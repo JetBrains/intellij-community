@@ -5,7 +5,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.openapi.Disposable
@@ -155,11 +155,9 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
         generateOnboardingTips: Boolean = false,
         sdk: Sdk = mySdk
     ) {
-        val languageData = languageData!!
         val kotlinData = kotlinData!!
-        languageData.language = "Kotlin"
-        languageData.name = name
-        languageData.path = contentRoot.toPath().resolve(relativePath).toCanonicalPath()
+        kotlinData.name = name
+        kotlinData.path = contentRoot.toPath().resolve(relativePath).toCanonicalPath()
         kotlinData.buildSystem = "IntelliJ"
         kotlinData.sdk = sdk
         kotlinData.addSampleCode = addSampleCode
@@ -429,9 +427,7 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
 
     private fun createJavaProject(): Project {
         return createProjectFromTemplate(JAVA) { step ->
-            val languageData = step.languageData!!
-            languageData.language = "Java"
-            languageData.name = "project"
+            step.baseData!!.name = "project"
         }
     }
 
