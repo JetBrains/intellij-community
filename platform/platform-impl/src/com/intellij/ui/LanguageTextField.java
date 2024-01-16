@@ -35,9 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LanguageTextField extends EditorTextField {
-  private final Language myLanguage;
+  private final @Nullable Language myLanguage;
   // Could be null to allow usage in UI designer, as EditorTextField permits
-  private final Project myProject;
+  private final @Nullable Project myProject;
 
   public LanguageTextField() {
     this(null, null, "");
@@ -114,7 +114,7 @@ public class LanguageTextField extends EditorTextField {
   @Override
   protected @NotNull EditorEx createEditor() {
     EditorEx editor = super.createEditor();
-    if (myLanguage != null && !myProject.isDisposed()) {
+    if (myLanguage != null && (myProject == null || !myProject.isDisposed())) {
       FileType fileType = myLanguage.getAssociatedFileType();
       editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
     }
