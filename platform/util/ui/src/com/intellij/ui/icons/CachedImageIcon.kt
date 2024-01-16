@@ -96,6 +96,9 @@ open class CachedImageIcon private constructor(
   internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
     this(resolver = resolver, originalResolver = resolver, toolTip = toolTip)
 
+  internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?, originalResolver: ImageDataLoader?) :
+    this(resolver = resolver, originalResolver = originalResolver, toolTip = toolTip, scaleContext = null)
+
   private fun getEffectiveAttributes(): IconAttributes {
     return if (attributes.isDarkSet) attributes else attributes.copy(isDark = pathTransform.get().isDark, isDarkSet = true)
   }
