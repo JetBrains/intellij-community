@@ -47,7 +47,6 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
-import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.IOException
@@ -67,12 +66,12 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     testFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
 
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixture)
-    myFixture!!.setUp()
+    fixture.setUp()
 
     // org.jetbrains.idea.maven.utils.MavenRehighlighter
-    (myFixture!! as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+    (fixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
-    myFixture!!.enableInspections(MavenModelInspection::class.java, XmlUnresolvedReferenceInspection::class.java)
+    fixture.enableInspections(MavenModelInspection::class.java, XmlUnresolvedReferenceInspection::class.java)
 
     myOriginalAutoCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
@@ -84,7 +83,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion
       myConfigTimestamps.clear()
 
-      myFixture!!.tearDown()
+      fixture.tearDown()
     }
     finally {
       myFixture = null
@@ -105,14 +104,14 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       MavenLog.LOG.warn("MavenDomTestCase configTest skipped")
       return
     }
-    myFixture!!.configureFromExistingVirtualFile(f)
+    fixture.configureFromExistingVirtualFile(f)
     myConfigTimestamps[f] = f.timeStamp
     MavenLog.LOG.warn("MavenDomTestCase configTest performed")
   }
 
   protected fun type(f: VirtualFile, c: Char) {
     configTest(f)
-    myFixture!!.type(c)
+    fixture.type(c)
   }
 
   protected fun getReferenceAtCaret(f: VirtualFile): PsiReference? {
@@ -137,7 +136,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected fun getEditor(f: VirtualFile): Editor {
     configTest(f)
-    return myFixture!!.editor
+    return fixture.editor
   }
 
   protected val editorOffset: Int
@@ -152,7 +151,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   private fun getTestPsiFile(f: VirtualFile): PsiFile {
     configTest(f)
-    return myFixture!!.file
+    return fixture.file
   }
 
   protected fun findTag(path: String?): XmlTag {
@@ -296,7 +295,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected fun getCompletionVariants(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
     configTest(f)
-    val variants = myFixture!!.completeBasic()
+    val variants = fixture.completeBasic()
 
     val result: MutableList<String?> = ArrayList()
     for (each in variants) {
@@ -312,7 +311,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   protected fun getDependencyCompletionVariants(f: VirtualFile,
                                                 lookupElementStringFunction: Function<in MavenRepositoryArtifactInfo?, String>): Set<String> {
     configTest(f)
-    val variants = myFixture!!.completeBasic()
+    val variants = fixture.completeBasic()
 
     val result: MutableSet<String> = TreeSet()
     for (each in variants) {
@@ -366,7 +365,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
       val psiFile = findPsiFile(f)
 
-      val document = myFixture!!.getDocument(psiFile)
+      val document = fixture.getDocument(psiFile)
       if (null == document) {
         MavenLog.LOG.warn("checkHighlighting: document is null")
       }
@@ -380,7 +379,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
       try {
         UIUtil.dispatchAllInvocationEvents()
-        myFixture!!.testHighlighting(true, false, true, f)
+        fixture.testHighlighting(true, false, true, f)
       }
       catch (throwable: Throwable) {
         MavenLog.LOG.error("Exception during highlighting", throwable)
@@ -407,7 +406,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   protected fun getIntentionAtCaret(pomFile: VirtualFile, intentionName: String?): IntentionAction? {
     configTest(pomFile)
     try {
-      val intentions = myFixture!!.availableIntentions
+      val intentions = fixture.availableIntentions
 
       return CodeInsightTestUtil.findIntentionByText(intentions, intentionName!!)
     }
@@ -435,7 +434,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     val renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context)
     assertNotNull(renameHandler)
     assertInstanceOf(renameHandler, VariableInplaceRenameHandler::class.java)
-    CodeInsightTestUtil.doInlineRename(renameHandler as VariableInplaceRenameHandler?, value, myFixture!!)
+    CodeInsightTestUtil.doInlineRename(renameHandler as VariableInplaceRenameHandler?, value, fixture)
   }
 
   protected fun assertCannotRename() {
