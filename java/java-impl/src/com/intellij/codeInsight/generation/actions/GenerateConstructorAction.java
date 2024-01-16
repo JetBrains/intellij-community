@@ -18,6 +18,8 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiImplicitClass;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * Action group which contains Generate... actions
@@ -28,8 +30,9 @@ public class GenerateConstructorAction extends BaseGenerateAction {
     super(new GenerateConstructorHandler());
   }
 
+  @VisibleForTesting
   @Override
-  protected boolean isValidForClass(final PsiClass targetClass) {
-    return super.isValidForClass(targetClass) && !(targetClass instanceof PsiAnonymousClass);
+  public boolean isValidForClass(final PsiClass targetClass) {
+    return super.isValidForClass(targetClass) && !(targetClass instanceof PsiAnonymousClass) && !(targetClass instanceof PsiImplicitClass);
   }
 }

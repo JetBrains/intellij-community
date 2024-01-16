@@ -59,6 +59,14 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       return null;
     }
 
+    if (aClass instanceof PsiImplicitClass) {
+      Messages.showMessageDialog(project,
+                                 JavaBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
+                                 CommonBundle.getErrorTitle(),
+                                 Messages.getErrorIcon());
+      return null;
+    }
+
     if (aClass.isRecord()) {
       PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
       if (constructor instanceof LightRecordCanonicalConstructor) {

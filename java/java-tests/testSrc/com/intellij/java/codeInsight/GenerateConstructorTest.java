@@ -7,12 +7,14 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.codeInsight.generation.RecordConstructorMember;
+import com.intellij.codeInsight.generation.actions.GenerateConstructorAction;
 import com.intellij.java.codeInspection.DataFlowInspectionTest;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -124,6 +126,16 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
 
   public void testRecordCustomConstructorOrder() {
     doTestRecordConstructor((aClass, m) -> ArrayUtil.reverseArray(m));
+  }
+
+  public void testImplicitClass() {
+    String name = getTestName(false);
+    PsiJavaFile file = (PsiJavaFile) myFixture.configureByFile("before" + name + ".java");
+    PsiClass[] classes = file.getClasses();
+    assertSize(1, classes);
+    PsiClass aClass = classes[0];
+    GenerateConstructorAction action = new GenerateConstructorAction();
+    assertFalse(action.isValidForClass(aClass));
   }
 
   private void doTest() {
