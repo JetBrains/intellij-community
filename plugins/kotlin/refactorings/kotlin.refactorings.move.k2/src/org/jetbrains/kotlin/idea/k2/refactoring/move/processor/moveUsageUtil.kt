@@ -119,31 +119,33 @@ private fun KtNamedDeclaration.findNonCodeUsages(
     searchForText: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
-    val usages = mutableListOf<UsageInfo>()
-    fun addNonCodeUsages(oldFqn: String, newFqn: String) {
-        TextOccurrencesUtil.findNonCodeUsages(
-            this,
-            resolveScope,
-            oldFqn,
-            searchInCommentsAndStrings,
-            searchForText,
-            newFqn,
-            usages
+    return name?.let { elementName ->
+        val usages = mutableListOf<UsageInfo>()
+        fun addNonCodeUsages(oldFqn: String, newFqn: String) {
+            TextOccurrencesUtil.findNonCodeUsages(
+                this,
+                resolveScope,
+                oldFqn,
+                searchInCommentsAndStrings,
+                searchForText,
+                newFqn,
+                usages
+            )
+        }
+
+        fqName?.quoteIfNeeded()?.asString()?.let { currentName ->
+            val newName = "${newPkgName.asString()}.$elementName"
+            addNonCodeUsages(currentName, newName)
+        }
+
+        val currentJavaFacadeName = StringUtil.getQualifiedName(containingKtFile.javaFileFacadeFqName.asString(), elementName)
+        val newJavaFacadeName = StringUtil.getQualifiedName(
+            StringUtil.getQualifiedName(newPkgName.asString(), containingKtFile.javaFileFacadeFqName.shortName().asString()),
+            elementName
         )
-    }
-
-    fqName?.quoteIfNeeded()?.asString()?.let { currentName ->
-        val newName = "${newPkgName.asString()}.$name"
-        addNonCodeUsages(currentName, newName)
-    }
-
-    val currentJavaFacadeName = StringUtil.getQualifiedName(containingKtFile.javaFileFacadeFqName.asString(), name ?: "")
-    val newJavaFacadeName = StringUtil.getQualifiedName(
-        StringUtil.getQualifiedName(newPkgName.asString(), containingKtFile.javaFileFacadeFqName.shortName().asString()),
-        name ?: ""
-    )
-    addNonCodeUsages(currentJavaFacadeName, newJavaFacadeName)
-    return usages
+        addNonCodeUsages(currentJavaFacadeName, newJavaFacadeName)
+        return usages
+    } ?: emptyList()
 }
 
 /**
