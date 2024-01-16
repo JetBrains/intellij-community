@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,4 +49,16 @@ public abstract class UndoManager {
   public abstract @NotNull Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getUndoActionNameAndDescription(FileEditor editor);
 
   public abstract @NotNull Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getRedoActionNameAndDescription(FileEditor editor);
+
+  @ApiStatus.Experimental
+  public abstract long getNextUndoNanoTime(@NotNull FileEditor editor);
+
+  @ApiStatus.Experimental
+  public abstract long getNextRedoNanoTime(@NotNull FileEditor editor);
+
+  @ApiStatus.Experimental
+  public abstract boolean isNextUndoAskConfirmation(@NotNull FileEditor editor);
+
+  @ApiStatus.Experimental
+  public abstract boolean isNextRedoAskConfirmation(@NotNull FileEditor editor);
 }
