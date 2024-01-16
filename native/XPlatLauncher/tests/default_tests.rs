@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 pub mod utils;
 
@@ -100,12 +100,10 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::Standard);
 
         let bin_dir = test.dist_root.join("bin");
-        for item in fs::read_dir(&bin_dir).expect(&format!("Cannot list: {:?}", bin_dir)) {
-            if let Ok(entry) = item {
-                if entry.file_name().to_str().unwrap().ends_with(".vmoptions") {
-                    fs::remove_file(&entry.path()).expect(&format!("Cannot delete: {:?}", entry.path()));
-                    break;
-                }
+        for entry in fs::read_dir(&bin_dir).unwrap_or_else(|_| panic!("Cannot list: {:?}", bin_dir)).flatten() {
+            if entry.file_name().to_str().unwrap().ends_with(".vmoptions") {
+                fs::remove_file(entry.path()).unwrap_or_else(|_| panic!("Cannot delete: {:?}", entry.path()));
+                break;
             }
         }
 
