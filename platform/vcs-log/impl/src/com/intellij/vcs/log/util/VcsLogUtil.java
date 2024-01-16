@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -334,6 +335,10 @@ public final class VcsLogUtil {
 
   public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project, @NotNull VcsLogManager logManager) {
     return getVcsDisplayName(project, logManager.getDataManager().getLogProviders().values());
+  }
+
+  public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable) {
+    invokeOnChange(ui, runnable, Conditions.alwaysTrue());
   }
 
   public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable,

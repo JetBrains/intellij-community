@@ -7,14 +7,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -133,14 +130,14 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
       model.requestToLoadMore(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myLogData.getDataPack() != myVisiblePack.getDataPack()) {
-      invokeOnChange(() -> tryJumpTo(commitId, rowGetter, future, focus));
+      VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myVisiblePack.getDataPack() instanceof DataPack.ErrorDataPack ||
              myVisiblePack instanceof VisiblePack.ErrorVisiblePack) {
       future.set(JumpResult.fromInt(result));
     }
     else if (!myVisiblePack.isFull()) {
-      invokeOnChange(() -> tryJumpTo(commitId, rowGetter, future, focus));
+      VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else {
       future.set(JumpResult.fromInt(result));
@@ -170,14 +167,6 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
       }
     }
     return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", commitId.toString());
-  }
-
-  protected void invokeOnChange(@NotNull Runnable runnable) {
-    invokeOnChange(runnable, Conditions.alwaysTrue());
-  }
-
-  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<? super VcsLogDataPack> condition) {
-    VcsLogUtil.invokeOnChange(this, runnable, condition);
   }
 
   @Override

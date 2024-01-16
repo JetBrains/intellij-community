@@ -110,8 +110,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     List<NotificationAction> actions = new ArrayList<>();
     actions.add(NotificationAction.createSimple(VcsLogBundle.message("vcs.log.commit.does.not.match.view.and.reset.link"), () -> {
       getFilterUi().clearFilters();
-      invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
-                     pack -> pack.getFilters().isEmpty());
+      VcsLogUtil.invokeOnChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true),
+                                pack -> pack.getFilters().isEmpty());
     }));
     VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
     if (projectLog.getDataManager() == myLogData) {

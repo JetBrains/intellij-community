@@ -23,6 +23,7 @@ import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +122,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     if (hasBranchFilter) {
       actions.add(NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
+        VcsLogUtil.invokeOnChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
       }));
     }
     actions.add(NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
