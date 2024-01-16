@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -6,16 +6,17 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -48,20 +49,21 @@ public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInsp
   record HashCodeModel(@NotNull PsiExpression completeExpression,
                        @NotNull PsiExpression argument,
                        @Nullable PsiLocalVariable intermediateVariable,
+                       @Nullable PsiExpression definition,
                        @NotNull String type) {
     @NotNull HashCodeModel tryReplaceDouble() {
-      PsiLocalVariable local = ExpressionUtils.resolveLocalVariable(argument);
-      if (local == null) return this;
-      if (!(PsiUtil.skipParenthesizedExprDown(local.getInitializer()) instanceof PsiMethodCallExpression call)) return this;
+      @Nullable PsiExpression expression = PsiUtil.skipParenthesizedExprDown(argument);
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) return this;
+      if (!(referenceExpression.resolve() instanceof PsiLocalVariable local)) return this;
+      PsiExpression definition = PsiUtil.skipParenthesizedExprDown(DeclarationSearchUtils.findDefinition(referenceExpression, local));
+      if (!(definition instanceof PsiMethodCallExpression call)) return this;
       if (!DOUBLE_TO_LONG_BITS.matches(call)) return this;
-      if (!(local.getParent() instanceof PsiDeclarationStatement decl) || decl.getDeclaredElements().length != 1) return this;
-      PsiElement nextDeclaration = PsiTreeUtil.skipWhitespacesAndCommentsForward(decl);
-      if (!PsiTreeUtil.isAncestor(nextDeclaration, completeExpression, true)) return this;
-      if (ContainerUtil.exists(VariableAccessUtils.getVariableReferences(local, PsiUtil.getVariableCodeBlock(local, null)),
-                               ref -> !PsiTreeUtil.isAncestor(completeExpression, ref, true))) {
-        return this;
-      }
-      return new HashCodeModel(completeExpression, call.getArgumentList().getExpressions()[0], local, "Double");
+      PsiStatement statement = PsiTreeUtil.getParentOfType(definition, PsiStatement.class);
+      PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
+      if (!PsiTreeUtil.isAncestor(nextStatement, completeExpression, true)) return this;
+      final PsiCodeBlock block = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
+      if (block == null || DefUseUtil.getRefs(block, local, definition).length != 2) return this;
+      return new HashCodeModel(completeExpression, call.getArgumentList().getExpressions()[0], local, definition, "Double");
     }
   }
 
@@ -80,8 +82,8 @@ public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInsp
     if (leftOperand == null || rightOperand == null) return null;
     if (!PsiTypes.longType().equals(PsiPrimitiveType.getOptionallyUnboxedType(leftOperand.getType()))) return null;
 
-    if (isXorShift(leftOperand, rightOperand)) return new HashCodeModel(cast, leftOperand, null, "Long").tryReplaceDouble();
-    if (isXorShift(rightOperand, leftOperand)) return new HashCodeModel(cast, rightOperand, null, "Long").tryReplaceDouble();
+    if (isXorShift(leftOperand, rightOperand)) return new HashCodeModel(cast, leftOperand, null, null, "Long").tryReplaceDouble();
+    if (isXorShift(rightOperand, leftOperand)) return new HashCodeModel(cast, rightOperand, null, null, "Long").tryReplaceDouble();
     return null;
   }
 
@@ -119,19 +121,21 @@ public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInsp
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
-      PsiTypeCastExpression element = (PsiTypeCastExpression)startElement;
-      HashCodeModel model = getHashCodeModel(element);
+      HashCodeModel model = getHashCodeModel((PsiTypeCastExpression)startElement);
       if (model == null) return;
       PsiExpression argument = model.argument();
-      PsiType type = argument.getType();
       CommentTracker ct = new CommentTracker();
-      String call = type instanceof PsiPrimitiveType
+      String call = argument.getType() instanceof PsiPrimitiveType
                     ? "java.lang." + model.type() + ".hashCode(" + ct.text(argument) + ")"
                     : ct.text(argument, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) + ".hashCode()";
-      if (model.intermediateVariable() != null) {
-        ct.delete(model.intermediateVariable());
+      PsiLocalVariable local = model.intermediateVariable;
+      if (local != null && model.definition != null) {
+        PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(model.definition, PsiExpressionStatement.class);
+        if (expressionStatement != null) ct.delete(expressionStatement);
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(local);
+        if (references.size() == 2) ct.delete(local);
       }
-      ct.replaceAndRestoreComments(element, call);
+      ct.replaceAndRestoreComments(startElement, call);
     }
   }
 }
