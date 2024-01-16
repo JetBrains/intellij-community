@@ -3,8 +3,8 @@ package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.interpreter.ReachabilityCountingInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
@@ -24,6 +24,7 @@ import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
@@ -73,21 +74,18 @@ public class DebuggerDfaRunner {
     DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
     int startingIndex = myStartingState.getInstruction().getIndex();
     DfaInstructionState startingState = new DfaInstructionState(myStartingState.getInstruction(), memoryState);
-    BitSet reached = new BitSet();
-    reached.set(0, startingIndex);
-    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true) {
+    ReachabilityCountingInterpreter interpreter = new ReachabilityCountingInterpreter(myFlow, interceptor, true, startingIndex) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
-        reached.set(instructionState.getInstruction().getIndex());
         DfaInstructionState[] states = super.acceptInstruction(instructionState);
         return StreamEx.of(states).filter(state -> state.getInstruction().getIndex() > startingIndex)
           .toArray(DfaInstructionState.EMPTY_ARRAY);
       }
     };
     if (interpreter.interpret(List.of(startingState)) != RunnerResult.OK) return DfaResult.EMPTY;
-    Set<PsiElement> unreachable = myFlow.computeUnreachable(reached);
-    return new DfaResult(myBody.getContainingFile(), interceptor.computeHints(),
-                         interceptor.unreachableSegments(myAnchor, unreachable));
+    Set<PsiElement> unreachable = interpreter.getUnreachable();
+    Collection<TextRange> segments = DataFlowIRProvider.computeUnreachableSegments(myAnchor, unreachable);
+    return new DfaResult(myBody.getContainingFile(), interceptor.computeHints(), segments);
   }
 
   /**
