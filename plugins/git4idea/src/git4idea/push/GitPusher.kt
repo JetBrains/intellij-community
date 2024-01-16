@@ -1,97 +1,86 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.push;
+package git4idea.push
 
-import com.intellij.dvcs.push.PushSpec;
-import com.intellij.dvcs.push.Pusher;
-import com.intellij.dvcs.push.VcsPushOptionValue;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import git4idea.GitUtil;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepository;
-import git4idea.update.GitUpdateInfoAsLog;
-import git4idea.update.HashRange;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.dvcs.push.PushSpec
+import com.intellij.dvcs.push.Pusher
+import com.intellij.dvcs.push.VcsPushOptionValue
+import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import git4idea.GitUtil
+import git4idea.config.GitVcsSettings
+import git4idea.repo.GitRepository
+import git4idea.update.GitUpdateInfoAsLog
 
-import java.util.Collections;
-import java.util.Map;
+class GitPusher(
+  private val project: Project,
+  private val settings: GitVcsSettings,
+  private val pushSupport: GitPushSupport
+) : Pusher<GitRepository, GitPushSource, GitPushTarget>() {
 
-import static java.util.Collections.emptyMap;
-
-class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
-
-  private final @NotNull Project myProject;
-  private final @NotNull GitVcsSettings mySettings;
-  private final @NotNull GitPushSupport myPushSupport;
-
-  GitPusher(@NotNull Project project, @NotNull GitVcsSettings settings, @NotNull GitPushSupport pushSupport) {
-    myProject = project;
-    mySettings = settings;
-    myPushSupport = pushSupport;
+  override fun push(
+    pushSpecs: Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>>,
+    additionalOption: VcsPushOptionValue?,
+    force: Boolean
+  ) {
+    push(pushSpecs, additionalOption, force, emptyMap())
   }
 
-  @Override
-  public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
-                   @Nullable VcsPushOptionValue additionalOption,
-                   boolean force) {
-    push(pushSpecs, additionalOption, force, emptyMap());
-  }
+  override fun push(
+    pushSpecs: Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>>,
+    optionValue: VcsPushOptionValue?,
+    force: Boolean,
+    customParams: Map<String, VcsPushOptionValue>
+  ) {
+    expireExistingErrorsAndWarnings()
 
-  @Override
-  public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
-                   @Nullable VcsPushOptionValue optionValue, boolean force,
-                   @NotNull Map<String, VcsPushOptionValue> customParams) {
-    expireExistingErrorsAndWarnings();
-    GitPushTagMode pushTagMode;
-    boolean skipHook;
-
-    if (optionValue instanceof GitVcsPushOptionValue) {
-      pushTagMode = ((GitVcsPushOptionValue)optionValue).getPushTagMode();
-      skipHook = ((GitVcsPushOptionValue)optionValue).isSkipHook();
-    }
-    else {
-      pushTagMode = null;
-      skipHook = false;
+    val (pushTagMode: GitPushTagMode?, skipHook: Boolean) = when (optionValue) {
+      is GitVcsPushOptionValue -> optionValue.pushTagMode to optionValue.isSkipHook
+      else -> null to false
     }
 
-    mySettings.setPushTagMode(pushTagMode);
+    settings.pushTagMode = pushTagMode
 
-    GitPushOperation pushOperation = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force, skipHook);
-    pushAndNotify(myProject, pushOperation, customParams);
+    val pushOperation = GitPushOperation(project, pushSupport, pushSpecs, pushTagMode, force, skipHook)
+    pushAndNotify(project, pushOperation, customParams)
   }
 
-  public static void pushAndNotify(@NotNull Project project,
-                                   @NotNull GitPushOperation pushOperation,
-                                   @NotNull Map<String, VcsPushOptionValue> customParams) {
-    GitPushResult pushResult = pushOperation.execute();
-
-    GitPushListener pushListener = project.getMessageBus().syncPublisher(GitPushListener.getTOPIC());
-
-    for (Map.Entry<GitRepository, GitPushRepoResult> entry : pushResult.getResults().entrySet()) {
-      pushListener.onCompleted(entry.getKey(), entry.getValue(), customParams);
+  private fun expireExistingErrorsAndWarnings() {
+    val existingNotifications: Array<GitPushResultNotification> = NotificationsManager.getNotificationsManager()
+      .getNotificationsOfType(GitPushResultNotification::class.java, project)
+    for (notification in existingNotifications) {
+      if (notification.type != NotificationType.INFORMATION) {
+        notification.expire()
+      }
     }
-
-    Map<GitRepository, HashRange> updatedRanges = pushResult.getUpdatedRanges();
-    GitUpdateInfoAsLog.NotificationData notificationData = !updatedRanges.isEmpty() ?
-                                                           new GitUpdateInfoAsLog(project, updatedRanges).calculateDataAndCreateLogTab() :
-                                                           null;
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      boolean multiRepoProject = GitUtil.getRepositoryManager(project).moreThanOneRoot();
-      GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData, customParams)
-        .notify(project);
-    });
   }
 
-  protected void expireExistingErrorsAndWarnings() {
-    GitPushResultNotification[] existingNotifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(GitPushResultNotification.class, myProject);
-    for (GitPushResultNotification notification : existingNotifications) {
-      if (notification.getType() != NotificationType.INFORMATION) {
-        notification.expire();
+  companion object {
+    @JvmStatic
+    fun pushAndNotify(
+      project: Project,
+      pushOperation: GitPushOperation,
+      customParams: Map<String, VcsPushOptionValue>
+    ) {
+      val pushResult = pushOperation.execute()
+      val pushListener = project.messageBus.syncPublisher(GitPushListener.TOPIC)
+      pushResult.results.forEach { (gitRepository, pushRepoResult) ->
+        pushListener.onCompleted(gitRepository, pushRepoResult, customParams)
+      }
+
+      val updatedRanges = pushResult.updatedRanges
+      val notificationData = if (!updatedRanges.isEmpty()) {
+        GitUpdateInfoAsLog(project, updatedRanges).calculateDataAndCreateLogTab()
+      }
+      else {
+        null
+      }
+
+      ApplicationManager.getApplication().invokeLater {
+        val multiRepoProject = GitUtil.getRepositoryManager(project).moreThanOneRoot()
+        GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData, customParams)
+          .notify(project)
       }
     }
   }
