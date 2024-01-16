@@ -3,12 +3,14 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -18,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.messages.MessageDialog
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.updateSettings.impl.BuildInfo
@@ -41,9 +44,7 @@ import com.intellij.util.PlatformUtils.isPyCharmCommunity
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.Nls
@@ -54,7 +55,6 @@ import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
-import kotlin.io.path.exists
 
 private const val TOOLBOX_INSTALL_BASE_URL = "http://localhost:52829/install/IDEA-U"
 private const val TOOLBOX_ORIGIN = "https://toolbox.app"
@@ -87,7 +87,7 @@ class UltimateInstallationService(
               useFallback(pluginId, suggestedIde.defaultDownloadUrl)
               return@withBackgroundProgress
             }
-            
+
             val productData = UpdateChecker.loadProductData(null)
             val build = productData?.channels?.firstOrNull { it.status == ChannelStatus.RELEASE }?.builds?.first()
                         ?: return@withBackgroundProgress
@@ -100,22 +100,13 @@ class UltimateInstallationService(
               }
             }
 
-            if (!tryToInstall(build, pluginId, suggestedIde)) {
-              useFallback(pluginId, suggestedIde.defaultDownloadUrl)
-            }
+            tryToInstall(build, pluginId, suggestedIde)
           }
         }
-      } catch (e: Exception) {
-        when {
-          e is CancellationException -> {
-            FUSEventSource.EDITOR.logTryUltimateCancelled(project, pluginId)
-            throw e
-          }
-          else -> {
-            ultimateInstallationLogger.warn("Installation process is failed", e)
-            useFallback(pluginId, suggestedIde.defaultDownloadUrl)
-          }
-        }
+      }
+      catch (e: CancellationException) {
+        FUSEventSource.EDITOR.logTryUltimateCancelled(project, pluginId)
+        throw e
       }
       finally {
         EditorNotifications.getInstance(project).updateAllNotifications()
@@ -132,32 +123,97 @@ class UltimateInstallationService(
     return resp.statusCode() == 200
   }
 
-  private suspend fun tryToInstall(buildInfo: BuildInfo, pluginId: PluginId? = null, suggestedIde: SuggestedIde): Boolean {
-    if (installer == null) return false
+  private suspend fun tryToInstall(buildInfo: BuildInfo, pluginId: PluginId? = null, suggestedIde: SuggestedIde) {
+    if (installer == null) return
 
+    val downloadResult = runCatching { download(buildInfo, suggestedIde, pluginId) }.getOrNullLogged()
+    if (downloadResult == null) {
+      showProcessErrorDialog("Download", pluginId, suggestedIde)
+      return
+    }
+
+    val installationResult = runCatching { installIde(downloadResult, pluginId) }.getOrNullLogged()
+    if (installationResult == null) {
+      showProcessErrorDialog("Install", pluginId, suggestedIde)
+      return
+    }
+
+    val startResult = runCatching {
+      val openActivity = FUSEventSource.EDITOR.logTryUltimateIdeOpened(project, pluginId)
+      indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.opening", suggestedIde.name)) {
+        installer!!.startUltimateAndNotify(installationResult, suggestedIde)
+      }
+      openActivity.finished()
+    }
+
+    if (startResult.isFailure) {
+      showOpenProcessErrorDialog("Open", pluginId, suggestedIde)
+    }
+  }
+
+  private suspend fun download(buildInfo: BuildInfo, suggestedIde: SuggestedIde, pluginId: PluginId?): DownloadResult? {
     val downloadActivity = FUSEventSource.EDITOR.logTryUltimateDownloadStarted(project, pluginId)
-    val downloadResult = progressStep(1.0, text = IdeBundle.message("plugins.advertiser.try.ultimate.download")) {
+    val result = progressStep(1.0, text = IdeBundle.message("plugins.advertiser.try.ultimate.download")) {
       withRawProgressReporter {
         coroutineToIndicator {
           installer?.download(buildInfo, ProgressManager.getInstance().progressIndicator, suggestedIde)
         }
       }
-    } ?: return false
+    }
     downloadActivity.finished()
+    return result
+  }
 
+  private fun <T> Result<T>.getOrNullLogged(): T? {
+    if (isFailure) {
+      val exception = exceptionOrNull()
+      ultimateInstallationLogger.warn("Exception while trying upgrade to Ultimate: ${exception?.message}")
+      if (exception is CancellationException) throw exception
+    }
+
+    return getOrNull()
+  }
+
+  private suspend fun installIde(downloadResult: DownloadResult, pluginId: PluginId?): InstallationResult? {
     val installActivity = FUSEventSource.EDITOR.logTryUltimateInstallationStarted(project, pluginId)
     val installResult = indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.install")) {
       installer?.install(downloadResult)
-    } ?: return false
-    installActivity.finished()
-
-    val openActivity = FUSEventSource.EDITOR.logTryUltimateIdeOpened(project, pluginId)
-    val startResult = indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.opening")) {
-      installer!!.startUltimateAndNotify(installResult, suggestedIde)
     }
-    openActivity.finished()
+    installActivity.finished()
+    return installResult
+  }
 
-    return startResult
+  private suspend fun showProcessErrorDialog(stepName: String, pluginId: PluginId?, suggestedIde: SuggestedIde) {
+    val dialog = messageDialog(stepName, listOf("Try Again", "Open Website", "Cancel"))
+    when (dialog.exitCode) {
+      0 -> install(pluginId, suggestedIde)
+      1 -> useFallback(pluginId = pluginId, defaultDownloadUrl = suggestedIde.defaultDownloadUrl)
+      else -> Unit
+    }
+  }
+
+  private suspend fun showOpenProcessErrorDialog(stepName: String, pluginId: PluginId?, suggestedIde: SuggestedIde) {
+    val dialog = messageDialog(stepName, listOf("Open Website", "Cancel"))
+    when (dialog.exitCode) {
+      0 -> useFallback(pluginId = pluginId, defaultDownloadUrl = suggestedIde.defaultDownloadUrl)
+      else -> Unit
+    }
+  }
+
+  private suspend fun messageDialog(stepName: String, options: List<String>): MessageDialog {
+    return withContext(Dispatchers.EDT) {
+      val dialog = MessageDialog(
+        project,
+        IdeBundle.message("plugins.advertiser.try.ultimate.dialog.step.failed", stepName),
+        IdeBundle.message("plugins.advertiser.try.ultimate.dialog.title"),
+        options.toTypedArray(),
+        -1,
+        AllIcons.General.Error,
+        false
+      )
+      dialog.show()
+      dialog
+    }
   }
 
   private fun useFallback(pluginId: PluginId? = null, defaultDownloadUrl: String) {
@@ -179,13 +235,11 @@ internal abstract class UltimateInstaller(
     val link = generateDownloadLink(buildInfo, suggestedIde, postfix)
     val downloadPath = updateTempDirectory.resolve("${buildInfo.version}$postfix")
 
-    if (!downloadPath.exists()) {
-      try {
-        HttpRequests.request(link).saveToFile(downloadPath.toFile(), indicator)
-      } catch (e: Exception) {
-        deleteInBackground(downloadPath)
-        throw e
-      }
+    try {
+      HttpRequests.request(link).saveToFile(downloadPath.toFile(), indicator)
+    } catch (e: Exception) {
+      deleteInBackground(downloadPath)
+      throw e
     }
 
     return DownloadResult(downloadPath, buildInfo.version)
@@ -202,8 +256,8 @@ internal abstract class UltimateInstaller(
   fun startUltimateAndNotify(installationResult: InstallationResult, suggestedIde: SuggestedIde): Boolean {
     val notification = NotificationGroupManager.getInstance().getNotificationGroup("Ultimate Installed")
       .createNotification(
-        IdeBundle.message("notification.group.advertiser.try.ultimate.installed"), 
-        IdeBundle.message("notification.plugin.advertiser.try.ultimate.started", suggestedIde.name), 
+        IdeBundle.message("notification.group.advertiser.try.ultimate.installed"),
+        IdeBundle.message("notification.plugin.advertiser.try.ultimate.started", suggestedIde.name),
         NotificationType.INFORMATION
       )
       .setSuggestionType(true)
@@ -212,7 +266,7 @@ internal abstract class UltimateInstaller(
           ApplicationManager.getApplication().exit()
         }
       })
-    
+
     notification.notify(project)
 
     return startUltimate(installationResult)
@@ -262,7 +316,7 @@ private fun generateDownloadLink(buildInfo: BuildInfo, suggestedIde: SuggestedId
 internal data class DownloadResult(val downloadPath: Path, val buildVersion: String)
 internal data class InstallationResult(val appPath: Path)
 
-private fun SuggestedIde.canBeAutoInstalled() : Boolean {
+private fun SuggestedIde.canBeAutoInstalled(): Boolean {
   return when {
     isIdeaCommunity() && productCode == "IU" -> true
     isPyCharmCommunity() && productCode == "PY" -> true
