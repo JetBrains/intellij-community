@@ -59,6 +59,15 @@ public final class XBreakpointUtil {
   }
 
   /**
+   * @see XBreakpointType#getGeneralDescription(XBreakpoint)
+   */
+  @Nls
+  public static <B extends XBreakpoint> String getGeneralDescription(@NotNull B breakpoint) {
+    //noinspection unchecked
+    return breakpoint.getType().getGeneralDescription(breakpoint);
+  }
+
+  /**
    * @see #getPropertyXMLDescriptions(XBreakpoint)
    */
   public static <B extends XBreakpoint> List<@Nls String> getPropertyXMLDescriptions(@NotNull B breakpoint) {

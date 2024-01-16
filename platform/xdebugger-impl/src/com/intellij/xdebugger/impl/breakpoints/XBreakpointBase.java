@@ -366,8 +366,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   /**
-   * Full description of the breakpoint, including breakpoint target (e.g., "Line 20 in foo()") and its properties (e.g., condition).
+   * Full description of the breakpoint,
+   * including kind of breakpoint target (e.g., "Lambda breakpoint", see {@link XBreakpointUtil#getGeneralDescription(XBreakpoint)})
+   * and its properties (e.g., condition).
    * Formatted as HTML document.
+   * Primarily used for tooltip in the editor.
    */
   @NotNull
   @Nls
@@ -375,7 +378,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     StringBuilder builder = new StringBuilder();
     builder.append(CommonXmlStrings.HTML_START).append(CommonXmlStrings.BODY_START);
     LineSeparator separator = new LineSeparator(builder);
-    builder.append(StringUtil.escapeXmlEntities(XBreakpointUtil.getDisplayText(this)));
+    builder.append(StringUtil.escapeXmlEntities(XBreakpointUtil.getGeneralDescription(this)));
     var prePropertiesLen = builder.length();
 
     String errorMessage = getErrorMessage();

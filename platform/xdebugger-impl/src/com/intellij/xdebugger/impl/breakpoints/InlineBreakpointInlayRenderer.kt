@@ -182,8 +182,7 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
     if (tooltipHint?.isVisible == true) return
     if (!inlay.editor.contentComponent.isShowing) return
 
-    // FIXME[inline-bp]: use some better texts here
-    val text = breakpoint?.description ?: variant!!.text
+    val text = breakpoint?.description ?: variant!!.tooltipDescription
     val hint = LightweightHint(HintUtil.createInformationLabel(text))
 
     // Location policy: mimic gutter tooltip by pointing it to the center of an icon, but show it above the line.

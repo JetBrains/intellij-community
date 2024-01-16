@@ -101,6 +101,20 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
+   * Laconic breakpoint variant description with specification of its kind (type of target).
+   * Primarily used for tooltip in the editor, when exact target is obvious but overall semantics might be unclear.
+   * E.g.: "Line breakpoint", "Lambda breakpoint", "Field breakpoint".
+   *
+   * @see XBreakpointType#getGeneralDescription(XBreakpoint)
+   */
+  @NotNull
+  @Nls
+  protected String getGeneralDescription(XLineBreakpointVariant variant) {
+    // Default implementation just for API backward compatibility, it's highly recommended to properly implement this method.
+    return variant.getText();
+  }
+
+  /**
    * The source position for a line breakpoint defaults to its file and line.
    */
   @Override
@@ -217,6 +231,12 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
     public final XLineBreakpointType<P> getType() {
       return XLineBreakpointType.this;
+    }
+
+    @NotNull
+    @Nls
+    public final String getTooltipDescription() {
+      return getType().getGeneralDescription(this);
     }
 
     @Override

@@ -143,6 +143,19 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   public abstract String getDisplayText(B breakpoint);
 
   /**
+   * Laconic breakpoint description with specification of its kind (type of target).
+   * Primarily used for tooltip in the editor, when exact target is obvious but overall semantics might be unclear.
+   * E.g.: "Line breakpoint", "Lambda breakpoint", "Field breakpoint".
+   *
+   * @see XLineBreakpointType#getGeneralDescription(XLineBreakpointType.XLineBreakpointVariant)
+   */
+  @Nls
+  public String getGeneralDescription(B breakpoint) {
+    // Default implementation just for API backward compatibility, it's highly recommended to properly implement this method.
+    return getDisplayText(breakpoint);
+  }
+
+  /**
    * Description lines of specific breakpoint properties (e.g., class filter for Java line breakpoints),
    * XML formatted.
    */
