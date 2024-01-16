@@ -359,6 +359,9 @@
         <synonym key="action.ShowBlankDiffWindow.synonym1"/>
         <synonym key="action.ShowBlankDiffWindow.synonym2"/>
       </action>
+      <action id="CloseDiffEditor" class="com.intellij.diff.editor.CloseDiffEditorAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="ESCAPE"/>
+      </action>
 
       <separator/>
       <action id="Diff.OpenDiffInEditor" class="com.intellij.diff.actions.impl.OpenDiffInEditorAction" internal="true"/>

@@ -23,7 +23,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
                                    "EditorEnter", "NextTemplateVariable", "Git.Log.Branches.Change.Branch.Filter", "SplitChooser.Split",
                                    "JupyterMarkdownDestroyControllerAction", "Console.TableResult.GotoReferencedResult"},
-      {"ESCAPE",                   "CloseGotItTooltip", "EditorEscape", "FocusEditor", "Terminal.SwitchFocusToEditor"},
+      {"ESCAPE",                   "CloseGotItTooltip", "EditorEscape", "FocusEditor", "Terminal.SwitchFocusToEditor", "CloseDiffEditor"},
       {"F1",                       "ContextHelp", "org.jetbrains.r.actions.REditorHelpAction"},
       {"F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue",
                                    "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename",
@@ -238,7 +238,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta C",             "CopyPaths", "DatabaseView.CopyDdlAction", "WebInspector.Browser.Selection.Toggle", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     }),
     Map.entry("Emacs", new String[][]{
-      {"ESCAPE",                   SECOND_STROKE, "CloseGotItTooltip", "FocusEditor", "Terminal.SwitchFocusToEditor"},
+      {"ESCAPE",                   SECOND_STROKE, "CloseGotItTooltip", "FocusEditor", "Terminal.SwitchFocusToEditor", "CloseDiffEditor"},
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                    "EmacsStyleIndent", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow", "InsertInlineCompletionAction",
                                    "Terminal.CommandCompletion", "CodeFloatingToolbar.GotoNextMenu", "AIAssistant.Editor.AcceptOneLineCompletion"},

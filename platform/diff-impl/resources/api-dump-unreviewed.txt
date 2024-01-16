@@ -541,6 +541,7 @@ f:com.intellij.diff.editor.DefaultDiffFileEditorCustomizer
 - com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 - <init>():V
 - customize(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.FileEditor,com.intellij.diff.DiffContext):V
+f:com.intellij.diff.editor.DefaultDiffFileEditorCustomizerKt
 f:com.intellij.diff.editor.DefaultDiffTabFilesManager
 - com.intellij.diff.editor.DiffEditorTabFilesManager
 - <init>(com.intellij.openapi.project.Project):V
