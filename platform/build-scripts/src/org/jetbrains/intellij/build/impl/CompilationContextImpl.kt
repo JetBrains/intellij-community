@@ -426,7 +426,13 @@ internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = Comp
   spanBuilder("clean output").use { span ->
     val outDir = paths.buildOutputDir
     outputDirectoriesToKeep.forEach {
-      span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), "${outDir.relativize(it)}"))
+      val path = try {
+        outDir.relativize(it)
+      }
+      catch (e: IllegalArgumentException) {
+        it
+      }
+      span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), path.toString()))
     }
     Files.newDirectoryStream(outDir).use { dirStream ->
       var pathsToBeCleanedStream = dirStream - outputDirectoriesToKeep
