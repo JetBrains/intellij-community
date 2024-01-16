@@ -1,16 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.ui.popup.list.SelectablePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -24,12 +24,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
   protected final ComponentType myComponent;
@@ -39,21 +41,20 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private final JComponent myTipComponent = new JComponent() {
     @Override
     protected void paintComponent(Graphics g) {
-      Insets insets = getInsets();
       Graphics2D g2d = (Graphics2D)g.create();
-      double scale = JBUIScale.sysScale((Graphics2D)g);
-      double devTop = insets.top * scale;
-      // A workaround for IDEA-183253. If insets.top is *.5 in device space, then move up the image by one device pixel.
-      if (devTop + 0.5 == Math.floor(devTop + 0.5)) {
-        double devPix = 1 / scale;
-        g2d.translate(0, -devPix);
-      }
       try {
-        if (transparentPopup) {
-          // Not sure why this is necessary
-          g2d.setComposite(AlphaComposite.SrcOver);
+        if (myClip != null) {
+          g2d.clip(myClip);
         }
-        UIUtil.drawImage(g2d, myImage, insets.left, insets.top, null);
+        if (myImage != null) {
+          UIUtil.drawImage(g2d, myImage, 0, 0, null);
+        }
+        else if (myKey != null) {
+          ToolTipDetails details = calcToolTipDetails(myKey);
+          if (details != null) {
+            details.painter.accept(g2d);
+          }
+        }
       }
       finally {
         g2d.dispose();
@@ -66,8 +67,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
+  private Shape myClip;
   private int borderArc = 0;
-  private boolean transparentPopup;
 
   public static void setRelativeBounds(@NotNull Component parent, @NotNull Rectangle bounds,
                                        @NotNull Component child, @NotNull Container validationParent) {
@@ -274,14 +275,25 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myKey = selected;
 
-    Point location = createToolTipImage(myKey);
+    ToolTipDetails details = calcToolTipDetails(myKey);
 
-    if (location == null) {
+    if (details == null) {
       hideHint();
     }
     else {
-      Rectangle bounds = new Rectangle(location, myTipComponent.getPreferredSize());
-      myPopup.setTransparent(transparentPopup);
+      myKeyItemBounds = details.keyItemBounds;
+      Rectangle bounds = details.bounds;
+      myTipComponent.setPreferredSize(bounds.getSize());
+      // We cannot use buffered rendering in rem-dev case, cause backend might not have the required fonts to render text
+      if (!AppMode.isRemoteDevHost()) {
+        // We use an 'opaque' image type (RGB, not ARGB) here to support subpixel-antialiased text
+        myImage = UIUtil.createImage(myComponent, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = myImage.createGraphics();
+        details.painter.accept(g);
+        g.dispose();
+      }
+      myClip = details.clip;
+      myPopup.setTransparent(myClip != null);
       myPopup.setBounds(bounds);
       myPopup.onAncestorFocusLost(() -> onFocusLost());
       myPopup.setVisible(noIntersections(bounds));
@@ -362,7 +374,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return result instanceof SelectablePanel selectablePanel ? selectablePanel : null;
   }
 
-  private @Nullable Point createToolTipImage(@NotNull KeyType key) {
+  private @Nullable ToolTipDetails calcToolTipDetails(@NotNull KeyType key) {
     ClientProperty.put(myComponent, EXPANDED_RENDERER, true);
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
     ClientProperty.put(myComponent, EXPANDED_RENDERER, null);
@@ -377,18 +389,16 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       if (delegate != null && ClientProperty.isTrue(delegate, RENDERER_DISABLED)) return null;
     }
 
-    myKeyItemBounds = rendererAndBounds.second;
+    Rectangle cellBounds = rendererAndBounds.second;
 
     if (ClientProperty.isTrue(renderer, USE_RENDERER_BOUNDS)) {
-      myKeyItemBounds.translate(renderer.getX(), renderer.getY());
-      myKeyItemBounds.setSize(renderer.getSize());
+      cellBounds.translate(renderer.getX(), renderer.getY());
+      cellBounds.setSize(renderer.getSize());
     }
 
     SelectablePanel selectablePanel = findSelectablePanel(renderer);
     int arc = selectablePanel == null ? borderArc : selectablePanel.getSelectionArc();
-    transparentPopup = arc > 0;
 
-    Rectangle cellBounds = myKeyItemBounds;
     Rectangle visibleRect = getVisibleRect(key);
 
     if (cellBounds.y < visibleRect.y) return null;
@@ -412,66 +422,57 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     int width = Math.min(screen.width + screen.x - location.x - borderSize, cellMaxX - visMaxX);
     int height = cellBounds.height;
 
+    int cellY = 0;
+    if (arc > 0 && selectablePanel != null) {
+      renderer.setBounds(cellBounds);
+      Rectangle rect = calcRectInParent(selectablePanel, renderer);
+      width -= selectablePanel.getSelectionInsets().right;
+      height = rect.height;
+      cellY = rect.y;
+      location.y += cellY;
+    }
+
     if (width <= 0 || height <= 0) return null;
 
-    Graphics2D g;
-    if (arc > 0) {
-      width += borderSize;
-      height += borderSize * 2;
-      int clippedY = 0;
-      int clippedHeight = height;
-      if (selectablePanel != null) {
-        width -= selectablePanel.getSelectionInsets().right;
-        if (width <= 0) {
-          return null;
-        }
-        renderer.setBounds(cellBounds);
-        Rectangle rect = calcRectInParent(selectablePanel, renderer);
-        clippedY = rect.y;
-        clippedHeight = rect.height + borderSize * 2;
-      }
-      myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_ARGB);
-      g = myImage.createGraphics();
-      //noinspection GraphicsSetClipInspection
-      g.setClip(new RoundRectangle2D.Float(-arc, clippedY, width + arc, clippedHeight, arc, arc));
+    location.y -= borderSize;
+    width += borderSize;
+    height += borderSize * 2;
+
+    int imgWidth = width;
+    int imgHeight = height;
+    int xShift = cellBounds.x - visMaxX;
+    int yShift = borderSize - cellY;
+    Consumer<Graphics2D> painter = (g) -> {
+      doFillBackground(imgHeight, imgWidth, g);
+      // On showing, popup will be aligned to device pixel's grid. This adjustment tries to compensate for this shift.
+      // Ideally, we'd like to compensate also for the similar alignment of the main window. But we don't have enough information for that -
+      // from Java API we only have the integer-valued window coordinates in user space. If the main window is moved to an arbitrary place
+      // on screen using mouse, exact device-space coordinates cannot be obtained. We can only expect this alignment not to be needed for
+      // maximized windows.
+      double fractionalScaleCorrection = location.y - PaintUtil.alignToInt(location.y, g, PaintUtil.RoundingMode.ROUND_FLOOR_BIAS);
+      g.translate(xShift, yShift + fractionalScaleCorrection);
+      doPaintTooltipImage(renderer, cellBounds, g, key);
+      g.translate(-xShift, -yShift - fractionalScaleCorrection);
 
       if (borderSize > 0) {
-        location.y -= borderSize;
         g.setColor(getBorderColor());
-        g.fillRect(0, 0, width, height);
-        //noinspection GraphicsSetClipInspection
-        g.setClip(new RoundRectangle2D.Float(-arc, clippedY + borderSize, width + arc - borderSize, clippedHeight - borderSize * 2, arc, arc));
+        if (arc > 0) {
+          Area area = new Area(new Rectangle(0, 0, imgWidth, imgHeight) /* will be restricted by clip */);
+          area.subtract(new Area(new RoundRectangle2D.Double(- arc + borderSize, borderSize,
+                                                             imgWidth + arc - borderSize * 2, imgHeight - borderSize * 2, arc, arc)));
+          g.fill(area);
+        }
+        else {
+          g.fillRect(0, 0, imgWidth, borderSize);
+          g.fillRect(0, imgHeight - borderSize, imgWidth, borderSize);
+          g.fillRect(imgWidth - borderSize, 0, borderSize, imgHeight);
+        }
       }
-      doFillBackground(height, width, g);
-      g.translate(cellBounds.x - visMaxX, borderSize);
-      doPaintTooltipImage(renderer, cellBounds, g, key);
-      myTipComponent.setBorder(null);
-    }
-    else {
-      myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_RGB);
-      g = myImage.createGraphics();
-      //noinspection GraphicsSetClipInspection
-      g.setClip(null);
-      doFillBackground(height, width, g);
+    };
 
-      if (borderSize > 0) {
-        CustomLineBorder border = new CustomLineBorder(getBorderColor(), borderSize, 0, borderSize, borderSize);
-        location.y -= borderSize;
-        width += borderSize;
-        height += borderSize * 2;
-        myTipComponent.setBorder(border);
-      } else {
-        myTipComponent.setBorder(null);
-      }
-      g.translate(cellBounds.x - visMaxX, 0);
-      doPaintTooltipImage(renderer, cellBounds, g, key);
-    }
+    Shape clip = arc > 0 ? new RoundRectangle2D.Float(-arc, 0, imgWidth + arc, imgHeight, arc, arc) : null;
 
-    g.dispose();
-    myRendererPane.remove(renderer);
-
-    myTipComponent.setPreferredSize(new Dimension(width, height));
-    return location;
+    return new ToolTipDetails(new Rectangle(location.x, location.y, imgWidth, imgHeight), cellBounds, painter, clip);
   }
 
   protected boolean isPaintBorder() {
@@ -489,6 +490,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected void doPaintTooltipImage(Component rComponent, Rectangle cellBounds, Graphics2D g, KeyType key) {
     myRendererPane.paintComponent(g, rComponent, myComponent, 0, 0, cellBounds.width, cellBounds.height, true);
+    myRendererPane.remove(rComponent);
   }
 
   protected Rectangle getVisibleRect(KeyType key) {
@@ -521,4 +523,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     result.setSize(child.getSize());
     return result;
   }
+
+  private record ToolTipDetails(@NotNull Rectangle bounds,
+                                @Nullable Rectangle keyItemBounds,
+                                @NotNull Consumer<Graphics2D> painter,
+                                @Nullable Shape clip) {}
 }
