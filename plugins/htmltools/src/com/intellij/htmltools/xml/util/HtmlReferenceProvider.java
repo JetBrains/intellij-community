@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.paths.GlobalPathReferenceProvider;
 import com.intellij.openapi.paths.PathReferenceManager;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +57,8 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
   private static final @NonNls String SRC_ATTR_NAME = "src";
   private static final @NonNls String JAVASCRIPT_PREFIX = "javascript:";
 
-  public static final FileType[] IMAGE_FILE_TYPES = new FileType[]{ImageFileTypeManager.getInstance().getImageFileType()};
+  public static final @NotNull NotNullLazyValue<FileType[]> IMAGE_FILE_TYPES =
+    NotNullLazyValue.lazy(() -> new FileType[]{ImageFileTypeManager.getInstance().getImageFileType()});
   public static final String LABELLEDBY = "aria-labelledby";
 
   public static ElementFilter getFilter() {
@@ -102,68 +104,68 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
           tag.getAttributeValue("type") != null &&
           "image".equalsIgnoreCase(tag.getAttributeValue("type"))
          )
-       ) ||
+        ) ||
          ( attrName.equalsIgnoreCase(HREF_ATTRIBUTE_NAME) &&
            ( tagName.equalsIgnoreCase("a") ||
-             tagName.equalsIgnoreCase("area") ||
-             tagName.equalsIgnoreCase("link")
-           )
-         ) ||
+          tagName.equalsIgnoreCase("area") ||
+          tagName.equalsIgnoreCase("link")
+         )
+        ) ||
            ( attrName.equalsIgnoreCase(USEMAP_ATTR_NAME) &&
-             (tagName.equalsIgnoreCase(SizeReference.IMAGE_TAG_NAME) ||
-              tagName.equalsIgnoreCase("object"))
-           ) ||
+         (tagName.equalsIgnoreCase(SizeReference.IMAGE_TAG_NAME) ||
+          tagName.equalsIgnoreCase("object"))
+        ) ||
            ( attrName.equalsIgnoreCase("action") &&
-             tagName.equalsIgnoreCase("form")
-           ) ||
-             attrName.equalsIgnoreCase("background") ||
+         tagName.equalsIgnoreCase("form")
+        ) ||
+        attrName.equalsIgnoreCase("background") ||
              ( ( attrName.equalsIgnoreCase(NAME_ATTR_LOCAL_NAME) ||
-                 attrName.equalsIgnoreCase(HtmlUtil.ID_ATTRIBUTE_NAME) ||
-                 attrName.equalsIgnoreCase(HtmlUtil.CLASS_ATTRIBUTE_NAME)
-               ) &&
-               tag.getNamespacePrefix().length() == 0
-             ) ||
+          attrName.equalsIgnoreCase(HtmlUtil.ID_ATTRIBUTE_NAME) ||
+          attrName.equalsIgnoreCase(HtmlUtil.CLASS_ATTRIBUTE_NAME)
+         ) &&
+         tag.getNamespacePrefix().length() == 0
+        ) ||
                ( (attrName.equalsIgnoreCase(SizeReference.WIDTH_ATTR_NAME) ||
-                  attrName.equalsIgnoreCase(SizeReference.HEIGHT_ATTR_NAME)
-                 ) &&
-                   (tagName.equalsIgnoreCase(SizeReference.IMAGE_TAG_NAME))
-               ) ||
-                 (attrName.equalsIgnoreCase(ContentTypeReference.TYPE_ATTR_NAME) &&
-                  (tagName.equalsIgnoreCase(HtmlUtil.STYLE_TAG_NAME) ||
-                    tagName.equalsIgnoreCase(HtmlUtil.SCRIPT_TAG_NAME)
-                   )
-                  ) ||
-                    (attrName.equalsIgnoreCase(ColorReference.BG_COLOR_ATTR_NAME) &&
-                     ColorReference.ourBgColorTagNames.contains(StringUtil.toLowerCase(tagName))
-                    ) ||
+          attrName.equalsIgnoreCase(SizeReference.HEIGHT_ATTR_NAME)
+         ) &&
+         (tagName.equalsIgnoreCase(SizeReference.IMAGE_TAG_NAME))
+        ) ||
+        (attrName.equalsIgnoreCase(ContentTypeReference.TYPE_ATTR_NAME) &&
+         (tagName.equalsIgnoreCase(HtmlUtil.STYLE_TAG_NAME) ||
+          tagName.equalsIgnoreCase(HtmlUtil.SCRIPT_TAG_NAME)
+         )
+        ) ||
+        (attrName.equalsIgnoreCase(ColorReference.BG_COLOR_ATTR_NAME) &&
+         ColorReference.ourBgColorTagNames.contains(StringUtil.toLowerCase(tagName))
+        ) ||
                     ( attrName.equalsIgnoreCase(ColorReference.COLOR_ATTR_NAME) &&
-                      (tagName.equalsIgnoreCase("basefont") ||
-                       tagName.equalsIgnoreCase("font")
-                      )
-                    ) ||
+         (tagName.equalsIgnoreCase("basefont") ||
+          tagName.equalsIgnoreCase("font")
+         )
+        ) ||
                     ( tagName.equalsIgnoreCase("body") &&
-                      (attrName.equalsIgnoreCase(ColorReference.TEXT_ATTR_NAME) ||
-                       attrName.equalsIgnoreCase(ColorReference.LINK_ATTR_NAME) ||
-                       attrName.equalsIgnoreCase(ColorReference.VLINK_ATTR_NAME) ||
-                       attrName.equalsIgnoreCase(ColorReference.ALINK_ATTR_NAME)
-                       )
-                    ) ||
-                    (tagName.equalsIgnoreCase("label") &&
-                     attrName.equalsIgnoreCase(FOR_ATTR_NAME)
-                    ) ||
-                    (attrName.equalsIgnoreCase(MicrodataUtil.ITEM_REF) &&
-                     tag.getAttribute(MicrodataUtil.ITEM_SCOPE) != null
-                    ) ||
-                    (attrName.equalsIgnoreCase("data") &&
-                     tagName.equalsIgnoreCase("object")
+         (attrName.equalsIgnoreCase(ColorReference.TEXT_ATTR_NAME) ||
+          attrName.equalsIgnoreCase(ColorReference.LINK_ATTR_NAME) ||
+          attrName.equalsIgnoreCase(ColorReference.VLINK_ATTR_NAME) ||
+          attrName.equalsIgnoreCase(ColorReference.ALINK_ATTR_NAME)
+         )
+        ) ||
+        (tagName.equalsIgnoreCase("label") &&
+         attrName.equalsIgnoreCase(FOR_ATTR_NAME)
+        ) ||
+        (attrName.equalsIgnoreCase(MicrodataUtil.ITEM_REF) &&
+         tag.getAttribute(MicrodataUtil.ITEM_SCOPE) != null
+        ) ||
+        (attrName.equalsIgnoreCase("data") &&
+         tagName.equalsIgnoreCase("object")
                     )||
-                    (attrName.equalsIgnoreCase("poster") &&
-                     tagName.equalsIgnoreCase("video")
+        (attrName.equalsIgnoreCase("poster") &&
+         tagName.equalsIgnoreCase("video")
                     )||
-                    (attrName.equalsIgnoreCase("srcset") &&
-                     (tagName.equalsIgnoreCase(SizeReference.IMAGE_TAG_NAME) || tagName.equals("source"))
+        (attrName.equalsIgnoreCase("srcset") &&
+         (tagName.equalsIgnoreCase(SizeReference.IMAGE_TAG_NAME) || tagName.equals("source"))
                     )||
-                    (attrName.equalsIgnoreCase(LABELLEDBY))
+        (attrName.equalsIgnoreCase(LABELLEDBY))
         ;
     }
     return false;
@@ -192,18 +194,18 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
       refs = MicrodataUtil.getReferencesForAttributeValue(value, (token, offset1) -> new HtmlIdRefReference(value, offset1));
     } else
     if(ColorReference.BG_COLOR_ATTR_NAME.equalsIgnoreCase(localName) ||
-       ColorReference.COLOR_ATTR_NAME.equalsIgnoreCase(localName) ||
-       ColorReference.TEXT_ATTR_NAME.equalsIgnoreCase(localName) ||
-       ColorReference.LINK_ATTR_NAME.equalsIgnoreCase(localName) ||
-       ColorReference.VLINK_ATTR_NAME.equalsIgnoreCase(localName) ||
-       ColorReference.ALINK_ATTR_NAME.equalsIgnoreCase(localName)
-       ) {
+             ColorReference.COLOR_ATTR_NAME.equalsIgnoreCase(localName) ||
+             ColorReference.TEXT_ATTR_NAME.equalsIgnoreCase(localName) ||
+             ColorReference.LINK_ATTR_NAME.equalsIgnoreCase(localName) ||
+             ColorReference.VLINK_ATTR_NAME.equalsIgnoreCase(localName) ||
+             ColorReference.ALINK_ATTR_NAME.equalsIgnoreCase(localName)
+    ) {
       refs = new PsiReference[] { new ColorReference(element, offset)};
     } else
     if(ContentTypeReference.TYPE_ATTR_NAME.equalsIgnoreCase(localName)) {
       refs = new PsiReference[] { new ContentTypeReference(element)};
     } else if (SizeReference.WIDTH_ATTR_NAME.equalsIgnoreCase(localName) ||
-               SizeReference.HEIGHT_ATTR_NAME.equalsIgnoreCase(localName)) {
+             SizeReference.HEIGHT_ATTR_NAME.equalsIgnoreCase(localName)) {
       refs = new PsiReference[] { new SizeReference(element, offset)};
     } else {
       if (HtmlUtil.ID_ATTRIBUTE_NAME.equalsIgnoreCase(localName)) {
@@ -221,10 +223,12 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
           ndx += token.length();
         }
         references.toArray(refs = new PsiReference[references.size()]);
-      } else if (SRC_ATTR_NAME.equalsIgnoreCase(localName) && SizeReference.IMAGE_TAG_NAME.equalsIgnoreCase(tag.getName())) {
-          refs = PathReferenceManager.getInstance().createReferences(element, false, false, true, IMAGE_FILE_TYPES);
-      } else if (("srcset".equalsIgnoreCase(localName) &&
-                  (SizeReference.IMAGE_TAG_NAME.equalsIgnoreCase(tag.getName()) || "source".equals(tag.getName())) &&
+      }
+      else if (SRC_ATTR_NAME.equalsIgnoreCase(localName) && SizeReference.IMAGE_TAG_NAME.equalsIgnoreCase(tag.getName())) {
+        refs = PathReferenceManager.getInstance().createReferences(element, false, false, true, IMAGE_FILE_TYPES.get());
+      }
+      else if (("srcset".equalsIgnoreCase(localName) &&
+                (SizeReference.IMAGE_TAG_NAME.equalsIgnoreCase(tag.getName()) || "source".equals(tag.getName())) &&
                   PsiTreeUtil.getChildOfType(element, OuterLanguageElement.class) == null))
       {
         final List<PsiReference> result = new ArrayList<>();
@@ -234,14 +238,15 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
           while (innerIndex < imageAndSize.length() && Character.isWhitespace(imageAndSize.charAt(innerIndex))) innerIndex++;
           if (innerIndex < imageAndSize.length()) {
             final String image = imageAndSize.substring(innerIndex).split(" ", 2)[0];
-            Collections.addAll(result, new FileReferenceSet(image, element, index + innerIndex, null, true, false, IMAGE_FILE_TYPES).getAllReferences());
+            Collections.addAll(result, new FileReferenceSet(image, element, index + innerIndex, null, true, false,
+                                                            IMAGE_FILE_TYPES.get()).getAllReferences());
           }
           index += imageAndSize.length() + 1;
         }
         refs = result.toArray(PsiReference.EMPTY_ARRAY);
       } else if (("data".equals(localName) && "object".equalsIgnoreCase(tag.getName())) ||
                ("poster".equals(localName) && "video".equalsIgnoreCase(tag.getName()))) {
-          refs = PathReferenceManager.getInstance().createReferences(element, false, false, true);
+        refs = PathReferenceManager.getInstance().createReferences(element, false, false, true);
       }
       else if (HREF_ATTRIBUTE_NAME.equalsIgnoreCase(localName) && "link".equalsIgnoreCase(tag.getName())) {
         if (!HtmlUtil.hasHtmlPrefix(text)) {
@@ -275,13 +280,13 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
         return findFileType("text/css");
       }
       if (type.contains("icon") || type.contains("image")) {
-        return IMAGE_FILE_TYPES;
+        return IMAGE_FILE_TYPES.get();
       }
     }
     return null;
   }
 
-    private static FileType[] findFileType(@Nullable String mimeType) {
+  private static FileType[] findFileType(@Nullable String mimeType) {
     final Collection<Language> languages = Language.findInstancesByMimeType(mimeType != null ? mimeType.trim() : null);
     FileType fileType = ContainerUtil.find(FileTypeManager.getInstance().getRegisteredFileTypes(),
                                            type -> type instanceof LanguageFileType && languages.contains(((LanguageFileType)type).getLanguage()));
