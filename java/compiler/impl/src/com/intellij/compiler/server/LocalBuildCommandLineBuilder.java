@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
@@ -15,7 +15,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
 
-class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
+final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private final GeneralCommandLine myCommandLine = new GeneralCommandLine();
 
   LocalBuildCommandLineBuilder(String vmExecutablePath) {
@@ -69,7 +69,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public @NotNull String getHostIp() {
-    return Boolean.parseBoolean(System.getProperty("java.net.preferIPv6Addresses", "false")) ? "::1" : "127.0.0.1";
+    return getListenAddress().getHostAddress();
   }
 
   @Override
