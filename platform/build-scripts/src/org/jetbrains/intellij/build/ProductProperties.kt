@@ -405,7 +405,8 @@ abstract class ProductProperties {
   )
 
   /**
-   * Allows customizing [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
+   * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
+   * Please do not ignore validation failures here, they will fail CI builds anyway.
    * @return list of plugin validation errors.
    */
   open fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
