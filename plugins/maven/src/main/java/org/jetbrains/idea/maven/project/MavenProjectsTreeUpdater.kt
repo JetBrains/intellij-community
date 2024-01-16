@@ -26,6 +26,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
                                         private val process: RawProgressReporter?,
                                         private val updateModules: Boolean) {
   private val updated = ConcurrentHashMap<VirtualFile, Boolean>()
+  private val createdMavenProjects = ConcurrentHashMap<VirtualFile, MavenProject>()
   private val userSettingsFile = generalSettings.effectiveUserSettingsIoFile
   private val globalSettingsFile = generalSettings.effectiveGlobalSettingsIoFile
 
@@ -180,10 +181,14 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
       return mavenProject
     }
 
-    val newMavenProject = MavenProject(f)
-    MavenLog.LOG.debug("Maven tree updater: created new maven project $newMavenProject")
+    val createdMavenProject = createdMavenProjects.compute(f) { file: VirtualFile?, value: MavenProject? ->
+      if (null != value) return@compute value
 
-    return newMavenProject
+      MavenLog.LOG.debug("Maven tree updater: created new maven project $file")
+      MavenProject(f)
+    }!!
+
+    return createdMavenProject
   }
 
   private suspend fun update(mavenProjectFile: VirtualFile, forceRead: Boolean) {
