@@ -1091,6 +1091,32 @@ class CacheApiTest {
     )
   }
 
+  @Test
+  fun `request of cache with removing an entity`() {
+    val builder = MutableEntityStorage.create()
+    builder addEntity ParentMultipleEntity("data1", MySource) {
+      this.children = listOf(ChildMultipleEntity("data1", MySource))
+    }
+    builder addEntity ParentMultipleEntity("data2", MySource) {
+      this.children = listOf(ChildMultipleEntity("data2", MySource))
+    }
+    val snapshot = builder.toSnapshot()
+
+    val childData = entities<ParentMultipleEntity>()
+      .flatMap { parentEntity, _ -> parentEntity.children }
+      .map { it.childData }
+
+    snapshot.cached(childData)
+
+    val builder1 = snapshot.toBuilder()
+    builder1.entities(ChildMultipleEntity::class.java).forEach {
+      builder1.removeEntity(it)
+    }
+    val newSnapshot = builder1.toSnapshot()
+
+    newSnapshot.cached(childData)
+  }
+
   private fun createNamedEntity(also: MutableEntityStorage.() -> Unit = {}): ImmutableEntityStorage {
     val builder = createEmptyBuilder()
     builder addEntity NamedEntity("MyName", MySource)

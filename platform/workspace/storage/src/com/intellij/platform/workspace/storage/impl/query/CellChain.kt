@@ -1,11 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.query
 
-import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.ChangeEntry
-import com.intellij.platform.workspace.storage.impl.ChangeLog
-import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.cache.CellUpdateInfo
 import com.intellij.platform.workspace.storage.impl.cache.EntityStorageChange
 import com.intellij.platform.workspace.storage.impl.cache.UpdateType
@@ -63,7 +60,9 @@ internal class CellChain(
         val tokens = TokenSet()
         if (changeRequest.updateType.entityId != null) {
           tokens.add(WithEntityId(Operation.REMOVED, changeRequest.updateType.entityId))
-          tokens.add(WithEntityId(Operation.ADDED, changeRequest.updateType.entityId))
+          if ((newSnapshot as ImmutableEntityStorageImpl).entityDataById(changeRequest.updateType.entityId) != null) {
+            tokens.add(WithEntityId(Operation.ADDED, changeRequest.updateType.entityId))
+          }
         }
         else {
           tokens.add(WithInfo(Operation.REMOVED, changeRequest.updateType.key))

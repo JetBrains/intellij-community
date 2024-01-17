@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.query
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -83,8 +83,8 @@ internal class FlatMapCell<T, K>(
     val traces = ArrayList<Pair<ReadTraceHashSet, UpdateType>>()
     val newMemory = memory.mutate { mutableMemory ->
       prevData.removedTokens().forEach { token ->
-        val removedValue = mutableMemory.remove(token.key()) ?: error("Value expected to exist in memory: $token")
-        removedValue.forEach {
+        val removedValue = mutableMemory.remove(token.key())
+        removedValue?.forEach {
           generatedTokens += it.toToken(Operation.REMOVED)
         }
       }
@@ -137,8 +137,10 @@ internal class GroupByCell<T, K, V>(
     val traces = ArrayList<Pair<ReadTraceHashSet, UpdateType>>()
     val newMemory = myMemory.mutate { mutableMemory ->
       prevData.removedTokens().forEach { token ->
-        val removedValue = mutableMemory.remove(token.key()) ?: error("Value expected to exist in memory: $token")
-        generatedTokens += removedValue.toToken(Operation.REMOVED)
+        val removedValue = mutableMemory.remove(token.key())
+        if (removedValue != null) {
+          generatedTokens += removedValue.toToken(Operation.REMOVED)
+        }
       }
       prevData.addedTokens().forEach { token ->
         val (newTraces, keyToValue) = ReadTracker.traceHashes(newSnapshot) {
