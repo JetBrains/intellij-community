@@ -3,11 +3,11 @@ package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PairConsumer
 import com.intellij.vcs.log.VcsLogProvider
+import java.util.function.BiConsumer
 
 class VcsProjectLogManager(project: Project, uiProperties: VcsLogProjectTabsProperties, logProviders: Map<VirtualFile, VcsLogProvider>,
-                           recreateHandler: PairConsumer<in VcsLogErrorHandler.Source, in Throwable>) :
+                           recreateHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>) :
   VcsLogManager(project, uiProperties, logProviders, false, recreateHandler) {
 
   val tabsManager = VcsLogTabsManager(project, uiProperties, this)

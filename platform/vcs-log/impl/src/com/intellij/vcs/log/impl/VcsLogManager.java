@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 
@@ -46,7 +46,7 @@ public class VcsLogManager implements Disposable {
 
   protected final @NotNull Project myProject;
   private final @NotNull VcsLogTabsProperties myUiProperties;
-  private final @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
+  private final @Nullable BiConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogColorManager myColorManager;
@@ -63,7 +63,7 @@ public class VcsLogManager implements Disposable {
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                        boolean scheduleRefreshImmediately,
-                       @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
+                       @Nullable BiConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
@@ -277,7 +277,7 @@ public class VcsLogManager implements Disposable {
     public void handleError(@Nullable Source source, @NotNull Throwable throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
         if (myRecreateMainLogHandler != null) {
-          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.accept(source, throwable));
         }
         else {
           LOG.error(source != null ? "Vcs Log exception from " + source : throwable.getMessage(), throwable);
