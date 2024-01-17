@@ -12,6 +12,4 @@ interface CorrectnessChecker {
                     suggestion: String,
                     offset: Int,
                     prefix: String): List<CorrectnessError>
-
-  // TODO function to check semantic in parallel with timelimit
 }
