@@ -1,16 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapperDialog
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.CancellableTaskCancellation
 import com.intellij.platform.ide.progress.NonCancellableTaskCancellation
 import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.ProgressState
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.TitlePanel
 import com.intellij.ui.WindowMoveListener
@@ -140,12 +141,19 @@ internal class ProgressDialogUI : Disposable {
   }
 
   fun updateProgress(state: ProgressState) {
+    updateProgress(state.fraction, state.text, state.details)
+  }
+
+  fun updateProgress(
+    fraction: Double?,
+    text: @ProgressText String?,
+    details: @ProgressText String?,
+  ) {
     EDT.assertIsEdt()
-    textLabel.text = fitTextToLabel(state.text, textLabel)
-    detailsLabel.text = fitTextToLabel(state.details, detailsLabel)
+    textLabel.text = fitTextToLabel(text, textLabel)
+    detailsLabel.text = fitTextToLabel(details, detailsLabel)
     if (progressBar.isShowing) {
-      val fraction = state.fraction
-      if (fraction < 0.0) {
+      if (fraction == null) {
         progressBar.isIndeterminate = true
       }
       else {
