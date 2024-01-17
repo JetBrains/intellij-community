@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.storage.impl.cache
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache.Companion.LOG_QUEUE_MAX_SIZE
 import com.intellij.platform.workspace.storage.impl.query.*
 import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
@@ -155,8 +156,4 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
   internal fun getQueryIdToChain() = queryIdToChain
   @TestOnly
   internal fun getQueryIdToTraceIndex() = queryIdToTraceIndex
-
-  companion object {
-    internal const val LOG_QUEUE_MAX_SIZE = 10_000
-  }
 }

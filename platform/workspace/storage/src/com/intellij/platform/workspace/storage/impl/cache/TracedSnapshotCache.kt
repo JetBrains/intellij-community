@@ -37,6 +37,12 @@ public interface TracedSnapshotCache {
     from: TracedSnapshotCache,
     changes: EntityStorageChange,
   )
+
+  public companion object {
+    @ApiStatus.Internal
+    @set:TestOnly
+    public var LOG_QUEUE_MAX_SIZE: Int = 10_000
+  }
 }
 
 @ApiStatus.Experimental

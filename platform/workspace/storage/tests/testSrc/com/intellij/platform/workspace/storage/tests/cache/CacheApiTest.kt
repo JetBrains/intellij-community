@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.cache
 
 import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.query.*
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
@@ -924,7 +924,7 @@ class CacheApiTest {
     assertEquals("MyName", element)
     assertEquals(1, recalculations)
 
-    repeat(TracedSnapshotCacheImpl.LOG_QUEUE_MAX_SIZE - 2) { counter ->
+    repeat(TracedSnapshotCache.LOG_QUEUE_MAX_SIZE - 2) { counter ->
       snapshot = snapshot.update {
         if (counter % 2 == 0) {
           it addEntity NamedEntity("X", MySource)
@@ -955,7 +955,7 @@ class CacheApiTest {
     assertEquals("MyName", element)
     assertEquals(1, recalculations)
 
-    repeat(TracedSnapshotCacheImpl.LOG_QUEUE_MAX_SIZE + 2) { counter ->
+    repeat(TracedSnapshotCache.LOG_QUEUE_MAX_SIZE + 2) { counter ->
       snapshot = snapshot.update {
         if (counter % 2 == 0) {
           it addEntity NamedEntity("X", MySource)

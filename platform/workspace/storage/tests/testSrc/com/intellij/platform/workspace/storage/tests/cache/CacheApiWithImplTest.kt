@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.cache
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.cache.CellUpdateInfo
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.cache.UpdateType
 import com.intellij.platform.workspace.storage.impl.query.CellId
@@ -118,13 +119,13 @@ class CacheApiWithImplTest {
     // Now we'll make two updates by half of limit. In the middle of updates, we'll update one of the caches.
     // In this way, one of caches should remain and the second will reset
     val tempSnapshot = snapshot2.update {  builder ->
-      repeat(TracedSnapshotCacheImpl.LOG_QUEUE_MAX_SIZE / 2) {
+      repeat(TracedSnapshotCache.LOG_QUEUE_MAX_SIZE / 2) {
         builder addEntity NamedEntity("MyEntity$it", MySource)
       }
     }
     tempSnapshot.cached(query1)
     val snapshot3 = tempSnapshot.update {  builder ->
-      repeat(TracedSnapshotCacheImpl.LOG_QUEUE_MAX_SIZE / 2 + 10) {
+      repeat(TracedSnapshotCache.LOG_QUEUE_MAX_SIZE / 2 + 10) {
         builder addEntity NamedEntity("MyEntityX$it", MySource)
       }
     }
