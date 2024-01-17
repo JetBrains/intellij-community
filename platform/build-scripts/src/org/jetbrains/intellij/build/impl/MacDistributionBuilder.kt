@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
+import org.jetbrains.intellij.build.impl.client.generateJetBrainsClientAppBundleForMacOs
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.io.*
 import java.io.File
@@ -253,6 +254,8 @@ class MacDistributionBuilder(override val context: BuildContext,
     val jetBrainsClientContext = createJetBrainsClientContextForLaunchers(context)
     if (jetBrainsClientContext != null) {
       writeMacOsVmOptions(macBinDir, jetBrainsClientContext)
+      generateJetBrainsClientAppBundleForMacOs(macDistDir, arch, jetbrainsClientBuildContext = jetBrainsClientContext,
+                                               mainIdeBuildContext = context)
     }
 
     substitutePlaceholdersInInfoPlist(macDistDir, docTypes, arch, macCustomizer, context)
@@ -524,12 +527,13 @@ private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
   return vmOptionsPath
 }
 
-private fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
-                                              docTypes: String?,
-                                              arch: JvmArchitecture,
-                                              macCustomizer: MacDistributionCustomizer,
-                                              context: BuildContext) {
-  val executable = context.productProperties.baseFileName
+internal fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
+                                               docTypes: String?,
+                                               arch: JvmArchitecture,
+                                               macCustomizer: MacDistributionCustomizer,
+                                               context: BuildContext,
+                                               executableFileName: String = context.productProperties.baseFileName,
+                                               icnsFileName: String = context.productProperties.targetIcnsFileName) {
   val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
   val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
   val fullName = context.applicationInfo.fullProductName
@@ -540,8 +544,8 @@ private fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
   val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"
   val isEap = if (isNotRelease) "-EAP" else ""
 
-  val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log"
-  val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"
+  val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executableFileName}_%p.log"
+  val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executableFileName}.hprof"
   val additionalJvmArgs = context.getAdditionalJvmArguments(OsFamily.MACOS, arch).toMutableList()
   if (!bootClassPath.isEmpty()) {
     //noinspection SpellCheckingInspection
@@ -585,8 +589,8 @@ private fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
     values = listOf(
       Pair("build", context.fullBuildNumber),
       Pair("doc_types", docTypes ?: ""),
-      Pair("executable", executable),
-      Pair("icns", context.productProperties.targetIcnsFileName),
+      Pair("executable", executableFileName),
+      Pair("icns", icnsFileName),
       Pair("bundle_name", fullName),
       Pair("product_state", isEap),
       Pair("bundle_identifier", macCustomizer.bundleIdentifier),
@@ -595,7 +599,7 @@ private fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
       Pair("xx_error_file", errorFilePath),
       Pair("xx_heap_dump", heapDumpPath),
       Pair("vm_options", optionsToXml(launcherVmOptions)),
-      Pair("vm_properties", propertiesToXml(launcherProperties, mapOf("idea.executable" to context.productProperties.baseFileName))),
+      Pair("vm_properties", propertiesToXml(launcherProperties, mapOf("idea.executable" to executableFileName))),
       Pair("class_path", classPath),
       Pair("main_class_name", context.ideMainClassName.replace('.', '/')),
       Pair("url_schemes", urlSchemesString),
@@ -605,5 +609,5 @@ private fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
   )
 }
 
-private val ProductProperties.targetIcnsFileName: String
+internal val ProductProperties.targetIcnsFileName: String
   get() = "$baseFileName.icns"

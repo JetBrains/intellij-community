@@ -115,9 +115,10 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
           LOG.info("Cannot use launcher because $productInfoPath doesn't have special handling for 'thinClient' command")
           return null
         }
-        val appPath = homePath.parent
-        //on macOS, the default launcher is modified to start JetBrains Client when running with 'thinClient' command
-        if (appPath.fileName.toString().endsWith(".app")) {
+        val helpers = homePath.resolve("Helpers")
+        //todo locate proper directory if there are several entries
+        val appPath = if (helpers.isDirectory()) helpers.listDirectoryEntries("*.app").singleOrNull() else null
+        if (appPath != null) {
           CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
         }
         else {
