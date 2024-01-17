@@ -51,7 +51,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope) : JpsGlobalModelSynchronizer {
   private var loadedFromDisk: Boolean = false
-  private val isLibSerializationProhibited: Boolean
+  private val isSerializationProhibited: Boolean
     get() = !forceEnableLoading && ApplicationManager.getApplication().isUnitTestMode
 
   override fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
@@ -76,27 +76,43 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
     serializers.forEach { serializer ->
-      val entities = entityStorage.entities(serializer.mainEntityClass).toList()
-      LOG.info("Saving global entities ${serializer.mainEntityClass.name} to files")
-
-      val filteredEntities = if (serializer.mainEntityClass == LibraryEntity::class.java) {
-        // We need to filter custom libraries, they will be serialized by the client code and not by the platform
-        entities.filter { it.entitySource is JpsGlobalFileEntitySource }
-      } else entities
-
-      if (serializer.mainEntityClass == SdkEntity::class.java) {
-        assertUnexpectedAdditionalDataModification(entityStorage)
-      }
-
-      if (filteredEntities.isEmpty()) {
-        // Remove empty files
-        serializer.deleteObsoleteFile(serializer.fileUrl.url, contentWriter)
-      } else {
-        serializer.saveEntities(filteredEntities, emptyMap(), entityStorage, contentWriter)
-      }
+      serializeEntities(entityStorage, serializer, contentWriter)
     }
     contentWriter.saveSession()
   }
+
+  @TestOnly
+  suspend fun saveSdkEntities() {
+    val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
+    val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(VirtualFileUrlManager.getGlobalInstance(), sortedRootTypes) as JpsFileEntityTypeSerializer<WorkspaceEntity>
+    val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
+    val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
+    serializeEntities(entityStorage, sdkSerializer, contentWriter)
+    contentWriter.saveSession()
+  }
+
+  private fun serializeEntities(entityStorage: EntityStorage, serializer: JpsFileEntityTypeSerializer<WorkspaceEntity>,
+                                contentWriter: JpsAppFileContentWriter) {
+    val entities = entityStorage.entities(serializer.mainEntityClass).toList()
+    LOG.info("Saving global entities ${serializer.mainEntityClass.name} to files")
+
+    val filteredEntities = if (serializer.mainEntityClass == LibraryEntity::class.java) {
+      // We need to filter custom libraries, they will be serialized by the client code and not by the platform
+      entities.filter { it.entitySource is JpsGlobalFileEntitySource }
+    } else entities
+
+    if (serializer.mainEntityClass == SdkEntity::class.java) {
+      assertUnexpectedAdditionalDataModification(entityStorage)
+    }
+
+    if (filteredEntities.isEmpty()) {
+      // Remove empty files
+      serializer.deleteObsoleteFile(serializer.fileUrl.url, contentWriter)
+    } else {
+      serializer.saveEntities(filteredEntities, emptyMap(), entityStorage, contentWriter)
+    }
+  }
+
 
   private fun assertUnexpectedAdditionalDataModification(entityStorage: EntityStorage) {
     entityStorage.entities(SdkEntity::class.java).forEach { sdkEntity ->
@@ -160,10 +176,10 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   }
 
   private fun createSerializers(): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
+    if (isSerializationProhibited) return emptyList()
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
     return JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance(),
-                                                                     sortedRootTypes,
-                                                                     !isLibSerializationProhibited)
+                                                                     sortedRootTypes)
   }
 
   private fun bridgesInitializationCallback(mutableStorage: MutableEntityStorage,

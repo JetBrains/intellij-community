@@ -85,6 +85,7 @@ public final class CompilerTestUtil {
         }
         BuildManager.getInstance().clearState(project);
       });
+      saveApplicationSettings();
     });
   }
 

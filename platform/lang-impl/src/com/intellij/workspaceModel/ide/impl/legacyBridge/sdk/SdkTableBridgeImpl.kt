@@ -117,7 +117,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   @Suppress("RAW_RUN_BLOCKING")
   override fun saveOnDisk() {
     runBlocking {
-      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
+      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
     }
   }
 }
