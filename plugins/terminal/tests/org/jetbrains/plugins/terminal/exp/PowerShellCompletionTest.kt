@@ -139,7 +139,7 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
     }
     val completions = getCompletionsForCommand("ls $tempDirectory\\<caret>")
     assertFalse("Completions are null or empty", completions.isNullOrEmpty())
-    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory\\$dirName<caret>'")
+    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory\\$dirName\\<caret>'")
   }
 
   @Test
@@ -151,7 +151,7 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
     }
     val completions = getCompletionsForCommand("ls '$tempDirectory\\<caret>'")
     assertFalse("Completions are null or empty", completions.isNullOrEmpty())
-    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory\\$dirName<caret>'")
+    selectItemAndCheckResult(dirName, expectedText = "ls '$tempDirectory\\$dirName\\<caret>'")
   }
 
   private fun getCompletionsForCommand(command: String): List<String>? {

@@ -80,6 +80,7 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
       .withIcon(getIconForItem(this))
       .replacementStringAware(this) // first insert the correct completion string
       .surroundingQuotesAware(this) // then correct the quotes
+      .insertFileSeparatorIfNeeded(this)
   }
 
   private fun getIconForItem(item: CompletionItemInfo): Icon {
@@ -139,6 +140,23 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
         DocumentUtil.writeInRunUndoTransparentAction {
           val endIndex = context.editor.caretModel.offset // end of the inserted lookup string
           context.document.replaceString(itemInfo.replacementIndex, endIndex, itemInfo.replacementString)
+        }
+      }
+    }
+    return this
+  }
+
+  /**
+   * Inserts the file separator after the completed item if it is a directory.
+   */
+  private fun LookupElementBuilder.insertFileSeparatorIfNeeded(itemInfo: CompletionItemInfo): LookupElementBuilder {
+    if (itemInfo.type == CompletionResultType.PROVIDER_CONTAINER) {
+      return withInsertHandler { context, item ->
+        insertHandler?.handleInsert(context, item) // call existing insert handler first
+        DocumentUtil.writeInRunUndoTransparentAction {
+          val offset = context.editor.caretModel.offset
+          context.document.insertString(offset, File.separator)
+          context.editor.caretModel.moveToOffset(offset + 1)
         }
       }
     }
