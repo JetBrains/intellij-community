@@ -3,23 +3,23 @@ package org.jetbrains.idea.maven.project.auto.reload
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.autoimport.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import java.util.concurrent.ExecutorService
 
 @ApiStatus.Internal
@@ -44,52 +44,34 @@ class MavenProjectAware(
     ApplicationManager.getApplication().invokeAndWait {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
-    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
     if (context.hasUndefinedModifications) {
-      cs.launch {
-        manager.findAllAvailablePomFilesIfNotMavenized()
-        manager.updateAllMavenProjects(MavenImportSpec(true, context.isExplicitReload))
-      }
+      manager.findAllAvailablePomFilesIfNotMavenized()
+      manager.scheduleUpdateAllMavenProjects(MavenImportSpec(true, context.isExplicitReload))
     }
     else {
       val settingsFilesContext = context.settingsFilesContext
-      submitSettingsFilesPartition(settingsFilesContext) { (filesToUpdate, filesToDelete) ->
-        val updated = settingsFilesContext.created + settingsFilesContext.updated
-        val deleted = settingsFilesContext.deleted
-        if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
-          cs.launch {
-            manager.updateMavenProjects(MavenImportSpec(true, context.isExplicitReload), filesToUpdate, filesToDelete)
-          }
-        }
-        else {
-          cs.launch {
-            manager.findAllAvailablePomFilesIfNotMavenized()
-            manager.updateAllMavenProjects(MavenImportSpec(false, context.isExplicitReload))
-          }
-        }
+
+      val filesToUpdate = mutableListOf<VirtualFile>()
+      val filesToDelete = mutableListOf<VirtualFile>()
+      for (projectsFile in manager.projectsTree.projectsFiles) {
+        val path = projectsFile.path
+        if (path in settingsFilesContext.created) filesToUpdate.add(projectsFile)
+        if (path in settingsFilesContext.updated) filesToUpdate.add(projectsFile)
+        if (path in settingsFilesContext.deleted) filesToDelete.add(projectsFile)
+      }
+
+      val updated = settingsFilesContext.created + settingsFilesContext.updated
+      val deleted = settingsFilesContext.deleted
+
+      if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
+        manager.scheduleUpdateMavenProjects(MavenImportSpec(true, context.isExplicitReload), filesToUpdate, filesToDelete)
+      }
+      else {
+        // IDEA-276087 if changed not project files(.mvn) then run full import
+        manager.findAllAvailablePomFilesIfNotMavenized()
+        manager.scheduleUpdateAllMavenProjects(MavenImportSpec(false, context.isExplicitReload))
       }
     }
-  }
-
-  private fun submitSettingsFilesPartition(
-    context: ExternalSystemSettingsFilesReloadContext,
-    action: (Pair<List<VirtualFile>, List<VirtualFile>>) -> Unit
-  ) {
-    ReadAsyncSupplier.Builder { partitionSettingsFiles(context) }
-      .build(backgroundExecutor)
-      .supply(manager, action)
-  }
-
-  private fun partitionSettingsFiles(context: ExternalSystemSettingsFilesReloadContext): Pair<List<VirtualFile>, List<VirtualFile>> {
-    val updated = mutableListOf<VirtualFile>()
-    val deleted = mutableListOf<VirtualFile>()
-    for (projectsFile in manager.projectsTree.projectsFiles) {
-      val path = projectsFile.path
-      if (path in context.created) updated.add(projectsFile)
-      if (path in context.updated) updated.add(projectsFile)
-      if (path in context.deleted) deleted.add(projectsFile)
-    }
-    return updated to deleted
   }
 
   private fun hasPomFile(rootDirectory: String): Boolean {
