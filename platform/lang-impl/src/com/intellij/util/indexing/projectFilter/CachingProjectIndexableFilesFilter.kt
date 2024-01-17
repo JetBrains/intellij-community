@@ -3,6 +3,7 @@ package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
 import com.intellij.util.containers.ConcurrentThreeStateBitSet
 import com.intellij.util.indexing.IndexableFilesIndex
 
@@ -19,10 +20,15 @@ internal class CachingProjectIndexableFilesFilter(private val project: Project) 
   private fun containsFileId(_fileIds: ConcurrentThreeStateBitSet, fileId: Int): Boolean {
     while (true) {
       _fileIds[fileId]?.let { return it }
-      val file = ManagingFS.getInstance().findFileById(fileId)
-      val isIndexable = file == null || IndexableFilesIndex.getInstance(project).shouldBeIndexed(file)
-      if (_fileIds.compareAndSet(fileId, null, isIndexable)) {
-        return isIndexable
+      try {
+        val file = ManagingFS.getInstance().findFileById(fileId)
+        val isIndexable = file == null || IndexableFilesIndex.getInstance(project).shouldBeIndexed(file)
+        if (_fileIds.compareAndSet(fileId, null, isIndexable)) {
+          return isIndexable
+        }
+      }
+      catch (error: VfsRootAccessNotAllowedError) {
+        return false
       }
     }
   }
