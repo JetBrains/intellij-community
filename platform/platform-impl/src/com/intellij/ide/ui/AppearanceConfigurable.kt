@@ -63,6 +63,7 @@ import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
+import javax.swing.event.ListDataListener
 
 private val settings: UISettings
   get() = UISettings.getInstance()
@@ -163,9 +164,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     return panel {
       panel {
         row(message("combobox.look.and.feel")) {
-          val theme = comboBox(lafManager.lafComboBoxModel, lafManager.lookAndFeelCellRenderer)
+          val lafComboBoxModelWrapper = LafComboBoxModelWrapper(lafManager.lafComboBoxModel)
+          val theme = comboBox(lafComboBoxModelWrapper, lafManager.lookAndFeelCellRenderer)
             .bindItem(lafProperty)
             .accessibleName(message("combobox.look.and.feel"))
+
+          lafComboBoxModelWrapper.comboBoxComponent = theme.component
 
           val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
             .bindSelected(syncThemeProperty)
@@ -175,11 +179,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           theme.enabledIf(autodetectSupportedPredicate.not().or(syncCheckBox.selected.not()))
           cell(lafManager.settingsToolbar)
             .visibleIf(syncCheckBox.selected.and(autodetectSupportedPredicate))
-
-          link(message("link.get.more.themes")) {
-            val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
-            settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
-          }
         }
       }
 
@@ -189,7 +188,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           var resetZoom: Cell<ActionLink>? = null
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-          val zoomComboBox = comboBox(model, textListCellRenderer { it })
+          comboBox(model, textListCellRenderer { it })
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item, false) != null) return@onChanged
@@ -612,4 +611,34 @@ private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
     IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
     IdeZoomEventFields.presentationMode.with(isPresentation)
   )
+}
+
+private class LafComboBoxModelWrapper(private val lafComboBoxModel: CollectionComboBoxModel<LafReference>): ComboBoxModel<LafReference> {
+  private val moreAction = LafReference(name = message("link.get.more.themes"), themeId = "")
+  private val additionalItems = listOf(LafReference.SEPARATOR, moreAction)
+  var comboBoxComponent: JComponent? = null
+
+  override fun getSize(): Int = lafComboBoxModel.size.let { if (it > 0) it + additionalItems.size else it }
+
+  override fun getElementAt(index: Int): LafReference =
+    if (index < lafComboBoxModel.size) lafComboBoxModel.getElementAt(index)
+    else additionalItems[index - lafComboBoxModel.size]
+
+  override fun addListDataListener(l: ListDataListener?) {
+    lafComboBoxModel.addListDataListener(l)
+  }
+
+  override fun removeListDataListener(l: ListDataListener?) {
+    lafComboBoxModel.removeListDataListener(l)
+  }
+
+  override fun setSelectedItem(anItem: Any?) {
+    if (anItem == moreAction) {
+      val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(comboBoxComponent))
+      settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+    }
+    else lafComboBoxModel.selectedItem = anItem
+  }
+
+  override fun getSelectedItem(): Any? = lafComboBoxModel.selectedItem
 }

@@ -56,6 +56,11 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   }
 
   @Override
+  public final @Nullable String getAuthor() {
+    return theme.getAuthor();
+  }
+
+  @Override
   public final boolean isDark() {
     return theme.isDark();
   }
