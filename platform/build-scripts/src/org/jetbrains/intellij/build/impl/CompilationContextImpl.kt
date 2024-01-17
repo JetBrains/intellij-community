@@ -41,6 +41,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.relativeToOrNull
 
 @Obsolete
 fun createCompilationContextBlocking(communityHome: BuildDependenciesCommunityRoot,
@@ -426,12 +427,7 @@ internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = Comp
   spanBuilder("clean output").use { span ->
     val outDir = paths.buildOutputDir
     outputDirectoriesToKeep.forEach {
-      val path = try {
-        outDir.relativize(it)
-      }
-      catch (e: IllegalArgumentException) {
-        it
-      }
+      val path = it.relativeToOrNull(outDir) ?: it
       span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), path.toString()))
     }
     Files.newDirectoryStream(outDir).use { dirStream ->
