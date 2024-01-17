@@ -115,6 +115,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final AtomicBoolean isExtensionsLoaded = new AtomicBoolean(false);
   private final @NotNull Project project;
 
+  private boolean firstShow = true;
+
   private final ProjectViewState currentState;
   // + options
   private final Option abbreviatePackageNames = new Option() {
@@ -610,6 +612,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   static final class MyToolWindowManagerListener implements ToolWindowManagerListener {
+
     @Override
     public void toolWindowShown(@NotNull ToolWindow toolWindow) {
       if (!ToolWindowId.PROJECT_VIEW.equals(toolWindow.getId())) {
@@ -626,7 +629,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       Module[] modules = ModuleManager.getInstance(project).getModules();
       if (modules.length != 1 || !GeneralModuleType.TYPE_ID.equals(modules[0].getModuleTypeName())) {
         JTree tree = pane.getTree();
-        if (tree != null) {
+        if (tree != null && projectView instanceof ProjectViewImpl impl && impl.firstShow) {
+          impl.firstShow = false;
           TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
         }
       }
