@@ -642,11 +642,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void pack() {
       super.pack();
-      // pack() already sets the size to the preferred size, but it may change during validation,
-      // which is performed after the size is set. This happens, for example, if there are components
-      // with soft wraps whose preferred height depends on their width.
-      var preferredSize = getPreferredSize();
-      super.setSize(preferredSize.width, preferredSize.height); // we don't want to call our own overload here
+      DialogWrapper dialogWrapper = getDialogWrapper();
+      if (dialogWrapper == null || dialogWrapper.setSizeDuringPack()) {
+        // pack() already sets the size to the preferred size, but it may change during validation,
+        // which is performed after the size is set. This happens, for example, if there are components
+        // with soft wraps whose preferred height depends on their width.
+        var preferredSize = getPreferredSize();
+        super.setSize(preferredSize.width, preferredSize.height); // we don't want to call our own overload here
+      }
     }
 
     @Override

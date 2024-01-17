@@ -201,6 +201,8 @@ private class AlertDialog(project: Project?,
     WindowRoundedCornersManager.configure(this)
   }
 
+  override fun setSizeDuringPack() = false
+
   override fun sortActionsOnMac(actions: MutableList<Action>) {
     actions.reverse()
   }

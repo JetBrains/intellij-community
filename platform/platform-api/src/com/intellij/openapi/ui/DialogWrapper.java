@@ -1463,6 +1463,10 @@ public abstract class DialogWrapper {
     myPeer.pack();
   }
 
+  public boolean setSizeDuringPack() {
+    return true;
+  }
+
   /**
    * Override to set default initial size of the window
    *
