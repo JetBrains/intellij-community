@@ -26,8 +26,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -139,21 +138,23 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
   fun resolveAllBackground(): Deferred<Boolean> {
     return runBackground(JavaUiBundle.message("repository.library.utils.progress.title.resolving.all.libraries")) {
-      val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
-      val libraries = snapshot.entities(LibraryEntity::class.java).toList()
-      val failedToResolve = resolve(libraries.asSequence())
-      if (failedToResolve.isEmpty()) {
-        showNotification(JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.success", libraries.size),
-                         NotificationType.INFORMATION)
-      }
-      else {
-        logger.info("resolveAllBackground complete, failed to resolve ${failedToResolve.size} libraries")
-        showFailedToResolveNotification(failedToResolve, snapshot) { libsList, leftNotDisplayedSize ->
-          JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.fail", libsList, leftNotDisplayedSize)
+      reportRawProgress { reporter ->
+        val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+        val libraries = snapshot.entities(LibraryEntity::class.java).toList()
+        val failedToResolve = resolve(reporter, libraries.asSequence())
+        if (failedToResolve.isEmpty()) {
+          showNotification(JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.success", libraries.size),
+                           NotificationType.INFORMATION)
         }
-      }
+        else {
+          logger.info("resolveAllBackground complete, failed to resolve ${failedToResolve.size} libraries")
+          showFailedToResolveNotification(failedToResolve, snapshot) { libsList, leftNotDisplayedSize ->
+            JavaUiBundle.message("repository.library.utils.notification.content.libraries.resolve.fail", libsList, leftNotDisplayedSize)
+          }
+        }
 
-      failedToResolve.isEmpty()
+        failedToResolve.isEmpty()
+      }
     }
   }
 
@@ -184,7 +185,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
   private fun <T> runBackground(title: @NlsContexts.ProgressTitle String, action: suspend () -> T): Deferred<T> {
     val deferred = myCoroutineScope.async {
       withBackgroundProgress(project, title) {
-        withRawProgressReporter { action() }
+        action()
       }
     }
 
@@ -201,13 +202,13 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
   /**
    * @return A list of library entities failed to resolve or an empty list if resolution is successful.
    */
-  private suspend fun resolve(libraries: Sequence<LibraryEntity>): List<LibraryEntity> = coroutineScope {
+  private suspend fun resolve(reporter: RawProgressReporter, libraries: Sequence<LibraryEntity>): List<LibraryEntity> = coroutineScope {
     val librariesAsList = libraries.toList()
     if (librariesAsList.isEmpty()) return@coroutineScope emptyList<LibraryEntity>()
 
     val total = librariesAsList.size
     val completeCounter = AtomicInteger(0)
-    updateProgressDetailsFraction(completeCounter, total)
+    reporter.updateProgressDetailsFraction(completeCounter, total)
 
     val failedList: MutableList<LibraryEntity> = CopyOnWriteArrayList()
     librariesAsList.map { lib ->
@@ -222,11 +223,11 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
           if (it == null || it.isEmpty()) rejectedPromise() else resolvedPromise(it)
         }
       promise.onError { failedList.add(lib) }
-      promise.onProcessed { updateProgressDetailsFraction(completeCounter, total) }
+      promise.onProcessed { reporter.updateProgressDetailsFraction(completeCounter, total) }
       promise
     }.collectResults(ignoreErrors = true).await() // We're collecting errors manually, fail silently
 
-    resetProgressDetailsFraction()
+    reporter.resetProgressDetailsFraction()
     return@coroutineScope failedList
   }
 
@@ -304,16 +305,16 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     }
   }
 
-  private fun CoroutineScope.updateProgressDetailsFraction(counter: AtomicInteger, total: Int) {
+  private fun RawProgressReporter.updateProgressDetailsFraction(counter: AtomicInteger, total: Int) {
     val current = counter.get()
-    rawProgressReporterOrError.details(JavaUiBundle.message("repository.library.utils.progress.details.complete.for", current, total))
-    rawProgressReporterOrError.fraction(current.toDouble() / total)
+    details(JavaUiBundle.message("repository.library.utils.progress.details.complete.for", current, total))
+    fraction(current.toDouble() / total)
     counter.incrementAndGet()
   }
 
-  private fun CoroutineScope.resetProgressDetailsFraction() {
-    rawProgressReporterOrError.details(null)
-    rawProgressReporterOrError.fraction(null)
+  private fun RawProgressReporter.resetProgressDetailsFraction() {
+    details(null)
+    fraction(null)
   }
 
   private inner class BuildExtendedLibraryPropertiesJob(
@@ -323,7 +324,11 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     private val preFilter: (LibraryEntity) -> Boolean = { true }
   ) {
 
-    suspend fun run() = coroutineScope {
+    suspend fun run(): Unit = reportRawProgress { reporter ->
+      run(reporter)
+    }
+
+    private suspend fun run(reporter: RawProgressReporter) = coroutineScope {
       if (!buildMissingChecksums && !bindRepositories) return@coroutineScope
       logger.info("Building libraries properties started: buildMissingChecksums=$buildMissingChecksums, bindRepositories=$bindRepositories")
 
@@ -347,7 +352,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }
 
       // Try to resolve libraries with missing roots silently
-      rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.resolving.before.update"))
+      reporter.text(JavaUiBundle.message("repository.library.utils.progress.text.resolving.before.update"))
       logger.info("Building libraries properties progressed: library list collected, resolving before update")
       val preResolveEntities = entitiesAndProperties.asSequence()
         .filter { (entity, properties) ->
@@ -355,7 +360,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
         }
         .map { (entity, _) -> entity }
 
-      val unresolvedBeforeUpdate = resolve(preResolveEntities.map { it.library })
+      val unresolvedBeforeUpdate = resolve(reporter, preResolveEntities.map { it.library })
       if (unresolvedBeforeUpdate.isNotEmpty()) {
         logger.info("Building libraries properties progressed: resolving before update failed, cancelling operation")
         showFailedToResolveNotification(unresolvedBeforeUpdate, snapshot) { shown, notShownSize ->
@@ -365,11 +370,11 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }
 
       logger.info("Building libraries properties progressed: resolving before update complete, computing properties")
-      rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.computing.properties"))
+      reporter.text(JavaUiBundle.message("repository.library.utils.progress.text.computing.properties"))
 
       val progressCounter = AtomicInteger(0)
       val progressTotal = entitiesAndProperties.size
-      updateProgressDetailsFraction(progressCounter, progressTotal)
+      reporter.updateProgressDetailsFraction(progressCounter, progressTotal)
 
       val failedToGuessRemoteRepository = AtomicBoolean(false)
       val updatedEntitiesAndProperties = entitiesAndProperties.map { (entity, properties) ->
@@ -379,7 +384,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
           val bindRepoUpdated = bindRepositories && tryGuessAndBindRemoteRepository(repositories, properties)
           if (bindRepositories && properties.jarRepositoryId == null) failedToGuessRemoteRepository.set(true)
 
-          updateProgressDetailsFraction(progressCounter, progressTotal)
+          reporter.updateProgressDetailsFraction(progressCounter, progressTotal)
           if (!checksumsUpdated && !bindRepoUpdated) null else entity to properties
         }
       }.awaitAll().filterNotNull()
@@ -398,8 +403,8 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }
 
       logger.info("Building libraries properties progressed: computing properties complete for $updatedCount libraries, saving results")
-      rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
-      resetProgressDetailsFraction()
+      reporter.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
+      reporter.resetProgressDetailsFraction()
 
       val builder = snapshot.toBuilder()
       updatedEntitiesAndProperties.forEach { (entity, properties) -> updateEntityIfPropertiesChanged(builder, properties, entity) }
@@ -415,14 +420,14 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }
 
       logger.info("Building libraries properties progressed: started checking resolution after update")
-      rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.verifying.resolution.after.update"))
+      reporter.text(JavaUiBundle.message("repository.library.utils.progress.text.verifying.resolution.after.update"))
       val snapshotAfterUpdate = workspaceModel.currentSnapshot
       val entitiesAfterUpdate = updatedEntitiesAndProperties.mapNotNull { (entity, _) ->
         // Fetch updated properties entity from the workspace model
         snapshotAfterUpdate.resolve(entity.library.symbolicId)?.libraryProperties
       }.asSequence()
 
-      val unresolvedAfterUpdate = resolve(entitiesAfterUpdate.map { it.library })
+      val unresolvedAfterUpdate = resolve(reporter, entitiesAfterUpdate.map { it.library })
       showUpdateCompleteNotification(disableInfoNotifications,
                                      updatedEntitiesAndProperties.size,
                                      snapshotAfterUpdate,
@@ -522,7 +527,11 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     private val disableInfoNotifications: Boolean
   ) {
 
-    suspend fun run() = coroutineScope {
+    suspend fun run(): Unit = reportRawProgress { reporter ->
+      run(reporter)
+    }
+
+    private suspend fun run(reporter: RawProgressReporter) = coroutineScope {
       if (!removeExistingChecksums && !unbindRepositories) return@coroutineScope
       logger.info("Clear libraries properties started: " +
                   "removeExistingChecksums=$removeExistingChecksums, unbindRepositories=$unbindRepositories")
@@ -542,7 +551,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }
 
       logger.info("Clear libraries properties progressed: computing properties started")
-      rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.computing.properties"))
+      reporter.text(JavaUiBundle.message("repository.library.utils.progress.text.computing.properties"))
       val builder = snapshot.toBuilder()
       val updatedCounter = AtomicInteger(0)
       entitiesAndProperties.forEach { (entity, properties) ->
@@ -553,7 +562,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }
 
       logger.info("Clear libraries properties progressed: computing properties complete")
-      rawProgressReporterOrError.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
+      reporter.text(JavaUiBundle.message("repository.library.utils.progress.text.saving.changes"))
       commitBuilderIfModified(workspaceModel, builder)
 
       logger.info("Clear libraries properties complete: ${updatedCounter.get()} libraries updated")
@@ -575,8 +584,6 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     }
   }
 }
-
-private val CoroutineScope.rawProgressReporterOrError: RawProgressReporter get() = requireNotNull(rawProgressReporter)
 
 private fun LibraryPropertiesEntity.isRepositoryLibraryProperties() = propertiesXmlTag != null && REPOSITORY_LIBRARY_KIND.kindId == libraryType
 

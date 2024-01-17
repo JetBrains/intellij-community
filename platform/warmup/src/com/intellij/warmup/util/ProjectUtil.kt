@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
 import com.intellij.conversion.ConversionListener
@@ -23,8 +23,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.Observation
-import com.intellij.platform.util.progress.durationStep
-import com.intellij.platform.util.progress.itemDuration
+import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -214,19 +213,19 @@ private suspend fun callProjectConfigurators(
     }
   }
 
-  val fraction = activeConfigurators.itemDuration()
-
   withLoggingProgressReporter {
-    for (configuration in activeConfigurators) {
-      durationStep(fraction, "Configurator ${configuration.configuratorPresentableName} is in action..." /* NON-NLS */) {
-        runTaskAndLogTime("Configure " + configuration.configuratorPresentableName) {
-          try {
-            withContext(CommandLineProgressReporterElement(getCommandLineReporter(configuration.configuratorPresentableName))) {
-              action(configuration)
+    reportProgress(activeConfigurators.size) { reporter ->
+      for (configuration in activeConfigurators) {
+        reporter.itemStep("Configurator ${configuration.configuratorPresentableName} is in action..." /* NON-NLS */) {
+          runTaskAndLogTime("Configure " + configuration.configuratorPresentableName) {
+            try {
+              withContext(CommandLineProgressReporterElement(getCommandLineReporter(configuration.configuratorPresentableName))) {
+                action(configuration)
+              }
+            } catch (e : CancellationException) {
+              val message = (e.message ?: e.stackTraceToString()).lines().joinToString("\n") { "[${configuration.configuratorPresentableName}]: $it" }
+              WarmupLogger.logInfo("Configurator '${configuration.configuratorPresentableName}' was cancelled with the following outcome:\n$message")
             }
-          } catch (e : CancellationException) {
-            val message = (e.message ?: e.stackTraceToString()).lines().joinToString("\n") { "[${configuration.configuratorPresentableName}]: $it" }
-            WarmupLogger.logInfo("Configurator '${configuration.configuratorPresentableName}' was cancelled with the following outcome:\n$message")
           }
         }
       }

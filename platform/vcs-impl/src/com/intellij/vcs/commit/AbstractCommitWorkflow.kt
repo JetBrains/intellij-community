@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.BundleBase
@@ -30,10 +30,7 @@ import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.platform.util.progress.durationStep
-import com.intellij.platform.util.progress.indeterminateStep
-import com.intellij.platform.util.progress.itemDuration
-import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
@@ -269,7 +266,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
   }
 
-  private suspend fun runCommitHandlers(commitInfo: DynamicCommitInfo): CommitChecksResult {
+  private suspend fun runCommitHandlers(commitInfo: DynamicCommitInfo): CommitChecksResult = reportSequentialProgress { reporter ->
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
@@ -282,26 +279,26 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         return CommitChecksResult.Cancelled
       }
 
-      progressStep(PROGRESS_FRACTION_EARLY) {
+      reporter.nextStep(PROGRESS_FRACTION_EARLY) {
         runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])
       }?.let { return it }
 
-      indeterminateStep {
+      reporter.indeterminateStep {
         @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
         runMetaHandlers(metaHandlers)
       }
 
-      progressStep(PROGRESS_FRACTION_MODIFICATIONS) {
+      reporter.nextStep(PROGRESS_FRACTION_MODIFICATIONS) {
         runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])
       }?.let { return it }
 
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      progressStep(PROGRESS_FRACTION_LATE) {
+      reporter.nextStep(PROGRESS_FRACTION_LATE) {
         runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])
       }?.let { return it }
 
-      progressStep(PROGRESS_FRACTION_POST) {
+      reporter.nextStep(PROGRESS_FRACTION_POST) {
         runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.POST_COMMIT])
       }?.let { return it }
 
@@ -331,16 +328,17 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private suspend fun runModalCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): CommitChecksResult? {
     if (commitChecks.isNullOrEmpty()) return null
 
-    val duration = commitChecks.itemDuration()
-    for (commitCheck in commitChecks) {
-      val result = durationStep(duration) {
-        runModalCommitCheck(commitInfo, commitCheck)
+    reportSequentialProgress(commitChecks.size) { reporter ->
+      for (commitCheck in commitChecks) {
+        val result = reporter.itemStep {
+          runModalCommitCheck(commitInfo, commitCheck)
+        }
+        if (result != null) {
+          return result
+        }
       }
-      if (result != null) {
-        return result
-      }
+      return null
     }
-    return null
   }
 
   private suspend fun runModalCommitCheck(commitInfo: DynamicCommitInfo, commitCheck: CommitCheck): CommitChecksResult? {
@@ -378,10 +376,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   companion object {
-    internal const val PROGRESS_FRACTION_EARLY = 0.2
-    internal const val PROGRESS_FRACTION_MODIFICATIONS = 0.5
-    internal const val PROGRESS_FRACTION_LATE = 0.75
-    internal const val PROGRESS_FRACTION_POST = 1.0
+    internal const val PROGRESS_FRACTION_EARLY = 20
+    internal const val PROGRESS_FRACTION_MODIFICATIONS = 50
+    internal const val PROGRESS_FRACTION_LATE = 75
+    internal const val PROGRESS_FRACTION_POST = 100
 
     @JvmStatic
     fun getCommitHandlerFactories(vcses: Collection<AbstractVcs>): List<BaseCheckinHandlerFactory> =

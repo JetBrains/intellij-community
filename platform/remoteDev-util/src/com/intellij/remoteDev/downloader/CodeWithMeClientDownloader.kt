@@ -21,8 +21,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
@@ -336,11 +335,9 @@ object CodeWithMeClientDownloader {
 
 
   suspend fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo): ExtractedJetBrainsClientData {
-    return progressStep(1.0, RemoteDevUtilBundle.message("launcher.get.client.info")) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
-        }
+    return withProgressText(RemoteDevUtilBundle.message("launcher.get.client.info")) {
+      coroutineToIndicator {
+        downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
       }
     }
   }

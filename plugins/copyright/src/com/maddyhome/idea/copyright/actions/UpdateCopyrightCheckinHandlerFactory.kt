@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.actions
 
 import com.intellij.copyright.CopyrightBundle
@@ -12,8 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
@@ -40,13 +39,11 @@ private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandl
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val files = commitInfo.committedVirtualFiles
-    progressStep(1.0, CopyrightBundle.message("updating.copyrights.progress.message")) {
+    withProgressText(CopyrightBundle.message("updating.copyrights.progress.message")) {
       withContext(Dispatchers.Default) {
         val psiFiles = readAction { getPsiFiles(files) }
-        withRawProgressReporter {
-          coroutineToIndicator {
-            UpdateCopyrightProcessor(project, null, psiFiles, false).run()
-          }
+        coroutineToIndicator {
+          UpdateCopyrightProcessor(project, null, psiFiles, false).run()
         }
       }
     }

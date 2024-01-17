@@ -1,51 +1,47 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.impl
 
 import com.intellij.ide.CommandLineInspectionProgressReporter
 import com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.warmup.WarmupConfigurator
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.warmup.util.WarmupLogger
 import java.nio.file.Path
 import java.util.function.Predicate
-import kotlin.coroutines.coroutineContext
 
 /**
  * This class is a temporary bridge between old [CommandLineInspectionProjectConfigurator] and new [WarmupConfigurator].
  */
 internal class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInspectionProjectConfigurator) : WarmupConfigurator {
 
-  override suspend fun prepareEnvironment(projectPath: Path) =
-    withRawProgressReporter {
-      val context = produceConfigurationContext(projectPath, delegate.name)
-      blockingContext {
-        delegate.configureEnvironment(context)
-      }
+  override suspend fun prepareEnvironment(projectPath: Path): Unit = reportRawProgress { reporter ->
+    val context = produceConfigurationContext(reporter, projectPath, delegate.name)
+    blockingContext {
+      delegate.configureEnvironment(context)
     }
+  }
 
-  override suspend fun runWarmup(project: Project): Boolean =
-    withRawProgressReporter {
-      val context = produceConfigurationContext(project.guessProjectDir()?.path?.let(Path::of), delegate.name)
-      if (delegate is CommandLineInspectionProjectAsyncConfigurator) {
-        delegate.configureProjectAsync(project, context)
+  override suspend fun runWarmup(project: Project): Boolean = reportRawProgress { reporter ->
+    val context = produceConfigurationContext(reporter, project.guessProjectDir()?.path?.let(Path::of), delegate.name)
+    if (delegate is CommandLineInspectionProjectAsyncConfigurator) {
+      delegate.configureProjectAsync(project, context)
+      false
+    }
+    else {
+      blockingContext {
+        delegate.configureProject(project, context)
         false
       }
-      else{
-        blockingContext {
-          delegate.configureProject(project, context)
-          false
-        }
-      }
     }
+  }
 
   override val configuratorPresentableName: String
     get() = delegate.name
@@ -57,11 +53,11 @@ internal fun getCommandLineReporter(sectionName: String): CommandLineInspectionP
   override fun reportMessage(minVerboseLevel: Int, message: String?) = message?.let { WarmupLogger.logInfo("[$sectionName]: $it") } ?: Unit
 }
 
-suspend fun produceConfigurationContext(projectDir: Path?, name: String): CommandLineInspectionProjectConfigurator.ConfiguratorContext {
-  val reporter = coroutineContext.rawProgressReporter
-  if (reporter == null) {
-    logger<WarmupConfigurator>().warn("No ProgressReporter installed to the coroutine context. Message reporting is disabled")
-  }
+private fun produceConfigurationContext(
+  reporter: RawProgressReporter,
+  projectDir: Path?,
+  name: String,
+): CommandLineInspectionProjectConfigurator.ConfiguratorContext {
   return object : CommandLineInspectionProjectConfigurator.ConfiguratorContext {
     val reporter = getCommandLineReporter(name)
 
@@ -73,23 +69,23 @@ suspend fun produceConfigurationContext(projectDir: Path?, name: String): Comman
      */
     override fun getProgressIndicator(): ProgressIndicator = object : EmptyProgressIndicator() {
       override fun setText(text: String?) {
-        reporter?.text(text)
+        reporter.text(text)
       }
 
       override fun setText2(text: String?) {
-        reporter?.details(text)
+        reporter.details(text)
       }
 
       override fun setFraction(fraction: Double) {
-        reporter?.fraction(fraction)
+        reporter.fraction(fraction)
       }
 
       override fun setIndeterminate(indeterminate: Boolean) {
         if (indeterminate) {
-          reporter?.fraction(null)
+          reporter.fraction(null)
         }
         else {
-          reporter?.fraction(0.0)
+          reporter.fraction(0.0)
         }
       }
     }

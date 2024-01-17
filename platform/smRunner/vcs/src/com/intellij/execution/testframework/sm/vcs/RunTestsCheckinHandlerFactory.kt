@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.vcs
 
 import com.intellij.build.BuildView
@@ -46,8 +46,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.forEachWithProgress
-import com.intellij.platform.util.progress.progressReporter
-import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
@@ -139,7 +139,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
     }
 
     val problems = ArrayList<FailureDescription>()
-    progressStep(1.0, SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name)) {
+    withProgressText(SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name)) {
       withContext(Dispatchers.IO) {
         val executor = DefaultRunExecutor.getRunExecutorInstance()
         val configuration = configurationSettings.configuration
@@ -168,12 +168,11 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
 
   private suspend fun startConfiguration(executor: Executor,
                                          configurationSettings: RunnerAndConfigurationSettings,
-                                         problems: ArrayList<FailureDescription>) {
+                                         problems: ArrayList<FailureDescription>): Unit = reportRawProgress { reporter ->
     val environmentBuilder = ExecutionUtil.createEnvironment(executor, configurationSettings) ?: return
     val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
     val environment = environmentBuilder.target(executionTarget).build()
     environment.setHeadless()
-    val reporter = currentCoroutineContext().progressReporter?.rawReporter()
     val formDescriptor = suspendCancellableCoroutine<TestResultsFormDescriptor?> { continuation ->
       val messageBus = project.messageBus
       messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {

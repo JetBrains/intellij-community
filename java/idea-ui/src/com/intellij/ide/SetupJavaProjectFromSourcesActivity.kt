@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.CoroutineScope
@@ -210,11 +209,9 @@ private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) 
 
   val modules = ModuleManager.getInstance(project).modules
   if (modules.any { ModuleType.get(it) is JavaModuleType }) {
-    withRawProgressReporter {
-      coroutineToIndicator {
-        findAndSetupSdk(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {
-          JavaSdkUtil.applyJdkToProject(project, it)
-        }
+    coroutineToIndicator {
+      findAndSetupSdk(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {
+        JavaSdkUtil.applyJdkToProject(project, it)
       }
     }
   }

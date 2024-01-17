@@ -1,12 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.SmartList
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.api.MergeResult.MergeStatus
@@ -76,12 +79,17 @@ internal open class Pull(val manager: GitRepositoryClient, val commitMessageForm
     }
   }
 
-  suspend fun fetch(prevRefUpdateResult: RefUpdate.Result? = null, refUpdateProcessor: ((TrackingRefUpdate) -> Unit)? = null): Ref? {
+  suspend fun fetch(
+    prevRefUpdateResult: RefUpdate.Result? = null,
+    refUpdateProcessor: ((TrackingRefUpdate) -> Unit)? = null
+  ): Ref? {
     coroutineContext.ensureActive()
 
-    val progressMonitor = progressMonitor()
-    val fetchResult = blockingContext {
-      repository.fetch(remoteConfig, manager.credentialsProvider, progressMonitor)
+    val fetchResult = reportRawProgress { reporter ->
+      val progressMonitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
+      blockingContext {
+        repository.fetch(remoteConfig, manager.credentialsProvider, progressMonitor)
+      }
     } ?: return null
 
     if (LOG.isDebugEnabled) {

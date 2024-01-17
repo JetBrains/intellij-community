@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
 import com.intellij.ide.impl.isTrusted
@@ -23,8 +23,7 @@ import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
@@ -236,8 +235,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun readMavenProjects(spec: MavenSyncSpec,
                                         filesToUpdate: List<VirtualFile>,
                                         filesToDelete: List<VirtualFile>): MavenProjectsTreeUpdateResult {
-    return withRawProgressReporter {
-      val progressReporter = rawProgressReporter!!
+    return reportRawProgress { reporter ->
+      val progressReporter = reporter
       val deleted = projectsTree.delete(filesToDelete, generalSettings, progressReporter)
       val updated = projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, progressReporter)
       deleted + updated
@@ -360,7 +359,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     logDebug("importModules started: ${projectsToResolve.size}")
     val resolver = MavenProjectResolver(project)
     val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
-      withRawProgressReporter {
+      reportRawProgress { reporter ->
         runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
           val res = resolver.resolve(!spec.isForceReading,
@@ -368,7 +367,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                      projectsTree,
                                      generalSettings,
                                      embeddersManager,
-                                     rawProgressReporter!!,
+                                     reporter,
                                      syncConsole)
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionFinished(
             res.mavenProjectMap.entries.flatMap { it.value }.map { it.mavenProject })
@@ -385,14 +384,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val pluginResolutionJob = cs.launch {
       val pluginResolver = MavenPluginResolver(projectsTree)
       withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
-        withRawProgressReporter {
+        reportRawProgress { reporter ->
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pluginResolutionStarted()
           runMavenImportActivity(project, MavenImportStats.PluginsResolvingTask) {
             for (mavenProjects in resolutionResult.mavenProjectMap) {
               try {
                 pluginResolver.resolvePlugins(mavenProjects.value,
                                               embeddersManager,
-                                              rawProgressReporter!!,
+                                              reporter,
                                               syncConsole,
                                               true)
               }
@@ -431,8 +430,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun readAllMavenProjects(spec: MavenSyncSpec): MavenProjectsTreeUpdateResult {
-    return withRawProgressReporter {
-      projectsTree.updateAll(spec.isForceReading, generalSettings, rawProgressReporter!!)
+    return reportRawProgress { reporter ->
+      projectsTree.updateAll(spec.isForceReading, generalSettings, reporter)
     }
   }
 
@@ -524,8 +523,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     if (!sources && !docs) return MavenArtifactDownloader.DownloadResult()
 
     val result = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading"), true) {
-      withRawProgressReporter {
-        doDownloadArtifacts(projects, artifacts, sources, docs, rawProgressReporter!!)
+      reportRawProgress { reporter ->
+        doDownloadArtifacts(projects, artifacts, sources, docs, reporter)
       }
     }
 

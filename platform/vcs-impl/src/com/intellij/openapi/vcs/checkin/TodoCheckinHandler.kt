@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -27,8 +27,7 @@ import com.intellij.openapi.vcs.checkin.TodoCheckinHandler.Companion.showDialog
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.wm.ToolWindowId.TODO_VIEW
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.psi.search.TodoItem
 import com.intellij.util.text.DateFormatUtil.formatDateTime
 import com.intellij.util.ui.UIUtil.getWarningIcon
@@ -74,11 +73,9 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 
     withContext(Dispatchers.Default) {
-      progressStep(endFraction = 1.0, message("progress.text.checking.for.todo")) {
-        withRawProgressReporter {
-          coroutineToIndicator {
-            worker.execute()
-          }
+      withProgressText(message("progress.text.checking.for.todo")) {
+        coroutineToIndicator {
+          worker.execute()
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.TargetBrowserHints
@@ -8,23 +8,21 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.bind
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import com.jetbrains.python.sdk.add.PyAddSdkStateListener
 import com.jetbrains.python.sdk.add.PyAddSdkView
 import com.jetbrains.python.sdk.add.target.TargetPanelExtension
 import com.jetbrains.python.sdk.add.target.addBrowseFolderListener
-import com.jetbrains.python.icons.PythonIcons
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -61,8 +59,10 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddSdkVie
         .trimmedTextValidation(model.condaPathValidator)
 
       button(PyBundle.message("python.add.sdk.panel.load.envs")) {
-        runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {
-          model.onLoadEnvsClicked(Dispatchers.EDT, this.rawProgressReporter)
+        runWithModalProgressBlocking(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {
+          reportRawProgress { reporter ->
+            model.onLoadEnvsClicked(Dispatchers.EDT, reporter)
+          }
         }.onFailure {
           showError(PyBundle.message("python.sdk.conda.getting.list.envs"), it.localizedMessage)
         }
@@ -110,8 +110,10 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddSdkVie
   override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
 
   override fun onSelected() {
-    runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
-      model.detectConda(Dispatchers.EDT, rawProgressReporter)
+    runWithModalProgressBlocking(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
+      reportRawProgress { reporter ->
+        model.detectConda(Dispatchers.EDT, reporter)
+      }
     }
   }
 
@@ -124,9 +126,9 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddSdkVie
 
   override fun getOrCreateSdk(): Sdk? {
     return runWithModalProgressBlocking(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
-      withRawProgressReporter {
+      reportRawProgress { reporter ->
         targetPanelExtension?.applyToTargetConfiguration()
-        model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), rawProgressReporter,
+        model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), reporter,
                                       model.targetConfiguration).onFailure {
           logger<PyAddCondaPanelModel>().warn(it)
           showError(

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.codeInsight.CodeInsightUtilCore
@@ -13,8 +13,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
@@ -24,8 +22,9 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
@@ -256,33 +255,25 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         modulesAndJvmTargets: Map<ModuleName, TargetJvm>,
         commandKey: String,
         isAutoConfig: Boolean = false
-    ): ConfigurationResult {
-        return withRawProgressReporter {
-            val progressReporter = coroutineContext.rawProgressReporter
-            progressReporter?.details(KotlinIdeaGradleBundle.message("step.configure.kotlin.preparing"))
-            progressReporter?.fraction(0.0)
+    ): ConfigurationResult = reportSequentialProgress { reporter ->
+        reporter.nextStep(endFraction = 30, KotlinIdeaGradleBundle.message("step.configure.kotlin.preparing"))
+        readAndWriteAction {
+            val collector = NotificationMessageCollector.create(project)
 
-            readAndWriteAction {
-                val collector = NotificationMessageCollector.create(project)
-
-                // First check all the files and abort if something would not work
-                val configureAction =
-                  createConfigureWithVersionAction(project, modules, version, collector, kotlinVersionsAndModules, modulesAndJvmTargets)
-                progressReporter?.fraction(0.3)
-                progressReporter?.details(KotlinIdeaGradleBundle.message("step.configure.kotlin.writing"))
-
-                // Now that everything has been read and verified, apply the changes
-                writeAction {
-                    project.executeCommand(KotlinIdeaGradleBundle.message(commandKey)) {
-                        val changedFiles = configureAction()
-                        val firstModule = modules.firstOrNull()
-                        if (isAutoConfig && firstModule != null) {
-                            project.queueGradleSync()
-                        }
-                        addUndoListener(project, modules, isAutoConfig)
-                        progressReporter?.fraction(1.0)
-                        ConfigurationResult(collector, changedFiles)
+            // First check all the files and abort if something would not work
+            val configureAction =
+                createConfigureWithVersionAction(project, modules, version, collector, kotlinVersionsAndModules, modulesAndJvmTargets)
+            // Now that everything has been read and verified, apply the changes
+            writeAction {
+                reporter.nextStep(endFraction = 100, KotlinIdeaGradleBundle.message("step.configure.kotlin.writing"))
+                project.executeCommand(KotlinIdeaGradleBundle.message(commandKey)) {
+                    val changedFiles = configureAction()
+                    val firstModule = modules.firstOrNull()
+                    if (isAutoConfig && firstModule != null) {
+                        project.queueGradleSync()
                     }
+                    addUndoListener(project, modules, isAutoConfig)
+                    ConfigurationResult(collector, changedFiles)
                 }
             }
         }

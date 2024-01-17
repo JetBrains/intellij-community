@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.jarRepository.JarRepositoryManager
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.indeterminateStep
-import com.intellij.platform.util.progress.withRawProgressReporter
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -89,16 +88,14 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
     version: String,
     repos: List<RemoteRepositoryDescription>
   ): VirtualFile? = indeterminateStep {
-    withRawProgressReporter {
-      coroutineToIndicator {
-        JarRepositoryManager.loadDependenciesSync(
-          project,
-          JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version),
-          setOf(ArtifactKind.ANNOTATIONS),
-          repos,
-          null
-        )?.firstOrNull()?.file
-      }
+    coroutineToIndicator {
+      JarRepositoryManager.loadDependenciesSync(
+        project,
+        JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version),
+        setOf(ArtifactKind.ANNOTATIONS),
+        repos,
+        null
+      )?.firstOrNull()?.file
     }
   }
 }
