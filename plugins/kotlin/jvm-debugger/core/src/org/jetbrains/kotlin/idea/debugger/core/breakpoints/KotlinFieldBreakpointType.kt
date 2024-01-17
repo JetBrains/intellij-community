@@ -43,6 +43,12 @@ class KotlinFieldBreakpointType :
     ),
     KotlinBreakpointType
 {
+    override fun getGeneralDescription(variant: XLineBreakpointVariant) =
+        KotlinDebuggerCoreBundle.message("property.watchpoint.description")
+
+    override fun getGeneralDescription(breakpoint: XLineBreakpoint<KotlinPropertyBreakpointProperties>) =
+        KotlinDebuggerCoreBundle.message("property.watchpoint.description")
+
     override fun createJavaBreakpoint(
         project: Project,
         breakpoint: XBreakpoint<KotlinPropertyBreakpointProperties>
