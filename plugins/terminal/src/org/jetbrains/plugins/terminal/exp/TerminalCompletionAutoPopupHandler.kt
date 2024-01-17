@@ -39,4 +39,12 @@ class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
 
     return Result.CONTINUE
   }
+
+  override fun beforeClosingQuoteInserted(quote: CharSequence, project: Project, editor: Editor, file: PsiFile): Result {
+    // do not insert backticks in pairs because it is a line continuation character in PowerShell
+    return if (!editor.isPromptEditor || quote != "`") {
+      Result.CONTINUE
+    }
+    else Result.STOP
+  }
 }
