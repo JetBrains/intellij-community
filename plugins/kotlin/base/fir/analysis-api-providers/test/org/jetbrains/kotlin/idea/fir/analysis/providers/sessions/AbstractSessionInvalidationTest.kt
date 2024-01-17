@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractProjectStructureTest
-import org.jetbrains.kotlin.idea.fir.analysis.providers.ModulesByName
-import org.jetbrains.kotlin.idea.fir.analysis.providers.ProjectLibrariesByName
+import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
+import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
+import org.jetbrains.kotlin.idea.test.projectStructureTest.ProjectLibrariesByName
 import java.io.File
 
 sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<SessionInvalidationTestProjectStructure>() {

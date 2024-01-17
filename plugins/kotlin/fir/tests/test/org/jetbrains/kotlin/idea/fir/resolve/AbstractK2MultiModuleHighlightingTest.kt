@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheServiceImpl
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs

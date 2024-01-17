@@ -32,9 +32,9 @@ fun test() {
     O::objectMember1
     ::objectMember2
     O::objectExtension
-    foo.A.Companion::companionMember
+    A.Companion::companionMember
     (A)::companionMember
-    foo.A.Companion::companionExtension
+    A.Companion::companionExtension
     (A)::companionExtension
     J()::javaClassMember
     J::javaClassMember

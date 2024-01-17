@@ -1,0 +1,11 @@
+{
+    "libraries": [
+        { "name": "library", "roots": ["library"] }
+    ],
+    "modules": [
+        { "name": "module", "dependsOn": ["library"] }
+    ],
+    "targets": [
+        { "module": "module", "file": "main.kt" }
+    ]
+}

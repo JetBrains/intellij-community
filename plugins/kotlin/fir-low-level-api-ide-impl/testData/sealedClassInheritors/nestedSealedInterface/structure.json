@@ -1,0 +1,9 @@
+{
+    "modules": [
+        { "name": "dependency" },
+        { "name": "main", "dependsOn": ["dependency"] }
+    ],
+    "targets": [
+        { "module": "main", "file": "main.kt" }
+    ]
+}

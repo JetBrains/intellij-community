@@ -39,11 +39,12 @@ import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
+import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -56,7 +57,6 @@ import org.jetbrains.kotlin.projectModel.FullJdk
 import org.jetbrains.kotlin.projectModel.KotlinSdk
 import org.jetbrains.kotlin.projectModel.ResolveSdk
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary

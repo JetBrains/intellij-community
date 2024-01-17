@@ -2959,6 +2959,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../idea/tests/testData/quickfix/when/elseNotLastInWhen.kt");
         }
 
+        @TestMetadata("localSealedClassInheritorExhaustive.kt")
+        public void testLocalSealedClassInheritorExhaustive() throws Exception {
+            runTest("../../idea/tests/testData/quickfix/when/localSealedClassInheritorExhaustive.kt");
+        }
+
         @TestMetadata("noElseInWhenWithBranches.kt")
         public void testNoElseInWhenWithBranches() throws Exception {
             runTest("../../idea/tests/testData/quickfix/when/noElseInWhenWithBranches.kt");

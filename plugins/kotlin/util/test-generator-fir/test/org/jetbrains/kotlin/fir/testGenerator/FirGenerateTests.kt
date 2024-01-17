@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirSealedClassInheritorsTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
@@ -111,6 +112,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("fir-low-level-api-ide-impl") {
         testClass<AbstractFirLibraryModuleDeclarationResolveTest> {
             model("libraryModuleResolve", isRecursive = false)
+        }
+
+        testClass<AbstractFirSealedClassInheritorsTest> {
+            model("sealedClassInheritors", pattern = DIRECTORY, isRecursive = false)
         }
     }
 

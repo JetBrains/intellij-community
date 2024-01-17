@@ -19,7 +19,7 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
-import org.jetbrains.kotlin.idea.jsonUtils.getString
+import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor

@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.idea.test.addEmptyClassesRoot
-import org.jetbrains.kotlin.test.util.addDependency
 
 class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventTest<ModuleStateModificationEventTracker>() {
     override fun constructTracker(module: KtModule): ModuleStateModificationEventTracker = ModuleStateModificationEventTracker(module)

@@ -30,12 +30,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModuleOfType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
-import org.jetbrains.kotlin.test.util.addDependency
 import org.junit.Assert.assertNotEquals
 import java.io.File
 
