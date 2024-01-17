@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
 import com.intellij.diagnostic.ThreadDumper
@@ -87,7 +87,7 @@ internal fun progressStateText(state: ProgressState): StructuredMessage? {
   }
 
   val shortText = text ?: ""
-  val verboseText = shortText + (text2?.let { " ($it)"} ?: "")
+  val verboseText = shortText + (text2?.let { " ($it)" } ?: "")
   if (shortText.isBlank() || state.fraction < 0.0) {
     return StructuredMessage(shortText, verboseText)
   }
@@ -127,7 +127,10 @@ private class ChannelingProgressIndicator(private val prefix: String) : Progress
     val messages = ApplicationManager.getApplication().service<WarmupLoggingService>().messages
     val progressState = progressStateText(dumpProgressState()) ?: return
     val actualPrefix = if (prefix.isEmpty()) "" else "[$prefix]: "
-    messages.tryEmit(progressState.copy(contractedMessage = actualPrefix + progressState.contractedMessage, fullMessage = actualPrefix + progressState.fullMessage))
+    messages.tryEmit(progressState.copy(
+      contractedMessage = actualPrefix + progressState.contractedMessage,
+      fullMessage = actualPrefix + progressState.fullMessage,
+    ))
   }
 }
 
@@ -139,7 +142,6 @@ private fun ProgressIndicator.dumpProgressState(): ProgressState =
  */
 suspend fun <T> withLoggingProgressReporter(action: suspend CoroutineScope.() -> T): T = coroutineScope {
   TextDetailsProgressReporter(this).use { reporter ->
-    val messageFlow = ApplicationManager.getApplication().service<WarmupLoggingService>().messages
     val job = launch {
       reporter.progressState.collect { progressState ->
         progressStateText(progressState)?.let { WarmupLogger.logStructured(it) }
@@ -147,7 +149,8 @@ suspend fun <T> withLoggingProgressReporter(action: suspend CoroutineScope.() ->
     }
     try {
       withContext(reporter.asContextElement(), action)
-    } finally {
+    }
+    finally {
       job.cancel()
     }
   }
@@ -204,7 +207,7 @@ internal data class StructuredMessage(
   val fullMessage: String,
   // a short message, suitable for logging as it does not contain sensitive information
   val contractedMessage: String,
-  )
+)
 
 @OptIn(FlowPreview::class)
 @Service(Service.Level.APP)
