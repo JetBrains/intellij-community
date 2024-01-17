@@ -116,9 +116,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private static final @NonNls String FILE_TAG = "file";
   private static final @NonNls String URL_ATT = "url";
   private final PassExecutorService myPassExecutorService;
-  // Timestamp of myUpdateRunnable which it's needed to start (in System.nanoTime() sense)
-  // May be later than the actual ScheduledFuture sitting in the myAlarm queue.
-  // When it happens that the future has started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
+  /**
+   * Timestamp of {@link #myUpdateRunnable} which it's needed to start (in System.nanoTime() sense)
+   * May be later than the actual ScheduledFuture sitting in the {@link EdtExecutorService} queue.
+   * When it happens that the future has started sooner than this stamp, it will re-schedule itself for later.
+   */
   private long myScheduledUpdateTimestamp; // guarded by this
   private volatile boolean completeEssentialHighlightingRequested;
   private final AtomicInteger daemonCancelEventCount = new AtomicInteger();
@@ -728,8 +730,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @ApiStatus.Internal
-  @VisibleForTesting
-  public boolean isAllAnalysisFinished(@NotNull PsiFile psiFile) {
+  boolean isAllAnalysisFinished(@NotNull PsiFile psiFile) {
     if (myDisposed) return false;
     assertMyFile(psiFile.getProject(), psiFile);
     Document document = psiFile.getViewProvider().getDocument();
@@ -768,20 +769,21 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return isRunning() || !myUpdateRunnableFuture.isDone() || GeneralHighlightingPass.isRestartPending();
   }
 
-  // return true if the progress really was canceled
+  /**
+   * return true if the progress really was canceled
+   * reset {@link #myScheduledUpdateTimestamp} always, but re-schedule {@link #myUpdateRunnable} only rarely because of thread scheduling overhead
+   */
   synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     cancelAllUpdateProgresses(toRestartAlarm, reason);
     boolean restart = toRestartAlarm && !myDisposed;
-
-    // reset myScheduledUpdateStart always, but re-schedule myUpdateRunnable only rarely because of thread scheduling overhead
-    long autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
     if (restart) {
+      long autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
       myScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos;
-    }
-    // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
-    boolean isDone = myUpdateRunnableFuture.isDone();
-    if (restart && isDone) {
-      scheduleUpdateRunnable(autoReparseDelayNanos);
+      // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
+      boolean isDone = myUpdateRunnableFuture.isDone();
+      if (isDone) {
+        scheduleUpdateRunnable(autoReparseDelayNanos);
+      }
     }
   }
 
@@ -1134,7 +1136,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress, daemonCancelEventCount);
     }
     JobLauncher.getInstance().submitToJobThread(Context.current().wrap(() ->
-                                                  submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter, passesToIgnore, progress, session)),
+      submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter, passesToIgnore, progress, session)),
       // manifest exceptions in EDT to avoid storing them in the Future and abandoning
       task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     return session;
