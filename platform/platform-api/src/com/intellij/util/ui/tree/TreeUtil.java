@@ -858,6 +858,7 @@ public final class TreeUtil {
     // use the parent path of the normalized selection path to prohibit its collapsing
     TreePath prohibited = leadSelectionPath == null ? null : normalize(leadSelectionPath, minCount, keepSelectionLevel).getParentPath();
     // Collapse all
+    var paths = new ArrayList<TreePath>();
     while (0 < row--) {
       if (!strict && row == 0) break;
       TreePath path = tree.getPathForRow(row);
@@ -865,11 +866,26 @@ public final class TreeUtil {
       int pathCount = path.getPathCount();
       if (pathCount < minCount) continue;
       if (pathCount == minCount && row > 0) strict = true;
-      if (!isAlwaysExpand(path) && !path.isDescendant(prohibited)) tree.collapsePath(path);
+      if (!isAlwaysExpand(path) && !path.isDescendant(prohibited)) {
+        paths.add(path);
+      }
     }
+    collapsePaths(tree, paths);
     if (leadSelectionPath == null) return; // no selection to restore
     if (!strict) minCount++; // top level node is not collapsed
     internalSelect(tree, normalize(leadSelectionPath, minCount, keepSelectionLevel));
+  }
+
+  private static void collapsePaths(@NotNull JTree tree, @Nullable List<TreePath> paths) {
+    if (paths == null || paths.isEmpty()) {
+      return;
+    }
+    if (Tree.isBulkExpandCollapseSupported() && tree instanceof Tree jbTree) {
+      jbTree.collapsePaths(paths);
+    }
+    else {
+      paths.forEach(tree::collapsePath);
+    }
   }
 
   /**
