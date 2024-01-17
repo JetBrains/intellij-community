@@ -4,22 +4,22 @@ package com.intellij.platform.workspace.storage.impl.trace
 import com.intellij.platform.workspace.storage.trace.ObjectToTraceMap
 import com.intellij.platform.workspace.storage.trace.ReadTraceHash
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 
 internal class ReadTraceIndex<T> private constructor(
-  objToTrace: ObjectToTraceMap<T, IntOpenHashSet>,
-  traceToObj: Int2ObjectOpenHashMap<MutableSet<T>>,
+  objToTrace: ObjectToTraceMap<T, LongOpenHashSet>,
+  traceToObj: Long2ObjectOpenHashMap<MutableSet<T>>,
 ) {
 
-  constructor() : this(ObjectToTraceMap<T, IntOpenHashSet>(), Int2ObjectOpenHashMap<MutableSet<T>>())
+  constructor() : this(ObjectToTraceMap<T, LongOpenHashSet>(), Long2ObjectOpenHashMap<MutableSet<T>>())
 
-  private val objToTrace: MutableMap<T, IntOpenHashSet> = objToTrace.mapValuesTo(HashMap()) { IntOpenHashSet(it.value) }
-  private val traceToObj: Int2ObjectOpenHashMap<MutableSet<T>> = Int2ObjectOpenHashMap(traceToObj.mapValues { HashSet(it.value) })
+  private val objToTrace: MutableMap<T, LongOpenHashSet> = objToTrace.mapValuesTo(HashMap()) { LongOpenHashSet(it.value) }
+  private val traceToObj: Long2ObjectOpenHashMap<MutableSet<T>> = Long2ObjectOpenHashMap(traceToObj.mapValues { HashSet(it.value) })
 
   fun pull(another: ReadTraceIndex<T>) {
-    this.objToTrace.putAll(another.objToTrace.mapValuesTo(HashMap()) { IntOpenHashSet(it.value) })
-    this.traceToObj.putAll(Int2ObjectOpenHashMap(another.traceToObj.mapValues { HashSet(it.value) }))
+    this.objToTrace.putAll(another.objToTrace.mapValuesTo(HashMap()) { LongOpenHashSet(it.value) })
+    this.traceToObj.putAll(Long2ObjectOpenHashMap(another.traceToObj.mapValues { HashSet(it.value) }))
   }
 
   fun get(trace: ReadTraceHash): Set<T> {
@@ -32,7 +32,7 @@ internal class ReadTraceIndex<T> private constructor(
 
   fun set(traces: ReadTraceHashSet, obj: T) {
     val existingTraces = objToTrace.remove(obj)
-    val hashSetTraces = IntOpenHashSet(traces.size).also { set -> traces.forEach { set.add(it.hash) } }
+    val hashSetTraces = LongOpenHashSet(traces.size).also { set -> traces.forEach { set.add(it.hash) } }
     existingTraces?.forEach { trace ->
       val objs = traceToObj.get(trace)
       if (objs != null && trace !in hashSetTraces) {

@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import java.util.*
 
 
 /**
@@ -144,9 +143,9 @@ internal class ReadTracker private constructor(
 }
 
 // Type aliases for read trace as Int with string. This should increase memory consumption, but make debugging simpler
-internal data class ReadTraceHash(val hash: Int, val debug: String)
+internal data class ReadTraceHash(val hash: Long, val debug: String)
 internal typealias ReadTraceHashSet = HashSet<ReadTraceHash>
-internal fun Int.traceWithDebug(debug: String): ReadTraceHash = ReadTraceHash(this, debug)
+internal fun Long.traceWithDebug(debug: String): ReadTraceHash = ReadTraceHash(this, debug)
 internal typealias ObjectToTraceMap<K, V> = HashMap<K, V>
 internal typealias TraceToObjectMap<K, V> = Object2ObjectOpenHashMap<K, V>
 
@@ -156,7 +155,6 @@ internal typealias TraceToObjectMap<K, V> = Object2ObjectOpenHashMap<K, V>
 //internal fun Int.traceWithDebug(debug: String): ReadTraceHash = this
 //internal typealias ObjectToTraceMap<K, V> = HashMap<K, IntSet>
 //internal typealias TraceToObjectMap<K, V> = Int2ObjectOpenHashMap<V>
-
 
 internal sealed interface ReadTrace {
 
@@ -169,10 +167,8 @@ internal sealed interface ReadTrace {
   data class EntitiesOfType(val ofClass: Class<out WorkspaceEntity>) : ReadTrace {
     override val hash: ReadTraceHash
       get() {
-        return Objects.hash(
-          433, // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-          ofClass.toClassId(), // toClassId makes hashing more stable as the hash won't depend on class loading
-        ).traceWithDebug(this.toString())
+        val mult = 433L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        return (mult * (mult + ofClass.toClassId())).traceWithDebug(this.toString())
       }
   }
 
@@ -182,21 +178,18 @@ internal sealed interface ReadTrace {
   ) : ReadTrace {
     override val hash: ReadTraceHash
       get() {
-        return Objects.hash(
-          569, // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-          linkTo,
-          inClass.toClassId(), // toClassId makes hashing more stable as the hash won't depend on class loading
-        ).traceWithDebug(this.toString())
+        val mult = 569L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        var res = mult * linkTo.hashCode()
+        res = mult * res + inClass.toClassId()
+        return res.traceWithDebug(this.toString())
       }
   }
 
   data class Resolve(val link: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) : ReadTrace {
     override val hash: ReadTraceHash
       get() {
-        return Objects.hash(
-          859, // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-          link,
-        ).traceWithDebug(this.toString())
+        val mult = 859L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        return (mult + (mult + link.hashCode())).traceWithDebug(this.toString())
       }
   }
 
@@ -207,10 +200,8 @@ internal sealed interface ReadTrace {
   data class ExternalMappingAccess(val identifier: ExternalMappingKey<*>) : ReadTrace {
     override val hash: ReadTraceHash
       get() {
-        return Objects.hash(
-          1129, // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-          identifier,
-        ).traceWithDebug(this.toString())
+        val mult = 1129L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        return (mult * (mult + identifier.hashCode())).traceWithDebug(this.toString())
       }
   }
 
@@ -219,10 +210,8 @@ internal sealed interface ReadTrace {
   ) : ReadTrace {
     override val hash: ReadTraceHash
       get() {
-        return Objects.hash(
-          2833, // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-          entityId,
-        ).traceWithDebug(this.toString())
+        val mult = 2833L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
+        return (mult * (mult + entityId)).traceWithDebug(this.toString())
       }
 
     override fun toString(): String {
