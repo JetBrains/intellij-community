@@ -22,12 +22,6 @@ class CodeCorrectnessBuilder {
     else -> ErrorsState.Incorrect(errors)
   }
 
-  fun timeLimitExceeded() {
-    if ((semanticState as? ErrorsState.Unknown)?.reason == UnknownReason.IN_PROGRESS) {
-      semanticState = ErrorsState.Unknown(UnknownReason.TIME_LIMIT_EXCEEDED)
-    }
-  }
-
   fun build(): CodeCorrectness {
     return CodeCorrectness(semanticState)
   }
