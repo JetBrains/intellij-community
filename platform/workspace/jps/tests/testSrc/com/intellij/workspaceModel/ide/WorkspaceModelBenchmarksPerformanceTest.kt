@@ -22,6 +22,7 @@ import com.intellij.platform.workspace.storage.ExternalMappingKey
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
@@ -606,26 +607,28 @@ class WorkspaceModelBenchmarksPerformanceTest {
   }
 
   @Test
-  @Disabled("IDEA-340767")
   fun `request of cache`(testInfo: TestInfo) {
     CacheResetTracker.enable()
     println("Create snapshot")
-    val snapshots = List(500) {
+    val baseSize = 500
+    val smallBaseSize = 10
+    TracedSnapshotCache.LOG_QUEUE_MAX_SIZE = baseSize * smallBaseSize
+    val snapshots = List(baseSize / 2) {
       val builder = MutableEntityStorage.create()
 
       // Set initial state
-      repeat(1000) {
+      repeat(baseSize) {
         builder addEntity NamedEntity("MyName$it", MySource)
       }
-      repeat(1000) {
+      repeat(baseSize) {
         val parent = builder addEntity ParentEntity("data$it", MySource)
 
         val data = if (it % 2 == 0) "ExternalInfo" else "InternalInfo"
         builder.getMutableExternalMapping(externalMappingKey).addMapping(parent, data)
       }
-      repeat(1000) {
+      repeat(baseSize) {
         builder addEntity ParentMultipleEntity("data$it", MySource) {
-          this.children = List(10) {
+          this.children = List(smallBaseSize) {
             ChildMultipleEntity("data$it", MySource)
           }
         }
@@ -659,20 +662,21 @@ class WorkspaceModelBenchmarksPerformanceTest {
       .warmupIterations(0)
       .attempts(1).assertTimingAsSubtest()
 
+    println("Modify after second read")
     // Modify snapshots
     val newSnapshots = snapshots.map { snapshot ->
       val builder = snapshot.toBuilder()
-      repeat(100) {
+      repeat(baseSize / 10) {
         builder addEntity NamedEntity("MyNameXYZ$it", MySource)
       }
-      repeat(500) { // Half of all entities
+      repeat(baseSize / 2) { // Half of all entities
         val namedEntity = builder.resolve(NameId("MyName$it"))!!
         builder.modifyEntity(namedEntity) {
           this.myName = "newName$it"
         }
       }
       val mutableMapping = builder.getMutableExternalMapping(externalMappingKey)
-      mutableMapping.getEntities("ExternalInfo").take(250).forEach {
+      mutableMapping.getEntities("ExternalInfo").take(baseSize / 4).forEach {
         mutableMapping.addMapping(it, "AnotherMapping")
       }
 
@@ -682,8 +686,10 @@ class WorkspaceModelBenchmarksPerformanceTest {
       builder.toSnapshot()
     }
 
+    println("Finish second modification")
     Assertions.assertFalse(CacheResetTracker.cacheReset)
 
+    println("Start third read...")
     // Do request after modifications
     PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Third Access - After Modification", 100500) {
       newSnapshots.forEach { snapshot ->
@@ -698,10 +704,10 @@ class WorkspaceModelBenchmarksPerformanceTest {
     println("Modify snapshots second time")
     val snapshotsWithLotOfUpdates = newSnapshots.map { snapshot ->
       var currentSnapshot = snapshot
-      repeat(10) { outerLoop ->
+      repeat(smallBaseSize) { outerLoop ->
         val builder = currentSnapshot.toBuilder()
 
-        repeat(10) {
+        repeat(smallBaseSize) {
           builder addEntity NamedEntity("MyName--$outerLoop-$it", MySource)
         }
         // Remove some random entities
@@ -738,10 +744,10 @@ class WorkspaceModelBenchmarksPerformanceTest {
     println("Modify snapshots third time")
     val snapshotsWithTonsOfUpdates = snapshotsWithLotOfUpdates.map { snapshot ->
       var currentSnapshot = snapshot
-      repeat(11) { outerLoop ->
+      repeat(smallBaseSize + 1) { outerLoop ->
         val builder = currentSnapshot.toBuilder()
 
-        repeat(1000) {
+        repeat(baseSize) {
           builder addEntity NamedEntity("MyName-X$outerLoop-$it", MySource)
         }
 
@@ -762,6 +768,41 @@ class WorkspaceModelBenchmarksPerformanceTest {
     }
       .warmupIterations(0)
       .attempts(1).assertTimingAsSubtest()
+  }
+
+  @Test
+  fun `request of cache1`(testInfo: TestInfo) {
+    CacheResetTracker.enable()
+    println("Create snapshot")
+    val baseSize = 10
+    val smallBaseSize = 10
+    val builder = MutableEntityStorage.create()
+    repeat(baseSize) {
+      builder addEntity ParentMultipleEntity("data$it", MySource) {
+        this.children = List(smallBaseSize) {
+          ChildMultipleEntity("data$it", MySource)
+        }
+      }
+    }
+    val snapshot = builder.toSnapshot()
+
+    val childData = entities<ParentMultipleEntity>()
+      .flatMap { parentEntity, _ -> parentEntity.children }
+      .map { it.childData }
+
+    // Do first request
+    snapshot.cached(childData)
+
+    println("Modify after second read")
+    // Modify snapshots
+    val builder1 = snapshot.toBuilder()
+    builder1.entities(ChildMultipleEntity::class.java).filter { it.childData.removePrefix("data").toInt() % 2 == 0 }.forEach {
+      builder1.removeEntity(it)
+    }
+    val newSnapshot = builder1.toSnapshot()
+
+    println("Start third read...")
+    newSnapshot.cached(childData)
   }
 
   @Test
