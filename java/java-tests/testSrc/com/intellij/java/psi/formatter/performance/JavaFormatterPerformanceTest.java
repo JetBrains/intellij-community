@@ -49,12 +49,20 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
       FormattingModel model =
         LanguageFormatting.INSTANCE.forContext(file).createModel(FormattingContext.create(file, settings));
       formatter.formatWithoutModifications(model.getDocumentModel(), model.getRootBlock(), settings, options, file.getTextRange());
-    }).assertTiming();
+    })
+      .warmupIterations(50)
+      .attempts(200)
+      .assertTiming();
+    // attempt.min.ms varies ~3% (from experiments)
   }
 
   public void testPerformance2() {
     getSettings().setDefaultRightMargin(120);
-    PlatformTestUtil.startPerformanceTest("Java Formatting [2]", 8000, () -> doTest()).assertTiming();
+    PlatformTestUtil.startPerformanceTest("Java Formatting [2]", 8000, () -> doTest())
+      .warmupIterations(5)
+      .attempts(20)
+      .assertTiming();
+    // attempt.min.ms varies ~50% (from experiments)
   }
 
   public void testPerformance3() {
@@ -68,7 +76,11 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     indentOptions.USE_TAB_CHARACTER = true;
     indentOptions.TAB_SIZE = 4;
 
-    PlatformTestUtil.startPerformanceTest("Java Formatting [3]", 3000, () -> doTest()).assertTiming();
+    PlatformTestUtil.startPerformanceTest("Java Formatting [3]", 3000, () -> doTest())
+      .warmupIterations(100)
+      .attempts(300)
+      .assertTiming();
+    // attempt.min.ms varies ~5% (from experiments)
   }
 
   @Override

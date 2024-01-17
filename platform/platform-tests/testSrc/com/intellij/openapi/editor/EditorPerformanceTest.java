@@ -24,6 +24,9 @@ public class EditorPerformanceTest extends AbstractEditorTest {
         executeAction(IdeActions.ACTION_EDITOR_ENTER);
         UIUtil.dispatchAllInvocationEvents(); // let gutter update its width
       }
-    }).assertTiming();
+    }).warmupIterations(50)
+      .attempts(100)
+      .assertTiming();
+    // attempt.min.ms varies ~15% (from experiments)
   }
 }

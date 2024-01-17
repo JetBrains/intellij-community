@@ -30,6 +30,7 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
     initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
 
     doTestScrollingPerformance("scrolling through text file with many lines", 2600);
+    // attempt.min.ms varies ~5% (from experiments)
   }
 
   public void testScrollingThroughLongSoftWrappedLine() {
@@ -37,6 +38,7 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
     EditorTestUtil.configureSoftWraps(getEditor(), EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
     
     doTestScrollingPerformance("scrolling through long soft wrapped line", 2500);
+    // attempt.min.ms varies ~4% (from experiments)
   }
 
   private void doTestScrollingPerformance(String message, int expectedMs) {
@@ -50,7 +52,9 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
         editor.getContentComponent().paintComponent(g);
         result[0] += g.getResult();
       }
-    }).assertTiming();
+    }).warmupIterations(50)
+      .attempts(100)
+      .assertTiming();
     LOG.debug(String.valueOf(result[0]));
   }
 }

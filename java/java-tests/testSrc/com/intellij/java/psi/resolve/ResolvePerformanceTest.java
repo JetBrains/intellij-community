@@ -107,7 +107,10 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     PsiReference ref = configureByFile("class/" + getTestName(false) + ".java");
     ensureIndexUpToDate();
     PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> assertNull(ref.resolve()))
-      .attempts(1).assertTiming();
+      .warmupIterations(20)
+      .attempts(50)
+      .assertTiming();
+    // attempt.min.ms varies below the measurement threshold
   }
 
   public void testResolveOfManyStaticallyImportedFields() throws Exception {
@@ -134,8 +137,10 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
       }
     })
       .setup(getPsiManager()::dropPsiCaches)
+      .warmupIterations(100)
+      .attempts(500)
       .assertTiming();
-
+    // attempt.min.ms varies ~7% (from experiments)
   }
 
   private void ensureIndexUpToDate() {
@@ -169,7 +174,10 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
 
     ensureIndexUpToDate();
     PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> assertNull(ref.resolve()))
-      .attempts(1).assertTiming();
+      .warmupIterations(20)
+      .attempts(50)
+      .assertTiming();
+    // attempt.min.ms varies below the measurement threshold
   }
 
   public void testLongIdentifierDotChain() {
@@ -177,6 +185,10 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
       PsiFile file = createDummyFile("a.java", "class C { { " + StringUtil.repeat("obj.", 100) + "foo } }");
       PsiReference ref = file.findReferenceAt(file.getText().indexOf("foo"));
       assertNull(ref.resolve());
-    }).assertTiming();
+    })
+      .warmupIterations(100)
+      .attempts(300)
+      .assertTiming();
+    // attempt.min.ms varies below the measurement threshold
   }
 }

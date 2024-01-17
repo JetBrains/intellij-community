@@ -32,7 +32,11 @@ public class EditorCreationPerformanceTest extends AbstractEditorTest {
       finally {
         EditorFactory.getInstance().releaseEditor(editor);
       }
-    }).assertTiming();
+    })
+      .warmupIterations(50)
+      .attempts(100)
+      .assertTiming();
+    // attempt.min.ms varies ~57% (from experiments)
   }
 
   public void testOpeningEditorWithLongLine() {
@@ -47,6 +51,10 @@ public class EditorCreationPerformanceTest extends AbstractEditorTest {
       finally {
         EditorFactory.getInstance().releaseEditor(editor);
       }
-    }).assertTiming();
+    })
+      .warmupIterations(50)
+      .attempts(100)
+      .assertTiming();
+    // attempt.min.ms varies ~17% (from experiments)
   }
 }
