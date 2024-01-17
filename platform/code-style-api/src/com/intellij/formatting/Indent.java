@@ -294,6 +294,16 @@ public abstract class Indent {
     public static final Type CONTINUATION = new Type("CONTINUATION");
     public static final Type CONTINUATION_WITHOUT_FIRST = new Type("CONTINUATION_WITHOUT_FIRST");
 
+    /**
+     * Outdent with a size of normal indent
+     */
+    public static final Type OUTDENT_NORMAL = new Type("OUTDENT_NORMAL");
+
+    /**
+     * Outdent with a size specified in spaces. Used for outdenting aligned blocks, so gets substracted from spaces instead of indent spaces
+     */
+    public static final Type OUTDENT_SPACES = new Type("OUTDENT_SPACES");
+
     public String toString() {
       return myName;
     }
