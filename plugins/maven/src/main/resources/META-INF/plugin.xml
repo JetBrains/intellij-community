@@ -143,7 +143,6 @@
     <externalIconProvider key="MAVEN" implementationClass="org.jetbrains.idea.maven.ui.MavenIconProvider"/>
     <externalSystemKeymapProvider implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
     <externalSystemWorkspaceContributor implementation="org.jetbrains.idea.maven.importing.MavenWorkspaceContributor"/>
-    <externalProjectWatcherContributor implementation="org.jetbrains.idea.maven.project.auto.reload.MavenProjectWatcherContributor"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
