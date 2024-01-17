@@ -3,7 +3,6 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.platform.util.progress.progressReporter
 import com.intellij.platform.util.progress.progressReporterTest
 import com.intellij.platform.util.progress.rawProgressReporter
@@ -263,48 +262,6 @@ class RunBlockingCancellableTest : CancellationTest() {
             assertSame(reporter, rawProgressReporter)
           }
         }
-      }
-    }
-  }
-
-  @Test
-  fun `delegates reporting to current indicator`() {
-    val indicator = object : EmptyProgressIndicator() {
-      val updates = ArrayList<ProgressState>()
-      var state = ProgressState(null, null, -1.0)
-
-      override fun setText(text: String?) {
-        val newState = state.copy(text = text)
-        if (newState != state) {
-          state = newState
-          updates.add(state)
-        }
-      }
-
-      override fun setText2(text: String?) {
-        val newState = state.copy(details = text)
-        if (newState != state) {
-          state = newState
-          updates.add(state)
-        }
-      }
-
-      override fun setFraction(fraction: Double) {
-        val newState = state.copy(fraction = fraction)
-        if (newState != state) {
-          state = newState
-          updates.add(state)
-        }
-      }
-    }
-
-    withIndicator(indicator) {
-      runBlockingCancellable {
-        check(progressReporter == null)
-        val reporter = checkNotNull(rawProgressReporter)
-        reporter.text("Hello")
-        reporter.details("World")
-        reporter.fraction(0.42)
       }
     }
   }

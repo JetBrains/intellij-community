@@ -81,9 +81,8 @@ suspend fun checkCancelled() {
  *
  * ### Progress reporting
  *
- * - If invoked under indicator, installs [RawProgressReporter], which methods delegate to the indicator, into the [action] context.
- * - If the thread context contains [ProgressReporter], installs it into the [action] context as is.
- * - If the thread context contains [RawProgressReporter], installs it into the [action] context as is.
+ * - If there is a fresh [currentProgressStep] in the thread context, this function propagates it as it into [action] context.
+ * - If invoked under indicator, no reporting from [action] is visible in the indicator.
  *
  * ### Examples
  *
