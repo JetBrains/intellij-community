@@ -55,10 +55,16 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Any?
       val virtualFile = file.viewProvider.virtualFile
       if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return@runReadAction CodeVisionState.READY_EMPTY
 
+      val renamedElementToSkip = file.getUserData(REFACTORING_DATA_KEY)?.let { when (it) {
+        is SuggestedRenameData -> it.declaration
+        else -> null
+      }}
+
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
       val traverser = SyntaxTraverser.psiTraverser(file)
       for (element in traverser) {
         if (!acceptsElement(element)) continue
+        if (element == renamedElementToSkip) continue
         if (!InlayHintsUtils.isFirstInLine(element)) continue
         val hint = getHint(element, file)
         if (hint == null) continue
