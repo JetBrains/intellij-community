@@ -9,8 +9,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.VersionComparatorUtil
 import org.gradle.tooling.model.UnsupportedMethodException
@@ -478,31 +476,7 @@ private fun getInternalModuleName(
     resolverCtx: ProjectResolverContext,
     actualName: String = kotlinComponent.name
 ): String {
-    val delimiter: String
-    val moduleName = StringBuilder()
-
-    val buildSrcGroup = resolverCtx.buildSrcGroup
-    if (resolverCtx.isUseQualifiedModuleNames) {
-        delimiter = "."
-        if (StringUtil.isNotEmpty(buildSrcGroup)) {
-            moduleName.append(buildSrcGroup).append(delimiter)
-        }
-        moduleName.append(
-            gradlePathToQualifiedName(
-                gradleModule.project.name,
-                externalProject.qName
-            )
-        )
-    } else {
-        delimiter = "_"
-        if (StringUtil.isNotEmpty(buildSrcGroup)) {
-            moduleName.append(buildSrcGroup).append(delimiter)
-        }
-        moduleName.append(gradleModule.name)
-    }
-    moduleName.append(delimiter)
-    moduleName.append(kotlinComponent.fullName(actualName))
-    return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
+    return KotlinModuleUtils.getInternalModuleName(gradleModule, externalProject, resolverCtx, kotlinComponent.fullName(actualName))
 }
 
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
@@ -535,16 +509,6 @@ private fun createExternalSourceSet(
 
 private fun getExternalModuleName(gradleModule: IdeaModule, kotlinComponent: KotlinComponent) =
     gradleModule.name + ":" + kotlinComponent.fullName()
-
-private fun gradlePathToQualifiedName(
-    rootName: String,
-    gradlePath: String
-): String {
-    return ((if (gradlePath.startsWith(":")) "$rootName." else "")
-            + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-        .filter { s: String -> s.isNotEmpty() }
-        .collect(Collectors.joining(".")))
-}
 
 private val IdeaModule.jdkNameIfAny
     get() = try {
