@@ -983,6 +983,9 @@ class DefaultTreeLayoutCache(
     private fun checkVisibleSubtrees() {
       for (i in 0 until rows.size) {
         val node = rows[i]
+        if (node.isChildrenVisible && !node.isChildrenLoaded) {
+          messages += "Node ${node.path} has its children visible, but they aren't loaded"
+        }
         val visibleSubtreeSize = node.visibleSubtreeNodeCount()
         if (visibleSubtreeSize <= 0) {
           messages += "Node ${node.path} at row $i is visible, but has the visible subtree of size $visibleSubtreeSize"
