@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.find.SearchSession
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
@@ -127,8 +128,17 @@ class BlockTerminalView(
             FileDocumentManager.getInstance().saveAllDocuments()
           }
         }
+        else {
+          // refresh when running a long-running command and switching outside the terminal
+          SaveAndSyncHandler.getInstance().scheduleRefresh()
+        }
       }
     })
+    session.commandManager.addListener(object: ShellCommandListener {
+      override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
+        SaveAndSyncHandler.getInstance().scheduleRefresh()
+      }
+    }, this)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
