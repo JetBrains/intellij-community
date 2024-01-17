@@ -8,15 +8,8 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 @Deprecated("Use CorrectnessChecker.checkSemantic directly")
 @ScheduledForRemoval
 sealed class ErrorsState {
-  data object Correct : ErrorsState() {
-    override fun errors() = emptyList<CorrectnessError>()
-  }
 
-  data class Incorrect(val errors: List<CorrectnessError>) : ErrorsState() {
-    init {
-      require(errors.isNotEmpty())
-    }
-
+  data class Analyzed(val errors: List<CorrectnessError>) : ErrorsState() {
     override fun errors() = errors
   }
 
