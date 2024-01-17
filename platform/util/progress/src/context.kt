@@ -70,6 +70,11 @@ private class ProgressStepElement(val step: ProgressStep) : AbstractCoroutineCon
   object Key : CoroutineContext.Key<ProgressStepElement>
 }
 
+@Internal
+fun CoroutineContext.internalCreateRawHandleFromContextStepIfExistsAndFresh(): RawProgressReporterHandle? {
+  return currentProgressStep().asRaw()
+}
+
 @Internal // clients are not supposed to put reporter into context
 fun ProgressReporter.asContextElement(): CoroutineContext.Element = ProgressReporterElement.Step(this)
 val CoroutineContext.progressReporter: ProgressReporter? get() = (this[ProgressReporterElement] as? ProgressReporterElement.Step)?.reporter
