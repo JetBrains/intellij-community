@@ -222,7 +222,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
           runLogged("Close project if it is opened") {
             ProjectManagerEx.getOpenProjects().forEach {
-              withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
+              // (RDCT-960) ModalityState.current() is used here, because
+              // both ModalityState.current() and ModalityState.any() allow to start project closing even under modality,
+              // but project closing is not allowed under ModalityState.any() (see doc for ModalityState.any())
+              withContext(Dispatchers.EDT + ModalityState.current().asContextElement() + NonCancellable) {
                 ProjectManagerEx.getInstanceEx().forceCloseProject(it)
               }
             }
