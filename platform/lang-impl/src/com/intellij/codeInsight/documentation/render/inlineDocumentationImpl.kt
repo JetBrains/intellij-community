@@ -71,7 +71,7 @@ internal fun createAdditionalStylesForStyledCode(editor: Editor): String {
 
   if (DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING) {
     result.append(".content code, .sections code $codeColorStyle")
-    result.append(".content code, .sections code { padding: 1px 4px; margin: 1px 0px; }")
+    result.append(".content code, .sections code { padding: 1px 4px; margin: 1px 0px; caption-side: 10px; }")
   }
   if (DocumentationSettings.isHighlightingOfCodeBlocksEnabled()) {
     result.append("div.styled-code $codeColorStyle")

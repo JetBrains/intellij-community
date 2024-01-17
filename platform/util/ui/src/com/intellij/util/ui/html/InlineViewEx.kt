@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.html
 
+import com.intellij.util.asSafely
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Graphics
@@ -16,6 +17,11 @@ import javax.swing.text.html.InlineView
 import javax.swing.text.html.StyleSheet
 import kotlin.math.max
 
+private val CAPTION_SIDE = CSS.Attribute::class.java
+  .getDeclaredField("CAPTION_SIDE")
+  .apply { isAccessible = true }
+  .get(null)
+
 /**
  * Supports paddings and margins for inline elements, like `<span>`. Due to limitations of [HTMLDocument],
  * paddings for nested inline elements are not supported and will cause incorrect rendering.
@@ -25,6 +31,19 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
   private lateinit var padding: JBInsets
   private lateinit var margin: JBInsets
   private lateinit var insets: JBInsets
+
+  // With private fields Java clone doesn't work well
+  @Suppress("ProtectedInFinal")
+  @JvmField
+  protected var borderRadius: Int = -1
+
+  @Suppress("ProtectedInFinal")
+  @JvmField
+  protected var startView: Boolean = false
+
+  @Suppress("ProtectedInFinal")
+  @JvmField
+  protected var endView: Boolean = false
 
   override fun setPropertiesFromAttributes() {
     super.setPropertiesFromAttributes()
@@ -41,8 +60,17 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
     padding = attributes.padding
     margin = attributes.margin
 
-    val startView = prevSibling?.attributes?.padding != padding || prevSibling.attributes.margin != margin
-    val endView = nextSibling?.attributes?.padding != padding || nextSibling.attributes.margin != margin
+    startView = prevSibling?.attributes?.padding != padding || prevSibling.attributes.margin != margin
+    endView = nextSibling?.attributes?.padding != padding || nextSibling.attributes.margin != margin
+
+    // "caption-side" is used as "border-radius"
+    borderRadius = attributes.getAttribute(CAPTION_SIDE)
+                     ?.asSafely<String>()
+                     ?.takeIf { it.endsWith("px") }
+                     ?.removeSuffix("px")
+                     ?.toIntOrNull()
+                     ?.let { JBUI.scale(it) }
+                   ?: 0
 
     padding.set(
       padding.top,
@@ -133,7 +161,18 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
     val bg = getBackground()
     if (bg != null) {
       g.color = bg
-      g.fillRect(alloc.x, alloc.y, alloc.width, alloc.height)
+      if (borderRadius > 0 && (startView || endView)) {
+        g.fillRoundRect(alloc.x, alloc.y, alloc.width, alloc.height, borderRadius, borderRadius)
+        if (!startView) {
+          g.fillRect(alloc.x, alloc.y, alloc.width - borderRadius, alloc.height)
+        }
+        else if (!endView) {
+          g.fillRect(alloc.x + borderRadius, alloc.y, alloc.width, alloc.height)
+        }
+      }
+      else {
+        g.fillRect(alloc.x, alloc.y, alloc.width, alloc.height)
+      }
     }
     // Shrink by padding
     alloc.setBounds(alloc.x + padding.left, alloc.y + padding.top,

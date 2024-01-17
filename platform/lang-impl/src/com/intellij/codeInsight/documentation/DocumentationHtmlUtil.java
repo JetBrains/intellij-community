@@ -127,7 +127,8 @@ public final class DocumentationHtmlUtil {
       if (DocumentationSettings.getInlineCodeHighlightingMode() != InlineCodeHighlightingMode.NO_HIGHLIGHTING) {
         result.add(".content code, .content-separated code, .content-only div:not(.bottom) code, .sections code " + codeColorStyle);
         result.add(
-          ".content code, .content-separated code, .content-only div:not(.bottom) code, .sections code { padding: 1px 4px; margin: 1px 0px; }");
+          // "caption-side" is used by InlineViewEx as "border-radius"
+          ".content code, .content-separated code, .content-only div:not(.bottom) code, .sections code { padding: 1px 4px; margin: 1px 0px; caption-side: 10px }");
       }
       if (DocumentationSettings.isHighlightingOfCodeBlocksEnabled()) {
         result.add("div.styled-code " + codeColorStyle);
