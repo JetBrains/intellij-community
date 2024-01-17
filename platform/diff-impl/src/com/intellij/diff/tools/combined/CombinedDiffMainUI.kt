@@ -366,6 +366,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
       return when {
         DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> model.getCurrentRequest()
+        OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.`is`(dataId) -> Runnable {  DiffUtil.minimizeDiffIfOpenedInWindow(this)}
         CommonDataKeys.PROJECT.`is`(dataId) -> context.project
         PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> {
           if (context.getUserData(DiffUserDataKeys.HELP_ID) != null) {

@@ -1301,7 +1301,14 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         if (data != null) return data;
       }
 
-      return DiffRequestProcessor.this.getData(dataId);
+      data = DiffRequestProcessor.this.getData(dataId);
+      if (data != null) return data;
+
+      if (OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.is(dataId)) {
+        return (Runnable)() -> DiffUtil.minimizeDiffIfOpenedInWindow(DiffRequestProcessor.this.myPanel);
+      }
+
+      return null;
     }
   }
 
