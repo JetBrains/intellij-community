@@ -20,7 +20,7 @@ abstract class AbstractMultiModuleRenameTest : KotlinMultiFileTestCase() {
 
         val file = renameParamsObject.getString("file")
         val newName = renameParamsObject.getString("newName")
-        val testIsEnabledInK2 = renameParamsObject.get(if (isFirPlugin()) "enabledInK2" else "enabledInK1")?.asBoolean != false
+        val isEnabled = renameParamsObject.get(if (isFirPlugin()) "enabledInK2" else "enabledInK1")?.asBoolean != false
 
         isMultiModule = true
 
@@ -40,8 +40,8 @@ abstract class AbstractMultiModuleRenameTest : KotlinMultiFileTestCase() {
         }
 
         results.fold(
-            onSuccess = { require(testIsEnabledInK2) { "This test passes and should be enabled!" } },
-            onFailure = { exception -> if (testIsEnabledInK2) throw exception }
+            onSuccess = { require(isEnabled) { "This test passes and should be enabled!" } },
+            onFailure = { exception -> if (isEnabled) throw exception }
         )
     }
 }

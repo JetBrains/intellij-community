@@ -7,7 +7,6 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.usageView.UsageInfo
-import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -35,9 +34,6 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
-    private fun notImplementedInK2(): Nothing {
-        throw IncorrectOperationException()
-    }
 
     override fun processForeignUsages(
         element: PsiElement,
