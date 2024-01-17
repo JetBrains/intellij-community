@@ -64,6 +64,7 @@ private class TestSplitButtonAction: SplitButtonAction() {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    super.updateCustomComponent(component, presentation)
     (component as? ToolbarSplitButton)?.apply {
       text = "Split button"
       presentation.getClientProperty(LEFT_ICONS_KEY)?.let { leftIcons = it }
@@ -87,14 +88,15 @@ private class TestComboButtonAction: ExpandableComboAction() {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    super.updateCustomComponent(component, presentation)
     (component as? ToolbarComboButton)?.apply {
-      text = "Combo button"
-      leftIcons = listOf(presentation.icon)
+      text = presentation.text
     }
   }
 
   override fun update(e: AnActionEvent) {
     e.presentation.icon = AllIcons.General.Filter
+    e.presentation.text = "Combo button"
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

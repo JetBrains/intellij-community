@@ -36,6 +36,22 @@ abstract class SplitButtonAction : AnAction(), CustomComponentAction {
     return ToolbarSplitButton(model)
   }
 
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    super.updateCustomComponent(component, presentation)
+    component.isEnabled = presentation.isEnabled
+    (component as? AbstractToolbarCombo)?.let {
+      val pLeftIcons = presentation.getClientProperty(ExpandableComboAction.LEFT_ICONS_KEY)
+      val pRightIcons = presentation.getClientProperty(ExpandableComboAction.RIGHT_ICONS_KEY)
+      it.leftIcons = when {
+        pLeftIcons != null -> pLeftIcons
+        !presentation.isEnabled && presentation.disabledIcon != null -> listOf(presentation.disabledIcon)
+        presentation.icon != null -> listOf(presentation.icon)
+        else -> emptyList()
+      }
+      if (pRightIcons != null) it.rightIcons = pRightIcons
+    }
+  }
+
   protected abstract fun createPopup(event: AnActionEvent): JBPopup?
 
   protected open fun buttonPressed(event: ActionEvent, widget: JComponent, presentation: Presentation, place: String) {

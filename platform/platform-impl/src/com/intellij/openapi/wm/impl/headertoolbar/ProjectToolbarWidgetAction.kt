@@ -65,6 +65,8 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    super.updateCustomComponent(component, presentation)
+
     val widget = component as? ToolbarComboButton ?: return
 
     widget.text = presentation.text

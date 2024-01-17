@@ -44,6 +44,22 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
     return createToolbarComboButton(model)
   }
 
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    super.updateCustomComponent(component, presentation)
+    component.isEnabled = presentation.isEnabled
+    (component as? AbstractToolbarCombo)?.let {
+      val pLeftIcons = presentation.getClientProperty(LEFT_ICONS_KEY)
+      val pRightIcons = presentation.getClientProperty(RIGHT_ICONS_KEY)
+      it.leftIcons = when {
+        pLeftIcons != null -> pLeftIcons
+        !presentation.isEnabled && presentation.disabledIcon != null -> listOf(presentation.disabledIcon)
+        presentation.icon != null -> listOf(presentation.icon)
+        else -> emptyList()
+      }
+      if (pRightIcons != null) it.rightIcons = pRightIcons
+    }
+  }
+
   protected open fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
     return ToolbarComboButton(model)
   }
