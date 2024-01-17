@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Experimental
 
 package com.intellij.platform.util.coroutines
@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.experimental.ExperimentalTypeInference
 
 /**
  * An arbitrary number.
@@ -105,9 +106,10 @@ suspend fun <X> Collection<X>.forEachConcurrent(
  * @see mapConcurrent
  * @see filterConcurrent
  */
+@OptIn(ExperimentalTypeInference::class)
 suspend fun <T, R> Collection<T>.transformConcurrent(
   concurrency: Int = DEFAULT_CONCURRENCY,
-  action: suspend TransformCollector<R>.(T) -> Unit,
+  @BuilderInference action: suspend TransformCollector<R>.(T) -> Unit,
 ): Collection<R> {
   require(concurrency > 0)
   return channelFlow {
