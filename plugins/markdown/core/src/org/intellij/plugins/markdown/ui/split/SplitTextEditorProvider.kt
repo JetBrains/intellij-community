@@ -33,7 +33,9 @@ abstract class SplitTextEditorProvider(
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return createEditorAsync(project = project, file = file).build()
+    val first = firstProvider.createEditor(project, file)
+    val second = secondProvider.createEditor(project, file)
+    return createSplitEditor(first, second)
   }
 
   override fun getEditorTypeId(): String {
