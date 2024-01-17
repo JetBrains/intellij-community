@@ -133,7 +133,12 @@ internal class CodingTimeUserActivityEditorFactoryListener : EditorFactoryListen
         if (DocumentHolder.getInstance(project).isAllowed(vf)) {
           FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(CodingTimeUserActivity) {
             val psiFile = readAction {
-              PsiManagerEx.getInstance(project).findFile(vf)?.validOrNull()
+              if (vf.isValid) {
+                PsiManagerEx.getInstance(project).findFile(vf)?.validOrNull()
+              }
+              else {
+                null
+              }
             } ?: return@runUpdateEvent
             it.write(editorId, psiFile.language, vf)
           }
@@ -147,7 +152,7 @@ internal class CodingTimeUserActivityCommandListener : CommandListener {
   override fun commandStarted(event: CommandEvent) {
     val doc = event.commandGroupId as? Document
     if (doc != null) {
-      val vf = FileDocumentManager.getInstance().getFile(doc)
+      val vf = FileDocumentManager.getInstance().getFile(doc)?.validOrNull()
       val project = event.project
       if (vf != null && project != null) {
         DocumentHolder.getInstance(project).submit(vf)
@@ -158,7 +163,7 @@ internal class CodingTimeUserActivityCommandListener : CommandListener {
   override fun commandFinished(event: CommandEvent) {
     val doc = event.commandGroupId as? Document
     if (doc != null) {
-      val vf = FileDocumentManager.getInstance().getFile(doc)
+      val vf = FileDocumentManager.getInstance().getFile(doc)?.validOrNull()
       val project = event.project
       if (vf != null && project != null) {
         DocumentHolder.getInstance(project).remove(vf)
