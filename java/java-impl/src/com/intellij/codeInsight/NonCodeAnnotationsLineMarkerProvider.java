@@ -90,6 +90,11 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     for (PsiElement element : elements) {
       LineMarkerInfo<?> info = buildLineMarkerInfo(element);
       if (info != null) {
+        List<NonCodeAnnotationsMarkerSuppressor> suppressors = NonCodeAnnotationsMarkerSuppressor.EP_NAME.getExtensionList();
+        if (ContainerUtil.exists(suppressors, suppressor -> suppressor.isLineMarkerSuppressed(element))) {
+          continue;
+        }
+
         result.add(info);
       }
     }
