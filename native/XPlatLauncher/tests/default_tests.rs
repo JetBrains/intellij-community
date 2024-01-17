@@ -31,7 +31,7 @@ mod tests {
     fn classpath_test_on_unc() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
         let test_unc = test_orig.to_unc();
-        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test_unc, LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
@@ -45,7 +45,7 @@ mod tests {
     fn classpath_test_on_ns_prefixed_path() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
         let test_unc = test_orig.to_ns_prefix();
-        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test_unc, LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
