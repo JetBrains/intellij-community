@@ -156,6 +156,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
   }
 
   private void showHint(final Editor editor, final int oldLine) {
+    int lineInCurrent = oldToNew(oldLine);
+    if (lineInCurrent < 0) return;
     JBColor borderColor = new JBColor(Gray._206, Gray._75);
     final JPanel panel = new JPanel(new VerticalLayout(0));
     panel.setBorder(JBUI.Borders.customLine(borderColor));
@@ -165,8 +167,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     final LineData lineData = getLineData(oldLine);
     final Editor uEditor;
     final String report;
-    int lineInCurrent = oldToNew(oldLine);
-    if (!mySubCoverageActive && lineInCurrent >= 0 && (report = getReport(lineData, lineInCurrent, editor, myCoverageSuite)) != null) {
+    if (!mySubCoverageActive && (report = getReport(lineData, lineInCurrent, editor, myCoverageSuite)) != null) {
       final EditorFactory factory = EditorFactory.getInstance();
       final Document doc = factory.createDocument(report);
       doc.setReadOnly(true);
