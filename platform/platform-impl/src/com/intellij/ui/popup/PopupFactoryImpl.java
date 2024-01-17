@@ -779,6 +779,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public static final class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
+
     private final AnAction myAction;
     private final Presentation myPresentation = new Presentation();
 

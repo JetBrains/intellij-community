@@ -160,7 +160,9 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         }
         text(LessonsBundle.message("run.configuration.run.generated.configuration"))
         stateCheck {
-          RunConfigurationStartHistory.getInstance(project).history().firstOrNull()?.configuration?.name == demoWithParametersName
+          val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
+          RunConfigurationStartHistory.getInstance(project).history().asSequence().mapNotNull { settings[it] }
+            .firstOrNull()?.configuration?.name == demoWithParametersName
         }
         restoreByUi(restoreId = dropDownTask)
         test {

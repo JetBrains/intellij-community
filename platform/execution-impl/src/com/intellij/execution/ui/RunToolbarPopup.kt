@@ -16,7 +16,6 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.HideableAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
@@ -46,6 +45,7 @@ import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
+import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -73,36 +73,56 @@ private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.con
 @ApiStatus.Internal
 val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.popup.parent.action")
 
+private const val TAG_PINNED = "pinned"
+private const val TAG_RECENT = "recent"
+private const val TAG_REGULAR_HIDE = "regular-hide"
+private const val TAG_REGULAR_SHOW = "regular-show"
+private const val TAG_HIDDEN = "hidden"
+
 internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
-  val pinned = RunConfigurationStartHistory.getInstance(project).pinned()
-  val recents = RunConfigurationStartHistory.getInstance(project).historyWithoutPinned().take(max(recentLimit, 0))
 
+  val cfgMap = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
+
+  val pinnedIds = RunConfigurationStartHistory.getInstance(project).pinned()
+  val historyIds = RunConfigurationStartHistory.getInstance(project).history()
+  val pinned = pinnedIds.mapNotNull { cfgMap[it] }
+  val recents = (historyIds - pinnedIds).asSequence().mapNotNull { cfgMap[it] }.take(max(recentLimit, 0)).toSet()
+
+  val alreadyShownIds = HashSet<String>()
   if (pinned.isNotEmpty()) {
     actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.pinned.separator.text")))
     for (conf in pinned) {
-      actions.add(createRunConfigurationWithInlines(project, conf, runExecutor, debugExecutor, pinned))
+      actions.add(createRunConfigurationWithInlines(project, conf, runExecutor, debugExecutor, true).also {
+        it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, TAG_PINNED)
+        it.templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, conf.folderName)
+      })
+      alreadyShownIds.add(conf.uniqueID)
     }
     actions.add(Separator.create())
   }
 
   val configurationMap = RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true)
   val configurationCount = configurationMap.values.asSequence().map { it.values }.flatten().map { it.size }.sum()
-  val shouldShowRecent: Boolean = (recents.isNotEmpty() || pinned.isNotEmpty()) && configurationCount >= recentLimit
 
-  if (shouldShowRecent) {
+  val withShowAllToggle = (recents.isNotEmpty() || pinned.isNotEmpty()) && configurationCount >= recentLimit
+  if (withShowAllToggle) {
     actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
     for (conf in recents) {
-      actions.add(createRunConfigurationWithInlines(project, conf, runExecutor, debugExecutor, pinned))
+      actions.add(createRunConfigurationWithInlines(project, conf, runExecutor, debugExecutor, false).also {
+        it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, TAG_RECENT)
+        it.templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, conf.folderName)
+      })
+      alreadyShownIds.add(conf.uniqueID)
     }
     actions.add(Separator.create())
     actions.add(AllRunConfigurationsToggle(allConfigurationMessage(configurationCount)))
   }
-  actions.add(createRunConfigurationFolderActions(project, configurationMap.values, recents, shouldShowRecent) { it, shouldBeShown ->
-    createRunConfigurationWithInlines(project, it, runExecutor, debugExecutor, pinned, shouldBeShown)
+  actions.add(createRunConfigurationActionGroup(configurationMap.values, alreadyShownIds, withShowAllToggle) {
+    createRunConfigurationWithInlines(project, it, runExecutor, debugExecutor, false)
   })
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
     actions.add(createCurrentFileWithInlineActions(runExecutor, debugExecutor, project))
@@ -112,20 +132,11 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
   return actions
 }
 
-private fun createRunConfigurationFolderActions(project: Project,
-                                                folderMaps: Collection<Map<String?, List<RunnerAndConfigurationSettings>>>,
-                                                recents: List<RunnerAndConfigurationSettings>,
-                                                shouldShowRecent: Boolean,
-                                                createFinalAction: (RunnerAndConfigurationSettings,
-                                                                    shouldBeShown: (Boolean) -> Boolean) -> AnAction): AnAction {
-  val shouldBeShown = { configuration: RunnerAndConfigurationSettings?, holdingFilter: Boolean ->
-    when {
-      !shouldShowRecent -> true
-      holdingFilter -> configuration == null || !recents.contains(configuration)
-      else -> RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
-    }
-  }
-
+private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?, List<RunnerAndConfigurationSettings>>>,
+                                              alreadyShownIds: Set<String>,
+                                              withShowAllToggle: Boolean,
+                                              actionCreator: (RunnerAndConfigurationSettings) -> AnAction): AnAction {
+  val regularTag = if (withShowAllToggle) TAG_REGULAR_HIDE else TAG_REGULAR_SHOW
   return object : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
       val result = ArrayList<AnAction>()
@@ -137,20 +148,25 @@ private fun createRunConfigurationFolderActions(project: Project,
               val folderName = folderEntry.key
               if (folderName == null) {
                 folderEntry.value.forEach { cfg ->
-                  result.add(createFinalAction(cfg) { shouldBeShown(cfg, it)})
+                  if (alreadyShownIds.contains(cfg.uniqueID)) return@forEach
+                  result.add(actionCreator(cfg).also {
+                    it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, regularTag)
+                  })
                 }
               }
               else {
-                result.add(object : ActionGroup(), AlwaysVisibleActionGroup, HideableAction {
+                result.add(object : ActionGroup(), AlwaysVisibleActionGroup {
                   init {
                     templatePresentation.setPopupGroup(true)
                     templatePresentation.setText(folderName)
                     templatePresentation.setIcon(AllIcons.Nodes.Folder)
+                    templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, regularTag)
                   }
 
                   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
                     return folderEntry.value.map { cfg ->
-                      createFinalAction(cfg) { shouldBeShown(cfg, it) }}.toTypedArray()
+                      actionCreator(cfg)
+                    }.toTypedArray()
                   }
                 })
               }
@@ -158,7 +174,9 @@ private fun createRunConfigurationFolderActions(project: Project,
             for (folderEntry in folderMap.entries) {
               if (folderEntry.key == null) continue
               folderEntry.value.forEach { cfg ->
-                result.add(createFinalAction(cfg) { it && !recents.contains(cfg) }.also {
+                if (alreadyShownIds.contains(cfg.uniqueID)) return@forEach
+                result.add(actionCreator(cfg).also {
+                  it.templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, TAG_HIDDEN)
                   it.templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, folderEntry.key)
                 })
               }
@@ -179,15 +197,20 @@ private fun allConfigurationMessage(number: Int): @Nls String {
   return "<html>$message</html>"
 }
 
-internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataContext: DataContext, disposeCallback: (() -> Unit)?) :
+internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
+                                                 dataContext: DataContext,
+                                                 disposeCallback: (() -> Unit)?) :
   PopupFactoryImpl.ActionGroupPopup(null, actionGroup, dataContext, false, false, true, false,
                                     disposeCallback, 30, null, null, PresentationFactory(), false) {
 
-  private val pinnedSize = RunConfigurationStartHistory.getInstance(project).pinned().size
+  private val pinnedSize: Int
+  private val serviceState: RunConfigurationStartHistory
 
   init {
+    serviceState = RunConfigurationStartHistory.getInstance(project)
     list.setExpandableItemsEnabled(false)
-    (step as ActionPopupStep).setSubStepContextAdjuster { context, action ->
+    myStep as ActionPopupStep
+    myStep.setSubStepContextAdjuster { context, action ->
       if (action is SelectConfigAction) {
         CustomizedDataContext.create(context) { dataId ->
           if (RUN_CONFIGURATION_KEY.`is`(dataId)) action.configuration else null
@@ -195,11 +218,16 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
       }
       else context
     }
+    pinnedSize = myStep.values.asSequence()
+      .filter { it.action !is Separator }
+      .takeWhile { it.getClientProperty(ActionUtil.SEARCH_TAG) == TAG_PINNED }
+      .count()
     if (pinnedSize != 0) {
       val dndManager = DnDManager.getInstance()
       dndManager.registerSource(MyDnDSource(), list, this)
       dndManager.registerTarget(MyDnDTarget(), list, this)
     }
+    listModel.syncModel()
   }
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
@@ -208,12 +236,25 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
     return popup
   }
 
+  override fun getListElementRenderer(): PopupListElementRenderer<PopupFactoryImpl.ActionItem> {
+    return object : PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
+      override fun isShowSecondaryText(): Boolean = mySpeedSearch.isHoldingFilter
+    }
+  }
+
   override fun shouldBeShowing(value: Any?): Boolean {
+    @Suppress("SENSELESS_COMPARISON")
+    if (serviceState == null) return true
     if (!super.shouldBeShowing(value)) return false
     if (value !is PopupFactoryImpl.ActionItem) return true
-    val action = value.action
-    val holdingFilter = mySpeedSearch.isHoldingFilter
-    return if (action is HideableAction) return action.shouldBeShown(holdingFilter) else true
+    val isFiltering = mySpeedSearch.isHoldingFilter
+    val tag = value.getClientProperty(ActionUtil.SEARCH_TAG)
+    return when {
+      isFiltering -> true
+      tag == TAG_REGULAR_SHOW -> true
+      serviceState.state.allConfigurationsExpanded -> tag != TAG_HIDDEN
+      else -> tag == null || tag == TAG_PINNED || tag == TAG_RECENT
+    }
   }
 
   override fun getList(): JBList<*> {
@@ -310,8 +351,7 @@ private fun createRunConfigurationWithInlines(project: Project,
                                               conf: RunnerAndConfigurationSettings,
                                               runExecutor: Executor,
                                               debugExecutor: Executor,
-                                              pinned: List<RunnerAndConfigurationSettings>,
-                                              shouldBeShown: (Boolean) -> Boolean = { true }
+                                              isPinned: Boolean
 ): SelectRunConfigurationWithInlineActions {
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
@@ -334,14 +374,14 @@ private fun createRunConfigurationWithInlines(project: Project,
     ))
   }
   val extraGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(conf, false)
-  val result = object : SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown) {
+  val result = object : SelectRunConfigurationWithInlineActions(inlineActions, conf, project) {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
       var prefix = listOf<AnAction>(extraGroup)
       if (showRerunAndStopButtons) {
         val extraExecutor = if (activeExecutor === runExecutor) debugExecutor else runExecutor
         prefix = prefix + ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
       }
-      val pinActionText = if (pinned.contains(conf)) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
+      val pinActionText = if (isPinned) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
       else ExecutionBundle.message("run.toolbar.widget.dropdown.pin.action.text")
       val pinAction = object : ActionRemotePermissionRequirements.ActionWithWriteAccess(pinActionText) {
         override fun actionPerformed(e: AnActionEvent) {
@@ -421,8 +461,7 @@ internal open class SelectRunConfigurationWithInlineActions(
   private val actions: List<AnAction>,
   configuration: RunnerAndConfigurationSettings,
   project: Project,
-  override val shouldBeShown: (holdingFilter: Boolean) -> Boolean
-) : SelectConfigAction(project, configuration), InlineActionsHolder, HideableAction {
+) : SelectConfigAction(project, configuration), InlineActionsHolder {
   override fun getInlineActions(): List<AnAction> = actions
 }
 
@@ -576,19 +615,12 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     var setting: String? = "",
   )
 
-  fun pinned(): List<RunnerAndConfigurationSettings> {
-    val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
-    return _state.pinned.mapNotNull { settings[it.setting] }
+  fun pinned(): Set<String> {
+    return _state.pinned.asSequence().mapNotNull { it.setting }.toSet()
   }
 
-  fun historyWithoutPinned(): List<RunnerAndConfigurationSettings> {
-    val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
-    return (_state.history - _state.pinned).mapNotNull { settings[it.setting] }
-  }
-
-  fun history(): List<RunnerAndConfigurationSettings> {
-    val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
-    return _state.history.mapNotNull { settings[it.setting] }
+  fun history(): Set<String> {
+    return _state.history.asSequence().mapNotNull { it.setting }.toSet()
   }
 
   fun togglePin(setting: RunnerAndConfigurationSettings) {
