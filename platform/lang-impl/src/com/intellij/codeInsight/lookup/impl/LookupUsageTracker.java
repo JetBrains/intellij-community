@@ -28,13 +28,14 @@ import java.util.List;
 
 import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
 import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER;
+import static com.intellij.codeInsight.completion.CompletionData.LOOKUP_ELEMENT_PSI_REFERENCE;
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
 import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATION_CHAR;
 
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 25);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 26);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -48,6 +49,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
   private static final IntEventField TOKEN_LENGTH = EventFields.Int("token_length");
   private static final IntEventField QUERY_LENGTH = EventFields.Int("query_length");
   private static final ClassEventField CONTRIBUTOR = EventFields.Class("contributor");
+  private static final ClassEventField PSI_REFERENCE = EventFields.Class("psi_reference");
   private static final LongEventField TIME_TO_SHOW = EventFields.Long("time_to_show");
   private static final LongEventField TIME_TO_SHOW_CORRECT_ELEMENT = EventFields.Long("time_to_show_correct_element");
   private static final LongEventField TIME_TO_SHOW_FIRST_ELEMENT = EventFields.Long("time_to_show_first_element");
@@ -230,6 +232,10 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
         CompletionContributor contributor = currentItem.getUserData(BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR);
         if (contributor != null) {
           data.add(CONTRIBUTOR.with(contributor.getClass()));
+        }
+        var psiReference = currentItem.getUserData(LOOKUP_ELEMENT_PSI_REFERENCE);
+        if (psiReference != null) {
+          data.add(PSI_REFERENCE.with(psiReference.getClass()));
         }
       }
 
