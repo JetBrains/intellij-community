@@ -131,7 +131,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState = state;
     if (isInitialized()) {
       applyStateToTree(myProjectsTree, this);
-      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false, false));
     }
   }
 
@@ -270,7 +269,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (runImportOnStartup.get()) {
         var forceImport =
           Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
-        scheduleUpdateAllMavenProjects(new MavenImportSpec(forceImport, forceImport, false));
+        if (forceImport) {
+          scheduleUpdateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT);
+        }
       }
     }
   }
