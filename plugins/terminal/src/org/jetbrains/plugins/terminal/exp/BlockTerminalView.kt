@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.find.SearchSession
+import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -117,6 +119,16 @@ class BlockTerminalView(
     installTypingEventsForwarding(outputView.preferredFocusableComponent, promptView.preferredFocusableComponent)
 
     installPromptAndOutput()
+
+    focusModel.addListener(object: TerminalFocusModel.TerminalFocusListener {
+      override fun activeStateChanged(isActive: Boolean) {
+        if (isActive) {
+          if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
+            FileDocumentManager.getInstance().saveAllDocuments()
+          }
+        }
+      }
+    })
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
