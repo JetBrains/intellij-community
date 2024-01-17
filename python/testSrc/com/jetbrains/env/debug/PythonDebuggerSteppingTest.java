@@ -3,7 +3,6 @@ package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -46,9 +45,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     }
 
     void assertSmartStepIntoVariants(@NotNull String @NotNull ... expectedFunctionNames) {
-      ReadAction.run(() -> {
-        List<?> variants = getSmartStepIntoVariants();
-
+      getSmartStepIntoVariantsAsync().onSuccess(variants -> {
         String[] arr = new String[variants.size()];
         for(int i = 0; i < arr.length; i++) {
           PySmartStepIntoVariant v = (PySmartStepIntoVariant) variants.get(i);

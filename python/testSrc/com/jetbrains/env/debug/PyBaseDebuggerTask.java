@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -34,6 +33,7 @@ import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 
 import java.io.PrintWriter;
@@ -130,8 +130,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     Assert.assertTrue(currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
-    ReadAction.run(() -> {
-      List<?> smartStepIntoVariants = getSmartStepIntoVariants();
+    getSmartStepIntoVariantsAsync().onSuccess(smartStepIntoVariants -> {
       for (Object o : smartStepIntoVariants) {
         PySmartStepIntoVariant variant = (PySmartStepIntoVariant) o;
         if (variant.getFunctionName().equals(funcName) && variant.getCallOrder() == callOrder)
@@ -541,9 +540,9 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return hasChildWithValue(children, Integer.toString(value));
   }
 
-  public List<?> getSmartStepIntoVariants() {
+  public @NotNull Promise<? extends List<?>> getSmartStepIntoVariantsAsync() {
       XSourcePosition position = XDebuggerManager.getInstance(getProject()).getCurrentSession().getCurrentPosition();
-      return myDebugProcess.getSmartStepIntoHandler().computeSmartStepVariants(position);
+      return myDebugProcess.getSmartStepIntoHandler().computeSmartStepVariantsAsync(position);
   }
 
   @Override
