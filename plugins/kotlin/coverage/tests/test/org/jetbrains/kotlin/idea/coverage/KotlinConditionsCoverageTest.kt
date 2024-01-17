@@ -24,6 +24,9 @@ class KotlinConditionsCoverageTest : AbstractPsiConditionsCoverageTest() {
     fun `test kotlin nullability`() = assertHints("KtNullability", true)
 
     @Test
+    fun `test kotlin line breaks`() = assertHints("KtLineBreaks", true)
+
+    @Test
     fun `test kotlin jacoco switches hints`() = assertHints("KtSwitches", false)
 
     @Test
@@ -37,4 +40,7 @@ class KotlinConditionsCoverageTest : AbstractPsiConditionsCoverageTest() {
 
     @Test
     fun `test kotlin jacoco nullability`() = assertHints("KtNullability", false)
+
+    @Test
+    fun `test kotlin jacoco line breaks`() = assertHints("KtLineBreaks", false)
 }

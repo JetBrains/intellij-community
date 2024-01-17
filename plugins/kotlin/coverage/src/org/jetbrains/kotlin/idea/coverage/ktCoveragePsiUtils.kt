@@ -31,8 +31,13 @@ internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchCoverag
 }
 
 internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionCoverageExpression> {
-    val parent = getEnclosingParent(psiFile, range) ?: return emptyList()
-    fun PsiElement.startsInRange() = textOffset in range
+    fun PsiElement.intersectsWithRange() = textRange.intersects(range)
+    fun PsiElement.endsInRange() = textRange.endOffset - 1 in range
+
+    val enclosingParent = getEnclosingParent(psiFile, range) ?: return emptyList()
+    val parent = enclosingParent.parents(withSelf = true).firstOrNull {
+        it is KtStatementExpression || it is KtFile
+    } ?: return emptyList()
 
     val expressions = LinkedHashSet<KtExpression>()
     parent.accept(object : RangePsiVisitor(range) {
@@ -42,22 +47,22 @@ internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionCo
         }
 
         override fun visitIfExpression(expression: KtIfExpression) {
-            expression.takeIf(PsiElement::startsInRange)?.condition?.also { expressions.add(it) }
+            expression.condition?.takeIf(PsiElement::intersectsWithRange)?.also { expressions.add(it) }
             super.visitIfExpression(expression)
         }
 
         override fun visitForExpression(expression: KtForExpression) {
-            expression.loopRange?.takeIf(PsiElement::startsInRange)?.also { expressions.add(it) }
+            expression.loopRange?.takeIf(PsiElement::endsInRange)?.also { expressions.add(it) }
             super.visitForExpression(expression)
         }
 
         override fun visitWhileExpression(expression: KtWhileExpression) {
-            expression.condition?.takeIf(PsiElement::startsInRange)?.also { expressions.add(it) }
+            expression.condition?.takeIf(PsiElement::endsInRange)?.also { expressions.add(it) }
             super.visitWhileExpression(expression)
         }
 
         override fun visitDoWhileExpression(expression: KtDoWhileExpression) {
-            expression.condition?.takeIf(PsiElement::startsInRange)?.also { expressions.add(it) }
+            expression.condition?.takeIf(PsiElement::endsInRange)?.also { expressions.add(it) }
             super.visitDoWhileExpression(expression)
         }
 
@@ -78,7 +83,8 @@ internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionCo
         }
     })
     return expressions
-        .flatMap(KtExpression::breakIntoConditions)
+        .flatMap { it.breakIntoConditions(range.startOffset, true) }
+        .map { (expression, text) -> ConditionCoverageExpression(text, expression.isReversedCondition()) }
 }
 
 private open class RangePsiVisitor(private val range: TextRange) : KtTreeVisitorVoid() {
@@ -101,21 +107,26 @@ private fun KtBinaryExpression.isBoolOperator(): Boolean {
     return token == KtTokens.OROR || token == KtTokens.ANDAND
 }
 
-private fun KtExpression.breakIntoConditions(parentIsBoolOperator: Boolean = true): List<ConditionCoverageExpression> {
+private fun KtExpression.breakIntoConditions(offset: Int, singleElement: Boolean = false): List<Pair<KtExpression, String>> {
     val expression = this.withoutParentheses() ?: return emptyList()
     return if (expression is KtBinaryExpression && expression.isBoolOperator()) {
-        (expression.left?.breakIntoConditions(true) ?: emptyList()) +
-                (expression.right?.breakIntoConditions(true) ?: emptyList())
+        val leftExpressions = expression.left?.breakIntoConditions(offset, true) ?: emptyList()
+        val rightExpressions = expression.right?.breakIntoConditions(offset, true) ?: emptyList()
+        return (leftExpressions + rightExpressions).filter { it.first.textOffset >= offset }
     } else if (expression is KtBinaryExpression && expression.operationToken == KtTokens.ELVIS) {
-        (expression.left?.breakIntoConditions(false) ?: emptyList()) +
-                listOf(ConditionCoverageExpression("${expression.left?.text} != null", false)) +
-                (expression.right?.breakIntoConditions(false) ?: emptyList())
+        val left = expression.left ?: return emptyList()
+        val leftExpressions = left.breakIntoConditions(offset)
+        val rightExpressions = expression.right?.breakIntoConditions(offset) ?: emptyList()
+        leftExpressions + listOf(this to "${left.text} != null") + rightExpressions
     } else if (expression is KtSafeQualifiedExpression) {
-        (expression.receiverExpression.breakIntoConditions(false)) +
-                listOf(ConditionCoverageExpression("${expression.receiverExpression.text} != null", false)) +
-                (expression.selectorExpression?.breakIntoConditions(false) ?: emptyList())
-    } else if (parentIsBoolOperator) {
-        listOf(ConditionCoverageExpression(expression.text, this.isReversedCondition()))
+        val left = expression.receiverExpression
+        val right = expression.selectorExpression ?: return emptyList()
+        val leftExpressions = left.breakIntoConditions(offset)
+        val rightExpressions = right.breakIntoConditions(offset)
+        val expressions = if (right.textOffset >= offset) listOf(this to "${left.text} != null") else emptyList()
+        leftExpressions + expressions + rightExpressions
+    } else if (singleElement) {
+        listOf(this to expression.text)
     } else emptyList()
 }
 
