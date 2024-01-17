@@ -96,7 +96,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                                             modelsProvider: IdeModifiableModelsProvider?,
                                                             previewModule: Module?): List<Module> {
     blockingContext { doAddManagedFilesWithProfiles(files, profiles, previewModule) }
-    return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider)
+    return updateAllMavenProjects(MavenImportSpec(false, false), modelsProvider)
   }
 
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>) {
@@ -217,10 +217,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                            filesToDelete: List<VirtualFile>) {
     importMutex.withLock {
       MavenLog.LOG.warn(
-        "updateMavenProjects started: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+        "updateMavenProjects started: ${spec.isForceReading} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
       doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
       MavenLog.LOG.warn(
-        "updateMavenProjects finished: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+        "updateMavenProjects finished: ${spec.isForceReading} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
     }
   }
 
@@ -279,9 +279,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun updateAllMavenProjects(spec: MavenImportSpec,
                                              modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     importMutex.withLock {
-      MavenLog.LOG.warn("updateAllMavenProjects started: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport}")
+      MavenLog.LOG.warn("updateAllMavenProjects started: ${spec.isForceReading} ${spec.isExplicitImport}")
       val result = doUpdateAllMavenProjects(spec, modelsProvider)
-      MavenLog.LOG.warn("updateAllMavenProjects finished: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport}")
+      MavenLog.LOG.warn("updateAllMavenProjects finished: ${spec.isForceReading} ${spec.isExplicitImport}")
       return result
     }
   }
@@ -296,57 +296,48 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                             modelsProvider: IdeModifiableModelsProvider?,
                                             read: suspend () -> MavenProjectsTreeUpdateResult): List<Module> {
     // display all import activities using the same build progress
-    logDebug("Start update ${project.name}, ${spec.isForceReading}, ${spec.isForceResolve}, ${spec.isExplicitImport}")
+    logDebug("Start update ${project.name}, ${spec.isForceReading}, ${spec.isExplicitImport}")
     ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncStarted(myProject)
 
     MavenSyncConsole.startTransaction(myProject)
     val syncActivity = importActivityStarted(project, MavenUtil.SYSTEM_ID)
     try {
+      val console = syncConsole
+      console.startImport(spec)
+      if (MavenUtil.enablePreimport()) {
+        val result = MavenProjectStaticImporter.getInstance(myProject)
+          .syncStatic(
+            projectsTree.existingManagedFiles,
+            modelsProvider,
+            importingSettings,
+            generalSettings,
+            !project.isTrusted(),
+            syncActivity)
+        if (MavenUtil.enablePreimportOnly()) return result.modules
 
-
-      if (spec.isForceResolve) {
-
-        val console = syncConsole
-        console.startImport(spec)
-        if (MavenUtil.enablePreimport()) {
-          val result = MavenProjectStaticImporter.getInstance(myProject)
-            .syncStatic(
-              projectsTree.existingManagedFiles,
-              modelsProvider,
-              importingSettings,
-              generalSettings,
-              !project.isTrusted(),
-              syncActivity)
-          if (MavenUtil.enablePreimportOnly()) return result.modules
-
-          if (!project.isTrusted()) {
-            projectsTree.updater().copyFrom(result.projectTree)
-            showUntrustedProjectNotification(myProject)
-            return result.modules
-          }
+        if (!project.isTrusted()) {
+          projectsTree.updater().copyFrom(result.projectTree)
+          showUntrustedProjectNotification(myProject)
+          return result.modules
         }
-        val readingResult = readMavenProjectsActivity(syncActivity) { read() }
-
-        fireImportAndResolveScheduled()
-        val projectsToResolve = collectProjectsToResolve(readingResult)
-
-        val result = importModules(syncActivity, projectsToResolve, modelsProvider)
-
-        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-
-        return result
       }
-      else {
-        val readingResult = readMavenProjectsActivity(syncActivity) { read() }
-      }
-      return emptyList()
+      val readingResult = readMavenProjectsActivity(syncActivity) { read() }
+
+      fireImportAndResolveScheduled()
+      val projectsToResolve = collectProjectsToResolve(readingResult)
+
+      val result = importModules(syncActivity, projectsToResolve, modelsProvider)
+
+      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+
+      return result
     }
     catch (e: Throwable) {
       logImportErrorIfNotControlFlow(e)
       return emptyList()
     }
     finally {
-      logDebug("Finish update ${project.name}, ${spec.isForceReading}, ${spec.isForceResolve}, ${spec.isExplicitImport}")
+      logDebug("Finish update ${project.name}, ${spec.isForceReading}, ${spec.isExplicitImport}")
       MavenSyncConsole.finishTransaction(myProject)
       syncActivity.finished {
         listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),

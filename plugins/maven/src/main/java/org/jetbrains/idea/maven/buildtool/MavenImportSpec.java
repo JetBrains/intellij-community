@@ -3,25 +3,19 @@ package org.jetbrains.idea.maven.buildtool;
 
 public class MavenImportSpec {
 
-  public static final MavenImportSpec EXPLICIT_IMPORT = new MavenImportSpec(true, true, true);
-  public static final MavenImportSpec IMPLICIT_IMPORT = new MavenImportSpec(true, true, false);
+  public static final MavenImportSpec EXPLICIT_IMPORT = new MavenImportSpec(true, true);
+  public static final MavenImportSpec IMPLICIT_IMPORT = new MavenImportSpec(true, false);
 
   private final boolean myForceReading;
-  private final boolean myForceResolve;
   private final boolean myExplicitImport;
 
-  public MavenImportSpec(boolean forceReading, boolean forceImportAndResolve, boolean explicitImport) {
+  public MavenImportSpec(boolean forceReading, boolean explicitImport) {
     myForceReading = forceReading;
-    myForceResolve = forceImportAndResolve;
     myExplicitImport = explicitImport;
   }
 
   public boolean isForceReading() {
     return myForceReading;
-  }
-
-  public boolean isForceResolve() {
-    return myForceResolve;
   }
 
   public boolean isExplicitImport() {
@@ -32,7 +26,6 @@ public class MavenImportSpec {
   public String toString() {
     return "MavenImportSpec{" +
            "forceReading=" + myForceReading +
-           ", forceResolve=" + myForceResolve +
            ", explicit=" + myExplicitImport +
            '}';
   }

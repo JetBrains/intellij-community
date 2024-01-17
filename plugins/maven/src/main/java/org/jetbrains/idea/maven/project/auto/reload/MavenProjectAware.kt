@@ -48,7 +48,7 @@ class MavenProjectAware(
     if (context.hasUndefinedModifications) {
       cs.launch {
         manager.findAllAvailablePomFilesIfNotMavenized()
-        manager.updateAllMavenProjects(MavenImportSpec(true, true, context.isExplicitReload))
+        manager.updateAllMavenProjects(MavenImportSpec(true, context.isExplicitReload))
       }
     }
     else {
@@ -58,13 +58,13 @@ class MavenProjectAware(
         val deleted = settingsFilesContext.deleted
         if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
           cs.launch {
-            manager.updateMavenProjects(MavenImportSpec(true, true, context.isExplicitReload), filesToUpdate, filesToDelete)
+            manager.updateMavenProjects(MavenImportSpec(true, context.isExplicitReload), filesToUpdate, filesToDelete)
           }
         }
         else {
           cs.launch {
             manager.findAllAvailablePomFilesIfNotMavenized()
-            manager.updateAllMavenProjects(MavenImportSpec(false, true, context.isExplicitReload))
+            manager.updateAllMavenProjects(MavenImportSpec(false, context.isExplicitReload))
           }
         }
       }

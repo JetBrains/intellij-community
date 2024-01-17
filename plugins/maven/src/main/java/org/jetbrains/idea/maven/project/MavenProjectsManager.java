@@ -448,7 +448,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete);
-    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, false));
+    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false));
   }
 
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
@@ -711,7 +711,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
     if (!isInitialized()) {
       initAndActivate();
-      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, false));
+      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false));
     }
     newTree.addListenersFrom(myProjectsTree);
     myProjectsTree = newTree;
@@ -751,7 +751,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, true));
+    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true));
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
