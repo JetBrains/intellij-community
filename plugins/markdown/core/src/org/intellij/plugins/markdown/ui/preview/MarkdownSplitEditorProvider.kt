@@ -42,19 +42,19 @@ class MarkdownSplitEditorProvider : SplitTextEditorProvider(PsiAwareTextEditorPr
     }
   }
 
-  private fun readLayoutState(sourceElement: Element, project: Project, file: VirtualFile): TextEditorWithPreview.Layout? {
-    val value = readSplitLayoutState(sourceElement, project, file)
+  private fun readLayoutState(sourceElement: Element): TextEditorWithPreview.Layout? {
+    val value = readSplitLayoutState(sourceElement)
     return TextEditorWithPreview.Layout.entries.find { it.name == value }
   }
 
   private fun readUnderlyingState(sourceElement: Element, project: Project, file: VirtualFile): TextEditorWithPreview.MyFileEditorState {
     val firstState = readFirstProviderState(sourceElement, project, file)
     val secondState = readSecondProviderState(sourceElement, project, file)
-    val layoutState = readLayoutState(sourceElement, project, file)
+    val layoutState = readLayoutState(sourceElement)
     return TextEditorWithPreview.MyFileEditorState(layoutState, firstState, secondState)
   }
 
-  private fun writeSplitLayoutState(layout: TextEditorWithPreview.Layout?, project: Project, targetElement: Element) {
+  private fun writeSplitLayoutState(layout: TextEditorWithPreview.Layout?, targetElement: Element) {
     val value = layout?.name ?: return
     writeSplitLayoutState(value, targetElement)
   }
@@ -63,7 +63,7 @@ class MarkdownSplitEditorProvider : SplitTextEditorProvider(PsiAwareTextEditorPr
     if (state is TextEditorWithPreview.MyFileEditorState) {
       writeFirstProviderState(state.firstState, project, targetElement)
       writeSecondProviderState(state.secondState, project, targetElement)
-      writeSplitLayoutState(state.splitLayout, project, targetElement)
+      writeSplitLayoutState(state.splitLayout, targetElement)
     }
   }
 

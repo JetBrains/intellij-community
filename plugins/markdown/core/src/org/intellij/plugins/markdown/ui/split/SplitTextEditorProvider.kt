@@ -7,9 +7,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.util.application
-import org.intellij.plugins.markdown.MarkdownBundle
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -43,8 +40,8 @@ abstract class SplitTextEditorProvider(
   }
 
   override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
-    val firstBuilder = createEditorBuilder(provider = firstProvider, project = project, file = file, document = null)
-    val secondBuilder = createEditorBuilder(provider = secondProvider, project = project, file = file, document = null)
+    val firstBuilder = createEditorBuilder(provider = firstProvider, project = project, file = file)
+    val secondBuilder = createEditorBuilder(provider = secondProvider, project = project, file = file)
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         return createSplitEditor(firstEditor = firstBuilder.build(), secondEditor = secondBuilder.build())
@@ -53,8 +50,8 @@ abstract class SplitTextEditorProvider(
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
-    val firstBuilder = createEditorBuilderAsync(provider = firstProvider, project = project, file = file, document = null)
-    val secondBuilder = createEditorBuilderAsync(provider = secondProvider, project = project, file = file, document = null)
+    val firstBuilder = createEditorBuilderAsync(provider = firstProvider, project = project, file = file, document = document)
+    val secondBuilder = createEditorBuilderAsync(provider = secondProvider, project = project, file = file, document = document)
     return object: AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         return createSplitEditor(firstEditor = firstBuilder.build(), secondEditor = secondBuilder.build())
@@ -72,7 +69,7 @@ abstract class SplitTextEditorProvider(
     return secondProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
   }
 
-  protected fun readSplitLayoutState(sourceElement: Element, project: Project, file: VirtualFile): String? {
+  protected fun readSplitLayoutState(sourceElement: Element): String? {
     return sourceElement.getAttribute(SPLIT_LAYOUT)?.value
   }
 
@@ -108,17 +105,11 @@ abstract class SplitTextEditorProvider(
 private fun createEditorBuilder(
   provider: FileEditorProvider,
   project: Project,
-  file: VirtualFile,
-  document: Document?
+  file: VirtualFile
 ): AsyncFileEditorProvider.Builder {
   if (provider is AsyncFileEditorProvider) {
-    if (application.isDispatchThread) {
-      return runWithModalProgressBlocking(project, title = MarkdownBundle.message("markdown.split.editor.creating.progress.text")) {
-        provider.createEditorBuilder(project = project, file = file, document = document)
-      }
-    }
     return runBlockingCancellable {
-      provider.createEditorBuilder(project = project, file = file, document = document)
+      provider.createEditorBuilder(project = project, file = file, document = null)
     }
   }
   return object: AsyncFileEditorProvider.Builder() {
