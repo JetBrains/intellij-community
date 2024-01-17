@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.idea.AppMode;
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
@@ -15,6 +16,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+@ApiStatus.Internal
 public final class DialogAppender extends Handler {
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
 
@@ -58,7 +60,7 @@ public final class DialogAppender extends Handler {
         queueAppend(ideaEvent);
       }
       else {
-        myEarlyEventCounter ++;
+        myEarlyEventCounter++;
         if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
           myEarlyEvents.add(ideaEvent);
         }
@@ -70,12 +72,11 @@ public final class DialogAppender extends Handler {
     if (myEarlyEventCounter == 0) return;
     IdeaLoggingEvent queued;
     while ((queued = myEarlyEvents.poll()) != null) {
-      myEarlyEventCounter --;
+      myEarlyEventCounter--;
       queueAppend(queued);
     }
     if (myEarlyEventCounter > 0) {
-      queueAppend(new IdeaLoggingEvent(DiagnosticBundle.message(
-        "error.monitor.early.errors.skipped", myEarlyEventCounter), new Throwable()));
+      queueAppend(new IdeaLoggingEvent(DiagnosticBundle.message("error.monitor.early.errors.skipped", myEarlyEventCounter), new Throwable()));
     }
   }
 
@@ -107,8 +108,7 @@ public final class DialogAppender extends Handler {
   }
 
   @Override
-  public void flush() {
-  }
+  public void flush() { }
 
   @Override
   public void close() { }

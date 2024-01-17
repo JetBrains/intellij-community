@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -180,7 +180,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     if (!child.isDirectory()) {
-      // access check should only be called when child is actually added to the parent, otherwise it may break VirtualFilePointers validity
+      // access check should only be called when a child is actually added to the parent, otherwise it may break VFP validity
       //noinspection TestOnlyProblems
       VfsRootAccess.assertAccessInTests(child, getFileSystem());
     }
@@ -244,20 +244,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @ApiStatus.Internal
-  public @NotNull VirtualFileSystemEntry createChild(int fileId,
-                                                     int nameId,
-                                                     @PersistentFS.Attributes int attributes,
-                                                     boolean isEmptyDirectory) {
+  public @NotNull VirtualFileSystemEntry createChild(int fileId, int nameId, @PersistentFS.Attributes int attributes, boolean isEmptyDirectory) {
     synchronized (myData) {
       return createChildImpl(fileId, nameId, attributes, isEmptyDirectory);
     }
   }
 
   //@GuardedBy("myData")
-  private @NotNull VirtualFileSystemEntry createChildImpl(int id,
-                                                 int nameId,
-                                                 @PersistentFS.Attributes int attributes,
-                                                 boolean isEmptyDirectory) {
+  private VirtualFileSystemEntry createChildImpl(int id, int nameId, @PersistentFS.Attributes int attributes, boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
 
     VfsData vfsData = getVfsData();
@@ -319,7 +313,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (caseSensitivityEvent != null) {
 
       changeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
-      // fire event asynchronously to avoid deadlocks with possibly currently-held VFP/Refresh queue locks
+      // fire event asynchronously to avoid deadlocks with possibly currently held VFP/Refresh queue locks
       RefreshQueue.getInstance().processEvents(true, List.of(caseSensitivityEvent));
       // when the case-sensitivity changes, the "children must be sorted by name" invariant must be restored
       resortChildren();
@@ -751,7 +745,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       validateAgainst(childrenToCreate, existingNames);
 
       if (!childrenToCreate.isEmpty() && !allChildrenLoaded()) {
-        // findChild asks FS when failed to locate child, and so should we
+        // findChild asks FS when failed to locate a child, and so should we
         int beforeSize = existingNames.size();
         String[] names = getFileSystem().list(this);
         existingNames.addAll(Arrays.asList(names));

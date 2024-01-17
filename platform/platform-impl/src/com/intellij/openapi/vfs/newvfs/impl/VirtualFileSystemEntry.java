@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.core.CoreBundle;
@@ -68,8 +68,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsDataFlags.CHILDREN_CASE_SENSITIVE;
 
   @MagicConstant(flagsFromClass = VfsDataFlags.class)
-  @interface Flags {
-  }
+  @interface Flags { }
 
   private volatile @NotNull("except `NULL_VIRTUAL_FILE`") VfsData.Segment mySegment;
   private volatile VirtualDirectoryImpl myParent;
@@ -111,7 +110,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   PersistentFSImpl owningPersistentFS() {
     return getVfsData().owningPersistentFS();
   }
-
 
   @NotNull VfsData.Segment getSegment() {
     VfsData.Segment segment = mySegment;
@@ -210,20 +208,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   void setFlagInt(@Flags int mask, boolean value) {
     getSegment().setFlag(myId, mask, value);
-  }
-
-  public int getIndexedStamp() {
-    if (VfsData.isIndexedFlagDisabled()) {
-      return 0;
-    }
-    return getSegment().getIndexedStamp(myId);
-  }
-
-  public void setIndexedStamp(int stamp) {
-    if (VfsData.isIndexedFlagDisabled()) {
-      return;
-    }
-    getSegment().setIndexedStamp(myId, stamp);
   }
 
   @Override

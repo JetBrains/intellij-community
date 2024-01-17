@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
@@ -22,7 +22,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
@@ -33,6 +32,7 @@ import com.intellij.platform.ide.bootstrap.shellEnvDeferred
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
@@ -294,7 +294,7 @@ private fun checkTempDirSanity() {
       if (!process.waitFor(1, TimeUnit.MINUTES)) throw IOException("${probe} timed out")
       if (process.exitValue() != 0) throw IOException("${probe} returned ${process.exitValue()}")
     }
-    catch (e: Exception) {
+    catch (_: Exception) {
       showNotification("temp.dir.exec.failed", suppressable = false, action = null, shorten(PathManager.getTempPath()))
     }
   }
@@ -331,7 +331,7 @@ private fun showNotification(key: @PropertyKey(resourceBundle = "messages.IdeBun
                              vararg params: Any) {
   if (suppressable) {
     val ignored = PropertiesComponent.getInstance().isValueSet("ignore.$key")
-    LOG.warn("issue detected: $key${if (ignored) " (ignored)" else ""}")
+    LOG.warn("issue detected: ${key}${if (ignored) " (ignored)" else ""}")
     if (ignored) {
       return
     }
@@ -385,24 +385,20 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
 
     while (isActive) {
       val usableSpace = withContext(Dispatchers.IO) {
-        if (Files.exists(dir)) {
-          store.usableSpace
-        }
-        else {
-          MAX_WRITE_SPEED_IN_BPS * 60
-        }
+        if (Files.exists(dir)) store.usableSpace else -1
       }
-
-      if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
-        LOG.warn("Extremely low disk space: $usableSpace")
+      if (usableSpace < 0) {
+        delay(60.seconds)  // unknown; retry in a minute
+      }
+      else if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
+        LOG.warn("Extremely low disk space: ${usableSpace}")
         withContext(Dispatchers.EDT) {
           Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", store.name()), IdeBundle.message("no.disk.space.title"))
         }
-
         delay(5.seconds)
       }
       else if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
-        LOG.warn("Low disk space: $usableSpace")
+        LOG.warn("Low disk space: ${usableSpace}")
         MyNotification(IdeBundle.message("low.disk.space.message", store.name()), NotificationType.WARNING, "low.disk")
           .setTitle(IdeBundle.message("low.disk.space.title"))
           .whenExpired { monitorDiskSpace(scope, dir, store, initialDelay = 5.seconds) }
