@@ -3,37 +3,42 @@ package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
+import com.intellij.find.FindManager
+import com.intellij.find.findUsages.FindUsagesHandler
+import com.intellij.find.impl.FindManagerImpl
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
-import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.Consumer
-import org.jetbrains.kotlin.lexer.KtToken
+import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
 abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
-    private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
+    private fun getOnReturnOrThrowOrLambdaUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         val expression = when (val parent = target.parent) {
             is KtNamedFunction -> parent.takeIf { (target as? ASTNode)?.elementType == KtTokens.FUN_KEYWORD }
             is KtPropertyAccessor -> parent
             is KtReturnExpression, is KtThrowExpression -> parent
+            is KtFunctionLiteral -> parent.takeIf { with((target as? ASTNode)?.elementType) { this == KtTokens.LBRACE || this == KtTokens.RBRACE } }
             is KtLabelReferenceExpression ->
                 PsiTreeUtil.getParentOfType(
                     target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
-                )?.takeUnless { it is KtFunction }
+                )?.takeUnless {
+                    it is KtFunction
+                }
             else -> null
         } as? KtExpression ?: return null
-        return OnExitUsagesHandler(editor, file, expression, false)
+        return OnExitUsagesHandler(editor, file, null, expression, false)
     }
 
     private fun getOnBreakOrContinueUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -46,30 +51,9 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
         return OnLoopUsagesHandler(editor, file, expression)
     }
 
-    private fun getOnLambdaCallUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-        if (target !is LeafPsiElement
-            || target.elementType !is KtToken // do not trigger loading of KtTokens in Java
-            || target.elementType != KtTokens.IDENTIFIER) {
-            return null
-        }
-
-        val literal = (target.parent as? KtNameReferenceExpression).asFunctionLiteral() ?: return null
-        return OnExitUsagesHandler(editor, file, literal, true)
-    }
-
-    private fun KtNameReferenceExpression?.asFunctionLiteral(): KtFunctionLiteral? {
-        val call = this?.parent as? KtCallExpression ?: return null
-        if (call.calleeExpression != this) return null
-
-        val lambda = call.lambdaArguments.singleOrNull() ?: return null
-        val literal = lambda.getLambdaExpression()?.functionLiteral ?: return null
-        return literal
-    }
-
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-        return getOnReturnOrThrowUsageHandler(editor, file, target)
+        return getOnReturnOrThrowOrLambdaUsageHandler(editor, file, target)
             ?: getOnBreakOrContinueUsageHandler(editor, file, target)
-            ?: getOnLambdaCallUsageHandler(editor, file, target)
     }
 
     protected abstract fun getRelevantReturnDeclaration(returnExpression: KtReturnExpression): KtDeclarationWithBody?
@@ -102,7 +86,13 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
         return expression.parents.filterIsInstance<KtDeclarationWithBody>().firstOrNull()
     }
 
-    private inner class OnExitUsagesHandler(editor: Editor, file: PsiFile, val target: KtExpression, val highlightReferences: Boolean) :
+    private inner class OnExitUsagesHandler(
+        editor: Editor,
+        file: PsiFile,
+        val referenceExpression: KtNameReferenceExpression?,
+        val target: KtExpression,
+        val highlightReferences: Boolean
+    ) :
         HighlightUsagesHandlerBase<PsiElement>(editor, file) {
 
         override fun getTargets(): List<KtExpression> = listOf(target)
@@ -131,13 +121,11 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                         targetOccurrenceAdded = true
                         addOccurrence(it)
                     }
-                    is KtFunctionLiteral -> relevantFunction.getStrictParentOfType<KtLambdaArgument>()
-                        ?.getStrictParentOfType<KtCallExpression>()
-                        ?.calleeExpression
-                        ?.let {
-                            targetOccurrenceAdded = true
-                            addOccurrence(it)
-                        }
+                    is KtFunctionLiteral -> {
+                        targetOccurrenceAdded = true
+                        addOccurrence(relevantFunction.lBrace)
+                        relevantFunction.rBrace?.let(::addOccurrence)
+                    }
                 }
             }
 
@@ -224,7 +212,6 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 private fun addTargetOccurenceIfNeeded(relevantFunction: KtDeclarationWithBody) {
                     if (!targetOccurrenceAdded) {
                         when (relevantFunction) {
-                            is KtFunctionLiteral -> relevantFunction.parentOfTypes(KtCallExpression::class)?.calleeExpression
                             is KtNamedFunction -> relevantFunction.funKeyword
                             else -> null
                         }?.let {
@@ -305,6 +292,21 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     addOccurrence(expression)
                 }
             })
+
+            if (relevantFunction != null) {
+                val containingFile = relevantFunction.containingFile
+                referenceExpression?.reference?.unwrappedTargets?.firstOrNull()?.let { target ->
+                    (target as? PsiNameIdentifierOwner)?.nameIdentifier.takeIf { target.containingFile == containingFile }
+                        ?.let(::addOccurrence)
+
+                    val handler: FindUsagesHandler? = (FindManager.getInstance(relevantFunction.project) as FindManagerImpl)
+                        .findUsagesManager
+                        .getFindUsagesHandler(target, true)
+                    handler?.findReferencesToHighlight(target, LocalSearchScope(containingFile)).let { ref ->
+                        ref?.forEach { addOccurrence(it.element) }
+                    }
+                }
+            }
         }
 
         override fun highlightReferences(): Boolean = highlightReferences
