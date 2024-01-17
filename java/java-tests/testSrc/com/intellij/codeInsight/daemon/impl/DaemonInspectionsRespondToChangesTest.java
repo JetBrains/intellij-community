@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -858,5 +859,33 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     List<HighlightInfo> infos2 = doHighlighting(HighlightSeverity.WARNING);
     HighlightInfo error2 = ContainerUtil.find(infos2, e->e.getDescription().contains("always 'false'"));
     assertNotNull(infos2.toString(), error2);
+  }
+
+  private static class MyException extends RuntimeException {
+    MyException() {
+      super("MyPreciousException");
+    }
+  }
+
+  public void testThrowingExceptionFromInspectionMustPropagateUpToTheLogger() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    enableInspectionTool(new MyInspectionBase(){
+      @Override
+      public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+        return new PsiElementVisitor() {
+          @Override
+          public void visitFile(@NotNull PsiFile file) {
+            throw new MyException();
+          }
+        };
+      }
+
+    });
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass {
+      }
+    """);
+
+    assertThrows(Exception.class, "MyPreciousException", () -> highlightErrors());
   }
 }

@@ -464,7 +464,6 @@ public final class JobLauncherImpl extends JobLauncher {
                 catch (RuntimeException|Error e) {
                   if (logAllExceptions) {
                     LOG.info("Failed to process " + element + ". Add too failed query.", e);
-                    System.out.println("Failed to process " + element + ". "+ ExceptionUtil.getThrowableText(e));
                   }
                   throw e;
                 }
@@ -475,13 +474,17 @@ public final class JobLauncherImpl extends JobLauncher {
               throw new RuntimeException(e);
             }
           }, progress);
+          completer.tryComplete();
           return result[0];
+        }
+        catch (Throwable throwable) {
+          completer.completeExceptionally(throwable);
+          return false;
         }
         finally {
           if (!result[0]) {
             futureResult.set(false);
           }
-          completer.tryComplete();
         }
       }
 
