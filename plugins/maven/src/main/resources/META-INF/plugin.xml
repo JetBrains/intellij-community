@@ -322,8 +322,8 @@
     <registryKey key="maven.plugins.use.cache" defaultValue="true"
                  description="Use cache for plugin resolving"/>
 
-    <registryKey key="maven.auto.update.local.index" defaultValue="true"
-                 description="Auto update local index if local repository is not indexed"/>
+    <registryKey key="maven.skip.gav.update.in.unit.test.mode" defaultValue="true"
+                 description="Skip update local gav index in unit tests"/>
 
     <registryKey key="maven.import.separate.main.and.test.modules.when.needed" defaultValue="true"
                  description="In order to support different 'testSource' and 'testTarget' compiler options, IntelliJ IDEA will create separate modules for such projects (IDEA-85478).\nAvailable only when Import using IntelliJ Workspace API is enabled."/>

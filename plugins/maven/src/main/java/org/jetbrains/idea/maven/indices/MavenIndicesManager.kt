@@ -102,6 +102,13 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     scheduleUpdateIndicesList() {}
   }
 
+  @TestOnly
+  fun scheduleUpdateIndicesListAndWait() {
+    runBlocking {
+      updateIndexList()
+    }
+  }
+
 
   fun scheduleUpdateIndicesList(onUpdate: () -> Unit) {
     cs.launch(Dispatchers.IO) {

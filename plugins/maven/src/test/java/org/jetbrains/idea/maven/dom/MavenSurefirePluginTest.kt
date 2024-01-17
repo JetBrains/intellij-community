@@ -7,7 +7,7 @@ import org.junit.Test
 
 class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project, "plugins", "local1")
+    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable,"plugins", "local1")
   }
 
   @Test

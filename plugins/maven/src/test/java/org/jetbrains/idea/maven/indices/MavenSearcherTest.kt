@@ -35,7 +35,7 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project)
+    myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
     myIndicesFixture.setUp()
     runBlocking {
       MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()

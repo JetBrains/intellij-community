@@ -15,15 +15,16 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -31,22 +32,20 @@ import java.util.concurrent.CompletableFuture;
 public class MavenIndicesTestFixture {
   private final Path myDir;
   private final Project myProject;
+  private final Disposable myTestRootDisposable;
   private final String myLocalRepoDir;
   private final String[] myExtraRepoDirs;
 
   private MavenCustomRepositoryHelper myRepositoryHelper;
 
-  public MavenIndicesTestFixture(Path dir, Project project) {
-    this(dir, project, "local1", "local2");
+  public MavenIndicesTestFixture(Path dir, Project project, Disposable testRootDisposable) {
+    this(dir, project, testRootDisposable, "local1", "local2");
   }
 
-  public MavenIndicesTestFixture(File dir, Project project) {
-    this(dir.toPath(), project);
-  }
-
-  public MavenIndicesTestFixture(Path dir, Project project, String localRepoDir, String... extraRepoDirs) {
+  public MavenIndicesTestFixture(Path dir, Project project, Disposable testRootDisposable, String localRepoDir, String... extraRepoDirs) {
     myDir = dir;
     myProject = project;
+    myTestRootDisposable = testRootDisposable;
     myLocalRepoDir = localRepoDir;
     myExtraRepoDirs = extraRepoDirs;
   }
@@ -60,6 +59,7 @@ public class MavenIndicesTestFixture {
 
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(
       myRepositoryHelper.getTestDataPath(myLocalRepoDir));
+    Registry.get("maven.skip.gav.update.in.unit.test.mode").setValue(false, myTestRootDisposable);
   }
 
   public void setUp() throws Exception {
@@ -85,6 +85,7 @@ public class MavenIndicesTestFixture {
   }
 
   public void tearDown() {
+    MavenSystemIndicesManager.getInstance().gc();
     MavenServerManager.getInstance().shutdown(true);
     Disposer.dispose(getIndicesManager());
   }

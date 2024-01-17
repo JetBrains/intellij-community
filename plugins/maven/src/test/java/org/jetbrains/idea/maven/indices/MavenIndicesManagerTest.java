@@ -31,7 +31,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndicesFixture = new MavenIndicesTestFixture(getDir().toPath(), getProject());
+    myIndicesFixture = new MavenIndicesTestFixture(getDir().toPath(), getProject(), getTestRootDisposable());
     myIndicesFixture.setUp();
   }
 
@@ -79,7 +79,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     File localRepo = myIndicesFixture.getRepositoryHelper().getTestData("local2");
 
     MavenProjectsManager.getInstance(getProject()).getGeneralSettings().setLocalRepository(localRepo.getPath());
-    myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList();
+    myIndicesFixture.getIndicesManager().scheduleUpdateIndicesListAndWait();
     myIndicesFixture.getIndicesManager().waitForGavUpdateCompleted();
     MavenGAVIndex localIndex = myIndicesFixture.getIndicesManager().getCommonGavIndex();
     assertTrue(localIndex.getArtifactIds("junit").isEmpty());

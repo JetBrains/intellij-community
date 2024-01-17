@@ -59,7 +59,7 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
   }
 
   protected open fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project)
+    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
   }
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {

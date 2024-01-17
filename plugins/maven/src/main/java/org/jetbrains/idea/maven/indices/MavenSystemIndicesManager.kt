@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.getOpenedProjects
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.PathUtilRt
 import com.intellij.util.messages.Topic
@@ -102,7 +103,14 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
         inMemoryIndices[dir.toString()]?.let { return@async it }
         return@async MavenLocalGavIndexImpl(repo)
           .also { inMemoryIndices[dir.toString()] = it }
-          .also { scheduleUpdateIndexContent(listOf(it), false) }
+          .also {
+            //IDEA-342984
+            val skipUpdate = ApplicationManager.getApplication().isUnitTestMode
+                             && Registry.`is`("maven.skip.gav.update.in.unit.test.mode")
+            if (!skipUpdate) {
+              scheduleUpdateIndexContent(listOf(it), false)
+            }
+          }
       }
     }.await()
   }
@@ -281,7 +289,8 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
           val indicator = MavenProgressIndicator(null, null)
           try {
             (idx as MavenUpdatableIndex).updateOrRepair(true, indicator, explicit)
-          } catch (ignore: MavenProcessCanceledException) {
+          }
+          catch (ignore: MavenProcessCanceledException) {
 
           }
           finally {
