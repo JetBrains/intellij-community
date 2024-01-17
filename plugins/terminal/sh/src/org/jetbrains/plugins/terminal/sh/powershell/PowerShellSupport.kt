@@ -9,6 +9,8 @@ class PowerShellSupport : TerminalShellSupport {
   override val promptLanguage: Language
     get() = PlainTextLanguage.INSTANCE
 
+  override val lineContinuationChar: Char = '`'
+
   override fun parseCommandHistory(history: String): List<String> {
     val trimmedHistory = StringUtil.convertLineSeparators(history, "\n").trimEnd()
     if (trimmedHistory.isBlank()) {

@@ -19,6 +19,8 @@ abstract class BaseShSupport : TerminalShellSupport {
   override val promptLanguage: Language
     get() = ShLanguage.INSTANCE
 
+  override val lineContinuationChar: Char = '\\'
+
   override fun getCommandTokens(leafElement: PsiElement): List<String>? {
     val commandElement: ShSimpleCommand = PsiTreeUtil.getParentOfType(leafElement, ShSimpleCommand::class.java)
                                           ?: return null

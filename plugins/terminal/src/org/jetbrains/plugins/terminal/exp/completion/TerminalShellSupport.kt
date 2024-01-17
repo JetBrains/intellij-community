@@ -12,6 +12,12 @@ interface TerminalShellSupport {
   val promptLanguage: Language
 
   /**
+   * The character that used to continue the command on the next line.
+   * For example, in Bash and Zsh it is a backslash '\'.
+   */
+  val lineContinuationChar: Char
+
+  /**
    * @return the token list for the parent shell command of the provided [leafElement]
    */
   fun getCommandTokens(leafElement: PsiElement): List<String>? = null

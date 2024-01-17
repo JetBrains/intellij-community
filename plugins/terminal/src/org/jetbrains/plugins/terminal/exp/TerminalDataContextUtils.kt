@@ -33,6 +33,8 @@ object TerminalDataContextUtils {
     get() = getData(TerminalSelectionController.KEY)
   val DataContext.terminalFocusModel: TerminalFocusModel?
     get() = getData(TerminalFocusModel.KEY)
+  val DataContext.terminalSession: BlockTerminalSession?
+    get() = getData(BlockTerminalSession.DATA_KEY)
 
   val AnActionEvent.editor: Editor?
     get() = getData(CommonDataKeys.EDITOR)
