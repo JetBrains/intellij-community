@@ -37,9 +37,11 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
   Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
 
   if (context.isMacCodeSignEnabled) {
-    context.proprietaryBuildTools.signTool.signFiles(files = listOf(sitFile),
-                                                     context = context,
-                                                     options = signingOptions("application/x-mac-app-zip", context))
+    var options = signingOptions("application/x-mac-app-zip", context)
+    if (context.options.enableEmbeddedJetBrainsClient && context.productProperties.embeddedJetBrainsClientProperties != null) {
+      options = options.put("mac_codesign_deep", true.toString())
+    }
+    context.proprietaryBuildTools.signTool.signFiles(files = listOf(sitFile), context = context, options = options)
   }
 
   if (notarize) {
