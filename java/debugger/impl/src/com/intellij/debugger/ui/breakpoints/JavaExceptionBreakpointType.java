@@ -68,7 +68,7 @@ public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<Ja
   public String getDisplayText(XBreakpoint<JavaExceptionBreakpointProperties> breakpoint) {
     String name = breakpoint.getProperties().myQualifiedName;
     if (name != null) {
-      return JavaDebuggerBundle.message("breakpoint.exception.breakpoint.display.name", name);
+      return name;
     }
     else {
       return JavaDebuggerBundle.message("breakpoint.any.exception.display.name");
