@@ -50,9 +50,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       InlineContextFeatures.PREVIOUS_NON_EMPTY_LINE_LENGTH,
       InlineContextFeatures.FOLLOWING_EMPTY_LINES_COUNT,
       InlineContextFeatures.FOLLOWING_NON_EMPTY_LINE_LENGTH,
-      InlineContextFeatures.FIRST_PARENT,
-      InlineContextFeatures.SECOND_PARENT,
       InlineContextFeatures.TIME_SINCE_LAST_TYPING,
+      *InlineContextFeatures.PARENT_FEATURES,
       *TypingSpeedTracker.getEventFields(),
     )
     val CONTEXT_FEATURES_COMPUTATION_TIME = EventFields.Long("context_features_computation_time")
