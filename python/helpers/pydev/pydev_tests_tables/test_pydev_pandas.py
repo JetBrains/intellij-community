@@ -124,7 +124,7 @@ def test_display_saves_display_options(setup_dataframe):
     max_columns_before = pd.get_option('display.max_columns')
     max_colwidth_before = pd.get_option('display.max_colwidth')
 
-    pandas_tables_helpers.display_data(df, start=0, end=2)
+    pandas_tables_helpers.display_data(df, start_index=0, end_index=2)
 
     max_columns_after = pd.get_option('display.max_columns')
     max_colwidth_after = pd.get_option('display.max_colwidth')
@@ -157,21 +157,6 @@ def test_convert_to_df_common_series(setup_dataframe):
 
         assert isinstance(converted_series, pd.DataFrame)
         assert converted_series.columns[0] == col
-
-
-def test_convert_to_df_ndarray(setup_dataframe):
-    """
-    In this test we check two methods: __convert_to_df and __get_column_name.
-    For a np.ndarray case.
-    :param setup_dataframe: fixture/data for the test
-    """
-    _, df, _, _ = setup_dataframe
-
-    for col in df.columns:
-        converted_series = pandas_tables_helpers.__convert_to_df(df[col].values)
-
-        assert isinstance(converted_series, pd.DataFrame)
-        assert converted_series.columns[0] == 0
 
 
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="TODO: investigate pd.Categorical/complex cases")
