@@ -130,7 +130,8 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
 
         val config = ModuleInfoProvider.Configuration(
             createSourceLibraryInfoForLibraryBinaries = false,
-            preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) && !isInSpecialSrcDir(psiElement),
+            preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) &&
+                    (!RootKindFilter.projectSources.matches(psiElement) || this.isInSpecialSrcDir(psiElement)),
             contextualModuleInfo = contextualModule?.ideaModuleInfo,
         )
 
@@ -182,7 +183,7 @@ private fun <T> cachedKtModule(
 }
 
 private inline fun forEachModuleFactory(action: KtModuleFactory.() -> Unit) {
-    for (extension in KtModuleFactory.EP_NAME.extensions) {
+    for (extension in KtModuleFactory.EP_NAME.extensionList) {
         extension.action()
     }
 }
@@ -193,7 +194,9 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
     }
 
     return when (moduleInfo) {
-        is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo)
+        is ModuleSourceInfo -> {
+            KtSourceModuleByModuleInfo(moduleInfo)
+        }
         is LibraryInfo -> KtLibraryModuleByModuleInfo(moduleInfo)
         is SdkInfo -> SdkKtModuleByModuleInfo(moduleInfo)
         is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo)

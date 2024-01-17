@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.LibraryScope
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -15,6 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.assertInstanceOf
@@ -27,12 +29,16 @@ import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModuleOfType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
@@ -45,6 +51,28 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File = throw UnsupportedOperationException()
+
+    override fun setUp() {
+        super.setUp()
+
+        val testProjectStructureInsightsProvider = object : ProjectStructureInsightsProvider {
+            override fun isInSpecialSrcDirectory(psiElement: PsiElement): Boolean {
+                if (!RootKindFilter.projectSources.matches(psiElement)) return false
+                val containingFile = psiElement.containingFile as? KtFile ?: return false
+                val virtualFile = containingFile.virtualFile
+                val index = ProjectFileIndex.getInstance(psiElement.project)
+                val module = index.getModuleForFile(virtualFile) ?: return false
+                return module.name == "buildSrc"
+            }
+        }
+
+        ExtensionTestUtil.maskExtensions(
+            ProjectStructureInsightsProvider.EP_NAME,
+            ProjectStructureInsightsProvider.EP_NAME.extensionList +
+                    listOf(testProjectStructureInsightsProvider),
+            testRootDisposable
+        )
+    }
 
     fun `test unrelated library`() {
         val moduleWithLibrary = createModule(
@@ -414,7 +442,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             },
         )
 
-        assertKtModuleType<KtScriptModule>("myScript.kts")
+        assertKtModuleType<KtSourceModule>("myScript.kts")
     }
 
     fun `test element to library mapping consistency with contextual library module`() {
