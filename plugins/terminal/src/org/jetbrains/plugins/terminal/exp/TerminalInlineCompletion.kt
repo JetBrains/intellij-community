@@ -24,7 +24,7 @@ import com.intellij.openapi.util.TextRange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
@@ -43,10 +43,12 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
   override val id: InlineCompletionProviderID = InlineCompletionProviderID("TerminalInlineCompletionProvider")
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     val flow = flow {
-      getCompletionElement(request.editor)?.let {
+      withContext(Dispatchers.EDT) {
+        getCompletionElement(request.editor)
+      }?.let {
         emit(it)
       }
-    }.flowOn(Dispatchers.EDT)
+    }
     return InlineCompletionSuggestion.Default(flow)
   }
 
