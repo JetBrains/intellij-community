@@ -20,12 +20,7 @@ sealed class ErrorsState {
     override fun errors() = errors
   }
 
-  data class Unknown(val reason: UnknownReason) : ErrorsState() {
-    enum class UnknownReason {
-      TIME_LIMIT_EXCEEDED,
-      NOT_STARTED,
-    }
-
+  data object Unknown : ErrorsState() {
     override fun errors() = emptyList<CorrectnessError>()
   }
 

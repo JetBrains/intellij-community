@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.correctness.checker
 
-import com.intellij.platform.ml.impl.correctness.checker.ErrorsState.Unknown.UnknownReason
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -11,7 +10,7 @@ data class CodeCorrectness(val semanticState: ErrorsState) {
 
   companion object {
     fun empty(): CodeCorrectness {
-      return CodeCorrectness(ErrorsState.Unknown(UnknownReason.NOT_STARTED))
+      return CodeCorrectness(ErrorsState.Unknown)
     }
   }
 }
