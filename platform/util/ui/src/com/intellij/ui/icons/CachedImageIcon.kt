@@ -66,7 +66,7 @@ open class CachedImageIcon private constructor(
   private val colorPatcher: ColorPatcherStrategy = GlobalColorPatcherStrategy,
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext? = null,
-  private val originalResolver: ImageDataLoader? = resolver,
+  @Internal val originalResolver: ImageDataLoader? = resolver,
   // Do not use it directly for rendering - use `getEffectiveAttributes`
   // isDark is not defined in most cases, and we use a global state at the call moment.
   private val attributes: IconAttributes = IconAttributes(),
@@ -91,7 +91,7 @@ open class CachedImageIcon private constructor(
   }
 
   @Internal
-  constructor(resolver: ImageDataLoader) : this(resolver = resolver, originalResolver = resolver)
+  constructor(resolver: ImageDataLoader, originalResolver: ImageDataLoader = resolver) : this(resolver = resolver, originalResolver = originalResolver, toolTip = null)
 
   internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
     this(resolver = resolver, originalResolver = resolver, toolTip = toolTip)
@@ -102,6 +102,9 @@ open class CachedImageIcon private constructor(
   private fun getEffectiveAttributes(): IconAttributes {
     return if (attributes.isDarkSet) attributes else attributes.copy(isDark = pathTransform.get().isDark, isDarkSet = true)
   }
+
+  @Internal
+  fun getResolver(): ImageDataLoader? = resolver
 
   @ApiStatus.Experimental
   fun getCoords(): Pair<String, ClassLoader>? = resolver?.getCoords()
