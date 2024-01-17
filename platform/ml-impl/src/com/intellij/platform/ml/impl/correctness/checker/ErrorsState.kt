@@ -24,7 +24,6 @@ sealed class ErrorsState {
     enum class UnknownReason {
       TIME_LIMIT_EXCEEDED,
       NOT_STARTED,
-      IN_PROGRESS
     }
 
     override fun errors() = emptyList<CorrectnessError>()
