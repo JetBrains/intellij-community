@@ -13,8 +13,6 @@ import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.*;
 import com.intellij.ide.wizard.LanguageNewProjectWizard;
 import com.intellij.ide.wizard.language.*;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -596,7 +594,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
         throw new CommitStepException(null);
       }
     }
-    reportStatistics("finish");
   }
 
   @Override
@@ -757,28 +754,5 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       return getCustomStep().getHelpId();
     }
     return myContext.isCreatingNewProject() ? "Project_Category_and_Options" : "Module_Category_and_Options";
-  }
-
-  @Override
-  public void onStepLeaving() {
-    reportStatistics("attempt");
-  }
-
-  private void reportStatistics(String eventId) {
-    TemplatesGroup group = myProjectTypeList.getSelectedTemplateGroup();
-    if (group == null) return;
-
-    FeatureUsageData data = new FeatureUsageData("FUS");
-    data.addData("projectType", group.getId());
-    data.addPluginInfo(group.getPluginInfo());
-    if (myCurrentCard.equals(FRAMEWORKS_CARD)) {
-      myFrameworksPanel.reportSelectedFrameworks(eventId, data);
-    }
-    ModuleWizardStep step = getCustomStep();
-    if (step instanceof StatisticsAwareModuleWizardStep) {
-      ((StatisticsAwareModuleWizardStep) step).addCustomFeatureUsageData(eventId, data);
-    }
-
-    FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId, data);
   }
 }

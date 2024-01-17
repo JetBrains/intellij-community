@@ -75,8 +75,6 @@ object NewProjectUtil {
   fun createFromWizard(wizard: AbstractProjectWizard, projectToClose: Project? = null): Project? {
     return try {
       val newProject = doCreate(wizard, projectToClose)
-      @Suppress("DEPRECATION", "removal")
-      FUCounterUsageLogger.getInstance().logEvent(newProject, "new.project.wizard", "project.created")
       NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
       newProject
     }

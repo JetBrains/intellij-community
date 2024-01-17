@@ -253,18 +253,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
-    logProjectGeneratedEvent(generator, project);
     return project;
-  }
-
-  private static void logProjectGeneratedEvent(@Nullable DirectoryProjectGenerator<?> generator, @Nullable Project project) {
-    FeatureUsageData data = new FeatureUsageData("FUS");
-    if (generator != null) {
-      data.addData("generator_id", generator.getClass().getName());
-      data.addPluginInfo(PluginInfoDetectorKt.getPluginInfo(generator.getClass()));
-    }
-
-    FUCounterUsageLogger.getInstance().logEvent(project, "new.project.wizard", "project.generated", data);
   }
 
   public static boolean created(@NotNull Project project) {
