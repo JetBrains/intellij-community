@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +75,10 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     return lambdaOrdinal != null && lambdaOrdinal != NO_LAMBDA;
   }
 
+  public boolean isLineAndLambdas() {
+    return encodedInlinePosition == null;
+  }
+
   @OptionTag("lambda-ordinal") // naming is a historic accident
   public @Nullable Integer getEncodedInlinePosition() {
     return encodedInlinePosition;
@@ -89,4 +95,23 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     encodedInlinePosition = state.encodedInlinePosition;
   }
 
+  @Nls
+  @NotNull
+  public static String getGeneralDescription(JavaLineBreakpointProperties props) {
+    // These properties are immutable, could not be changed after breakpoint creation, so we treat them specially,
+    // compared to other ones (e.g., WATCH_*** for JavaFieldBreakpointProperties).
+
+    if (props != null) {
+      if (props.isConditionalReturn()) {
+        return JavaDebuggerBundle.message("line.breakpoint.description.conditional.return");
+      }
+      if (props.isInLambda()) {
+        return JavaDebuggerBundle.message("line.breakpoint.description.lambda");
+      }
+      if (props.isLineAndLambdas()) {
+        return JavaDebuggerBundle.message("line.breakpoint.description.line.and.lambdas");
+      }
+    }
+    return JavaDebuggerBundle.message("line.breakpoint.description.basic.line");
+  }
 }

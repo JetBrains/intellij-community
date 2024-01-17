@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
@@ -62,6 +63,12 @@ public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<Ja
   //@Override
   public String getDisplayName() {
     return JavaDebuggerBundle.message("exception.breakpoints.tab.title");
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XBreakpoint<JavaExceptionBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("exception.breakpoint.description");
   }
 
   @Override

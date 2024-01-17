@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
@@ -55,6 +56,12 @@ public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBa
   //@Override
   public String getDisplayName() {
     return JavaDebuggerBundle.message("method.breakpoints.tab.title");
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("method.breakpoint.description");
   }
 
   @Override

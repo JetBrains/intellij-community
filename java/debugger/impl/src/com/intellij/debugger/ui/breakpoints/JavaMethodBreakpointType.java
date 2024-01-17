@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +75,18 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
   //@Override
   public String getDisplayName() {
     return JavaDebuggerBundle.message("method.breakpoints.tab.title");
+  }
+
+  @Nls
+  @Override
+  protected @NotNull String getGeneralDescription(XLineBreakpointType<JavaMethodBreakpointProperties>.XLineBreakpointVariant variant) {
+    return JavaDebuggerBundle.message("method.breakpoint.description");
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XLineBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("method.breakpoint.description");
   }
 
   @Override

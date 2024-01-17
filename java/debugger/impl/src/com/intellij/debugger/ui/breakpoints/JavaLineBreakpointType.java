@@ -78,6 +78,18 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return JavaDebuggerBundle.message("line.breakpoints.tab.title");
   }
 
+  @Nls
+  @Override
+  protected @NotNull String getGeneralDescription(XLineBreakpointType<JavaLineBreakpointProperties>.XLineBreakpointVariant variant) {
+    return JavaLineBreakpointProperties.getGeneralDescription(variant.createProperties());
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XLineBreakpoint<JavaLineBreakpointProperties> breakpoint) {
+    return JavaLineBreakpointProperties.getGeneralDescription(breakpoint.getProperties());
+  }
+
   @Override
   public List<XBreakpointGroupingRule<XLineBreakpoint<JavaLineBreakpointProperties>, ?>> getGroupingRules() {
     return XDebuggerUtil.getInstance().getGroupingByFileRuleAsList();

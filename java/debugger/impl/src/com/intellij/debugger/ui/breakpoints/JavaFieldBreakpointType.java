@@ -16,6 +16,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,18 @@ public final class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<Ja
   //@Override
   public String getDisplayName() {
     return JavaDebuggerBundle.message("field.watchpoints.tab.title");
+  }
+
+  @Nls
+  @Override
+  protected @NotNull String getGeneralDescription(XLineBreakpointType<JavaFieldBreakpointProperties>.XLineBreakpointVariant variant) {
+    return JavaDebuggerBundle.message("field.watchpoint.description");
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("field.watchpoint.description");
   }
 
   @Override
