@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -235,7 +236,7 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
       if (!confirmationDialog.confirmFor(ChangesUtil.getFilesFromChanges(changes))) return;
 
       FileDocumentManager.getInstance().saveAllDocuments();
-      LocalHistoryAction action = LocalHistory.getInstance().startAction(title);
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.get.from", panel.myBranchName));
 
       new Task.Modal(project, DvcsBundle.message("compare.branches.diff.panel.loading.content.from.branch.process"), false) {
         @Override

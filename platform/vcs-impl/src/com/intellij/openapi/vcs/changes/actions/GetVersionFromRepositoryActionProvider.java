@@ -49,7 +49,7 @@ public class GetVersionFromRepositoryActionProvider implements AnActionExtension
     List<GetVersionAction.FileRevisionProvider> fileContentProviders = ContainerUtil.map(changes, change -> {
       return new MyFileContentProvider(change);
     });
-    GetVersionAction.doGet(project, VcsBundle.message("compare.with.dialog.get.from.vcs.action.title"), fileContentProviders, null);
+    GetVersionAction.doGet(project, VcsBundle.message("activity.name.get"), fileContentProviders, null);
   }
 
   private static class MyFileContentProvider implements GetVersionAction.FileRevisionProvider {

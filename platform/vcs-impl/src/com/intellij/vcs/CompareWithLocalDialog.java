@@ -227,7 +227,7 @@ public final class CompareWithLocalDialog {
       List<FileRevisionProvider> fileContentProviders = ContainerUtil.map(browser.getSelectedChanges(), change -> {
         return new MyFileContentProvider(change, browser.myLocalContent);
       });
-      GetVersionAction.doGet(project, VcsBundle.message("compare.with.dialog.get.from.vcs.action.title"), fileContentProviders,
+      GetVersionAction.doGet(project, VcsBundle.message("activity.name.get"), fileContentProviders,
                              () -> {
                                FileDocumentManager.getInstance().saveAllDocuments();
                                changesPanel.reloadChanges();

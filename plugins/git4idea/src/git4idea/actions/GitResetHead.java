@@ -47,7 +47,7 @@ public class GitResetHead extends GitRepositoryAction {
     new Task.Backgroundable(project, GitBundle.message("resetting.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
+        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.reset"))) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (!result.success()) {
             VcsNotifier.getInstance(project).notifyError(RESET_FAILED,

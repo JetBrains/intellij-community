@@ -356,7 +356,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("update.label.before.update"));
-      myLocalHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("local.history.update.from.vcs"));
+      myLocalHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.update"));
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
@@ -510,7 +510,7 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("local.history.update.from.vcs")); // TODO check why this label is needed
+        LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("activity.name.update")); // TODO check why this label is needed
         return;
       }
       boolean continueChain = false;

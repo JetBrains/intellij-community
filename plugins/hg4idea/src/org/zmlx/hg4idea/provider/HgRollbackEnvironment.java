@@ -76,7 +76,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
         }
       }
     }
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getRollbackOperationName())) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rollback"))) {
       revert(filePaths);
       for (FilePath file : toDelete) {
         listener.accept(file);
@@ -98,7 +98,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
   @Override
   public void rollbackMissingFileDeletion(List<? extends FilePath> files,
                                           List<? super VcsException> exceptions, RollbackProgressListener listener) {
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getRollbackOperationName())) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rollback"))) {
       revert(files);
     }
   }

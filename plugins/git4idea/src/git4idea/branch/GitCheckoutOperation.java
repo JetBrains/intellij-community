@@ -116,7 +116,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     boolean success = false;
     boolean fatalErrorHappened = false;
     notifyBranchWillChange();
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getOperationName())) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.checkout"))) {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
         VirtualFile root = repository.getRoot();

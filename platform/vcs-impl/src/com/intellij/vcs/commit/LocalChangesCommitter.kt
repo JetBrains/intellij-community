@@ -6,7 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
@@ -21,7 +21,7 @@ open class LocalChangesCommitter(
   project: Project,
   val commitState: ChangeListCommitState,
   commitContext: CommitContext,
-  private val localHistoryActionName: @Nls String = message("commit.changes")
+  private val localHistoryActionName: @Nls String = VcsBundle.message("activity.name.commit")
 ) : VcsCommitter(project, commitState.changes, commitState.commitMessage, commitContext, true) {
 
   init {
@@ -77,7 +77,7 @@ open class LocalChangesCommitter(
       }
 
       if (toRefresh.isNotEmpty()) {
-        progress(message("commit.dialog.refresh.files"))
+        progress(VcsBundle.message("commit.dialog.refresh.files"))
         RefreshVFsSynchronously.updateChanges(toRefresh)
       }
 
@@ -85,7 +85,7 @@ open class LocalChangesCommitter(
 
       VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToRefresh, null)
 
-      LocalHistory.getInstance().putSystemLabel(project, "$localHistoryActionName: $commitMessage")
+      LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("activity.name.commit.message", commitMessage))
     }
     finally {
       ChangeListManager.getInstance(project).invokeAfterUpdate(true) { fireAfterRefresh() }

@@ -175,7 +175,7 @@ public class GitResetOperation {
   }
 
   public static @PropertyKey(resourceBundle = GitBundle.BUNDLE) class OperationPresentation {
-    public String activityName = "git.reset.process";
+    public String activityName = "activity.name.reset";
     public String operationTitle = "git.reset.operation";
     public String forceButtonTitle = "git.reset.hard.button";
     public String notificationSuccess = "git.reset.successful.notification.message";

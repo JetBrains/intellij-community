@@ -251,7 +251,7 @@ object GitStashOperations {
   fun runStashInBackground(project: Project, roots: Collection<VirtualFile>, createHandler: (VirtualFile) -> GitLineHandler) {
     object : Task.Backgroundable(project, GitBundle.message("stashing.progress.title"), false) {
       override fun run(indicator: ProgressIndicator) {
-        DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("stash.action.name")).use { _ ->
+        DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.stash")).use { _ ->
           val successfulRoots = linkedSetOf<VirtualFile>()
           val failedRoots = linkedMapOf<VirtualFile, @NlsSafe String>()
           for (root in roots) {

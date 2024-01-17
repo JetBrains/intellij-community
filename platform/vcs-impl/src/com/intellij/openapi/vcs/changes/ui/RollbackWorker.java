@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -56,30 +57,29 @@ public class RollbackWorker {
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles) {
-    doRollback(changes, deleteLocallyAddedFiles, null, null);
+    doRollback(changes, deleteLocallyAddedFiles, VcsBundle.message("activity.name.rollback"));
+  }
+
+  public void doRollback(@NotNull Collection<? extends Change> changes,
+                         boolean deleteLocallyAddedFiles,
+                         @NotNull @NlsContexts.Label String localHistoryActionName) {
+    doRollback(changes, deleteLocallyAddedFiles, null, localHistoryActionName, false);
   }
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
-                         @Nullable @Nls String localHistoryActionName) {
-    doRollback(changes, deleteLocallyAddedFiles, afterVcsRefreshInAwt, localHistoryActionName, false);
-  }
-
-  public void doRollback(@NotNull Collection<? extends Change> changes,
-                         boolean deleteLocallyAddedFiles,
-                         @Nullable Runnable afterVcsRefreshInAwt,
-                         @Nullable @Nls String localHistoryActionName,
+                         @NotNull @NlsContexts.Label String localHistoryActionName,
                          boolean honorExcludedFromCommit) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
-      final LocalHistoryAction action = LocalHistory.getInstance().startAction(myOperationName);
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(localHistoryActionName);
 
       final Runnable afterRefresh = () -> {
         action.finish();
-        LocalHistory.getInstance().putSystemLabel(myProject, notNull(localHistoryActionName, myOperationName), -1);
+        LocalHistory.getInstance().putSystemLabel(myProject, localHistoryActionName, -1);
 
         InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?
                                            InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE :

@@ -93,7 +93,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         }
 
         GitResetOperation.OperationPresentation presentation = new GitResetOperation.OperationPresentation();
-        presentation.activityName = "git.undo.action.process";
+        presentation.activityName = "activity.name.undo.commit";
         presentation.operationTitle = "git.undo.action.operation";
         presentation.notificationSuccess = "git.undo.action.successful.notification.message";
         presentation.notificationFailure = "git.undo.action.failed.notification.title";

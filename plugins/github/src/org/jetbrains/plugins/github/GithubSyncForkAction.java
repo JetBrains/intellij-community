@@ -298,7 +298,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
       String onto = parentRemote.getName() + "/" + branch;
       LOG.info("Rebasing current branch");
       indicator.setText(GithubBundle.message("rebase.process.rebasing.branch.onto", onto));
-      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("rebase.git.operation.name"))) {
+      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
         List<VirtualFile> rootsToSave = Collections.singletonList(myRepository.getRoot());
         GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
         GitPreservingProcess process =

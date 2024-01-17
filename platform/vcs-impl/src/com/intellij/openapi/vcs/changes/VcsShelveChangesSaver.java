@@ -99,7 +99,7 @@ public class VcsShelveChangesSaver {
                             @NotNull Collection<Change> shelvedChanges) {
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     List<Change> changes4Rollback = filterChangesByRoots(ChangeListManager.getInstance(project).getAllChanges(), rootsSet);
-    new RollbackWorker(project, myStashMessage, true).doRollback(changes4Rollback, true);
+    new RollbackWorker(project, myStashMessage, true).doRollback(changes4Rollback, true, VcsBundle.message("activity.name.shelve"));
   }
 
   @NotNull

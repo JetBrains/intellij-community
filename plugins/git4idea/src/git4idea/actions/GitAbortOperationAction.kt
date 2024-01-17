@@ -75,7 +75,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
   private fun doAbort(repository: GitRepository, indicator: ProgressIndicator) {
     val project = repository.project
     GitFreezingProcess(project, GitBundle.message("abort")) {
-      DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("abort")).use {
+      DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.abort.command", operationName)).use {
         indicator.text2 = GitBundle.message("abort.operation.indicator.text", gitCommand.name(), GitUtil.mention(repository))
 
         val startHash = GitUtil.getHead(repository)

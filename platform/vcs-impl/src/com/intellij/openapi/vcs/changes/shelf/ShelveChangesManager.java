@@ -499,7 +499,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
     runWithSpan(myTracer, Shelve.RollbackAfterShelve.getName(), (__) -> {
       new RollbackWorker(myProject, operationName, modalContext)
-        .doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"), honorExcludedFromCommit);
+        .doRollback(changes, true, null, VcsBundle.message("activity.name.shelve"), honorExcludedFromCommit);
     });
   }
 
