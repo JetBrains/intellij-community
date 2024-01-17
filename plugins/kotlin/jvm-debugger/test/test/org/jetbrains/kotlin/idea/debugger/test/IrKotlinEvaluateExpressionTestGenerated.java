@@ -1716,6 +1716,16 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/synchronizedBlock.kt");
             }
 
+            @TestMetadata("thisFromStaticLambda.kt")
+            public void testThisFromStaticLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/thisFromStaticLambda.kt");
+            }
+
+            @TestMetadata("thisFromStaticLambdaWithUnnamed.kt")
+            public void testThisFromStaticLambdaWithUnnamed() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/thisFromStaticLambdaWithUnnamed.kt");
+            }
+
             @TestMetadata("typeParameterRef.kt")
             public void testTypeParameterRef() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/typeParameterRef.kt");

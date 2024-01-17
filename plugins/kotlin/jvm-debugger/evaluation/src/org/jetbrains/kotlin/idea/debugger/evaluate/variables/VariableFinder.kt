@@ -8,7 +8,6 @@ import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
 import org.jetbrains.kotlin.backend.common.descriptors.synthesizedString
-import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.getCapturedFieldName
 import org.jetbrains.kotlin.codegen.AsmUtil.getLabeledThisName
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParam
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.coroutines.Continuation
@@ -253,10 +253,10 @@ class VariableFinder(val context: ExecutionContext) {
             // Find an unlabeled this with the compatible type
             findUnlabeledThis(unlabeledThisKind)?.let { return it }
 
-            // In lambdas local variable for outer this (e.g. with name "this$0") is not in visibleVariables,
-            // so try to find it in argumentVariables by type
-            frameProxy.safeArgumentValues()
-                .firstNotNullOfOrNull { findCapturedVariable(unlabeledThisKind, it) }
+            // In lambdas local variable for outer this (e.g. with name "this$0") is not in visibleVariables from vanilla JVM.
+            // So the code here relays on JDI for IntelliJ Platform.
+            frameProxy.safeVisibleVariables()
+                .firstNotNullOfOrNull { findCapturedVariable(unlabeledThisKind, frameProxy.getValue(it)) }
                 ?.let { return it }
         }
 
