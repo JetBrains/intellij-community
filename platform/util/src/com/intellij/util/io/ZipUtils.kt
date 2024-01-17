@@ -11,7 +11,10 @@ import kotlin.io.path.*
 fun ZipOutputStream.addFolder(entryName: String, folder: Path) {
   for (path in folder.walk()) {
     val relativized = folder.relativize(path)
-    addEntry(entryName + "/" + relativized.joinToString(separator = "/") { it.name }) {
+    val prefix = if (entryName.isNotEmpty()) {
+      "$entryName/"
+    } else ""
+    addEntry(prefix + relativized.joinToString(separator = "/") { it.name }) {
       path.inputStream().use {
         it.copyTo(this)
       }
