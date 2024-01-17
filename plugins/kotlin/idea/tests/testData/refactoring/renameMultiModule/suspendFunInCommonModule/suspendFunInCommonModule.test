@@ -2,6 +2,5 @@
   "type": "MARKED_ELEMENT",
   "file": "Common/src/test/test.kt",
   "newName": "bar",
-  "isMultiModule": "true",
-  "enabledInK2": "false"
+  "isMultiModule": "true"
 }

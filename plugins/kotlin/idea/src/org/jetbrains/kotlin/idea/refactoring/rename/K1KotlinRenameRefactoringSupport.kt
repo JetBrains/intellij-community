@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -96,11 +98,14 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         element.addToShorteningWaitSet(ShortenReferences.Options.ALL_ENABLED)
     }
 
-    override fun findAllOverridingMethods(psiMethod: PsiMethod, scope: SearchScope): List<PsiMethod> = buildList {
+    override fun findAllOverridingMethods(element: PsiElement, scope: SearchScope): List<PsiMethod> {
+      val psiMethod = (element as? PsiMethod ?: runReadAction { LightClassUtil.getLightClassMethod(element as KtFunction) }) ?: return emptyList()
+      return buildList {
         psiMethod.forEachOverridingMethod(scope) {
-            add(it)
-            true
+          add(it)
+          true
         }
+      }
     }
 
     override fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {

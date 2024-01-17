@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -151,18 +149,12 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
     }
 
-    override fun findAllOverridingMethods(psiMethod: PsiMethod, scope: SearchScope): List<PsiMethod> {
+    override fun findAllOverridingMethods(psiMethod: PsiElement, scope: SearchScope): List<PsiElement> {
         return when (val element = psiMethod.unwrapped) {
             is PsiMethod -> OverridingMethodsSearch.search(element, scope, /* checkDeep = */ true).toList()
 
             is KtCallableDeclaration -> {
-                val allOverrides = element.findAllOverridings(scope).toList()
-
-                val lightOverrides = allOverrides
-                    .flatMap { runReadAction { it.toLightMethods() } }
-                    .distinctBy { it.unwrapped }
-
-                lightOverrides
+                element.findAllOverridings(scope).toList()
             }
 
             else -> error("Unexpected class ${psiMethod::class}")

@@ -2,18 +2,11 @@
 
 package org.jetbrains.kotlin.idea.searching.usages
 
-import com.intellij.ide.IdeBundle
-import com.intellij.openapi.ui.Messages
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import com.intellij.psi.util.PsiFormatUtil
-import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.Processor
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
@@ -21,20 +14,15 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
-import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
@@ -131,89 +119,4 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
-    override fun checkSuperMethods(
-        declaration: KtDeclaration,
-        ignore: Collection<PsiElement>?,
-        @Nls actionString: String
-    ): List<PsiElement> {
-        if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
-
-        data class AnalyzedModel(
-            val declaredClassRender: String,
-            val overriddenDeclarationsAndRenders: Map<PsiElement, String>
-        )
-
-        fun getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
-            when (overriddenElement) {
-                is KtNamedFunction, is KtProperty, is KtParameter -> (containingSymbol as? KtNamedSymbol)?.name?.asString()
-                    ?: "Unknown"  //TODO render symbols
-                is PsiMethod -> {
-                    val psiClass = overriddenElement.containingClass ?: error("Invalid element: ${overriddenElement.text}")
-                    formatPsiClass(psiClass, markAsJava = true, inCode = false)
-                }
-
-                else -> error("Unexpected element: ${overriddenElement.getElementTextWithContext()}")
-            }.let { "    $it\n" }
-
-
-        val analyzeResult = analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
-            (declaration.getSymbol() as? KtCallableSymbol)?.let { callableSymbol ->
-                callableSymbol.originalContainingClassForOverride?.let { containingClass ->
-                    val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()
-
-                    val renderToPsi = overriddenSymbols.mapNotNull {
-                        it.psi?.let { psi ->
-                            psi to getClassDescription(psi, it.originalContainingClassForOverride)
-                        }
-                    }
-
-                    val filteredDeclarations =
-                        if (ignore != null) renderToPsi.filter { !ignore.contains(it.first) } else renderToPsi
-
-                    val renderedClass = containingClass.name?.asString() ?: SpecialNames.ANONYMOUS_STRING //TODO render class
-
-                    AnalyzedModel(renderedClass, filteredDeclarations.toMap())
-                }
-            }
-        } ?: return listOf(declaration)
-
-        if (analyzeResult.overriddenDeclarationsAndRenders.isEmpty()) return listOf(declaration)
-
-        val message = KotlinBundle.message(
-            "override.declaration.x.overrides.y.in.class.list",
-            analyzeResult.declaredClassRender,
-            "\n${analyzeResult.overriddenDeclarationsAndRenders.values.joinToString(separator = "")}",
-            actionString
-        )
-
-        val exitCode = showYesNoCancelDialog(
-            CHECK_SUPER_METHODS_YES_NO_DIALOG,
-            declaration.project, message, IdeBundle.message("title.warning"), Messages.getQuestionIcon(), Messages.YES
-        )
-
-        return when (exitCode) {
-            Messages.YES -> analyzeResult.overriddenDeclarationsAndRenders.keys.toList()
-            Messages.NO -> listOf(declaration)
-            else -> emptyList()
-        }
-    }
-
-}
-
-// temp duplicate of org.jetbrains.kotlin.idea.refactoring.formatPsiClass
-private fun formatPsiClass(
-    psiClass: PsiClass,
-    markAsJava: Boolean,
-    inCode: Boolean
-): String {
-    fun wrapOrSkip(s: String, inCode: Boolean) = if (inCode) "<code>$s</code>" else s
-
-    val kind = if (psiClass.isInterface) "interface " else "class "
-    var description = kind + PsiFormatUtil.formatClass(
-        psiClass,
-        PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME or PsiFormatUtilBase.SHOW_PARAMETERS or PsiFormatUtilBase.SHOW_TYPE
-    )
-    description = wrapOrSkip(description, inCode)
-
-    return if (markAsJava) "[Java] $description" else description
 }

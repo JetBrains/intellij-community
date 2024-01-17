@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
@@ -57,7 +56,7 @@ interface KotlinRenameRefactoringSupport {
 
     fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration)
 
-    fun findAllOverridingMethods(psiMethod: PsiMethod, scope: SearchScope): List<PsiMethod>
+    fun findAllOverridingMethods(psiMethod: PsiElement, scope: SearchScope): List<PsiElement>
 
     fun getJvmNamesForPropertyAccessors(element: PsiElement): Pair<String?, String?>
 
