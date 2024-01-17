@@ -70,7 +70,7 @@ object LogsPacker {
       val date = SimpleDateFormat("yyyyMMdd-HHmmss").format(Date())
       val archive = Files.createTempFile("$productName-logs-$date", ".zip")
       try {
-        val additionalFiles = LogProvider.EP.extensionList.flatMap { it.getAdditionalLogFiles(project) }
+        val additionalFiles = LogProvider.EP.extensionList.firstOrNull()?.getAdditionalLogFiles(project)
         ZipOutputStream(FileOutputStream(archive.toFile())).use { zip ->
           coroutineContext.ensureActive()
           val logs = PathManager.getLogDir()
@@ -83,7 +83,7 @@ object LogsPacker {
             lf.flushHandlers()
           }
 
-          addAdditionalFilesToZip(additionalFiles, zip)
+          additionalFiles?.let { addAdditionalFilesToZip(it, zip) }
 
           coroutineContext.ensureActive()
           if (project != null) {
