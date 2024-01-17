@@ -152,7 +152,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       warnOptionIgnored("intellij.build.test.patterns", "intellij.build.test.groups")
     }
     if (options.batchTestIncludes != null && !isRunningInBatchMode) {
-      context.messages.warning("'intellij.build.test.batchTest.includes' option will be ignored as other tests matching options are specified.")
+      context.messages.warning(
+        "'intellij.build.test.batchTest.includes' option will be ignored as other tests matching options are specified.")
     }
   }
 
@@ -257,10 +258,10 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                   ?: throw RuntimeException("Can't find the ${testDiscovery} library, but test discovery capturing enabled.")
 
     val agentJar = library.getPaths(JpsOrderRootType.COMPILED)
-      .firstOrNull {
-        val name = it.fileName.toString()
-        name.startsWith("intellij-test-discovery") && name.endsWith(".jar")
-      } ?: throw RuntimeException("Can't find the agent in ${testDiscovery} library, but test discovery capturing enabled.")
+                     .firstOrNull {
+                       val name = it.fileName.toString()
+                       name.startsWith("intellij-test-discovery") && name.endsWith(".jar")
+                     } ?: throw RuntimeException("Can't find the agent in ${testDiscovery} library, but test discovery capturing enabled.")
 
     additionalJvmOptions += "-javaagent:${agentJar}"
     val excludeRoots = context.projectModel.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE)
@@ -287,7 +288,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                          context: CompilationContext) {
     val testConfigurationType = System.getProperty("teamcity.remote-debug.type")
     if (testConfigurationType != "junit") {
-      context.messages.error("Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is ${testConfigurationType}")
+      context.messages.error(
+        "Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is ${testConfigurationType}")
     }
     val testObject = System.getProperty("teamcity.remote-debug.junit.type")
     val junitClass = System.getProperty("teamcity.remote-debug.junit.class")
@@ -347,7 +349,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     val testClasspath: List<String>
-    val modulePath : List<String>?
+    val modulePath: List<String>?
 
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
     val toStringConverter: (File) -> String? = { if (it.exists()) it.absolutePath else null }
@@ -458,20 +460,27 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=${hprofSnapshotFilePath}"))
 
-    jvmArgs.addAll(0, computeVmOptions(isEAP = true, bundledRuntime = context.bundledRuntime, customJvmMemoryOptions = null))
-
-    jvmArgs += options.jvmMemoryOptions?.split(Regex("\\s+")) ?: listOf("-Xms750m", "-Xmx750m")
+    val customMemoryOptions = options.jvmMemoryOptions?.trim()?.split(Regex("\\s+"))?.takeIf { it.isNotEmpty() }
+    jvmArgs.addAll(
+      index = 0,
+      elements = computeVmOptions(
+        isEAP = true,
+        bundledRuntime = context.bundledRuntime,
+        customJvmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
+        additionalVmOptions = customMemoryOptions,
+      ),
+    )
 
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
-    val ideaSystemPath = Path.of("${tempDir}/system")
-    context.messages.block("idea.system.path cleanup") {
+    val ideaSystemPath = Path.of("$tempDir/system")
+    spanBuilder("idea.system.path cleanup").use {
       NioFiles.deleteRecursively(ideaSystemPath)
     }
     @Suppress("SpellCheckingInspection")
     for ((k, v) in sequenceOf(
       "idea.platform.prefix" to options.platformPrefix,
       "idea.home.path" to context.paths.projectHome.toString(),
-      "idea.config.path" to "${tempDir}/config",
+      "idea.config.path" to "$tempDir/config",
       "idea.system.path" to "$ideaSystemPath",
       BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "${context.classesOutputDirectory}",
       "idea.coverage.enabled.build" to System.getProperty("idea.coverage.enabled.build"),
@@ -497,6 +506,11 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       if (key.startsWith("pass.")) {
         systemProperties[key.substring("pass.".length)] = value as String
       }
+
+      /**
+       * Make test inherit Maven dependency resolver settings
+       * See [org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder]
+       */
 
       /**
        * Make test inherit Maven dependency resolver settings
@@ -699,7 +713,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               jvmArgs: List<String>,
                               envVariables: Map<String, String>,
                               bootstrapClasspath: List<String>,
-                              modulePath : List<String>?,
+                              modulePath: List<String>?,
                               testClasspath: List<String>) {
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
@@ -736,13 +750,13 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
               val testClassName = FileUtilRt.getNameWithoutExtension(testClass).replace('/', '.')
 
               val exitCode = runJUnit5Engine(systemProperties = systemProperties,
-                              jvmArgs = jvmArgs + additionalJvmArgs + additionalJvmArgsJUnit5,
-                              envVariables = envVariables,
-                              bootstrapClasspath = bootstrapClasspath,
-                              modulePath = modulePath,
-                              testClasspath = testClasspath,
-                              suiteName = testClassName,
-                              methodName = null)
+                                             jvmArgs = jvmArgs + additionalJvmArgs + additionalJvmArgsJUnit5,
+                                             envVariables = envVariables,
+                                             bootstrapClasspath = bootstrapClasspath,
+                                             modulePath = modulePath,
+                                             testClasspath = testClasspath,
+                                             suiteName = testClassName,
+                                             methodName = null)
 
               if (exitCode == NO_TESTS_ERROR) batchExitCode = NO_TESTS_ERROR
             }
@@ -772,13 +786,13 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
               val testClassName = FileUtilRt.getNameWithoutExtension(testClass).replace('/', '.')
 
               val exitCode = runJUnit5Engine(systemProperties = systemProperties,
-                              jvmArgs = jvmArgs + additionalJvmArgs + additionalJvmArgsJUnit3,
-                              envVariables = envVariables,
-                              bootstrapClasspath = bootstrapClasspath,
-                              modulePath = modulePath,
-                              testClasspath = testClasspath,
-                              suiteName = testClassName,
-                              methodName = null)
+                                             jvmArgs = jvmArgs + additionalJvmArgs + additionalJvmArgsJUnit3,
+                                             envVariables = envVariables,
+                                             bootstrapClasspath = bootstrapClasspath,
+                                             modulePath = modulePath,
+                                             testClasspath = testClasspath,
+                                             suiteName = testClassName,
+                                             methodName = null)
 
               if (exitCode == NO_TESTS_ERROR) batchExitCode = NO_TESTS_ERROR
             }
@@ -831,7 +845,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
   }
 
-  private class NoTestsFound: Exception()
+  private class NoTestsFound : Exception()
 
   private fun runJUnit5Engine(systemProperties: Map<String, String?>,
                               jvmArgs: List<String>,
@@ -882,7 +896,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     val argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
-    val runtime = runBlocking(Dispatchers.IO) { getRuntimeExecutablePath ().toString() }
+    val runtime = runBlocking(Dispatchers.IO) { getRuntimeExecutablePath().toString() }
     context.messages.info("Starting tests on runtime ${runtime}")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
@@ -913,6 +927,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
   private fun buildCausalProfilingAgentJvmArg(options: CausalProfilingOptions): List<String> {
     val causalProfilingJvmArgs = ArrayList<String>()
+
     @Suppress("SpellCheckingInspection")
     val causalProfilerAgentName = if (SystemInfoRt.isLinux || SystemInfoRt.isMac) "liblagent.so" else null
     if (causalProfilerAgentName == null) {
@@ -926,13 +941,17 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
   }
 }
 
-private class MyTraceFileUploader(serverUrl: String, token: String?, private val messages: BuildMessages) : TraceFileUploader(serverUrl, token) {
+private class MyTraceFileUploader(serverUrl: String, token: String?, private val messages: BuildMessages) : TraceFileUploader(serverUrl,
+                                                                                                                              token) {
   override fun log(message: String) = messages.info(message)
 }
 
 private val ignoredPrefixes = listOf(
   "-ea", "-XX:+HeapDumpOnOutOfMemoryError", "-Xbootclasspath", "-Xmx", "-Xms",
-  "-Didea.system.path=", "-Didea.config.path=", "-Didea.home.path=")
+  // ReservedCodeCacheSize is critical - if not configured, maybe error `Out of space in CodeCache for adapters`
+  "-XX:ReservedCodeCacheSize",
+  "-Didea.system.path=", "-Didea.config.path=", "-Didea.home.path="
+)
 
 private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> {
   return vmOptions.filter { option -> ignoredPrefixes.none(option::startsWith) }

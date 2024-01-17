@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
@@ -36,6 +36,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static org.jetbrains.idea.devkit.run.DevKitApplicationPatcherKt.addRequiredVmOptionForTestOrAppRunConfiguration;
+
 final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
   static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
@@ -70,6 +72,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       }
 
       appendAddOpensWhenNeeded(project, jdk, vm);
+      addRequiredVmOptionForTestOrAppRunConfiguration(vm);
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);

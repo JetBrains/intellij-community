@@ -56,22 +56,19 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     }
 
     vmParameters.addAll(
-      "-XX:SoftRefLRUPolicyMSPerMB=50",
       "-XX:MaxJavaStackTraceDepth=10000",
       "-ea",
     )
-
-    if (!isDev) {
-      return
-    }
 
     vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false")
 
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")
     }
-    if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
-      vmParameters.add("-XX:ReservedCodeCacheSize=512m")
+    addRequiredVmOptionForTestOrAppRunConfiguration(vmParameters)
+
+    if (!isDev) {
+      return
     }
 
     var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
@@ -148,4 +145,14 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
     "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
     "compose.swing.render.on.graphics" to "true",
   )
+}
+
+internal fun addRequiredVmOptionForTestOrAppRunConfiguration(vmParameters: ParametersList) {
+  val list = vmParameters.list
+  if (list.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
+    vmParameters.add("-XX:ReservedCodeCacheSize=512m")
+  }
+  if (list.none { it.startsWith("-XX:SoftRefLRUPolicyMSPerMB") }) {
+    vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
+  }
 }

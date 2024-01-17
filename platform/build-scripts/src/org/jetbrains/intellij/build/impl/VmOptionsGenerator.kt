@@ -12,7 +12,8 @@ private fun addCommonVmOptions(is21: Boolean): List<String> {
     "-XX:SoftRefLRUPolicyMSPerMB=50",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
-    "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
+    // allowing the JVM to start even with outdated options stuck in user configs
+    "-XX:+IgnoreUnrecognizedVMOptions",
     "-ea",
     "-Dsun.io.useCanonCaches=false",
     "-Dsun.java2d.metal=true",
@@ -38,17 +39,6 @@ private fun addCommonVmOptions(is21: Boolean): List<String> {
 
 /** duplicates RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
 private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
-
-private const val DEFAULT_XMS = 128
-
-/** Must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX]. */
-private const val DEFAULT_XMX = 2048
-
-private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
-  "-Xms" to "${DEFAULT_XMS}m",
-  "-Xmx" to "${DEFAULT_XMX}m",
-  "-XX:ReservedCodeCacheSize=" to "512m"
-)
 
 @Suppress("IdentifierGrammar")
 object VmOptionsGenerator {
@@ -85,10 +75,14 @@ internal fun computeVmOptions(isEAP: Boolean,
   val result = ArrayList<String>()
 
   if (customJvmMemoryOptions != null) {
-    val memory = LinkedHashMap<String, String>()
-    memory.putAll(MEMORY_OPTIONS)
-    memory.putAll(customJvmMemoryOptions)
-    memory.forEach({ (k, v) -> result.add(k + v) })
+    val memory = LinkedHashMap<String, String>(customJvmMemoryOptions)
+    memory.putIfAbsent("-Xms", "128m")
+    // must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX]
+    memory.putIfAbsent("-Xmx", "2048m")
+    memory.putIfAbsent("-XX:ReservedCodeCacheSize=", "512m")
+    for ((k, v) in memory) {
+      result.add(k + v)
+    }
   }
 
   result.addAll(addCommonVmOptions(is21 = !bundledRuntime.build.startsWith("17.")))
