@@ -5,4 +5,4 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-data class CorrectnessError(val location: TextRange, val severity: Severity)
+data class CorrectnessError(val location: TextRange, val severity: Severity, val debugName: String)

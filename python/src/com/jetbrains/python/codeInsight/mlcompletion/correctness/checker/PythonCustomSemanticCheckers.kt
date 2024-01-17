@@ -1,5 +1,8 @@
 package com.jetbrains.python.codeInsight.mlcompletion.correctness.checker
 
+import com.intellij.platform.ml.impl.correctness.checker.CorrectnessError
+import com.intellij.platform.ml.impl.correctness.checker.CustomSemanticChecker
+import com.intellij.platform.ml.impl.correctness.checker.Severity
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.ProjectScope
@@ -7,9 +10,6 @@ import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.intellij.platform.ml.impl.correctness.checker.CorrectnessError
-import com.intellij.platform.ml.impl.correctness.checker.CustomSemanticChecker
-import com.intellij.platform.ml.impl.correctness.checker.Severity
 
 object PyAssignmentToLibraryScopeSemanticChecker : CustomSemanticChecker() {
   override fun findErrors(originalPsi: PsiFile,
@@ -29,7 +29,7 @@ object PyAssignmentToLibraryScopeSemanticChecker : CustomSemanticChecker() {
         librariesScope.contains(virtualFile)
       }.mapNotNull {
         val location = getLocationInSuggestion(it.textRange, offset, prefix, suggestion) ?: return@mapNotNull null
-        CorrectnessError(location, Severity.CRITICAL)
+        CorrectnessError(location, Severity.CRITICAL, javaClass.getSimpleName())
       }
   }
 

@@ -32,7 +32,7 @@ object PyUnresolvedReferencesSemanticChecker : InspectionBasedSemanticChecker(Py
     problemDescriptors.filterErrorsInsideUnresolvedWellKnownImports().mapNotNull { problemDescriptor ->
       val severity = getErrorSeverity(problemDescriptor)
       val location = getLocationInSuggestion(problemDescriptor, offset, prefix, suggestion) ?: return@mapNotNull null
-      CorrectnessError(location, severity)
+      CorrectnessError(location, severity, javaClass.getSimpleName())
   }
 
   private fun List<ProblemDescriptor>.filterErrorsInsideUnresolvedWellKnownImports(): List<ProblemDescriptor> {
@@ -81,7 +81,7 @@ object PyCallingNonCallableSemanticChecker : InspectionBasedSemanticChecker(PyCa
                                          suggestion: String): List<CorrectnessError> =
     problemDescriptors.mapNotNull { problemDescriptor ->
       val location = getLocationInSuggestion(problemDescriptor, offset, prefix, suggestion) ?: return@mapNotNull null
-      CorrectnessError(location, Severity.CRITICAL)
+      CorrectnessError(location, Severity.CRITICAL, javaClass.getSimpleName())
   }
 }
 
@@ -100,7 +100,7 @@ object PyArgumentListSemanticChecker : InspectionBasedSemanticChecker(PyArgument
     if (elementType === PyTokenTypes.RPAR) {
       return@mapNotNull null
     }
-      CorrectnessError(location, Severity.CRITICAL)
+      CorrectnessError(location, Severity.CRITICAL, javaClass.getSimpleName())
   }
 }
 
@@ -112,6 +112,6 @@ object PyRedeclarationSemanticChecker : InspectionBasedSemanticChecker(PyRedecla
                                          suggestion: String): List<CorrectnessError> =
     problemDescriptors.mapNotNull { problemDescriptor ->
       val location = getLocationInSuggestion(problemDescriptor, offset, prefix, suggestion) ?: return@mapNotNull null
-      CorrectnessError(location, Severity.CRITICAL)
+      CorrectnessError(location, Severity.CRITICAL, javaClass.getSimpleName())
   }
 }
