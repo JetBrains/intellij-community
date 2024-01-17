@@ -261,7 +261,7 @@ public final class DebuggerUIUtil {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
-                                          showAllOptions);
+                                          showAllOptions, true);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);

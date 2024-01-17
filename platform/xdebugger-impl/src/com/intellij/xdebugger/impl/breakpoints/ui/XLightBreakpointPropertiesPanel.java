@@ -29,6 +29,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -103,14 +104,25 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   private final XBreakpointBase myBreakpoint;
 
   private final boolean myShowAllOptions;
+  private final boolean myIsEditorBalloon;
 
   public void setDetailView(DetailView detailView) {
     myMasterBreakpointPanel.setDetailView(detailView);
   }
 
+  /**
+   * @deprecated use {@link XLightBreakpointPropertiesPanel#XLightBreakpointPropertiesPanel(Project, XBreakpointManager, XBreakpointBase, boolean, boolean)}
+   */
+  @Deprecated
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint, boolean showAllOptions) {
+    this(project, breakpointManager, breakpoint, showAllOptions, false);
+  }
+
+  public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
+                                         boolean showAllOptions, boolean isEditorBalloon) {
     myBreakpoint = breakpoint;
     myShowAllOptions = showAllOptions;
+    myIsEditorBalloon = isEditorBalloon;
     XBreakpointType breakpointType = breakpoint.getType();
 
     if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.SUSPEND_POLICY)) {
@@ -286,7 +298,27 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       customPanel.loadFrom(myBreakpoint);
     }
     myEnabledCheckbox.setSelected(myBreakpoint.isEnabled());
-    myBreakpointNameLabel.setText(XBreakpointUtil.getShortText(myBreakpoint));
+    myBreakpointNameLabel.setText(getBreakpointNameLabel());
+  }
+
+  @Nls
+  private String getBreakpointNameLabel() {
+    var description = XBreakpointUtil.getGeneralDescription(myBreakpoint);
+    if (myIsEditorBalloon) {
+      // Use tooltip-like description in this case.
+      return description;
+    }
+
+    var itemTitleText = XBreakpointUtil.getShortText(myBreakpoint);
+    if (description.equals(itemTitleText) || itemTitleText.contains(description)) {
+      return itemTitleText;
+    }
+    if (description.contains(itemTitleText)) {
+      return description;
+    }
+
+    // Try to take both of them for better result.
+    return XDebuggerBundle.message("xbreakpoints.dialog.double.breakpoint.title", itemTitleText, description);
   }
 
   public JPanel getMainPanel() {

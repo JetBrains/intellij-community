@@ -103,7 +103,7 @@ class XBreakpointItem extends BreakpointItem {
       myPropertiesPanel = null;
     }
     if (!editorOnly) {
-      myPropertiesPanel = new XLightBreakpointPropertiesPanel(project, getManager(), breakpoint, true);
+      myPropertiesPanel = new XLightBreakpointPropertiesPanel(project, getManager(), breakpoint, true, false);
 
       panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
     }
