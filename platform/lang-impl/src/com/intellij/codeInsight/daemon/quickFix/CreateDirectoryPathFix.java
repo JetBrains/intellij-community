@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -57,9 +59,20 @@ public final class CreateDirectoryPathFix extends AbstractCreateFileFix {
   protected void apply(@NotNull Project project, @NotNull Supplier<? extends @Nullable PsiDirectory> targetDirectory, @Nullable Editor editor)
     throws IncorrectOperationException {
 
-    PsiDirectory directory = targetDirectory.get();
-    if (directory != null) {
-      directory.createSubdirectory(myNewFileName);
+    try {
+      WriteCommandAction.writeCommandAction(project)
+        .withName(CodeInsightBundle.message(myKey, myNewFileName))
+        .run(() -> {
+          var parent = targetDirectory.get();
+          if (parent != null) {
+            parent.createSubdirectory(myNewFileName);
+          }
+        });
+    }
+    catch (IncorrectCreateFilePathException e) {
+      if (editor != null) {
+        HintManager.getInstance().showErrorHint(editor, e.getLocalizedMessage());
+      }
     }
   }
 

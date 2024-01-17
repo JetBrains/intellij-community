@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -28,7 +28,10 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.nio.file.InvalidPathException;
@@ -66,6 +69,12 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     myDirectories = newFileLocation.getDirectories();
     mySubPath = newFileLocation.getSubPath();
     myKey = fixLocaleKey;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    // required to open file not under Write lock
+    return false;
   }
 
   /**
@@ -144,8 +153,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
 
         if (currentDirectory == null) {
           if (editor != null) {
-            HintManager hintManager = HintManager.getInstance();
-            hintManager.showErrorHint(editor, CodeInsightBundle.message("create.file.incorrect.path.hint", myNewFileName));
+            throw new IncorrectCreateFilePathException(CodeInsightBundle.message("create.file.incorrect.path.hint", myNewFileName));
           }
           return null;
         }
@@ -168,11 +176,24 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     throws IncorrectOperationException {
   }
 
-  protected void apply(@NotNull Project project, @NotNull Supplier<? extends @Nullable PsiDirectory> targetDirectory, @Nullable Editor editor)
+  protected void apply(@NotNull Project project,
+                       @NotNull Supplier<? extends @Nullable PsiDirectory> targetDirectory,
+                       @Nullable Editor editor)
     throws IncorrectOperationException {
 
     // only for compatibility with 3-rd party plugins, not used
-    PsiDirectory directory = WriteAction.compute(() -> targetDirectory.get());
+    @Nullable PsiDirectory directory;
+    try {
+      directory = WriteCommandAction.writeCommandAction(project)
+        .withName(CodeInsightBundle.message(myKey, myNewFileName))
+        .compute(() -> targetDirectory.get());
+    }
+    catch (IncorrectCreateFilePathException e) {
+      if (editor != null) {
+        HintManager.getInstance().showErrorHint(editor, e.getLocalizedMessage());
+      }
+      directory = null;
+    }
     if (directory != null) {
       // for compatibility with plugins
       apply(project, directory, editor);
