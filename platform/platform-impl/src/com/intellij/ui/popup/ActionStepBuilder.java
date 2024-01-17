@@ -2,6 +2,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -136,9 +137,7 @@ final class ActionStepBuilder {
     }
 
     boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
-    List<PopupFactoryImpl.InlineActionItem> inlineItems = action instanceof InlineActionsHolder
-                                                          ? createInlineActionsItems(((InlineActionsHolder)action).getInlineActions())
-                                                          : Collections.emptyList();
+    List<PopupFactoryImpl.InlineActionItem> inlineItems = createInlineActionsItems(action, presentation);
     PopupFactoryImpl.ActionItem actionItem = new PopupFactoryImpl.ActionItem(
       action, mnemonic, myShowNumbers, myHonorActionMnemonics,
       myMaxIconWidth, myMaxIconHeight, prependSeparator, mySeparatorText, inlineItems);
@@ -148,13 +147,17 @@ final class ActionStepBuilder {
     mySeparatorText = null;
   }
 
-  private @NotNull List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull List<? extends AnAction> inlineActions) {
+  private @NotNull List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull AnAction action,
+                                                                                    @NotNull Presentation presentation) {
+    List<? extends AnAction> inlineActions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS);
+    if (inlineActions == null && action instanceof InlineActionsHolder holder) inlineActions = holder.getInlineActions();
+    if (inlineActions == null) return Collections.emptyList();
     List<PopupFactoryImpl.InlineActionItem> res = new ArrayList<>();
-    for (AnAction action : inlineActions) {
-      Presentation presentation = presentationFactory.getPresentation(action);
-      if (!presentation.isVisible()) continue;
-      PopupFactoryImpl.InlineActionItem item = new PopupFactoryImpl.InlineActionItem(action, myMaxIconWidth, myMaxIconHeight);
-      item.updateFromPresentation(presentation, myActionPlace);
+    for (AnAction a : inlineActions) {
+      Presentation p = presentationFactory.getPresentation(a);
+      if (!p.isVisible()) continue;
+      PopupFactoryImpl.InlineActionItem item = new PopupFactoryImpl.InlineActionItem(a, myMaxIconWidth, myMaxIconHeight);
+      item.updateFromPresentation(p, myActionPlace);
       res.add(item);
     }
     return res.isEmpty() ? Collections.emptyList() : res;

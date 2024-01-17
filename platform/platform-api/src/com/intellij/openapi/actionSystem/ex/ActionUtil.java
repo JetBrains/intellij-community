@@ -61,6 +61,7 @@ public final class ActionUtil {
   /** @noinspection removal*/
   public static final Key<@Nls String> SECONDARY_TEXT = Presentation.PROP_VALUE;
   public static final Key<@NonNls String> SEARCH_TAG = Key.create("SEARCH_TAG");
+  public static final Key<List<AnAction>> INLINE_ACTIONS = Key.create("INLINE_ACTIONS");
 
   private ActionUtil() {
   }

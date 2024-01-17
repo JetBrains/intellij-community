@@ -16,7 +16,6 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.openapi.components.*
@@ -200,8 +199,9 @@ private fun allConfigurationMessage(number: Int): @Nls String {
 internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
                                                  dataContext: DataContext,
                                                  disposeCallback: (() -> Unit)?) :
-  PopupFactoryImpl.ActionGroupPopup(null, actionGroup, dataContext, false, false, true, false,
-                                    disposeCallback, 30, null, null, PresentationFactory(), false) {
+  PopupFactoryImpl.ActionGroupPopup(
+    null, actionGroup, dataContext, false, false, true, false,
+    disposeCallback, 30, null, ActionPlaces.getPopupPlace("RunToolbarPopup"), PresentationFactory(), false) {
 
   private val pinnedSize: Int
   private val serviceState: RunConfigurationStartHistory
@@ -351,30 +351,36 @@ private fun createRunConfigurationWithInlines(project: Project,
                                               conf: RunnerAndConfigurationSettings,
                                               runExecutor: Executor,
                                               debugExecutor: Executor,
-                                              isPinned: Boolean
-): SelectRunConfigurationWithInlineActions {
+                                              isPinned: Boolean): AnAction {
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
-  val inlineActions = ArrayList<AnAction>()
+  val inlineActions =
   if (showRerunAndStopButtons) {
-    if (RunWidgetResumeManager.getInstance(project).isSecondVersionAvailable()) {
-      InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)?.let {
-        inlineActions.add(it)
-      }
+    val secondVersionAction = if (RunWidgetResumeManager.getInstance(project).isSecondVersionAvailable())
+      InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)
+    else null
+    if (secondVersionAction != null) {
+      listOf(
+        secondVersionAction,
+        ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
+        StopConfigurationInlineAction(activeExecutor, conf)
+      )
     }
-    inlineActions.addAll(listOf(
-      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
-      StopConfigurationInlineAction(activeExecutor, conf)
-    ))
+    else {
+      listOf(
+        ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
+        StopConfigurationInlineAction(activeExecutor, conf)
+      )
+    }
   }
   else {
-    inlineActions.addAll(listOf(
+    listOf(
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
-    ))
+    )
   }
   val extraGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(conf, false)
-  val result = object : SelectRunConfigurationWithInlineActions(inlineActions, conf, project) {
+  val result = object : SelectConfigAction(project, conf) {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
       var prefix = listOf<AnAction>(extraGroup)
       if (showRerunAndStopButtons) {
@@ -391,6 +397,9 @@ private fun createRunConfigurationWithInlines(project: Project,
       return (prefix + getDefaultChildren(excludeRunAndDebug) + pinAction).toTypedArray()
     }
   }
+    .also {
+      it.templatePresentation.putClientProperty(ActionUtil.INLINE_ACTIONS, inlineActions)
+    }
   return result
 }
 
@@ -406,33 +415,31 @@ private fun createCurrentFileWithInlineActions(runExecutor: Executor,
   val activeConfig = runRunningConfig ?: debugRunningConfig
 
   if (activeConfig == null || activeConfig.configuration.isAllowRunningInParallel) {
-    return object : SelectCurrentFileWithInlineActions(listOf(
-        ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
-        ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
-    ) {
+    return object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
       override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
         return getDefaultChildren(excludeRunAndDebug).toTypedArray()
       }
+    }.also {
+      it.templatePresentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(
+        ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
+        ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
+      )
     }
   }
 
-  val inlineActions = mutableListOf<AnAction>()
-  when {
-    runRunningConfig != null -> {
-      inlineActions.add(ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor))
-      inlineActions.add(StopConfigurationInlineAction(runExecutor, runRunningConfig))
-    }
-    debugRunningConfig != null -> {
-      inlineActions.add(ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
-      inlineActions.add(StopConfigurationInlineAction(debugExecutor, debugRunningConfig))
-    }
-    else -> {
-      inlineActions.add(ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor))
-      inlineActions.add(ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
-    }
+  val inlineActions = when {
+    runRunningConfig != null -> listOf(
+      ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
+      StopConfigurationInlineAction(runExecutor, runRunningConfig))
+    debugRunningConfig != null -> listOf(
+      ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor),
+      StopConfigurationInlineAction(debugExecutor, debugRunningConfig))
+    else -> listOf(
+      ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
+      ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))
   }
 
-  val res = object : SelectCurrentFileWithInlineActions(inlineActions) {
+  val res = object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
       var suffix = emptyList<AnAction>()
       if (debugRunningConfig != null) suffix = suffix + ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor)
@@ -440,6 +447,9 @@ private fun createCurrentFileWithInlineActions(runExecutor: Executor,
       return (suffix + getDefaultChildren(excludeRunAndDebug)).toTypedArray()
     }
   }
+    .also {
+      it.templatePresentation.putClientProperty(ActionUtil.INLINE_ACTIONS, inlineActions)
+    }
   return res
 }
 
@@ -455,19 +465,6 @@ private fun getCurrentPsiFile(project: Project): PsiFile? {
 private fun getActiveExecutor(project: Project, conf: RunnerAndConfigurationSettings): Executor? {
   val executionManager = ExecutionManagerImpl.getInstance(project)
   return executionManager.getRunningDescriptors { conf === it }.flatMap { executionManager.getExecutors(it) }.firstOrNull()
-}
-
-internal open class SelectRunConfigurationWithInlineActions(
-  private val actions: List<AnAction>,
-  configuration: RunnerAndConfigurationSettings,
-  project: Project,
-) : SelectConfigAction(project, configuration), InlineActionsHolder {
-  override fun getInlineActions(): List<AnAction> = actions
-}
-
-internal open class SelectCurrentFileWithInlineActions(private val actions: List<AnAction>) :
-  RunConfigurationsComboBoxAction.RunCurrentFileAction(), InlineActionsHolder {
-  override fun getInlineActions(): List<AnAction> = actions
 }
 
 private fun stopAll(e: AnActionEvent) {
