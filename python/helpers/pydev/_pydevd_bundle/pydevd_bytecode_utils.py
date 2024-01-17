@@ -3,15 +3,27 @@ variants."""
 
 import dis
 import inspect
+import logging
+import os
+import sys
 from collections import namedtuple
 
-from _pydevd_bundle.pydevd_constants import IS_PY3K, IS_CPYTHON
+from _pydevd_bundle.pydevd_constants import IS_PY3K, IS_CPYTHON, IS_PY312_OR_GREATER
 
 __all__ = [
     'find_last_call_name',
     'find_last_func_call_order',
     'get_smart_step_into_candidates',
 ]
+
+_logger = logging.getLogger(__name__)
+DEBUG = os.environ.get('PYCHARM_SMART_STEP_INTO_DEBUG', 'False') == 'True'
+if DEBUG:
+    _logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(name)s:%(levelname)s:%(message)s')
+    handler.setFormatter(formatter)
+    _logger.addHandler(handler)
 
 _LOAD_OPNAMES = {
     'LOAD_BUILD_CLASS',
@@ -34,6 +46,8 @@ if IS_PY3K:
         _LOAD_OPNAMES.add(each_opname)
     for each_opname in ('CALL_FUNCTION_EX', 'CALL_METHOD'):
         _CALL_OPNAMES.add(each_opname)
+    if IS_PY312_OR_GREATER:
+        _CALL_OPNAMES.add('CALL')
 else:
     _LOAD_OPNAMES.add('LOAD_LOCALS')
     for each_opname in ('CALL_FUNCTION_VAR', 'CALL_FUNCTION_VAR_KW'):
@@ -114,7 +128,7 @@ _Instruction = namedtuple(
         'arg',
         'argval',
         'offset',
-        'starts_line',
+        'lineno',
     ]
 )
 
@@ -169,7 +183,7 @@ class _BytecodeParsingError(Exception):
             self.offset, self.opname, self.arg)
 
 
-def get_smart_step_into_candidates(code):
+def _get_smart_step_into_candidates(code):
     """Iterate through the bytecode and return a list of instructions which can be
     smart step into candidates.
 
@@ -181,42 +195,64 @@ def get_smart_step_into_candidates(code):
     """
     if not IS_CPYTHON:
         # For implementations other than CPython we fall back to simple step into.
+        _logger.debug('Not CPython, returning the empty list of candidates')
         return []
 
     linestarts = dict(dis.findlinestarts(code))
+    _logger.debug('Instructions stating lines: {}'.format(linestarts))
+
     varnames = code.co_varnames
+    _logger.debug('Local variables in function: {}'.format(varnames))
+
     names = code.co_names
+    _logger.debug('Named used by bytecode in function: {}'.format(names))
+
     constants = code.co_consts
+    _logger.debug('Literals used by bytecode in function: {}'.format(constants))
+
     freevars = code.co_freevars
-    starts_line = None
-    stk = []  # only the instructions related to calls are pushed in the stack
+    _logger.debug('Name of free variables in function: {}'.format(freevars))
+
+    lineno = None
+    stk = []  # Only the instructions related to calls are pushed in the stack.
     result = []
 
     for offset, op, arg in _unpack_opargs(code.co_code):
+        _logger.debug('-------------------------')
+        _logger.debug('Current instruction stack: {}'.format(stk))
+        _logger.debug('offset[{}] - op[{}={}] - arg[{}]'.format(
+            offset, op, dis.opname[op], arg))
         try:
             if linestarts is not None:
-                starts_line = linestarts.get(offset, None) or starts_line
+                lineno = linestarts.get(offset, None)
             opname = dis.opname[op]
             argval = None
             if arg is None:
                 if _is_binary_opname(opname):
+                    _logger.debug('Handling binary operator')
                     stk.pop()
                     result.append(_Instruction(
-                        opname, op, arg, _BINARY_OP_MAP[opname], offset, starts_line))
+                        opname, op, arg, _BINARY_OP_MAP[opname], offset, lineno))
                 elif _is_unary_opname(opname):
+                    _logger.debug('Handling unary operator')
                     result.append(_Instruction(
-                        opname, op, arg, _UNARY_OP_MAP[opname], offset, starts_line))
+                        opname, op, arg, _UNARY_OP_MAP[opname], offset, lineno))
             if opname == 'COMPARE_OP':
+                _logger.debug('Handling comparison operation')
                 stk.pop()
                 cmp_op = dis.cmp_op[arg]
                 if cmp_op not in ('exception match', 'BAD'):
                     result.append(_Instruction(
-                        opname, op, arg, _COMP_OP_MAP[cmp_op], offset, starts_line))
+                        opname, op, arg, _COMP_OP_MAP[cmp_op], offset, lineno))
             if _is_load_opname(opname):
+                _logger.debug('Handling load operation')
                 if opname == 'LOAD_CONST':
                     argval = constants[arg]
                 elif opname == 'LOAD_NAME' or opname == 'LOAD_GLOBAL':
-                    argval = names[arg]
+                    if IS_PY312_OR_GREATER:
+                        argval = names[arg >> 1]
+                    else:
+                        argval = names[arg]
                 elif opname == 'LOAD_ATTR':
                     stk.pop()
                     argval = names[arg]
@@ -227,9 +263,10 @@ def get_smart_step_into_candidates(code):
                     argval = names[arg]
                 elif opname == 'LOAD_DEREF':
                     argval = freevars[arg]
-                stk.append(_Instruction(opname, op, arg, argval, starts_line, offset))
+                stk.append(_Instruction(opname, op, arg, argval, offset, lineno))
             elif _is_make_opname(opname):
                 # Qualified name of the function or function code in Python 2.
+                _logger.debug('Handling make operation')
                 tos = stk.pop()
                 argc = 0
                 if IS_PY3K:
@@ -245,6 +282,7 @@ def get_smart_step_into_candidates(code):
                     argc -= 1
                 stk.append(tos)
             elif _is_call_opname(opname):
+                _logger.debug('Handling call operation')
                 argc = arg  # the number of the function or method arguments
                 if (opname == 'CALL_FUNCTION_KW' or not IS_PY3K
                         and opname == 'CALL_FUNCTION_VAR'):
@@ -271,6 +309,8 @@ def get_smart_step_into_candidates(code):
                     continue
                 # The actual offset is not when a function was loaded but when
                 # it was called.
+                _logger.debug('Adding call target from the top of the stack: {}'.
+                              format(tos))
                 result.append(tos._replace(offset=offset))
         except Exception as e:
             err = _BytecodeParsingError(offset, dis.opname[op], arg)
@@ -279,24 +319,60 @@ def get_smart_step_into_candidates(code):
     return result
 
 
+def _get_smart_step_into_candidates_312(code):
+    result = []
+    stk = []
+    for instruction in dis.get_instructions(code):
+        if instruction.opname == 'CALL':
+            if stk[-1].opname == 'PUSH_NULL':
+                stk.pop()
+            tos = stk[-1]
+            if tos.opname == 'LOAD_GLOBAL':
+                result.append(_Instruction(
+                    tos.opname,
+                    tos.opcode,
+                    tos.arg,
+                    tos.argval,
+                    tos.offset,
+                    tos.positions.lineno
+                ))
+        else:
+            stk.append(instruction)
+    return result
+
+
+if IS_PY312_OR_GREATER:
+    get_smart_step_into_candidates = _get_smart_step_into_candidates_312
+else:
+    get_smart_step_into_candidates = _get_smart_step_into_candidates
+
+
 Variant = namedtuple('Variant', ['name', 'is_visited'])
 
 
 def find_stepping_targets(frame, start_line, end_line):
     """Find the *ordered* stepping targets within the given line range."""
+    _logger.debug("Collecting stepping targets for '{}' and line range [{}, {}]".format(
+        frame.f_code.co_name, start_line, end_line))
+    if DEBUG:
+        _logger.debug('The disassembled version of the code:')
+        dis.dis(frame.f_code, file=sys.stderr)
     stepping_targets = []
     is_within_range = False
     code = frame.f_code
     last_instruction = frame.f_lasti
+    _logger.debug('Last executed instruction offset is {}'.format(last_instruction))
     for inst in get_smart_step_into_candidates(code):
-        if inst.starts_line and inst.starts_line > end_line:
+        _logger.debug('Checking {} smart step into candidate'.format(inst))
+        if inst.lineno and inst.lineno > end_line:
             break
-        if (not is_within_range and inst.starts_line is not None
-                and inst.starts_line >= start_line):
+        if (not is_within_range and inst.lineno is not None
+                and inst.lineno >= start_line):
             is_within_range = True
         if not is_within_range:
             continue
-        stepping_targets.append(Variant(inst.argval, inst.offset <= last_instruction))
+        stepping_targets.append(Variant(inst.argval, inst.offset < last_instruction))
+    _logger.debug('Found stepping targets: {}'.format(stepping_targets))
     return stepping_targets
 
 
@@ -319,7 +395,7 @@ def find_last_func_call_order(frame, start_line):
     for inst in get_smart_step_into_candidates(code):
         if inst.offset > lasti:
             break
-        if inst.starts_line >= start_line:
+        if inst.lineno >= start_line:
             name = inst.argval
             call_order = cache.setdefault(name, -1)
             call_order += 1
