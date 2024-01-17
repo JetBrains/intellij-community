@@ -205,11 +205,11 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
           Logger logger = LoggerFactory.getLogger(X.class);
                   
           <weak_warning descr="Similar log messages">logger.atError()
-          .setMessage("aaa {}")
+          .setMessage("aaaaa {}")
           .log()</weak_warning>;
       
           <weak_warning descr="Similar log messages">logger.atError()
-          .setMessage("aaa 2{}")
+          .setMessage("aaaaa 2{}")
           .log()</weak_warning>;
         }        
       }

@@ -22,7 +22,6 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-private const val MIN_TEXT_LENGTH = 3
 private const val MAX_PART_COUNT = 10
 
 private const val WITH_THROWABLE = "withThrowable"
@@ -33,8 +32,14 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
   var mySkipErrorLogLevel: Boolean = true
 
+  @JvmField
+  var myMinTextLength: Int = 5
+
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
+      OptPane.number("myMinTextLength",
+                     JvmAnalysisBundle.message("jvm.inspection.logging.similar.message.problem.min.similar.length"),
+                     3, 100),
       OptPane.checkbox("mySkipErrorLogLevel",
                        JvmAnalysisBundle.message("jvm.inspection.logging.similar.message.problem.skip.on.error"))
     )
@@ -55,12 +60,13 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 
-    return UastHintedVisitorAdapter.create(holder.file.language, PlaceholderCountMatchesArgumentCountVisitor(holder),
+    return UastHintedVisitorAdapter.create(holder.file.language, PlaceholderCountMatchesArgumentCountVisitor(holder, myMinTextLength),
                                            arrayOf(UFile::class.java), directOnly = true)
   }
 
   inner class PlaceholderCountMatchesArgumentCountVisitor(
     private val holder: ProblemsHolder,
+    private val myMinTextLength: Int,
   ) : AbstractUastNonRecursiveVisitor() {
 
     override fun visitFile(node: UFile): Boolean {
@@ -81,17 +87,17 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
         if (group.size > 5) {
           var firstIsTaken = true
           var minLength: Int? = group
-                            .mapNotNull { messageLog -> messageLog.parts }
-                            .filter { parts -> firstIsText(parts) }
-                            .minOfOrNull { parts -> parts[0].text?.length ?: 0 }
+            .mapNotNull { messageLog -> messageLog.parts }
+            .filter { parts -> firstIsText(parts) }
+            .minOfOrNull { parts -> parts[0].text?.length ?: 0 }
 
 
           if (minLength == null || minLength == 0) {
             firstIsTaken = false
             minLength = group
-                          .mapNotNull { messageLog -> messageLog.parts }
-                          .filter { parts -> lastIsText(parts) }
-                          .minOfOrNull { parts -> parts.last().text?.length ?: 0 }
+              .mapNotNull { messageLog -> messageLog.parts }
+              .filter { parts -> lastIsText(parts) }
+              .minOfOrNull { parts -> parts.last().text?.length ?: 0 }
           }
 
           if (minLength == null || minLength == 0) {
@@ -102,7 +108,7 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
             .groupBy {
               val parts = it.parts ?: return@groupBy ""
               if (parts.isEmpty()) return@groupBy ""
-              val part0 = if(firstIsTaken) parts[0] else parts.last()
+              val part0 = if (firstIsTaken) parts[0] else parts.last()
               if (!part0.isConstant || part0.text == null || part0.text.length < minLength) return@groupBy ""
               part0.text.substring(0, minLength)
             }
@@ -114,7 +120,7 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
           val alreadyHasWarning = mutableSetOf<Int>()
           for (firstIndex in 0..currentGroup.lastIndex) {
             for (secondIndex in firstIndex + 1..currentGroup.lastIndex) {
-              if (similar(currentGroup[firstIndex].parts, currentGroup[secondIndex].parts)) {
+              if (similar(currentGroup[firstIndex].parts, currentGroup[secondIndex].parts, myMinTextLength)) {
                 if (alreadyHasWarning.add(firstIndex)) {
                   registerProblem(holder, currentGroup[firstIndex].call, currentGroup[secondIndex].call)
                 }
@@ -129,12 +135,6 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
 
       return super.visitFile(node)
     }
-
-    private fun firstIsText(parts: List<LoggingStringPartEvaluator.PartHolder>) =
-      parts.isNotEmpty() && parts[0].isConstant && parts[0].text?.isNotBlank() == true
-
-    private fun lastIsText(parts: List<LoggingStringPartEvaluator.PartHolder>) =
-      parts.isNotEmpty() && parts.last().isConstant && parts.last().text?.isNotBlank() == true
 
     private fun collectCalls(file: UFile): Set<UCallExpression> {
       val result = mutableSetOf<UCallExpression>()
@@ -301,13 +301,24 @@ private class PartHolderIterator(private val parts: List<LoggingStringPartEvalua
 private data class MessageLog(val call: UCallExpression, val parts: List<LoggingStringPartEvaluator.PartHolder>?)
 
 private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
-                    second: List<LoggingStringPartEvaluator.PartHolder>?): Boolean {
+                    second: List<LoggingStringPartEvaluator.PartHolder>?,
+                    minTextLength: Int): Boolean {
   if (first == null || second == null) return false
   if (first.isEmpty() || second.isEmpty()) return false
   if (first.size >= MAX_PART_COUNT || second.size >= MAX_PART_COUNT) return false
   val firstIterator = PartHolderIterator(first)
   val secondIterator = PartHolderIterator(second)
   var intersection = 0
+
+  val firstFirstIsText = firstIsText(first)
+  val firstLastIsText = lastIsText(first)
+
+  val secondFirstIsText = firstIsText(second)
+  val secondLastIsText = lastIsText(second)
+
+  if (!firstFirstIsText && !firstLastIsText && (secondFirstIsText || secondLastIsText)) return false
+  if (!secondFirstIsText && !secondLastIsText && (firstFirstIsText || firstLastIsText)) return false
+
   while (firstIterator.hasNext() && secondIterator.hasNext()) {
     //example: "something {} something", `{}` is skipped here
     if (!firstIterator.isText()) {
@@ -412,5 +423,11 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
     return false
   }
 
-  return intersection >= MIN_TEXT_LENGTH
+  return intersection >= minTextLength
 }
+
+private fun firstIsText(parts: List<LoggingStringPartEvaluator.PartHolder>) =
+  parts.isNotEmpty() && parts[0].isConstant && parts[0].text?.isNotBlank() == true
+
+private fun lastIsText(parts: List<LoggingStringPartEvaluator.PartHolder>) =
+  parts.isNotEmpty() && parts.last().isConstant && parts.last().text?.isNotBlank() == true
