@@ -156,10 +156,6 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
-import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractProjectTemplateBuildFileGenerationTest
-import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractYamlBuildFileGenerationTest
-import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNewWizardProjectImportTest
-import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProjectImportTest
 import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -1221,36 +1217,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractMultiPlatformCompletionTest> {
             model("multiPlatform", isRecursive = false, pattern = DIRECTORY)
-        }
-    }
-
-    testGroup("project-wizard/tests") {
-        fun MutableTSuite.allBuildSystemTests(relativeRootPath: String) {
-            for (testClass in listOf("GradleKts", "GradleGroovy", "Maven")) {
-                model(
-                    relativeRootPath,
-                    isRecursive = false,
-                    pattern = DIRECTORY,
-                    testMethodName = "doTest${testClass}",
-                    testClassName = testClass,
-                )
-            }
-        }
-
-        testClass<AbstractYamlBuildFileGenerationTest> {
-            model("buildFileGeneration", isRecursive = false, pattern = DIRECTORY)
-        }
-
-        testClass<AbstractProjectTemplateBuildFileGenerationTest> {
-            model("projectTemplatesBuildFileGeneration", isRecursive = false, pattern = DIRECTORY)
-        }
-
-        testClass<AbstractYamlNewWizardProjectImportTest> {
-            allBuildSystemTests("buildFileGeneration")
-        }
-
-        testClass<AbstractProjectTemplateNewWizardProjectImportTest> {
-            allBuildSystemTests("projectTemplatesBuildFileGeneration")
         }
     }
 
