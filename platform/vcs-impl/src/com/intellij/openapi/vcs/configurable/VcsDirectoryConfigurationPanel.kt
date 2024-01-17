@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder
@@ -90,7 +91,11 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
         if (roots.isNotEmpty()) {
           append(FontUtil.spaceAndThinSpace(), textAttributes)
           append(VcsBundle.message("project.detected.n.roots.presentation", roots.size), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
-          toolTipText = roots.joinToString(UIUtil.BR) { StringUtil.escapeXmlEntities(FileUtil.toSystemDependentName(it.path)) }
+          toolTipText = roots
+            .map { VcsUtil.getFilePath(it) }
+            .sortedWith(HierarchicalFilePathComparator.NATURAL)
+            .map { StringUtil.escapeXmlEntities(it.presentableUrl) }
+            .joinToString(UIUtil.BR)
         }
       }
     }
