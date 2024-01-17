@@ -4,22 +4,15 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCase
-import com.intellij.maven.testFramework.assertWithinTimeout
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.project.MavenSyncListener
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.utils.MavenLog
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWizard>() {
   override fun runInDispatchThread() = false
@@ -72,34 +65,4 @@ abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjec
       }
     }
   }
-
-  @RequiresBackgroundThread
-  protected suspend fun <T> waitForImportWithinTimeout(action: suspend () -> T): T {
-    MavenLog.LOG.warn("waitForImportWithinTimeout started")
-    val syncStarted = AtomicBoolean(false)
-    val syncFinished = AtomicBoolean(false)
-    ApplicationManager.getApplication().messageBus.connect(testRootDisposable)
-      .subscribe(MavenSyncListener.TOPIC, object : MavenSyncListener {
-        override fun syncStarted(project: Project) {
-          syncStarted.set(true)
-        }
-
-        override fun syncFinished(project: Project) {
-          syncFinished.set(true)
-        }
-      })
-
-    val result = action()
-
-    assertWithinTimeout {
-      assertTrue(
-        syncStarted.get()
-        && syncFinished.get()
-      )
-      MavenLog.LOG.warn("waitForImportWithinTimeout finished")
-    }
-
-    return result
-  }
-
 }

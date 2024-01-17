@@ -24,8 +24,6 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.util.function.Consumer
 
 abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
@@ -104,20 +102,10 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
   }
 
   suspend fun waitForProjectCreation(createProject: () -> Project): Project {
-    val project = withContext(Dispatchers.EDT) { createProject() }
-
-    // hack to wait for all the pending updates on newly created project
-    MavenProjectsManager.getInstance(project).updateAllMavenProjects(MavenImportSpec(false, false, false))
-
-    return project
+    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { createProject() } }
   }
 
   suspend fun waitForModuleCreation(createModule: () -> Module): Module {
-    val module = withContext(Dispatchers.EDT) { createModule() }
-
-    // hack to wait for all the pending updates
-    MavenProjectsManager.getInstance(module.project).updateAllMavenProjects(MavenImportSpec(false, false, false))
-
-    return module
+    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { createModule() } }
   }
 }
