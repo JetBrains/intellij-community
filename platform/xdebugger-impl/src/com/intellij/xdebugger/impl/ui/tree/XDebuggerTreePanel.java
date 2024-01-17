@@ -7,6 +7,7 @@ import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -34,7 +35,7 @@ public final class XDebuggerTreePanel implements DnDSource {
     myTree = new XDebuggerTree(project, editorsProvider, sourcePosition, popupActionGroupId, markers);
     myMainPanel = new JPanel(new BorderLayout());
     Component content;
-    if (Registry.intValue("debugger.anti.flickering.delay", 0) > 0) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0) {
       AntiFlickeringPanel antiFlickeringPanel = new AntiFlickeringPanel(new BorderLayout());
       antiFlickeringPanel.add(myTree);
       content = antiFlickeringPanel;
