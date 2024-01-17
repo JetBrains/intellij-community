@@ -28,7 +28,7 @@ class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, par
                                   "account.choose.title"),
                                 @Nls(capitalization = Nls.Capitalization.Title) okText: String = GithubBundle.message(
                                   "account.choose.button"))
-  : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
+  : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE) {
 
   private val description: JTextArea? = descriptionText?.let {
     JTextArea().apply {

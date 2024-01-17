@@ -23,7 +23,7 @@ class TokenLoginDialog(
   private val model: LoginModel,
   @NlsContexts.DialogTitle title: String = CollaborationToolsBundle.message("login.dialog.title"),
   private val centerPanelSupplier: CoroutineScope.() -> DialogPanel
-) : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
+) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
 
   private val uiScope = DisposingMainScope(disposable) + ModalityState.stateForComponent(rootPane).asContextElement()
 
