@@ -25,9 +25,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 @RunWith(JUnit4::class)
 class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
@@ -91,7 +91,7 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
       createFile(".hidden")
     }
     val completions = getCompletionsForCommand("ls $tempDirectory\\<caret>")
-    val expected = tempDirectory.listDirectoryEntries().map { it.absolutePathString() }
+    val expected = tempDirectory.listDirectoryEntries().map { it.name }
     assertSameCompletions(completions, expected)
   }
 
