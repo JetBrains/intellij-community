@@ -708,22 +708,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
-    if (!isInitialized()) {
-      initAndActivate();
-      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false));
-    }
-    newTree.addListenersFrom(myProjectsTree);
-    myProjectsTree = newTree;
-    myWatcher.setProjectTree(newTree);
-  }
-
-  @ApiStatus.Internal
-  public EventDispatcher<MavenProjectsTree.Listener> getTreeListenerEventDispatcher() {
-    return myProjectsTreeDispatcher;
-  }
-
-  @ApiStatus.Internal
   @NotNull
   public MavenProjectsTree getProjectsTree() {
     if (myProjectsTree == null) {
