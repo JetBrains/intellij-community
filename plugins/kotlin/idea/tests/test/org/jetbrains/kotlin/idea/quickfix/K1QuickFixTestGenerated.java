@@ -17942,6 +17942,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/when/elseNotLastInWhen.kt");
         }
 
+        @TestMetadata("localSealedClassInheritorExhaustive.kt")
+        public void testLocalSealedClassInheritorExhaustive() throws Exception {
+            runTest("testData/quickfix/when/localSealedClassInheritorExhaustive.kt");
+        }
+
         @TestMetadata("noElseInWhenWithBranches.kt")
         public void testNoElseInWhenWithBranches() throws Exception {
             runTest("testData/quickfix/when/noElseInWhenWithBranches.kt");

@@ -2,24 +2,16 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api.ide
 
-import com.intellij.openapi.module.Module
-import com.intellij.psi.JavaDirectoryService
-import com.intellij.psi.PsiPackage
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PackageScope
-import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.ClassInheritorsSearch
-import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.isSealed
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.util.concurrent.ConcurrentHashMap
 
 internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvider() {
@@ -33,39 +25,34 @@ internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvi
     }
 
     private fun getInheritors(firClass: FirRegularClass): List<ClassId> {
-        // TODO fix for non-source classes
         val sealedKtClass = firClass.psi as? KtClass ?: return emptyList()
-        val module = sealedKtClass.module ?: return emptyList()
-        val containingPackage = firClass.classId.packageFqName
+        val classId = sealedKtClass.getClassId() ?: return emptyList()
+        val ktModule = ProjectStructureProvider.getModule(sealedKtClass.project, sealedKtClass, contextualModule = null)
 
-        val psiPackage = KotlinJavaPsiFacade.getInstance(sealedKtClass.project)
-            .findPackage(containingPackage.asString(), GlobalSearchScope.moduleScope(module))
-            ?: getPackageViaDirectoryService(sealedKtClass)
-            ?: return emptyList()
+        // Some notes about the search:
+        //  - A Java class cannot legally extend a sealed Kotlin class (even in the same package), so we don't need to search for Java class
+        //    inheritors.
+        //  - Technically, we could use a package scope here to narrow the search, but the search is already sufficiently narrow because it
+        //    uses `KotlinSuperClassIndex` and is confined to the current `KtModule`. Finding a `PsiPackage` for a `PackageScope` is not
+        //    cheap, hence the decision to avoid it. If a `PackageScope` is needed in the future, it'd be best to extract a
+        //    `PackageNameScope` which operates just with the qualified package name, to avoid `PsiPackage`. (At the time of writing, this
+        //    is possible with the implementation of `PackageScope`.)
+        //  - We ignore local classes to avoid lazy resolve contract violations. See KT-63795.
+        //  - KMP is unlikely to be fully supported. See KTIJ-28421.
+        val searchParameters = DirectKotlinClassInheritorsSearch.SearchParameters(
+            ktClass = sealedKtClass,
+            searchScope = ktModule.contentScope,
+            includeLocal = false,
+        )
 
-        val kotlinAsJavaSupport = KotlinAsJavaSupport.getInstance(sealedKtClass.project)
-        val lightClass = sealedKtClass.toLightClass() ?: kotlinAsJavaSupport.getFakeLightClass(sealedKtClass)
-
-        val searchScope: SearchScope = getSearchScope(module, psiPackage)
-        val searchParameters = ClassInheritorsSearch.SearchParameters(lightClass, searchScope, false, true, false)
-        val subclasses = ClassInheritorsSearch.search(searchParameters)
-            .mapNotNull { it.classIdIfNonLocal }
+        val classIds = DirectKotlinClassInheritorsSearch.search(searchParameters)
+            .mapNotNull { (it as? KtClassOrObject)?.classIdIfNonLocal }
+            .filter { it.packageFqName == classId.packageFqName }
             .toMutableList()
 
         // Enforce a deterministic order on the result.
-        subclasses.sortBy { it.toString() }
-        return subclasses
-    }
+        classIds.sortBy { it.toString() }
 
-    private fun getSearchScope(module: Module, psiPackage: PsiPackage): GlobalSearchScope {
-        val packageScope = PackageScope(psiPackage, false, false)
-        // MPP multiple common modules are not supported!!
-        return module.moduleScope.intersectWith(packageScope)
-    }
-
-    private fun getPackageViaDirectoryService(ktClass: KtClass): PsiPackage? {
-        val directory = ktClass.containingFile.containingDirectory ?: return null
-        return JavaDirectoryService.getInstance().getPackage(directory)
+        return classIds
     }
 }
-

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
 import org.jetbrains.kotlin.idea.test.findFileWithCaret
 import org.jetbrains.kotlin.psi.KtFile

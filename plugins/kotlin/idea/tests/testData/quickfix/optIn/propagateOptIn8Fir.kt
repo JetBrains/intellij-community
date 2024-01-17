@@ -6,6 +6,7 @@
 // ACTION: Propagate 'UnstableApi' opt-in requirement to 'foo'
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn
 annotation class UnstableApi

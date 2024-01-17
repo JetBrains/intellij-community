@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlinx-serialization-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.0.0-dev-12050">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.0.0-dev-12846">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-dev-12050/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-dev-12050.jar">
-          <sha256sum>5291d26e40a19ecc93522cc0d61784395ac658c183fff95d43b0edc739f8fa14</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-dev-12846/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-dev-12846.jar">
+          <sha256sum>7008f88fe780310be071471ae2fddae6d78df6a398123a2ab572a604dd7dda3c</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-dev-12050/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-dev-12050.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-dev-12846/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-dev-12846.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-dev-12050/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-dev-12050-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-dev-12846/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-dev-12846-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

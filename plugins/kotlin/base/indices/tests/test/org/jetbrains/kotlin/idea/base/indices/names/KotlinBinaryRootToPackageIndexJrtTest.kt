@@ -12,7 +12,7 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
 import com.google.gson.JsonObject
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectLibrary
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureParser
-import org.jetbrains.kotlin.idea.jsonUtils.getString
+import org.jetbrains.kotlin.idea.base.util.getString
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
+import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructureParser
 
 data class SessionInvalidationTestProjectStructure(
     override val libraries: List<TestProjectLibrary>,

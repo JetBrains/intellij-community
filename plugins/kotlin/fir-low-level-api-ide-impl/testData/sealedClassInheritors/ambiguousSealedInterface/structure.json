@@ -1,0 +1,10 @@
+{
+    "modules": [
+        { "name": "module1" },
+        { "name": "module2", "dependsOn": ["module1"] }
+    ],
+    "targets": [
+        { "module": "module1", "file": "main.kt" },
+        { "module": "module2", "file": "main.kt" }
+    ]
+}

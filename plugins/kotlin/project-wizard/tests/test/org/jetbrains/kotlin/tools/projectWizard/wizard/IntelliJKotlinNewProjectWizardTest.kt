@@ -53,7 +53,7 @@ import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestRoot
-import org.jetbrains.kotlin.test.util.addDependency
+import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.tools.projectWizard.IntelliJKotlinNewProjectWizardData.Companion.kotlinData
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.StdlibVersionChooserDialog

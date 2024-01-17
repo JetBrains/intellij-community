@@ -1,0 +1,2 @@
+foo/ModuleSealedInterfaceInheritor1
+foo/ModuleSealedInterfaceInheritor2

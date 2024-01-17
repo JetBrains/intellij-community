@@ -1,0 +1,11 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.fir.low.level.api.ide">
+  <dependencies>
+    <module name="kotlin.searching.k2"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.FirSealedClassInheritorsProcessorFactory"
+            serviceImplementation="org.jetbrains.kotlin.idea.fir.low.level.api.ide.FirSealedClassInheritorsProcessorFactoryIdeImpl"/>
+  </extensions>
+</idea-plugin>
