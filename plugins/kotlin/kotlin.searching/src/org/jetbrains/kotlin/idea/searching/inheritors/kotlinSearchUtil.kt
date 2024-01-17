@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.util.*
 
 /**
@@ -50,6 +51,8 @@ fun KtCallableDeclaration.findHierarchyWithSiblings(searchScope: SearchScope = r
 } 
 
 private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean, searchScope: SearchScope): Sequence<PsiElement> {
+    if (runReadAction { containingClassOrObject !is KtClass }) return emptySequence()
+
     val queue = ArrayDeque<PsiElement>()
     val visited = HashSet<PsiElement>()
 
