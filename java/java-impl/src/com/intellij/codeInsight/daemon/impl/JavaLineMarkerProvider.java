@@ -125,7 +125,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   @NotNull
   private static LineMarkerInfo<PsiElement> createSuperMethodLineMarkerInfo(@NotNull PsiElement name, @NotNull Icon icon) {
     ArrowUpLineMarkerInfo info = new ArrowUpLineMarkerInfo(name, icon, MarkerType.OVERRIDING_METHOD);
-    return NavigateAction.setNavigateAction(info, JavaBundle.message("action.go.to.super.method.text"), IdeActions.ACTION_GOTO_SUPER);
+    return NavigateAction.setNavigateAction(info, JavaBundle.message("action.go.to.super.method.text"), IdeActions.ACTION_GOTO_SUPER, icon);
   }
 
   private static int getCategory(@NotNull PsiElement element, @NotNull CharSequence documentChars) {
@@ -216,7 +216,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       PsiElement range = getMethodRange(method);
       ArrowUpLineMarkerInfo upInfo =
         new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.SiblingInheritedMethod, MarkerType.SIBLING_OVERRIDING_METHOD);
-      return NavigateAction.setNavigateAction(upInfo, JavaBundle.message("action.go.to.super.method.text"), IdeActions.ACTION_GOTO_SUPER);
+      return NavigateAction.setNavigateAction(upInfo, JavaBundle.message("action.go.to.super.method.text"), IdeActions.ACTION_GOTO_SUPER,
+                                              upInfo.getIcon());
     });
   }
 
@@ -263,7 +264,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       NavigateAction.setNavigateAction(info, overridden ? JavaBundle.message("action.go.to.subclass.text") :
                                              subClass == null ? JavaBundle.message("action.go.to.functional.implementation.text")
                                                               : JavaBundle.message("action.go.to.implementation.text"),
-                                       IdeActions.ACTION_GOTO_IMPLEMENTATION);
+                                       IdeActions.ACTION_GOTO_IMPLEMENTATION, info.getIcon());
       return Collections.singletonList(info);
     }
     return Collections.emptyList();
@@ -313,7 +314,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
                                        overrides ? JavaBundle.message("action.go.to.overriding.methods.text") :
                                        entry.getValue() ? JavaBundle.message("action.go.to.functional.implementation.text")
                                                         : JavaBundle.message("action.go.to.implementation.text"),
-                                       IdeActions.ACTION_GOTO_IMPLEMENTATION);
+                                       IdeActions.ACTION_GOTO_IMPLEMENTATION, info.getIcon());
       result.add(info);
     }
     return result;
