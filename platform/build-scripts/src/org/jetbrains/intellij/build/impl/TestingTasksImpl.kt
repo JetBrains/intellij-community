@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
@@ -154,8 +156,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
   }
 
-  private fun warnOptionIgnored(specifiedOption: String, ignoredOption: String) =
+  private fun warnOptionIgnored(specifiedOption: String, ignoredOption: String) {
     context.messages.warning("'${specifiedOption}' option is specified, so '${ignoredOption}' will be ignored.")
+  }
 
   private fun runTestsFromRunConfigurations(additionalJvmOptions: List<String>,
                                             runConfigurations: List<JUnitRunConfigurationProperties>,
@@ -465,7 +468,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       NioFiles.deleteRecursively(ideaSystemPath)
     }
     @Suppress("SpellCheckingInspection")
-    mapOf(
+    for ((k, v) in sequenceOf(
       "idea.platform.prefix" to options.platformPrefix,
       "idea.home.path" to context.paths.projectHome.toString(),
       "idea.config.path" to "${tempDir}/config",
@@ -482,7 +485,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       "io.netty.leakDetectionLevel" to "PARANOID",
       "kotlinx.coroutines.debug" to "on",
       "sun.io.useCanonCaches" to "false",
-    ).forEach { (k, v) ->
+    )) {
       if (v != null) {
         systemProperties.putIfAbsent(k, v)
       }
@@ -504,7 +507,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
     }
 
-    systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = context.options.useCompiledClassesFromProjectOutput.toString()
+    systemProperties.put(BuildOptions.USE_COMPILED_CLASSES_PROPERTY, context.options.useCompiledClassesFromProjectOutput.toString())
 
     var suspendDebugProcess = options.isSuspendDebugProcess
     if (options.isPerformanceTestsOnly) {
@@ -525,7 +528,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     if (options.isEnableCausalProfiling) {
       val causalProfilingOptions = CausalProfilingOptions.IMPL
-      systemProperties["intellij.build.test.patterns"] = causalProfilingOptions.testClass.replace(".", "\\.")
+      systemProperties.put("intellij.build.test.patterns", causalProfilingOptions.testClass.replace(".", "\\."))
       jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
     }
 
@@ -538,15 +541,15 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         """.trimIndent()
       )
     }
-    if (systemProperties["java.system.class.loader"] == UrlClassLoader::class.java.canonicalName) {
+    if (systemProperties.get("java.system.class.loader") == UrlClassLoader::class.java.canonicalName) {
       val utilModule = context.findRequiredModule("intellij.platform.util")
       val enumerator = JpsJavaExtensionService.dependencies(utilModule)
         .recursively()
         .withoutSdk()
         .includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
       val utilClasspath = enumerator.classes().roots.mapTo(LinkedHashSet()) { it.absolutePath }
-      utilClasspath.removeAll(classPath.toSet())
-      classPath += utilClasspath
+      utilClasspath.removeAll(HashSet(classPath))
+      classPath.addAll(utilClasspath)
     }
   }
 
@@ -931,8 +934,9 @@ private val ignoredPrefixes = listOf(
   "-ea", "-XX:+HeapDumpOnOutOfMemoryError", "-Xbootclasspath", "-Xmx", "-Xms",
   "-Didea.system.path=", "-Didea.config.path=", "-Didea.home.path=")
 
-private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> =
-  vmOptions.filter { option -> ignoredPrefixes.none(option::startsWith) }
+private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> {
+  return vmOptions.filter { option -> ignoredPrefixes.none(option::startsWith) }
+}
 
 private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   val serverUrl = System.getProperty("intellij.test.discovery.url")
