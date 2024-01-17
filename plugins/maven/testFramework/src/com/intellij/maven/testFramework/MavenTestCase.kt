@@ -7,10 +7,7 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -643,17 +640,26 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun setFileContent(file: VirtualFile?, content: String?, advanceStamps: Boolean) {
     try {
       WriteAction.runAndWait<IOException> {
-        if (advanceStamps) {
-          file!!.setBinaryContent(content!!.toByteArray(StandardCharsets.UTF_8), -1, file.timeStamp + 4000)
-        }
-        else {
-          file!!.setBinaryContent(content!!.toByteArray(StandardCharsets.UTF_8), file.modificationStamp, file.timeStamp)
-        }
+        doSetFileContent(file!!, content!!, advanceStamps)
       }
     }
     catch (e: IOException) {
       throw RuntimeException(e)
     }
+  }
+
+  protected suspend fun setFileContentAsync(file: VirtualFile, content: String, advanceStamps: Boolean) {
+    writeAction {
+      doSetFileContent(file, content, advanceStamps)
+    }
+  }
+
+  private fun doSetFileContent(file: VirtualFile, content: String, advanceStamps: Boolean) {
+    val bytes = content.toByteArray(StandardCharsets.UTF_8)
+    val newModificationStamp = if (advanceStamps) -1 else file.modificationStamp
+    val newTimeStamp = if (advanceStamps) file.timeStamp + 4000 else file.timeStamp
+    MavenLog.LOG.debug("Set file content, modification stamp $newModificationStamp, time stamp $newTimeStamp, file $file")
+    file.setBinaryContent(bytes, newModificationStamp, newTimeStamp)
   }
 
   protected fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) {

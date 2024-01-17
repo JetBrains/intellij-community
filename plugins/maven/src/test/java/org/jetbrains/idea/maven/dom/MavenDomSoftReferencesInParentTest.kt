@@ -81,7 +81,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    setFileContent(projectPom, createPomXml("""
+    setFileContentAsync(projectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
