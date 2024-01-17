@@ -38,6 +38,9 @@ class PsiConditionsCoverageTest : AbstractPsiConditionsCoverageTest() {
   fun `test all conditions`() = assertHints("AllConditions", true)
 
   @Test
+  fun `test line breaks`() = assertHints("LineBreaks", true)
+
+  @Test
   fun `test jacoco conditions hints`() = assertHints("Conditions", false)
 
   @Test
@@ -48,6 +51,9 @@ class PsiConditionsCoverageTest : AbstractPsiConditionsCoverageTest() {
 
   @Test
   fun `test jacoco all conditions`() = assertHints("AllConditions", false)
+
+  @Test
+  fun `test jacoco line breaks`() = assertHints("LineBreaks", false)
 }
 
 abstract class AbstractPsiConditionsCoverageTest : CoverageIntegrationBaseTest() {
@@ -98,6 +104,11 @@ abstract class AbstractPsiConditionsCoverageTest : CoverageIntegrationBaseTest()
 }
 
 private fun assertEqualsFile(expectedFile: File, actual: String) {
+  if (!expectedFile.exists()) {
+    expectedFile.parentFile.mkdirs()
+    expectedFile.writeText(actual)
+    throw AssertionError("File ${expectedFile} not found. Created new file with actual content")
+  }
   val content = expectedFile.readText()
   if (content != actual) {
     throw FileComparisonFailedError("File content differs", content, actual, expectedFilePath = expectedFile.absolutePath)

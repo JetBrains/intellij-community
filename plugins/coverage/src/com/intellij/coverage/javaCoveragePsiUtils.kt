@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 
 // when a case list is null, it means that the order of cases may be unstable,
@@ -43,20 +44,33 @@ internal fun getSwitches(psiFile: PsiFile, range: TextRange): List<SwitchCoverag
 }
 
 internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionCoverageExpression> {
-  val parent = getEnclosingParent(psiFile, range) ?: return emptyList()
   fun PsiElement.startsInRange() = textOffset in range
+  fun PsiElement.startsNotBefore() = textOffset >= range.startOffset
 
+  val enclosingParent = getEnclosingParent(psiFile, range) ?: return emptyList()
+  val parent = enclosingParent.parents(withSelf = true).firstOrNull {
+    it is PsiStatement || it is PsiMethod || it is PsiClass || it is PsiFile
+  } ?: return emptyList()
   val conditionalExpressions = LinkedHashSet<PsiExpression>()
   parent.accept(object : RangePsiVisitor(range) {
     override fun visitElement(element: PsiElement) {
       if (element in conditionalExpressions) return
-      if (element is PsiConditionalLoopStatement) {
-        val condition = element.condition
-        if (condition != null && condition.startsInRange()) {
-          conditionalExpressions.add(condition)
-        }
-      }
       super.visitElement(element)
+    }
+
+    override fun visitForStatement(statement: PsiForStatement) {
+      statement.condition?.takeIf { it.textRange.intersects(range) }?.also { conditionalExpressions.add(it) }
+      super.visitForStatement(statement)
+    }
+
+    override fun visitWhileStatement(statement: PsiWhileStatement) {
+      statement.condition?.takeIf { statement.lParenth?.startsInRange() == true }?.also { conditionalExpressions.add(it) }
+      super.visitWhileStatement(statement)
+    }
+
+    override fun visitDoWhileStatement(statement: PsiDoWhileStatement) {
+      statement.condition?.takeIf { statement.lParenth?.startsInRange() == true }?.also { conditionalExpressions.add(it) }
+      super.visitDoWhileStatement(statement)
     }
 
     override fun visitIfStatement(statement: PsiIfStatement) {
@@ -76,8 +90,11 @@ internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionCo
 
     override fun visitPolyadicExpression(expression: PsiPolyadicExpression) {
       if (expression.isBoolOperator() && expression !in conditionalExpressions) {
-        val operands = expression.operands
-        conditionalExpressions.addAll(operands.take(operands.size - 1)) // only expression in the left operator creates a branch
+        val ifParent = expression.parentOfType<PsiIfStatement>()?.takeIf { it.condition == expression }
+        val operands = if (ifParent != null) expression.operands.toList()
+        // only expression in the left operator creates a branch
+        else expression.operands.take(expression.operands.size - 1)
+        operands.filter(PsiElement::startsNotBefore).forEach { conditionalExpressions.add(it) }
       }
       super.visitPolyadicExpression(expression)
     }
@@ -89,7 +106,8 @@ internal fun getConditions(psiFile: PsiFile, range: TextRange): List<ConditionCo
   })
 
   return conditionalExpressions
-    .flatMap(PsiExpression::breakIntoConditions)
+    .flatMap { it.breakIntoConditions(range.startOffset) }
+    .map { ConditionCoverageExpression(it.withoutParentheses()!!.text, it.isReversedCondition()) }
 }
 
 private open class RangePsiVisitor(private val range: TextRange) : JavaRecursiveElementVisitor() {
@@ -105,13 +123,13 @@ private fun PsiPolyadicExpression.isBoolOperator(): Boolean {
   return tokenType == JavaTokenType.OROR || tokenType == JavaTokenType.ANDAND
 }
 
-private fun PsiExpression.breakIntoConditions(): List<ConditionCoverageExpression> {
+private fun PsiExpression.breakIntoConditions(offset: Int): List<PsiExpression> {
   val expression = this.withoutParentheses() ?: return emptyList()
-  if (expression is PsiPolyadicExpression && expression.isBoolOperator()) {
-    return expression.operands.flatMap { it.breakIntoConditions() }
+  return if (expression is PsiPolyadicExpression && expression.isBoolOperator()) {
+    expression.operands.flatMap { it.breakIntoConditions(offset) }.filter { it.textOffset >= offset }
   }
   else {
-    return listOf(ConditionCoverageExpression(expression.text, this.isReversedCondition()))
+    listOf(this)
   }
 }
 
