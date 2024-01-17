@@ -377,7 +377,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
 
     if (myValueLabel != null) {
-      String valueLabelText = step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getValueFor(value) : null;
+      String valueLabelText = step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getSecondaryTextFor(value) : null;
       myValueLabel.setText(valueLabelText);
       if (ExperimentalUI.isNewUI()) {
         myValueLabel.setBorder(JBUI.Borders.emptyLeft(Strings.isEmpty(valueLabelText) ? 0 : 6));
