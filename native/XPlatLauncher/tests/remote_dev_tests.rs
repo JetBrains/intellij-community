@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 pub mod utils;
 
@@ -39,13 +39,12 @@ mod tests {
     #[test]
     fn remote_dev_known_command_with_project_path_test() {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
-        let project_dir = &test.project_dir.to_string_lossy().to_string();
-
-        let remote_dev_command = &["run", &project_dir];
+        let remote_dev_command = &["run", &test.project_dir.display().to_string()];
         let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command)).stdout;
 
-        assert!(output.contains("remoteDevHost"), "output:\n{}", output);
-        assert!(output.contains(project_dir), "output:\n{}", output);
+        let project_dir = format!("{:?}", &test.project_dir);
+        assert!(output.contains("remoteDevHost"), "'remoteDevHost' not in output:\n{}", output);
+        assert!(output.contains(project_dir.as_str()), "'{project_dir}' not in output:\n{}", output);
         assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"), "output:\n{}", output);
     }
 
