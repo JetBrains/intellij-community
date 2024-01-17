@@ -464,7 +464,6 @@ public final class FSRecordsImpl implements Closeable {
     return closed;
   }
 
-  @Contract("->fail")
   void checkNotClosed() {
     if (closed) {
       throw alreadyClosedException();
