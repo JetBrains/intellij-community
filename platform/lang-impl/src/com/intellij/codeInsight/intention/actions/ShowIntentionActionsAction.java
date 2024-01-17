@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ShowIntentionActionsAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore,
                                                                                        LightEditCompatible,
                                                                                        DumbAware,
-                                                                                       ActionRemoteBehaviorSpecification.Frontend {
+                                                                                       ActionRemoteBehaviorSpecification.FrontendThenBackend {
   public ShowIntentionActionsAction() {
     setEnabledInModalContext(true);
   }

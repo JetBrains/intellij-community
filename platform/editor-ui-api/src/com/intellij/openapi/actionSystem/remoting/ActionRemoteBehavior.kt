@@ -53,7 +53,7 @@ interface ActionRemoteBehaviorSpecification {
   }
 
   interface FrontendThenBackend : ActionRemoteBehaviorSpecification {
-    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendOnly
+    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
   }
 
   interface Duplicated : ActionRemoteBehaviorSpecification {
