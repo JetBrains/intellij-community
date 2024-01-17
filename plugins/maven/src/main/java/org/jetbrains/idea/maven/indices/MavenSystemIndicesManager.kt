@@ -28,6 +28,7 @@ import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -280,6 +281,8 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) {
           val indicator = MavenProgressIndicator(null, null)
           try {
             (idx as MavenUpdatableIndex).updateOrRepair(true, indicator, explicit)
+          } catch (ignore: MavenProcessCanceledException) {
+
           }
           finally {
             gavUpdatingIndixes.remove(idx)

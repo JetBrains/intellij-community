@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.indices
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
@@ -12,6 +13,7 @@ import org.jetbrains.idea.maven.server.AddArtifactResponse
 import org.jetbrains.idea.maven.server.IndexedMavenId
 import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 import java.nio.file.Paths
@@ -72,6 +74,7 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
               if (filesProcessed % 100 == 0) {
                 progress.setText(IndicesBundle.message("maven.indices.scanned.artifacts", filesProcessed))
               }
+              if(!isActive || progress.isCanceled()) throw MavenProcessCanceledException()
               filesProcessed++
             }
         }.join()
