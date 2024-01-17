@@ -3,14 +3,16 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
+import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -38,7 +40,6 @@ import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
-import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.After;
 import org.junit.Before;
@@ -58,7 +59,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -179,22 +183,15 @@ public abstract class AbstractModelBuilderTest {
 
   @NotNull
   public static Set<Class<?>> getToolingExtensionClasses() {
-    return new HashSet<>(Arrays.asList(
-      // external-system-rt.jar
-      ExternalSystemSourceType.class,
-      // gradle-tooling-extension-api jar
-      ProjectImportAction.class,
-      // gradle-tooling-extension-impl jar
-      Init.class,
-      Multimap.class,
-      ShortTypeHandling.class,
-      // fastutil
-      Object2ObjectMap.class,
-      // ion-java jar
-      IonType.class,
-      // util-rt jat
-      SystemInfoRt.class // !!! do not replace it with SystemInfo.class from util module
-    ));
+    return ContainerUtil.newHashSet(ExternalSystemRtClass.class, // intellij.platform.externalSystem.rt
+                                    GradleToolingExtensionClass.class, // intellij.gradle.toolingExtension
+                                    GradleToolingExtensionImplClass.class, // intellij.gradle.toolingExtension.impl
+                                    Multimap.class, // repacked gradle guava
+                                    ShortTypeHandling.class, // groovy
+                                    Object2ObjectMap.class, // fastutil
+                                    IonType.class,  // ion-java jar
+                                    SystemInfoRt.class // jar containing classes of `intellij.platform.util.rt` module
+    );
   }
 
   @After
