@@ -33,7 +33,7 @@ private val SLF4J_HOLDER = object : LoggerTypeSearcher {
   }
 }
 
-private val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
+internal val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
     var qualifierExpression = getImmediateLoggerQualifier(expression)
     if (qualifierExpression is UReferenceExpression) {
@@ -109,7 +109,7 @@ private val AKKA_PLACEHOLDERS = object : LoggerTypeSearcher {
   }
 }
 
-private val IDEA_PLACEHOLDERS = object : LoggerTypeSearcher {
+internal val IDEA_PLACEHOLDERS = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
     return null
   }

@@ -127,6 +127,7 @@ public interface Logger {
         public interface LoggingEventBuilder {
           LoggingEventBuilder addArgument(Object object);
           LoggingEventBuilder setMessage(String message);
+          LoggingEventBuilder setCause(Throwable cause); 
           LoggingEventBuilder addKeyValue(String key, Object object);
            void log(String format, Object... arguments);
            void log();

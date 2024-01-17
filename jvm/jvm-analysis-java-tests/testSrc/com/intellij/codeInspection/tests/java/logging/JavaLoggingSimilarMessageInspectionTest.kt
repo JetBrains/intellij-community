@@ -16,11 +16,15 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
         private static void request1(String i) {
             String msg = "log messages: "  + i;
             <weak_warning descr="Similar log messages">L<caret>OG.info(msg)</weak_warning>;
+            <weak_warning descr="Similar log messages">LOG.error(msg)</weak_warning>;
+            LOG.error(msg, new RuntimeException());
         }
     
         private static void request2(int i) {
             String msg = "log messages: " + i;
             <weak_warning descr="Similar log messages">LOG.info(msg)</weak_warning>;
+            <weak_warning descr="Similar log messages">LOG.error(msg)</weak_warning>;
+            LOG.error(msg, new RuntimeException());
         }
      }
     """.trimIndent())
@@ -35,11 +39,15 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
         private static void request1(String i) {
             String msg = "log messages: "  + i;
             LOG.info(msg);
+            LOG.error(msg);
+            LOG.error(msg, new RuntimeException());
         }
     
         private static void request2(int i) {
             String msg = "log messages: " + i;
             <selection><caret>LOG.info(msg)</selection>;
+            LOG.error(msg);
+            LOG.error(msg, new RuntimeException());
         }
      }
     """.trimIndent())
@@ -151,11 +159,15 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
         private static void request1(String i) {
             String msg = "log messages: "  + i;
             <weak_warning descr="Similar log messages">LOG.info(msg)</weak_warning>;
+            <weak_warning descr="Similar log messages">LOG.error(msg)</weak_warning>;
+            LOG.error(msg, new RuntimeException());
         }
     
         private static void request2(int i) {
             String msg = "log messages: " + i;
             <weak_warning descr="Similar log messages">LOG.info(msg)</weak_warning>;
+            <weak_warning descr="Similar log messages">LOG.error(msg)</weak_warning>;
+            LOG.error(msg, new RuntimeException());
         }
      }
     """.trimIndent())
@@ -170,12 +182,14 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
         
         private static void request1(String i) {
             String msg = "log messages: "  + i;
-            <weak_warning descr="Similar log messages">LOG.info(msg)</weak_warning>;
+            <weak_warning descr="Similar log messages">LOG.atInfo().setMessage(msg).log()</weak_warning>;
+            LOG.atInfo().setCause(new RuntimeException("1234")).setMessage(msg).log();
         }
     
         private static void request2(int i) {
             String msg = "log messages: " + i;
-            <weak_warning descr="Similar log messages">LOG.info(msg)</weak_warning>;
+            <weak_warning descr="Similar log messages">LOG.atInfo().setMessage(msg).log()</weak_warning>;
+            LOG.atInfo().setCause(new RuntimeException("1234")).setMessage(msg).log();
         }
      }
     """.trimIndent())
@@ -529,11 +543,13 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
         private static void request1(String i) {
             String msg = "log messages: "  + i;
             <weak_warning descr="Similar log messages">L<caret>OG.info(msg)</weak_warning>;
+            LOG.error(msg);
         }
     
         private static void request2(int i) {
             String msg = "log messages: " + i;
-            <weak_warning descr="Similar log messages">LOG.info(msg)</weak_warning>;
+            <weak_warning descr="Similar log messages">L<caret>OG.info(msg)</weak_warning>;
+            LOG.error(msg);
         }
      }
     """.trimIndent())

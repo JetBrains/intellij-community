@@ -6,6 +6,7 @@ import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.java.JavaBundle
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.modcommand.ModCommand
@@ -24,7 +25,20 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 private const val MIN_TEXT_LENGTH = 3
 private const val MAX_PART_COUNT = 10
 
+private const val WITH_THROWABLE = "withThrowable"
+private const val SET_CAUSE = "setCause"
+
 class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
+
+  @JvmField
+  var mySkipErrorLogLevel: Boolean = true
+
+  override fun getOptionsPane(): OptPane {
+    return OptPane.pane(
+      OptPane.checkbox("mySkipErrorLogLevel",
+                       JvmAnalysisBundle.message("jvm.inspection.logging.similar.message.problem.skip.on.error"))
+    )
+  }
 
   //otherwise results will be inconsistent
   override fun runForWholeFile(): Boolean {
@@ -126,13 +140,49 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       val result = mutableSetOf<UCallExpression>()
       file.accept(object : AbstractUastVisitor() {
         override fun visitCallExpression(node: UCallExpression): Boolean {
-          LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return false
+          val loggerTypeSearcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return false
+          if (mySkipErrorLogLevel) {
+            val hasSetMessage = hasSetThrowable(node, loggerTypeSearcher)
+            if (hasSetMessage) return false
+            if (LoggingUtil.getLoggerLevel(node) == LoggingUtil.Companion.LevelType.ERROR) {
+              if (loggerTypeSearcher == IDEA_PLACEHOLDERS) return false
+              val valueArguments = node.valueArguments
+              if (loggerTypeSearcher != SLF4J_BUILDER_HOLDER && loggerTypeSearcher != LOG4J_LOG_BUILDER_HOLDER &&
+                  !valueArguments.isEmpty() && hasThrowableType(valueArguments.last())) return false
+            }
+          }
           result.add(node)
           return true
         }
       })
       return result
     }
+  }
+
+  private fun hasSetThrowable(node: UCallExpression,
+                              loggerType: LoggerTypeSearcher?): Boolean {
+    if (loggerType == null) {
+      return false
+    }
+    if (!(loggerType == SLF4J_BUILDER_HOLDER || loggerType == LOG4J_LOG_BUILDER_HOLDER)) {
+      return false
+    }
+    var currentCall = node.receiver
+    for (ignore in 0..MAX_BUILDER_LENGTH) {
+      if (currentCall is UQualifiedReferenceExpression) {
+        currentCall = currentCall.selector
+        continue
+      }
+      if (currentCall !is UCallExpression) {
+        return false
+      }
+      val methodName = currentCall.methodName ?: return false
+      if (methodName == WITH_THROWABLE || methodName == SET_CAUSE) {
+        return true
+      }
+      currentCall = currentCall.receiver
+    }
+    return false
   }
 
   private fun collectParts(node: UCallExpression, searcher: LoggerTypeSearcher?): List<LoggingStringPartEvaluator.PartHolder>? {

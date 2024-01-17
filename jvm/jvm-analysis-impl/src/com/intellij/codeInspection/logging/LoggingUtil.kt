@@ -262,13 +262,13 @@ internal class LoggingUtil {
       return findLevelTypeByName(methodName, LEGACY_LEVEL_MAP)
     }
 
-    internal fun getLoggerLevel(uCall: UCallExpression?): LevelType? {
+    internal fun getLoggerLevel(uCall: UCallExpression?, isLog: Boolean = false): LevelType? {
       if (uCall == null) {
         return null
       }
 
       var levelName = uCall.methodName
-      if ("log" == levelName) {
+      if (isLog || "log" == levelName) {
         val levelTypeFromLog = findLevelTypeByFirstArgument(uCall, LEVEL_CLASSES, LEVEL_MAP)
         if (levelTypeFromLog != null) {
           return levelTypeFromLog
@@ -288,8 +288,9 @@ internal class LoggingUtil {
             return levelTypeFromAtLevel
           }
         }
+        val loggerLevel = getLoggerLevel(nextCall, true)
+        if (loggerLevel != null) return loggerLevel
         levelName = nextCall?.methodName
-
       }
       if (levelName == null) {
         return null

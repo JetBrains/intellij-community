@@ -296,16 +296,6 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       return throwable.isConvertibleFrom(functionalReturnType)
     }
 
-    private fun hasThrowableType(lastArgument: UExpression): Boolean {
-      val type = lastArgument.getExpressionType()
-      if (type is UastErrorType) {
-        return false
-      }
-      if (type is PsiDisjunctionType) {
-        return type.disjunctions.all { InheritanceUtil.isInheritor(it, CommonClassNames.JAVA_LANG_THROWABLE) }
-      }
-      return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)
-    }
   }
 
   private enum class ResultType {
@@ -320,6 +310,17 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
 
   private data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
+}
+
+internal fun hasThrowableType(lastArgument: UExpression): Boolean {
+  val type = lastArgument.getExpressionType()
+  if (type is UastErrorType) {
+    return false
+  }
+  if (type is PsiDisjunctionType) {
+    return type.disjunctions.all { InheritanceUtil.isInheritor(it, CommonClassNames.JAVA_LANG_THROWABLE) }
+  }
+  return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)
 }
 
 private fun UCallableReferenceExpression.getMethodReferenceReturnType(): PsiType? {
