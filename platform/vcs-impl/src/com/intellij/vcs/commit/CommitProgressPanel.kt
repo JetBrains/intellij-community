@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
@@ -24,8 +24,7 @@ import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.platform.util.progress.asContextElement
-import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
@@ -148,16 +147,15 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     indicator.start()
     try {
       return coroutineScope {
-        TextDetailsProgressReporter(scope).use { reporter ->
-          val updater = launch {
-            indicator.updateFromFlow(reporter.progressState)
-          }
-          try {
-            withContext(reporter.asContextElement(), action)
-          }
-          finally {
-            updater.cancel()
-          }
+        val pipe = scope.createProgressPipe()
+        val updater = launch {
+          indicator.updateFromFlow(pipe.progressUpdates())
+        }
+        try {
+          pipe.collectProgressUpdates(action)
+        }
+        finally {
+          updater.cancel()
         }
       }
     }
