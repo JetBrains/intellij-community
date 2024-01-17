@@ -332,6 +332,7 @@ public final class UndoManagerImpl extends UndoManager {
       return;
     }
 
+    action.setPerformedNanoTime(System.nanoTime());
     if (state.myCommandLevel == 0) {
       LOG.assertTrue(action instanceof NonUndoableAction,
                      "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())");
@@ -630,6 +631,58 @@ public final class UndoManagerImpl extends UndoManager {
   public @NotNull Pair<String, String> getRedoActionNameAndDescription(FileEditor editor) {
     return getUndoOrRedoActionNameAndDescription(editor, false);
   }
+
+ @Override
+public long getNextUndoNanoTime(@NotNull FileEditor editor) {
+    return getNextNanoTime(editor, true);
+}
+
+@Override
+public long getNextRedoNanoTime(@NotNull FileEditor editor) {
+    return getNextNanoTime(editor, false);
+}
+
+@Override
+public boolean isNextUndoAskConfirmation(@NotNull FileEditor editor) {
+    return isNextAskConfirmation(editor, true);
+}
+
+@Override
+public boolean isNextRedoAskConfirmation(@NotNull FileEditor editor) {
+    return isNextAskConfirmation(editor, false);
+}
+
+private long getNextNanoTime(@NotNull FileEditor editor, boolean isUndo) {
+    ClientState clientState = getClientState(editor);
+    Collection<DocumentReference> references = getDocRefs(editor);
+    if (clientState == null || references == null) {
+        return -1L;
+    }
+
+    if (isUndo) {
+        clientState.myMerger.flushCurrentCommand();
+    }
+
+    @NotNull UndoRedoStacksHolder stack = getStackHolder(clientState, isUndo);
+    UndoableGroup lastAction = stack.getLastAction(references);
+    return lastAction == null ? -1L : lastAction.getGroupStartPerformedTimestamp();
+}
+
+private boolean isNextAskConfirmation(@NotNull FileEditor editor, boolean isUndo) {
+    ClientState clientState = getClientState(editor);
+    Collection<DocumentReference> references = getDocRefs(editor);
+    if (clientState == null || references == null) {
+        return false;
+    }
+
+    if (isUndo) {
+        clientState.myMerger.flushCurrentCommand();
+    }
+
+    @NotNull UndoRedoStacksHolder stack = getStackHolder(clientState, isUndo);
+    UndoableGroup lastAction = stack.getLastAction(references);
+    return lastAction != null && lastAction.shouldAskConfirmation(!isUndo);
+}
 
   private @NotNull Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getUndoOrRedoActionNameAndDescription(@Nullable FileEditor editor, boolean undo) {
     String desc = isUndoOrRedoAvailable(editor, undo) ? doFormatAvailableUndoRedoAction(editor, undo) : null;

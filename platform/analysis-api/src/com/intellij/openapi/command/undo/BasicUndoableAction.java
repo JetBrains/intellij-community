@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class BasicUndoableAction implements UndoableAction {
   private final DocumentReference[] myRefs;
+  private long myPerformedTimestamp = -1L;
 
   public BasicUndoableAction() {
     myRefs = null;
@@ -40,5 +41,15 @@ public abstract class BasicUndoableAction implements UndoableAction {
   @Override
   public boolean isGlobal() {
     return false;
+  }
+
+  @Override
+  public long getPerformedNanoTime() {
+    return myPerformedTimestamp;
+  }
+
+  @Override
+  public void setPerformedNanoTime(long l) {
+    myPerformedTimestamp = l;
   }
 }
