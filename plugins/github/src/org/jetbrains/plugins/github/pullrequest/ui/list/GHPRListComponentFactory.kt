@@ -123,9 +123,14 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
     reviewState: ReviewState?
   ): UserPresentation {
     val avatarIcon = avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE)
-    val outlineColor = reviewState?.let { ReviewDetailsUIUtil.getReviewStateIconBorder(it) }
-    val outlinedAvatarIcon = CodeReviewAvatarUtils.outlineCircleIcon(avatarIcon, outlineColor)
+    val icon = if (reviewState != null) {
+      val outlineColor = ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
+      CodeReviewAvatarUtils.outlinedAvatarIcon(avatarIcon, outlineColor)
+    }
+    else {
+      avatarIcon
+    }
 
-    return UserPresentation.Simple(user.shortName, user.name, outlinedAvatarIcon)
+    return UserPresentation.Simple(user.shortName, user.name, icon)
   }
 }

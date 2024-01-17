@@ -13,12 +13,18 @@ import java.awt.image.BufferedImage.TYPE_INT_RGB
 import javax.swing.Icon
 
 object CodeReviewAvatarUtils {
-  val OUTLINE_WIDTH: Int
-    get() = JBUI.scale(2)
+  private const val INNER_WIDTH = 1
+  const val OUTLINE_WIDTH = 2
 
-  fun outlineCircleIcon(icon: Icon, outlineColor: Color?): Icon {
+  fun outlinedAvatarIcon(icon: Icon, outlineColor: Color): Icon {
+    val innerIcon = outlineCircleIcon(icon, JBUI.CurrentTheme.List.BACKGROUND, unscaledWidth = INNER_WIDTH)
+    return outlineCircleIcon(innerIcon, outlineColor, unscaledWidth = OUTLINE_WIDTH)
+  }
+
+  private fun outlineCircleIcon(icon: Icon, outlineColor: Color?, unscaledWidth: Int): Icon {
+    val outlineWidth = JBUI.scale(unscaledWidth)
     val iconSize = icon.iconWidth
-    val outlineIconSize = iconSize + 2 * OUTLINE_WIDTH
+    val outlineIconSize = iconSize + 2 * outlineWidth
     val colorImage = outlineColor?.let {
       val result = BufferedImage(outlineIconSize, outlineIconSize, TYPE_INT_RGB)
       val g2d = result.createGraphics()

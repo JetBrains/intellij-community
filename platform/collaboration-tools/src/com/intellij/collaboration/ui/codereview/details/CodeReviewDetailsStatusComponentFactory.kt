@@ -187,7 +187,7 @@ object CodeReviewDetailsStatusComponentFactory {
       border = JBUI.Borders.empty(STATUS_REVIEWER_BORDER, 0)
       val reviewerLabel = ReviewDetailsStatusLabel("Code review status: reviewer").apply {
         iconTextGap = STATUS_REVIEWER_COMPONENT_GAP
-        icon = CodeReviewAvatarUtils.outlineCircleIcon(
+        icon = CodeReviewAvatarUtils.outlinedAvatarIcon(
           iconProvider(avatarKeyProvider(reviewer), Avatar.Sizes.BASE),
           ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
         )
