@@ -4,7 +4,7 @@ package com.intellij.openapi.progress
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.ExpectedState
 import com.intellij.platform.util.progress.progressReporterTest
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -93,11 +93,11 @@ class CoroutineToIndicatorTest : CancellationTest() {
   @Test
   fun `delegates reporting to context reporter`() {
     progressReporterTest(
-      ProgressState(text = "Hello", details = null, fraction = -1.0),
-      ProgressState(text = "Hello", details = "World", fraction = -1.0),
-      ProgressState(text = "Hello", details = "World", fraction = 0.42),
-      ProgressState(text = null, details = "World", fraction = 0.42),
-      ProgressState(text = null, details = "World", fraction = -1.0),
+      ExpectedState(text = "Hello", details = null, fraction = null),
+      ExpectedState(text = "Hello", details = "World", fraction = null),
+      ExpectedState(text = "Hello", details = "World", fraction = 0.42),
+      ExpectedState(text = null, details = "World", fraction = 0.42),
+      ExpectedState(text = null, details = "World", fraction = null),
     ) {
       withRawProgressReporter {
         coroutineToIndicator {

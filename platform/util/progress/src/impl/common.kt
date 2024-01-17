@@ -1,9 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress.impl
-
-import com.intellij.openapi.diagnostic.Logger
-
-internal val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress.impl")
 
 internal data class FractionState<out T>(
   val fraction: Double,
@@ -18,8 +14,6 @@ internal fun totalFraction(completed: Double, updates: Iterable<FractionState<*>
     completed + updates.sumOf { it.fraction.coerceAtLeast(0.0) }
   }
 }
-
-internal typealias ProgressText = @com.intellij.openapi.util.NlsContexts.ProgressText String
 
 internal data class TextDetails(
   val text: ProgressText?,
