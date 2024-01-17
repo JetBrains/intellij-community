@@ -33,6 +33,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +71,8 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         myClassField.setChecked(true);
       }
       if (needEquals) {
-        myEqualsPanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.equals.fields.chooser.title"),
-                                                 myClassFields, null);
+        String title = JavaBundle.message("generate.equals.hashcode.equals.fields.chooser.title");
+        myEqualsPanel = new MemberSelectionPanel(title, myClassFields, null);
         myEqualsPanel.getTable().setMemberInfoModel(new EqualsMemberInfoModel());
       }
       else {
@@ -87,7 +88,8 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
           hashCodeMemberInfos = myClassFields;
           myFieldsToHashCode = null;
         }
-        myHashCodePanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.hashcode.fields.chooser.title"), hashCodeMemberInfos, null);
+        String title = JavaBundle.message("generate.equals.hashcode.hashcode.fields.chooser.title");
+        myHashCodePanel = new MemberSelectionPanel(title, hashCodeMemberInfos, null);
         myHashCodePanel.getTable().setMemberInfoModel(new HashCodeMemberInfoModel());
         if (needEquals) {
           updateHashCodeMemberInfos(myClassFields);
@@ -97,15 +99,16 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         myHashCodePanel = null;
         myFieldsToHashCode = null;
       }
-      myNonNullPanel = new MemberSelectionPanel(JavaBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
+      String title = JavaBundle.message("generate.equals.hashcode.non.null.fields.chooser.title");
+      myNonNullPanel = new MemberSelectionPanel(title, Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
-      if (!DumbService.isDumb(myClass.getProject())) {
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
         for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
           entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()) ||
                                       entry.getKey() instanceof PsiField field &&
                                       NullabilityUtil.getNullabilityFromFieldInitializers(field).second == Nullability.NOT_NULL);
         }
-      }
+      });
     }
 
     @Override
