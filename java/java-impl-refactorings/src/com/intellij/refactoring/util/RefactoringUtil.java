@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -78,9 +77,12 @@ public final class RefactoringUtil {
       if (!occurrence.isValid()) return null;
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
         if (destinationClass instanceof PsiImplicitClass) {
+          //If it is an implicit class, it is impossible to use class reference as qualifier.
+          //So if it is possible, keep it as unqualified.
+          //Otherwise, if there are variables with the same name, let's use `this`, even though it is not a good practise
           JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
           String name = codeStyleManager.suggestUniqueVariableName(newField.getName(), occurrence, true);
-          if (Strings.areSameInstance(name, newField.getName())) {
+          if (newField.getName().equals(name)) {
             ref.setQualifierExpression(null);
           }
         }
