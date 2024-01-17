@@ -79,6 +79,7 @@ import java.util.stream.IntStream;
 public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
   private static final String indent = "  ";
+  private static final int MAX_EXPRESSION_LENGTH = 100;
 
   public static JavaCoverageEngine getInstance() {
     return EP_NAME.findExtensionOrFail(JavaCoverageEngine.class);
@@ -585,8 +586,17 @@ public class JavaCoverageEngine extends CoverageEngine {
     return buf.toString();
   }
 
+  /**
+   * Try to remove line breaks from expression for better visibility.
+   * As the resulting expression can become too long, the modification is made only for short expressions.
+   */
+  private static String preprocessExpression(String expression) {
+    String preprocessed = expression.replaceAll("[\\s\n]+", " ");
+    return preprocessed.length() > MAX_EXPRESSION_LENGTH ? expression : preprocessed;
+  }
+
   private static void addJumpDataInfo(StringBuilder buf, JumpData jumpData, ConditionCoverageExpression expression) {
-    buf.append("\n").append(indent).append(expression.getExpression());
+    buf.append("\n").append(indent).append(preprocessExpression(expression.getExpression()));
     boolean reverse = expression.isReversed();
     int trueHits = reverse ? jumpData.getFalseHits() : jumpData.getTrueHits();
     buf.append("\n").append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits));
@@ -596,7 +606,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, SwitchCoverageExpression expression, int coverageStatus) {
-    buf.append("\n").append(indent).append(expression.getExpression());
+    buf.append("\n").append(indent).append(preprocessExpression(expression.getExpression()));
     boolean allBranchesHit = true;
     for (int i = 0; i < switchData.getKeys().length; i++) {
       String key = expression.getCases() != null && i < expression.getCases().size()

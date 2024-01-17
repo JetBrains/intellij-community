@@ -118,3 +118,16 @@ Covered 1/2 branches
 Line 104 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
+Line 106 coverage: FULL
+Hits: 1
+Line 107 coverage: FULL
+Hits: 1
+Line 108 coverage: PARTIAL
+Hits: 1
+Covered 1/2 branches
+Line 109 coverage: PARTIAL
+Hits: 1
+Covered 1/2 branches
+Line 110 coverage: PARTIAL
+Hits: 1
+Covered 1/2 branches

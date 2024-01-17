@@ -14,9 +14,7 @@ Line 13 coverage: FULL
 Hits: 1
 Line 15 coverage: PARTIAL
 Hits: 1
-  x
-      ==
-      1
+  x == 1
     true hits: 1
     false hits: 0
 Line 17 coverage: FULL
@@ -85,9 +83,7 @@ Line 49 coverage: FULL
 Hits: 1
 Line 51 coverage: PARTIAL
 Hits: 1
-  0
-      until
-      n
+  0 until n
     true hits: 1
     false hits: 0
 Line 58 coverage: FULL
@@ -104,9 +100,7 @@ Line 69 coverage: FULL
 Hits: 1
 Line 71 coverage: PARTIAL
 Hits: 1
-  i
-      <
-      n
+  i < n
     true hits: 0
     false hits: 1
 Line 79 coverage: FULL
@@ -117,9 +111,7 @@ Line 84 coverage: FULL
 Hits: 1
 Line 86 coverage: PARTIAL
 Hits: 1
-  i++
-      <
-      n
+  i++ < n
     true hits: 0
     false hits: 1
 Line 90 coverage: FULL
@@ -131,8 +123,7 @@ Hits: 1
   a != null
     true hits: 0
     false hits: 1
-  a
-      ?: b != null
+  a ?: b != null
     true hits: 0
     false hits: 1
 Line 95 coverage: FULL
@@ -142,8 +133,7 @@ Hits: 2
   h(a) != null
     true hits: 0
     false hits: 1
-  h(a)
-    ?: h(b) != null
+  h(a) ?: h(b) != null
     true hits: 0
     false hits: 1
 Line 98 coverage: FULL
@@ -160,8 +150,31 @@ Hits: 3
 Unknown outcome: 2
 Line 104 coverage: PARTIAL
 Hits: 3
+  a ?.g() != null
+    true hits: 1
+    false hits: 0
+Unknown outcome: 2
+Line 106 coverage: FULL
+Hits: 3
+Line 107 coverage: FULL
+Hits: 1
+Line 108 coverage: PARTIAL
+Hits: 3
+  a != null
+    true hits: 1
+    false hits: 0
+Unknown outcome: 2
+Line 109 coverage: PARTIAL
+Hits: 3
+  a ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName() != null
+    true hits: 1
+    false hits: 0
+Unknown outcome: 2
+Line 110 coverage: PARTIAL
+Hits: 3
   a
-    ?.g() != null
+    ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName()
+    ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName() != null
     true hits: 1
     false hits: 0
 Unknown outcome: 2

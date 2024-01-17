@@ -102,4 +102,10 @@ class KtLineBreaks {
   fun testSafeCallSequence(a: Int?) = a
     ?.g()
     ?.g()
+
+  private fun <T> T?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName(): T? = this
+  fun testSafeCallSequenceLongNames(a: Int?) = a
+    ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName()
+    ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName()
+    ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName()
 }

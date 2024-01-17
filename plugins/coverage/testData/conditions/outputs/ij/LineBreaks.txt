@@ -70,9 +70,7 @@ Line 52 coverage: FULL
 Hits: 1
 Line 54 coverage: PARTIAL
 Hits: 1
-  i
-        <
-        n
+  i < n
     true hits: 0
     false hits: 1
 Line 64 coverage: PARTIAL
@@ -84,9 +82,7 @@ Line 70 coverage: FULL
 Hits: 1
 Line 72 coverage: PARTIAL
 Hits: 1
-  i
-        <
-        n
+  i < n
     true hits: 0
     false hits: 1
 Line 83 coverage: FULL
