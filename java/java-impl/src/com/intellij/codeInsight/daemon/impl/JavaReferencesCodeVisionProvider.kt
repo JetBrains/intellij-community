@@ -2,7 +2,8 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
-import com.intellij.codeInsight.hints.codeVision.ReferencesCodeVisionProvider
+import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderBase
+import com.intellij.codeInsight.hints.codeVision.RenameAwareReferencesCodeVisionProvider
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
@@ -11,8 +12,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiTypeParameter
 
-class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
-  companion object{
+class JavaReferencesCodeVisionProvider : RenameAwareReferencesCodeVisionProvider() {
+  companion object {
     const val ID: String = "java.references"
   }
 
@@ -20,11 +21,11 @@ class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
 
   override fun acceptsElement(element: PsiElement): Boolean = element is PsiMember && element !is PsiTypeParameter
 
-  override fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
+  private fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionProviderBase.CodeVisionInfo? {
     val inspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(element)
     if (inspection.isEntryPoint(element)) return null
     return JavaTelescope.usagesHint(element as PsiMember, file)?.let {
-      CodeVisionInfo(it.hint, it.count)
+      CodeVisionProviderBase.CodeVisionInfo(it.hint, it.count)
     }
   }
 

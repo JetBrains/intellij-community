@@ -58,6 +58,10 @@ fun Editor.clearModificationStamp() {
   putUserData(PSI_MODIFICATION_STAMP, null)
 }
 
+fun Editor.getModificationStamp(): Long? {
+  return getUserData(PSI_MODIFICATION_STAMP)
+}
+
 private fun getCurrentModificationStamp(file: PsiFile): Long {
   return file.manager.modificationTracker.modificationCount
 }
