@@ -14,19 +14,14 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderBase
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
-import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
-import com.intellij.ui.CellRendererPanel
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.GroupedComboBoxRenderer
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.COLUMNS_LARGE
 import com.intellij.ui.dsl.builder.Row
@@ -51,13 +46,13 @@ import javax.swing.JList
  * - [DetectedJdk] - Configure a JDK detected by the IDE.
  */
 sealed class ProjectWizardJdkIntent {
-  object NoJdk : ProjectWizardJdkIntent()
+  data object NoJdk : ProjectWizardJdkIntent()
 
   data class DownloadJdk(val task: SdkDownloadTask) : ProjectWizardJdkIntent()
 
   data class ExistingJdk(val jdk: Sdk) : ProjectWizardJdkIntent()
 
-  object AddJdkFromPath : ProjectWizardJdkIntent()
+  data object AddJdkFromPath : ProjectWizardJdkIntent()
 
   data class AddJdkFromJdkListDownloader(val extension: SdkDownload) : ProjectWizardJdkIntent()
 
