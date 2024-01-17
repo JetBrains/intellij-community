@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.type.MapPsiToAsmDesc
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSourceLightMethod
@@ -143,6 +142,41 @@ private fun toPsiMethodForDeserialized(
     psi: KtFunction,
 ): PsiMethod? {
 
+    fun equalSignatures(psiMethod: PsiMethod): Boolean {
+        val methodParameters: Array<PsiParameter> = psiMethod.parameterList.parameters
+        val symbolParameters: List<KtValueParameterSymbol> = functionSymbol.valueParameters
+        if (methodParameters.size != symbolParameters.size) {
+            return false
+        }
+
+        for (i in methodParameters.indices) {
+            val symbolParameter = symbolParameters[i]
+            val symbolParameterType = toPsiType(
+                symbolParameter.returnType,
+                psiMethod,
+                context,
+                PsiTypeConversionConfiguration(
+                    TypeOwnerKind.DECLARATION,
+                    typeMappingMode = KtTypeMappingMode.VALUE_PARAMETER,
+                )
+            )
+
+            if (methodParameters[i].type != symbolParameterType) return false
+        }
+        val psiMethodReturnType = psiMethod.returnType ?: PsiTypes.voidType()
+        val symbolReturnType = toPsiType(
+            functionSymbol.returnType,
+            psiMethod,
+            context,
+            PsiTypeConversionConfiguration(
+                TypeOwnerKind.DECLARATION,
+                typeMappingMode = KtTypeMappingMode.RETURN_TYPE,
+            )
+        )
+
+        return psiMethodReturnType == symbolReturnType
+    }
+
     // NB: no fake generation for member functions, as deserialized source PSI for built-ins can trigger FIR build/resolution
     fun PsiClass.lookup(fake: Boolean): PsiMethod? {
         val candidates =
@@ -154,7 +188,7 @@ private fun toPsiMethodForDeserialized(
             0 -> if (fake) UastFakeDeserializedSourceLightMethod(psi, this) else null
             1 -> candidates.single()
             else -> {
-                candidates.firstOrNull { it.desc == desc(functionSymbol, it, context) } ?: candidates.first()
+                candidates.firstOrNull { equalSignatures(it) } ?: candidates.first()
             }
         }
     }
@@ -171,40 +205,6 @@ private fun toPsiMethodForDeserialized(
     } ?:
     // Deserialized top-level function
     psi.containingKtFile.findFacadeClass()?.lookup(fake = true)
-}
-
-context(KtAnalysisSession)
-private fun desc(
-    functionSymbol: KtFunctionLikeSymbol,
-    containingLightDeclaration: PsiModifierListOwner,
-    context: KtElement
-): String  = buildString {
-    functionSymbol.valueParameters.joinTo(this, separator = "", prefix = "(", postfix = ")") {
-        MapPsiToAsmDesc.typeDesc(
-            toPsiType(
-                it.returnType,
-                containingLightDeclaration,
-                context,
-                PsiTypeConversionConfiguration(
-                    TypeOwnerKind.DECLARATION,
-                    typeMappingMode = KtTypeMappingMode.VALUE_PARAMETER,
-                )
-            )
-        )
-    }
-    append(
-        MapPsiToAsmDesc.typeDesc(
-            toPsiType(
-                functionSymbol.returnType,
-                containingLightDeclaration,
-                context,
-                PsiTypeConversionConfiguration(
-                    TypeOwnerKind.DECLARATION,
-                    typeMappingMode = KtTypeMappingMode.RETURN_TYPE,
-                )
-            )
-        )
-    )
 }
 
 context(KtAnalysisSession)

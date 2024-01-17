@@ -16,6 +16,7 @@ import com.intellij.patterns.ValuePatternCondition
 import com.intellij.psi.*
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -39,13 +40,13 @@ import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriority
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
-import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import com.intellij.lang.injection.general.Injection as GeneralInjection
 
@@ -62,10 +63,10 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
     abstract fun injectionInfoByParameterAnnotation(functionReference: KtReference, argumentName: Name?, argumentIndex: Int): InjectionInfo?
 
-    private val absentKotlinInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
+    private val absentKotlinInjection: BaseInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
 
     companion object {
-        private val STRING_LITERALS_REGEXP = "\"([^\"]*)\"".toRegex()
+        private val STRING_LITERALS_REGEXP: Regex = "\"([^\"]*)\"".toRegex()
     }
 
     private data class KotlinCachedInjection(val modificationCount: Long, val baseInjection: BaseInjection)
@@ -175,7 +176,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
             ?: injectWithMutation(place)
     }
 
-    private val stringMutationOperators = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
+    private val stringMutationOperators: List<KtSingleValueToken> = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
 
     private fun injectWithMutation(host: KtElement): InjectionInfo? {
         val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationToken in stringMutationOperators } ?: return null
@@ -426,49 +427,56 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return InjectionInfo(id, prefix, suffix)
     }
 
-    private fun createCachedValue(project: Project): CachedValueProvider.Result<HashSet<String>> = with(Configuration.getProjectInstance(project)) {
-        CachedValueProvider.Result.create(
-            (getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID) + getInjections(KOTLIN_SUPPORT_ID))
-                .asSequence()
-                .flatMap { it.injectionPlaces.asSequence() }
-                .flatMap { retrieveJavaPlaceTargetClassesFQNs(it).asSequence() + retrieveKotlinPlaceTargetClassesFQNs(it).asSequence() }
-                .map { StringUtilRt.getShortName(it) }
-                .toHashSet(), this)
+    private fun createCachedValue(project: Project): CachedValueProvider.Result<Set<String>> {
+        return with(Configuration.getProjectInstance(project)) {
+            val result:MutableSet<String> = mutableSetOf()
+            for (injection in getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
+                for (injectionPlace in injection.injectionPlaces) {
+                    appendJavaPlaceTargetClassShortNames(injectionPlace, result)
+                    appendKotlinPlaceTargetClassShortNames(injectionPlace, result)
+                }
+            }
+            for (injection in getInjections(KOTLIN_SUPPORT_ID)) {
+                for (injectionPlace in injection.injectionPlaces) {
+                    appendJavaPlaceTargetClassShortNames(injectionPlace, result)
+                    appendKotlinPlaceTargetClassShortNames(injectionPlace, result)
+                }
+            }
+            CachedValueProvider.Result.create(result, this)
+        }
     }
 
-    private fun getInjectableTargetClassShortNames(project: Project) = CachedValuesManager.getManager(project).createCachedValue({ createCachedValue(project) }, false)
+    private fun getInjectableTargetClassShortNames(project: Project): CachedValue<Set<String>> = CachedValuesManager.getManager(project).createCachedValue({ createCachedValue(project) }, false)
 
     private fun fastCheckInjectionsExists(
         annotationShortName: String,
         project: Project
-    ) = annotationShortName in getInjectableTargetClassShortNames(project).value
+    ): Boolean = annotationShortName in getInjectableTargetClassShortNames(project).value
 
     private fun getCallableShortName(annotationEntry: KtCallElement): String? {
         val referencedName = getNameReference(annotationEntry.calleeExpression)?.getReferencedName() ?: return null
         return KotlinPsiHeuristics.unwrapImportAlias(annotationEntry.containingKtFile, referencedName).singleOrNull() ?: referencedName
     }
 
-    private fun retrieveJavaPlaceTargetClassesFQNs(place: InjectionPlace): Collection<String> {
+    private fun appendJavaPlaceTargetClassShortNames(place: InjectionPlace, classNames: MutableCollection<String>) {
         val classCondition = place.elementPattern.condition.conditions.firstOrNull { it.debugMethodName == "definedInClass" }
-                as? PatternConditionPlus<*, *> ?: return emptyList()
+                as? PatternConditionPlus<*, *> ?: return
         val psiClassNamePatternCondition =
-            classCondition.valuePattern.condition.conditions.firstIsInstanceOrNull<PsiClassNamePatternCondition>() ?: return emptyList()
+            classCondition.valuePattern.condition.conditions.firstIsInstanceOrNull<PsiClassNamePatternCondition>() ?: return
         val valuePatternCondition =
             psiClassNamePatternCondition.namePattern.condition.conditions.firstIsInstanceOrNull<ValuePatternCondition<String>>()
-                ?: return emptyList()
-        return valuePatternCondition.values
+                ?: return
+        valuePatternCondition.values.forEach { classNames.add(StringUtilRt.getShortName(it)) }
     }
 
-    private fun retrieveKotlinPlaceTargetClassesFQNs(place: InjectionPlace): Collection<String> {
-        val classNames = SmartList<String>()
+    private fun appendKotlinPlaceTargetClassShortNames(place: InjectionPlace, classNames: MutableCollection<String>) {
         fun collect(condition: PatternCondition<*>) {
             when (condition) {
                 is PatternConditionPlus<*, *> -> condition.valuePattern.condition.conditions.forEach { collect(it) }
-                is KotlinFunctionPatternBase.DefinedInClassCondition -> classNames.add(condition.fqName)
+                is KotlinFunctionPatternBase.DefinedInClassCondition -> classNames.add(StringUtilRt.getShortName(condition.fqName))
             }
         }
         place.elementPattern.condition.conditions.forEach { collect(it) }
-        return classNames
     }
 
 }
