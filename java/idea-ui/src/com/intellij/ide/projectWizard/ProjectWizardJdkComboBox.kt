@@ -63,8 +63,9 @@ fun Row.projectWizardJdkComboBox(
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
   sdkPropertyId: String,
+  projectJdk: Sdk? = null
 ) {
-  val combo = ProjectWizardJdkComboBox()
+  val combo = ProjectWizardJdkComboBox(projectJdk)
 
   val selectedJdkProperty = "jdk.selected.$sdkPropertyId"
 
@@ -121,7 +122,9 @@ private fun updateGraphProperties(
   sdkDownloadTaskProperty.set(downloadTask)
 }
 
-class ProjectWizardJdkComboBox(): ComboBox<ProjectWizardJdkIntent>() {
+class ProjectWizardJdkComboBox(
+  val projectJdk: Sdk? = null
+): ComboBox<ProjectWizardJdkIntent>() {
   val registered: MutableList<ExistingJdk> = mutableListOf()
   val detectedJDKs: MutableList<DetectedJdk> = mutableListOf()
   var isUpdating: Boolean = true
@@ -153,9 +156,14 @@ class ProjectWizardJdkComboBox(): ComboBox<ProjectWizardJdkIntent>() {
         when (value) {
           is NoJdk -> item.append(JavaUiBundle.message("jdk.missing.item"), SimpleTextAttributes.ERROR_ATTRIBUTES)
           is ExistingJdk -> {
-            item.append(value.jdk.name)
-            val version = value.jdk.versionString ?: (value.jdk.sdkType as SdkType).presentableName
-            item.append(" $version", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+            if (value.jdk == projectJdk) {
+              item.append(JavaUiBundle.message("jdk.project.item"))
+              item.append(" ${projectJdk.name}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+            } else {
+              item.append(value.jdk.name)
+              val version = value.jdk.versionString ?: (value.jdk.sdkType as SdkType).presentableName
+              item.append(" $version", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+            }
           }
           is DownloadJdk -> {
             item.append(JavaUiBundle.message("jdk.download.predefined.item", value.task.suggestedSdkName))
