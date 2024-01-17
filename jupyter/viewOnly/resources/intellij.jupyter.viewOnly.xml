@@ -1,9 +1,12 @@
 <!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/jupyter-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+<idea-plugin package="com.intellij.jupyter.viewOnly">
+  <dependencies>
+    <module name="intellij.jupyter.core"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <httpRequestHandler id="jupyter-view-only" implementation="com.intellij.jupyter.viewOnly.JupyterViewOnlyHandler"/>
-    <fileEditorProvider id="jupyter-view-only-provider" implementation="com.intellij.jupyter.viewOnly.JupyterViewOnlyProvider" fileType="Jupyter"/>
+    <fileEditorProvider id="jupyter-view-only-provider" implementation="com.intellij.jupyter.viewOnly.JupyterViewOnlyProvider"
+                        fileType="Jupyter"/>
   </extensions>
 </idea-plugin>

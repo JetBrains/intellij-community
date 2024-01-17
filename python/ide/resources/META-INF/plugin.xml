@@ -12,7 +12,10 @@
   <xi:include href="/META-INF/pycharm-community-and-pro-customization.xml"/>
   <xi:include href="/META-INF/pycharm-community-promo.xml"/>
   <xi:include href="/META-INF/tips-pycharm-community.xml"/>
-  <xi:include href="/META-INF/jupyter-view-only.xml"/>
+  <content>
+    <module name="intellij.jupyter.core"/>
+    <module name="intellij.jupyter.viewOnly"/>
+  </content>
 
 
 </idea-plugin>
