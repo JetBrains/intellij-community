@@ -438,6 +438,7 @@
     </action>
     <action id="NextTemplateVariable">
         <keyboard-shortcut first-keystroke="enter" />
+        <keyboard-shortcut first-keystroke="tab"/>
     </action>
     <action id="OpenFile">
         <keyboard-shortcut first-keystroke="meta o" />
