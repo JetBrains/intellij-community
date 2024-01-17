@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.presentation
 
@@ -9,6 +9,8 @@ import com.intellij.navigation.ItemPresentationProvider
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,7 +28,15 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
         return null
     }
 
-    override fun getPresentableText() = declaration.name
+    override fun getPresentableText(): @NlsSafe String? {
+        val name = declaration.name
+        if (declaration is KtCallableDeclaration && name != null) {
+            declaration.receiverTypeReference?.getTypeText()?.let {
+              return StringUtil.getQualifiedName(StringUtil.getShortName(it), name)
+          }
+        }
+        return name
+    }
 
     override fun getLocationString(): String? {
         if ((declaration is KtFunction && declaration.isLocal) || (declaration is KtClassOrObject && declaration.isLocal)) {
@@ -48,11 +58,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
             getNameForContainingObjectLiteral() ?: return null
         }
 
-        val receiverTypeRef = (declaration as? KtCallableDeclaration)?.receiverTypeReference
         return when {
-            receiverTypeRef != null -> {
-                getPresentationTextForReceiver(receiverTypeRef.getTypeText(), containerText)
-            }
             parent is KtFile -> getPresentationText(containerText)
             else -> getPresentationInContainer(containerText)
         }
@@ -83,11 +89,16 @@ open class KotlinFunctionPresentation(
 ) : KotlinDefaultNamedDeclarationPresentation(function) {
     override fun getPresentableText(): String {
         return buildString {
+            function.receiverTypeReference?.getTypeText()?.let {
+                append(StringUtil.getShortName(it))
+                append(".")
+            }
+
             name?.let { append(it) }
 
             append("(")
             append(function.valueParameters.joinToString {
-                (if (it.isVarArg) "vararg " else "") + (it.typeReference?.getTypeText() ?: "")
+                (if (it.isVarArg) "vararg " else "") + StringUtil.getShortName(it.typeReference?.getTypeText() ?: "")
             })
             append(")")
         }
@@ -126,12 +137,3 @@ private fun getPresentationText(param: Any): String {
         return KotlinBundle.message("presentation.text.paren", param)
     }
 }
-
-private fun getPresentationTextForReceiver(vararg params: Any): String {
-    if (ExperimentalUI.isNewUI()) {
-        return KotlinBundle.message("presentation.text.for.receiver.in.container.paren.no.brackets", *params)
-    } else {
-        return KotlinBundle.message("presentation.text.for.receiver.in.container.paren", *params)
-    }
-}
-

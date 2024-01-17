@@ -10,4 +10,4 @@ fun foo() {
 
 // REF: (dependency).test(String)
 
-// CLS_REF: (dependency).test(kotlin.String)
+// CLS_REF: (dependency).test(String)

@@ -499,9 +499,6 @@
   <!-- Declaration search and Find Usages -->
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereResultsEqualityProvider implementation="org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProvider"/>
-
-    <searchEverywhereClassifier implementation="org.jetbrains.kotlin.idea.goto.KotlinSearchEverywhereClassifier"/>
-
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAliasedImportedElementSearcher"/>
 
