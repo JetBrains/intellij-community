@@ -476,6 +476,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceAndCreateBlock.kt");
         }
 
+        @TestMetadata("IntroduceDestructuringDeclarationAndCreateBlock.kt")
+        public void testIntroduceDestructuringDeclarationAndCreateBlock() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
+        }
+
         @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
         public void testIntroduceLambdaAndCreateBlock() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");

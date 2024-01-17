@@ -478,6 +478,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/IntroduceAndCreateBlock.kt");
             }
 
+            @TestMetadata("IntroduceDestructuringDeclarationAndCreateBlock.kt")
+            public void testIntroduceDestructuringDeclarationAndCreateBlock() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
+            }
+
             @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
             public void testIntroduceLambdaAndCreateBlock() throws Exception {
                 runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");

@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.sure
@@ -216,11 +218,8 @@ abstract class KotlinIntroduceVariableContext(
                 }
                 emptyBody = anchor.replace(emptyBody) as KtBlockExpression
             }
-            for (child in emptyBody.children) {
-                if (child is KtProperty) {
-                    property = child
-                }
-            }
+            property = emptyBody.children.firstIsInstance<KtDeclaration>()
+
             if (commonContainer is KtContainerNode) {
                 if (commonContainer.parent is KtIfExpression) {
                     val next = commonContainer.nextSibling
