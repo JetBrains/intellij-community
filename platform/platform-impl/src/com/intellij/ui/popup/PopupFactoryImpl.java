@@ -7,7 +7,6 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -781,16 +780,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   public static final class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
     private final AnAction myAction;
+    private final Presentation myPresentation = new Presentation();
+
     private @NlsActions.ActionText String myText;
-    private @NlsContexts.DetailedDescription String myDescription;
-    private @NlsContexts.DetailedDescription String myTooltip;
-    private @NlsContexts.ListItem String myValue;
-    private boolean myIsEnabled;
-    private boolean myIsPerformGroup;
-    private boolean myIsSubstepSuppressed;
     private Icon myIcon;
     private Icon mySelectedIcon;
-    private boolean myIsKeepPopupOpen;
 
     private final int maxIconWidth;
     private final int maxIconHeight;
@@ -863,6 +857,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     void updateFromPresentation(@NotNull Presentation presentation, @NotNull String actionPlace) {
+      myPresentation.copyFrom(presentation, null, true);
+
       String text = presentation.getText();
       if (text != null && !myMnemonicsEnabled && myHonorActionMnemonics) {
         text = TextWithMnemonic.fromPlainText(text, (char)myAction.getTemplatePresentation().getMnemonic()).toString();
@@ -872,14 +868,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
         text = "";
       }
       myText = ActionPresentationDecorator.decorateTextIfNeeded(myAction, text);
-      myDescription =  presentation.getDescription();
-      //noinspection deprecation
-      myTooltip = (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY);
-
-      myIsEnabled = presentation.isEnabled();
-      myIsPerformGroup = myAction instanceof ActionGroup && presentation.isPerformGroup();
-      myIsSubstepSuppressed = myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(presentation);
-      myIsKeepPopupOpen = myIsKeepPopupOpen || presentation.isMultiChoice() || myAction instanceof KeepingPopupOpenAction;
 
       Pair<Icon, Icon> icons = ActionStepBuilder.calcRawIcons(myAction, presentation, false);
       Icon icon = icons.first;
@@ -898,8 +886,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
       myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
-
-      myValue = presentation.getClientProperty(ActionUtil.SECONDARY_TEXT);
     }
 
     @Override
@@ -938,20 +924,22 @@ public class PopupFactoryImpl extends JBPopupFactory {
       mySeparatorText = separatorText;
     }
 
-    public boolean isEnabled() { return myIsEnabled; }
+    public boolean isEnabled() { return myPresentation.isEnabled(); }
 
-    public boolean isPerformGroup() { return myIsPerformGroup; }
+    public boolean isPerformGroup() { return myAction instanceof ActionGroup && myPresentation.isPerformGroup(); }
 
-    boolean isSubstepSuppressed() { return myIsSubstepSuppressed; }
+    boolean isSubstepSuppressed() { return myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(myPresentation); }
 
-    boolean isKeepPopupOpen() { return myIsKeepPopupOpen; }
+    boolean isKeepPopupOpen() { return myPresentation.isMultiChoice() || myAction instanceof KeepingPopupOpenAction; }
 
     public @NlsContexts.DetailedDescription String getDescription() {
-      return myDescription == null ? myTooltip : myDescription;
+      String description = myPresentation.getDescription();
+      return description == null ? getTooltip() : description;
     }
 
     public @NlsContexts.DetailedDescription String getTooltip() {
-      return myTooltip;
+      //noinspection deprecation
+      return (String)myPresentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY);
     }
 
     @Override
@@ -959,13 +947,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return myAction.getShortcutSet();
     }
 
+    public @Nullable <T> T getClientProperty(@NotNull Key<T> key) {
+      return myPresentation.getClientProperty(key);
+    }
+
     @Override
     public String toString() {
       return myText;
-    }
-
-    public @NlsContexts.ListItem String getValue() {
-      return myValue;
     }
   }
 

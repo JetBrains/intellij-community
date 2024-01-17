@@ -185,7 +185,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   public @Nullable String getValueFor(PopupFactoryImpl.ActionItem item) {
-    return item.getValue();
+    return item.getClientProperty(ActionUtil.SECONDARY_TEXT);
   }
 
   @Override
