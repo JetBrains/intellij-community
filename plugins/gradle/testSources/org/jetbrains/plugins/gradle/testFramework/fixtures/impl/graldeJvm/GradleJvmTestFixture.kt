@@ -26,7 +26,7 @@ class GradleJvmTestFixture(private val gradleVersion: GradleVersion) : SdkTestFi
   override fun setUp() {
     fixtureDisposable = Disposer.newDisposable()
     sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, fixtureDisposable)
-
+    System.out.println("Gradle JVM: $sdk")
     installLinkedSettingsWatcher()
   }
 
