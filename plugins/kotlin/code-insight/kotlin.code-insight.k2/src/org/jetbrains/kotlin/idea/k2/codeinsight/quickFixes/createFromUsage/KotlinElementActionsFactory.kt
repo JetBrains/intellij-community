@@ -5,9 +5,9 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
-import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclarationBase
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
@@ -30,7 +30,9 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
-        var container = targetClass.takeUnless { it is KtLightClassForDecompiledDeclarationBase }?.toKtClassOrFile() ?: return emptyList()
+        var container =
+            targetClass.takeIf { (targetClass as? KtLightElementBase)?.parent?.containingFile?.virtualFile?.isWritable != false }?.toKtClassOrFile()
+                ?: return emptyList()
         return when (request) {
             is CreateMethodFromKotlinUsageRequest -> {
                 val isExtension = request.isExtension
