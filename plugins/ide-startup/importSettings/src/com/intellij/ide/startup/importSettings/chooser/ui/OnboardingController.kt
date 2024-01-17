@@ -2,7 +2,6 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.WizardProvider
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 
 class OnboardingController private constructor(){
@@ -66,9 +65,7 @@ class OnboardingController private constructor(){
   }
 
   fun dialogClose() {
-    if(dialog.isShowing && dialog.isVisible) {
-      dialog.doClose(DialogWrapper.CANCEL_EXIT_CODE)
-    }
+    dialog.dialogClose()
   }
 
 
@@ -94,7 +91,7 @@ class OnboardingController private constructor(){
     }
 
     dialog.title = title
-    state = State.IMPORT
+    state = State.WIZARD
   }
 
 }

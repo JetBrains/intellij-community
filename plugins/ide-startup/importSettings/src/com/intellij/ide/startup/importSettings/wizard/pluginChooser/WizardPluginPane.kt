@@ -2,26 +2,29 @@
 package com.intellij.ide.startup.importSettings.wizard.pluginChooser
 
 import com.intellij.ide.startup.importSettings.data.WizardPlugin
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IProperty
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class WizardPluginPane(plugin: WizardPlugin, lifetime: Lifetime) {
-  private var checkBox = CheckBoxComponent(plugin.state, lifetime)
+class WizardPluginPane(val plugin: WizardPlugin, changeHandler: () -> Unit) {
+  private var checkBox = JBCheckBox().apply {
+    addItemListener { e ->
+      changeHandler()
+    }
+    isOpaque = false
+  }
+
+  val selected: Boolean
+   get() = checkBox.isSelected
 
   val pane = JPanel(GridBagLayout()).apply {
     val c = GridBagConstraints()
@@ -92,67 +95,5 @@ class WizardPluginPane(plugin: WizardPlugin, lifetime: Lifetime) {
     dslLabel.maxLineLength = MAX_LINE_LENGTH_WORD_WRAP
 
     return dslLabel
-  }
-
-  internal class CheckBoxComponent(state: IProperty<WizardPlugin.State>, lifetime: Lifetime) : JPanel() {
-    private val checkBox: JBCheckBox = JBCheckBox()
-    private val progress: JLabel = JLabel(AnimatedIcon.Default.INSTANCE)
-    private val error: JLabel = JLabel(com.intellij.icons.AllIcons.Ide.FatalError)
-
-    private val controls = listOf<JComponent>(checkBox, progress, error)
-
-    init {
-      layout = VerticalLayout(0, 0)
-      border = JBUI.Borders.empty()
-
-      isOpaque = false
-      checkBox.isOpaque = false
-
-
-      checkBox.isSelected = state.value == WizardPlugin.State.CHECKED
-      checkBox.addItemListener { e ->
-        state.set(if (checkBox.isSelected) WizardPlugin.State.CHECKED else WizardPlugin.State.UNCHECKED)
-      }
-
-      add(checkBox)
-      add(progress)
-      add(error)
-
-      state.advise(lifetime) {
-        when (it) {
-          WizardPlugin.State.UNCHECKED -> {
-            setVisibleControl(checkBox)
-            checkBox.isSelected = false
-            checkBox.isEnabled = true
-          }
-          WizardPlugin.State.CHECKED -> {
-            setVisibleControl(checkBox)
-            checkBox.isSelected = true
-            checkBox.isEnabled = true
-          }
-          WizardPlugin.State.INSTALLED -> {
-            setVisibleControl(checkBox)
-            checkBox.isSelected = true
-            checkBox.isEnabled = false
-          }
-          WizardPlugin.State.ERROR -> {
-            setVisibleControl(error)
-          }
-          WizardPlugin.State.IN_PROGRESS -> {
-            setVisibleControl(progress)
-          }
-        }
-      }
-    }
-
-    private fun setVisibleControl(component: JComponent) {
-      component.isVisible = true
-
-      controls.forEach {
-        if (it != component) {
-          it.isVisible = false
-        }
-      }
-    }
   }
 }

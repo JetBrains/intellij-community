@@ -3,7 +3,8 @@ package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.WizardService
 import com.intellij.ide.startup.importSettings.wizard.keymapChooser.KeymapChooserPage
-import com.intellij.ide.startup.importSettings.wizard.pluginChooser.PluginChooserPage
+import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardPluginsPage
+import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardProgressPage
 
 interface WizardController : BaseController {
   companion object {
@@ -19,7 +20,8 @@ interface WizardController : BaseController {
   fun goToThemePage()
   fun goToKeymapPage()
   fun goToPluginPage()
-
+  fun goToInstallPluginPage(ids: List<String>)
+  fun skipPlugins()
 }
 
 class WizardControllerImpl(dialog: OnboardingDialog,
@@ -35,8 +37,22 @@ class WizardControllerImpl(dialog: OnboardingDialog,
   }
 
   override fun goToPluginPage() {
-    val page = PluginChooserPage(this)
+    val page = WizardPluginsPage(this)
     dialog.changePage(page)
   }
 
+  override fun goToInstallPluginPage(ids: List<String>) {
+    if(ids.isNotEmpty()) {
+      val importProgress = service.getPluginService().install(ids)
+      val page = WizardProgressPage(importProgress, this)
+      dialog.changePage(page)
+    } else {
+      skipPlugins()
+    }
+  }
+
+  override fun skipPlugins() {
+    service.getPluginService().skipPlugins()
+    dialog.dialogClose()
+  }
 }

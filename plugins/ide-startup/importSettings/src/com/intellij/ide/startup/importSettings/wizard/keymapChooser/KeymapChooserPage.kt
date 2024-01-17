@@ -5,12 +5,8 @@ import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardController
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
-import com.intellij.ui.JBColor
-import com.intellij.ui.SeparatorComponent
-import com.intellij.ui.SeparatorOrientation
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.*

@@ -8,7 +8,6 @@ import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ide.startup.importSettings.data.SettingsService
-import com.intellij.openapi.ui.DialogWrapper
 
 interface ImportSettingsController : BaseController {
   companion object {
@@ -35,7 +34,7 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
        * what should we do here?
        */
       /*skipImportAction.invoke()*/
-      dialog.doClose(DialogWrapper.CANCEL_EXIT_CODE)
+      dialog.dialogClose()
     }
 
     settService.error.advise(lifetime) {
@@ -61,6 +60,6 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
 
 
   override fun skipImport() {
-    dialog.doClose(DialogWrapper.CANCEL_EXIT_CODE)
+    dialog.dialogClose()
   }
 }

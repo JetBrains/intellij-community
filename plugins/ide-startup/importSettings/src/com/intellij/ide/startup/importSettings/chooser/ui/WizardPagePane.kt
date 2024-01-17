@@ -6,14 +6,15 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.SeparatorOrientation
 import com.intellij.util.ui.JBUI
-import java.awt.FlowLayout
+import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class WizardPagePane(centralPane: JComponent, buttons: List<JButton>) : JPanel() {
+class WizardPagePane(centralPane: JComponent, buttons: List<JButton>, leftComponent: JComponent? = null) : JPanel() {
   init {
     layout = GridBagLayout()
 
@@ -29,7 +30,7 @@ class WizardPagePane(centralPane: JComponent, buttons: List<JButton>) : JPanel()
 
     gbc.fill = GridBagConstraints.BOTH
     gbc.gridy = 1
-    gbc.weighty = 2.0
+    gbc.weighty = 1.0
     add(centralPane, gbc)
 
     gbc.fill = GridBagConstraints.HORIZONTAL
@@ -37,15 +38,25 @@ class WizardPagePane(centralPane: JComponent, buttons: List<JButton>) : JPanel()
     gbc.weighty = 0.0
     add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL), gbc)
 
-    val buttonPane = JPanel(FlowLayout(FlowLayout.RIGHT)).apply {
-      add(DialogWrapper.layoutButtonsPanel(buttons))
-      border = JBUI.Borders.empty(3, 0, 3, 15)
+    val buttonPane = object : JPanel(BorderLayout()) {
+      override fun getPreferredSize(): Dimension {
+        val preferredSize = super.getPreferredSize()
+        return Dimension(preferredSize.width, JBUI.scale(57))
+      }
+    }.apply {
+      leftComponent?.let {
+        add(leftComponent, BorderLayout.CENTER)
+      }
+
+      add(DialogWrapper.layoutButtonsPanel(buttons), BorderLayout.EAST)
+      border = JBUI.Borders.empty(3, 0, 3, 20)
+      preferredSize = Dimension(preferredSize.width, JBUI.scale(57))
     }
 
-    gbc.fill = GridBagConstraints.HORIZONTAL
     gbc.gridy = 3
-    gbc.weighty = 0.0
-
+    gbc.anchor = GridBagConstraints.SOUTH
+    gbc.fill = GridBagConstraints.HORIZONTAL
     add(buttonPane, gbc)
+
   }
 }

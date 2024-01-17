@@ -19,7 +19,6 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.*
@@ -90,7 +89,8 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
         }
       }.align(AlignY.TOP)
     }.apply {
-      preferredWidth = JBUI.scale(200)
+      preferredSize = Dimension(JBUI.scale(200), preferredSize.height)
+
       border = JBUI.Borders.empty(20, 20, 0, 0)
     }, BorderLayout.WEST)
 
@@ -103,7 +103,6 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
         add(st.component())
       }
     }
-
     add(
       JBScrollPane(listPane).apply {
         viewport.isOpaque = false

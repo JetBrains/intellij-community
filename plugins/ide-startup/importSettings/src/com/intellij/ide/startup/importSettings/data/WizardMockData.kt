@@ -4,6 +4,10 @@ package com.intellij.ide.startup.importSettings.data
 import com.intellij.icons.AllIcons
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.threading.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
@@ -79,20 +83,42 @@ class PluginServiceImpl : PluginService {
   override val plugins: List<WizardPlugin> = listOf
 
   override fun install(ids: List<String>): PluginImportProgress = TestPluginImportProgress(Lifetime.Eternal)
+  override fun skipPlugins() {
+
+  }
 }
 
 class TestPluginImportProgress(lifetime: Lifetime) : TestImportProgress(lifetime), PluginImportProgress {
-  override val complete: Signal<PluginInstallationResult> = Signal()
+  private val iconList = listOf(AllIcons.Plugins.PluginLogo,
+                                AllIcons.Plugins.PluginLogoDisabled,
+                                AllIcons.TransferSettings.RecentProjects,
+                                AllIcons.TransferSettings.Vscode,
+                                AllIcons.TransferSettings.Settings,
+                                AllIcons.TransferSettings.PluginsAndFeatures)
+
+  override val icon = Property(AllIcons.Plugins.PluginLogo)
+
+  private var index = 0
+  init {
+    lifetime.launch {
+      launch(Dispatchers.Default) {
+        while (true) {
+          index = if (index < iconList.size - 1) index + 1 else 0
+          icon.set(
+            iconList[index]
+          )
+          delay(300L)
+        }
+      }
+    }
+  }
 }
 
 class WizardPluginImpl(override val icon: Icon,
                        override val name: String,
                        override val description: String? = null,
-                       override val id: String = UUID.randomUUID().toString(),
-                       override val state: IProperty<WizardPlugin.State> = Property(WizardPlugin.State.UNCHECKED)) : WizardPlugin {
-
+                       override val id: String = UUID.randomUUID().toString()) : WizardPlugin {
 }
-
 
 @Suppress("HardCodedStringLiteral")
 class TestKeymapService : KeymapService {

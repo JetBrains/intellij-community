@@ -43,7 +43,13 @@ class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, nul
     }
   }
 
-  fun doClose(code: Int) {
+  fun dialogClose() {
+    if(isShowing && isVisible) {
+      doClose(CANCEL_EXIT_CODE)
+    }
+  }
+
+  private fun doClose(code: Int) {
     tracker.onLeave()
     close(code)
   }

@@ -46,32 +46,18 @@ interface WizardTheme {
 interface PluginService {
   val plugins: List<WizardPlugin>
   fun install(ids: List<String>): PluginImportProgress
+  fun skipPlugins()
 }
 
 interface PluginImportProgress : ImportProgress {
-  val complete: Signal<PluginInstallationResult>
-}
-
-interface PluginInstallationResult {
-  val icon: Icon
-  val message: String
+  val icon: IPropertyView<Icon>
 }
 
 interface WizardPlugin {
-  enum class State {
-    IN_PROGRESS,
-    INSTALLED,
-    CHECKED,
-    UNCHECKED,
-    ERROR
-  }
-
   val id: String
   val icon: Icon
   val name: String
   val description: String?
-
-  val state: IProperty<State>
 }
 
 interface KeymapService {

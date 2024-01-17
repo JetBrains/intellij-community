@@ -109,12 +109,13 @@ enum class StartupWizardStage {
   ImportProgressPage,
   WizardThemePage,
   WizardKeymapPage,
-  WizardPluginPage
+  WizardPluginPage,
+  WizardProgressPage
 }
 
 object IdeStartupWizardCollector : CounterUsagesCollector() {
 
-  val GROUP = EventLogGroup("wizard.startup", 5)
+  val GROUP = EventLogGroup("wizard.startup", 6)
   override fun getGroup() = GROUP
 
   private val initialStartSucceeded = GROUP.registerEvent("initial_start_succeeded")
