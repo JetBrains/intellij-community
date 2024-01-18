@@ -6,8 +6,13 @@ import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +36,21 @@ public final class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> i
     return myListLoaded;
   }
 
+  @Override
+  protected ActionLink createActionLink() {
+    return new ActionLink(ApplicationBundle.message("link.editor.scheme.change.ide.theme"), (actionEvent) -> {
+      Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext((ActionLink)actionEvent.getSource()));
+      if (settings != null) {
+        settings.select(settings.find("preferences.lookFeel"));
+      }
+    });
+  }
+
+  @Nls
+  @Override
+  protected String getContextHelpLabelText() {
+    return ApplicationBundle.message("editbox.scheme.context.help.label");
+  }
 
   void resetSchemesCombo(final Object source) {
     if (this != source) {
