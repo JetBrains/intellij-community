@@ -51,7 +51,7 @@ class LoadedGitLabDiscussion(
   glMetadata: GitLabServerMetadata?,
   private val glProject: GitLabProjectCoordinates,
   private val currentUser: GitLabUserDTO,
-  private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
+  private val eventSink: suspend (Change<GitLabDiscussionDTO>) -> Unit,
   private val draftNotesEventSink: suspend (Change<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
   private val mr: GitLabMergeRequest,
   discussionData: GitLabDiscussionDTO,
@@ -88,7 +88,7 @@ class LoadedGitLabDiscussion(
           }
 
           if (notesData.isEmpty()) {
-            eventSink(GitLabDiscussionEvent.Deleted(discussionData.id))
+            eventSink(Deleted { it.id == discussionData.id })
             return@collectLatest
           }
 

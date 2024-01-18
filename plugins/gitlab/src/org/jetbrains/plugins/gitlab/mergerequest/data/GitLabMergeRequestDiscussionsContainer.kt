@@ -2,17 +2,13 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.data.GraphQLRequestPagination
-import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.async.*
-import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
@@ -21,6 +17,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabGraphQLListLoaderIn
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabRestETagListLoaderIn
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -50,7 +47,6 @@ interface GitLabMergeRequestDiscussionsContainer {
 
 private val LOG = logger<GitLabMergeRequestDiscussionsContainer>()
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class GitLabMergeRequestDiscussionsContainerImpl(
   parentCs: CoroutineScope,
   private val project: Project,
@@ -74,69 +70,24 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   }
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  private val discussionEvents = MutableSharedFlow<GitLabDiscussionEvent>()
-  override val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> =
-    reloadRequests.transformLatest { collectNonEmptyDiscussions() }.modelFlow(cs, LOG)
+  private val discussionEvents = MutableSharedFlow<Change<GitLabDiscussionDTO>>()
 
-  private suspend fun FlowCollector<Result<List<GitLabDiscussionDTO>>>.collectNonEmptyDiscussions() {
-    runCatchingUser {
-      supervisorScope {
-        val discussions = LinkedHashMap<GitLabId, GitLabDiscussionDTO>()
-        val discussionsGuard = Mutex()
-        var lastCursor: String? = null
-        ApiPageUtil.createGQLPagesFlow {
-          api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, it)
-        }.collect { page ->
-          discussionsGuard.withLock {
-            for (dto in page.nodes.filter { it.notes.isNotEmpty() }) {
-              discussions[dto.id] = dto
-            }
-          }
-          lastCursor = page.pageInfo.startCursor
-        }
-        if (lastCursor != null) {
-          launchNow {
-            updateRequests.collect {
-              val page = api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, GraphQLRequestPagination(lastCursor!!))
-              val newDiscussions = page?.nodes
-              if (newDiscussions != null) {
-                discussionsGuard.withLock {
-                  for (dto in newDiscussions) {
-                    discussions[dto.id] = dto
-                  }
-                  emit(Result.success(discussions.values.toList()))
-                }
-              }
-              lastCursor = page?.pageInfo?.startCursor
-              if (lastCursor == null) {
-                currentCoroutineContext().cancel()
-              }
-            }
-          }
-        }
-        launchNow {
-          discussionEvents.collect { e ->
-            discussionsGuard.withLock {
-              when (e) {
-                is GitLabDiscussionEvent.Deleted -> {
-                  discussions.remove(e.discussionId)
-                  LOG.debug("Discussion removed: ${e.discussionId}")
-                }
-                is GitLabDiscussionEvent.Added -> {
-                  discussions[e.discussion.id] = e.discussion
-                  LOG.debug("New discussion added: ${e.discussion}")
-                }
-              }
-              emit(Result.success(discussions.values.toList()))
-            }
-          }
-        }
-        discussionsGuard.withLock {
-          emit(Result.success(discussions.values.toList()))
-        }
-      }
-    }.onFailure { emit(Result.failure(it)) }
-  }
+  private val discussionsDataHolder =
+    startGitLabGraphQLListLoaderIn(
+      cs,
+      { it.id },
+
+      requestReloadFlow = reloadRequests,
+      requestRefreshFlow = updateRequests,
+      requestChangeFlow = discussionEvents
+    ) { cursor ->
+      api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, GraphQLRequestPagination(cursor))
+    }
+
+  override val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> =
+    discussionsDataHolder.resultOrErrorFlow
+      .mapCatching { discussions -> discussions.filter { it.notes.isNotEmpty() } }
+      .modelFlow(cs, LOG)
 
   override val discussions: Flow<Result<List<GitLabMergeRequestDiscussion>>> =
     nonEmptyDiscussionsData
@@ -231,7 +182,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
 
       withContext(NonCancellable) {
-        discussionEvents.emit(GitLabDiscussionEvent.Added(newDiscussion))
+        discussionEvents.emit(AddedLast(newDiscussion))
       }
     }
   }
@@ -243,7 +194,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
 
       withContext(NonCancellable) {
-        discussionEvents.emit(GitLabDiscussionEvent.Added(newDiscussion))
+        discussionEvents.emit(AddedLast(newDiscussion))
       }
     }
   }
@@ -298,5 +249,6 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     updateRequests.emit(Unit)
 
     draftNotesDataHolder?.loadAll()
+    discussionsDataHolder.loadAll()
   }
 }
