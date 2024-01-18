@@ -121,8 +121,8 @@ class IndexingStampInfo {
 
   @Override
   public int hashCode() {
-    int result = (int)(indexingFileStamp ^ (indexingFileStamp >>> 32));
-    result = 31 * result + (int)(indexingByteLength ^ (indexingByteLength >>> 32));
+    int result = Long.hashCode(indexingFileStamp);
+    result = 31 * result + Long.hashCode(indexingByteLength);
     result = 31 * result + indexingCharLength;
     result = 31 * result + (isBinary ? 1 : 0);
     return result;

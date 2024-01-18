@@ -142,7 +142,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
 
   @Override
   public int hashCode() {
-    int result = (int)(myRemoteProcessIdleTtlInMs ^ (myRemoteProcessIdleTtlInMs >>> 32));
+    int result = Long.hashCode(myRemoteProcessIdleTtlInMs);
     result = 31 * result + (myVerboseProcessing ? 1 : 0);
     result = 31 * result + myJvmArguments.hashCode();
     result = 31 * result + myArguments.hashCode();

@@ -113,7 +113,7 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
     }
 
     public int hashCode() {
-      return (int)(myValue ^ (myValue >>> 32));
+      return java.lang.Long.hashCode(myValue);
     }
 
     public String toString() {

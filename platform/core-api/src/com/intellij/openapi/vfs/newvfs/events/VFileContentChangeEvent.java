@@ -123,8 +123,8 @@ public final class VFileContentChangeEvent extends VFileEvent {
 
   public int hashCode() {
     int result = myFile.hashCode();
-    result = 31 * result + (int)(myOldModificationStamp ^ (myOldModificationStamp >>> 32));
-    result = 31 * result + (int)(myNewModificationStamp ^ (myNewModificationStamp >>> 32));
+    result = 31 * result + Long.hashCode(myOldModificationStamp);
+    result = 31 * result + Long.hashCode(myNewModificationStamp);
     return result;
   }
 }

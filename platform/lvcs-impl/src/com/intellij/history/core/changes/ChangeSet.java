@@ -207,7 +207,7 @@ public final class ChangeSet {
 
   @Override
   public int hashCode() {
-    return (int)(myId ^ (myId >>> 32));
+    return Long.hashCode(myId);
   }
 
   public void accept(ChangeVisitor v) throws ChangeVisitor.StopVisitingException {

@@ -45,7 +45,7 @@ final class MyEditorState implements FileEditorState{
   }
 
   public int hashCode(){
-    return (int)(myDocumentModificationStamp ^ (myDocumentModificationStamp >>> 32));
+    return Long.hashCode(myDocumentModificationStamp);
   }
 
   @Override
