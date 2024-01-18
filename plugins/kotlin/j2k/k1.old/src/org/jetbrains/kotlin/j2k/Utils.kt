@@ -54,7 +54,7 @@ fun PsiElement.isInSingleLine(): Boolean {
     return true
 }
 
-//TODO: check for variables that are definitely assigned in constructors
+@Deprecated("This declaration will be removed in a future release along with the whole Old J2K module")
 fun PsiElement.getContainingMethod(): PsiMethod? {
     var context = context
     while (context != null) {
@@ -66,6 +66,7 @@ fun PsiElement.getContainingMethod(): PsiMethod? {
 }
 
 @Suppress("unused") // used from a 3rd-party plugin
+@Deprecated("This declaration will be removed in a future release along with the whole Old J2K module")
 fun PsiElement.getContainingClass(): PsiClass? {
     var context = context
     while (context != null) {
