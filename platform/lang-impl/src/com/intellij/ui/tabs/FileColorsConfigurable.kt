@@ -60,7 +60,7 @@ internal class FileColorsConfigurable(private val project: Project) : BoundSearc
 
   override fun createPanel(): DialogPanel {
     val manager = FileColorManager.getInstance(project) as FileColorManagerImpl
-    var result: DialogPanel? = null
+    lateinit var result: DialogPanel
     result = panel {
       row {
         val cbEnabledFileColors = checkBox(message("settings.file.colors.enable.file.colors"))
@@ -83,7 +83,7 @@ internal class FileColorsConfigurable(private val project: Project) : BoundSearc
       }.resizableRow()
       row {
         link(message("settings.file.colors.manage.scopes")) {
-          Settings.KEY.getData(DataManager.getInstance().getDataContext(result!!))?.let {
+          Settings.KEY.getData(DataManager.getInstance().getDataContext(result))?.let {
             try {
               // try to select related configurable in the current Settings dialog
               if (!it.select(it.find(PROJECT_SCOPES)).isRejected) return@link
