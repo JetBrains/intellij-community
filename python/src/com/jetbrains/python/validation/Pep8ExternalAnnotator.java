@@ -331,7 +331,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
           universal = true;
         }
         else if (problem.myCode.equals("W391")) {
-          fix = LocalQuickFixAndIntentionActionOnPsiElement.from(new RemoveTrailingBlankLinesFix(), problemElement);
+          fix = new RemoveTrailingBlankLinesFix().asIntention();
           universal = true;
         }
         else if (problem.myCode.equals("E501")) {
@@ -339,7 +339,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
           universal = false;
         }
         else {
-          fix = LocalQuickFixAndIntentionActionOnPsiElement.from(new ReformatFix(), problemElement);
+          fix = new ReformatFix().asIntention();
           universal = true;
         }
         AnnotationBuilder builder = holder.newAnnotation(severity, message).range(problemRange);

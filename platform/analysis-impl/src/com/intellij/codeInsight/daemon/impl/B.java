@@ -92,7 +92,12 @@ class B implements AnnotationBuilder {
     Boolean universal;
 
     FixB(@NotNull CommonIntentionAction fix) {
-      this.fix = fix;
+      ModCommandAction unwrappedModCommandAction = fix.asModCommandAction();
+      if (unwrappedModCommandAction != null) {
+        this.fix = unwrappedModCommandAction;
+      } else {
+        this.fix = fix;
+      }
     }
 
     @Override
