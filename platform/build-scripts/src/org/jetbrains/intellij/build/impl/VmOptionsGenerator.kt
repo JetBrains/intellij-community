@@ -9,7 +9,6 @@ import java.nio.file.Path
 @Suppress("SpellCheckingInspection")
 private fun addCommonVmOptions(is21: Boolean): List<String> {
   val common = listOf(
-    "-XX:SoftRefLRUPolicyMSPerMB=50",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
     // allowing the JVM to start even with outdated options stuck in user configs
@@ -29,10 +28,11 @@ private fun addCommonVmOptions(is21: Boolean): List<String> {
     )
   }
   else {
-    // temporary workaround for crashes in С2 (JBR-4509)
     return common + listOf(
+      // temporary workaround for crashes in С2 (JBR-4509)
       "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",
       "-XX:CICompilerCount=2",
+      "-XX:SoftRefLRUPolicyMSPerMB=50",
     )
   }
 }
