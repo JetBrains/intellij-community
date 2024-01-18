@@ -17,13 +17,14 @@ import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.openapi.components.*
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -31,11 +32,10 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.psi.PsiFile
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
@@ -78,8 +78,18 @@ private const val TAG_REGULAR_HIDE = "regular-hide"
 private const val TAG_REGULAR_SHOW = "regular-show"
 private const val TAG_HIDDEN = "hidden"
 
-internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
-  val actions = DefaultActionGroup()
+class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
+  override fun getBehavior() = ActionRemoteBehavior.BackendOnly
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    val project = e?.project ?: return emptyArray()
+    val selectedFile = e.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file
+    return createRunConfigurationsActionGroup(project, selectedFile).toTypedArray()
+  }
+}
+
+internal fun createRunConfigurationsActionGroup(project: Project, selectedFile: VirtualFile?): List<AnAction> {
+  val actions = ArrayList<AnAction>()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
@@ -118,13 +128,13 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
       alreadyShownIds.add(conf.uniqueID)
     }
     actions.add(Separator.create())
-    actions.add(AllRunConfigurationsToggle(allConfigurationMessage(configurationCount)))
+    actions.add(ActionManager.getInstance().getAction("AllRunConfigurationsToggle"))
   }
   actions.add(createRunConfigurationActionGroup(configurationMap.values, alreadyShownIds, withShowAllToggle) {
     createRunConfigurationWithInlines(project, it, runExecutor, debugExecutor, false)
   })
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-    actions.add(createCurrentFileWithInlineActions(runExecutor, debugExecutor, project))
+    actions.add(createCurrentFileWithInlineActions(project, selectedFile, runExecutor, debugExecutor))
   }
   actions.add(Separator.create())
   actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
@@ -188,12 +198,6 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
       return result.toTypedArray()
     }
   }
-}
-
-private fun allConfigurationMessage(number: Int): @Nls String {
-  val textColor = ColorUtil.toHex(JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND)
-  val message = ExecutionBundle.message("run.toolbar.widget.all.configurations", """<a style="color:#$textColor;">${number}</a>""")
-  return "<html>$message</html>"
 }
 
 internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
@@ -324,9 +328,10 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   }
 }
 
-class AllRunConfigurationsToggle(@NlsActions.ActionText text: String) : ToggleAction(text), KeepingPopupOpenAction, DumbAware {
+open class AllRunConfigurationsToggle : DumbAwareToggleAction(), KeepingPopupOpenAction, ActionRemoteBehaviorSpecification {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
 
   override fun isSelected(e: AnActionEvent): Boolean = RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded
 
@@ -341,9 +346,25 @@ class AllRunConfigurationsToggle(@NlsActions.ActionText text: String) : ToggleAc
   }
 
   override fun update(e: AnActionEvent) {
+    val project = e.project ?: run {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     super.update(e)
     e.presentation.isEnabledAndVisible = true
-    e.presentation.icon = if (isSelected(e)) AllIcons.General.ChevronDown else AllIcons.General.ChevronRight
+    e.presentation.icon =
+      if (isSelected(e)) AllIcons.General.ChevronDown
+      else AllIcons.General.ChevronRight
+
+    if (e.presentation.text != templatePresentation.text) {
+      // do not update the text when already showing
+      return
+    }
+
+    val count = RunManager.getInstance(project).allSettings.size
+    val textColor = ColorUtil.toHex(JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND)
+    val message = ExecutionBundle.message("run.toolbar.widget.all.configurations", """<a style="color:#$textColor;">$count</a>""")
+    e.presentation.text = "<html>$message</html>"
   }
 }
 
@@ -403,13 +424,14 @@ private fun createRunConfigurationWithInlines(project: Project,
   return result
 }
 
-private fun createCurrentFileWithInlineActions(runExecutor: Executor,
-                                               debugExecutor: Executor,
-                                               project: Project): AnAction {
+private fun createCurrentFileWithInlineActions(project: Project,
+                                               selectedFile: VirtualFile?,
+                                               runExecutor: Executor,
+                                               debugExecutor: Executor): AnAction {
   if (DumbService.isDumb(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction()
   }
-  val configs = getCurrentPsiFile(project)?.let { ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(it, false) } ?: emptyList()
+  val configs = selectedFile?.findPsiFile(project)?.let { ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(it, false) } ?: emptyList()
   val runRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, runExecutor, project) }
   val debugRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, debugExecutor, project) }
   val activeConfig = runRunningConfig ?: debugRunningConfig
@@ -456,10 +478,6 @@ private fun createCurrentFileWithInlineActions(runExecutor: Executor,
 private fun checkIfRunWithExecutor(config: RunnerAndConfigurationSettings, executor: Executor, project: Project): Boolean {
   if (ProgramRunner.getRunner(executor.id, config.configuration) == null) return false
   return getActiveExecutor(project, config) === executor
-}
-
-private fun getCurrentPsiFile(project: Project): PsiFile? {
-  return FileEditorManagerEx.Companion.getInstanceEx(project).currentFile?.findPsiFile(project)
 }
 
 private fun getActiveExecutor(project: Project, conf: RunnerAndConfigurationSettings): Executor? {
