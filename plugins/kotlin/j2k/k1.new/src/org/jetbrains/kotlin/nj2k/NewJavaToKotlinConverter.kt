@@ -203,11 +203,11 @@ class NewJavaToKotlinConverter(
     }
 }
 
-internal fun WithProgressProcessor.updateState(fileIndex: Int?, phase: J2KConversionPhase, description: String) {
+private fun WithProgressProcessor.updateState(fileIndex: Int?, phase: J2KConversionPhase, description: String) {
     updateState(fileIndex, phase.phaseNumber, description)
 }
 
-internal enum class J2KConversionPhase(val phaseNumber: Int) {
+private enum class J2KConversionPhase(val phaseNumber: Int) {
     BUILD_AST(0),
     RUN_CONVERSIONS(1),
     PRINT_CODE(2),
