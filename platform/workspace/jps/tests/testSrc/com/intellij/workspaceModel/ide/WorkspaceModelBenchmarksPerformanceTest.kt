@@ -771,41 +771,6 @@ class WorkspaceModelBenchmarksPerformanceTest {
   }
 
   @Test
-  fun `request of cache1`(testInfo: TestInfo) {
-    CacheResetTracker.enable()
-    println("Create snapshot")
-    val baseSize = 10
-    val smallBaseSize = 10
-    val builder = MutableEntityStorage.create()
-    repeat(baseSize) {
-      builder addEntity ParentMultipleEntity("data$it", MySource) {
-        this.children = List(smallBaseSize) {
-          ChildMultipleEntity("data$it", MySource)
-        }
-      }
-    }
-    val snapshot = builder.toSnapshot()
-
-    val childData = entities<ParentMultipleEntity>()
-      .flatMap { parentEntity, _ -> parentEntity.children }
-      .map { it.childData }
-
-    // Do first request
-    snapshot.cached(childData)
-
-    println("Modify after second read")
-    // Modify snapshots
-    val builder1 = snapshot.toBuilder()
-    builder1.entities(ChildMultipleEntity::class.java).filter { it.childData.removePrefix("data").toInt() % 2 == 0 }.forEach {
-      builder1.removeEntity(it)
-    }
-    val newSnapshot = builder1.toSnapshot()
-
-    println("Start third read...")
-    newSnapshot.cached(childData)
-  }
-
-  @Test
   fun `operations on external mappings`(testInfo: TestInfo) {
     val size = 1_000_000
     val builders = List(size) {
