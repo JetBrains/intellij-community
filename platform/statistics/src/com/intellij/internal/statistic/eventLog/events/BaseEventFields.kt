@@ -70,7 +70,7 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
     @NonNls val customValidationRule: Class<out CustomValidationRule>
   ) : StringEventField(name) {
     override val validationRule: List<String>
-      get() = listOf("{util#${CustomValidationRule.geRuleId(customValidationRule)}}")
+      get() = listOf("{util#${CustomValidationRule.getRuleId(customValidationRule)}}")
   }
 
   data class ValidatedByRegexp(@NonNls @EventFieldName  override val name: String, @NonNls val regexpRef: String) : StringEventField(name) {
@@ -363,7 +363,7 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
     @NonNls val customValidationRule: Class<out CustomValidationRule>
   ) : StringListEventField(name) {
     override val validationRule: List<String>
-      get() = listOf("{util#${CustomValidationRule.geRuleId(customValidationRule)}}")
+      get() = listOf("{util#${CustomValidationRule.getRuleId(customValidationRule)}}")
   }
 
   data class ValidatedByRegexp(@NonNls @EventFieldName  override val name: String, @NonNls val regexpRef: String) : StringListEventField(name) {

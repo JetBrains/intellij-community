@@ -37,7 +37,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
     }
 
     override val validationRule: List<String>
-      get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(ActionRuleValidator::class.java).ruleId}}")
+      get() = listOf("{util#${CustomValidationRule.getRuleId(ActionRuleValidator::class.java)}}")
   }
 
   @JvmField

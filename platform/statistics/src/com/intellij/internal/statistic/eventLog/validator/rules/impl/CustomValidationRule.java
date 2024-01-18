@@ -50,7 +50,7 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     throw new UnsupportedOperationException(String.format("The method getRuleId must be overridden in %s", getClass()));
   }
 
-  public static String geRuleId(Class<?> clazz) {
+  public static String getRuleId(Class<?> clazz) {
     Optional<String> optionalCustomValidationRule = EP_NAME.getExtensionList()
       .stream()
       .filter(customValidationRule -> customValidationRule.getClass() == clazz)
