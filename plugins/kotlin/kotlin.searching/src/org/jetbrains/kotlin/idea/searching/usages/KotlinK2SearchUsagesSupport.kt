@@ -107,6 +107,11 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     }
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
+        if (declaration.isExpectDeclaration() &&
+            reference.unwrappedTargets.any { target -> target is KtDeclaration && expectedDeclarationIfAny(target) == declaration }) {
+            return true
+        }
+
         fun KtDeclaration.isTopLevelCallable() = when (this) {
             is KtNamedFunction -> isTopLevel
             is KtProperty -> isTopLevel
