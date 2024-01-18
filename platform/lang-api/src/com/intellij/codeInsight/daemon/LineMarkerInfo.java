@@ -42,7 +42,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
-  private AnAction myNavigateAction = new NavigateAction<>(this);
+  private AnAction myNavigateAction;
   private final @NotNull GutterIconRenderer.Alignment myIconAlignment;
   private final GutterIconNavigationHandler<T> myNavigationHandler;
 
@@ -138,6 +138,9 @@ public class LineMarkerInfo<T extends PsiElement> {
     myIconAlignment = alignment;
     this.elementRef = elementRef;
     myNavigationHandler = navHandler;
+    if (navHandler != null) {
+      myNavigateAction = new NavigateAction<>(this);
+    }
     startOffset = range.getStartOffset();
     endOffset = range.getEndOffset();
     updatePass = 11; //Pass.LINE_MARKERS;
