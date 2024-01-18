@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import com.intellij.platform.workspace.storage.trace.ReadTracker
+import it.unimi.dsi.fastutil.longs.LongArrayList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.mutate
 import kotlin.reflect.KClass
@@ -93,11 +94,14 @@ internal class FlatMapCell<T, K>(
           generatedTokens += it.toToken(Operation.REMOVED, token.match)
         }
       }
+      val target = LongArrayList()
+      val tracker = ReadTracker.tracedSnapshot(newSnapshot, target)
       prevData.addedTokens().forEach { token ->
-        val (newTraces, mappedValues) = ReadTracker.traceHashes(newSnapshot) {
-          val mappingTarget = token.getData(it)
-          mapping(mappingTarget as T, it)
-        }
+        target.clear()
+        val mappingTarget = token.getData(tracker)
+        val mappedValues = mapping(mappingTarget as T, tracker)
+        val newTraces = ReadTraceHashSet(target)
+
         mutableMemory[token.match] = mappedValues
 
         mappedValues.forEach {
@@ -144,13 +148,13 @@ internal class GroupByCell<T, K, V>(
           generatedTokens += removedValue.toToken(Operation.REMOVED, token.match)
         }
       }
+      val target = LongArrayList()
+      val tracker = ReadTracker.tracedSnapshot(newSnapshot, target)
       prevData.addedTokens().forEach { token ->
-        val (newTraces, keyToValue) = ReadTracker.traceHashes(newSnapshot) {
-          val origData = token.getData(it)
-          val key = keySelector(origData as T)
-          val value = valueTransform(origData as T)
-          key to value
-        }
+        target.clear()
+        val origData = token.getData(tracker)
+        val keyToValue = keySelector(origData as T) to valueTransform(origData as T)
+        val newTraces = ReadTraceHashSet(target)
 
         mutableMemory[token.match] = keyToValue
 

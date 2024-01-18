@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.containers.ClosableHashSet
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
@@ -131,15 +130,8 @@ internal class ReadTracker private constructor(
       }
     }
 
-    fun <T> traceHashes(snapshot: ImmutableEntityStorage, action: (ImmutableEntityStorage) -> T): Pair<ReadTraceHashSet, T> {
-      val res = ClosableHashSet<ReadTraceHash>().use { traces ->
-        val res1 = LongArrayList()
-        val traced = ReadTracker(snapshot) { res1.add(it.hash) }
-        val res = action(traced)
-        traces.addAll(res1)
-        traces to res
-      }
-      return ReadTraceHashSet(res.first) to res.second
+    fun tracedSnapshot(snapshot: ImmutableEntityStorage, addTo: LongArrayList): ReadTracker {
+      return ReadTracker(snapshot) { addTo.add(it.hash) }
     }
   }
 }
