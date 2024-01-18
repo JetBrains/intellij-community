@@ -24,9 +24,9 @@ object RemoteTransferUIManager {
   private val focusInlayOnShowKey = Key.create<Boolean>("lux.block.inlay.focus.on.show")
   private val becontrolizaitionExceptionKey = "lux.localComponents.becontrolizationException"
 
-  private fun _forbidBeControlizationInLux(comp: Any, registryKey: String) {
+  private fun _forbidBeControlizationInLux(comp: Any, registryKey: String?) {
     try {
-      if (!Registry.stringValue(becontrolizaitionExceptionKey).contains(registryKey))
+      if (registryKey != null && !Registry.stringValue(becontrolizaitionExceptionKey).contains(registryKey))
         return
     } catch (ignore: MissingResourceException) {
       return
@@ -39,12 +39,12 @@ object RemoteTransferUIManager {
   }
 
   @JvmStatic
-  fun forbidBeControlizationInLux(comp: UserDataHolder, registryKey: String) {
+  fun forbidBeControlizationInLux(comp: UserDataHolder, registryKey: String?) {
     _forbidBeControlizationInLux(comp, registryKey)
   }
 
   @JvmStatic
-  fun forbidBeControlizationInLux(comp: JComponent, registryKey: String) {
+  fun forbidBeControlizationInLux(comp: JComponent, registryKey: String?) {
     _forbidBeControlizationInLux(comp, registryKey)
   }
 
