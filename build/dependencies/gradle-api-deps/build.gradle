@@ -11,18 +11,11 @@ plugins {
 
 def intelliJDepsGroupId = 'org.jetbrains.intellij.deps'
 def gradleApiArtifactId = 'gradle-api'
-def gradleApiImplDepArtifactId = 'gradle-api-impldep'
-def gradleWrapperArtifactId = 'gradle-wrapper'
-def gradleLauncherArtifactId = 'gradle-launcher'
 def dependenciesProperties = new Properties()
 Files.newInputStream(Paths.get(projectDir.toString()).resolve("../dependencies.properties")).withCloseable {
   dependenciesProperties.load(it)
 }
 def gradleApiVersion = dependenciesProperties.getProperty("gradleApiVersion")
-
-def gradleApiBaseVersion = GradleVersion.version(gradleApiVersion).getBaseVersion().getVersion()
-def gradleWrapperFileName = "gradle-wrapper.jar"
-def gradleLauncherFileName = "gradle-launcher-${gradleApiBaseVersion}.jar"
 
 def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build/apiDeps")
 
@@ -60,12 +53,9 @@ dependencies {
 
 task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
   println 'configurations.gradleApiDeps.files: ' + configurations.gradleApiDeps.files
-  from new File(project.gradle.getGradleHomeDir(), 'lib/${gradleLauncherFileName}')
   from zipTree(configurations.gradleApiDeps.files.find {it.name == "gradle-api-" + currentGradleVersion + ".jar"})
   into '${gradleApiDepsDir.path.replace("\\","\\\\")}'
 
-  include '${gradleWrapperFileName}'
-  include '${gradleLauncherFileName}'
   include 'org/gradle/**'
   include 'net/rubygrapefruit/**'
   include 'META-INF/native/**'
@@ -101,9 +91,11 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
       buildLauncher.setStandardOutput(System.out);
       buildLauncher.setStandardError(System.err);
       buildLauncher.run()
+
+      assert new File(gradleApiDepsDir, "org/gradle").isDirectory()
+      assert new File(gradleApiDepsDir, "org/gradle/wrapper").isDirectory()
+      assert new File(gradleApiDepsDir, "org/gradle/launcher").isDirectory()
       assert new File(gradleApiDepsDir, "org/gradle/internal/impldep").isDirectory()
-      assert new File(gradleApiDepsDir, gradleWrapperFileName).isFile()
-      assert new File(gradleApiDepsDir, gradleLauncherFileName).isFile()
     }
     finally {
       connection.close()
@@ -119,19 +111,6 @@ task gradleApiJar(type: Zip, dependsOn: expandGradleApiJar) {
   version patchedVersionName
 
   from gradleApiDepsDir
-  exclude 'org/gradle/internal/impldep/**'
-  exclude 'org/gradle/wrapper/**'
-  exclude gradleWrapperFileName
-  exclude gradleLauncherFileName
-}
-
-task gradleApiImplDepJar(type: Zip, dependsOn: expandGradleApiJar) {
-  extension 'jar'
-  baseName gradleApiImplDepArtifactId
-  version patchedVersionName
-
-  from gradleApiDepsDir
-  include 'org/gradle/internal/impldep/**'
 }
 
 publishing {
@@ -140,51 +119,8 @@ publishing {
       groupId intelliJDepsGroupId
       artifactId gradleApiArtifactId
       version patchedVersionName
-      pom.withXml {
-        def dependencies = asNode().appendNode('dependencies')
-
-        def apiImplDep = dependencies.appendNode("dependency")
-        apiImplDep.appendNode('groupId', intelliJDepsGroupId)
-        apiImplDep.appendNode('artifactId', gradleApiImplDepArtifactId)
-        apiImplDep.appendNode('version', patchedVersionName)
-
-        def wrapper = dependencies.appendNode("dependency")
-        wrapper.appendNode('groupId', intelliJDepsGroupId)
-        wrapper.appendNode('artifactId', gradleWrapperArtifactId)
-        wrapper.appendNode('version', patchedVersionName)
-
-        def launcher = dependencies.appendNode("dependency")
-        launcher.appendNode('groupId', intelliJDepsGroupId)
-        launcher.appendNode('artifactId', gradleLauncherArtifactId)
-        launcher.appendNode('version', patchedVersionName)
-      }
 
       artifact gradleApiJar
-    }
-    gradleApiImplDep(MavenPublication) {
-      groupId intelliJDepsGroupId
-      artifactId gradleApiImplDepArtifactId
-      version patchedVersionName
-
-      artifact gradleApiImplDepJar
-    }
-    gradleWrapper(MavenPublication) {
-      groupId intelliJDepsGroupId
-      artifactId gradleWrapperArtifactId
-      version patchedVersionName
-
-      artifact(new File(gradleApiDepsDir, gradleWrapperFileName)) {
-        builtBy expandGradleApiJar
-      }
-    }
-    gradleLauncher(MavenPublication) {
-      groupId intelliJDepsGroupId
-      artifactId gradleLauncherArtifactId
-      version patchedVersionName
-
-      artifact(new File(gradleApiDepsDir, gradleLauncherFileName)) {
-        builtBy expandGradleApiJar
-      }
     }
   }
   repositories {
