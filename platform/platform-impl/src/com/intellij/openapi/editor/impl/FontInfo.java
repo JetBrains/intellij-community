@@ -40,16 +40,6 @@ public final class FontInfo {
   /**
    * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
    */
-  public FontInfo(final String familyName, final float size, @JdkConstants.FontStyle int style, boolean useLigatures,
-                  FontRenderContext fontRenderContext) {
-    mySize = size;
-    myFont = EditorFontCacheImpl.deriveFontWithLigatures(new Font(familyName, style, 1).deriveFont(size), useLigatures);
-    myContext = fontRenderContext;
-  }
-
-  /**
-   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
-   */
   public FontInfo(Font font, int size, boolean useLigatures, FontRenderContext fontRenderContext) {
     this(font, (float)size, useLigatures, fontRenderContext);
   }

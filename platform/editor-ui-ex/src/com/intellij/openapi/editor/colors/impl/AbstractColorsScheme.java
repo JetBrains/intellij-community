@@ -242,7 +242,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public @NlsSafe String getEditorFontName() {
-    return AppFontOptions.NEW_FONT_SELECTOR ? fontPreferences.getFontFamily() : getFont(EditorFontType.PLAIN).getFamily();
+    return fontPreferences.getFontFamily();
   }
 
   @Override

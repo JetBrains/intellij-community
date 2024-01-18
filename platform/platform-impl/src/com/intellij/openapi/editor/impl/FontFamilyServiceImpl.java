@@ -5,7 +5,6 @@ import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.impl.AppFontOptions;
 import com.intellij.util.MethodHandleUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -63,7 +62,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
   private FontFamilyServiceImpl() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !AppFontOptions.NEW_FONT_SELECTOR) {
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       return;
     }
 

@@ -35,13 +35,6 @@ public final class Patches {
   public static final boolean JDK_BUG_WITH_TRACE_SEND = true;
 
   /**
-   * JDK on Mac detects font style for system fonts based only on their name (PostScript name).
-   * This doesn't work for some fonts, which don't use recognizable style suffixes in their names.
-   * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.org/browse/JDK-8139151">JDK-8139151</a>.
-   */
-  public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfoRt.isMac;
-
-  /**
    * Some HTTP connections lock class loaders: <a href="https://bugs.openjdk.org/browse/JDK-8032832">JDK-8032832</a>
    * The issue claims to be fixed in 8u20, but the fix just replaces one lock with another (on a context class loader).
    */

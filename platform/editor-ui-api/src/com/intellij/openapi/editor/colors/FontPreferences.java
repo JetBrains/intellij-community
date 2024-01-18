@@ -69,26 +69,6 @@ public class FontPreferences {
     return DEFAULT_LINE_SPACING;
   }
 
-  /**
-   * There is a possible case that particular font family is not available at particular environment (e.g. Monaco under *nix).
-   * However, java environment tries to mask that via 'Dialog' fonts, i.e. when we try to create font like
-   * {@code new Font("Monaco", style, size)}, it creates a font object which has font family "Monaco" but is a "Dialog" font.
-   * <p/>
-   * That's why we have a special check for such a situation.
-   *
-   * @param fontName        font family name to check
-   * @param fallbackScheme  colors scheme to use for fallback fonts retrieval (if necessary);
-   * @return                fallback font family to use if font family with the given name is not registered at current environment;
-   *                        {@code null} if font family with the given name is registered at the current environment
-   */
-  public static @Nullable @NlsSafe String getFallbackName(@NotNull String fontName, @Nullable EditorColorsScheme fallbackScheme) {
-    Font plainFont = new Font(fontName, Font.PLAIN, DEFAULT_FONT_SIZE);
-    if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
-      return fallbackScheme == null ? DEFAULT_FONT_NAME : fallbackScheme.getEditorFontName();
-    }
-    return null;
-  }
-
   public static @NlsSafe String getDefaultFontName() {
     if (SystemInfo.isJetBrainsJvm) {
       return JETBRAINS_MONO;

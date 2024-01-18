@@ -1,12 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -22,13 +19,10 @@ import java.util.*;
 
 public final class ComplementaryFontsRegistry {
   private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
-  private static final boolean PATCH_FONT_NAMES = Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND &&
-                                                  !AppEditorFontOptions.NEW_FONT_SELECTOR;
   private static final String DEFAULT_FALLBACK_FONT = Font.MONOSPACED;
   private static final Object lock = new Object();
   @SuppressWarnings("unchecked")
   private static final List<String>[] ourFontNames = new List[4]; // per font style
-  private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<>();
   @SuppressWarnings("unchecked")
   private static final LinkedHashMap<String, FallBackInfo>[] ourUsedFonts = new LinkedHashMap[] { // per font style
     new LinkedHashMap<String, FallBackInfo>(), new LinkedHashMap<String, FallBackInfo>(),
@@ -37,7 +31,7 @@ public final class ComplementaryFontsRegistry {
   private static final Map<Font, FallBackInfo> ourMainUsedFonts = new HashMap<>();
   // This is the font that will be used to show placeholder glyphs for characters no installed font can display.
   // Glyph with code 0 will be used as a placeholder from this font.
-  private static final FallBackInfo UNDISPLAYABLE_FONT_INFO = new FallBackInfo("JetBrains Mono", Font.PLAIN, Font.PLAIN);
+  private static final FallBackInfo UNDISPLAYABLE_FONT_INFO = new FallBackInfo("JetBrains Mono", Font.PLAIN);
   private static final IntSet[] ourUndisplayableChars = new IntOpenHashSet[] { // per font style
     new IntOpenHashSet(), new IntOpenHashSet(), new IntOpenHashSet(), new IntOpenHashSet()
   };
@@ -46,18 +40,6 @@ public final class ComplementaryFontsRegistry {
   private static String ourLastBoldSubFamily;
   private static boolean ourLastTypographicNames;
   private static final FallBackInfo[] ourLastFallBackInfo = new FallBackInfo[4]; // per font style
-
-  private static final @NonNls Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<>();
-  static {
-    FONT_NAME_TO_STYLE.put("AnkaCoder-b",           Font.BOLD);
-    FONT_NAME_TO_STYLE.put("AnkaCoder-i",           Font.ITALIC);
-    FONT_NAME_TO_STYLE.put("AnkaCoder-bi",          Font.BOLD | Font.ITALIC);
-    FONT_NAME_TO_STYLE.put("SourceCodePro-It",      Font.ITALIC);
-    FONT_NAME_TO_STYLE.put("SourceCodePro-BoldIt",  Font.BOLD | Font.ITALIC);
-    FONT_NAME_TO_STYLE.put("Hasklig-It",            Font.ITALIC);
-    FONT_NAME_TO_STYLE.put("Hasklig-BoldIt",        Font.BOLD | Font.ITALIC);
-    FONT_NAME_TO_STYLE.put("FiraCode-Medium",       Font.BOLD);
-  }
 
   private ComplementaryFontsRegistry() {
   }
@@ -74,9 +56,6 @@ public final class ComplementaryFontsRegistry {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       fontNames.add("Monospaced");
     } else {
-      if (PATCH_FONT_NAMES) {
-        fillStyledFontMap();
-      }
       // This must match the corresponding call in com.intellij.idea.StartupUtil#updateFrameClassAndWindowIconAndPreloadSystemFonts for optimal performance
       String[] families = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
       for (final String fontName : families) {
@@ -88,30 +67,6 @@ public final class ComplementaryFontsRegistry {
     ourFontNames[0] = fontNames;
     for (int i = 1; i < 4; i++) {
       ourFontNames[i] = new ArrayList<>(fontNames);
-    }
-  }
-
-  private static void fillStyledFontMap() {
-    Font[] allFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-    for (Font font : allFonts) {
-      String name = font.getName();
-      Integer style = FONT_NAME_TO_STYLE.get(name);
-      if (style == null) {
-        continue;
-      }
-      if (style != Font.PLAIN) {
-        String familyName = font.getFamily();
-        Pair<String, Integer>[] entry = ourStyledFontMap.get(familyName);
-        if (entry == null) {
-          //noinspection unchecked
-          entry = new Pair[4];
-          for (int i = 1; i < 4; i++) {
-            entry[i] = Pair.create(familyName, i);
-          }
-          ourStyledFontMap.put(familyName, entry);
-        }
-        entry[style] = Pair.create(name, Font.PLAIN);
-      }
     }
   }
 
@@ -248,30 +203,21 @@ public final class ComplementaryFontsRegistry {
     return doGetFontAbleToDisplay(codePoint, null, 0, 0, size, style, false, context);
   }
 
-  private static @Nullable FontInfo doGetFontAbleToDisplay(int codePoint, float size, @JdkConstants.FontStyle int originalStyle,
+  private static @Nullable FontInfo doGetFontAbleToDisplay(int codePoint, float size, @JdkConstants.FontStyle int style,
                                                            @NotNull String defaultFontFamily, String regularSubFamily, String boldSubFamily,
                                                            boolean useLigatures, FontRenderContext context, boolean disableFontFallback,
                                                            boolean useTypographicNames) {
-    if (originalStyle < 0 || originalStyle > 3) originalStyle = Font.PLAIN;
+    if (style < 0 || style > 3) style = Font.PLAIN;
     synchronized (lock) {
       FallBackInfo fallBackInfo = null;
-      boolean typographicNames = AppEditorFontOptions.NEW_FONT_SELECTOR && useTypographicNames;
-      @JdkConstants.FontStyle int style = originalStyle;
-      if (PATCH_FONT_NAMES && style != Font.PLAIN) {
-        Pair<String, Integer>[] replacement = ourStyledFontMap.get(defaultFontFamily);
-        if (replacement != null) {
-          defaultFontFamily = replacement[style].first;
-          style = replacement[style].second;
-        }
-      }
-      if (typographicNames == ourLastTypographicNames &&
+      if (useTypographicNames == ourLastTypographicNames &&
           defaultFontFamily.equals(ourLastFontFamily) &&
-          (!typographicNames ||
+          (!useTypographicNames ||
            Objects.equals(regularSubFamily, ourLastRegularSubFamily) && Objects.equals(boldSubFamily, ourLastBoldSubFamily))) {
         fallBackInfo = ourLastFallBackInfo[style];
       }
       else {
-        ourLastTypographicNames = typographicNames;
+        ourLastTypographicNames = useTypographicNames;
         ourLastFontFamily = defaultFontFamily;
         ourLastRegularSubFamily = regularSubFamily;
         ourLastBoldSubFamily = boldSubFamily;
@@ -286,7 +232,7 @@ public final class ComplementaryFontsRegistry {
           LinkedHashMap<String, FallBackInfo> usedFonts = ourUsedFonts[style];
           fallBackInfo = usedFonts.get(defaultFontFamily);
           if (fallBackInfo == null) {
-            fallBackInfo = new FallBackInfo(defaultFontFamily, style, originalStyle);
+            fallBackInfo = new FallBackInfo(defaultFontFamily, style);
             usedFonts.put(defaultFontFamily, fallBackInfo);
           }
         }
@@ -308,7 +254,7 @@ public final class ComplementaryFontsRegistry {
         LinkedHashMap<String, FallBackInfo> usedFonts = ourUsedFonts[style];
         final Collection<FallBackInfo> descriptors = usedFonts.values();
         for (FallBackInfo info : descriptors) {
-          if (info.myOriginalStyle == style && info.canDisplay(codePoint, false)) {
+          if (info.canDisplay(codePoint, false)) {
             canDisplayFirst = true;
             if (remainingText == null || info.myBaseFont.canDisplayUpTo(remainingText, start, end) == -1) {
               fallBackInfo = info;
@@ -320,7 +266,7 @@ public final class ComplementaryFontsRegistry {
           List<String> fontNames = ourFontNames[style];
           for (int i = 0; i < fontNames.size(); i++) {
             String name = fontNames.get(i);
-            FallBackInfo info = new FallBackInfo(name, style, style);
+            FallBackInfo info = new FallBackInfo(name, style);
             if (info.canDisplay(codePoint, false)) {
               canDisplayFirst = true;
               if (remainingText == null || info.myBaseFont.canDisplayUpTo(remainingText, start, end) == -1) {
@@ -386,19 +332,16 @@ public final class ComplementaryFontsRegistry {
 
   private static final class FallBackInfo {
     private final Font myBaseFont;
-    private final int myOriginalStyle;
     private final Map<FontKey, FontInfo> myFontInfoMap = new HashMap<>();
     private final FontKey myLastFontKey = new FontKey(-1, false, FontInfo.DEFAULT_CONTEXT);
     private FontInfo myLastFontInfo;
 
     private FallBackInfo(Font font) {
       myBaseFont = font;
-      myOriginalStyle = -1;
     }
 
-    private FallBackInfo(String familyName, @JdkConstants.FontStyle int style, int originalStyle) {
+    private FallBackInfo(String familyName, @JdkConstants.FontStyle int style) {
       myBaseFont = new Font(familyName, style, 1);
-      myOriginalStyle = originalStyle;
     }
 
     private boolean canDisplay(int codePoint, boolean disableFontFallback) {
@@ -416,9 +359,7 @@ public final class ComplementaryFontsRegistry {
       myLastFontKey.myContext = fontRenderContext;
       FontInfo fontInfo = myFontInfoMap.get(myLastFontKey);
       if (fontInfo == null) {
-        fontInfo = AppEditorFontOptions.NEW_FONT_SELECTOR
-                   ? new FontInfo(myBaseFont, size, useLigatures, fontRenderContext)
-                   : new FontInfo(myBaseFont.getName(), size, myBaseFont.getStyle(), useLigatures, fontRenderContext);
+        fontInfo = new FontInfo(myBaseFont, size, useLigatures, fontRenderContext);
         myFontInfoMap.put(myLastFontKey.clone(), fontInfo);
       }
       myLastFontInfo = fontInfo;
