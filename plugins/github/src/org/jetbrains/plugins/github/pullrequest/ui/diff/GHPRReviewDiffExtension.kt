@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterCon
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
 import com.intellij.collaboration.util.Hideable
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
@@ -139,18 +140,12 @@ private class DiffEditorModel(
   }
 
   override fun toggleComments(lineIdx: Int) {
-    inlays.value.forEach {
-      if (it is Hideable) {
-        if (it.line.value == lineIdx) {
-          it.toggleHidden()
-        }
-      }
-    }
+    inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
 
   private inner class MappedThread(vm: GHPRReviewThreadDiffViewModel)
     : GHPREditorMappedComponentModel.Thread<GHPRReviewThreadEditorViewModel>(vm) {
-    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hidden) { visible, hidden -> visible && !hidden }
+    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
     override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
   }
 

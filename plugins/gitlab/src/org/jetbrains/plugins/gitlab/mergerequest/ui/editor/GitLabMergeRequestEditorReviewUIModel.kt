@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.collaboration.util.Hideable
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -131,13 +132,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 
   override fun toggleComments(lineIdx: Int) {
-    inlays.value.forEach {
-      if (it is Hideable) {
-        if (it.line.value == lineIdx) {
-          it.toggleHidden()
-        }
-      }
-    }
+    inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
 
   fun cancelNewDiscussion(originalLine: Int) {
@@ -164,13 +159,13 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   private inner class ShiftedDiscussion(vm: GitLabMergeRequestEditorDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.Discussion<GitLabMergeRequestEditorDiscussionViewModel>(vm) {
-    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hidden) { visible, hidden -> visible && !hidden }
+    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
     override val line: StateFlow<Int?> = vm.line.shiftLine()
   }
 
   private inner class ShiftedDraftNote(vm: GitLabMergeRequestEditorDraftNoteViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.DraftNote<GitLabMergeRequestEditorDraftNoteViewModel>(vm) {
-    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hidden) { visible, hidden -> visible && !hidden }
+    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
     override val line: StateFlow<Int?> = vm.line.shiftLine()
   }
 
