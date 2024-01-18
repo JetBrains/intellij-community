@@ -3,11 +3,10 @@ package com.intellij.platform.workspace.storage.impl.query
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.asBase
+import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.cache.PropagationResult
 import com.intellij.platform.workspace.storage.impl.cache.UpdateType
-import com.intellij.platform.workspace.storage.impl.clazz
-import com.intellij.platform.workspace.storage.impl.findWorkspaceEntity
+import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import com.intellij.platform.workspace.storage.trace.ReadTracker
@@ -39,9 +38,14 @@ internal class EntityCell<T : WorkspaceEntity>(
 ) : Cell<List<T>>(id) {
   override fun snapshotInput(snapshot: ImmutableEntityStorage): PropagationResult<List<T>> {
     val newCell = EntityCell(this.id, this.type)
-    val tokens = snapshot
-      .entities(type.java)
-      .map { value -> Token(Operation.ADDED, MatchWithEntityId(value.asBase().id)) } // Maybe we can get ids directly without creating an entity
+    val snapshotImpl = snapshot as ImmutableEntityStorageImpl
+    val toClassId = type.java.toClassId()
+    val ids = snapshotImpl.entitiesByType[toClassId]?.entities?.asSequence()
+                ?.mapIndexedNotNull { index, workspaceEntityData ->
+                  if (workspaceEntityData == null) null else createEntityId(index, toClassId)
+                } ?: emptySequence()
+    val tokens = ids
+      .map { value -> Token(Operation.ADDED, MatchWithEntityId(value)) }
       .toList()
     val traces = ReadTraceHashSet()
     traces.add(ReadTrace.EntitiesOfType(type.java).hash)
