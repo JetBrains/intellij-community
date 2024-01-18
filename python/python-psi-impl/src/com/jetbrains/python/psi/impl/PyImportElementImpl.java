@@ -10,6 +10,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -31,7 +32,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   public PyImportElementImpl(PyImportElementStub stub) {
-    this(stub, PyElementTypes.IMPORT_ELEMENT);
+    this(stub, PyStubElementTypes.IMPORT_ELEMENT);
   }
 
   public PyImportElementImpl(PyImportElementStub stub, IStubElementType nodeType) {

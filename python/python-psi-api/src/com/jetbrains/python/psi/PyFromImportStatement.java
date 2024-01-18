@@ -45,9 +45,7 @@ public interface PyFromImportStatement extends PyAstFromImportStatement, PyImpor
    */
   @Override
   @Nullable
-  default PyStarImportElement getStarImportElement() {
-    return (PyStarImportElement)PyAstFromImportStatement.super.getStarImportElement();
-  }
+  PyStarImportElement getStarImportElement();
 
   /**
    * Resolves the import source qualified name to a file or directory. Note: performs a Python only resolve,

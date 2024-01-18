@@ -11,6 +11,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -31,7 +32,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
   }
 
   public PyImportStatementImpl(PyImportStatementStub stub) {
-    this(stub, PyElementTypes.IMPORT_STATEMENT);
+    this(stub, PyStubElementTypes.IMPORT_STATEMENT);
   }
 
   public PyImportStatementImpl(PyImportStatementStub stub, IStubElementType nodeType) {

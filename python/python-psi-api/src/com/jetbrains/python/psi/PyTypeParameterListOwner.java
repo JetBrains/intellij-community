@@ -10,10 +10,7 @@ import org.jetbrains.annotations.Nullable;
  * which was added in <a href="https://peps.python.org/pep-0695/">PEP 695</a>
  */
 public interface PyTypeParameterListOwner extends PyAstTypeParameterListOwner, PsiElement {
-
   @Override
   @Nullable
-  default PyTypeParameterList getTypeParameterList() {
-    return null;
-  }
+  PyTypeParameterList getTypeParameterList();
 }

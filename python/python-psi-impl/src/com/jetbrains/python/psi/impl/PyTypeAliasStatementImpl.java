@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
@@ -22,7 +23,7 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
   }
 
   public PyTypeAliasStatementImpl(PyTypeAliasStatementStub stub) {
-    this(stub, PyElementTypes.TYPE_ALIAS_STATEMENT);
+    this(stub, PyStubElementTypes.TYPE_ALIAS_STATEMENT);
   }
 
   public PyTypeAliasStatementImpl(PyTypeAliasStatementStub stub, IStubElementType nodeType) {
@@ -47,6 +48,12 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
       PyExpression typeExpression = getTypeExpression();
       return typeExpression != null ? typeExpression.getText() : null;
     }
+  }
+
+  @Override
+  @Nullable
+  public PyTypeParameterList getTypeParameterList() {
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @Override

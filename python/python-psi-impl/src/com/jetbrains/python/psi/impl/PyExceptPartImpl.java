@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyUtil;
@@ -18,7 +19,7 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
   }
 
   public PyExceptPartImpl(PyExceptPartStub stub) {
-    super(stub, PyElementTypes.EXCEPT_PART);
+    super(stub, PyStubElementTypes.EXCEPT_PART);
   }
 
   @Override

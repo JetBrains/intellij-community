@@ -145,11 +145,7 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
 
   @Override
   @Nullable
-  default PyAstTypeParameterList getTypeParameterList() {
-    //noinspection unchecked
-    return this.<PyAstTypeParameterList>getStubOrPsiChild(PyElementTypes.TYPE_PARAMETER_LIST);
-  }
-
+  PyAstTypeParameterList getTypeParameterList();
   /**
    * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
    *
@@ -263,22 +259,14 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
 
   @Override
   @Nullable
-  default PyAstDecoratorList getDecoratorList() {
-    //noinspection unchecked
-    return this.<PyAstDecoratorList>getStubOrPsiChild(PyElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
-  }
+  PyAstDecoratorList getDecoratorList();
 
   @Override
-  default PyAstAnnotation getAnnotation() {
-    //noinspection unchecked
-    return this.<PyAstAnnotation>getStubOrPsiChild(PyElementTypes.ANNOTATION);
-  }
+  PyAstAnnotation getAnnotation();
 
   @Override
-  default @NotNull PyAstParameterList getParameterList() {
-    //noinspection unchecked,rawtypes
-    return this.<StubElement, PyAstParameterList>getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
-  }
+  @NotNull
+  PyAstParameterList getParameterList();
 
   @Override
   @Nullable

@@ -2,32 +2,32 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.*;
 
 import static com.jetbrains.python.PyElementTypesFacade.Companion;
 
 public interface PyElementTypes {
-  IStubElementType FUNCTION_DECLARATION = Companion.getINSTANCE().getFunctionDeclaration();
-  IStubElementType CLASS_DECLARATION = Companion.getINSTANCE().getClassDeclaration();
-  IStubElementType PARAMETER_LIST = Companion.getINSTANCE().getParameterList();
-  IStubElementType DECORATOR_LIST = Companion.getINSTANCE().getDecoratorList();
-
-  IStubElementType NAMED_PARAMETER = Companion.getINSTANCE().getNamedParameter();
-  IStubElementType TUPLE_PARAMETER = Companion.getINSTANCE().getTupleParameter();
-  IStubElementType SLASH_PARAMETER = Companion.getINSTANCE().getSlashParameter();
-  IStubElementType SINGLE_STAR_PARAMETER = Companion.getINSTANCE().getSingleStarParameter();
-  IStubElementType DECORATOR_CALL = Companion.getINSTANCE().getDecoratorCall();
-  IStubElementType IMPORT_ELEMENT = Companion.getINSTANCE().getImportElement();
-  IStubElementType ANNOTATION = Companion.getINSTANCE().getAnnotation();
-  IStubElementType STAR_IMPORT_ELEMENT = Companion.getINSTANCE().getStarImportElement();
-  IStubElementType EXCEPT_PART = Companion.getINSTANCE().getExceptPart();
-  IStubElementType FROM_IMPORT_STATEMENT = Companion.getINSTANCE().getFromImportStatement();
-  IStubElementType IMPORT_STATEMENT = Companion.getINSTANCE().getImportStatement();
-  IStubElementType TARGET_EXPRESSION = Companion.getINSTANCE().getTargetExpression();
-  IStubElementType TYPE_PARAMETER = Companion.getINSTANCE().getTypeParameter();
-  IStubElementType TYPE_PARAMETER_LIST = Companion.getINSTANCE().getTypeParameterList();
-  IStubElementType TYPE_ALIAS_STATEMENT = Companion.getINSTANCE().getTypeAliasStatement();
+  IElementType FUNCTION_DECLARATION = Companion.getINSTANCE().getFunctionDeclaration();
+  IElementType CLASS_DECLARATION = Companion.getINSTANCE().getClassDeclaration();
+  IElementType PARAMETER_LIST = Companion.getINSTANCE().getParameterList();
+  IElementType DECORATOR_LIST = Companion.getINSTANCE().getDecoratorList();
+  IElementType NAMED_PARAMETER = Companion.getINSTANCE().getNamedParameter();
+  IElementType TUPLE_PARAMETER = Companion.getINSTANCE().getTupleParameter();
+  IElementType SLASH_PARAMETER = Companion.getINSTANCE().getSlashParameter();
+  IElementType SINGLE_STAR_PARAMETER = Companion.getINSTANCE().getSingleStarParameter();
+  IElementType DECORATOR_CALL = Companion.getINSTANCE().getDecoratorCall();
+  IElementType IMPORT_ELEMENT = Companion.getINSTANCE().getImportElement();
+  IElementType ANNOTATION = Companion.getINSTANCE().getAnnotation();
+  IElementType STAR_IMPORT_ELEMENT = Companion.getINSTANCE().getStarImportElement();
+  IElementType EXCEPT_PART = Companion.getINSTANCE().getExceptPart();
+  IElementType FROM_IMPORT_STATEMENT = Companion.getINSTANCE().getFromImportStatement();
+  IElementType IMPORT_STATEMENT = Companion.getINSTANCE().getImportStatement();
+  IElementType TARGET_EXPRESSION = Companion.getINSTANCE().getTargetExpression();
+  IElementType TYPE_PARAMETER = Companion.getINSTANCE().getTypeParameter();
+  IElementType TYPE_PARAMETER_LIST = Companion.getINSTANCE().getTypeParameterList();
+  IElementType TYPE_ALIAS_STATEMENT = Companion.getINSTANCE().getTypeAliasStatement();
 
   TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);
 

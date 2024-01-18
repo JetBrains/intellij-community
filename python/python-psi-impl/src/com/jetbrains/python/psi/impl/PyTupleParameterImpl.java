@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyParameter;
@@ -36,7 +37,7 @@ public class PyTupleParameterImpl extends PyBaseElementImpl<PyTupleParameterStub
   }
 
   public PyTupleParameterImpl(PyTupleParameterStub stub) {
-    super(stub, PyElementTypes.TUPLE_PARAMETER);
+    super(stub, PyStubElementTypes.TUPLE_PARAMETER);
   }
 
   @Override

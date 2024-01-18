@@ -152,20 +152,6 @@ public interface PyAstClass extends PsiNameIdentifierOwner, PyAstCompoundStateme
 
   @Override
   @Nullable
-  default PyAstTypeParameterList getTypeParameterList() {
-    //noinspection unchecked
-    return this.<PyAstTypeParameterList>getStubOrPsiChild(PyElementTypes.TYPE_PARAMETER_LIST);
-  }
-
-  @Override
-  @Nullable
-  default PyAstDecoratorList getDecoratorList() {
-    //noinspection unchecked
-    return this.<PyAstDecoratorList>getStubOrPsiChild(PyElementTypes.DECORATOR_LIST);
-  }
-
-  @Override
-  @Nullable
   default PyAstStringLiteralExpression getDocStringExpression() {
     return DocStringUtilCore.findDocStringExpression(getStatementList());
   }

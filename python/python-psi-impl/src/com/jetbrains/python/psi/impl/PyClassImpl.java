@@ -78,7 +78,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   public PyClassImpl(@NotNull final PyClassStub stub) {
-    this(stub, PyElementTypes.CLASS_DECLARATION);
+    this(stub, PyStubElementTypes.CLASS_DECLARATION);
   }
 
   public PyClassImpl(@NotNull final PyClassStub stub, @NotNull IStubElementType nodeType) {
@@ -1673,6 +1673,18 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyClassLikeType getType(@NotNull TypeEvalContext context) {
     return as(context.getType(this), PyClassLikeType.class);
+  }
+
+  @Override
+  @Nullable
+  public PyTypeParameterList getTypeParameterList() {
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
+  }
+
+  @Nullable
+  @Override
+  public PyDecoratorList getDecoratorList() {
+    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
   }
 
   @NotNull

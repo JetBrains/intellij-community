@@ -19,6 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -101,11 +103,7 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
 
   @Nullable
   @Override
-  default PyAstAnnotation getAnnotation() {
-    //noinspection unchecked
-    return this.<PyAstAnnotation>getStubOrPsiChild(PyElementTypes.ANNOTATION);
-  }
-
+  PyAstAnnotation getAnnotation();
   /**
    * Parameter is considered "keyword-only" if it appears after named or unnamed positional vararg parameter.
    * See PEP-3102 for more details.

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStubElementType;
@@ -122,6 +123,6 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   }
 
   protected IStubElementType getStubElementType() {
-    return PyElementTypes.FUNCTION_DECLARATION;
+    return PyStubElementTypes.FUNCTION_DECLARATION;
   }
 }
