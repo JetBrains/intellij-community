@@ -30,12 +30,6 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
   }
 
   @Override
-  public void beforeSuiteChosen() {
-    // Call here to ensure that toolwindow is created
-    CoverageViewManager.getInstance(myProject);
-  }
-
-  @Override
   public void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
     CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
     if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, viewManager.getStateBean()) != null) {

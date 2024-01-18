@@ -7,38 +7,38 @@ import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.view.CoverageViewManager.StateBean
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
-import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.NonNls
 
 @State(name = "CoverageViewManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 class CoverageViewManager(private val myProject: Project) : PersistentStateComponent<StateBean?>, Disposable.Default {
-  private var myContentManager: ContentManager? = null
   var stateBean = StateBean()
     private set
   private val myViews: MutableMap<CoverageSuitesBundle, CoverageView> = HashMap()
 
-  init {
-    invokeLaterIfProjectAlive(myProject) {
-      val toolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOLWINDOW_ID) {
-        sideTool = true
-        icon = AllIcons.Toolwindows.ToolWindowCoverage
-        anchor = ToolWindowAnchor.RIGHT
-        stripeTitle = CoverageBundle.messagePointer("coverage.view.title")
-      }
-      toolWindow.helpId = CoverageView.HELP_ID
-      myContentManager = toolWindow.contentManager
+  @Volatile
+  private var myContentManager: ContentManager? = null
+
+  @RequiresEdt
+  private fun initializeToolWindow(): ContentManager? {
+    if (myProject.isDisposed || !myProject.isOpen) return null
+    val toolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOLWINDOW_ID) {
+      sideTool = true
+      icon = AllIcons.Toolwindows.ToolWindowCoverage
+      anchor = ToolWindowAnchor.RIGHT
+      stripeTitle = CoverageBundle.messagePointer("coverage.view.title")
     }
+    toolWindow.helpId = CoverageView.HELP_ID
+    return toolWindow.contentManager
   }
 
   override fun getState(): StateBean {
@@ -60,41 +60,35 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
 
   val openedSuite: CoverageSuitesBundle?
     get() {
-      val manager = myContentManager
-      if (manager == null) return null
+      val manager = myContentManager ?: return null
       val selectedContent = manager.selectedContent
       if (selectedContent == null) return null
-      for ((key, value) in myViews) {
-        val content = manager.getContent(value)
-        if (content === selectedContent) {
-          return key
-        }
-      }
-      return null
+      return myViews.firstNotNullOfOrNull { (suite, view) -> suite.takeIf { selectedContent === manager.getContent(view) } }
     }
 
+  @RequiresEdt
   fun activateToolwindow(view: CoverageView) {
-    myContentManager!!.setSelectedContent(myContentManager!!.getContent(view))
+    val manager = myContentManager ?: return
+    manager.setSelectedContent(manager.getContent(view))
     val toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID)
-    LOG.assertTrue(toolWindow != null)
-    toolWindow!!.activate(null, false)
+                     ?: error("Coverage toolwindow is not registered")
+    toolWindow.activate(null, false)
   }
 
-  @Synchronized
+  @RequiresEdt
   fun createView(suitesBundle: CoverageSuitesBundle, activate: Boolean) {
     var coverageView = myViews[suitesBundle]
-    val content: Content
-    if (coverageView == null) {
+    val manager = getContentManager() ?: return
+    val content = if (coverageView == null) {
       coverageView = CoverageView(myProject, suitesBundle, stateBean)
       myViews[suitesBundle] = coverageView
-      content = myContentManager!!.factory.createContent(coverageView, getDisplayName(suitesBundle), false)
-      myContentManager!!.addContent(content)
+      manager.factory.createContent(coverageView, getDisplayName(suitesBundle), false)
+        .also { manager.addContent(it) }
     }
     else {
-      content = myContentManager!!.getContent(coverageView)
+      manager.getContent(coverageView)
     }
-    myContentManager!!.setSelectedContent(content)
-
+    manager.setSelectedContent(content)
     if (CoverageOptionsProvider.getInstance(myProject).activateViewOnRun() && activate) {
       activateToolwindow(coverageView)
     }
@@ -104,10 +98,11 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     val oldView = myViews.remove(suitesBundle)
     if (oldView != null) {
       oldView.saveSize()
-      ApplicationManager.getApplication().invokeLater {
-        val content = myContentManager!!.getContent(oldView)
+      runInEdt {
+        val manager = myContentManager ?: return@runInEdt
+        val content = manager.getContent(oldView)
         if (content != null) {
-          myContentManager!!.removeContent(content, false)
+          manager.removeContent(content, false)
         }
       }
     }
@@ -119,18 +114,28 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     return getView(suitesBundle)
   }
 
-
   @Deprecated("Use activateToolwindow(CoverageView) instead", ReplaceWith("if (activate) activateToolwindow(view)"))
   fun activateToolwindow(view: CoverageView, activate: Boolean) {
     if (activate) {
-      activateToolwindow(view)
+      runInEdt {
+        activateToolwindow(view)
+      }
     }
   }
 
-
   @Deprecated("Use createView instead", ReplaceWith("createView(suitesBundle, activate)"))
+  @RequiresEdt
   fun createToolWindow(suitesBundle: CoverageSuitesBundle, activate: Boolean) {
     createView(suitesBundle, activate)
+  }
+
+  /**
+   * Call to this method initializes the coverage tool window.
+   */
+  @RequiresEdt
+  private fun getContentManager(): ContentManager? {
+    myContentManager?.also { return it }
+    return initializeToolWindow()?.also { myContentManager = it }
   }
 
   class StateBean {
@@ -204,11 +209,13 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
   }
 
   companion object {
-    private val LOG = Logger.getInstance(CoverageViewManager::class.java)
     const val TOOLWINDOW_ID: @NonNls String = "Coverage"
 
     @JvmStatic
     fun getInstance(project: Project): CoverageViewManager = project.service()
+
+    @JvmStatic
+    fun getInstanceIfCreated(project: Project): CoverageViewManager? = project.serviceIfCreated()
 
     fun getDisplayName(suitesBundle: CoverageSuitesBundle): @NlsSafe String? {
       val configuration = suitesBundle.runConfiguration

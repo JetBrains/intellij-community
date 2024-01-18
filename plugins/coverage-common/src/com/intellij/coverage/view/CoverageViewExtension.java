@@ -26,7 +26,6 @@ public abstract class CoverageViewExtension {
   protected final CoverageSuitesBundle mySuitesBundle;
   protected final CoverageViewManager.StateBean myStateBean;
   protected final CoverageDataManager myCoverageDataManager;
-  protected final CoverageViewManager myCoverageViewManager;
 
   public CoverageViewExtension(@NotNull Project project, CoverageSuitesBundle suitesBundle, CoverageViewManager.StateBean stateBean) {
     assert !project.isDefault() : "Should not run coverage for default project";
@@ -34,7 +33,6 @@ public abstract class CoverageViewExtension {
     mySuitesBundle = suitesBundle;
     myStateBean = stateBean;
     myCoverageDataManager = CoverageDataManager.getInstance(myProject);
-    myCoverageViewManager = CoverageViewManager.getInstance(myProject);
   }
 
   @Nullable

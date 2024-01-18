@@ -124,8 +124,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public CoverageSuitesBundle getCurrentSuitesBundle() {
-    CoverageSuitesBundle openedSuite = CoverageViewManager.getInstance(myProject).getOpenedSuite();
-    if (openedSuite != null) return openedSuite;
+    CoverageViewManager manager = CoverageViewManager.getInstanceIfCreated(myProject);
+    if (manager != null) {
+      CoverageSuitesBundle openedSuite = manager.getOpenedSuite();
+      if (openedSuite != null) return openedSuite;
+    }
     return myActiveBundles.values().stream().findFirst().orElse(null);
   }
 

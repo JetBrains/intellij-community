@@ -7,6 +7,7 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ public final class SelectInCoverageView implements SelectInTarget {
       final CoverageView coverageView = coverageViewManager.getView(suitesBundle);
       coverageView.select(context.getVirtualFile());
       if (requestFocus) {
-        coverageViewManager.activateToolwindow(coverageView);
+        ApplicationManager.getApplication().invokeLater(() -> coverageViewManager.activateToolwindow(coverageView));
       }
     }
   }
