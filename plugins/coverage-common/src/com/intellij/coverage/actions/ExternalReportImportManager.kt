@@ -19,6 +19,12 @@ class ExternalReportImportManager(private val project: Project) {
     @JvmStatic
     fun getInstance(project: Project): ExternalReportImportManager = project.service()
   }
+  
+  fun chooseAndOpenSuites() {
+    val suites = chooseAndImportCoverageReportsFromDisc()
+    if (suites.isEmpty()) return
+    openSuites(suites)
+  }
 
   fun openSuites(suites: List<CoverageSuite>) {
     val suitesByEngine = suites.groupBy { it.coverageEngine }
