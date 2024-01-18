@@ -671,13 +671,18 @@ internal class ActionUpdater @JvmOverloads constructor(
       return updater.updateAction(action) ?: updater.initialBgtPresentation(action)
     }
 
+    override suspend fun childrenSuspend(actionGroup: ActionGroup): List<AnAction> {
+      return updater.getGroupChildren(actionGroup)
+    }
+
     override suspend fun expandSuspend(group: ActionGroup): List<AnAction> {
       return updater.expandActionGroup(group, group is CompactActionGroup)
     }
 
-    override suspend fun <T: Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T {
-      return updater.getSessionDataDeferred(Pair(key.toString(), key), supplier).await()
-    }
+    override fun <T: Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T =
+      updater.computeSessionDataOrThrow(Pair(key.toString(), key)) {
+        supplier()
+      }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun visitCaches(visitor: (AnAction, String, Any) -> Unit) {
