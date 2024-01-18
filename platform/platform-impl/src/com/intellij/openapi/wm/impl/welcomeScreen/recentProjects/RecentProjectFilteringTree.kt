@@ -441,6 +441,12 @@ internal class RecentProjectFilteringTree(
 
         return this
       }
+
+      // Allow the recent project tree to reduce size of wide elements
+      override fun getPreferredSize(): Dimension {
+        val minSize =  super.getPreferredSize()
+        return Dimension(0, minSize.height)
+      }
     }
 
     private inner class ProjectGroupComponent : JPanel(GridLayout()) {
