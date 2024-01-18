@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
-import com.intellij.diff.tools.combined.*
+import com.intellij.diff.tools.combined.CombinedDiffComponentFactoryProvider
+import com.intellij.diff.tools.combined.CombinedDiffEditor
+import com.intellij.diff.tools.combined.CombinedDiffVirtualFile
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
@@ -28,14 +30,7 @@ internal class DiffEditorProvider : DefaultPlatformFileEditorProvider, Structure
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     if (file is CombinedDiffVirtualFile) {
-      val sourceId = file.sourceId
-      val modelRepository = project.service<CombinedDiffModelRepository>()
-      var combinedDiffModel = modelRepository.findModel(sourceId)
-      if (combinedDiffModel == null && file is CombinedDiffModelBuilder) {
-        combinedDiffModel = file.createModel(sourceId)
-        modelRepository.registerModel(sourceId, combinedDiffModel)
-      }
-      requireNotNull(combinedDiffModel) { "Combined diff model doesn't registered for $sourceId" }
+      val combinedDiffModel = file.createModel()
       val factory = project.service<CombinedDiffComponentFactoryProvider>().create(combinedDiffModel)
       val editor = CombinedDiffEditor(file, factory)
       DiffRequestProcessorEditorCustomizer.customize(file, editor, factory.model.context)

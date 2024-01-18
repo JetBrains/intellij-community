@@ -6,7 +6,6 @@ import com.intellij.diff.tools.combined.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -19,13 +18,12 @@ import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Co
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.Delegates
-import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 @JvmField
 internal val COMBINED_DIFF_PREVIEW_TAB_NAME = Key.create<() -> @NlsContexts.TabTitle String>("combined_diff_preview_tab_name")
 
-class CombinedDiffPreviewVirtualFile(sourceId: String) : CombinedDiffVirtualFile(sourceId, "")
+abstract class CombinedDiffPreviewVirtualFile() : CombinedDiffVirtualFile("")
 
 abstract class CombinedDiffPreview(project: Project,
                                    targetComponent: JComponent,
@@ -33,17 +31,23 @@ abstract class CombinedDiffPreview(project: Project,
                                    parentDisposable: Disposable) :
   EditorTabPreviewBase(project, parentDisposable) {
 
-  protected abstract val sourceId: String
+  override val previewFile: VirtualFile by lazy {
+    object : CombinedDiffPreviewVirtualFile() {
+      override fun createModel(): CombinedDiffModel = this@CombinedDiffPreview.createModel()
+    }
+  }
 
-  override val previewFile: VirtualFile by lazy { CombinedDiffPreviewVirtualFile(sourceId) }
+  override val updatePreviewProcessor get() = getOrCreateModel()
 
-  override val updatePreviewProcessor get() = model
+  var model: CombinedDiffPreviewModel? = null
+    private set
 
-  protected open val model by lazy { createModel().also { model -> customizeModel(sourceId, model) } }
-
-  protected fun customizeModel(sourceId: String, model: CombinedDiffPreviewModel) {
-    model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
-    project.service<CombinedDiffModelRepository>().registerModel(sourceId, model)
+  private fun getOrCreateModel(): CombinedDiffPreviewModel {
+    model?.let { return it }
+    model = createModel().also {
+      it.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
+    }
+    return model!!
   }
 
   override fun updatePreview(fromModelRefresh: Boolean) {
@@ -65,6 +69,7 @@ abstract class CombinedDiffPreview(project: Project,
   }
 
   protected open fun updatePreview() {
+    val model = model ?: return
     if (model.ourDisposable.isDisposed) return
     model.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
     val changes = model.iterateAllChanges().toList()
@@ -87,12 +92,10 @@ abstract class CombinedDiffPreview(project: Project,
     event.presentation.isVisible = event.isFromActionToolbar || event.presentation.isEnabled
   }
 
-  override fun getCurrentName(): String? = model.selected?.presentableName
-  override fun hasContent(): Boolean = model.requests.isNotEmpty()
+  override fun getCurrentName(): String? = model?.selected?.presentableName
+  override fun hasContent(): Boolean = !model?.requests.isNullOrEmpty()
 
-  internal fun getFileSize(): Int = model.requests.size
-
-  protected val JComponent.id: @NonNls String get() = javaClass.name + "@" + Integer.toHexString(hashCode())
+  internal fun getFileSize(): Int = model?.requests?.size ?: 0
 }
 
 abstract class CombinedDiffPreviewModel(project: Project, parentDisposable: Disposable) :

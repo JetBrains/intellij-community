@@ -6,6 +6,7 @@ import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.CombinedBlockProducer
+import com.intellij.diff.tools.combined.CombinedDiffModel
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
 import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.project.Project
@@ -51,7 +52,7 @@ internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManage
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createModel(id: String): CombinedDiffModelImpl {
+  override fun createModel(): CombinedDiffModel {
     val model = CombinedDiffModelImpl(project)
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel

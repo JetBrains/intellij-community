@@ -2,11 +2,10 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.DiffRequestProcessorEditor
-import com.intellij.diff.tools.combined.CombinedDiffModelRepository
+import com.intellij.diff.tools.combined.CombinedDiffEditor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.progress.blockingContext
@@ -38,15 +37,18 @@ private class VcsEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
     }
     val supplier = {
       val editors = FileEditorManager.getInstance(project).getEditors(file)
-      val editor = ContainerUtil.findInstance(editors, DiffRequestProcessorEditor::class.java)
-      val processor = editor?.processor
-      if (file is PreviewDiffVirtualFile) {
-        file.provider.getEditorTabName(processor)
-      }
-      else {
-        val sourceId = (file as CombinedDiffPreviewVirtualFile).sourceId
-        val diffModel = project.service<CombinedDiffModelRepository>().findModel(sourceId)
-        diffModel?.context?.getUserData(COMBINED_DIFF_PREVIEW_TAB_NAME)?.invoke()
+      when (file) {
+        is PreviewDiffVirtualFile -> {
+          val editor = ContainerUtil.findInstance(editors, DiffRequestProcessorEditor::class.java)
+          val processor = editor?.processor
+          file.provider.getEditorTabName(processor)
+        }
+        is CombinedDiffPreviewVirtualFile -> {
+          val editor = ContainerUtil.findInstance(editors, CombinedDiffEditor::class.java)
+          val model = editor?.factory?.model
+          model?.context?.getUserData(COMBINED_DIFF_PREVIEW_TAB_NAME)?.invoke()
+        }
+        else -> null
       }
     }
     if (EDT.isCurrentThreadEdt()) {

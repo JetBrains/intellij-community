@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorWithTextEditors
 import com.intellij.openapi.util.Disposer
 import javax.swing.JComponent
 
-internal class CombinedDiffEditor(file: CombinedDiffVirtualFile, private val factory: CombinedDiffComponentFactory) :
+class CombinedDiffEditor(file: CombinedDiffVirtualFile, val factory: CombinedDiffComponentFactory) :
   DiffEditorBase(file, factory.getMainComponent(), factory.ourDisposable), FileEditorWithTextEditors {
 
   override fun dispose() {

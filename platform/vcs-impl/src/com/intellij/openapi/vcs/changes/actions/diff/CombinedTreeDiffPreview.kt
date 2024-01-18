@@ -17,8 +17,6 @@ abstract class CombinedTreeDiffPreview(protected val tree: ChangesTree,
                                        parentDisposable: Disposable) :
   CombinedDiffPreview(tree.project, targetComponent, needSetupOpenPreviewListeners, parentDisposable) {
 
-  override val sourceId: String get() = tree.id
-
   constructor(tree: ChangesTree, parentDisposable: Disposable) :
     this(tree, tree, false, true, parentDisposable)
 

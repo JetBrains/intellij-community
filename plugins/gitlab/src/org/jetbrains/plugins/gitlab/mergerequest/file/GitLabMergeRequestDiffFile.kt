@@ -6,6 +6,7 @@ import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
 import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.tools.combined.CombinedDiffModel
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.actionSystem.ActionManager
@@ -66,8 +67,9 @@ internal data class GitLabMergeRequestCombinedDiffFile(
 
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
-  override fun createModel(id: String): CombinedDiffModelImpl =
-    project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffModel(connectionId, mergeRequestIid)
+  override fun createModel(): CombinedDiffModel {
+    return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffModel(connectionId, mergeRequestIid)
+  }
 }
 
 private fun createSourceId(connectionId: String, glProject: GitLabProjectCoordinates, mergeRequestIid: String) =
