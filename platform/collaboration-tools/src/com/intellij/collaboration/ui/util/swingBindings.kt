@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -212,7 +213,9 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: MutableStateFlow<String>) 
     textFlow.collect {
       if (text != it) {
         writeAction {
-          setText(it)
+          CommandProcessor.getInstance().runUndoTransparentAction {
+            setText(it)
+          }
         }
       }
     }
