@@ -1,8 +1,10 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <!-- Components and extensions declared in this file work ONLY in the Python plugin,
-       both Community and Professional versions. -->
-
-  <xi:include href="/META-INF/python-community-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+<idea-plugin package="com.intellij.python.community.plugin.java">
+  <!--For IU or IC-->
+  <dependencies>
+    <!-- Supports Java -->
+    <plugin id="com.intellij.java"/>
+    <module name="intellij.python.community.impl"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <newProjectWizard.languageGenerator implementation="com.intellij.python.community.plugin.java.PythonNewProjectWizard"/>

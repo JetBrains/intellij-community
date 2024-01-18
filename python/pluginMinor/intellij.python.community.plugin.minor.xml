@@ -1,7 +1,16 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
-  <!-- Components and extensions declared in this file work ONLY in the Python plugin for minor IDEs -->
+<idea-plugin package="com.intellij.python.community.plugin.minor" url="https://confluence.jetbrains.com/display/PYH/">
+  <dependencies>
+    <module name="intellij.python.community.impl"/>
+    <!--Any IDE but NOT PyCharm-->
+    <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
+    <!-- That is Mini-ide -->
+    <plugin id="com.intellij.modules.python-in-mini-ide-capable"/>
+    <!-- and compatible with Python -->
+    <plugin id="com.intellij.modules.python-core-capable"/>
 
-  <xi:include href="/META-INF/python-community-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <!-- for library facet etc -->
+    <module name="intellij.python.community.plugin.impl"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable groupId="build"

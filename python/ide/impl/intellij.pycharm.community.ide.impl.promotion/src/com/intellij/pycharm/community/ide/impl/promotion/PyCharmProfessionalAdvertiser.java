@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl;
+package com.intellij.pycharm.community.ide.impl.promotion;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle;
 import com.jetbrains.python.PyCellUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class PyCharmProfessionalAdvertiser implements Annotator {
+final class PyCharmProfessionalAdvertiser implements Annotator {
   private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("PyCharm Professional Advertiser");
 
   @Override

@@ -1,26 +1,39 @@
-<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<idea-plugin>
-  <resource-bundle>messages.PyBundle</resource-bundle>
+<idea-plugin package="com.intellij.pycharm.community.ide.impl.promotion">
+  <!--Customization code for Community Pycharm only. Promotes PyCharm Prof-->
+
+  <dependencies>
+    <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.python.community.impl"/>
+  </dependencies>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+    <annotator language="Python" implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmProfessionalAdvertiser"/>
+    <annotator language="TEXT" implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmProfessionalAdvertiser"/>
+    <annotator language="JSON" implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmProfessionalAdvertiser"/>
+    <projectService serviceImplementation="com.intellij.pycharm.community.ide.impl.promotion.PyCharmProfessionalAdvertiserSettings"/>
+  </extensions>
+
   <actions resource-bundle="messages.PyCharmCommunityCustomizationBundle">
     <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoAiCodeCompletion"
             id="PromoAiCodeCompletion"
-            icon="AllIcons.Ultimate.PycharmLock" />
+            icon="AllIcons.Ultimate.PycharmLock"/>
 
     <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoDataFrameAction"
             id="PromoDataFrameAction"
-            icon="AllIcons.Ultimate.PycharmLock" />
+            icon="AllIcons.Ultimate.PycharmLock"/>
 
     <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoDockerAction"
             id="PromoDockerAction"
-            icon="AllIcons.Ultimate.PycharmLock" />
+            icon="AllIcons.Ultimate.PycharmLock"/>
 
     <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoEndpointsAction"
             id="PromoEndpointsAction"
-            icon="AllIcons.Ultimate.PycharmLock" />
+            icon="AllIcons.Ultimate.PycharmLock"/>
 
     <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoPlotsAction"
             id="PromoPlotsAction"
-            icon="AllIcons.Ultimate.PycharmLock" />
+            icon="AllIcons.Ultimate.PycharmLock"/>
 
     <action id="PromoNewJupyterNotebook" class="com.intellij.pycharm.community.ide.impl.promotion.NewJupyterNotebookFile"
             icon="AllIcons.Ultimate.PycharmLock">

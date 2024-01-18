@@ -1,18 +1,19 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.jetbrains.python">
   <!--Part of both: community and prof -->
 
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
 
-  <module value="com.intellij.modules.python"/>
 
   <xi:include href="/META-INF/PythonParser.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonPsi.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonPsiImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PythonSdk.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <!-- Enable command-line language. Not used by community itself, but by some plugins -->
-  <xi:include href="/META-INF/command-line-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
 
@@ -44,8 +45,6 @@
                     overrides="true"/>
   </extensions>
 
-  <!-- Poetry. Can't extract module due to circular dependency between it and community.impl--> -->
-  <depends optional="true" config-file="PyPoetryInclude.xml">org.toml.lang</depends>
 
   <projectListeners>
     <listener
@@ -169,6 +168,7 @@
     <xdebugger.settings implementation="com.jetbrains.python.debugger.settings.PyDebuggerSettings"/>
     <xdebugger.attachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
+    <codeInsight.containerProvider implementation="com.jetbrains.python.codeInsight.PyContainerProvider"/>
     <registryKey key="python.debugger.use.dispatcher" defaultValue="false" description="Use dispatcher in Python debugger"/>
     <registryKey key="flask.new.run.config" defaultValue="true" description="Flask Server Run configurations new UI"/>
 

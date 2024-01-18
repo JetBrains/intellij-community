@@ -1,13 +1,14 @@
-<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<idea-plugin>
-  <resource-bundle>messages.PyBundle</resource-bundle>
+<idea-plugin package="com.intellij.pycharm.community.ide.impl">
+  <!--Customization code for both Community and Pro PyCharms-->
+  <dependencies>
+    <module name="intellij.python.community.impl"/>
+    <plugin id="com.intellij.modules.platform"/>
+  </dependencies>
 
-  <content>
-    <module name="intellij.pycharm.community.ide.impl/training"/>
-  </content>
   <projectListeners>
     <listener class="com.intellij.pycharm.community.ide.impl.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
-    <listener class="com.intellij.pycharm.community.ide.impl.PySdkFromEnvironmentVariableConfigurator" topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
+    <listener class="com.intellij.pycharm.community.ide.impl.PySdkFromEnvironmentVariableConfigurator"
+              topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -42,7 +43,8 @@
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PlatformInspectionProfileConfigurator"/>
-    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeConfigurator" id="welcome" order="last"/>
+    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeConfigurator"
+                                  id="welcome" order="last"/>
 
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PythonModuleTypeManager"
@@ -67,20 +69,23 @@
     <applicationService serviceImplementation="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeSettings"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeCollector"/>
     <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
-      bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
+                       bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
 
     <ignoredFileProvider implementation="com.intellij.pycharm.community.ide.impl.configuration.PyTemporarilyIgnoredFileProvider"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
     <newUIConfigurable implementation="com.intellij.pycharm.community.ide.impl.configuration.PyExperimentalUIConfigurable"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
-                                      id="requirementsTxtOrSetupPy"/>
-    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyEnvironmentYmlSdkConfiguration"
-                                      id="environmentYml"/>
+    <projectSdkConfigurationExtension
+      implementation="com.intellij.pycharm.community.ide.impl.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
+      id="requirementsTxtOrSetupPy"/>
+    <projectSdkConfigurationExtension
+      implementation="com.intellij.pycharm.community.ide.impl.configuration.PyEnvironmentYmlSdkConfiguration"
+      id="environmentYml"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"/>
@@ -93,7 +98,8 @@
     </action>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject" class="com.intellij.pycharm.community.ide.impl.newProject.steps.PyCharmNewProjectStep"/>
+      <action id="WelcomeScreen.CreateDirectoryProject"
+              class="com.intellij.pycharm.community.ide.impl.newProject.steps.PyCharmNewProjectStep"/>
       <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

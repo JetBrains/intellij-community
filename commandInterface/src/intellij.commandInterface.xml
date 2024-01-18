@@ -1,5 +1,8 @@
-<idea-plugin>
-
+<idea-plugin package="com.intellij.commandInterface">
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
   <!--
    Extension points to support gnu command line language.
    See {@link com.intellij.commandInterface.commandLine}
@@ -10,12 +13,13 @@
     <lang.parserDefinition language="CommandLine"
                            implementationClass="com.intellij.commandInterface.commandLine.CommandLineParserDefinition"/>
     <lang.syntaxHighlighter language="CommandLine"
-                                   implementationClass="com.intellij.commandInterface.commandLine.CommandLineSyntaxHighlighter"/>
+                            implementationClass="com.intellij.commandInterface.commandLine.CommandLineSyntaxHighlighter"/>
     <psi.referenceContributor language="CommandLine"
                               implementation="com.intellij.commandInterface.commandLine.CommandLineReferenceContributor"/>
     <lang.elementManipulator forClass="com.intellij.commandInterface.commandLine.CommandLineElement"
                              implementationClass="com.intellij.commandInterface.commandLine.CommandLineElementManipulator"/>
-    <localInspection language="CommandLine" shortName="CommandLineInspection" bundle="com.intellij.commandInterface.CommandInterfaceBundle" key="commandLine.inspection.name"
+    <localInspection language="CommandLine" shortName="CommandLineInspection" bundle="com.intellij.commandInterface.CommandInterfaceBundle"
+                     key="commandLine.inspection.name"
                      enabledByDefault="true" level="WARNING"
                      groupKey="INSP.GROUP.python"
                      groupBundle="messages.PyBundle"

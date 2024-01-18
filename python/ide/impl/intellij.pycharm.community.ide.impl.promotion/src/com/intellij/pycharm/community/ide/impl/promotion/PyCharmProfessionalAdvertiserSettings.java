@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl;
+package com.intellij.pycharm.community.ide.impl.promotion;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "PyCharmProfessionalAdvertiser")
-public class PyCharmProfessionalAdvertiserSettings implements PersistentStateComponent<PyCharmProfessionalAdvertiserSettings> {
+class PyCharmProfessionalAdvertiserSettings implements PersistentStateComponent<PyCharmProfessionalAdvertiserSettings> {
   public boolean shown = false;
 
   @Nullable

@@ -1,4 +1,11 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.python.community.plugin.impl">
+  <!--Plugin for other (not PyCharm) IDEs, including IU-->
+  <dependencies>
+    <!--Any IDE but NOT PyCharm-->
+    <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
+
+    <module name="intellij.python.community.impl"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
