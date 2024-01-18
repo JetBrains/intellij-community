@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Supplier;
@@ -312,7 +313,9 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        getNavigationHandler().navigate(null, getElement());
+        InputEvent event = e.getInputEvent();
+        MouseEvent mouseEvent = event instanceof MouseEvent ? (MouseEvent)event : null;
+        getNavigationHandler().navigate(mouseEvent, getElement());
       }
 
       @Override
