@@ -16,6 +16,7 @@ import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class YAMLElementGenerator {
   private final Project myProject;
@@ -41,6 +42,36 @@ public class YAMLElementGenerator {
       }
     }
     return sb.toString();
+  }
+
+  /**
+   * Create a YAML key-value pair with a sequence as the value.
+   * Example:
+   * <pre>{@code
+   * Given:
+   * keyName = "fruits";
+   * sequence = Map.of("apple","red", "banana","yellow");
+   *
+   * would generate YAML:
+   * fruits:
+   *   apple: red
+   *   banana: yellow
+   * }</pre>
+   * @param keyName   The name of the key.
+   * @param sequence  The sequence to be used as the value.
+   * @return The created YAML key-value pair.
+   */
+  public YAMLKeyValue createYamlKeyValueWithSequence(@NotNull String keyName, @NotNull Map<String, String> sequence) {
+    if (sequence.isEmpty()) return createYamlKeyValue(keyName, "");
+
+    StringBuilder sb = new StringBuilder(keyName + ":\n");
+    sequence.entrySet().stream()
+      .sorted(Map.Entry.comparingByKey())
+      .forEach(entry -> sb.append(" %s: %s\n".formatted(entry.getKey(), entry.getValue())));
+
+    YAMLKeyValue yamlKeyValueWithSequence = YAMLUtil.getTopLevelKeys(createDummyYamlWithText(sb.toString()))
+      .stream().findFirst().orElseThrow(() -> new RuntimeException("Cannot create dummy YAML file using string: "+sb));
+    return yamlKeyValueWithSequence;
   }
 
   @NotNull

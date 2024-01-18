@@ -12,6 +12,8 @@ import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 
+import java.util.Map;
+
 public class YAMLMappingModificationTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
@@ -113,7 +115,16 @@ public class YAMLMappingModificationTest extends BasePlatformTestCase {
                   - bla
                   - bla""");
   }
-  
+
+  public void testSetValueCompoundSequence() {
+    YAMLElementGenerator yamlGenerator = YAMLElementGenerator.getInstance(getProject());
+    YAMLKeyValue sequence = yamlGenerator.createYamlKeyValueWithSequence(
+      "someKey",
+      Map.of("abl", "1", "blah", "2", "acl", "3")
+    );
+    doValueTest(sequence.getText());
+  }
+
   private void doValueTest(final String valueText) {
     myFixture.configureByFile(getTestName(true) + ".yml");
     final int offset = myFixture.getCaretOffset();
