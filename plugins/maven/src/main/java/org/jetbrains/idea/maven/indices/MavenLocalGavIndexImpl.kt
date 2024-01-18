@@ -8,7 +8,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
-import org.jetbrains.idea.maven.model.RepositoryKind
 import org.jetbrains.idea.maven.server.AddArtifactResponse
 import org.jetbrains.idea.maven.server.IndexedMavenId
 import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector
@@ -49,8 +48,6 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
 
   private fun id2string(groupId: String, artifactId: String): String = "$groupId:$artifactId"
 
-  override fun getKind() = RepositoryKind.LOCAL
-
   override fun getRepository() = repo
 
   override fun updateOrRepair(fullUpdate: Boolean, progress: MavenProgressIndicator, explicit: Boolean) {
@@ -74,7 +71,7 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
               if (filesProcessed % 100 == 0) {
                 progress.setText(IndicesBundle.message("maven.indices.scanned.artifacts", filesProcessed))
               }
-              if(!isActive || progress.isCanceled()) throw MavenProcessCanceledException()
+              if (!isActive || progress.isCanceled()) throw MavenProcessCanceledException()
               filesProcessed++
             }
         }.join()

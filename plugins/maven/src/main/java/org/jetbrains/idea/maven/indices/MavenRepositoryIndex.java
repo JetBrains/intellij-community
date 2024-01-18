@@ -7,10 +7,6 @@ import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.model.RepositoryKind;
 
 public interface MavenRepositoryIndex {
-  @ApiStatus.Internal
-  @NotNull
-  RepositoryKind getKind();
-
   @NotNull
   @ApiStatus.Internal
   MavenRepositoryInfo getRepository();

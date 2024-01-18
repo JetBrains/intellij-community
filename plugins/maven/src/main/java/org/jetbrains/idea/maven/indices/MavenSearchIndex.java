@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.model.RepositoryKind;
@@ -32,22 +33,32 @@ public interface MavenSearchIndex extends MavenRepositoryIndex {
     new Topic<>("Maven Index Broken Listener", IndexListener.class);
 
   @NlsSafe
-  String getRepositoryId();
+  default String getRepositoryId() {
+    return getRepository().getId();
+  }
 
-  File getRepositoryFile();
-
-  @NotNull
-  MavenRepositoryInfo getRepository();
+  @Nullable
+  default File getRepositoryFile() {
+    MavenRepositoryInfo repository = getRepository();
+    if (repository.getKind() == RepositoryKind.LOCAL) {
+      return new File(repository.getUrl());
+    }
+    return null;
+  }
 
   @NlsSafe
-  String getRepositoryUrl();
+  default String getRepositoryUrl() {
+    MavenRepositoryInfo repository = getRepository();
+    if (repository.getKind() == RepositoryKind.REMOTE) {
+      return repository.getUrl();
+    }
+    return null;
+  }
 
   @NlsSafe
-  String getRepositoryPathOrUrl();
-
-  RepositoryKind getKind();
-
-  long getUpdateTimestamp();
+  default String getRepositoryPathOrUrl() {
+    return getRepository().getUrl();
+  }
 
   @NlsSafe
   String getFailureMessage();

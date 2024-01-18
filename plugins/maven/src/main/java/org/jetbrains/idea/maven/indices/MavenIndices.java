@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -208,8 +207,7 @@ public class MavenIndices implements Disposable {
 
   @NotNull
   private static MavenIndex createMavenIndex(@NotNull String id, @NotNull String repositoryPathOrUrl, RepositoryKind repositoryKind) {
-    return MavenSystemIndicesManager.getInstance()
-      .getIndexForRepoSync(new MavenRepositoryInfo(id, id, repositoryPathOrUrl, repositoryKind));
+    throw new UnsupportedOperationException();
   }
 
   static class RepositoryDiff<T> {

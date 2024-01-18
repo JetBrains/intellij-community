@@ -171,8 +171,6 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
   }
 
   private synchronized void save() {
-    myDir.mkdirs();
-    MavenIndexUtils.saveIndexProperty(this);
   }
 
   @Override
@@ -196,16 +194,10 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
   }
 
   @Override
-  public RepositoryKind getKind() {
-    return myKind;
-  }
-
-  @Override
   public MavenRepositoryInfo getRepository() {
     return new MavenRepositoryInfo(getRepositoryId(), getRepositoryId(), myRepositoryPathOrUrl, myKind);
   }
 
-  @Override
   public long getUpdateTimestamp() {
     return myUpdateTimestamp == null ? -1 : myUpdateTimestamp;
   }

@@ -81,7 +81,7 @@ public final class MavenIndexUtils {
   public static void saveIndexProperty(MavenIndexImpl index) {
     Properties props = new Properties();
 
-    props.setProperty(KIND_KEY, index.getKind().toString());
+    props.setProperty(KIND_KEY, index.getRepository().getKind().toString());
     props.setProperty(ID_KEY, index.getRepositoryId());
     props.setProperty(PATH_OR_URL_KEY, index.getRepositoryPathOrUrl());
     props.setProperty(INDEX_VERSION_KEY, CURRENT_VERSION);
@@ -151,7 +151,7 @@ public final class MavenIndexUtils {
     return all;
   }
 
-  static class IndexPropertyHolder {
+  public static class IndexPropertyHolder {
     final File dir;
     final RepositoryKind kind;
     final Set<String> repositoryIds;

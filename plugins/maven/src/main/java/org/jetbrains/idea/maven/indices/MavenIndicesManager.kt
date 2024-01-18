@@ -319,10 +319,6 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
       return myGavIndices.any { it.hasVersion(groupId, artifactId, version) }
     }
 
-    override fun getKind(): RepositoryKind {
-      throw IllegalStateException("Internal API, do not use it")
-    }
-
     override fun getRepository(): MavenRepositoryInfo {
       throw IllegalStateException("Internal API, do not use it")
     }
