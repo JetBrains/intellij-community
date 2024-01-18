@@ -17,12 +17,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.SmartList
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xml.CommonXmlStrings
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
@@ -49,6 +51,31 @@ class KotlinFieldBreakpointType :
     override fun getGeneralDescription(breakpoint: XLineBreakpoint<KotlinPropertyBreakpointProperties>) =
         KotlinDebuggerCoreBundle.message("property.watchpoint.description")
 
+    override fun getPropertyXMLDescriptions(breakpoint: XLineBreakpoint<KotlinPropertyBreakpointProperties>): MutableList<String> {
+        val res = SmartList(super.getPropertyXMLDescriptions(breakpoint))
+        val props = breakpoint.getProperties() ?: return res
+        val defaults = createProperties()
+        if (props.watchInitialization != defaults.watchInitialization ||
+            props.watchAccess != defaults.watchAccess ||
+            props.watchModification != defaults.watchModification) {
+
+            // Add all if at least one property isn't default.
+            res.add(
+                KotlinDebuggerCoreBundle.message("property.watchpoint.property.name.initialization") + CommonXmlStrings.NBSP +
+                        props.watchInitialization
+            )
+            res.add(
+                KotlinDebuggerCoreBundle.message("property.watchpoint.property.name.access") + CommonXmlStrings.NBSP +
+                        props.watchAccess
+            )
+            res.add(
+                KotlinDebuggerCoreBundle.message("property.watchpoint.property.name.modification") + CommonXmlStrings.NBSP +
+                        props.watchModification
+            )
+        }
+        return res
+    }
+
     override fun createJavaBreakpoint(
         project: Project,
         breakpoint: XBreakpoint<KotlinPropertyBreakpointProperties>
@@ -69,7 +96,7 @@ class KotlinFieldBreakpointType :
     override fun getPriority() = 120
 
     override fun createBreakpointProperties(file: VirtualFile, line: Int): KotlinPropertyBreakpointProperties {
-        return KotlinPropertyBreakpointProperties()
+        return createProperties()
     }
 
     override fun addBreakpoint(project: Project, parentComponent: JComponent?): XLineBreakpoint<KotlinPropertyBreakpointProperties>? {
