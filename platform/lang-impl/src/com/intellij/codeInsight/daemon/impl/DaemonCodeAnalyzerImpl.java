@@ -729,8 +729,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       .collect(Collectors.toList());
   }
 
+  /**
+   * Used in tests, don't remove VisibleForTesting
+   */
   @ApiStatus.Internal
-  boolean isAllAnalysisFinished(@NotNull PsiFile psiFile) {
+  @VisibleForTesting
+  public boolean isAllAnalysisFinished(@NotNull PsiFile psiFile) {
     if (myDisposed) return false;
     assertMyFile(psiFile.getProject(), psiFile);
     Document document = psiFile.getViewProvider().getDocument();
