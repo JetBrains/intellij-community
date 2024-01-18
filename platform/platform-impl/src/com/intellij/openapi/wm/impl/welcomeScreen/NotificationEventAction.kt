@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.application.subscribe
+import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -35,6 +36,7 @@ internal class NotificationEventAction(parentDisposable: Disposable) : DumbAware
     super.update(e)
 
     e.presentation.icon = WelcomeScreenComponentFactory.getNotificationIcon(notificationTypes, getComponent(e))
+    e.presentation.text = IdeBundle.message("toolwindow.stripe.Notifications")
     e.presentation.isEnabledAndVisible = notificationTypes.isNotEmpty()
   }
 
