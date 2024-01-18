@@ -678,6 +678,7 @@
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
     <applicationService serviceImplementation="git4idea.light.LightGitTracker"/>
+    <applicationService serviceImplementation="git4idea.index.ui.GitStageUiApplicationSettings"/>
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 

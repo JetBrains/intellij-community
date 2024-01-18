@@ -29,7 +29,6 @@ private class KeymapFlagsStorageListener : KeymapManagerListener {
 }
 
 @Internal
-@Service(Service.Level.APP)
 @State(name = "KeymapFlagsStorage",
        category = SettingsCategory.KEYMAP,
        exportable = true,

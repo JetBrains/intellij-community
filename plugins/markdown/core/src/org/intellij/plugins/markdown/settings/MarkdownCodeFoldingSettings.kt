@@ -4,7 +4,6 @@ import com.intellij.openapi.components.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@Service(Service.Level.APP)
 @State(name = "MarkdownCodeFoldingSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
 class MarkdownCodeFoldingSettings: SimplePersistentStateComponent<MarkdownCodeFoldingSettings.State>(State()) {
   class State: BaseState() {

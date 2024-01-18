@@ -148,6 +148,8 @@
     <projectService serviceImplementation="com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager"/>
 
     <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->

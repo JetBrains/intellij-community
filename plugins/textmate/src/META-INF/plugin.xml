@@ -47,6 +47,8 @@
     <fileIconProvider implementation="org.jetbrains.plugins.textmate.TextMateBackedFileIconProvider" order="last"/>
     <lineIndentProvider implementation="org.jetbrains.plugins.textmate.editor.TextMateLineIndentProvider" />
     <!--<lang.formatter language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateFormattingModelBuilder"/>-->
+    <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings" />
+    <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings" />
   </extensions>
   <actions>
     <action id="install-vscode-plugin" class="org.jetbrains.plugins.textmate.actions.InstallVSCodePluginAction"
