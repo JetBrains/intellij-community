@@ -141,8 +141,10 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
       val emptyCellChain = query.compile()
       val chainWithTraces = emptyCellChain.snapshotInput(snapshot)
       val (newChain, traces) = chainWithTraces
-      traces.forEach { (trace, updateRequest) ->
-        queryIdToTraceIndex.getOrPut(newChain.id) { ReadTraceIndex() }.set(ReadTraceHashSet(trace), updateRequest)
+      queryIdToTraceIndex.getOrPut(newChain.id) { ReadTraceIndex() }.also { index ->
+        traces.forEach { (trace, updateRequest) ->
+          index.set(trace, updateRequest)
+        }
       }
       queryIdToChain[newChain.id] = newChain
       return newChain.data()
