@@ -201,7 +201,13 @@ public final class ChangeListChooserPanel extends JPanel {
     updateEnabled();
   }
 
+  public void setChangeListDescription(String description) {
+    myListPanel.setDescription(description);
+    myLastTypedDescription = description;
+  }
+
   private void updateDescription() {
+    if (myLastTypedDescription != null) return;
     LocalChangeList list = getExistingChangelistByName(myListPanel.getChangeListName());
     String newText = list != null ? list.getComment() : myLastTypedDescription;
     if (!StringUtil.equals(myListPanel.getDescription(), newText)) {

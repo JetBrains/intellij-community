@@ -39,6 +39,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -422,7 +423,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (myShouldUpdateChangeListName && myChangeListChooser != null) {
+      if (StringUtil.isNotEmpty(messageFromPatch) && myChangeListChooser != null) {
+        myChangeListChooser.setChangeListDescription(messageFromPatch);
+      }
+      else if (myShouldUpdateChangeListName && myChangeListChooser != null) {
         String subject = chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim());
         myChangeListChooser.setSuggestedName(subject, messageFromPatch, false);
       }
