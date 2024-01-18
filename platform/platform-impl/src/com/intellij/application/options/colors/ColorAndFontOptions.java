@@ -715,7 +715,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private void ensureSchemesPanel() {
     if (myRootSchemesPanel == null) {
-      myRootSchemesPanel = new SchemesPanel(this);
+      myRootSchemesPanel = new SchemesPanel(this, 0);
 
       myRootSchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
         @Override
