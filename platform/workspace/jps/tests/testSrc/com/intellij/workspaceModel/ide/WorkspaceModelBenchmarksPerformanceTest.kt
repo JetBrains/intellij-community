@@ -18,9 +18,7 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
-import com.intellij.platform.workspace.storage.ExternalMappingKey
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
@@ -32,7 +30,6 @@ import com.intellij.platform.workspace.storage.query.flatMap
 import com.intellij.platform.workspace.storage.query.groupBy
 import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.PlatformTestUtil
@@ -59,6 +56,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.system.measureTimeMillis
+import kotlin.time.measureTime
 
 
 @TestApplication
@@ -824,6 +822,198 @@ class WorkspaceModelBenchmarksPerformanceTest {
         myBuilder.getMutableExternalMapping(externalMappingKey).addMapping(entity, "data$it")
         mySnapshot = myBuilder.toSnapshot()
       }
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = [10, 100, 1_000, 10_000, 100_000, 1_000_000])
+  fun `recalculate versus cache`(size: Int, testInfo: TestInfo) {
+    val q = entities<NamedEntity>().map { it.myName }
+
+    val builder = MutableEntityStorage.create()
+    repeat(size) {
+      builder addEntity NamedEntity("Data$it", MySource)
+    }
+    var snapshot = builder.toSnapshot()
+
+    println("Test one --- Raw recalculate")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + " raw calculate - size: $size", 100500) {
+      val time = measureTime {
+        snapshot.entities<NamedEntity>().map { it.myName }.toList()
+      }
+      println("Raw recalculate. size: $size, time: $time.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+
+    println()
+    println("Test two --- First calculate")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- first calculate - size: $size", 100500) {
+      val time2 = measureTime {
+        snapshot.cached(q)
+      }
+      println("First recalculate. size: $size, time: $time2.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+
+    println()
+    println("Test three --- Unmodified second access")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- second access - size: $size", 100500) {
+      val time3 = measureTime {
+        snapshot.cached(q)
+      }
+      println("Unmodified second access. size: $size, time: $time3.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+
+    snapshot.toBuilder().also { it.addEntity(NamedEntity("XX", MySource)) }.toSnapshot()
+
+    println()
+    println("Test four --- Add one entity")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Add one entity - size: $size", 100500) {
+      val time4 = measureTime {
+        snapshot.cached(q)
+      }
+      println("Add one entity. size: $size, time: $time4.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+
+    snapshot = snapshot.toBuilder().also { builder1 ->
+      // Remove 10% of entities
+      builder1.entities<NamedEntity>().take(size / 10).forEach { builder1.removeEntity(it) }
+
+      // Modify 10% of entities
+      builder1.entities<NamedEntity>().take(size / 10).forEach {
+        builder1.modifyEntity(it) {
+          this.myName += "MyName"
+        }
+      }
+
+      // Add 10% of entities
+      repeat(size / 10) {
+        builder1.addEntity(NamedEntity("XXY$it", MySource))
+      }
+    }.toSnapshot()
+
+    println()
+    println("Test five --- Update 10% of entities")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Affect 10% of entities - size: $size", 100500) {
+      val time5 = measureTime {
+        snapshot.cached(q)
+      }
+      println("Update 10% of entities. size: $size, time: $time5.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = [10, 100, 1_000, 10_000, 100_000, 1_000_000])
+  fun `recalculate versus cache on tricky case`(size: Int, testInfo: TestInfo) {
+    val q = entities<NamedEntity>()
+      .flatMap { namedEntity, _ -> namedEntity.children }
+      .map { it.childProperty }
+      .map { it + "XXXX" }
+
+    val builder = MutableEntityStorage.create()
+    repeat(size) {
+      builder addEntity NamedEntity("Data$it", MySource) {
+        this.children = List(10) {
+          NamedChildEntity("Child$it", MySource)
+        }
+      }
+    }
+    var snapshot = builder.toSnapshot()
+
+    println("Test one --- Raw recalculate")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + " raw calculate - size: $size", 100500) {
+      val time = measureTime {
+        snapshot.entities<NamedEntity>()
+          .flatMap { it.children }
+          .map { it.childProperty }
+          .map { it + "XXXX" }
+          .toList()
+      }
+      println("Raw recalculate. size: $size, time: $time.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+
+    println()
+    println("Test two --- First calculate")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- first calculate - size: $size", 100500) {
+      val time2 = measureTime {
+        snapshot.cached(q)
+      }
+      println("First recalculate. size: $size, time: $time2.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+
+    println()
+    println("Test three --- Unmodified second access")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- second access - size: $size", 100500) {
+      val time3 = measureTime {
+        snapshot.cached(q)
+      }
+      println("Unmodified second access. size: $size, time: $time3.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+
+    snapshot.toBuilder().also {
+      it addEntity NamedEntity("XX", MySource) {
+        this.children = listOf(NamedChildEntity("Hey", MySource))
+      }
+    }.toSnapshot()
+
+    println()
+    println("Test four --- Add one entity")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Add one entity - size: $size", 100500) {
+      val time4 = measureTime {
+        snapshot.cached(q)
+      }
+      println("Add one entity. size: $size, time: $time4.")
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTiming()
+
+    snapshot = snapshot.toBuilder().also { builder1 ->
+      // Remove 10% of entities
+      builder1.entities<NamedEntity>().take(size / 10).forEach { builder1.removeEntity(it) }
+
+      // Modify 10% of entities
+      builder1.entities<NamedEntity>().take(size / 10).forEach {
+        builder1.modifyEntity(it) {
+          this.myName += "MyName"
+        }
+      }
+      builder1.entities<NamedChildEntity>().toList().takeLast(size / 10).forEach {
+        builder1.modifyEntity(it) {
+          this.childProperty = "Prop"
+        }
+      }
+
+      // Add 10% of entities
+      repeat(size / 10) {
+        builder1 addEntity NamedEntity("XXY$it", MySource) {
+          this.children = List(10) { NamedChildEntity("Prop", MySource) }
+        }
+      }
+    }.toSnapshot()
+
+    println()
+    println("Test five --- Update 10% of entities")
+    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Affect 10% of entities - size: $size", 100500) {
+      val time5 = measureTime {
+        snapshot.cached(q)
+      }
+      println("Update 10% of entities. size: $size, time: $time5.")
     }
       .warmupIterations(0)
       .attempts(1).assertTiming()
