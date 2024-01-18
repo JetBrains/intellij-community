@@ -525,6 +525,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public SelectConfigAction(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
       myProject = project;
       myConfiguration = configuration;
+      // TODO for RemDev old action update only, remove ASAP
+      update(AnActionEvent.createFromDataContext("", getTemplatePresentation(), DataContext.EMPTY_CONTEXT));
     }
 
     public @NotNull RunnerAndConfigurationSettings getConfiguration() {
