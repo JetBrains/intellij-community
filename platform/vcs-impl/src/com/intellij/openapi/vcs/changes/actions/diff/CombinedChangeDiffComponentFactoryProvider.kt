@@ -12,52 +12,47 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
   override fun create(model: CombinedDiffModel): CombinedDiffComponentFactory = MyFactory(model)
 
   private inner class MyFactory(model: CombinedDiffModel) : CombinedDiffComponentFactory(model) {
+    override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction(model)
+  }
+}
 
-    init {
-      model.cleanBlocks()
+private class MyGoToChangePopupAction(val model: CombinedDiffModel) : PresentableGoToChangePopupAction.Default<PresentableChange>() {
+
+  val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+
+  override fun getChanges(): ListSelection<out PresentableChange> {
+    val changes =
+      if (model is CombinedDiffPreviewModel) (model as CombinedDiffPreviewModel).iterateAllChanges().toList()
+      else model.requests.map { it.producer }.filterIsInstance<PresentableChange>()
+
+    val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
+    val selectedIndex = when {
+      selected != null -> changes.indexOfFirst {
+        it.tag == selected.tag &&
+        it.fileStatus == selected.fileStatus &&
+        it.filePath == selected.path
+      }
+      else -> -1
     }
-
-    override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction()
-    private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<PresentableChange>() {
-
-      val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-
-      override fun getChanges(): ListSelection<out PresentableChange> {
-        val changes =
-          if (model is CombinedDiffPreviewModel) (model as CombinedDiffPreviewModel).iterateAllChanges().toList()
-          else model.requests.map { it.producer }.filterIsInstance<PresentableChange>()
-
-        val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
-        val selectedIndex = when {
-          selected != null -> changes.indexOfFirst {
-            it.tag == selected.tag &&
-            it.fileStatus == selected.fileStatus &&
-            it.filePath == selected.path
-          }
-          else -> -1
-        }
-        return ListSelection.createAt(changes, selectedIndex)
-      }
-
-      override fun canNavigate(): Boolean {
-        if (model is CombinedDiffPreviewModel) {
-          val allChanges = toListIfNotMany((model as CombinedDiffPreviewModel).iterateAllChanges(), true)
-          return allChanges == null || allChanges.size > 1
-        }
-
-        return super.canNavigate()
-      }
-
-      override fun onSelected(change: PresentableChange) {
-        if (model is CombinedDiffPreviewModel && change is Wrapper) {
-          (model as CombinedDiffPreviewModel).selected = change
-        }
-        else {
-          viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,
-                                  CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
-        }
-      }
-    }
+    return ListSelection.createAt(changes, selectedIndex)
   }
 
+  override fun canNavigate(): Boolean {
+    if (model is CombinedDiffPreviewModel) {
+      val allChanges = toListIfNotMany((model as CombinedDiffPreviewModel).iterateAllChanges(), true)
+      return allChanges == null || allChanges.size > 1
+    }
+
+    return super.canNavigate()
+  }
+
+  override fun onSelected(change: PresentableChange) {
+    if (model is CombinedDiffPreviewModel && change is Wrapper) {
+      (model as CombinedDiffPreviewModel).selected = change
+    }
+    else {
+      viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,
+                              CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
+    }
+  }
 }

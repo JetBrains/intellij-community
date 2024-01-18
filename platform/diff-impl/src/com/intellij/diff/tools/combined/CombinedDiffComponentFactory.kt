@@ -21,7 +21,7 @@ interface CombinedDiffComponentFactoryProvider {
   fun create(model: CombinedDiffModel): CombinedDiffComponentFactory
 }
 
-abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
+open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   internal val ourDisposable = Disposer.newCheckedDisposable()
 
@@ -40,6 +40,8 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     mainUi = createMainUI()
 
     combinedViewer = createCombinedViewer(true)
+
+    model.cleanBlocks()
   }
 
   internal fun getPreferredFocusedComponent() = mainUi.getPreferredFocusedComponent()
@@ -67,7 +69,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
   }
 
-  protected abstract fun createGoToChangeAction(): AnAction?
+  protected open fun createGoToChangeAction(): AnAction? = null
 
   private inner class ModelListener : CombinedDiffModelListener {
     override fun onModelReset() {
