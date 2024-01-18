@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.footer
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.OpenInRightSplitAction
+import com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
@@ -190,5 +192,10 @@ class ExtendedInfoOpenInRightSplitAction(private val dataContext: DataContext) :
 
   override fun actionPerformed(e: AnActionEvent) {
     ActionUtil.invokeAction(split, dataContext, ActionPlaces.ACTION_SEARCH, null, null)
+    if (e.project != null) {
+      getPopup(e.project!!)?.closeOk(e.inputEvent)
+    }
   }
+
+  private fun getPopup(project: Project) = project.getUserData(SEARCH_EVERYWHERE_POPUP)?.get(ClientId.current)
 }
