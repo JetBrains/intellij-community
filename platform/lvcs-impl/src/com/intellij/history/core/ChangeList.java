@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.core;
 
+import com.intellij.history.ActivityId;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.ChangeVisitor;
@@ -63,7 +64,7 @@ public class ChangeList {
   public synchronized @Nullable ChangeSet forceBeginChangeSet() {
     ChangeSet lastChangeSet = null;
     if (myChangeSetDepth > 0) {
-      lastChangeSet = doEndChangeSet(null);
+      lastChangeSet = doEndChangeSet(null, null);
     }
 
     myChangeSetDepth++;
@@ -71,16 +72,16 @@ public class ChangeList {
     return lastChangeSet;
   }
 
-  public synchronized @Nullable ChangeSet endChangeSet(@NlsContexts.Label String name) {
+  public synchronized @Nullable ChangeSet endChangeSet(@NlsContexts.Label String name, @Nullable ActivityId activityId) {
     LocalHistoryLog.LOG.assertTrue(myChangeSetDepth > 0, "not balanced 'begin/end-change set' calls");
 
     myChangeSetDepth--;
     if (myChangeSetDepth > 0) return null;
 
-    return doEndChangeSet(name);
+    return doEndChangeSet(name, activityId);
   }
 
-  private @Nullable ChangeSet doEndChangeSet(@NlsContexts.Label String name) {
+  private @Nullable ChangeSet doEndChangeSet(@Nullable @NlsContexts.Label String name, @Nullable ActivityId activityId) {
     if (myCurrentChangeSet.isEmpty()) {
       myCurrentChangeSet = null;
       return null;
@@ -88,6 +89,7 @@ public class ChangeList {
 
     ChangeSet lastChangeSet = myCurrentChangeSet;
     lastChangeSet.setName(name);
+    lastChangeSet.setActivityId(activityId);
     lastChangeSet.lock();
     myStorage.writeNextSet(lastChangeSet);
 

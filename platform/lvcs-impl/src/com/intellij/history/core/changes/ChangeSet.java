@@ -16,6 +16,7 @@
 
 package com.intellij.history.core.changes;
 
+import com.intellij.history.ActivityId;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +38,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class ChangeSet {
-  private static final int VERSION = 0;
+  private static final int VERSION = 1;
   private final long myId;
-  private @Nullable @NlsContexts.Label String myName;
   private final long myTimestamp;
   private final List<Change> myChanges;
+
+  private @Nullable @NlsContexts.Label String myName;
+  private @Nullable @NonNls ActivityId myActivityId = null;
 
   private volatile boolean isLocked = false;
 
@@ -51,10 +55,14 @@ public final class ChangeSet {
   }
 
   public ChangeSet(DataInput in) throws IOException {
-    DataInputOutputUtil.readINT(in);
+    int version = DataInputOutputUtil.readINT(in);
     myId = DataInputOutputUtil.readLONG(in);
     myName = DataStreamUtil.readStringOrNull(in); //NON-NLS
     myTimestamp = DataInputOutputUtil.readTIME(in);
+
+    if (version >= 1) {
+      myActivityId = readActivityId(in);
+    }
 
     int count = DataInputOutputUtil.readINT(in);
     List<Change> changes = new ArrayList<>(count);
@@ -72,6 +80,8 @@ public final class ChangeSet {
     DataStreamUtil.writeStringOrNull(out, myName);
     DataInputOutputUtil.writeTIME(out, myTimestamp);
 
+    writeActivityId(out, myActivityId);
+
     DataInputOutputUtil.writeINT(out, myChanges.size());
     for (Change c : myChanges) {
       DataStreamUtil.writeChange(out, c);
@@ -84,6 +94,14 @@ public final class ChangeSet {
 
   public @NlsContexts.Label @Nullable String getName() {
     return myName;
+  }
+
+  public void setActivityId(@Nullable ActivityId activityId) {
+    myActivityId = activityId;
+  }
+
+  public @Nullable ActivityId getActivityId() {
+    return myActivityId;
   }
 
   public long getTimestamp() {
@@ -239,5 +257,17 @@ public final class ChangeSet {
       func.run();
       return null;
     });
+  }
+
+  private static @Nullable ActivityId readActivityId(@NotNull DataInput in) throws IOException {
+    String kind = DataStreamUtil.readStringOrNull(in);
+    String provider = DataStreamUtil.readStringOrNull(in);
+    if (kind == null || provider == null) return null;
+    return new ActivityId(provider, kind);
+  }
+
+  private static void writeActivityId(@NotNull DataOutput out, @Nullable ActivityId activityId) throws IOException {
+    DataStreamUtil.writeStringOrNull(out, activityId != null ? activityId.getKind() : null);
+    DataStreamUtil.writeStringOrNull(out, activityId != null ? activityId.getProviderId() : null);
   }
 }

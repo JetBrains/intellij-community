@@ -151,14 +151,25 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     init()
   }
 
-  override fun startAction(name: @NlsContexts.Label String?): LocalHistoryAction {
+  override fun startAction(name: @NlsContexts.Label String?, activityId: ActivityId?): LocalHistoryAction {
     if (!isInitialized()) {
       return LocalHistoryAction.NULL
     }
 
-    val a = LocalHistoryActionImpl(eventDispatcher, name)
+    val a = LocalHistoryActionImpl(eventDispatcher, name, activityId)
     a.start()
     return a
+  }
+
+  override fun putEventLabel(p: Project, name: @NlsContexts.Label String, activityId: ActivityId): Label {
+    if (!isInitialized()) {
+      return Label.NULL_INSTANCE
+    }
+
+    val action = startAction(name, activityId)
+    val label = label(facade!!.putUserLabel(name, getProjectId(p)))
+    action.finish()
+    return label
   }
 
   override fun putUserLabel(p: Project, name: @NlsContexts.Label String): Label {

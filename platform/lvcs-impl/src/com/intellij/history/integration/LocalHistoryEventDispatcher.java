@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
+import com.intellij.history.ActivityId;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.tree.Entry;
@@ -46,24 +47,24 @@ final class LocalHistoryEventDispatcher {
     myVcs.forceBeginChangeSet();
   }
 
-  void finishAction(@NlsContexts.Label String name) {
+  void finishAction(@NlsContexts.Label String name, @Nullable ActivityId activityId) {
     myGateway.registerUnsavedDocuments(myVcs);
-    endChangeSet(name);
+    endChangeSet(name, activityId);
   }
 
   private void beginChangeSet() {
     myVcs.beginChangeSet();
   }
 
-  private void endChangeSet(@NlsContexts.Label String name) {
-    myVcs.endChangeSet(name);
+  private void endChangeSet(@NlsContexts.Label String name, @Nullable ActivityId activityId) {
+    myVcs.endChangeSet(name, activityId);
   }
 
   private void fileCreated(@Nullable VirtualFile file) {
     if (file == null) return;
     beginChangeSet();
     createRecursively(file);
-    endChangeSet(null);
+    endChangeSet(null, null);
   }
 
   /**
@@ -235,7 +236,7 @@ final class LocalHistoryEventDispatcher {
     @Override
     public void afterRefreshFinish(boolean asynchronous) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("system.label.external.change"));
+      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("system.label.external.change"), null);
     }
   }
 
@@ -249,7 +250,7 @@ final class LocalHistoryEventDispatcher {
     @Override
     public void commandFinished(@NotNull CommandEvent e) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName());
+      if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName(), null);
     }
   }
 

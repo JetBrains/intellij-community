@@ -17,7 +17,13 @@ public abstract class LocalHistory {
     return service != null ? service : new Dummy();
   }
 
-  public abstract LocalHistoryAction startAction(@Nullable @NlsContexts.Label String name);
+  public LocalHistoryAction startAction(@Nullable @NlsContexts.Label String name) {
+    return startAction(name, null);
+  }
+
+  public abstract LocalHistoryAction startAction(@Nullable @NlsContexts.Label String name, @Nullable ActivityId activityId);
+
+  public abstract Label putEventLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name, @NotNull ActivityId activityId);
 
   public abstract Label putSystemLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name, int color);
 
@@ -34,8 +40,13 @@ public abstract class LocalHistory {
   private static class Dummy extends LocalHistory {
 
     @Override
-    public LocalHistoryAction startAction(@Nullable @NlsContexts.Label String name) {
+    public LocalHistoryAction startAction(@Nullable @NlsContexts.Label String name, @Nullable ActivityId activityId) {
       return LocalHistoryAction.NULL;
+    }
+
+    @Override
+    public Label putEventLabel(@NotNull Project p, @NotNull String name, @NotNull ActivityId activityId) {
+      return Label.NULL_INSTANCE;
     }
 
     @Override

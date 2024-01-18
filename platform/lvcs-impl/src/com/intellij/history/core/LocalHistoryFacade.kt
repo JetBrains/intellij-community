@@ -15,6 +15,7 @@
  */
 package com.intellij.history.core
 
+import com.intellij.history.ActivityId
 import com.intellij.history.ByteContent
 import com.intellij.history.core.changes.*
 import com.intellij.history.core.revisions.ChangeRevision
@@ -51,8 +52,9 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
     }
   }
 
-  fun endChangeSet(name: @NlsContexts.Label String?) {
-    val lastChangeSet = changeList.endChangeSet(name)
+  @JvmOverloads
+  fun endChangeSet(name: @NlsContexts.Label String?, activityId: ActivityId? = null) {
+    val lastChangeSet = changeList.endChangeSet(name, activityId)
     if (lastChangeSet != null) {
       fireChangeSetFinished(lastChangeSet)
     }

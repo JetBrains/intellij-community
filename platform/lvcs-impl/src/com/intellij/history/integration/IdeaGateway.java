@@ -383,7 +383,7 @@ public class IdeaGateway {
         if (!shouldRegisterDocument(f)) continue;
         registerDocumentContents(vcs, f, d);
       }
-      vcs.endChangeSet(null);
+      vcs.endChangeSet(null, null);
     });
   }
 
