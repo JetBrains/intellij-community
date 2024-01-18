@@ -68,11 +68,13 @@ internal fun loadImage(path: String,
                        isDark: Boolean = StartupUiUtil.isDarkTheme,
                        colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider? = null,
                        filters: List<ImageFilter> = emptyList(),
-                       useCache: Boolean): Image? {
+                       useCache: Boolean,
+                       isStroke: Boolean = false): Image? {
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   val descriptors = createImageDescriptorList(path = path,
                                               isDark = isDark,
-                                              pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat())
+                                              pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat(),
+                                              isStroke = isStroke)
 
   val lastDotIndex = path.lastIndexOf('.')
   val rawPathWithoutExt: String

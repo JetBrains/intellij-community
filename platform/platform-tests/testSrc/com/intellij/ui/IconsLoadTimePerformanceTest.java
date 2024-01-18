@@ -71,7 +71,7 @@ public class IconsLoadTimePerformanceTest {
         URL url = new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL();
         // do not use global cache
         //noinspection KotlinInternalInJava
-        ImageCacheKt.loadImage(url.toString(), null, null, ScaleContext.create(), false, null, Collections.emptyList(), false);
+        ImageCacheKt.loadImage(url.toString(), null, null, ScaleContext.create(), false, null, Collections.emptyList(), false, false);
       }
     }
     StatData svgData = IconsLoadTime.getStatData(false, true);

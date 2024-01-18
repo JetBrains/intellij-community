@@ -95,7 +95,8 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                      scaleContext = scaleContext,
                      classLoader = classLoader,
       // CachedImageIcon instance cache the resolved image
-                     useCache = false)
+                     useCache = false,
+                     isStroke = parameters.isStroke)
   }
 
   override val url: URL?
