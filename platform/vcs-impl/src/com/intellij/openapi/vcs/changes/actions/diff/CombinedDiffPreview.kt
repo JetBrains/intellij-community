@@ -8,6 +8,7 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
@@ -99,7 +100,13 @@ abstract class CombinedDiffPreview(project: Project,
 }
 
 abstract class CombinedDiffPreviewModel(project: Project, parentDisposable: Disposable) :
-  CombinedDiffModelImpl(project, parentDisposable), DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
+  CombinedDiffModelImpl(project), DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
+
+  init {
+    Disposer.register(parentDisposable, ourDisposable)
+  }
+
+  override val haveParentDisposable: Boolean = true
 
   var selected by Delegates.equalVetoingObservable<Wrapper?>(null) { change ->
     if (change != null) {

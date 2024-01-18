@@ -60,7 +60,7 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
   fun <VM : ComputedDiffViewModel> createCombinedDiffModel(
     reviewDiffVm: Flow<VM?>, createContext: (VM) -> List<KeyValuePair<*>>
   ): CombinedDiffModelImpl {
-    val model = CombinedDiffModelImpl(project, null)
+    val model = CombinedDiffModelImpl(project)
     cs.launchNow(CoroutineName("Code Review Combined Diff UI")) {
       reviewDiffVm.collectLatest { computedDiffVm ->
         if (computedDiffVm != null) {

@@ -46,7 +46,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
     val document = FileDocumentManager.getInstance().getDocument(file)!!
 
     if (CombinedDiffRegistry.isEnabled()) {
-      val model = CombinedDiffModelImpl(project, null)
+      val model = CombinedDiffModelImpl(project)
       model.setBlocks(buildCombinedDiffModel(document))
 
       val factory = project.service<CombinedDiffComponentFactoryProvider>().create(model)
