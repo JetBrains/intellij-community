@@ -34,7 +34,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   protected final ListPopupImpl myPopup;
   private @Nullable JLabel myShortcutLabel;
-  private @Nullable JLabel myValueLabel;
+  private @Nullable JLabel mySecondaryTextLabel;
   protected JLabel myMnemonicLabel;
   protected JLabel myIconLabel;
 
@@ -126,12 +126,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     };
     panel.add(myTextLabel, BorderLayout.WEST);
 
-    myValueLabel = new JLabel();
-    myValueLabel.setEnabled(false);
+    mySecondaryTextLabel = new JLabel();
+    mySecondaryTextLabel.setEnabled(false);
     JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, 8, 1, 0);
-    myValueLabel.setBorder(valueBorder);
-    myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
-    panel.add(myValueLabel, BorderLayout.CENTER);
+    mySecondaryTextLabel.setBorder(valueBorder);
+    mySecondaryTextLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
+    panel.add(mySecondaryTextLabel, BorderLayout.CENTER);
 
     myShortcutLabel = new JLabel();
     JBEmptyBorder shortcutBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0,0,1,3);
@@ -376,20 +376,25 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
                                     : UIManager.getColor("MenuItem.acceleratorForeground"));
     }
 
-    if (myValueLabel != null) {
-      String valueLabelText = step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getSecondaryTextFor(value) : null;
-      myValueLabel.setText(valueLabelText);
+    if (mySecondaryTextLabel != null) {
+      String valueLabelText = isShowSecondaryText() && step instanceof ListPopupStepEx<Object> o ?
+                              o.getSecondaryTextFor(value) : null;
+      mySecondaryTextLabel.setText(valueLabelText);
       if (ExperimentalUI.isNewUI()) {
-        myValueLabel.setBorder(JBUI.Borders.emptyLeft(Strings.isEmpty(valueLabelText) ? 0 : 6));
+        mySecondaryTextLabel.setBorder(JBUI.Borders.emptyLeft(Strings.isEmpty(valueLabelText) ? 0 : 6));
       }
       boolean selected = isSelected && isSelectable && !nextStepButtonSelected;
-      setForegroundSelected(myValueLabel, selected);
+      setForegroundSelected(mySecondaryTextLabel, selected);
     }
 
     if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
       selectablePanel.setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
       setSelected(myMainPane, isSelected && isSelectable);
     }
+  }
+
+  protected boolean isShowSecondaryText() {
+    return false;
   }
 
   private boolean updateExtraButtons(JList<? extends E> list, E value, ListPopupStep<Object> step, boolean isSelected, boolean hasNextIcon) {
