@@ -52,16 +52,18 @@ internal class LoggingStringPartEvaluator {
         is UParenthesizedExpression -> recursiveCalculateValue(expression.skipParenthesizedExprDown(), context)
         is USimpleNameReferenceExpression -> getFromReferenceExpression(expression, context)
         is UCallExpression -> getFromCallExpression(expression, context)
+        is UQualifiedReferenceExpression -> getFromCallExpression(expression.selector as? UCallExpression, context)
         else -> listOf(PartHolder(null, false))
       }
     }
 
-    private fun getFromCallExpression(expression: UCallExpression, initialContext: Context): List<PartHolder> {
+    private fun getFromCallExpression(expression: UCallExpression?, initialContext: Context): List<PartHolder> {
+      if (expression == null) return listOf(PartHolder(null, false))
       val stringArguments = expression.valueArguments
         .flatMap { recursiveCalculateValue(it, initialContext.copy(depth = initialContext.depth - 1)) }
         .filter { it.isConstant }
         .mapNotNull { it.text }
-      return if(stringArguments.isEmpty()) {
+      return if (stringArguments.isEmpty()) {
         listOf(PartHolder(null, false))
       }
       else {
