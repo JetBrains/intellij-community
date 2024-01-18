@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
 import org.jetbrains.plugins.gitlab.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabRestETagListLoaderIn
@@ -259,9 +260,12 @@ class GitLabApiTest : GitLabApiTestCase() {
     checkVersion(after(v(7, 0)))
 
     requiresAuthentication { api ->
-      val mrs = api.rest.loadMergeRequests(glTest1Coordinates, "search=important").body()
+      val mrs = api.rest.loadUpdatableJsonList<GitLabMergeRequestShortRestDTO>(
+        GitLabApiRequestName.REST_GET_MERGE_REQUESTS,
+        getMergeRequestListURI(glTest1Coordinates, "search=important")
+      ).body()
 
-      assertEquals(listOf("2"), mrs.map { it.iid })
+      assertEquals(listOf("2"), mrs?.map { it.iid })
     }
   }
 
@@ -304,10 +308,10 @@ class GitLabApiTest : GitLabApiTestCase() {
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
       }
-      val result = loader.stateFlow.first().list
+      val result = loader.stateFlow.first { it.list != null }.list
 
       assertNotNull(result)
-      assertEquals(listOf(1), result.map { it.id })
+      assertEquals(listOf(1), result?.map { it.id })
     }
     cs.cancelAndJoinSilently()
   }
@@ -327,10 +331,10 @@ class GitLabApiTest : GitLabApiTestCase() {
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
       }
-      val result = loader.stateFlow.first().list
+      val result = loader.stateFlow.first { it.list != null }.list
 
       assertNotNull(result)
-      assertEquals(listOf(3, 4, 5), result.map { it.id })
+      assertEquals(listOf(3, 4, 5), result?.map { it.id })
     }
     cs.cancelAndJoinSilently()
   }
@@ -350,10 +354,10 @@ class GitLabApiTest : GitLabApiTestCase() {
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
       }
-      val result = loader.stateFlow.first().list
+      val result = loader.stateFlow.first { it.list != null }.list
 
       assertNotNull(result)
-      assertEquals(listOf(3, 4), result.map { it.id })
+      assertEquals(listOf(3, 4), result?.map { it.id })
     }
     cs.cancelAndJoinSilently()
   }
