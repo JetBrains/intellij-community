@@ -38,7 +38,8 @@ internal class MatchWithData(val data: Any?, val basedOn: Match? = null): Match 
     return true
   }
 
-  override fun hashCode(): Int = Objects.hash(data, basedOn)
+  private val hashCode = Objects.hash(data, basedOn)
+  override fun hashCode(): Int = hashCode
 
   override fun toString(): String {
     if (basedOn != null) {
@@ -67,7 +68,8 @@ internal class MatchWithEntityId(val entityId: EntityId, val basedOn: Match? = n
     return true
   }
 
-  override fun hashCode(): Int = Objects.hash(entityId, basedOn)
+  private val hashCode = Objects.hash(entityId, basedOn)
+  override fun hashCode(): Int = hashCode
 
   override fun toString(): String {
     if (basedOn != null) {
