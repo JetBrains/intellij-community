@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListe
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -17,27 +16,24 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.project.MavenImportListener
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import java.util.concurrent.ExecutorService
+import org.jetbrains.idea.maven.project.MavenSyncListener
 
 @ApiStatus.Internal
 class MavenProjectAware(
-  private val project: Project,
+  private val myProject: Project,
   override val projectId: ExternalSystemProjectId,
-  private val manager: MavenProjectsManager,
-  private val backgroundExecutor: ExecutorService
+  private val manager: MavenProjectsManager
 ) : ExternalSystemProjectAware {
 
-  private val isImportCompleted = AtomicBooleanProperty(true)
+  private val isSyncCompleted = AtomicBooleanProperty(true)
 
   override val settingsFiles: Set<String>
     get() = collectSettingsFiles()
 
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
-    isImportCompleted.afterReset(parentDisposable) { listener.onProjectReloadStart() }
-    isImportCompleted.afterSet(parentDisposable) { listener.onProjectReloadFinish(SUCCESS) }
+    isSyncCompleted.afterReset(parentDisposable) { listener.onProjectReloadStart() }
+    isSyncCompleted.afterSet(parentDisposable) { listener.onProjectReloadFinish(SUCCESS) }
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
@@ -101,14 +97,18 @@ class MavenProjectAware(
   }
 
   init {
-    project.messageBus.connect(manager)
-      .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
-        override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
-          isImportCompleted.set(true)
+    ApplicationManager.getApplication().messageBus.connect(manager)
+      .subscribe(MavenSyncListener.TOPIC, object : MavenSyncListener {
+        override fun syncFinished(project: Project) {
+          if (myProject == project) {
+            isSyncCompleted.set(true)
+          }
         }
 
-        override fun importStarted() {
-          isImportCompleted.set(false)
+        override fun syncStarted(project: Project) {
+          if (myProject == project) {
+            isSyncCompleted.set(false)
+          }
         }
       })
   }

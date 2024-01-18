@@ -36,7 +36,7 @@ public final class MavenProjectManagerWatcher {
     var projectManager = MavenProjectsManager.getInstance(myProject);
     var projectTracker = ExternalSystemProjectTracker.getInstance(myProject);
     var projectId = new ExternalSystemProjectId(MavenUtil.SYSTEM_ID, myProject.getName());
-    myProjectAware = new MavenProjectAware(project, projectId, projectManager, backgroundExecutor);
+    myProjectAware = new MavenProjectAware(project, projectId, projectManager);
     myProfileWatcher = new MavenProfileWatcher(projectId, projectTracker, projectManager);
     myRenameModuleWatcher = new MavenRenameModuleWatcher();
     myGeneralSettingsWatcher = new MavenGeneralSettingsWatcher(projectManager, backgroundExecutor);
