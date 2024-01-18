@@ -15,6 +15,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     generateK2IntentionTests()
     generateK2StructureViewTests()
     generateK2PostfixTemplateTests()
+    generateK2LiveTemplateTests()
     generateK2LineMarkerTests()
 
     testGroup("code-insight/kotlin.code-insight.k2") {

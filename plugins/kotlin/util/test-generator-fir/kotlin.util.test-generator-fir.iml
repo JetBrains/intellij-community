@@ -73,5 +73,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.fir.tests" />
     <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" scope="TEST" />
   </component>
 </module>

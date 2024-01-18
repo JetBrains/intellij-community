@@ -51,5 +51,6 @@
     <orderEntry type="module" module-name="kotlin.copyright.fir.tests" />
     <orderEntry type="module" module-name="kotlin.injection-k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" scope="RUNTIME" />
   </component>
 </module>
