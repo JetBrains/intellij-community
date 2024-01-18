@@ -1,18 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.trace
 
-import com.intellij.platform.workspace.storage.trace.ObjectToTraceMap
 import com.intellij.platform.workspace.storage.trace.ReadTraceHash
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 
 internal class ReadTraceIndex<T> private constructor(
-  objToTrace: ObjectToTraceMap<T, LongOpenHashSet>,
+  objToTrace: HashMap<T, LongOpenHashSet>,
   traceToObj: Long2ObjectOpenHashMap<MutableSet<T>>,
 ) {
 
-  constructor() : this(ObjectToTraceMap<T, LongOpenHashSet>(), Long2ObjectOpenHashMap<MutableSet<T>>())
+  constructor() : this(HashMap<T, LongOpenHashSet>(), Long2ObjectOpenHashMap<MutableSet<T>>())
 
   private val objToTrace: MutableMap<T, LongOpenHashSet> = objToTrace.mapValuesTo(HashMap()) { LongOpenHashSet(it.value) }
   private val traceToObj: Long2ObjectOpenHashMap<MutableSet<T>> = Long2ObjectOpenHashMap(traceToObj.mapValues { HashSet(it.value) })
@@ -23,7 +22,7 @@ internal class ReadTraceIndex<T> private constructor(
   }
 
   fun get(trace: ReadTraceHash): Set<T> {
-    return traceToObj.get(trace.hash)?.toSet() ?: emptySet()
+    return traceToObj.get(trace)?.toSet() ?: emptySet()
   }
 
   fun get(traces: ReadTraceHashSet): Set<T> {
@@ -32,18 +31,23 @@ internal class ReadTraceIndex<T> private constructor(
 
   fun set(traces: ReadTraceHashSet, obj: T) {
     val existingTraces = objToTrace.remove(obj)
-    val hashSetTraces = LongOpenHashSet(traces.size).also { set -> traces.forEach { set.add(it.hash) } }
-    existingTraces?.forEach { trace ->
-      val objs = traceToObj.get(trace)
-      if (objs != null && trace !in hashSetTraces) {
-        objs.remove(obj)
-        if (objs.isEmpty()) {
-          traceToObj.remove(trace)
+    if (existingTraces != null) {
+      val existingTracesIterator = existingTraces.longIterator()
+      while (existingTracesIterator.hasNext()) {
+        val trace = existingTracesIterator.nextLong()
+        val objs = traceToObj.get(trace)
+        if (objs != null && trace !in traces) {
+          objs.remove(obj)
+          if (objs.isEmpty()) {
+            traceToObj.remove(trace)
+          }
         }
       }
     }
 
-    hashSetTraces.forEach { trace ->
+    val tracesIterator = traces.longIterator()
+    while (tracesIterator.hasNext()) {
+      val trace = tracesIterator.nextLong()
       if (existingTraces == null || trace !in existingTraces) {
         val objs = traceToObj.get(trace)
         if (objs == null) {
@@ -56,7 +60,7 @@ internal class ReadTraceIndex<T> private constructor(
     }
 
     if (traces.isNotEmpty()) {
-      objToTrace[obj] = hashSetTraces
+      objToTrace[obj] = traces
     }
   }
 }

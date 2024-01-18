@@ -10,7 +10,7 @@ import com.intellij.platform.workspace.storage.impl.containers.ClosableHashSet
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 
 
 /**
@@ -142,19 +142,9 @@ internal class ReadTracker private constructor(
   }
 }
 
-// Type aliases for read trace as Int with string. This should increase memory consumption, but make debugging simpler
-internal data class ReadTraceHash(val hash: Long, val debug: String)
-internal typealias ReadTraceHashSet = HashSet<ReadTraceHash>
-internal fun Long.traceWithDebug(debug: String): ReadTraceHash = ReadTraceHash(this, debug)
-internal typealias ObjectToTraceMap<K, V> = HashMap<K, V>
-internal typealias TraceToObjectMap<K, V> = Object2ObjectOpenHashMap<K, V>
-
-// Type aliases for read trace as Int. This should decrease memory consumption, but make debugging more complicated
-//internal typealias ReadTraceHash = Int
-//internal typealias ReadTraceHashSet = IntOpenHashSet
-//internal fun Int.traceWithDebug(debug: String): ReadTraceHash = this
-//internal typealias ObjectToTraceMap<K, V> = HashMap<K, IntSet>
-//internal typealias TraceToObjectMap<K, V> = Int2ObjectOpenHashMap<V>
+internal typealias ReadTraceHash = Long
+internal typealias ReadTraceHashSet = LongOpenHashSet
+internal fun Long.traceWithDebug(debug: String): ReadTraceHash = this
 
 internal sealed interface ReadTrace {
 
