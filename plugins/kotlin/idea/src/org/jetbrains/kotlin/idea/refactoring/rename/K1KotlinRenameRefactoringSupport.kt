@@ -70,10 +70,6 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         return KotlinTypeMapper.InternalNameMapper.demangleInternalName(mangledName)
     }
 
-    override fun liftToExpected(declaration: KtDeclaration): KtDeclaration? {
-        return declaration.liftToExpected()
-    }
-
     override fun getJvmName(element: PsiElement): String? {
         val descriptor = (element.unwrapped as? KtFunction)?.unsafeResolveToDescriptor() as? FunctionDescriptor ?: return null
         return DescriptorUtils.getJvmName(descriptor)

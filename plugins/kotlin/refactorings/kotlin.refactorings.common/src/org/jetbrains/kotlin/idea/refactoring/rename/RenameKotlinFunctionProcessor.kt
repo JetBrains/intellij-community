@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
-import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
 import org.jetbrains.kotlin.psi.*
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
@@ -92,8 +91,6 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement? {
         substituteForExpectOrActual(element)?.let { return it }
 
-        val javaMethod = element as? PsiMethod
-
         val deepestSuperMethods =
             runProcessWithProgressSynchronously(
                 KotlinBundle.message("rename.searching.for.super.declaration"),
@@ -101,18 +98,14 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                 element.project
             ) {
                 runReadAction {
-                    if (javaMethod != null) {
-                        findDeepestSuperMethodsKotlinAware(javaMethod)
-                    } else {
-                        KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
-                    }
+                    KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
                 }
             }
 
         val substitutedJavaElement = when {
             deepestSuperMethods.isEmpty() -> return element
-            javaMethod != null && (javaMethod.isConstructor || deepestSuperMethods.size == 1 || element !is KtNamedFunction) -> {
-                javaMethodProcessorInstance.substituteElementToRename(javaMethod, editor)
+            element is PsiMethod -> {
+                javaMethodProcessorInstance.substituteElementToRename(element, editor)
             }
             else -> {
                 val declaration = element.unwrapped as? KtNamedFunction ?: return element
@@ -148,30 +141,25 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         substituteForExpectOrActual(element)?.let { return preprocessAndPass(it) }
 
-        val javaMethod = element as? PsiMethod
         val deepestSuperMethods = runProcessWithProgressSynchronously(
             KotlinBundle.message("rename.searching.for.super.declaration"),
             canBeCancelled = true,
             element.project
         ) {
             runReadAction {
-                if (javaMethod != null) {
-                    findDeepestSuperMethodsKotlinAware(javaMethod)
-                } else {
-                    KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
-                }
+                KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
             }
         }
 
         when {
             deepestSuperMethods.isEmpty() -> preprocessAndPass(element)
-            javaMethod != null && (javaMethod.isConstructor || deepestSuperMethods.size == 1 || element !is KtNamedFunction) -> {
-                javaMethodProcessorInstance.substituteElementToRename(javaMethod, editor, Pass.create(::preprocessAndPass))
+            element is PsiMethod -> {
+                javaMethodProcessorInstance.substituteElementToRename(element, editor, Pass.create(::preprocessAndPass))
             }
             else -> {
-                val declaration = element.unwrapped as? KtNamedFunction ?: return
-                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), editor) {
-                    preprocessAndPass(if (it.size > 1) FunctionWithSupersWrapper(declaration, it) else it.firstOrNull() ?: element)
+                val declaration = element as? KtNamedFunction ?: return
+                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), editor) { chosenElements ->
+                    preprocessAndPass(if (chosenElements.size > 1) FunctionWithSupersWrapper(declaration, chosenElements) else chosenElements.firstOrNull() ?: element)
                 }
             }
         }
