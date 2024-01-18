@@ -5,15 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
@@ -24,7 +18,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -32,9 +25,10 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class CoverageSuiteChooserDialog extends DialogWrapper {
   @NonNls private static final String LOCAL = "Local";
@@ -99,31 +93,8 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    Map<CoverageEngine, List<CoverageSuite>> byEngine = suites.stream().collect(Collectors.groupingBy((suite) -> suite.getCoverageEngine()));
-    closeBundlesThatAreNotChosen(byEngine);
-
-    for (List<CoverageSuite> suiteList : byEngine.values()) {
-      CoverageSuitesBundle bundle = new CoverageSuitesBundle(suiteList.toArray(new CoverageSuite[0]));
-      CoverageLogger.logSuiteImport(myProject, bundle);
-      myCoverageManager.chooseSuitesBundle(bundle);
-    }
-
-    if (!suites.isEmpty()) {
-      ExternalCoverageWatchManager.getInstance(myProject).addRootsToWatch(suites);
-    }
+    ExternalReportImportManager.getInstance(myProject).openSuites(suites);
     super.doOKAction();
-  }
-
-  private void closeBundlesThatAreNotChosen(Map<CoverageEngine, List<CoverageSuite>> byEngine) {
-    Collection<CoverageSuitesBundle> activeSuites = myCoverageManager.activeSuites();
-    Set<CoverageEngine> activeEngines = activeSuites.stream().map(b -> b.getCoverageEngine()).collect(Collectors.toSet());
-    activeEngines.removeAll(byEngine.keySet());
-
-    for (CoverageSuitesBundle bundle : activeSuites) {
-      if (activeEngines.contains(bundle.getCoverageEngine())) {
-        myCoverageManager.closeSuitesBundle(bundle);
-      }
-    }
   }
 
   @Override
@@ -133,16 +104,6 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private static String getCoverageRunnerTitle(CoverageRunner coverageRunner) {
     return CoverageBundle.message("coverage.data.runner.name", coverageRunner.getPresentableName());
-  }
-
-  @Nullable
-  private static CoverageRunner getCoverageRunner(@NotNull VirtualFile file) {
-    for (CoverageRunner runner : CoverageRunner.EP_NAME.getExtensionList()) {
-      for (String extension : runner.getDataFileExtensions()) {
-        if (Comparing.strEqual(file.getExtension(), extension) && runner.canBeLoaded(VfsUtilCore.virtualToIoFile(file))) return runner;
-      }
-    }
-    return null;
   }
 
   private List<CoverageSuite> collectSelectedSuites() {
@@ -280,33 +241,14 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final VirtualFile[] files =
-        FileChooser.chooseFiles(new FileChooserDescriptor(true, false, false, false, false, true) {
-          @Override
-          public boolean isFileSelectable(@Nullable VirtualFile file) {
-            return file != null && getCoverageRunner(file) != null;
-          }
-        }, myProject, null);
-      if (files.length > 0) {
-        //ensure timestamp in vfs is updated
-        VfsUtil.markDirtyAndRefresh(false, false, false, files);
-
-        for (VirtualFile file : files) {
-          final CoverageRunner coverageRunner = getCoverageRunner(file);
-          if (coverageRunner == null) {
-            Messages.showErrorDialog(myProject, CoverageBundle.message("no.coverage.runner.available.for", file.getName()), CommonBundle.getErrorTitle());
-            continue;
-          }
-
-          CoverageSuite coverageSuite = myCoverageManager.addExternalCoverageSuite(VfsUtilCore.virtualToIoFile(file), coverageRunner);
-
-          List<CoverageSuite> currentlySelected = collectSelectedSuites();
-          currentlySelected.add(coverageSuite);
-          initTree();
-          selectSuites(currentlySelected);
-          ((DefaultTreeModel)mySuitesTree.getModel()).reload();
-          TreeUtil.expandAll(mySuitesTree);
-        }
+      List<CoverageSuite> suites = ExternalReportImportManager.getInstance(myProject).chooseAndImportCoverageReportsFromDisc();
+      if (!suites.isEmpty()) {
+        List<CoverageSuite> currentlySelected = collectSelectedSuites();
+        currentlySelected.addAll(suites);
+        initTree();
+        selectSuites(currentlySelected);
+        ((DefaultTreeModel)mySuitesTree.getModel()).reload();
+        TreeUtil.expandAll(mySuitesTree);
       }
     }
   }
