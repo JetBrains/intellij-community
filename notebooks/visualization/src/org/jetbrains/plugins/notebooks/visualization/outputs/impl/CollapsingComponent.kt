@@ -102,7 +102,7 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
     result.height += insets.run { top + bottom }
     return result
   }
-  // jumping cells
+
   override fun doLayout() {
     val (borderWidth, borderHeight) = insets.run { left + right to top + bottom }
     when {
