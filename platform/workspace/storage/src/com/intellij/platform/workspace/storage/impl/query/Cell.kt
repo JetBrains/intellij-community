@@ -7,11 +7,12 @@ import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.cache.PropagationResult
 import com.intellij.platform.workspace.storage.impl.cache.UpdateType
 import com.intellij.platform.workspace.storage.impl.clazz
-import com.intellij.platform.workspace.storage.impl.containers.PersistentMultiOccurenceMap
 import com.intellij.platform.workspace.storage.impl.findWorkspaceEntity
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import com.intellij.platform.workspace.storage.trace.ReadTracker
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.mutate
 import kotlin.reflect.KClass
 
 /**
@@ -72,7 +73,7 @@ internal class EntityCell<T : WorkspaceEntity>(
 internal class FlatMapCell<T, K>(
   id: CellId,
   val mapping: (T, ImmutableEntityStorage) -> Iterable<K>,
-  private val memory: PersistentMultiOccurenceMap<Match, Iterable<K>>,
+  private val memory: PersistentMap<Match, Iterable<K>>,
 ) : Cell<List<K>>(id) {
 
   private var dataCache: List<K>? = null
@@ -112,7 +113,7 @@ internal class FlatMapCell<T, K>(
       return existingData
     }
 
-    val res = memory.values().flatten()
+    val res = memory.values.flatten()
     this.dataCache = res
     return res
   }
@@ -123,7 +124,7 @@ internal class GroupByCell<T, K, V>(
   id: CellId,
   val keySelector: (T) -> K,
   val valueTransform: (T) -> V,
-  private val myMemory: PersistentMultiOccurenceMap<Match, Pair<K, V>>,
+  private val myMemory: PersistentMap<Match, Pair<K, V>>,
 ) : Cell<Map<K, List<V>>>(id) {
 
   private var mapCache: Map<K, List<V>>? = null
@@ -164,7 +165,7 @@ internal class GroupByCell<T, K, V>(
     val myMapCache = mapCache
     if (myMapCache != null) return myMapCache
     val res = mutableMapOf<K, MutableList<V>>()
-    myMemory.values().forEach { (k, v) ->
+    myMemory.values.forEach { (k, v) ->
       res.getOrPut(k) { ArrayList() }.add(v)
     }
     mapCache = res

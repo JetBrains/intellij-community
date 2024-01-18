@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.query
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.containers.PersistentMultiOccurenceMap
 import com.intellij.platform.workspace.storage.impl.query.*
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
@@ -58,7 +58,7 @@ internal fun <T> StorageQuery<T>.compile(cellCollector: MutableList<Cell<*>> = m
           cellCollector.prepend(EntityCell(CellId(), type))
         }
         is CollectionQuery.FlatMapTo<*, *> -> {
-          cellCollector.prepend(FlatMapCell(CellId(), map, PersistentMultiOccurenceMap()))
+          cellCollector.prepend(FlatMapCell(CellId(), map, persistentMapOf()))
           this.from.compile(cellCollector)
         }
       }
@@ -66,7 +66,7 @@ internal fun <T> StorageQuery<T>.compile(cellCollector: MutableList<Cell<*>> = m
     is AssociationQuery<*, *> -> {
       when (this) {
         is AssociationQuery.GroupBy<*, *, *> -> {
-          cellCollector.prepend(GroupByCell(CellId(), keySelector, valueTransformer, PersistentMultiOccurenceMap()))
+          cellCollector.prepend(GroupByCell(CellId(), keySelector, valueTransformer, persistentMapOf()))
           this.from.compile(cellCollector)
         }
       }
