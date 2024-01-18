@@ -33,24 +33,32 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
   // TODO add flag 'errorProne' that fill turn off logs about bad end?
   override val id = "runconfig.running"
 
-  private var lastBuildAtLock = Mutex()
+  private val lastBuildLock = Mutex()
   private var lastBuildAt = 0L
+  private var lastAttemptFromBuildListener: Boolean? = null
 
-  suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int, timeStart: Long) {
+  suspend fun writeBuildStart(id: Int, timeStart: Long, attemptFromBuildListener: Boolean) {
     /**
      * Sometimes [BuildProgressListener] reports events, sometimes [ExecutionListener].
-     * Sometimes they both report build events. So if a build event happened within 27ms, we will skip it
+     * Sometimes they both report build events. So if a build event happened within 300ms and other event is from different place, we will skip it
      */
-    if (kind == RunConfigurationEventKind.Build) {
-      lastBuildAtLock.withLock {
-        if (timeStart - lastBuildAt <= 27) {
-          return
-        }
-        else {
-          lastBuildAt = timeStart
-        }
+    lastBuildLock.withLock {
+      val diff = timeStart - lastBuildAt
+
+      if (diff <= 300 && lastAttemptFromBuildListener != attemptFromBuildListener) {
+        return
+      }
+      else {
+        lastBuildAt = timeStart
+        lastAttemptFromBuildListener = attemptFromBuildListener
       }
     }
+
+    val data = mapOf("act" to RunConfigurationEventKind.Build.toString())
+    submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.Start, data)
+  }
+
+  suspend fun writeRunConfigurationStart(kind: RunConfigurationEventKind, id: Int, timeStart: Long) {
     val data = mapOf("act" to kind.eventName)
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.Start, data)
   }
@@ -122,7 +130,7 @@ internal class RunConfigurationListener : ExecutionListener {
     when { // should be similar to [isAllowed]
       env.runProfile.name.let { it.contains("[build", true) || it.startsWith("build", true) } -> {
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
-          it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id, timeStart)
+          it.writeBuildStart(id, timeStart, false)
         }
       }
       env.executor is DefaultDebugExecutor || env.executor.id.contains("debug", true) -> {
@@ -175,7 +183,7 @@ internal class BuildListener : BuildProgressListener {
         // Skip Gradle initial loading
         if (event.buildDescriptor.title == "Classes up-to-date check") return
         FeatureUsageDatabaseCountersScopeProvider.getScope().runUpdateEvent(RunConfigurationTimeSpanUserActivity) {
-          it.writeRunConfigurationStart(RunConfigurationEventKind.Build, id, timeStart)
+          it.writeBuildStart(id, timeStart, true)
         }
       }
       is FinishBuildEvent -> {
