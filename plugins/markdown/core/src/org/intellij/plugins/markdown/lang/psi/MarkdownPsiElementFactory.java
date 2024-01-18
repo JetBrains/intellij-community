@@ -51,15 +51,9 @@ public final class MarkdownPsiElementFactory {
                                                   @Nullable String language,
                                                   @NotNull String text,
                                                   @Nullable String indent) {
-    String content = new StringBuilder()
-      .append("```")
-      .append(StringUtil.notNullize(language))
-      .append("\n")
-      .append(text)
-      .append("\n")
-      .append(StringUtil.notNullize(indent))
-      .append("```")
-      .toString();
+    String content = "```" + StringUtil.notNullize(language) + "\n" +
+                     text + "\n" +
+                     StringUtil.notNullize(indent) + "```";
 
     final MarkdownFile file = createFile(project, content);
 
@@ -135,9 +129,7 @@ public final class MarkdownPsiElementFactory {
     }
     final var builder = new StringBuilder();
     builder.append("|");
-    for (var column = 0; column < columnsCount; column += 1) {
-      builder.append("    |");
-    }
+    builder.append("    |".repeat(columnsCount));
     builder.append('\n');
     builder.append(text);
     final var file = createFile(project, builder.toString());

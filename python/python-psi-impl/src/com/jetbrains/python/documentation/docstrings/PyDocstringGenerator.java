@@ -300,7 +300,7 @@ public final class PyDocstringGenerator {
 
   @NotNull
   public String getPreferredParameterName(@NotNull PyNamedParameter parameter) {
-    if (getDocStringFormat() == DocStringFormat.GOOGLE && parameter.getAsNamed() != null) {
+    if (getDocStringFormat() == DocStringFormat.GOOGLE) {
       return parameter.getAsNamed().getRepr(false);
     }
     return StringUtil.notNullize(parameter.getName());
@@ -441,7 +441,7 @@ public final class PyDocstringGenerator {
   }
 
   public DocstringParam getParamToEdit() {
-    if (myAddedParams.size() == 0) {
+    if (myAddedParams.isEmpty()) {
       throw new IllegalStateException("We should have at least one param to edit");
     }
     return myAddedParams.get(0);
@@ -529,9 +529,7 @@ public final class PyDocstringGenerator {
 
       if (myReturnValue != param.myReturnValue) return false;
       if (!myName.equals(param.myName)) return false;
-      if (myType != null ? !myType.equals(param.myType) : param.myType != null) return false;
-
-      return true;
+      return Objects.equals(myType, param.myType);
     }
 
     @Override
