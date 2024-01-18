@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.*
@@ -225,6 +225,14 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
       multicaster.addDocumentListener(this, project)
       multicaster.addEditorMouseListener(this, project)
       VFM.addAsyncFileListener(this, project)
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    @Deprecated("Use the 'Util.find' method", ReplaceWith("Util.find(project)", "com.intellij.ide.bookmark.providers.LineBookmarkProvider.Util"))
+    fun find(project: Project): LineBookmarkProvider? {
+      return Util.find(project)
     }
   }
 
