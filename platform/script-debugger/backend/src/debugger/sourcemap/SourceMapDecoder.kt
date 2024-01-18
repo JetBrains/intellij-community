@@ -210,7 +210,8 @@ private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
   return SourceMapDataImpl(file, sources, sourcesContent, !names.isNullOrEmpty(), mappings)
 }
 
-private fun readSourcePath(reader: JsonReaderEx): String = PathUtil.toSystemIndependentName(reader.nextString().trim { it <= ' ' })
+private fun readSourcePath(reader: JsonReaderEx): String? = PathUtil.toSystemIndependentName(
+  reader.nextNullableString()?.trim { it <= ' ' })
 
 private fun readMappings(value: String,
                          mappings: MutableList<MappingEntry>,
@@ -286,7 +287,7 @@ private fun readSources(reader: JsonReaderEx, sourceRoot: String?): List<String>
   else {
     sources = SmartList()
     do {
-      var sourceUrl: String = readSourcePath(reader)
+      var sourceUrl = readSourcePath(reader) ?: ""
       if (!sourceRoot.isNullOrEmpty()) {
         if (sourceRoot == "/") {
           sourceUrl = "/$sourceUrl"
@@ -366,7 +367,7 @@ private class CharSequenceIterator(private val content: CharSequence) : CharIter
 
   override fun next() = content.get(current++)
 
-  internal fun peek() = content.get(current)
+  fun peek() = content.get(current)
 
   override fun hasNext() = current < length
 }
