@@ -29,7 +29,7 @@ class NewJavaToKotlinConverter(
     val targetModule: Module?,
     val settings: ConverterSettings
 ) : JavaToKotlinConverter() {
-    val phasesCount = J2KConversionPhase.values().size
+    val phasesCount = J2KConversionPhase.entries.size
     val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher
 
     override fun filesToKotlin(
