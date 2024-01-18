@@ -36,8 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.jetbrains.idea.devkit.run.DevKitApplicationPatcherKt.addRequiredVmOptionForTestOrAppRunConfiguration;
-
 final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
   static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
@@ -72,7 +70,6 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       }
 
       appendAddOpensWhenNeeded(project, jdk, vm);
-      addRequiredVmOptionForTestOrAppRunConfiguration(vm);
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);

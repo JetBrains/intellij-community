@@ -231,7 +231,7 @@ private suspend fun isJbrOperational(): Boolean {
 
 private fun checkReservedCodeCacheSize() {
   val reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true)
-  val minReservedCodeCacheSize = if (PluginManagerCore.isRunningFromSources()) 240 else 512
+  val minReservedCodeCacheSize = if (Runtime.version().feature() == 21 || PluginManagerCore.isRunningFromSources()) 240 else 512
   if (reservedCodeCacheSize in 1 until minReservedCodeCacheSize) {
     val vmEditAction = EditCustomVmOptionsAction()
     val action = if (vmEditAction.isEnabled()) {
