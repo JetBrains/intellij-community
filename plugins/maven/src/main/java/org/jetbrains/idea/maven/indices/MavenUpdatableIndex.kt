@@ -7,8 +7,15 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 
 interface MavenUpdatableIndex : MavenRepositoryIndex {
+  @Deprecated("do not use it")
   @Throws(MavenProcessCanceledException::class)
-  fun updateOrRepair(fullUpdate: Boolean, progress: MavenProgressIndicator, explicit: Boolean)
+  fun updateOrRepair(fullUpdate: Boolean, progress: MavenProgressIndicator, explicit: Boolean) {
+  }
+
+  suspend fun update(indicator: MavenProgressIndicator, explicit: Boolean) {
+    updateOrRepair(true, indicator, explicit)
+  }
 
   fun tryAddArtifacts(artifactFiles: Collection<File>): List<AddArtifactResponse>
 }
+

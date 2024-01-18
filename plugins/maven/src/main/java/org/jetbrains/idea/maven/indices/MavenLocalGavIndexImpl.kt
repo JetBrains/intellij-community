@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.server.AddArtifactResponse
@@ -50,50 +50,43 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
 
   override fun getRepository() = repo
 
-  override fun updateOrRepair(fullUpdate: Boolean, progress: MavenProgressIndicator, explicit: Boolean) {
+  override suspend fun update(indicator: MavenProgressIndicator, explicit: Boolean) {
     val activity = MavenIndexUsageCollector.GAV_INDEX_UPDATE.started(null)
     var success = false
     var filesProcessed = 0
     val startTime = System.currentTimeMillis()
-    try {
-      if (fullUpdate) {
-        group2Artifacts.clear()
-        mavenIds2Versions.clear()
-      }
-      runBlockingMaybeCancellable {
-        launch(Dispatchers.IO) {
-          repoFile.walkBottomUp()
-            .filter { it.name.endsWith(".pom") }
-            .mapNotNull { extractMavenId(it) }
-            .forEach { id ->
-              addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
-              addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
-              if (filesProcessed % 100 == 0) {
-                progress.setText(IndicesBundle.message("maven.indices.scanned.artifacts", filesProcessed))
-              }
-              if (!isActive || progress.isCanceled()) throw MavenProcessCanceledException()
-              filesProcessed++
+    withContext(Dispatchers.IO) {
+      try {
+        repoFile.walkBottomUp()
+          .filter { it.name.endsWith(".pom") }
+          .mapNotNull { extractMavenId(it) }
+          .forEach { id ->
+            addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
+            addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
+            if (filesProcessed % 100 == 0) {
+              indicator.setText(IndicesBundle.message("maven.indices.scanned.artifacts", filesProcessed))
             }
-        }.join()
+            if (!isActive) throw MavenProcessCanceledException()
+            filesProcessed++
+          }
+        success = true
+        indicator.setText(IndicesBundle.message("maven.indices.updated.for.repo", repo.name))
       }
-      success = true
-      progress.setText(IndicesBundle.message("maven.indices.updated.for.repo", repo.name))
-    }
-    finally {
-      MavenLog.LOG.info(
-        "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis")
-      activity.finished {
-        listOf(
-          MavenIndexUsageCollector.MANUAL.with(explicit),
-          MavenIndexUsageCollector.IS_SUCCESS.with(success),
-          MavenIndexUsageCollector.GROUPS_COUNT.with(group2Artifacts.size),
-          MavenIndexUsageCollector.ARTIFACTS_COUNT.with(filesProcessed),
-        )
+      finally {
+        MavenLog.LOG.info(
+          "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis")
+        activity.finished {
+          listOf(
+            MavenIndexUsageCollector.MANUAL.with(explicit),
+            MavenIndexUsageCollector.IS_SUCCESS.with(success),
+            MavenIndexUsageCollector.GROUPS_COUNT.with(group2Artifacts.size),
+            MavenIndexUsageCollector.ARTIFACTS_COUNT.with(filesProcessed),
+          )
+        }
       }
-
     }
-
   }
+
 
   private fun addTo(map: MutableMap<String, MutableSet<String>>, key: String, value: String) {
     val set = map.computeIfAbsent(key) { ConcurrentHashMap<String, Boolean>().keySet(true) }

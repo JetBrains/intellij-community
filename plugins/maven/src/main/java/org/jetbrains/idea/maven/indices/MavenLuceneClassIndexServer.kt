@@ -9,7 +9,6 @@ import org.jetbrains.idea.maven.server.AddArtifactResponse
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerIndexerException
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 
@@ -36,9 +35,8 @@ class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
     return myNexusIndexer.search(myIndexId, pattern, maxResult)
   }
 
-  @Throws(MavenProcessCanceledException::class)
-  override fun updateOrRepair(fullUpdate: Boolean, progress: MavenProgressIndicator, explicit: Boolean) {
-    myNexusIndexer.updateIndex(myIndexId, progress, explicit)
+  override suspend fun update(indicator: MavenProgressIndicator, explicit: Boolean) {
+    myNexusIndexer.updateIndex(myIndexId, indicator, explicit)
     myUpdateTimestamp = System.currentTimeMillis()
   }
 

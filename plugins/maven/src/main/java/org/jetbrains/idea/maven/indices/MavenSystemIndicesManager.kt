@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.PathUtilRt
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -316,19 +315,16 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     }
 
     inMemoryUpdate.forEach { idx ->
-      cs.async(Dispatchers.IO) {
-        withRawProgressReporter {
-          val indicator = MavenProgressIndicator(null, null)
-          try {
-            (idx as MavenUpdatableIndex).updateOrRepair(true, indicator, explicit)
-          }
-          catch (ignore: MavenProcessCanceledException) {
+      cs.launch(Dispatchers.IO) {
+        val indicator = MavenProgressIndicator(null, null)
+        try {
+          (idx as MavenUpdatableIndex).update(indicator, explicit)
+        }
+        catch (ignore: MavenProcessCanceledException) {
 
-          }
-          finally {
-            gavUpdatingIndixes.remove(idx)
-          }
-
+        }
+        finally {
+          gavUpdatingIndixes.remove(idx)
         }
       }
     }
@@ -339,7 +335,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
       cs.launch {
         try {
           val indicator = MavenProgressIndicator(null, null)
-          idx.updateOrRepair(true, indicator, explicit)
+          idx.update(indicator, explicit)
           getOrCreateState().updateTimestamp(idx.repository)
           luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(
             idx.repository.url, null, null,
