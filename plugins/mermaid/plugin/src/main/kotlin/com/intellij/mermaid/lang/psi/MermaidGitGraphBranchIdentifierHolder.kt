@@ -10,6 +10,6 @@ fun MermaidGitGraphBranchIdentifierHolder.isQuoted(): Boolean {
 
 // TODO: Probably should return [MermaidIdentifier]
 // TODO: [MermaidQuotedBranchIdentifier] should probably implement [MermaidIdentifier]
-fun MermaidGitGraphBranchIdentifierHolder.identifier(): MermaidPsiElement {
+fun MermaidGitGraphBranchIdentifierHolder.branchIdentifier(): MermaidPsiElement {
   return gitGraphBranchIdentifier.identifier ?: gitGraphBranchIdentifier.quotedBranchIdentifier!!
 }

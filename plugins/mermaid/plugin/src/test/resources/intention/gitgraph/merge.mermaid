@@ -1,0 +1,10 @@
+gitGraph
+  commit
+  merge <error descr="Branch 'testBranch' does not exist">testBranch</error>
+  commit
+  checkout <error descr="Branch 'testBranch' does not exist">testBranch</error>
+  commit
+  branch testBranch
+  commit
+  checkout main
+  merge testBranch

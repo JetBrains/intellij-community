@@ -45,6 +45,24 @@ class MermaidElementFactory {
       return file.traverse().filterIsInstance<MermaidCommitStatement>().firstOrNull()
     }
 
+    fun createCommitIdValue(project: Project, id: String): MermaidCommitIdValue? {
+      val text = """
+        gitGraph
+          commit id: "$id"
+      """.trimIndent()
+      val file = createFile(project, text)
+      return file.traverse().filterIsInstance<MermaidCommitIdValue>().firstOrNull()
+    }
+
+    fun createParentIdAttribute(project: Project, id: String): MermaidParentCommitIdAttribute? {
+      val text = """
+        gitGraph
+          cherry-pick id: "1" parent: "$id"
+      """.trimIndent()
+      val file = createFile(project, text)
+      return file.traverse().filterIsInstance<MermaidParentCommitIdAttribute>().firstOrNull()
+    }
+
     fun createSpaceElement(project: Project, length: Int): PsiElement {
       check(length > 0) { "Length of element should be > 0" }
       val text = """

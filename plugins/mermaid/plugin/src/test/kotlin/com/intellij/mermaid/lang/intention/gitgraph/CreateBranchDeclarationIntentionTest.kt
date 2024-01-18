@@ -1,9 +1,10 @@
-package com.intellij.mermaid.lang.intention.declarations
+package com.intellij.mermaid.lang.intention.gitgraph
 
 import com.intellij.mermaid.MermaidBundle
 import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.intention.GitGraphInspection
 
-class CreateBranchDeclarationIntentionTest : MermaidBaseTestCase("intention/declarations/create_branch") {
+class CreateBranchDeclarationIntentionTest : MermaidBaseTestCase("intention/gitgraph/create_branch") {
   fun `test merge`() = doTest()
 
   fun `test checkout`() = doTest()
@@ -13,6 +14,7 @@ class CreateBranchDeclarationIntentionTest : MermaidBaseTestCase("intention/decl
   private fun doTest() {
     val testName = getTestName(true)
     myFixture.configureByFile("${testName}_before.mermaid")
+    myFixture.enableInspections(GitGraphInspection())
 
     val targetText = MermaidBundle.message("fix.create.branch.declaration", "master")
     val fix = myFixture.getAllQuickFixes().find { it.text == targetText }

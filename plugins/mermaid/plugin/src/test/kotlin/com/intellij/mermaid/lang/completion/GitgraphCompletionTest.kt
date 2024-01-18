@@ -10,7 +10,7 @@ class GitgraphCompletionTest : MermaidBaseTestCase("completion/diagrams/gitgraph
 
   fun `test merge`() = doTest("id", "tag", "type")
 
-  fun `test cherry-pick`() = doTest("id", "tag")
+  fun `test cherry-pick`() = doTest("id", "tag", "parent")
 
   fun `test commit type`() = doTest("NORMAL", "REVERSE", "HIGHLIGHT")
 

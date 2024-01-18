@@ -724,6 +724,9 @@ object MermaidTokens {
     val MSG = MermaidToken("GitGraph.MSG")
 
     @JvmField
+    val PARENT = MermaidToken("GitGraph.PARENT")
+
+    @JvmField
     val CHERRY_PICK = MermaidToken("GitGraph.CHERRY_PICK")
 
     @JvmField

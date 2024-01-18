@@ -609,8 +609,12 @@ commitStatement ::=
   | COMMIT [commit_arg]
 
 private cherryPickAttributes ::=
-    commitIdAttribute commitTagAttribute
+    commitIdAttribute parentCommitIdAttribute commitTagAttribute
+  | commitIdAttribute commitTagAttribute parentCommitIdAttribute
+  | commitTagAttribute commitIdAttribute parentCommitIdAttribute
+  | commitIdAttribute commitTagAttribute
   | commitTagAttribute commitIdAttribute
+  | commitIdAttribute parentCommitIdAttribute
   | commitIdAttribute
 
 private commitAttributes ::=
@@ -708,6 +712,7 @@ private commitAttributesWithMsg ::=
 
 branchOrder ::= ORDER COLON NUM
 commitIdAttribute ::= ID_KEYWORD COLON DOUBLE_QUOTE commitIdValue DOUBLE_QUOTE
+parentCommitIdAttribute ::= PARENT COLON DOUBLE_QUOTE commitIdValue DOUBLE_QUOTE
 commitTypeAttribute ::= TYPE COLON commitType
 commitTagAttribute ::= TAG COLON maybeEmptyString
 commitMsgAttribute ::= MSG COLON maybeEmptyString

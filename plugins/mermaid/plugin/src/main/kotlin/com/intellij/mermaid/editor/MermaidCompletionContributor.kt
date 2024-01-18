@@ -310,7 +310,7 @@ class MermaidCompletionContributor : CompletionContributor() {
         psiElement().afterSiblingSkippingElementsAndWhitespaces(MermaidTokens.GitGraph.CHERRY_PICK),
         psiElement().insideGitGraphStatement(psiElement(MermaidElements.CHERRY_PICK_STATEMENT))
       ),
-      GitGraphCommitCompletionProvider(listOf("id", "tag"))
+      GitGraphCommitCompletionProvider(listOf("id", "tag", "parent"))
     )
     extend(
       CompletionType.BASIC,

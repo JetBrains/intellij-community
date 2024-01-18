@@ -849,6 +849,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "type" { return TYPE; }
   "tag" { return GitGraph.TAG; }
   "msg" { return GitGraph.MSG; }
+  "parent" { return GitGraph.PARENT; }
   "branch" { return GitGraph.BRANCH; }
   "order" { return GitGraph.ORDER; }
   "merge" { return GitGraph.MERGE; }

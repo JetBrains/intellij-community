@@ -238,7 +238,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.GitGraph.TAG,
         MermaidTokens.GitGraph.MSG,
         MermaidTokens.GitGraph.CHERRY_PICK,
-        MermaidTokens.GitGraph.ORDER
+        MermaidTokens.GitGraph.ORDER,
+        MermaidTokens.GitGraph.PARENT
       )
       fillMap(
         holder,

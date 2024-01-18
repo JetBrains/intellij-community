@@ -70,10 +70,6 @@
 
     <annotator
       language="Mermaid"
-      implementationClass="com.intellij.mermaid.lang.intention.GitGraphAnnotator"/>
-
-    <annotator
-      language="Mermaid"
       implementationClass="com.intellij.mermaid.lang.intention.UnrenderableSpacesAnnotator"/>
 
     <annotator
@@ -119,6 +115,15 @@
                      level="ERROR"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.mermaid.lang.intention.UnsupportedDirectiveInspection"/>
+
+    <localInspection language="Mermaid" shortName="GitGraph"
+                     groupKey="git.graph.inspection.display.name"
+                     bundle="messages.MermaidBundle"
+                     key="git.graph.inspection.display.name"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.mermaid.lang.intention.GitGraphInspection"/>
 
     <spellchecker.support language="Mermaid" implementationClass="com.intellij.mermaid.lang.MermaidSpellcheckingStrategy"/>
 
