@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.resultOrErrorFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
@@ -19,7 +20,7 @@ import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
-import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabRestETagListLoaderIn
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabRegistry
@@ -92,7 +93,6 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>)
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class LoadedGitLabMergeRequest(
   private val project: Project,
   parentCs: CoroutineScope,
@@ -113,9 +113,9 @@ internal class LoadedGitLabMergeRequest(
   override val url: String = mergeRequest.webUrl
   override val author: GitLabUserDTO = mergeRequest.author
 
-  private val mergeRequestRefreshRequest = MutableSharedFlow<Unit>()
-  private val mergeRequestReloadRequest = MutableSharedFlow<Unit>()
-  private val stateEventsRefreshRequest = MutableSharedFlow<Unit>()
+  private val mergeRequestRefreshRequest = MutableSharedFlow<Unit>(1)
+  private val mergeRequestReloadRequest = MutableSharedFlow<Unit>(1)
+  private val stateEventsRefreshRequest = MutableSharedFlow<Unit>(1)
 
   private val mergeRequestDetailsState: MutableStateFlow<GitLabMergeRequestFullDetails> =
     MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest))
@@ -126,32 +126,53 @@ internal class LoadedGitLabMergeRequest(
     .mapScoped { details -> GitLabMergeRequestChangesImpl(project, this, api, glMetadata, projectMapping, details) }
     .modelFlow(cs, LOG)
 
-  override val stateEvents =
-    mergeRequestReloadRequest.withInitial(Unit).combine(stateEventsRefreshRequest.withInitial(Unit)) { _, _ -> }.flatMapLatest {
-      GitLabETagUpdatableListLoader(getMergeRequestStateEventsUri(glProject, iid), mergeRequestRefreshRequest) { uri, eTag ->
+  private val stateEventsHolder =
+    startGitLabRestETagListLoaderIn(
+      cs,
+      getMergeRequestStateEventsUri(glProject, iid),
+      { it.id },
+
+      requestReloadFlow = mergeRequestReloadRequest.withInitial(Unit),
+      requestRefreshFlow = mergeRequestRefreshRequest.combine(stateEventsRefreshRequest.withInitial(Unit)) { _, _ -> }
+    ) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
-      }.events
-    }.modelFlow(cs, LOG)
+    }
+  override val stateEvents =
+    stateEventsHolder.resultOrErrorFlow.modelFlow(cs, LOG)
 
-  override val labelEvents =
-    mergeRequestReloadRequest.withInitial(Unit).flatMapLatest {
-      GitLabETagUpdatableListLoader(getMergeRequestLabelEventsUri(glProject, iid), mergeRequestRefreshRequest) { uri, eTag ->
+  private val labelEventsHolder =
+    startGitLabRestETagListLoaderIn(
+      cs,
+      getMergeRequestLabelEventsUri(glProject, iid),
+      { it.id },
+
+      requestReloadFlow = mergeRequestReloadRequest.withInitial(Unit),
+      requestRefreshFlow = mergeRequestRefreshRequest
+    ) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
         )
-      }.events
-    }.modelFlow(cs, LOG)
+    }
+  override val labelEvents =
+    labelEventsHolder.resultOrErrorFlow.modelFlow(cs, LOG)
 
-  override val milestoneEvents =
-    mergeRequestReloadRequest.withInitial(Unit).flatMapLatest {
-      GitLabETagUpdatableListLoader(getMergeRequestMilestoneEventsUri(glProject, iid), mergeRequestRefreshRequest) { uri, eTag ->
+  private val milestoneEventsHolder =
+    startGitLabRestETagListLoaderIn(
+      cs,
+      getMergeRequestMilestoneEventsUri(glProject, iid),
+      { it.id },
+
+      requestReloadFlow = mergeRequestReloadRequest.withInitial(Unit),
+      requestRefreshFlow = mergeRequestRefreshRequest
+    ) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
         )
-      }.events
-    }.modelFlow(cs, LOG)
+    }
+  override val milestoneEvents =
+    milestoneEventsHolder.resultOrErrorFlow.modelFlow(cs, LOG)
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isLoading: SharedFlow<Boolean> = _isLoading.asSharedFlow()
@@ -222,9 +243,8 @@ internal class LoadedGitLabMergeRequest(
 
   override fun refreshData() {
     cs.launch {
-      mergeRequestRefreshRequest.emit(Unit)
-
-      discussionsContainer.requestDiscussionsReload()
+      updateData()
+      startRefreshCycle()
     }
   }
 
@@ -237,6 +257,12 @@ internal class LoadedGitLabMergeRequest(
   private suspend fun updateData() {
     mergeRequestRefreshRequest.emit(Unit)
     discussionsContainer.checkUpdates()
+  }
+
+  private suspend fun startRefreshCycle() {
+    stateEventsHolder.loadAll()
+    labelEventsHolder.loadAll()
+    milestoneEventsHolder.loadAll()
   }
 
   override suspend fun merge(commitMessage: String) {
