@@ -17,10 +17,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.TokenType
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.DocumentUtil
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -235,7 +235,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 if (leaf != null) {
                     val parent = leaf.parent
                     if (parent != null && parent.node.elementType in KotlinTypedHandlerTokenSets.CONTROL_FLOW_EXPRESSIONS) {
-                        val nonWhitespaceSibling = FormatterUtil.getPreviousNonWhitespaceSibling(leaf.node)
+                        val nonWhitespaceSibling = PsiTreeUtil.skipWhitespacesBackward(leaf)
                         if (nonWhitespaceSibling != null && nonWhitespaceSibling.startOffset == tokenBeforeBraceOffset) {
                             EditorModificationUtilEx.insertStringAtCaret(editor, "{", false, true)
                             TypedHandler.indentBrace(project, editor, '{')
