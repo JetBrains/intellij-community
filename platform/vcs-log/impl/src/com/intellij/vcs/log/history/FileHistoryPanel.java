@@ -70,7 +70,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   private final @NotNull CommitDetailsListPanel myDetailsPanel;
   private final @NotNull JBSplitter myDetailsSplitter;
 
-  private @Nullable FileHistoryEditorDiffPreview myEditorDiffPreview;
+  private final @NotNull FileHistoryEditorDiffPreview myEditorDiffPreview;
 
   private final @NotNull History myHistory;
 
@@ -122,8 +122,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
-    setEditorDiffPreview();
-    EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
+    myEditorDiffPreview = new FileHistoryEditorDiffPreview(myProject, this);
 
     JComponent actionsToolbar = createActionsToolbar();
     actionsToolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
@@ -152,20 +151,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myHistory = VcsLogUiUtil.installNavigationHistory(logUi, myGraphTable);
 
     Disposer.register(disposable, this);
-  }
-
-  private void setEditorDiffPreview() {
-    FileHistoryEditorDiffPreview preview = myEditorDiffPreview;
-
-    boolean isEditorPreview = true;
-    if (isEditorPreview && preview == null) {
-      preview = new FileHistoryEditorDiffPreview(myProject, this);
-      myEditorDiffPreview = preview;
-    }
-    else if (!isEditorPreview && preview != null) {
-      preview.closePreview();
-      myEditorDiffPreview = null;
-    }
   }
 
   private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {

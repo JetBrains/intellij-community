@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.getInstance
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
@@ -68,7 +67,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   private var isShowOnlyAffectedSelected = false
 
   private var affectedPaths: Collection<FilePath>? = null
-  private var editorDiffPreviewController: DiffPreviewController? = null
+  private val editorDiffPreviewController: DiffPreviewController?
 
   init {
     val propertiesChangeListener = object : PropertiesChangeListener {
@@ -92,10 +91,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     init()
 
-    if (isWithEditorDiffPreview) {
-      setEditorDiffPreview()
-      getInstance(myProject).subscribeToPreviewVisibilityChange(this) { setEditorDiffPreview() }
-    }
+    editorDiffPreviewController = if (isWithEditorDiffPreview) createDiffPreviewController() else null
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
@@ -312,18 +308,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       }
     }
     return createDiffRequestProducer(myProject, userObject, context, forDiffPreview)
-  }
-
-  private fun setEditorDiffPreview() {
-    val diffPreviewController = editorDiffPreviewController
-    val isWithEditorDiffPreview = true
-    if (isWithEditorDiffPreview && diffPreviewController == null) {
-      editorDiffPreviewController = createDiffPreviewController()
-    }
-    else if (!isWithEditorDiffPreview && diffPreviewController != null) {
-      diffPreviewController.activePreview.closePreview()
-      editorDiffPreviewController = null
-    }
   }
 
   fun createChangeProcessor(isInEditor: Boolean): VcsLogChangeProcessor {
