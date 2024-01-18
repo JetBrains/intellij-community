@@ -2,6 +2,7 @@
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 public final class InjectionCache {
   private final CachedValue<Set<String>> myAnnoIndex;
   private final CachedValue<Collection<String>> myXmlIndex;

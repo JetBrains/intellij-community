@@ -2,6 +2,7 @@
 package com.jetbrains.python.black.configuration
 
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -13,6 +14,7 @@ import com.jetbrains.python.sdk.pythonSdk
 
 const val BLACK_ID: String = "Black"
 
+@Service(Service.Level.PROJECT)
 @State(name = BLACK_ID)
 data class BlackFormatterConfiguration(var enabledOnReformat: Boolean,
                                        var enabledOnSave: Boolean,

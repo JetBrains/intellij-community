@@ -156,9 +156,7 @@
     <!-- Run/Debug -->
     <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
                         serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
-    <applicationService serviceImplementation="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"/>
     <applicationService serviceImplementation="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings"/>
-    <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebugValueExecutionService"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
@@ -360,7 +358,6 @@
                          key="configurable.PyConsoleOptionsConfigurable.display.name"/>
 
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
-    <projectService serviceImplementation="com.jetbrains.python.console.PythonConsoleToolWindow"/>
     <toolWindowExtractorMode id="Python Console" mode="mirror"/>
 
     <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
@@ -368,18 +365,14 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyDebuggerConfigurable.display.name"/>
 
-    <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
-
     <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
 
     <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider" id="pyDirectoryDefault"/>
 
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
-    <applicationService serviceImplementation="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache"/>
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCustomMemberProvider"
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl"/>
-    <projectService serviceImplementation="com.jetbrains.python.codeInsight.typing.PyStubPackagesInstallingStatus"/>
 
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
@@ -506,7 +499,7 @@
 
     <!-- Poetry -->
     <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PyProjectTomlWatcher"/>
-    <projectService serviceImplementation="com.jetbrains.python.sdk.poetry.PoetryConfigService"/>
+
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
 
     <!-- Targets API -->
@@ -591,7 +584,6 @@
     <actionOnSaveInfoProvider id="BlackFormatterActionOnSaveInfo"
                               implementation="com.jetbrains.python.black.configuration.BlackFormatterConfigurable$BlackFormatterActionOnSaveInfoProvider"/>
 
-    <projectService serviceImplementation="com.jetbrains.python.black.configuration.BlackFormatterConfiguration"/>
     <notificationGroup id="Black Formatter Integration" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="black.configurable.name"/>
 

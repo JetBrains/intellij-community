@@ -3,6 +3,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -14,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Service
 public final class HgExecutableManager {
   public static HgExecutableManager getInstance() {
     return ApplicationManager.getApplication().getService(HgExecutableManager.class);

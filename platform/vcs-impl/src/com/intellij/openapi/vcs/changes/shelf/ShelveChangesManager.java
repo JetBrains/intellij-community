@@ -86,6 +86,7 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWith
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 
+@Service(Service.Level.PROJECT)
 @State(name = "ShelveChangesManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ShelveChangesManager implements PersistentStateComponent<Element> {
   public static final String DEFAULT_PROJECT_PRESENTATION_PATH = "<Project>/shelf"; //NON-NLS

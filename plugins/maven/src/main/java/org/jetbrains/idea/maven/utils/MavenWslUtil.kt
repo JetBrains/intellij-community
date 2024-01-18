@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -395,6 +396,7 @@ object MavenWslUtil : MavenUtil() {
 }
 
 
+@Service
 class MavenWslCache {
 
   private val myEnvCache: MutableMap<String, Map<String, String>> = HashMap()

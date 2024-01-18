@@ -11,12 +11,6 @@
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache"/>
 
     <projectService
@@ -72,7 +66,5 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.caches.trackers.ModuleDependencyProviderExtension"
             serviceImplementation="org.jetbrains.kotlin.idea.caches.project.ResolutionAnchorModuleDependencyProviderExtension"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.project.ModulePlatformCache"/>
   </extensions>
 </idea-plugin>

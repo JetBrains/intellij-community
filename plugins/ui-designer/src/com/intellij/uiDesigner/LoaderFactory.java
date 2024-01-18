@@ -4,6 +4,7 @@ package com.intellij.uiDesigner;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentMap;
 
+@Service(Service.Level.PROJECT)
 public final class LoaderFactory implements Disposable {
   private final Project myProject;
 

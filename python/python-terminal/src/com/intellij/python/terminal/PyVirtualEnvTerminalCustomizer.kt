@@ -3,6 +3,7 @@ package com.intellij.python.terminal
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
@@ -159,6 +160,7 @@ class SettingsState {
   var virtualEnvActivate: Boolean = true
 }
 
+@Service(Service.Level.PROJECT)
 @State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
 class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
   private var myState: SettingsState = SettingsState()

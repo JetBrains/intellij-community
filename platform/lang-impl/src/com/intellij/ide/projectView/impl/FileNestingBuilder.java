@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +18,7 @@ import java.util.function.Function;
  *
  * @see NestingTreeStructureProvider
  */
+@Service
 public final class FileNestingBuilder {
   public static FileNestingBuilder getInstance() {
     return ApplicationManager.getApplication().getService(FileNestingBuilder.class);

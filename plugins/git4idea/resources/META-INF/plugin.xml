@@ -671,7 +671,6 @@
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
     <projectService serviceImplementation="git4idea.config.GitPullSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings"/>
-    <projectService serviceImplementation="git4idea.rebase.interactive.GitRewordedCommitMessageProvider"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl"/>
@@ -691,7 +690,6 @@
     <applicationService serviceImplementation="git4idea.DialogManager"/>
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
-    <applicationService serviceImplementation="git4idea.light.LightGitTracker"/>
     <applicationService serviceImplementation="git4idea.index.ui.GitStageUiApplicationSettings"/>
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
@@ -778,7 +776,6 @@
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
-    <projectService serviceImplementation="git4idea.index.vfs.GitIndexFileSystemRefresher"/>
     <virtualFileSystem implementationClass="git4idea.index.vfs.GitIndexFileSystem" key="gitIndexFs" physical="true"/>
 
     <vcs.baseContentProvider implementation="git4idea.index.vfs.GitIndexVirtualFileBaseContentProvider"/>
@@ -801,7 +798,6 @@
                         displayNameSupplierClassName="git4idea.stash.ui.GitStashDisplayNameSupplier"
                         isInCommitToolWindow="true"/>
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
-    <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>

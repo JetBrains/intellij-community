@@ -32,7 +32,6 @@ Suggested files are listed as <b>People who change the files in the active chang
     <applicationService serviceImplementation="com.jetbrains.changeReminder.plugin.UserSettings"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector"/>
     <vcs.changes.changesViewModifier implementation="com.jetbrains.changeReminder.changes.ChangeReminderChangesViewModifier"/>
-    <projectService serviceImplementation="com.jetbrains.changeReminder.predict.PredictionService"/>
     <vcsCheckinHandlerFactory implementation="com.jetbrains.changeReminder.stats.commit.ChangeReminderStatsCheckinHandler"/>
   </extensions>
   <resource-bundle>messages.ChangeReminderBundle</resource-bundle>

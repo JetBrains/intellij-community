@@ -7,9 +7,7 @@
     <localTerminalCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.python.terminal.PyVirtualEnvTerminalSettings"/>
-  </extensions>
+  <extensions defaultExtensionNs="com.intellij"/>
 
 
 </idea-plugin>

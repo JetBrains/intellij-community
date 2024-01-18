@@ -12,13 +12,6 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GHPersistentAccounts"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader"/>
-
-    <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GHAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"

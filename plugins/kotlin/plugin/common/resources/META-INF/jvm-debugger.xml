@@ -31,9 +31,6 @@
     <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
 
     <applicationService
-            serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState"/>
-
-    <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.KotlinJvmDebuggerFacadeImpl"/>
 

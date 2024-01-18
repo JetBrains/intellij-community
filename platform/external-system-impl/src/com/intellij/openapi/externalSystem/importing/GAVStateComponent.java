@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
 @State(name = "ExternalSystem.GAVStateComponent", storages = @Storage("jps2ext.xml"))
 public final class GAVStateComponent implements PersistentStateComponent<GAVStateComponent.State> {

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit
  *
  * Do not rethrow exception too often to disable HL for a while
  */
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class KotlinHighlightingSuspender(private val project: Project) {
     private val timeoutSeconds = Registry.intValue("kotlin.highlighting.suspended.timeout", 10)

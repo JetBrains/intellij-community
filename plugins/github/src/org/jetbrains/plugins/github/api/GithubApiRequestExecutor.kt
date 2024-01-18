@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -210,6 +211,7 @@ sealed class GithubApiRequestExecutor {
     }
   }
 
+  @Service
   class Factory {
     fun create(token: String): GithubApiRequestExecutor = create(token, true)
 

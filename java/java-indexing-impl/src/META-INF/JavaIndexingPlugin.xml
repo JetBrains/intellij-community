@@ -57,8 +57,6 @@
                    serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl"/>
-    <projectService
-                    serviceImplementation="com.intellij.psi.impl.search.HighlightingCaches"/>
     <implicitToStringSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
     <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>

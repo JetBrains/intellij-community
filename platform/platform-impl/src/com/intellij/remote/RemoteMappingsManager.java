@@ -2,6 +2,7 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 @State(name = "RemoteMappingsManager", storages = @Storage("remote-mappings.xml"))
 public final class RemoteMappingsManager implements PersistentStateComponent<RemoteMappingsManager.State> {
   private final State myState = new State();

@@ -2,6 +2,7 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.serviceContainer.NonInjectable;
@@ -20,6 +21,7 @@ import java.util.List;
 /**
 * @author Dmitry Avdeev
 */
+@Service(Service.Level.PROJECT)
 @State(name = "TaskProjectConfiguration")
 public final class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
   @Tag("server")

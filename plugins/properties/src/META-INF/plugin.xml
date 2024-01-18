@@ -47,8 +47,6 @@
                              implementationClass="com.intellij.lang.properties.PropertyValueManipulator"/>
     <lang.elementManipulator forClass="com.intellij.lang.properties.psi.impl.PropertyImpl"
                              implementationClass="com.intellij.lang.properties.PropertyManipulator"/>
-    <projectService serviceImplementation="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"/>
-    <projectService serviceImplementation="com.intellij.lang.properties.ResourceBundleManager"/>
     <codeInsight.wordCompletionFilter language="Properties"
                                       implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
     <lang.psiStructureViewFactory language="Properties"
@@ -105,8 +103,6 @@
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.lang.properties.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.lang.properties.idCache.PropertiesTodoIndexer"/>
-
-    <projectService serviceImplementation="com.intellij.lang.properties.PropertiesReferenceManager"/>
 
     <spellchecker.support language="Properties"
                           id="propertiesSpellcheckingStrategy"

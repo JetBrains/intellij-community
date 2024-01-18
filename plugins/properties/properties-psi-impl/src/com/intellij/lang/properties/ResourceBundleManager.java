@@ -8,6 +8,7 @@ import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +31,7 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
+@Service(Service.Level.PROJECT)
 @State(name = "ResourceBundleManager", storages = @Storage("resourceBundles.xml"))
 public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState>, Disposable {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);

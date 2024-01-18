@@ -26,10 +26,7 @@ import com.intellij.execution.testframework.sm.vcs.RunTestsBeforeCheckinHandler.
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -56,6 +53,7 @@ import kotlin.coroutines.resume
 
 private val LOG = logger<RunTestsCheckinHandlerFactory>()
 
+@Service(Service.Level.PROJECT)
 @State(name = "TestsVcsConfig", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyState> {
   class MyState {

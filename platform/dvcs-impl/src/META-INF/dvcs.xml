@@ -81,7 +81,6 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
 
     <changesGroupingPolicy key="repository" id="repository" weight="30"
                            implementationClass="com.intellij.dvcs.ui.RepositoryChangesGroupingPolicy$Factory"/>

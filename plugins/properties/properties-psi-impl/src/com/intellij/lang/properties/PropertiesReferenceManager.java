@@ -3,6 +3,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentMap;
 
+@Service(Service.Level.PROJECT)
 public final class PropertiesReferenceManager {
   private final PsiManager myPsiManager;
   private final DumbService myDumbService;
