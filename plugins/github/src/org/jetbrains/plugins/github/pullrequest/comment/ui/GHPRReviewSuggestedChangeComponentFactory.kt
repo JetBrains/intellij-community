@@ -135,13 +135,14 @@ internal object GHPRReviewSuggestedChangeComponentFactory {
 
     private fun createPopupComponentContainer(project: Project, cancelActionListener: ActionListener): ComponentContainer =
       object : ComponentContainer {
-        private val commitAction = ActionListener {
+        private val commitAction = ActionListener { e ->
           if (commitEditor.text.isBlank()) {
             errorLabel.isVisible = true
             return@ActionListener
           }
 
           vm.commitSuggestion(block.patch!!, commitEditor.text)
+          cancelActionListener.actionPerformed(e)
         }
 
         private val errorLabel = JBLabel().apply {
