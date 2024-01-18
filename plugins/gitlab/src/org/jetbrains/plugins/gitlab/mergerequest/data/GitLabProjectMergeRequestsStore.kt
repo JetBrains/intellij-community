@@ -10,12 +10,10 @@ import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
@@ -81,6 +79,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
 
   private val reloadMergeRequest: MutableSharedFlow<String> = MutableSharedFlow(1)
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun getListLoaderIn(cs: CoroutineScope, searchQuery: String): ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO> {
     val loader = startGitLabRestETagListLoaderIn(
       cs,
@@ -92,6 +91,21 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
       api.rest.loadUpdatableJsonList<GitLabMergeRequestShortRestDTO>(
         GitLabApiRequestName.REST_GET_MERGE_REQUESTS, uri, etag
       )
+    }
+
+    // Keep the first N merge requests always hot and loaded
+    cs.launch {
+      loader.stateFlow.mapLatest { it.list?.take(Registry.intValue("gitlab.merge.requests.cached.from.list")) }.filterNotNull()
+        .distinctUntilChanged()
+        .collectLatest { mrs ->
+          coroutineScope {
+            mrs.forEach { mr ->
+              launch {
+                getShared(mr.iid).collect()
+              }
+            }
+          }
+        }
     }
 
     return loader
@@ -114,7 +128,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
         .transformConsecutiveSuccesses {
           mapScoped { mrData -> LoadedGitLabMergeRequest(project, this, api, glMetadata, projectMapping, currentUser, mrData) }
         }
-        .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
+        .shareIn(cs, SharingStarted.WhileSubscribed(0, 1000), 1)
       // this the model will only be alive while it's needed
     }
   }
