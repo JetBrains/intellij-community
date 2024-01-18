@@ -2,13 +2,10 @@
 package com.intellij.platform.workspace.storage.impl.query
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.cache.CellUpdateInfo
 import com.intellij.platform.workspace.storage.impl.cache.EntityStorageChange
 import com.intellij.platform.workspace.storage.impl.cache.UpdateType
 import com.intellij.platform.workspace.storage.impl.cache.makeTokensForDiff
-import com.intellij.platform.workspace.storage.impl.query.Token.WithEntityId
-import com.intellij.platform.workspace.storage.impl.query.Token.WithInfo
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
@@ -58,15 +55,11 @@ internal class CellChain(
       is UpdateType.DIFF -> changes.makeTokensForDiff()
       is UpdateType.RECALCULATE -> {
         val tokens = TokenSet()
-        if (changeRequest.updateType.entityId != null) {
-          tokens.add(WithEntityId(Operation.REMOVED, changeRequest.updateType.entityId))
-          if ((newSnapshot as ImmutableEntityStorageImpl).entityDataById(changeRequest.updateType.entityId) != null) {
-            tokens.add(WithEntityId(Operation.ADDED, changeRequest.updateType.entityId))
-          }
-        }
-        else {
-          tokens.add(WithInfo(Operation.REMOVED, changeRequest.updateType.key))
-          tokens.add(WithInfo(Operation.ADDED, changeRequest.updateType.key))
+        val match = changeRequest.updateType.match
+
+        tokens.add(Token(Operation.REMOVED, match))
+        if (match.isValid(newSnapshot)) {
+          tokens.add(Token(Operation.ADDED, match))
         }
         tokens
       }

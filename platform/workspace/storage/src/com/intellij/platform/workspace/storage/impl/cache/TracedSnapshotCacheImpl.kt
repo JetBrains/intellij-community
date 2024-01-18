@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.impl.cache
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache.Companion.LOG_QUEUE_MAX_SIZE
 import com.intellij.platform.workspace.storage.impl.query.*
 import com.intellij.platform.workspace.storage.impl.trace.ReadTraceIndex
@@ -21,7 +20,7 @@ internal data class CellUpdateInfo(
 
 internal sealed interface UpdateType {
   data object DIFF : UpdateType
-  data class RECALCULATE(val key: Any?, val entityId: EntityId?) : UpdateType
+  data class RECALCULATE(val match: Match) : UpdateType
 }
 
 internal class PropagationResult<T>(

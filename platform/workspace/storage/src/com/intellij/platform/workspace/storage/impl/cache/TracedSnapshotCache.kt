@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker.cacheReset
+import com.intellij.platform.workspace.storage.impl.query.MatchWithEntityId
 import com.intellij.platform.workspace.storage.impl.query.Operation
 import com.intellij.platform.workspace.storage.impl.query.Token
 import com.intellij.platform.workspace.storage.impl.query.TokenSet
@@ -117,22 +118,22 @@ internal class ChangeOnWorkspaceBuilderChangeLog(
     changes.changeLog.forEach { (entityId, change) ->
       when (change) {
         is ChangeEntry.AddEntity -> {
-          if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += Token.WithEntityId(Operation.ADDED, entityId)
+          if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += Token(Operation.ADDED, MatchWithEntityId(entityId))
         }
         is ChangeEntry.RemoveEntity -> {
-          if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += Token.WithEntityId(Operation.REMOVED, entityId)
+          if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += Token(Operation.REMOVED, MatchWithEntityId(entityId))
         }
         is ChangeEntry.ReplaceEntity -> {
-          if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += Token.WithEntityId(Operation.REMOVED, entityId)
-          if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += Token.WithEntityId(Operation.ADDED, entityId)
+          if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += Token(Operation.REMOVED, MatchWithEntityId(entityId))
+          if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += Token(Operation.ADDED, MatchWithEntityId(entityId))
         }
       }
     }
 
     externalMappingChanges.values.forEach { affectedIds ->
       affectedIds.forEach { entityId ->
-        if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += Token.WithEntityId(Operation.REMOVED, entityId)
-        if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += Token.WithEntityId(Operation.ADDED, entityId)
+        if (createdTokens.add(Operation.REMOVED to entityId)) tokenSet += Token(Operation.REMOVED, MatchWithEntityId(entityId))
+        if (createdTokens.add(Operation.ADDED to entityId)) tokenSet += Token(Operation.ADDED, MatchWithEntityId(entityId))
       }
     }
 

@@ -40,7 +40,7 @@ internal class EntityCell<T : WorkspaceEntity>(
     val newCell = EntityCell(this.id, this.type)
     val tokens = snapshot
       .entities(type.java)
-      .map { value -> Token.WithEntityId(Operation.ADDED, value.asBase().id) } // Maybe we can get ids directly without creating an entity
+      .map { value -> Token(Operation.ADDED, MatchWithEntityId(value.asBase().id)) } // Maybe we can get ids directly without creating an entity
       .toList()
     val traces = ReadTraceHashSet()
     traces.add(ReadTrace.EntitiesOfType(type.java).hash)
@@ -51,10 +51,10 @@ internal class EntityCell<T : WorkspaceEntity>(
                      newSnapshot: ImmutableEntityStorage): PropagationResult<List<T>> {
     val tokenSet = TokenSet()
     prevData.addedTokens()
-      .filter { (it as Token.WithEntityId).entityId.clazz.findWorkspaceEntity().kotlin == type }
+      .filter { (it.match as MatchWithEntityId).entityId.clazz.findWorkspaceEntity().kotlin == type }
       .forEach { tokenSet.add(it) }
     prevData.removedTokens()
-      .filter { (it as Token.WithEntityId).entityId.clazz.findWorkspaceEntity().kotlin == type }
+      .filter { (it.match as MatchWithEntityId).entityId.clazz.findWorkspaceEntity().kotlin == type }
       .forEach { tokenSet.add(it) }
 
     val traces = ReadTraceHashSet()
@@ -72,7 +72,7 @@ internal class EntityCell<T : WorkspaceEntity>(
 internal class FlatMapCell<T, K>(
   id: CellId,
   val mapping: (T, ImmutableEntityStorage) -> Iterable<K>,
-  private val memory: PersistentMultiOccurenceMap<Any?, Iterable<K>>,
+  private val memory: PersistentMultiOccurenceMap<Match, Iterable<K>>,
 ) : Cell<List<K>>(id) {
 
   private var dataCache: List<K>? = null
@@ -83,9 +83,9 @@ internal class FlatMapCell<T, K>(
     val traces = ArrayList<Pair<ReadTraceHashSet, UpdateType>>()
     val newMemory = memory.mutate { mutableMemory ->
       prevData.removedTokens().forEach { token ->
-        val removedValue = mutableMemory.remove(token.key())
+        val removedValue = mutableMemory.remove(token.match)
         removedValue?.forEach {
-          generatedTokens += it.toToken(Operation.REMOVED)
+          generatedTokens += it.toToken(Operation.REMOVED, token.match)
         }
       }
       prevData.addedTokens().forEach { token ->
@@ -93,15 +93,12 @@ internal class FlatMapCell<T, K>(
           val mappingTarget = token.getData(it)
           mapping(mappingTarget as T, it)
         }
-        mutableMemory[token.key()] = mappedValues
+        mutableMemory[token.match] = mappedValues
 
         mappedValues.forEach {
-          generatedTokens += it.toToken(Operation.ADDED)
+          generatedTokens += it.toToken(Operation.ADDED, token.match)
         }
-        val recalculate = when (token) {
-          is Token.WithEntityId -> UpdateType.RECALCULATE(null, token.entityId)
-          is Token.WithInfo -> UpdateType.RECALCULATE(token.info, null)
-        }
+        val recalculate = UpdateType.RECALCULATE(token.match)
         traces += newTraces to recalculate
       }
     }
@@ -126,7 +123,7 @@ internal class GroupByCell<T, K, V>(
   id: CellId,
   val keySelector: (T) -> K,
   val valueTransform: (T) -> V,
-  private val myMemory: PersistentMultiOccurenceMap<Any?, Pair<K, V>>,
+  private val myMemory: PersistentMultiOccurenceMap<Match, Pair<K, V>>,
 ) : Cell<Map<K, List<V>>>(id) {
 
   private var mapCache: Map<K, List<V>>? = null
@@ -137,9 +134,9 @@ internal class GroupByCell<T, K, V>(
     val traces = ArrayList<Pair<ReadTraceHashSet, UpdateType>>()
     val newMemory = myMemory.mutate { mutableMemory ->
       prevData.removedTokens().forEach { token ->
-        val removedValue = mutableMemory.remove(token.key())
+        val removedValue = mutableMemory.remove(token.match)
         if (removedValue != null) {
-          generatedTokens += removedValue.toToken(Operation.REMOVED)
+          generatedTokens += removedValue.toToken(Operation.REMOVED, token.match)
         }
       }
       prevData.addedTokens().forEach { token ->
@@ -150,14 +147,11 @@ internal class GroupByCell<T, K, V>(
           key to value
         }
 
-        mutableMemory[token.key()] = keyToValue
+        mutableMemory[token.match] = keyToValue
 
-        generatedTokens += keyToValue.toToken(Operation.ADDED)
+        generatedTokens += keyToValue.toToken(Operation.ADDED, token.match)
 
-        val recalculate = when (token) {
-          is Token.WithEntityId -> UpdateType.RECALCULATE(null, token.entityId)
-          is Token.WithInfo -> UpdateType.RECALCULATE(token.info, null)
-        }
+        val recalculate = UpdateType.RECALCULATE(token.match)
         traces += newTraces to recalculate
       }
     }
