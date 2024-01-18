@@ -162,7 +162,7 @@ public final class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix
       var renderingLanguage = targetLanguage.is(JsonLanguage.INSTANCE) ? JsonSchemaObjectRenderingLanguage.JSON : JsonSchemaObjectRenderingLanguage.YAML;
       return renderSchemaNode(schemaObject, renderingLanguage);
     }
-    else if (defaultValueObject instanceof JsonNode jsonNode) {//todo fix properties tests??
+    else if (defaultValueObject instanceof JsonNode jsonNode) {
       return convertToYamlIfNeeded(targetLanguage, jsonNode);
     }
     else if (defaultValueObject instanceof String) {
@@ -190,9 +190,10 @@ public final class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix
         .build();
 
     try {
-      return new ObjectMapper(jacksonFactory)
+      var exampleInTargetLanguage =  new ObjectMapper(jacksonFactory)
         .writerWithDefaultPrettyPrinter()
         .writeValueAsString(jsonNode);
+      return StringUtil.trimEnd(exampleInTargetLanguage, "\n");
     }
     catch (JsonProcessingException e) {
       return null;
