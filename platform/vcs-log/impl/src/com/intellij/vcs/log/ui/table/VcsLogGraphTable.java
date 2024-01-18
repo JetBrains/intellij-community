@@ -69,7 +69,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -118,7 +117,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
 
   public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
-                          @NotNull Consumer<Runnable> requestMore, @NotNull Disposable disposable) {
+                          @NotNull Runnable requestMore, @NotNull Disposable disposable) {
     super(new GraphTableModel(logData, requestMore, uiProperties));
     Disposer.register(disposable, this);
 

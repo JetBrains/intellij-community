@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,6 +13,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.AbstractTableModel;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
 
 public final class GraphTableModel extends AbstractTableModel implements VcsLogCommitListModel {
   private static final int UP_PRELOAD_COUNT = 20;
@@ -30,15 +29,13 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
   private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
 
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull Consumer<Runnable> myRequestMore;
+  private final @NotNull Runnable myRequestMore;
   private final @NotNull VcsLogUiProperties myProperties;
 
   private @NotNull VisiblePack myVisiblePack = VisiblePack.EMPTY;
 
-  private boolean myMoreRequested;
-
   public GraphTableModel(@NotNull VcsLogData logData,
-                         @NotNull Consumer<Runnable> requestMore,
+                         @NotNull Runnable requestMore,
                          @NotNull VcsLogUiProperties properties) {
     myLogData = logData;
     myRequestMore = requestMore;
@@ -66,8 +63,8 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
   }
 
   public @NotNull <T> T getValueAt(int rowIndex, @NotNull VcsLogColumn<T> column) {
-    if (rowIndex >= getRowCount() - 1 && canRequestMore()) {
-      requestToLoadMore(EmptyRunnable.INSTANCE);
+    if (rowIndex >= getRowCount() - 1 && VcsLogUtil.canRequestMore(myVisiblePack)) {
+      myRequestMore.run();
     }
 
     try {
@@ -86,26 +83,8 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
     return VcsLogColumnManager.getInstance().getColumn(modelIndex);
   }
 
-  /**
-   * Requests the proper data provider to load more data from the log & recreate the model.
-   *
-   * @param onLoaded will be called upon task completion on the EDT.
-   */
-  public void requestToLoadMore(@NotNull Runnable onLoaded) {
-    myMoreRequested = true;
-    myRequestMore.accept(onLoaded);
-  }
-
-  /**
-   * Returns true if not all data has been loaded, i.e. there is sense to {@link #requestToLoadMore(Runnable) request more data}.
-   */
-  public boolean canRequestMore() {
-    return !myMoreRequested && myVisiblePack.canRequestMore();
-  }
-
   void setVisiblePack(@NotNull VisiblePack visiblePack) {
     myVisiblePack = visiblePack;
-    myMoreRequested = false;
     fireTableDataChanged();
   }
 

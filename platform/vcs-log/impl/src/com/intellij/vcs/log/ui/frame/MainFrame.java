@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentati
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
@@ -63,7 +64,6 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -110,7 +110,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myFilterUi = filterUi;
 
     myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
-                                          () -> logUi.getRefresher().onRefresh(), logUi::requestMore, disposable);
+                                          () -> logUi.getRefresher().onRefresh(), () -> logUi.requestMore(EmptyRunnable.INSTANCE),
+                                          disposable);
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.getProject(), logData.getLogProviders().values());
     myGraphTable.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.table.accessible.name", vcsDisplayName));
 
@@ -430,7 +431,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     MyVcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
                        @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
-                       @NotNull Runnable refresh, @NotNull Consumer<Runnable> requestMore,
+                       @NotNull Runnable refresh, @NotNull Runnable requestMore,
                        @NotNull Disposable disposable) {
       super(logId, logData, uiProperties, colorManager, requestMore, disposable);
       myRefresh = refresh;

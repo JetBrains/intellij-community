@@ -15,7 +15,6 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.CompoundVisibleGraph;
@@ -82,7 +81,7 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
   public abstract @NotNull VcsLogGraphTable getTable();
 
   public void requestMore(@NotNull Runnable onLoaded) {
-    myRefresher.moreCommitsNeeded(onLoaded);
+    VcsLogUtil.requestToLoadMore(this, onLoaded);
     getTable().setPaintBusy(true);
   }
 
@@ -119,15 +118,13 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
                             boolean focus) {
     if (future.isCancelled()) return;
 
-    GraphTableModel model = getTable().getModel();
-
     int result = rowGetter.apply(myVisiblePack, commitId);
     if (result >= 0) {
       getTable().jumpToRow(result, focus);
       future.set(JumpResult.SUCCESS);
     }
-    else if (model.canRequestMore()) {
-      model.requestToLoadMore(() -> tryJumpTo(commitId, rowGetter, future, focus));
+    else if (VcsLogUtil.canRequestMore(myVisiblePack)) {
+      VcsLogUtil.requestToLoadMore(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myLogData.getDataPack() != myVisiblePack.getDataPack()) {
       VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));

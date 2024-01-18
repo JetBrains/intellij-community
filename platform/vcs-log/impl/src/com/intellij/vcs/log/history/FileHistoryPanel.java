@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -86,7 +87,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myProperties = logUi.getProperties();
 
     myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
-                                        logUi::requestMore, disposable) {
+                                        () -> logUi.requestMore(EmptyRunnable.INSTANCE), disposable) {
       @Override
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();
