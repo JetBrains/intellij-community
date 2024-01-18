@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
 import com.intellij.codeInsight.navigation.activateFileIfOpen
@@ -67,7 +67,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   }
 
   private suspend fun doNavigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
-    val requests = navigatables.mapWithProgress(concurrent = true) {
+    val requests = navigatables.mapWithProgress {
       readAction {
         it.navigationRequest()
       }
