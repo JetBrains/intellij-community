@@ -17,6 +17,12 @@ import java.util.Set;
 public class ReachabilityCountingInterpreter extends StandardDataFlowInterpreter {
   protected final @NotNull BitSet myReached = new BitSet();
 
+  /**
+   * @param flow control flow to interpret
+   * @param listener listener to use
+   * @param stopOnNull whether to stop interpretation on inevitable NullPointerException
+   * @param startingIndex starting instruction index (usually, 0)
+   */
   public ReachabilityCountingInterpreter(@NotNull ControlFlow flow, @NotNull DfaListener listener, boolean stopOnNull, int startingIndex) {
     super(flow, listener, stopOnNull);
     myReached.set(0, startingIndex);

@@ -402,7 +402,7 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
            || parent instanceof PsiSwitchStatement || parent instanceof PsiSynchronizedStatement;
   }
 
-  private static boolean isFlagCheck(PsiElement element) {
+  static boolean isFlagCheck(PsiElement element) {
     PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiVariable.class);
     PsiExpression topExpression = scope instanceof PsiIfStatement ifStatement ? ifStatement.getCondition() :
                                   scope instanceof PsiVariable variable ? variable.getInitializer() :

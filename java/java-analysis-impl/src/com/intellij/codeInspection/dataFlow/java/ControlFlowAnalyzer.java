@@ -2365,18 +2365,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(castExpression);
     PsiExpression operand = castExpression.getOperand();
 
+    PsiType operandType = operand == null ? null : operand.getType();
     if (operand != null) {
       operand.accept(this);
-      generateBoxingUnboxingInstructionFor(castExpression, operand.getType(), castExpression.getType(), true);
+      generateBoxingUnboxingInstructionFor(castExpression, operandType, castExpression.getType(), true);
     }
     else {
       addInstruction(new PushValueInstruction(DfTypes.typedObject(castExpression.getType(), Nullability.UNKNOWN)));
     }
 
     final PsiTypeElement typeElement = castExpression.getCastType();
-    if (typeElement != null && operand != null && operand.getType() != null && !(typeElement.getType() instanceof PsiPrimitiveType)) {
+    if (typeElement != null && operandType != null && !(typeElement.getType() instanceof PsiPrimitiveType) &&
+        !(operandType instanceof PsiLambdaExpressionType) && !(operandType instanceof PsiMethodReferenceType)) {
       DfaControlTransferValue transfer = createTransfer("java.lang.ClassCastException");
       addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType(), transfer));
+    } else {
+      addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(castExpression)));
     }
     finishElement(castExpression);
   }

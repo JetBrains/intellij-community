@@ -171,7 +171,13 @@ public class StandardDataFlowRunner {
                                                   @NotNull ControlFlow flow,
                                                   @NotNull List<DfaInstructionState> startingStates) {
     myInterpreter = createInterpreter(listener, flow);
-    return myInterpreter.interpret(startingStates);
+    RunnerResult result = myInterpreter.interpret(startingStates);
+    afterInterpretation(flow, myInterpreter, result);
+    return result;
+  }
+
+  protected void afterInterpretation(@NotNull ControlFlow flow, @NotNull StandardDataFlowInterpreter interpreter, @NotNull RunnerResult result) {
+    
   }
 
   @NotNull

@@ -55,8 +55,13 @@ public final class JavaDataFlowIRProvider implements DataFlowIRProvider {
       }
     }
     if (unreachable instanceof PsiCodeBlock) {
-      if (unreachable.getParent() instanceof PsiCatchSection && unreachable.getParent().getParent() instanceof PsiTryStatement &&
-          !allUnreachable.contains(unreachable.getParent().getParent())) {
+      if (unreachable.getParent() instanceof PsiCatchSection catchSection && 
+          catchSection.getParent() instanceof PsiTryStatement tryStatement &&
+          !allUnreachable.contains(tryStatement)) {
+        return unreachable.getTextRange();
+      }
+      if (unreachable.getParent() instanceof PsiClassInitializer initializer &&
+          !allUnreachable.contains(initializer)) {
         return unreachable.getTextRange();
       }
     }
@@ -66,8 +71,8 @@ public final class JavaDataFlowIRProvider implements DataFlowIRProvider {
       if (unreachable instanceof PsiSwitchLabelStatement) return null;
       if (allUnreachable.contains(statementParent)) return null;
       if (parent instanceof PsiStatement) {
-        if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == unreachable) {
-          PsiKeyword elseKeyword = ((PsiIfStatement)parent).getElseElement();
+        if (parent instanceof PsiIfStatement ifStatement && ifStatement.getElseBranch() == unreachable) {
+          PsiKeyword elseKeyword = ifStatement.getElseElement();
           if (elseKeyword != null) {
             return TextRange.create(elseKeyword.getTextRange().getStartOffset(), unreachable.getTextRange().getEndOffset());
           }
@@ -75,10 +80,10 @@ public final class JavaDataFlowIRProvider implements DataFlowIRProvider {
         return statement.getTextRange();
       }
       if (parent instanceof PsiCodeBlock) {
-        if (statement instanceof PsiSwitchLabeledRuleStatement) {
-          PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)statement).getEnclosingSwitchBlock();
+        if (statement instanceof PsiSwitchLabeledRuleStatement ruleStatement) {
+          PsiSwitchBlock block = ruleStatement.getEnclosingSwitchBlock();
           if (!allUnreachable.contains(block)) {
-            PsiStatement body = ((PsiSwitchLabeledRuleStatement)statement).getBody();
+            PsiStatement body = ruleStatement.getBody();
             if (body != null) {
               return body.getTextRange();
             }
@@ -86,8 +91,8 @@ public final class JavaDataFlowIRProvider implements DataFlowIRProvider {
           return null;
         }
         PsiStatement prevStatement = ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement), PsiStatement.class);
-        if (prevStatement instanceof PsiSwitchLabelStatement) {
-          PsiSwitchBlock block = ((PsiSwitchLabelStatement)prevStatement).getEnclosingSwitchBlock();
+        if (prevStatement instanceof PsiSwitchLabelStatement labelStatement) {
+          PsiSwitchBlock block = labelStatement.getEnclosingSwitchBlock();
           if (block != null && !allUnreachable.contains(block)) {
             PsiElement last = ((PsiCodeBlock)statementParent).getRBrace();
             PsiSwitchLabelStatement nextLabel = PsiTreeUtil.getNextSiblingOfType(statement, PsiSwitchLabelStatement.class);
@@ -102,8 +107,8 @@ public final class JavaDataFlowIRProvider implements DataFlowIRProvider {
           return null;
         }
         if (allUnreachable.contains(prevStatement)) return null;
-        PsiElement lastStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(((PsiCodeBlock)statementParent).getRBrace());
-        if (lastStatement != null && prevStatement != null) {
+        PsiElement lastStatement = getLastStatement(statement);
+        if (prevStatement != null) {
           if (prevStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(prevStatement, startAnchor, false)) {
             return null;
           }
@@ -112,5 +117,15 @@ public final class JavaDataFlowIRProvider implements DataFlowIRProvider {
       }
     }
     return null;
+  }
+
+  private static @NotNull PsiElement getLastStatement(@NotNull PsiStatement statement) {
+    PsiElement lastStatement = statement;
+    while (true) {
+      PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastStatement);
+      if (!(nextStatement instanceof PsiStatement) || nextStatement instanceof PsiSwitchLabelStatement) break;
+      lastStatement = nextStatement;
+    }
+    return lastStatement;
   }
 }
