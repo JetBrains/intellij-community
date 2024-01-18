@@ -37,11 +37,13 @@ class ShowCombinedDiffAction : DumbAwareAction() {
 
   companion object {
     fun showDiff(project: Project, changes: List<Change>) {
-      val producers: Map<CombinedBlockId, ChangeDiffRequestProducer> = changes.mapNotNull {
+      val producers: List<CombinedBlockProducer> = changes.mapNotNull {
         val changeContext = mutableMapOf<Key<out Any>, Any?>()
         VcsDiffUtil.putFilePathsIntoChangeContext(it, changeContext)
-        ChangeDiffRequestProducer.create(project, it, changeContext)
-      }.associateBy { CombinedPathBlockId(it.filePath, it.fileStatus) }
+        val producer = ChangeDiffRequestProducer.create(project, it, changeContext) ?: return@mapNotNull null
+        val id = CombinedPathBlockId(producer.filePath, it.fileStatus)
+        CombinedBlockProducer(id, producer)
+      }
 
       val sourceId = UUID.randomUUID().toString()
       val model = CombinedDiffModelImpl(project)

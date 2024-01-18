@@ -25,13 +25,15 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
       override fun getChanges(): ListSelection<out PresentableChange> {
         val changes =
           if (model is CombinedDiffPreviewModel) (model as CombinedDiffPreviewModel).iterateAllChanges().toList()
-          else model.requests.values.filterIsInstance<PresentableChange>()
+          else model.requests.map { it.producer }.filterIsInstance<PresentableChange>()
 
         val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
         val selectedIndex = when {
-          selected != null -> changes.indexOfFirst { it.tag == selected.tag
-                                                     && it.fileStatus == selected.fileStatus
-                                                     && it.filePath == selected.path }
+          selected != null -> changes.indexOfFirst {
+            it.tag == selected.tag &&
+            it.fileStatus == selected.fileStatus &&
+            it.filePath == selected.path
+          }
           else -> -1
         }
         return ListSelection.createAt(changes, selectedIndex)

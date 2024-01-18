@@ -10,10 +10,9 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.collaboration.util.clearData
 import com.intellij.collaboration.util.putData
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
-import com.intellij.diff.tools.combined.CombinedBlockId
+import com.intellij.diff.tools.combined.CombinedBlockProducer
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
 import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.project.Project
@@ -82,7 +81,7 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
   }
 
   private suspend fun handleChanges(computedDiffVm: ComputedDiffViewModel, model: CombinedDiffModelImpl) {
-    fun setBlocks(blocks: Map<CombinedBlockId, DiffRequestProducer>?) {
+    fun setBlocks(blocks: List<CombinedBlockProducer>?) {
       model.cleanBlocks()
       model.setBlocks(blocks.orEmpty())
     }
@@ -90,12 +89,12 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
     computedDiffVm.diffVm.collectLatest { result ->
       if (result.isInProgress) {
         delay(DiffUIUtil.PROGRESS_DISPLAY_DELAY)
-        setBlocks(mapOf(CONSTANT_BLOCK_ID to DiffUIUtil.LOADING_PRODUCER))
+        setBlocks(listOf(CombinedBlockProducer(CONSTANT_BLOCK_ID, DiffUIUtil.LOADING_PRODUCER)))
         return@collectLatest
       }
 
       val diffVm = result.result?.getOrElse {
-        setBlocks(mapOf(CONSTANT_BLOCK_ID to DiffUIUtil.createErrorProducer(it)))
+        setBlocks(listOf(CombinedBlockProducer(CONSTANT_BLOCK_ID, DiffUIUtil.createErrorProducer(it))))
         return@collectLatest
       }
 
@@ -111,12 +110,13 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
   // fixme: fix after selection rework
   private suspend fun CombinedDiffModelImpl.installVm(vm: DiffProducersViewModel) {
     vm.producers.collectLatest {
-      val current = requests.values
+      val current = requests.map { it.producer }
       val new = it.producers
       if (current.size != new.size || !current.containsAll(new)) {
-        val blocks = linkedMapOf<CombinedBlockId, DiffRequestProducer>()
+        val blocks = mutableListOf<CombinedBlockProducer>()
         for (producer in new) {
-          blocks[CombinedPathBlockId(producer.filePath, producer.fileStatus)] = producer
+          val id = CombinedPathBlockId(producer.filePath, producer.fileStatus)
+          blocks += CombinedBlockProducer(id, producer)
         }
         setBlocks(blocks)
       }

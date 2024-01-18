@@ -107,28 +107,28 @@ abstract class CombinedDiffPreviewModel(project: Project, parentDisposable: Disp
 
   companion object {
     @JvmStatic
-    fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): Map<CombinedBlockId, DiffRequestProducer> {
+    fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): List<CombinedBlockProducer> {
       return changes
-        .asSequence()
         .mapNotNull { wrapper ->
-          wrapper.createProducer(project)
-            ?.let { CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag) to it }
-        }.toMap()
+          val producer = wrapper.createProducer(project) ?: return@mapNotNull null
+          val id = CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag)
+          CombinedBlockProducer(id, producer)
+        }
     }
 
     @JvmStatic
-    fun prepareCombinedDiffModelRequestsFromProducers(changes: List<ChangeDiffRequestChain.Producer>): Map<CombinedBlockId, DiffRequestProducer> {
+    fun prepareCombinedDiffModelRequestsFromProducers(changes: List<ChangeDiffRequestChain.Producer>): List<CombinedBlockProducer> {
       return changes
-        .asSequence()
         .map { wrapper ->
-          CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, null) to wrapper
-        }.toMap()
+          val id = CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, null)
+          CombinedBlockProducer(id, wrapper)
+        }
     }
 
   }
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<DiffRequestProducer> {
-    return ListSelection.create(requests.values.toList(), selected?.createProducer(project))
+    return ListSelection.create(requests.map { it.producer }, selected?.createProducer(project))
   }
 
   abstract fun iterateAllChanges(): Iterable<Wrapper>

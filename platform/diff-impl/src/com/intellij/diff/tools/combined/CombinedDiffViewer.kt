@@ -54,7 +54,7 @@ import kotlin.math.roundToInt
 
 class CombinedDiffViewer(
   private val context: DiffContext,
-  keys: List<CombinedBlockId>,
+  keys: List<CombinedBlockProducer>,
   blockToSelect: CombinedBlockId?,
   blockListener: BlockListener,
 ) : CombinedDiffNavigation,
@@ -63,7 +63,7 @@ class CombinedDiffViewer(
     Disposable {
   private val project = context.project!! // CombinedDiffContext expected
 
-  private val blockState = BlockState(keys, blockToSelect ?: keys.first())
+  private val blockState = BlockState(keys.map { it.id }, blockToSelect ?: keys.first().id)
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
   private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = hashMapOf()
