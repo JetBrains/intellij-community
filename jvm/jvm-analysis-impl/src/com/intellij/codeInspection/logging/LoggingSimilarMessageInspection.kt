@@ -305,6 +305,13 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
                     minTextLength: Int): Boolean {
   if (first == null || second == null) return false
   if (first.isEmpty() || second.isEmpty()) return false
+  if (first.any { it.callPart != null } || second.any { it.callPart != null }) {
+    val firstSetArguments = first.mapNotNull { it.callPart }.flatMap { callPart -> callPart.stringArguments }.toSet()
+    val secondSetArguments = second.mapNotNull { it.callPart }.flatMap { callPart -> callPart.stringArguments }.toSet()
+    if (!firstSetArguments.containsAll(secondSetArguments) || !secondSetArguments.containsAll(firstSetArguments)) {
+      return false
+    }
+  }
   if (first.size >= MAX_PART_COUNT || second.size >= MAX_PART_COUNT) return false
   val firstIterator = PartHolderIterator(first)
   val secondIterator = PartHolderIterator(second)

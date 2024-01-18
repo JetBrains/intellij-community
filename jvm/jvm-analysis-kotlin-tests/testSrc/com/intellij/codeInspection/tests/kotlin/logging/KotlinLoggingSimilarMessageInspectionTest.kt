@@ -90,5 +90,24 @@ class KotlinLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectio
       }
     """.trimIndent())
   }
+  fun `test skip inside calls`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+      
+      internal class Logging {
+          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: java">java</error>)
+      
+          private fun request2() {
+            LOG.warn("Non-cached operation ${"\${operationName(\"update\")}"}")
+            LOG.warn("Non-cached operation ${"\${operationName(\"getChildren\")}"}")
+          }
+          
+          private fun operationName(operationName: String): String {
+            return operationName
+          }
+      }
+    """.trimIndent())
+  }
 }
 
