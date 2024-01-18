@@ -5,11 +5,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class SubPathRelativizer implements PathRelativizer {
+class CommonPathRelativizer implements PathRelativizer {
   private final String myPath;
   private final String myIdentifier;
 
-  SubPathRelativizer(@Nullable String path, @NotNull String identifier) {
+  CommonPathRelativizer(@Nullable String path, @NotNull String identifier) {
     myPath = path;
     myIdentifier = identifier;
   }
