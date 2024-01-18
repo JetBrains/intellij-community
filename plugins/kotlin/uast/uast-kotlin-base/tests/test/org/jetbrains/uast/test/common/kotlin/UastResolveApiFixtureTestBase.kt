@@ -549,6 +549,11 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolved = (uCallExpression.receiver?.tryResolve() as? PsiParameter)
             .orFail("cant resolve implicit lambda parameter")
         TestCase.assertEquals("it", resolved.name)
+
+        // Inspired by https://issuetracker.google.com/issues/298483892
+        val uParameter = resolved.toUElementOfType<UParameter>()
+        TestCase.assertNotNull(uParameter)
+        TestCase.assertEquals(resolved.name, uParameter!!.name)
     }
 
     fun checkResolveImplicitLambdaParameter_binary(myFixture: JavaCodeInsightTestFixture) {
