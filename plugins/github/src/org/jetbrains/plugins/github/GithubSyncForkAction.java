@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
+import git4idea.GitActivity;
 import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVcsSettings;
@@ -298,7 +299,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
       String onto = parentRemote.getName() + "/" + branch;
       LOG.info("Rebasing current branch");
       indicator.setText(GithubBundle.message("rebase.process.rebasing.branch.onto", onto));
-      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
+      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"), GitActivity.Rebase)) {
         List<VirtualFile> rootsToSave = Collections.singletonList(myRepository.getRoot());
         GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
         GitPreservingProcess process =

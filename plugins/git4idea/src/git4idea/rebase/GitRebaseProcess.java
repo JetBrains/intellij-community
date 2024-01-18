@@ -31,6 +31,7 @@ import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import git4idea.DialogManager;
+import git4idea.GitActivity;
 import git4idea.GitNotificationIdsHolder;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.branch.GitRebaseParams;
@@ -140,7 +141,7 @@ public class GitRebaseProcess {
       return;
     }
 
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"), GitActivity.Rebase)) {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
 
       GitRepository latestRepository = null;

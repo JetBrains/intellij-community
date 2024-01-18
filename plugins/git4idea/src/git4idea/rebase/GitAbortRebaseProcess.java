@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.vcs.log.Hash;
 import git4idea.DialogManager;
+import git4idea.GitActivity;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -156,7 +157,8 @@ class GitAbortRebaseProcess {
     boolean[] success = new boolean[1];
 
     new GitFreezingProcess(myProject, GitBundle.message("activity.name.rebase"), () -> {
-      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
+      String activityName = GitBundle.message("activity.name.abort.command", GitBundle.message("abort.operation.rebase.name"));
+      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, activityName, GitActivity.Abort)) {
         if (myRepositoryToAbort != null) {
           myIndicator.setText2(GitBundle.message(
             "rebase.abort.progress.indicator.command.in.repo.title",

@@ -833,6 +833,8 @@
                              -1 to disable check."/>
     <postStartupActivity os="windows" implementation="git4idea.config.GitNewVersionChecker$Starter"/>
     <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
+
+    <history.activityPresentationProvider implementation="git4idea.GitActivityPresentationProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

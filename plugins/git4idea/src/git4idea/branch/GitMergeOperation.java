@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitActivity;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitSaveChangesPolicy;
@@ -64,7 +65,7 @@ class GitMergeOperation extends GitBranchOperation {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
     int alreadyUpToDateRepositories = 0;
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.merge"))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.merge"), GitActivity.Merge)) {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
         LOG.info("next repository: " + repository);

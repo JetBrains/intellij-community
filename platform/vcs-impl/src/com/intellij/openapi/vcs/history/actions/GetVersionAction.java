@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.VcsActivity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +91,7 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      LocalHistoryAction action = LocalHistory.getInstance().startAction(myActivityName);
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(myActivityName, VcsActivity.Get);
       try {
         TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
         Object commandGroup = new Object();

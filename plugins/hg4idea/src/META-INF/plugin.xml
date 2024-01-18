@@ -65,6 +65,8 @@
                             order="after InHgIncomingOutgoingWidget"/>
 
     <statistics.notificationIdsHolder implementation="org.zmlx.hg4idea.HgNotificationIdsHolder"/>
+
+    <history.activityPresentationProvider implementation="org.zmlx.hg4idea.HgActivityPresentationProvider"/>
   </extensions>
 
   <projectListeners>

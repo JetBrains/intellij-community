@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitActivity;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -47,7 +48,7 @@ public class GitResetHead extends GitRepositoryAction {
     new Task.Backgroundable(project, GitBundle.message("resetting.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.reset"))) {
+        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.reset"), GitActivity.Reset)) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (!result.success()) {
             VcsNotifier.getInstance(project).notifyError(RESET_FAILED,

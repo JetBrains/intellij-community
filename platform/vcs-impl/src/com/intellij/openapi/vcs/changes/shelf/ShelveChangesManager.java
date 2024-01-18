@@ -53,6 +53,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -499,7 +500,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
     runWithSpan(myTracer, Shelve.RollbackAfterShelve.getName(), (__) -> {
       new RollbackWorker(myProject, operationName, modalContext)
-        .doRollback(changes, true, null, VcsBundle.message("activity.name.shelve"), honorExcludedFromCommit);
+        .doRollback(changes, true, null, VcsBundle.message("activity.name.shelve"), VcsActivity.Shelve, honorExcludedFromCommit);
     });
   }
 

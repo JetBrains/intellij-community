@@ -348,6 +348,8 @@
     <backgroundPostStartupActivity implementation="com.intellij.codeInsight.ChangesToolwindowPassCache"/>
 
     <vcs.vcsSymlinkResolver implementation="com.intellij.vcs.DefaultVcsSymlinkResolver" order="last"/>
+
+    <history.activityPresentationProvider implementation="com.intellij.vcs.VcsActivityPresentationProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

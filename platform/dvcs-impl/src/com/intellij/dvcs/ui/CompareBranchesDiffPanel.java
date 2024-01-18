@@ -30,6 +30,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.vcs.VcsActivity;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -236,7 +237,8 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
       if (!confirmationDialog.confirmFor(ChangesUtil.getFilesFromChanges(changes))) return;
 
       FileDocumentManager.getInstance().saveAllDocuments();
-      LocalHistoryAction action = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.get.from", panel.myBranchName));
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.get.from", panel.myBranchName),
+                                                                         VcsActivity.Get);
 
       new Task.Modal(project, DvcsBundle.message("compare.branches.diff.panel.loading.content.from.branch.process"), false) {
         @Override

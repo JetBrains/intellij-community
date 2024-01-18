@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgActivity;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -50,7 +51,7 @@ public class HgRebaseCommand {
   }
 
   private @Nullable HgCommandResult performRebase(@NonNls String @NotNull ... args) {
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rebase"))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rebase"), HgActivity.Rebase)) {
       final List<String> list = ContainerUtil.concat(List.of(args),
       List.of("--config", "extensions.rebase="));
       HgCommandResult result =

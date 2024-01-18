@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitActivity;
 import git4idea.branch.GitBranchUiHandlerImpl;
 import git4idea.branch.GitSmartOperationDialog;
 import git4idea.commands.Git;
@@ -72,7 +73,7 @@ public class GitResetOperation {
   public void execute() {
     saveAllDocuments();
     Map<GitRepository, GitCommandResult> results = new HashMap<>();
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message(myPresentation.activityName))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message(myPresentation.activityName), GitActivity.Reset)) {
       for (Map.Entry<GitRepository, Hash> entry : myCommits.entrySet()) {
         GitRepository repository = entry.getKey();
         VirtualFile root = repository.getRoot();

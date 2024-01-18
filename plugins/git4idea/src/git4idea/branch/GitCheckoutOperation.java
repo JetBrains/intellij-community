@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitActivity;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
@@ -116,7 +117,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     boolean success = false;
     boolean fatalErrorHappened = false;
     notifyBranchWillChange();
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.checkout"))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.checkout"), GitActivity.Checkout)) {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
         VirtualFile root = repository.getRoot();

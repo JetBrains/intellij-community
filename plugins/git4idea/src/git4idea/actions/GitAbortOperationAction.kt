@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import git4idea.DialogManager
+import git4idea.GitActivity
 import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_FAILED
 import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_SUCCESS
 import git4idea.GitNotificationIdsHolder.Companion.MERGE_ABORT_FAILED
@@ -75,7 +76,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
   private fun doAbort(repository: GitRepository, indicator: ProgressIndicator) {
     val project = repository.project
     GitFreezingProcess(project, GitBundle.message("abort")) {
-      DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.abort.command", operationName)).use {
+      DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.abort.command", operationName), GitActivity.Abort).use {
         indicator.text2 = GitBundle.message("abort.operation.indicator.text", gitCommand.name(), GitUtil.mention(repository))
 
         val startHash = GitUtil.getHead(repository)

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.history.ActivityId;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.VcsActivity;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class RollbackWorker {
   private static final Logger LOG = Logger.getInstance(RollbackWorker.class);
@@ -57,25 +57,27 @@ public class RollbackWorker {
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles) {
-    doRollback(changes, deleteLocallyAddedFiles, VcsBundle.message("activity.name.rollback"));
+    doRollback(changes, deleteLocallyAddedFiles, VcsBundle.message("activity.name.rollback"), VcsActivity.Rollback);
   }
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
-                         @NotNull @NlsContexts.Label String localHistoryActionName) {
-    doRollback(changes, deleteLocallyAddedFiles, null, localHistoryActionName, false);
+                         @NotNull @NlsContexts.Label String localHistoryActionName,
+                         @NotNull ActivityId activityId) {
+    doRollback(changes, deleteLocallyAddedFiles, null, localHistoryActionName, activityId, false);
   }
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
                          @NotNull @NlsContexts.Label String localHistoryActionName,
+                         @NotNull ActivityId activityId,
                          boolean honorExcludedFromCommit) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
-      LocalHistoryAction action = LocalHistory.getInstance().startAction(localHistoryActionName);
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(localHistoryActionName, activityId);
 
       final Runnable afterRefresh = () -> {
         action.finish();

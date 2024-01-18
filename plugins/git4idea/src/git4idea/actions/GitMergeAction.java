@@ -126,7 +126,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
         boolean setupRebaseEditor = shouldSetupRebaseEditor(project, selectedRoot);
         Ref<GitHandlerRebaseEditorManager> rebaseEditorManager = Ref.create();
-        try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.merge"))) {
+        try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.merge"), GitActivity.Merge)) {
           GitCommandResult result = git.runCommand(() -> {
             GitLineHandler handler = handlerProvider.get();
 

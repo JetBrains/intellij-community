@@ -37,12 +37,9 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.xml.util.XmlStringUtil
-import git4idea.GitCommit
-import git4idea.GitNotificationIdsHolder
+import git4idea.*
 import git4idea.GitNotificationIdsHolder.Companion.STASH_LOCAL_CHANGES_DETECTED
 import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_FAILED
-import git4idea.GitStashUsageCollector
-import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
@@ -180,7 +177,7 @@ object GitStashOperations {
               rootAndRevisions: Map<VirtualFile, Hash?>,
               handlerProvider: (VirtualFile) -> GitLineHandler,
               conflictResolver: GitConflictResolver): Boolean {
-    DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.unstash")).use {
+    DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.unstash"), GitActivity.Unstash).use {
       for ((root, hash) in rootAndRevisions) {
         val handler = handlerProvider(root)
 
@@ -251,7 +248,7 @@ object GitStashOperations {
   fun runStashInBackground(project: Project, roots: Collection<VirtualFile>, createHandler: (VirtualFile) -> GitLineHandler) {
     object : Task.Backgroundable(project, GitBundle.message("stashing.progress.title"), false) {
       override fun run(indicator: ProgressIndicator) {
-        DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.stash")).use { _ ->
+        DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.stash"), GitActivity.Stash).use { _ ->
           val successfulRoots = linkedSetOf<VirtualFile>()
           val failedRoots = linkedMapOf<VirtualFile, @NlsSafe String>()
           for (root in roots) {

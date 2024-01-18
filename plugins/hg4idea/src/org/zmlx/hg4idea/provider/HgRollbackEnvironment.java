@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -98,7 +99,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
   @Override
   public void rollbackMissingFileDeletion(List<? extends FilePath> files,
                                           List<? super VcsException> exceptions, RollbackProgressListener listener) {
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rollback"))) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rollback"), VcsActivity.Rollback)) {
       revert(files);
     }
   }
