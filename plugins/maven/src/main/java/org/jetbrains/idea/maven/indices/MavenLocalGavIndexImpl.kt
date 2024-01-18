@@ -51,10 +51,10 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
   override fun getRepository() = repo
 
   override fun updateOrRepair(fullUpdate: Boolean, progress: MavenProgressIndicator, explicit: Boolean) {
-    val activity = MavenIndexUsageCollector.GAV_INDEX_UPDATE.started(null);
-    var success = false;
+    val activity = MavenIndexUsageCollector.GAV_INDEX_UPDATE.started(null)
+    var success = false
     var filesProcessed = 0
-    var startTime = System.currentTimeMillis();
+    val startTime = System.currentTimeMillis()
     try {
       if (fullUpdate) {
         group2Artifacts.clear()
@@ -76,7 +76,7 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
             }
         }.join()
       }
-      success = true;
+      success = true
       progress.setText(IndicesBundle.message("maven.indices.updated.for.repo", repo.name))
     }
     finally {
@@ -137,13 +137,13 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
           result.add(AddArtifactResponse(file, null))
         }
         else {
-          addTo(group2Artifacts, id!!.groupId!!, id.artifactId!!)
+          addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
           addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
           result.add(AddArtifactResponse(file, IndexedMavenId(id.groupId, id.artifactId, id.version, "", "")))
         }
       }
     }
-    return result;
+    return result
   }
 
 }

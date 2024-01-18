@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenIndexId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
-import org.jetbrains.idea.maven.model.RepositoryKind
 import org.jetbrains.idea.maven.server.AddArtifactResponse
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerIndexerException
@@ -16,7 +15,6 @@ import java.io.File
 
 class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
                                   private val myIndexId: MavenIndexId,
-                                  private val myDataDir: File,
                                   private val myNexusIndexer: MavenIndexerWrapper) : MavenUpdatableIndex, MavenSearchIndex {
 
   private var myUpdateTimestamp: Long = -1
@@ -31,7 +29,7 @@ class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
   }
 
   override fun getFailureMessage(): String {
-    return "";
+    return ""
   }
 
   override fun search(pattern: String, maxResult: Int): Set<MavenArtifactInfo> {
@@ -49,7 +47,7 @@ class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
       return myNexusIndexer.addArtifacts(myIndexId, artifactFiles)
     }
     catch (e: ProcessCanceledException) {
-      throw e;
+      throw e
     }
     catch (e: Exception) {
       MavenLog.LOG.error("exception adding artifacts into index $myIndexId")
@@ -61,6 +59,6 @@ class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
   }
 
   override fun getRepository(): MavenRepositoryInfo {
-    return myRepo;
+    return myRepo
   }
 }

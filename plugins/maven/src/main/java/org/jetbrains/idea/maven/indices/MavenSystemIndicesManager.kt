@@ -63,12 +63,12 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     cs.launch {
       while (isActive) {
         delay(2000)
-        val statusToSend = ArrayList<MavenIndexUpdateState>();
+        val statusToSend = ArrayList<MavenIndexUpdateState>()
         if (!needPoll) continue
-        var anyInProgress = false;
+        var anyInProgress = false
         status().forEach { s ->
           anyInProgress = anyInProgress || s.myState == MavenIndexUpdateState.State.INDEXING
-          val oldStatus = luceneUpdateStatusMap[s.myUrl];
+          val oldStatus = luceneUpdateStatusMap[s.myUrl]
           if (oldStatus == null || oldStatus.timestamp < s.timestamp) {
             statusToSend.add(s)
             luceneUpdateStatusMap[s.myUrl] = s
@@ -87,12 +87,12 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
       override fun projectClosed(project: Project) {
         gc()
       }
-    });
+    })
   }
 
   private var ourTestIndicesDir: Path? = null
   suspend fun getClassIndexForRepository(repo: MavenRepositoryInfo): MavenSearchIndex? {
-    return getIndexForRepo(repo) as? MavenSearchIndex
+    return getIndexForRepo(repo)
   }
 
   suspend fun getGAVIndexForRepository(repo: MavenRepositoryInfo): MavenGAVIndex? {
@@ -167,7 +167,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     val status = getIndexWrapper().startIndexing(repo, indexFile)
     needPoll = true
     if (status != null) {
-      luceneUpdateStatusMap[repo.url] = status;
+      luceneUpdateStatusMap[repo.url] = status
       ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).indexStatusChanged(status)
     }
   }
@@ -189,7 +189,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
           dir.name, repo.id, if (repo.kind == RepositoryKind.LOCAL) repo.url else null,
           if (repo.kind == RepositoryKind.REMOTE) repo.url else null, dir.absolutePathString()
         )
-        return@async MavenLuceneClassIndexServer(repo, indexId, dir.toFile(), getIndexWrapper()).also {
+        return@async MavenLuceneClassIndexServer(repo, indexId, getIndexWrapper()).also {
           luceneIndices[dir.toString()] = it
 
           getOrCreateState().mavenIndicesData.computeIfAbsent(repo.url) {
@@ -301,7 +301,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
       val idx = iterator.next()
       if (!validIndices.contains(idx.value)) {
         iterator.remove()
-        action(idx.value);
+        action(idx.value)
       }
     }
   }
@@ -335,20 +335,22 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
 
     luceneUpdate.forEach { idx ->
       luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(idx.repository.url, null, null,
-                                                                        MavenIndexUpdateState.State.INDEXING);
+                                                                        MavenIndexUpdateState.State.INDEXING)
       cs.launch {
         try {
           val indicator = MavenProgressIndicator(null, null)
           idx.updateOrRepair(true, indicator, explicit)
           getOrCreateState().updateTimestamp(idx.repository)
-          luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(idx.repository.url, null, null,
-                                                                            MavenIndexUpdateState.State.SUCCEED)
+          luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(
+            idx.repository.url, null, null,
+            MavenIndexUpdateState.State.SUCCEED)
 
         }
         catch (e: Throwable) {
           MavenLog.LOG.error(e)
-          luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(idx.repository.url, null, null,
-                                                                            MavenIndexUpdateState.State.FAILED)
+          luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(
+            idx.repository.url, null, null,
+            MavenIndexUpdateState.State.FAILED)
         }
 
       }
@@ -381,15 +383,15 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
   fun updateIndexContentFromEDT(repositoryInfo: MavenRepositoryInfo) {
     val task = object : Task.Backgroundable(null, IndicesBundle.message("maven.indices.updating"), true) {
       override fun run(indicator: ProgressIndicator) {
-        val mavenIndicator = MavenProgressIndicator(null, indicator, null);
+        val mavenIndicator = MavenProgressIndicator(null, indicator, null)
         runBlockingCancellable {
-          val mavenIndex = getClassIndexForRepository(repositoryInfo);
+          val mavenIndex = getClassIndexForRepository(repositoryInfo)
           (mavenIndex as? MavenUpdatableIndex)?.updateOrRepair(true, mavenIndicator, true)
         }
       }
     }
 
-    ProgressManager.getInstance().run(task);
+    ProgressManager.getInstance().run(task)
 
   }
 

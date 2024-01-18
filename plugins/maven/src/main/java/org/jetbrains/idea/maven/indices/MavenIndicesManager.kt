@@ -43,10 +43,9 @@ import java.util.concurrent.CopyOnWriteArrayList
 class MavenIndicesManager(private val myProject: Project, private val cs: CoroutineScope) : Disposable {
   interface MavenIndexerListener {
     fun gavIndexUpdated(repo: MavenRepositoryInfo, added: Set<File>, failedToAdd: Set<File>) {}
-    fun classIndexUpdated(repo: MavenRepositoryInfo, added: Set<File>, failedToAdd: Set<File>) {}
   }
 
-  private val myGavIndices = CopyOnWriteArrayList<MavenGAVIndex>();
+  private val myGavIndices = CopyOnWriteArrayList<MavenGAVIndex>()
 
   private val myDownloadListener = MavenIndexServerDownloadListener(this)
   private val localMavenGavIndex: MavenGAVIndex?
@@ -70,7 +69,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
   fun getCommonGavIndex(): MavenGAVIndex {
-    return MavenGAVIndexWrapper();
+    return MavenGAVIndexWrapper()
   }
 
   fun updateIndicesListSync() {
@@ -93,7 +92,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
       override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                    nativeMavenProject: NativeMavenProjectHolder?) {
-        scheduleUpdateIndicesList();
+        scheduleUpdateIndicesList()
       }
     }, this)
   }

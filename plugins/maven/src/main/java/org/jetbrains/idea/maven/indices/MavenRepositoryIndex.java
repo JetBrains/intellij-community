@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.indices;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.model.RepositoryKind;
 
 public interface MavenRepositoryIndex {
   @NotNull

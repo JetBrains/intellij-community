@@ -194,7 +194,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
   }
 
   @Override
-  public MavenRepositoryInfo getRepository() {
+  public @NotNull MavenRepositoryInfo getRepository() {
     return new MavenRepositoryInfo(getRepositoryId(), getRepositoryId(), myRepositoryPathOrUrl, myKind);
   }
 
