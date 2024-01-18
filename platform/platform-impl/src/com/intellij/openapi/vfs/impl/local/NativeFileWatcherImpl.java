@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
@@ -127,13 +127,20 @@ public final class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
+  /**
+   * Subclasses should override this method if they want to use custom logic to disable their file watcher.
+   */
   private static boolean isDisabled() {
     if (Boolean.getBoolean(PROPERTY_WATCHER_DISABLED)) return true;
-    var app = ApplicationManager.getApplication();
+    Application app = ApplicationManager.getApplication();
     return app.isCommandLine() || app.isUnitTestMode();
   }
 
-  private static @Nullable Path getExecutable() {
+  /**
+   * Subclasses should override this method to provide a custom binary to run.
+   */
+  @Nullable
+  private static Path getExecutable() {
     String customPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (customPath != null) {
       Path customFile = PathManager.findBinFile(customPath);
