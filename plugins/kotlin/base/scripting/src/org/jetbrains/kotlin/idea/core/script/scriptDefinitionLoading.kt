@@ -55,7 +55,7 @@ fun loadDefinitionsFromTemplatesByPaths(
     val loader = if (classpath.isEmpty())
         baseLoader
     else
-        UrlClassLoader.build().files(classpath).parent(baseLoader).get()
+        UrlClassLoader.build().files(classpath).useCache(false).parent(baseLoader).get()
 
     val definitions = templateClassNames.mapNotNull { templateClassName ->
         try {
