@@ -111,9 +111,9 @@
   "languages": [
     {
       "id": "java",
-      "experimentBucketsCount": 16,
-      "includeGroups": [ 7, 8, 11, 12, 13, 14 ],
-      "shouldLogElementFeatures": false
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 13, 13, 13, 22 ],
+      "shouldLogElementFeatures": true
     },
     {
       "id": "python",
