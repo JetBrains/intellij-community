@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.CommandSpecCompletion
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
@@ -31,9 +32,16 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val prefix = result.prefixMatcher.prefix.substringAfterLast('/') // take last part if it is a file path
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
-    val tokens = shellSupport.getCommandTokens(parameters.position) ?: return
+    val document = parameters.editor.document
+    val caretOffset = parameters.editor.caretModel.offset
+    val command = document.getText(TextRange.create(0, caretOffset))
+    val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
+    val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
+      tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
+    }
+    else tokens
     val suggestions = runBlockingCancellable {
-      computeSuggestions(tokens, context)
+      computeSuggestions(allTokens, context)
     }
 
     val elements = suggestions.flatMap { it.toLookupElements() }
@@ -41,7 +49,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   }
 
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<BaseSuggestion> {
-    val aliases = context.runtimeDataProvider.getShellEnvironment()?.aliases ?: return emptyList()
+    val aliases = context.runtimeDataProvider.getShellEnvironment()?.aliases ?: emptyMap()
     val expandedTokens = expandAliases(tokens, aliases, context)
 
     val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), context.runtimeDataProvider)

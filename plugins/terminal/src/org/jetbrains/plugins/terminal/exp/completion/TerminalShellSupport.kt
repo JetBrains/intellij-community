@@ -18,11 +18,6 @@ interface TerminalShellSupport {
   val lineContinuationChar: Char
 
   /**
-   * @return the token list for the parent shell command of the provided [leafElement]
-   */
-  fun getCommandTokens(leafElement: PsiElement): List<String>? = null
-
-  /**
    * @return the token list for the last shell command in [command] text
    */
   fun getCommandTokens(project: Project, command: String): List<String>? = null

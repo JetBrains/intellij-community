@@ -2,14 +2,20 @@ package org.jetbrains.plugins.terminal.sh.powershell
 
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.sh.getShellCommandTokens
 
 class PowerShellSupport : TerminalShellSupport {
   override val promptLanguage: Language
     get() = PlainTextLanguage.INSTANCE
 
   override val lineContinuationChar: Char = '`'
+
+  override fun getCommandTokens(project: Project, command: String): List<String>? {
+    return getShellCommandTokens(project, command)
+  }
 
   override fun parseCommandHistory(history: String): List<String> {
     val trimmedHistory = StringUtil.convertLineSeparators(history, "\n").trimEnd()
