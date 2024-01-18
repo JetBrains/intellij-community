@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -53,11 +54,7 @@ class NewJavaToKotlinConverter(
             val kotlinFiles = results.mapIndexed { i, result ->
                 runUndoTransparentActionInEdt(inWriteAction = true) {
                     val javaFile = files[i]
-                    withProgressProcessor.updateState(
-                        fileIndex = i,
-                        phase = J2KConversionPhase.CREATE_FILES,
-                        description = "Creating files..."
-                    )
+                    withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES)
                     KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                         .also { it.addImports(result.importsToAdd) }
                 }
@@ -80,7 +77,6 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
     ): Result {
-        val phaseDescription = KotlinNJ2KBundle.message("phase.converting.j2k")
         val contextElement = inputElements.firstOrNull() ?: return Result(emptyList(), null, null)
         val resolver = JKResolver(project, targetModule, contextElement)
         val symbolProvider = JKSymbolProvider(resolver)
@@ -104,7 +100,7 @@ class NewJavaToKotlinConverter(
         }
 
         val asts = inputElements.mapIndexed { i, element ->
-            processor.updateState(i, J2KConversionPhase.BUILD_AST, phaseDescription)
+            processor.updateState(fileIndex = i, phase = BUILD_AST)
             element to treeBuilder.buildTree(element, saveImports)
         }
         val inConversionContext = { element: PsiElement ->
@@ -128,7 +124,7 @@ class NewJavaToKotlinConverter(
         )
         ConversionsRunner.doApply(asts.mapNotNull { it.second }, context) { conversionIndex, conversionCount, i, desc ->
             processor.updateState(
-                J2KConversionPhase.RUN_CONVERSIONS.phaseNumber,
+                RUN_CONVERSIONS.phaseNumber,
                 conversionIndex,
                 conversionCount,
                 i,
@@ -137,7 +133,7 @@ class NewJavaToKotlinConverter(
         }
 
         val results = asts.mapIndexed { i, elementWithAst ->
-            processor.updateState(i, J2KConversionPhase.PRINT_CODE, phaseDescription)
+            processor.updateState(fileIndex = i, phase = PRINT_CODE)
             val (element, ast) = elementWithAst
             if (ast == null) return@mapIndexed null
             val code = JKCodeBuilder(context).run { printCodeOut(ast) }
@@ -203,8 +199,10 @@ class NewJavaToKotlinConverter(
     }
 }
 
-private fun WithProgressProcessor.updateState(fileIndex: Int?, phase: J2KConversionPhase, description: String) {
-    updateState(fileIndex, phase.phaseNumber, description)
+private val phaseDescription: String = KotlinNJ2KBundle.message("phase.converting.j2k")
+
+private fun WithProgressProcessor.updateState(fileIndex: Int?, phase: J2KConversionPhase) {
+    updateState(fileIndex, phase.phaseNumber, phaseDescription)
 }
 
 private enum class J2KConversionPhase(val phaseNumber: Int) {
