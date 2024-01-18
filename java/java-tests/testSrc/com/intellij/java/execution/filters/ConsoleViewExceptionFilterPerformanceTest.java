@@ -59,6 +59,7 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
         console.print("start\n", ConsoleViewContentType.NORMAL_OUTPUT);
         console.flushDeferredText();
         console.getEditor().getCaretModel().moveToOffset(0); // avoid stick-to-end
+        console.getEditor().getScrollingModel().scroll(0, 0); // avoid stick-to-end
         DocumentUtil.executeInBulk(console.getEditor().getDocument(), ()-> { // avoid editor size validation
           for (int i = 0; i < 25; i++) {
             for (int j = 0; j < 1_000; j++) {
