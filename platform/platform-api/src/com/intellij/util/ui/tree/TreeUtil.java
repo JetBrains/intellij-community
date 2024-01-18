@@ -1015,7 +1015,17 @@ public final class TreeUtil {
    */
   public static @NotNull Promise<?> promiseExpand(@NotNull JTree tree, int depth) {
     AsyncPromise<?> promise = new AsyncPromise<>();
-    promiseMakeVisible(tree, path -> depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE, promise)
+    promiseMakeVisible(tree, new TreeVisitor() {
+      @Override
+      public @NotNull TreeVisitor.VisitThread visitThread() {
+        return Registry.is("ide.tree.background.expand", true) ? VisitThread.BGT : VisitThread.EDT;
+      }
+
+      @Override
+      public @NotNull Action visit(@NotNull TreePath path) {
+        return depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE;
+      }
+    }, promise)
       .onError(promise::setError)
       .onSuccess(path -> {
         if (promise.isCancelled()) return;
