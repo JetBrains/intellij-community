@@ -131,6 +131,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState = state;
     if (isInitialized()) {
       applyStateToTree(myProjectsTree, this);
+      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false));
     }
   }
 
