@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 
 import static com.intellij.ui.JBColor.namedColor;
@@ -98,6 +99,10 @@ public abstract class SpeedSearchSupply {
 
   public boolean isObjectFilteredOut(Object o) {
     return false;
+  }
+
+  public InputMethodRequests getInputMethodRequests() {
+    return null;
   }
 
   @ApiStatus.Experimental

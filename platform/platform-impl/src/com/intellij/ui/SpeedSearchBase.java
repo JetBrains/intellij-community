@@ -46,8 +46,11 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.font.TextHitInfo;
+import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.text.AttributedCharacterIterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -160,6 +163,22 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     });
 
+    if (allowInputMethodsInSpeedSearch()) {
+      myComponent.addInputMethodListener(new InputMethodListener() {
+        @Override
+        public void inputMethodTextChanged(InputMethodEvent e) {
+          processInputMethodEvent(e);
+        }
+
+        @Override
+        public void caretPositionChanged(InputMethodEvent e) {
+          processInputMethodEvent(e);
+        }
+      });
+
+      myComponent.enableInputMethods(true);
+    }
+
     new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -193,6 +212,111 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected boolean keepEvenWhenFocusLost() {
     return false;
+  }
+
+  protected boolean allowInputMethodsInSpeedSearch() {
+    return true;
+  }
+
+  private class MyInputMethodRequests implements InputMethodRequests {
+    private void ensurePopupIsShown() {
+      if (mySearchPopup == null) {
+        showPopup();
+      }
+    }
+
+    private InputMethodRequests getDelegate() {
+      JTextField field = getSearchField();
+      if (field == null) {
+        return null;
+      } else {
+        return field.getInputMethodRequests();
+      }
+    }
+
+    @Override
+    public Rectangle getTextLocation(TextHitInfo offset) {
+      InputMethodRequests delegate = getDelegate();
+      if (delegate == null) {
+        return new Rectangle();
+      } else {
+        return delegate.getTextLocation(offset);
+      }
+    }
+
+    @Nullable
+    @Override
+    public TextHitInfo getLocationOffset(int x, int y) {
+      InputMethodRequests delegate = getDelegate();
+      if (delegate == null) {
+        return null;
+      } else {
+        return delegate.getLocationOffset(x, y);
+      }
+    }
+
+    @Override
+    public int getInsertPositionOffset() {
+      InputMethodRequests delegate = getDelegate();
+      if (delegate == null) {
+        return 0;
+      } else {
+        return delegate.getInsertPositionOffset();
+      }
+    }
+
+    @Override
+    public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
+      ensurePopupIsShown();
+      InputMethodRequests delegate = getDelegate();
+      assert delegate != null;
+      return delegate.getCommittedText(beginIndex, endIndex, attributes);
+    }
+
+    @Override
+    public int getCommittedTextLength() {
+      ensurePopupIsShown();
+      InputMethodRequests delegate = getDelegate();
+      assert delegate != null;
+      return getDelegate().getCommittedTextLength();
+    }
+
+    @Nullable
+    @Override
+    public AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
+      InputMethodRequests delegate = getDelegate();
+      if (delegate == null) {
+        return null;
+      } else {
+        return delegate.cancelLatestCommittedText(attributes);
+      }
+    }
+
+    @Nullable
+    @Override
+    public AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
+      InputMethodRequests delegate = getDelegate();
+      if (delegate == null) {
+        return null;
+      } else {
+        return delegate.getSelectedText(attributes);
+      }
+    }
+  }
+
+  private MyInputMethodRequests myInputMethodRequests;
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    if (!allowInputMethodsInSpeedSearch()) {
+      return null;
+    }
+
+    if (myInputMethodRequests == null) {
+      myInputMethodRequests = new MyInputMethodRequests();
+    }
+
+    return myInputMethodRequests;
   }
 
   public @Nullable JTextField getSearchField() {
@@ -439,6 +563,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
+  protected void processInputMethodEvent(InputMethodEvent e) {
+    if (!isSpeedSearchEnabled()) return;
+
+    if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {
+      showPopup();
+    }
+
+    if (mySearchPopup != null) {
+      mySearchPopup.processInputMethodEvent(e);
+    }
+  }
+
   protected @NotNull SpeedSearchBase<Comp>.SearchPopup createPopup(String s) {
     return new SearchPopup(s);
   }
@@ -615,6 +751,16 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
 
+    @Override
+    public void processInputMethodEvent(InputMethodEvent e) {
+      mySearchField.processInputMethodEvent(e);
+      if (e.isConsumed()) {
+        updateLastPattern();
+        String s = mySearchField.getText();
+        updateSelection(findElement(s), s);
+      }
+    }
+
     void refreshSelection() {
       findAndSelectElement(mySearchField.getText());
     }
@@ -783,6 +929,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (i == KeyEvent.VK_BACK_SPACE) {
         e.consume();
       }
+    }
+
+    @Override
+    public void processInputMethodEvent(InputMethodEvent e) {
+      super.processInputMethodEvent(e);
     }
 
     @Override
