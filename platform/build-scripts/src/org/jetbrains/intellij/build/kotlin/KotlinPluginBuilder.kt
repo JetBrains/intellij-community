@@ -443,4 +443,14 @@ object KotlinPluginBuilder {
   enum class KotlinPluginKind {
     IJ, AS, MI, Fleet,
   }
+
+  /**
+   * A special plugin for JetBrains Client
+   */
+  fun kotlinFrontendPlugin(): PluginLayout {
+    return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
+      spec.withModules(MODULES_SHARED_WITH_CLIENT)
+      spec.withProjectLibrary("kotlinc.kotlin-compiler-common", LibraryPackMode.STANDALONE_MERGED)
+    }
+  }
 }
