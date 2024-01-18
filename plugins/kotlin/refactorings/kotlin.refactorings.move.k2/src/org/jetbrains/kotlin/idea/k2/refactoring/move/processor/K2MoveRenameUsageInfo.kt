@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.k2.refactoring.computeWithoutAddingRedundantImports
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -157,7 +158,8 @@ sealed class K2MoveRenameUsageInfo(
 
         override fun retarget(to: KtNamedDeclaration): PsiElement? {
             val element = (element as? KtElement) ?: return element
-            to.fqName?.let(element.containingKtFile::addImport)
+            val containingFile = element.containingKtFile
+            computeWithoutAddingRedundantImports(containingFile) { to.fqName?.let(containingFile::addImport) }
             return element
         }
     }

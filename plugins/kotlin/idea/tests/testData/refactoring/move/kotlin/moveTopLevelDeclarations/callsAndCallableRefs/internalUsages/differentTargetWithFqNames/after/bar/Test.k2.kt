@@ -1,7 +1,5 @@
 package bar
 
-import foo.A.Companion.companionExtensionMember
-import foo.O.objectExtensionMember1
 import foo.O.objectExtensionMember2
 import foo.X
 import foo.classExtension
