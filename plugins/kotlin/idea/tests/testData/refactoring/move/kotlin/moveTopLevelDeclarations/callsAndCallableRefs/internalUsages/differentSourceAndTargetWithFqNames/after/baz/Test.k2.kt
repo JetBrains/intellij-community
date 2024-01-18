@@ -2,6 +2,10 @@ package baz
 
 import foo.A.Companion.companionExtensionMember
 import foo.O.objectExtensionMember1
+import foo.O.objectExtensionMember2
+import foo.classExtension
+import foo.companionExtension
+import foo.objectExtension
 
 fun test() {
     foo.A().classMember()

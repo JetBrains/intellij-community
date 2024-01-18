@@ -19,14 +19,10 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
-import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -194,17 +190,6 @@ sealed class K2MoveRenameUsageInfo(
          */
         @OptIn(KtAllowAnalysisFromWriteAction::class)
         private fun findInternalUsages(containingDecl: KtNamedDeclaration): List<K2MoveRenameUsageInfo> = allowAnalysisFromWriteAction {
-            fun KtDeclarationSymbol.isImported(file: KtFile): Boolean {
-                val fqName = when (this) {
-                    is KtClassLikeSymbol -> classIdIfNonLocal?.asSingleFqName()
-                    is KtConstructorSymbol -> containingClassIdIfNonLocal?.asSingleFqName()
-                    is KtCallableSymbol -> callableIdIfNonLocal?.asSingleFqName()
-                    else -> null
-                } ?: return false
-                val importPaths = file.importDirectives.mapNotNull { it.importPath }
-                return importPaths.any { fqName.isImported(it, false) }
-            }
-
             val usages = mutableListOf<K2MoveRenameUsageInfo>()
             containingDecl.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
                 if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
@@ -213,9 +198,7 @@ sealed class K2MoveRenameUsageInfo(
                     val ref = refExpr.mainReference
                     val declSymbol = ref.resolveToSymbol() as? KtDeclarationSymbol? ?: return@forEachDescendantOfType
                     val declPsi = declSymbol.psi as? KtNamedDeclaration ?: return@forEachDescendantOfType
-                    if (!declSymbol.isImported(refExpr.containingKtFile)
-                        && (refExpr.isUnqualifiable() || refExpr.isFirstInQualifiedChain())
-                        && declPsi.needsReferenceUpdate) {
+                    if ((refExpr.isUnqualifiable() || refExpr.isFirstInQualifiedChain()) && declPsi.needsReferenceUpdate) {
                         val usageInfo = ref.createKotlinUsageInfo(declPsi, isInternal = true)
                         usages.add(usageInfo)
                         refExpr.internalUsageInfo = usageInfo
@@ -314,7 +297,7 @@ sealed class K2MoveRenameUsageInfo(
         private fun retargetExternalUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
             val externalUsages = usages
                 .filterIsInstance<K2MoveRenameUsageInfo>()
-                .filter { !it.isInternal }
+                .filter { !it.isInternal && it.element != null } // if element is null, it means the this external usage was moved
                 .sortedByFile()
             retargetMoveUsages(externalUsages, oldToNewMap)
         }

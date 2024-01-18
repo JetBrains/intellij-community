@@ -1,6 +1,10 @@
-package baz
+package foo
 
 import bar.CrExtended
+import foo.extValWithExtFunType
+import foo.extValWithFunType
+import foo.valWithExtFunType
+import foo.valWithFunType
 
 fun test(ce: CrExtended) {
     valWithFunType()

@@ -2,6 +2,13 @@ package foo
 
 import foo.A.Companion.companionExtensionMember
 import foo.O.objectExtensionMember1
+import foo.O.objectExtensionMember2
+import foo.O.objectMember2
+import foo.Y
+import foo.classExtension
+import foo.companionExtension
+import foo.objectExtension
+import foo.topLevel
 
 fun test() {
     A().classMember()

@@ -1,6 +1,7 @@
 package target
 
 import library.KtClass
+import library.KtObject
 import source.Bar
 
 class Foo {
