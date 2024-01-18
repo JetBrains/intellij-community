@@ -2,10 +2,8 @@
 package org.jetbrains.jps.util;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,32 +60,13 @@ public final class JpsPathUtil {
     return url;
   }
 
-  //todo reuse code from VfsUtil instead
-  @NotNull
-  public static String fixURLforIDEA(@NotNull String url) {
-    int idx = url.indexOf(":/");
-    if (idx >= 0 && idx + 2 < url.length() && url.charAt(idx + 2) != '/') {
-      String prefix = url.substring(0, idx);
-      String suffix = url.substring(idx + 2);
-
-      if (SystemInfoRt.isWindows) {
-        url = prefix + "://" + suffix;
-      }
-      else {
-        url = prefix + ":///" + suffix;
-      }
-    }
-    return url;
-  }
-
   public static String pathToUrl(String path) {
     return FILE_URL_PREFIX + path;
   }
 
   public static String getLibraryRootUrl(File file) {
     String path = FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
-    return file.isDirectory() ? FILE_URL_PREFIX + path : JAR_URL_PREFIX
-                                                         + path + "!/";
+    return file.isDirectory() ? FILE_URL_PREFIX + path : JAR_URL_PREFIX + path + "!/";
   }
 
   public static boolean isJrtUrl(@NotNull String url) {
