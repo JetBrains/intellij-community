@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.conversions.*
 import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
 import org.jetbrains.kotlin.nj2k.tree.JKParameter
@@ -66,6 +67,7 @@ internal object ConversionsRunner {
         EnumSyntheticValuesMethodConversion(context)
     )
 
+    context(KtAnalysisSession)
     fun doApply(
         trees: List<JKTreeRoot>,
         context: NewJ2kConverterContext,

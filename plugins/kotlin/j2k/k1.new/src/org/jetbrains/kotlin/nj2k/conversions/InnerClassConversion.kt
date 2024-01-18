@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.isLocalClass
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
 import org.jetbrains.kotlin.nj2k.tree.elementByModifier
 
 internal class InnerClassConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement =
         if (element is JKClass) recurseArmed(element, outerClass = element) else recurse(element)
 

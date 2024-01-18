@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.callOn
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isStringType
 
 internal class AnyWithStringConcatenationConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKBinaryExpression) return recurse(element)
         if (element.operator.token == JKOperatorToken.PLUS

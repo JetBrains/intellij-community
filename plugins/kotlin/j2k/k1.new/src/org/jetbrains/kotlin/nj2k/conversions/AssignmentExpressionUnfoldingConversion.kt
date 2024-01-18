@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.blockStatement
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         val unfolded = when (element) {
             is JKBlock -> element.convertAssignments()

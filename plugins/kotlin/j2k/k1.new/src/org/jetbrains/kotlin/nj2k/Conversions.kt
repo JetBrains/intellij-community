@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -15,12 +16,14 @@ internal abstract class Conversion(val context: NewJ2kConverterContext) {
     val typeFactory: JKTypeFactory
         get() = context.typeFactory
 
+    context(KtAnalysisSession)
     fun runForEach(treeRoots: Sequence<JKTreeElement>, context: NewJ2kConverterContext) {
         for (root in treeRoots) {
             run(root, context)
         }
     }
 
+    context(KtAnalysisSession)
     abstract fun run(treeRoot: JKTreeElement, context: NewJ2kConverterContext)
 
     protected fun <E : JKTreeElement> applyRecursive(element: E, func: (JKTreeElement) -> JKTreeElement): E =
@@ -40,17 +43,21 @@ internal val Conversion.moduleApiVersion: ApiVersion
     get() = languageVersionSettings.apiVersion
 
 internal abstract class RecursiveConversion(context: NewJ2kConverterContext) : Conversion(context) {
+    context(KtAnalysisSession)
     override fun run(treeRoot: JKTreeElement, context: NewJ2kConverterContext) {
         val root = applyToElement(treeRoot)
         assert(root === treeRoot)
     }
 
+    context(KtAnalysisSession)
     abstract fun applyToElement(element: JKTreeElement): JKTreeElement
 
-    protected fun <E : JKTreeElement> recurse(element: E): E = applyRecursive(element, ::applyToElement)
+    context(KtAnalysisSession)
+    protected fun <E : JKTreeElement> recurse(element: E): E = applyRecursive(element) { applyToElement(it) }
 }
 
 internal abstract class RecursiveConversionWithData<D>(context: NewJ2kConverterContext, private val initialData: D) : Conversion(context) {
+    context(KtAnalysisSession)
     override fun run(treeRoot: JKTreeElement, context: NewJ2kConverterContext) {
         val root = applyToElement(treeRoot, initialData)
         assert(root === treeRoot)

@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -25,6 +28,7 @@ abstract class AbstractNewJavaToKotlinConverterMultiFileTest : AbstractJavaToKot
         }
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun doTest(directory: File, filesToConvert: Array<File>) {
         val psiManager = PsiManager.getInstance(project)
 
@@ -68,8 +72,15 @@ abstract class AbstractNewJavaToKotlinConverterMultiFileTest : AbstractJavaToKot
 
         resultFiles.forEach { it.commitAndUnblockDocument() }
 
+        val contextElement = resultFiles.first()
+        allowAnalysisOnEdt {
+            analyze(contextElement) {
+                externalCodeProcessor?.bindJavaDeclarationsToConvertedKotlinOnes(resultFiles)
+            }
+        }
+
         project.executeWriteCommand("") {
-            process?.invoke(resultFiles)
+            process?.invoke()
         }
 
         for ((i, kotlinFile) in resultFiles.withIndex()) {

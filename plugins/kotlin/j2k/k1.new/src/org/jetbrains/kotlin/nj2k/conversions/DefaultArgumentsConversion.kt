@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.*
@@ -23,6 +24,7 @@ internal class DefaultArgumentsConversion(context: NewJ2kConverterContext) : Rec
                 || hasAnnotations
                 || name.value.canBeGetterOrSetterName()
 
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClassBody) return recurse(element)
 

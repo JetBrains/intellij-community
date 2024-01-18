@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -41,6 +42,7 @@ private val equalsOperators: TokenSet =
         KtTokens.EXCLEQ
     )
 
+context(KtAnalysisSession)
 internal fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -56,6 +58,7 @@ internal fun untilToExpression(
     )
 }
 
+context(KtAnalysisSession)
 internal fun downToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -80,6 +83,7 @@ internal fun JKBinaryExpression.parenthesizedWithFormatting(): JKParenthesizedEx
         JKBinaryExpression(::left.detached(), ::right.detached(), operator).withFormattingFrom(this)
     )
 
+context(KtAnalysisSession)
 internal fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
@@ -148,10 +152,12 @@ internal fun stringLiteral(content: String, typeFactory: JKTypeFactory): JKExpre
     }
 }
 
+context(KtAnalysisSession)
 internal fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverterContext): List<JKFieldAccessExpression> {
     val symbol = context.symbolProvider.provideUniverseSymbol(this)
     val usages = mutableListOf<JKFieldAccessExpression>()
     val searcher = object : RecursiveConversion(context) {
+        context(KtAnalysisSession)
         override fun applyToElement(element: JKTreeElement): JKTreeElement {
             if (element is JKExpression) {
                 element.unboxFieldReference()?.also {
@@ -191,9 +197,11 @@ internal fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
         else -> false
     }
 
+context(KtAnalysisSession)
 internal fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
 
+context(KtAnalysisSession)
 internal fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).any {
         it.asAssignmentFromTarget() != null

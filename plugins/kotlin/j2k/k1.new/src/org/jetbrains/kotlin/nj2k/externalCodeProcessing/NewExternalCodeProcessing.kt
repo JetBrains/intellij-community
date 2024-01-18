@@ -10,9 +10,9 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
 import org.jetbrains.kotlin.j2k.ProgressPortionReporter
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.nj2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
 import org.jetbrains.kotlin.nj2k.types.typeFqName
+import org.jetbrains.kotlin.nj2k.types.typeFqNamePossiblyMappedToKotlin
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
@@ -47,13 +48,16 @@ class NewExternalCodeProcessing internal constructor(
     fun isExternalProcessingNeeded(): Boolean =
         members.values.any { it.searchingNeeded }
 
+    context(KtAnalysisSession)
     fun addMember(data: JKMemberData) {
         val key = data.buildKey() ?: return
         members[key] = data
     }
 
+    context(KtAnalysisSession)
     internal fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
 
+    context(KtAnalysisSession)
     fun getMember(element: KtNamedDeclaration): JKMemberData? {
         val key = element.buildKey()
         // For Java record classes, we collect usages of light (non-physical) methods that correspond to the record components.
@@ -62,30 +66,36 @@ class NewExternalCodeProcessing internal constructor(
         return members[key] ?: members[key.toLightMethodKey()].takeIf { element.isConstructorDeclaredProperty() }
     }
 
+    context(KtAnalysisSession)
     private fun JKMemberData.buildKey(): MemberKey? {
         val fqName = this.fqName ?: return null
         return when (this) {
-            is JKPhysicalMethodData -> PhysicalMethodKey(fqName, this.javaElement.parameterList.parameters.mapNotNull { it.typeFqName() })
+            is JKPhysicalMethodData ->
+                PhysicalMethodKey(fqName, javaElement.parameterList.parameters.mapNotNull { it.typeFqNamePossiblyMappedToKotlin() })
+
             is JKLightMethodData -> LightMethodKey(fqName)
             else -> FieldKey(fqName)
         }
     }
 
+    context(KtAnalysisSession)
     private fun PsiMember.buildKey(): MemberKey? {
         val fqName = this.kotlinFqName ?: return null
         return when (this) {
-            is PsiMethod -> PhysicalMethodKey(fqName, this.parameterList.parameters.mapNotNull { it.typeFqName() })
+            is PsiMethod -> PhysicalMethodKey(fqName, parameterList.parameters.mapNotNull { it.typeFqNamePossiblyMappedToKotlin() })
             else -> FieldKey(fqName)
         }
     }
 
+    context(KtAnalysisSession)
     private fun KtNamedDeclaration.buildKey() = when (this) {
         is KtNamedFunction -> PhysicalMethodKey(this.fqNameWithoutCompanions, this.valueParameters.mapNotNull { it.typeFqName() })
         else -> FieldKey(this.fqNameWithoutCompanions)
     }
 
-    private fun List<KtFile>.bindJavaDeclarationsToConvertedKotlinOnes() {
-        forEach { file ->
+    context(KtAnalysisSession)
+    override fun bindJavaDeclarationsToConvertedKotlinOnes(files: List<KtFile>) {
+        files.forEach { file ->
             file.forEachDescendantOfType<KtNamedDeclaration> { declaration ->
                 if (declaration is KtNamedFunction || declaration is KtProperty || declaration.isConstructorDeclaredProperty()) {
                     val member = getMember(declaration) ?: return@forEachDescendantOfType
@@ -95,21 +105,7 @@ class NewExternalCodeProcessing internal constructor(
         }
     }
 
-    private fun List<KtFile>.shortenJvmAnnotationsFqNames() {
-        val filter = filter@{ element: PsiElement ->
-            if (element !is KtUserType) return@filter ShortenReferences.FilterResult.GO_INSIDE
-            val isJvmAnnotation = ExternalUsagesFixer.USED_JVM_ANNOTATIONS.any { annotation ->
-                element.textMatches(annotation.asString())
-            }
-            if (isJvmAnnotation) ShortenReferences.FilterResult.PROCESS
-            else ShortenReferences.FilterResult.SKIP
-        }
-        for (file in this) {
-            ShortenReferences.DEFAULT.process(file, filter)
-        }
-    }
-
-    override fun prepareWriteOperation(progress: ProgressIndicator?): (List<KtFile>) -> Unit {
+    override fun prepareWriteOperation(progress: ProgressIndicator?): () -> Unit {
         progress?.text = KotlinNJ2KBundle.message("progress.searching.usages.to.update")
 
         val usages = mutableListOf<ExternalUsagesFixer.JKMemberInfoWithUsages>()
@@ -126,13 +122,10 @@ class NewExternalCodeProcessing internal constructor(
                 usages += member.collectUsages()
             }
         }
-        return { files ->
-            files.bindJavaDeclarationsToConvertedKotlinOnes()
+        return {
             ExternalUsagesFixer(usages).fix()
-            files.shortenJvmAnnotationsFqNames()
         }
     }
-
 
     private fun JKMemberData.collectUsages(): ExternalUsagesFixer.JKMemberInfoWithUsages {
         val javaUsages = mutableListOf<PsiElement>()

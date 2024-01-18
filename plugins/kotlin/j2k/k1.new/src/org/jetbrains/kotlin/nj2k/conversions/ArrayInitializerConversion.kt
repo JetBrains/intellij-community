@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 internal class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         var newElement = element
         if (element is JKJavaNewArray) {

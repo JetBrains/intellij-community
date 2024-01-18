@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.parenthesizedWithFormatting
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKKtWordOperatorToken
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 
 internal class ParenthesizeBitwiseOperationConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKBinaryExpression) return recurse(element)
         val parent = element.parent as? JKBinaryExpression ?: return recurse(element)

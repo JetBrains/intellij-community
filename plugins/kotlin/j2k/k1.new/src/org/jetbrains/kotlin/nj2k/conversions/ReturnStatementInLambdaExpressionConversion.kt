@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.asStatement
@@ -16,6 +17,7 @@ internal class ReturnStatementInLambdaExpressionConversion(context: NewJ2kConver
         const val DEFAULT_LABEL_NAME = "label"
     }
 
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKLambdaExpression) return recurse(element)
         val statement = element.statement

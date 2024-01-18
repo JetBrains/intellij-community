@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.SyntheticElement
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.LanguageFeature.EnumEntries
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
@@ -17,6 +18,7 @@ private const val ENUM_VALUES_METHOD_NAME = "values"
 private const val ENUM_ENTRIES_PROPERTY_NAME = "entries"
 
 internal class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression && element !is JKCallExpression) return recurse(element)
         if (!languageVersionSettings.supportsFeature(EnumEntries)) return recurse(element)
@@ -31,6 +33,7 @@ internal class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterConte
     private fun JKTreeElement.selector(): JKTreeElement =
         if (this is JKQualifiedExpression) selector else this
 
+    context(KtAnalysisSession)
     private fun JKTreeElement.isReceiverEnumType(): Boolean =
         when (this) {
             is JKQualifiedExpression ->

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.conversions.InitializationState.*
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
 
 internal class ImplicitInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)
         if (element.initializer !is JKStubExpression) return recurse(element)
@@ -28,6 +30,7 @@ internal class ImplicitInitializerConversion(context: NewJ2kConverterContext) : 
         return recurse(element)
     }
 
+    context(KtAnalysisSession)
     private fun JKField.initializationState(): InitializationState {
         val containingClass = parentOfType<JKClass>() ?: return NON_INITIALIZED
         val constructors = containingClass.declarationList.filterIsInstance<JKConstructor>()
@@ -73,6 +76,7 @@ internal class ImplicitInitializerConversion(context: NewJ2kConverterContext) : 
         }
     }
 
+    context(KtAnalysisSession)
     private fun JKClass.findDeclarationsWithInitializersFor(field: JKField): Set<JKDeclaration> {
         val fieldSymbol = symbolProvider.provideUniverseSymbol(field)
         val usages = field.findUsages(scope = this, context)

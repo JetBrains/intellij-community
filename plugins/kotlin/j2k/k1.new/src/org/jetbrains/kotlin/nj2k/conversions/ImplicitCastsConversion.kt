@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiNewExpression
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKVariable -> convertVariable(element)
@@ -151,12 +153,14 @@ internal class ImplicitCastsConversion(context: NewJ2kConverterContext) : Recurs
         }
     }
 
+    context(KtAnalysisSession)
     private fun convertNewExpression(expression: JKNewExpression) {
         val constructor = expression.psi.safeAs<PsiNewExpression>()?.resolveConstructor() ?: return
         val methodSymbol = context.symbolProvider.provideDirectSymbol(constructor) as? JKMethodSymbol ?: return
         convertArguments(methodSymbol, expression.arguments.arguments)
     }
 
+    context(KtAnalysisSession)
     private fun convertMethodCallExpression(expression: JKCallExpression) {
         convertArguments(expression.identifier, expression.arguments.arguments)
     }
@@ -179,6 +183,7 @@ internal class ImplicitCastsConversion(context: NewJ2kConverterContext) : Recurs
         }
     }
 
+    context(KtAnalysisSession)
     private fun convertArguments(methodSymbol: JKMethodSymbol, arguments: List<JKArgument>) {
         if (methodSymbol.isUnresolved) return
         val parameterTypes = methodSymbol.parameterTypesWithLastArgumentUnfoldedAsVararg() ?: return
@@ -203,6 +208,7 @@ internal class ImplicitCastsConversion(context: NewJ2kConverterContext) : Recurs
         return null
     }
 
+    context(KtAnalysisSession)
     private fun JKMethodSymbol.parameterTypesWithLastArgumentUnfoldedAsVararg(): List<JKType>? {
         val realParameterTypes = parameterTypes ?: return null
         if (realParameterTypes.isEmpty()) return null

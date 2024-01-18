@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -37,6 +39,12 @@ internal class JKSymbolProvider(private val resolver: JKResolver) {
                 createDirectSymbol(psi)
             }
         }
+    }
+
+    context(KtAnalysisSession)
+    fun provideDirectSymbol(symbol: KtDeclarationSymbol): JKSymbol {
+        val psi = symbol.psi ?: return JKUnresolvedClassSymbol(NO_NAME_PROVIDED, typeFactory)
+        return provideDirectSymbol(psi)
     }
 
     inline fun <reified T : JKSymbol> provideSymbolForReference(reference: PsiReference): T {
@@ -136,6 +144,7 @@ internal class JKSymbolProvider(private val resolver: JKResolver) {
     fun provideMethodSymbol(fqName: String): JKMethodSymbol =
         provideMethodSymbol(fqName.asSafeFqName())
 
+    context(KtAnalysisSession)
     fun provideMethodSymbolWithExactSignature(methodFqName: String, parameterTypesFqNames: List<String>): JKMethodSymbol {
         return symbolsByFqNameWithExactSignature.getOrPutIfNotNull(listOf(methodFqName) + parameterTypesFqNames) {
             resolver.resolveMethodWithExactSignature(
@@ -190,6 +199,8 @@ internal class JKSymbolProvider(private val resolver: JKResolver) {
 
     private fun String.asSafeFqName(): FqName =
         FqName(replace('/', '.'))
+
+    private val NO_NAME_PROVIDED: String = "NO_NAME_PROVIDED"
 }
 
 private class SymbolProviderVisitor(private val symbolProvider: JKSymbolProvider) : JavaElementVisitor() {

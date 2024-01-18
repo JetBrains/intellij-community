@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_6
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.ifEmpty
 
 internal class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKAnnotationList) return recurse(element)
         element.annotations.forEach {

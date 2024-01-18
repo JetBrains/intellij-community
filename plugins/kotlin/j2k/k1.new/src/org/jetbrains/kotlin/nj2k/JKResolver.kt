@@ -9,13 +9,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
-import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.types.typeFqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -34,11 +34,12 @@ internal class JKResolver(val project: Project, module: Module?, private val con
         resolveFqNameOfKtFunctionByIndex(fqName)
             ?: resolveFqName(fqName)
 
+    context(KtAnalysisSession)
     fun resolveMethodWithExactSignature(methodFqName: FqName, parameterTypesFqNames: List<FqName>): PsiElement? =
-        resolveFqNameOfKtFunctionByIndex(methodFqName) {
-            it.valueParameters.size == parameterTypesFqNames.size &&
-                    it.valueParameters.map { param -> param.resolveToParameterDescriptorIfAny()?.type?.fqName } == parameterTypesFqNames
-        }
+        resolveFqNameOfKtFunctionByIndex(methodFqName, filter = fun(function: KtNamedFunction): Boolean {
+            if (function.valueParameters.size != parameterTypesFqNames.size) return false
+            return function.valueParameters.mapNotNull { it.typeFqName() } == parameterTypesFqNames
+        })
 
     fun resolveField(fqName: FqName): PsiElement? =
         resolveFqNameOfKtPropertyByIndex(fqName)

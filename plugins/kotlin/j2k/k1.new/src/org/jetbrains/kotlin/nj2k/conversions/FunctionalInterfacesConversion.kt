@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.annotationByFqName
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 private const val FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface"
 
 internal class FunctionalInterfacesConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (!context.functionalInterfaceConversionEnabled) return recurse(element)
         if (element !is JKClass) return recurse(element)

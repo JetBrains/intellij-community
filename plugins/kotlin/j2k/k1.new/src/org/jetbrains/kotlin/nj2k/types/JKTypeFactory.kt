@@ -3,13 +3,15 @@
 package org.jetbrains.kotlin.nj2k.types
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.Nullability.Nullable
-import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
-import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
@@ -17,12 +19,12 @@ import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.isNullable
 
 internal class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
     fun fromPsiType(type: PsiType): JKType = createPsiType(type)
-    fun fromKotlinType(type: KotlinType): JKType = createKotlinType(type)
+
+    context(KtAnalysisSession)
+    fun fromKtType(type: KtType): JKType = createKtType(type)
 
     inner class DefaultTypes {
         private fun typeByFqName(
@@ -128,23 +130,30 @@ internal class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         else -> JKNoType
     }
 
-    private fun createKotlinType(type: KotlinType): JKType {
-        return when (val descriptor = type.constructor.declarationDescriptor) {
-            is TypeParameterDescriptor ->
-                JKTypeParameterType(
-                    symbolProvider.provideDirectSymbol(
-                        descriptor.findPsi() as? KtTypeParameter ?: return JKNoType
-                    ) as JKTypeParameterSymbol
-                )
+    context(KtAnalysisSession)
+    private fun createKtType(type: KtType): JKType {
+        return when (type) {
+            is KtTypeParameterType -> {
+                val symbol = symbolProvider.provideDirectSymbol(type.symbol) as? JKTypeParameterSymbol ?: return JKNoType
+                JKTypeParameterType(symbol)
+            }
 
-            else -> JKClassType(
-                symbolProvider.provideClassSymbol(type.getKotlinTypeFqName(false)), //TODO constructor fqName
-                type.arguments.map { typeArgument ->
-                    if (typeArgument.isStarProjection) JKStarProjectionTypeImpl
-                    else fromKotlinType(typeArgument.type)
-                },
-                if (type.isNullable()) Nullable else NotNull
-            )
+            is KtNonErrorClassType -> {
+                val fqName = type.classId.asSingleFqName()
+                val classReference = symbolProvider.provideClassSymbol(fqName)
+                val typeParameters = type.ownTypeArguments.map { typeArgument ->
+                    if (typeArgument is KtStarTypeProjection) {
+                        JKStarProjectionTypeImpl
+                    } else {
+                        val typeArgumentType = typeArgument.type ?: return JKNoType
+                        createKtType(typeArgumentType)
+                    }
+                }
+                val nullability = if (type.nullability.isNullable) Nullable else NotNull
+                JKClassType(classReference, typeParameters, nullability)
+            }
+
+            else -> JKNoType
         }
     }
 }

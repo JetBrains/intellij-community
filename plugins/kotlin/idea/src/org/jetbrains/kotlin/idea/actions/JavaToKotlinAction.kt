@@ -28,6 +28,9 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -36,7 +39,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures.NewJ2k
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.j2k.OldJ2kPostProcessor
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -53,6 +55,7 @@ class JavaToKotlinAction : AnAction() {
     object Handler {
         val title: String = KotlinBundle.message("action.j2k.name")
 
+        @OptIn(KtAllowAnalysisOnEdt::class)
         fun convertFiles(
             files: List<PsiJavaFile>,
             project: Project,
@@ -90,23 +93,33 @@ class JavaToKotlinAction : AnAction() {
             val externalCodeUpdate =
                 prepareExternalCodeUpdate(project, externalCodeProcessing, enableExternalCodeProcessing, askExternalCodeProcessing)
 
-            return project.executeWriteCommand(KotlinBundle.message("action.j2k.task.name"), null) {
-                CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
-
-                val newFiles = saveResults(javaFiles, result.results)
-                    .map { it.toPsiFile(project) as KtFile }
-                    .onEach { it.commitAndUnblockDocument() }
-
-                externalCodeUpdate?.invoke(newFiles)
-
-                PsiDocumentManager.getInstance(project).commitAllDocuments()
-
-                newFiles.singleOrNull()?.let {
-                    FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
+            lateinit var newFiles: List<KtFile>
+            CommandProcessor.getInstance().runUndoTransparentAction {
+                newFiles = project.executeWriteCommand {
+                    CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
+                    saveResults(javaFiles, result.results)
+                        .map { it.toPsiFile(project) as KtFile }
+                        .onEach { it.commitAndUnblockDocument() }
                 }
 
-                newFiles
+                val contextElement = newFiles.firstOrNull() ?: return@runUndoTransparentAction
+                allowAnalysisOnEdt {
+                    analyze(contextElement) {
+                        externalCodeProcessing?.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
+                    }
+                }
+
+                project.executeWriteCommand {
+                    CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
+                    externalCodeUpdate?.invoke()
+                    PsiDocumentManager.getInstance(project).commitAllDocuments()
+                    newFiles.singleOrNull()?.let {
+                        FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
+                    }
+                }
             }
+
+            return newFiles
         }
 
         private fun prepareExternalCodeUpdate(
@@ -114,10 +127,10 @@ class JavaToKotlinAction : AnAction() {
             processing: ExternalCodeProcessing?,
             isEnabled: Boolean,
             shouldAsk: Boolean
-        ): ((List<KtFile>) -> Unit)? {
+        ): (() -> Unit)? {
             if (!isEnabled || processing == null) return null
 
-            var result: ((List<KtFile>) -> Unit)? = null
+            var result: (() -> Unit)? = null
             val question = KotlinBundle.message("action.j2k.correction.required")
 
             if (!shouldAsk || Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES) {
@@ -133,6 +146,9 @@ class JavaToKotlinAction : AnAction() {
 
         private fun runSynchronousProcess(project: Project, process: () -> Unit): Boolean =
             ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, /* canBeCanceled = */ true, project)
+
+        private fun <T> Project.executeWriteCommand(command: () -> T): T =
+            executeWriteCommand(KotlinBundle.message("action.j2k.task.name"), groupId = null, command)
 
         private fun saveResults(javaFiles: List<PsiJavaFile>, convertedTexts: List<String>): List<VirtualFile> {
             fun uniqueKotlinFileName(javaFile: VirtualFile): String {

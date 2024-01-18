@@ -9,9 +9,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
@@ -74,13 +81,33 @@ class NewJavaToKotlinConverter(
         }
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     fun elementsToKotlin(
         inputElements: List<PsiElement>,
         processor: WithProgressProcessor,
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
-    ): Result {
+    ): Result = allowAnalysisOnEdt {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
+        val targetKtModule = targetModule?.productionOrTestSourceModuleInfo?.toKtModule() ?: return Result.EMPTY
+
+        // TODO
+        // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
+        // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
+
+        analyze(targetKtModule) {
+            doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun doConvertElementsToKotlin(
+        contextElement: PsiElement,
+        inputElements: List<PsiElement>,
+        processor: WithProgressProcessor,
+        bodyFilter: ((PsiElement) -> Boolean)?,
+        forInlining: Boolean
+    ): Result {
         val resolver = JKResolver(project, targetModule, contextElement)
         val symbolProvider = JKSymbolProvider(resolver)
         val typeFactory = JKTypeFactory(symbolProvider)

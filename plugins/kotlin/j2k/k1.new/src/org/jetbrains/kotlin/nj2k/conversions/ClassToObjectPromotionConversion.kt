@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 
 internal class ClassToObjectPromotionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKClass && element.classKind == JKClass.ClassKind.CLASS) {
             val companion = element.getCompanion() ?: return recurse(element)

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldDataFromJava
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.nj2k.types.isStringType
 import org.jetbrains.kotlin.nj2k.types.updateNullabilityRecursively
 
 internal class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKMethodImpl -> element.convert()
@@ -27,6 +29,7 @@ internal class ClassMemberConversion(context: NewJ2kConverterContext) : Recursiv
         return recurse(element)
     }
 
+    context(KtAnalysisSession)
     private fun JKMethodImpl.convert() {
         removeStaticModifierFromAnonymousClassMember()
 
@@ -75,6 +78,7 @@ internal class ClassMemberConversion(context: NewJ2kConverterContext) : Recursiv
         }
     }
 
+    context(KtAnalysisSession)
     private fun JKField.convert() {
         removeStaticModifierFromAnonymousClassMember()
         mutability = if (modality == FINAL) IMMUTABLE else MUTABLE

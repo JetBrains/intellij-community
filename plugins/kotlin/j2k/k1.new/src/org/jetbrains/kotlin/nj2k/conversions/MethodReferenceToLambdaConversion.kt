@@ -4,8 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.lang.jvm.JvmModifier.STATIC
 import com.intellij.psi.PsiModifier
-import org.jetbrains.kotlin.codegen.kotlinType
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.nullIfStubExpression
@@ -14,13 +13,13 @@ import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private const val RECEIVER_NAME: String = "obj"
 
 internal class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKMethodReferenceExpression) return recurse(element)
 
@@ -103,6 +102,7 @@ internal class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext
         } else null
     }
 
+    context(KtAnalysisSession)
     private fun JKClassType.singleFunctionParameterTypes(): List<JKType>? {
         return when (val reference = classReference) {
             is JKMultiverseClassSymbol -> {
@@ -114,8 +114,8 @@ internal class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext
             is JKMultiverseKtClassSymbol -> {
                 val function = reference.target.body?.functions?.singleOrNull()
                 function?.valueParameters?.map { param ->
-                    val type = param.kotlinType(param.analyze()) ?: return null
-                    typeFactory.fromKotlinType(type).substituteTypeParameters(classType = this)
+                    val ktType = param.getParameterSymbol().returnType
+                    typeFactory.fromKtType(ktType).substituteTypeParameters(classType = this)
                 }
             }
 

@@ -5,13 +5,12 @@ package org.jetbrains.kotlin.nj2k.types
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.util.getParameterDescriptor
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.Default
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
@@ -26,9 +25,7 @@ import org.jetbrains.kotlin.nj2k.types.JKVarianceTypeParameterType.Variance
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
@@ -44,16 +41,54 @@ internal val PsiType.isKotlinFunctionalType: Boolean
         return functionalTypeRegex.matches(fqName.asString())
     }
 
-internal fun PsiParameter.typeFqName(): FqName? = this.getParameterDescriptor()?.type?.fqName
+context(KtAnalysisSession) // TODO: currently unused, will be used in the K2 implementation
+internal fun PsiParameter.typeFqNamePossiblyMappedToKotlin(): FqName {
+    // TODO: support (nested) array types: KTIJ-28739
+    // TODO: use `asKtType` function in the K2 implementation (it doesn't work in K1 yet: KT-65545)
+    //val ktType = type.asKtType(useSitePosition = this) as? KtNonErrorClassType ?: return null
+    //return ktType.classId.asSingleFqName()
 
-fun KtParameter.typeFqName(): FqName? = this.descriptor?.type?.fqName
+    val typeName = if (type is PsiEllipsisType) type.canonicalText.trimEnd('.') else type.canonicalText
+    primitiveTypeMapping[typeName]?.let {
+        return FqName(it)
+    }
+    val originalFqName = FqName(typeName)
+    val mappedFqName = JavaToKotlinClassMap.mapJavaToKotlin(originalFqName)?.asSingleFqName()
+    return mappedFqName ?: originalFqName
+}
+
+// Copied from org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory
+private val primitiveTypeMapping: Map<String, String> = mapOf(
+    PsiTypes.voidType().name to "kotlin.Unit",
+    PsiTypes.booleanType().name to "kotlin.Boolean",
+    PsiTypes.byteType().name to "kotlin.Byte",
+    PsiTypes.charType().name to "kotlin.Char",
+    PsiTypes.shortType().name to "kotlin.Short",
+    PsiTypes.intType().name to "kotlin.Int",
+    PsiTypes.floatType().name to "kotlin.Float",
+    PsiTypes.longType().name to "kotlin.Long",
+    PsiTypes.doubleType().name to "kotlin.Double",
+    "${PsiTypes.booleanType().name}[]" to "kotlin.BooleanArray",
+    "${PsiTypes.byteType().name}[]" to "kotlin.ByteArray",
+    "${PsiTypes.charType().name}[]" to "kotlin.CharArray",
+    "${PsiTypes.shortType().name}[]" to "kotlin.ShortArray",
+    "${PsiTypes.intType().name}[]" to "kotlin.IntArray",
+    "${PsiTypes.floatType().name}[]" to "kotlin.FloatArray",
+    "${PsiTypes.longType().name}[]" to "kotlin.LongArray",
+    "${PsiTypes.doubleType().name}[]" to "kotlin.DoubleArray"
+)
+
+context(KtAnalysisSession)
+internal fun KtParameter.typeFqName(): FqName? {
+    val type = getParameterSymbol().returnType as? KtNonErrorClassType
+    return type?.classId?.asSingleFqName()
+}
 
 private val functionalTypeRegex = """(kotlin\.jvm\.functions|kotlin)\.Function[\d+]""".toRegex()
 
-internal fun KtTypeReference.toJK(typeFactory: JKTypeFactory): JKType? =
-    analyze(BodyResolveMode.PARTIAL)
-        .get(BindingContext.TYPE, this)
-        ?.let { typeFactory.fromKotlinType(it) }
+context(KtAnalysisSession)
+internal fun KtTypeReference.toJK(typeFactory: JKTypeFactory): JKType =
+    typeFactory.fromKtType(getKtType())
 
 internal infix fun JKJavaPrimitiveType.isStrongerThan(other: JKJavaPrimitiveType) =
     jvmPrimitiveTypesPriority.getValue(this.jvmPrimitiveType.primitiveType) >

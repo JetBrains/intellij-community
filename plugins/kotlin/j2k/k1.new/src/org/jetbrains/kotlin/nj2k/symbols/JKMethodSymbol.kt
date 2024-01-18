@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -16,18 +17,28 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal sealed class JKMethodSymbol : JKSymbol {
+    context(KtAnalysisSession)
     abstract val receiverType: JKType?
+
+    context(KtAnalysisSession)
     abstract val parameterTypes: List<JKType>?
+
+    context(KtAnalysisSession)
     abstract val returnType: JKType?
 }
 
 internal class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethodSymbol(), JKUniverseSymbol<JKMethod> {
+    context(KtAnalysisSession)
     override val receiverType: JKType?
         get() = target.parent.safeAs<JKClass>()?.let {
             JKClassType(symbolProvider.provideUniverseSymbol(it))
         }
+
+    context(KtAnalysisSession)
     override val parameterTypes: List<JKType>
         get() = target.parameters.map { it.type.type }
+
+    context(KtAnalysisSession)
     override val returnType: JKType
         get() = target.returnType.type
 
@@ -38,6 +49,7 @@ internal class JKMultiverseMethodSymbol(
     override val target: PsiMethod,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseSymbol<PsiMethod> {
+    context(KtAnalysisSession)
     override val receiverType: JKType?
         get() = target.containingClass?.let {
             JKClassType(symbolProvider.provideDirectSymbol(it) as JKClassSymbol)
@@ -59,9 +71,11 @@ internal class JKMultiverseFunctionSymbol(
     override val target: KtFunction,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseKtSymbol<KtFunction> {
+    context(KtAnalysisSession)
     override val receiverType: JKType?
         get() = target.receiverTypeReference?.toJK(typeFactory)
 
+    context(KtAnalysisSession)
     @Suppress("UNCHECKED_CAST")
     override val parameterTypes: List<JKType>?
         get() = target.valueParameters.map { parameter ->
@@ -76,6 +90,7 @@ internal class JKMultiverseFunctionSymbol(
             }
         }.takeIf { parameters -> parameters.all { it != null } } as? List<JKType>
 
+    context(KtAnalysisSession)
     override val returnType: JKType?
         get() = target.typeReference?.toJK(typeFactory)
 }
@@ -87,8 +102,11 @@ internal class JKUnresolvedMethod(
 ) : JKMethodSymbol(), JKUnresolvedSymbol {
     constructor(target: PsiReference, typeFactory: JKTypeFactory) : this(target.canonicalText, typeFactory)
 
+    context(KtAnalysisSession)
     override val receiverType: JKType
         get() = typeFactory.types.nullableAny
+
+    context(KtAnalysisSession)
     override val parameterTypes: List<JKType>
         get() = emptyList()
 }
@@ -97,10 +115,16 @@ internal class KtClassImplicitConstructorSymbol(
     override val target: KtLightMethod,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseSymbol<KtLightMethod> {
+
+    context(KtAnalysisSession)
     override val receiverType: JKType?
         get() = null
+
+    context(KtAnalysisSession)
     override val parameterTypes: List<JKType>
         get() = emptyList()
+
+    context(KtAnalysisSession)
     override val returnType: JKType?
         get() = target.returnType?.let(typeFactory::fromPsiType)
 }

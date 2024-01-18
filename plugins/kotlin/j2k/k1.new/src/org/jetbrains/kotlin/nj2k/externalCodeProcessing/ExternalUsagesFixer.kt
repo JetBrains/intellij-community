@@ -3,13 +3,11 @@
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
-import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.j2k.AccessorKind.GETTER
 import org.jetbrains.kotlin.j2k.AccessorKind.SETTER
 import org.jetbrains.kotlin.lexer.KtTokens.*
-import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
@@ -17,6 +15,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     private val conversions: MutableList<JKExternalConversion> = mutableListOf()
+    private val jvmFieldAnnotatedDeclarations: MutableSet<KtNamedDeclaration> = mutableSetOf()
+    private val jvmStaticAnnotatedDeclarations: MutableSet<KtNamedDeclaration> = mutableSetOf()
 
     fun fix() {
         for (usage in usages) {
@@ -49,10 +49,10 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
 
         when {
             ktProperty.canBeAnnotatedWithJvmField() ->
-                ktProperty.addAnnotationIfThereAreNoJvmOnes(JVM_FIELD_ANNOTATION_FQ_NAME)
+                ktProperty.addJvmFieldAnnotationIfThereAreNoJvmAnnotations()
 
             isStatic && !ktProperty.hasModifier(CONST_KEYWORD) ->
-                ktProperty.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
+                ktProperty.addJvmStaticAnnotationIfThereAreNoJvmAnnotations()
         }
     }
 
@@ -63,10 +63,10 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
         if (javaUsages.isNotEmpty()) {
             when {
                 element.canBeAnnotatedWithJvmField() ->
-                    element.addAnnotationIfThereAreNoJvmOnes(JVM_FIELD_ANNOTATION_FQ_NAME)
+                    element.addJvmFieldAnnotationIfThereAreNoJvmAnnotations()
 
                 isStatic && !element.isConstProperty() ->
-                    element.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
+                    element.addJvmStaticAnnotationIfThereAreNoJvmAnnotations()
             }
         }
 
@@ -78,12 +78,18 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
             conversions += AccessorToPropertyKotlinExternalConversion(member.name, accessorKind, usage)
         }
 
-        if (element.hasJvmFieldAnnotation()) {
+        if (javaUsages.isNotEmpty() && element.hasJvmFieldAnnotation()) {
             for (usage in javaUsages) {
                 conversions += AccessorToPropertyJavaExternalConversion(member.name, accessorKind, usage)
             }
         }
     }
+
+    private fun KtNamedDeclaration.hasJvmFieldAnnotation(): Boolean =
+        jvmFieldAnnotatedDeclarations.contains(this)
+
+    private fun KtNamedDeclaration.hasJvmAnnotations(): Boolean =
+        jvmFieldAnnotatedDeclarations.contains(this) || jvmStaticAnnotatedDeclarations.contains(this)
 
     private fun KtNamedDeclaration.isConstProperty(): Boolean =
         this is KtProperty && hasModifier(CONST_KEYWORD)
@@ -97,16 +103,21 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
         isConstructorDeclaredProperty() ||
                 (this is KtProperty && getter == null && setter == null)
 
-    private fun KtNamedDeclaration.addAnnotationIfThereAreNoJvmOnes(fqName: FqName) {
-        // we don't want to resolve here and as we are working with fqNames, just by-text comparing is OK
-        val hasJvmAnnotations = annotationEntries.any { entry ->
-            USED_JVM_ANNOTATIONS.any { jvmAnnotation ->
-                entry.typeReference?.textMatches(jvmAnnotation.asString()) == true
-            }
-        }
-        if (!hasJvmAnnotations) {
-            addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@${fqName.asString()}"))
-        }
+    private fun KtNamedDeclaration.addJvmFieldAnnotationIfThereAreNoJvmAnnotations() {
+        if (hasJvmAnnotations()) return
+        jvmFieldAnnotatedDeclarations.add(this)
+        addAnnotation(JVM_FIELD)
+    }
+
+    private fun KtNamedDeclaration.addJvmStaticAnnotationIfThereAreNoJvmAnnotations() {
+        if (hasJvmAnnotations()) return
+        jvmStaticAnnotatedDeclarations.add(this)
+        addAnnotation(JVM_STATIC)
+    }
+
+    private fun KtNamedDeclaration.addAnnotation(fqName: String) {
+        val annotation = addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@$fqName"))
+        ShortenReferencesFacility.getInstance().shorten(annotation)
     }
 
     internal data class JKMemberInfoWithUsages(
@@ -114,9 +125,7 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
         val javaUsages: List<PsiElement>,
         val kotlinUsages: List<KtElement>
     )
-
-    companion object {
-        private val JVM_STATIC_FQ_NAME: FqName = FqName("kotlin.jvm.JvmStatic")
-        val USED_JVM_ANNOTATIONS: List<FqName> = listOf(JVM_STATIC_FQ_NAME, JVM_FIELD_ANNOTATION_FQ_NAME)
-    }
 }
+
+private const val JVM_FIELD: String = "kotlin.jvm.JvmField"
+private const val JVM_STATIC: String = "kotlin.jvm.JvmStatic"
