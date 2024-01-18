@@ -21,6 +21,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabRestETagListLoaderIn
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -168,88 +169,45 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
       .modelFlow(cs, LOG)
 
-  private val draftNotesEvents = MutableSharedFlow<GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>>()
+  private val draftNotesEvents = MutableSharedFlow<Change<GitLabMergeRequestDraftNoteRestDTO>>()
 
-  override val draftNotesData: SharedFlow<Result<List<GitLabMergeRequestDraftNoteRestDTO>>> =
-    reloadRequests.transformLatest { collectDraftNotes() }.modelFlow(cs, LOG)
+  private val draftNotesDataHolder =
+    if (glMetadata == null || glMetadata.version < GitLabVersion(15, 9)) {
+      null
+    }
+    else {
+      startGitLabRestETagListLoaderIn(
+        cs,
+        getMergeRequestDraftNotesUri(glProject, mr.iid),
+        { it.id },
 
-  private suspend fun FlowCollector<Result<List<GitLabMergeRequestDraftNoteRestDTO>>>.collectDraftNotes() {
-    runCatching {
-      supervisorScope {
-        if (glMetadata == null || glMetadata.version < GitLabVersion(15, 9)) {
-          emit(Result.success(listOf()))
-          currentCoroutineContext().cancel()
-        }
-
-        val notesGuard = Mutex()
-        val draftNotes = LinkedHashMap<GitLabId, GitLabMergeRequestDraftNoteRestDTO>()
-
-        var lastETag: String? = null
-        val uri = getMergeRequestDraftNotesUri(glProject, mr.iid)
-        ApiPageUtil.createPagesFlowByLinkHeader(uri) {
-          api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(
-            GitLabApiRequestName.REST_GET_DRAFT_NOTES, it
-          )
-        }.collect {
-          val newNotes = it.body() ?: error("Empty response")
-          notesGuard.withLock {
-            for (note in newNotes) {
-              draftNotes[note.id] = note
-            }
-          }
-          lastETag = it.headers().firstValue("ETag").orElse(null)
-        }
-
-        if (lastETag != null) {
-          launchNow {
-            updateRequests.collect {
-              val response = api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(
-                GitLabApiRequestName.REST_GET_DRAFT_NOTES, uri, lastETag
-              )
-              val newNotes = response.body()
-              if (newNotes != null) {
-                notesGuard.withLock {
-                  for (note in newNotes) {
-                    draftNotes[note.id] = note
-                  }
-                  emit(Result.success(draftNotes.values.toList()))
-                }
-              }
-              lastETag = response.headers().firstValue("ETag").orElse(null)
-              if (lastETag == null) {
-                currentCoroutineContext().cancel()
-              }
-            }
-          }
-        }
-        launchNow {
-          draftNotesEvents.collect { e ->
-            notesGuard.withLock {
-              when (e) {
-                is GitLabNoteEvent.Added -> draftNotes[e.note.id] = e.note
-                is GitLabNoteEvent.Deleted -> draftNotes.remove(e.noteId)
-                is GitLabNoteEvent.AllDeleted -> draftNotes.clear()
-                else -> Unit
-              }
-              emit(Result.success(draftNotes.values.toList()))
-            }
-          }
-        }
-        notesGuard.withLock {
-          emit(Result.success(draftNotes.values.toList()))
-        }
+        requestReloadFlow = reloadRequests,
+        requestRefreshFlow = updateRequests,
+        requestChangeFlow = draftNotesEvents
+      ) { uri, eTag ->
+        api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(
+          GitLabApiRequestName.REST_GET_DRAFT_NOTES, uri, eTag
+        )
       }
     }
-  }
+
+  override val draftNotesData =
+    (draftNotesDataHolder?.resultOrErrorFlow ?: flowOf(Result.success(emptyList())))
+      .mapCatching { draftNotes ->
+        if (draftNotes.isEmpty()) return@mapCatching emptyList()
+
+        draftNotes.map { it }
+      }
+      .modelFlow(cs, LOG)
 
   override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> = flow {
-    // we shouldn't get another user's draft notes
-    val currentUser = api.graphQL.getCurrentUser()
     draftNotesData
       .transformConsecutiveSuccesses {
         mapDataToModel(
           GitLabMergeRequestDraftNoteRestDTO::id,
-          { GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, glProject, mr, { draftNotesEvents::emit }, it, currentUser) },
+          {
+            GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, glProject, mr, { draftNotesEvents::emit }, it, currentUser)
+          },
           { update(it) }
         )
       }.collect(this)
@@ -297,7 +255,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
 
       withContext(NonCancellable) {
-        draftNotesEvents.emit(GitLabNoteEvent.Added(newNote))
+        draftNotesEvents.emit(AddedLast(newNote))
       }
     }
   }
@@ -309,7 +267,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
 
       withContext(NonCancellable) {
-        draftNotesEvents.emit(GitLabNoteEvent.Added(newNote))
+        draftNotesEvents.emit(AddedLast(newNote))
       }
     }
   }
@@ -325,8 +283,8 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         api.rest.submitDraftNotes(glProject, mr.iid)
       }
       withContext(NonCancellable) {
-        draftNotesEvents.emit(GitLabNoteEvent.AllDeleted())
-        reloadRequests.emit(Unit)
+        draftNotesEvents.emit(AllDeleted())
+        checkUpdates()
       }
     }
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.SUBMIT_DRAFT_NOTES)
@@ -338,5 +296,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   suspend fun checkUpdates() {
     updateRequests.emit(Unit)
+
+    draftNotesDataHolder?.loadAll()
   }
 }

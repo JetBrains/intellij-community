@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.mapDataToModel
-import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
@@ -54,7 +52,7 @@ class LoadedGitLabDiscussion(
   private val glProject: GitLabProjectCoordinates,
   private val currentUser: GitLabUserDTO,
   private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
-  private val draftNotesEventSink: suspend (GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
+  private val draftNotesEventSink: suspend (Change<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
   private val mr: GitLabMergeRequest,
   discussionData: GitLabDiscussionDTO,
   draftNotes: Flow<List<GitLabMergeRequestDraftNote>>
@@ -152,7 +150,7 @@ class LoadedGitLabDiscussion(
         api.rest.addDraftReplyNote(glProject, mr.iid, id.guessRestId(), body).body()
       }?.also {
         withContext(NonCancellable) {
-          draftNotesEventSink(GitLabNoteEvent.Added(it))
+          draftNotesEventSink(AddedLast(it))
         }
       }
     }
