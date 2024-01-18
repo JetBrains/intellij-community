@@ -1,18 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
-import com.intellij.Patches;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.ui.*;
+import com.intellij.ui.AbstractFontCombo;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FontComboBox;
+import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -279,15 +279,6 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     panel.add(myEnableLigaturesCheckbox);
     enableLigaturesHintLabel.setBorder(JBUI.Borders.emptyLeft(5));
     panel.add(enableLigaturesHintLabel);
-    JLabel warningIcon = new JLabel(AllIcons.General.BalloonWarning);
-    IdeTooltipManager.getInstance().setCustomTooltip(
-      warningIcon,
-      new TooltipWithClickableLinks.ForBrowser(warningIcon,
-                                               ApplicationBundle.message("ligatures.jre.warning",
-                                                                         ApplicationNamesInfo.getInstance().getFullProductName())));
-    warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
-    warningIcon.setVisible(!areLigaturesAllowed());
-    panel.add(warningIcon);
     c.gridx = 0;
     c.gridy ++;
     c.gridwidth = 2;
@@ -426,14 +417,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myEditorFontSizeField.setEnabled(!readOnly);
     mySizeLabel.setEnabled(!readOnly);
 
-    myEnableLigaturesCheckbox.setEnabled(!readOnly && areLigaturesAllowed());
+    myEnableLigaturesCheckbox.setEnabled(!readOnly);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;
-  }
-
-  private static boolean areLigaturesAllowed() {
-    return !Patches.TEXT_LAYOUT_IS_SLOW;
   }
 
   protected void updateCustomOptions() {
