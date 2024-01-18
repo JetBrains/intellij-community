@@ -57,10 +57,10 @@ class CombinedDiffViewer(
   keys: List<CombinedBlockId>,
   blockToSelect: CombinedBlockId?,
   blockListener: BlockListener,
-) : DiffViewer,
-    CombinedDiffNavigation,
+) : CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
-    DataProvider {
+    DataProvider,
+    Disposable {
   private val project = context.project!! // CombinedDiffContext expected
 
   private val blockState = BlockState(keys, blockToSelect ?: keys.first())
@@ -193,11 +193,11 @@ class CombinedDiffViewer(
     return diffBlock
   }
 
-  override fun getComponent(): JComponent = contentPanel
+  val component get(): JComponent = contentPanel
 
-  override fun getPreferredFocusedComponent(): JComponent? = getCurrentDiffViewer()?.preferredFocusedComponent
+  val preferredFocusedComponent get(): JComponent? = getCurrentDiffViewer()?.preferredFocusedComponent
 
-  override fun init(): FrameDiffTool.ToolbarComponents {
+  fun init(): FrameDiffTool.ToolbarComponents {
     val components = FrameDiffTool.ToolbarComponents()
     components.toolbarActions = createToolbarActions()
     components.diffInfo = diffInfo

@@ -130,7 +130,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   @RequiresEdt
-  fun setContent(viewer: DiffViewer) {
+  fun setContent(viewer: CombinedDiffViewer) {
     clear()
     contentPanel.setContent(viewer.component)
     val toolbarComponents = viewer.init()
