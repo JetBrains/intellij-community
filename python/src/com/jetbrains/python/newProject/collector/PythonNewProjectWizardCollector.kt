@@ -16,7 +16,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
     return GROUP
   }
 
-  private val GROUP = EventLogGroup("python.new.project.wizard", 6)
+  private val GROUP = EventLogGroup("python.new.project.wizard", 7)
   const val PROJECT_GENERATED_EVENT_ID = "project.generated"
   private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
   private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
@@ -37,6 +37,9 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
                                                                   ADDITIONAL)
 
   private val DJANGO_ADMIN_CHECKED = GROUP.registerEvent("django.admin.selected", DJANGO_ADMIN_FIELD)
+
+  private val USE_SUGGESTED_VENV_DIR_FIX = GROUP.registerEvent("suggested.venv.dir")
+  private val USE_EXISTING_VENV_FIX = GROUP.registerEvent("existing.venv")
 
   @JvmStatic
   fun logPythonNewProjectGenerated(info: InterpreterStatisticsInfo,
@@ -59,6 +62,16 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   @JvmStatic
   fun logDjangoAdminSelected(djangoAdminSelected: Boolean) {
     DJANGO_ADMIN_CHECKED.log(djangoAdminSelected)
+  }
+
+  @JvmStatic
+  fun logSuggestedVenvDirFixUsed() {
+    USE_SUGGESTED_VENV_DIR_FIX.log()
+  }
+
+  @JvmStatic
+  fun logExistingVenvFixUsed() {
+    USE_EXISTING_VENV_FIX.log()
   }
 }
 
