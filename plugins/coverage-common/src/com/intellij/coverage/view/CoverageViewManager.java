@@ -29,7 +29,7 @@ import java.util.Map;
 
 @State(name = "CoverageViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 @Service(Service.Level.PROJECT)
-public final class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean>, Disposable {
+public final class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean>, Disposable.Default {
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
   public static final @NonNls String TOOLWINDOW_ID = "Coverage";
   private final Project myProject;
@@ -53,8 +53,8 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     });
   }
 
-  @Override
-  public void dispose() {
+  public static CoverageViewManager getInstance(@NotNull Project project) {
+    return project.getService(CoverageViewManager.class);
   }
 
   @Override
@@ -75,7 +75,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     return myStateBean;
   }
 
-  public CoverageView getToolwindow(CoverageSuitesBundle suitesBundle) {
+  public synchronized CoverageView getView(CoverageSuitesBundle suitesBundle) {
     return myViews.get(suitesBundle);
   }
 
@@ -93,20 +93,14 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     return null;
   }
 
-  public void activateToolwindow(@NotNull CoverageView view, boolean requestFocus) {
+  public void activateToolwindow(@NotNull CoverageView view) {
+    myContentManager.setSelectedContent(myContentManager.getContent(view));
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
-    if (requestFocus) {
-      myContentManager.setSelectedContent(myContentManager.getContent(view));
-      LOG.assertTrue(toolWindow != null);
-      toolWindow.activate(null, false);
-    }
+    LOG.assertTrue(toolWindow != null);
+    toolWindow.activate(null, false);
   }
 
-  public static CoverageViewManager getInstance(@NotNull Project project) {
-    return project.getService(CoverageViewManager.class);
-  }
-
-  public void createToolWindow(CoverageSuitesBundle suitesBundle, boolean activate) {
+  public synchronized void createView(CoverageSuitesBundle suitesBundle, boolean activate) {
     CoverageView coverageView = myViews.get(suitesBundle);
     Content content;
     if (coverageView == null) {
@@ -121,7 +115,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     myContentManager.setSelectedContent(content);
 
     if (CoverageOptionsProvider.getInstance(myProject).activateViewOnRun() && activate) {
-      activateToolwindow(coverageView, true);
+      activateToolwindow(coverageView);
     }
   }
 
@@ -142,6 +136,32 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   public static String getDisplayName(@NotNull CoverageSuitesBundle suitesBundle) {
     RunConfigurationBase<?> configuration = suitesBundle.getRunConfiguration();
     return configuration != null ? configuration.getName() : suitesBundle.getPresentableName();
+  }
+
+  /**
+   * @deprecated Use {@link #getView(CoverageSuitesBundle)} instead
+   */
+  @Deprecated
+  public CoverageView getToolwindow(CoverageSuitesBundle suitesBundle) {
+    return getView(suitesBundle);
+  }
+
+  /**
+   * @deprecated Use {@link #activateToolwindow(CoverageView)} instead
+   */
+  @Deprecated
+  public void activateToolwindow(@NotNull CoverageView view, boolean activate) {
+    if (activate) {
+      activateToolwindow(view);
+    }
+  }
+
+  /**
+   * @deprecated Use {@link #createView(CoverageSuitesBundle, boolean)} instead
+   */
+  @Deprecated
+  public void createToolWindow(CoverageSuitesBundle suitesBundle, boolean activate) {
+    createView(suitesBundle, activate);
   }
 
   public static final class StateBean {

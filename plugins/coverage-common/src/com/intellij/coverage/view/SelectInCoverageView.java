@@ -3,7 +3,6 @@ package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageDataManagerImpl;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
@@ -27,7 +26,7 @@ public final class SelectInCoverageView implements SelectInTarget {
   public boolean canSelect(final SelectInContext context) {
     CoverageDataManager manager = CoverageDataManager.getInstance(myProject);
     for (CoverageSuitesBundle suitesBundle : manager.activeSuites()) {
-      final CoverageView coverageView = CoverageViewManager.getInstance(myProject).getToolwindow(suitesBundle);
+      final CoverageView coverageView = CoverageViewManager.getInstance(myProject).getView(suitesBundle);
       if (coverageView != null) {
         final VirtualFile file = context.getVirtualFile();
         return !file.isDirectory() && coverageView.canSelect(file);
@@ -41,9 +40,11 @@ public final class SelectInCoverageView implements SelectInTarget {
     CoverageDataManager manager = CoverageDataManager.getInstance(myProject);
     for (CoverageSuitesBundle suitesBundle : manager.activeSuites()) {
       final CoverageViewManager coverageViewManager = CoverageViewManager.getInstance(myProject);
-      final CoverageView coverageView = coverageViewManager.getToolwindow(suitesBundle);
+      final CoverageView coverageView = coverageViewManager.getView(suitesBundle);
       coverageView.select(context.getVirtualFile());
-      coverageViewManager.activateToolwindow(coverageView, requestFocus);
+      if (requestFocus) {
+        coverageViewManager.activateToolwindow(coverageView);
+      }
     }
   }
 
