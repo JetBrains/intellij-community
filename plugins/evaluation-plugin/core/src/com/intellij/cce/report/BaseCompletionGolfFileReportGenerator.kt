@@ -258,8 +258,9 @@ abstract class BaseCompletionGolfFileReportGenerator(
   }
 
   private fun TBODY.defaultText(text: String, lineNumbers: Int): Int {
+    val shouldDropFirst = text.lines().firstOrNull()?.isEmpty() ?: false
     return text.lines()
-      .drop(1).dropLast(1)
+      .drop(if (shouldDropFirst) 1 else 0).dropLast(1)
       .onEachIndexed { i, line ->
         tr {
           td("line-numbers") {
