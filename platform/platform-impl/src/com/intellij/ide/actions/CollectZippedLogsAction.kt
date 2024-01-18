@@ -12,15 +12,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ui.IoErrorText
 import java.io.IOException
 
@@ -47,38 +44,29 @@ class CollectZippedLogsAction : AnAction(), DumbAware {
       }
     }
 
-    val modalTaskOwner = if (project == null) {
-      ModalTaskOwner.guess()
+    try {
+      val logs = runWithModalProgressBlocking(
+        owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+        title = IdeBundle.message("collect.logs.progress.title"),
+      ) {
+        packLogs(project)
+      }
+      if (RevealFileAction.isSupported()) {
+        RevealFileAction.openFile(logs)
+      }
+      else {
+        Notification(NOTIFICATION_GROUP, IdeBundle.message(
+          "collect.logs.notification.success", logs),
+                     NotificationType.INFORMATION).notify(project)
+      }
     }
-    else {
-      ModalTaskOwner.project(project)
+    catch (x: IOException) {
+      Logger.getInstance(javaClass).warn(x)
+      val message = IdeBundle.message("collect.logs.notification.error",
+                                      IoErrorText.message(x))
+      Notification(NOTIFICATION_GROUP, message,
+                   NotificationType.ERROR).notify(project)
     }
-
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        try {
-          val logs = runBlockingCancellable {
-            withModalProgress(modalTaskOwner, IdeBundle.message("collect.logs.progress.title"), TaskCancellation.cancellable()) {
-              packLogs(project)
-            }
-          }
-          if (RevealFileAction.isSupported()) {
-            RevealFileAction.openFile(logs)
-          }
-          else {
-            Notification(NOTIFICATION_GROUP, IdeBundle.message(
-              "collect.logs.notification.success", logs),
-                         NotificationType.INFORMATION).notify(project)
-          }
-        }
-        catch (x: IOException) {
-          Logger.getInstance(javaClass).warn(x)
-          val message = IdeBundle.message("collect.logs.notification.error",
-                                          IoErrorText.message(x))
-          Notification(NOTIFICATION_GROUP, message,
-                       NotificationType.ERROR).notify(project)
-        }
-      }, IdeBundle.message("collect.logs.progress.title"), true, project)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
