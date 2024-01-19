@@ -5,24 +5,20 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
 public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private static final String[] BIN_DIRECTORIES = new String[]{"/usr/bin", "/usr/local/bin"};
-  private static final String[] NAMES = new String[]{"jython", "pypy"};
+  private static final Set<String> NAMES = Set.of("jython", "pypy");
   private static final Pattern PYTHON_3_RE = Pattern.compile("(python-?3\\.(\\d){1,2})|(python-?3)");
 
   private UnixPythonSdkFlavor() {
@@ -57,6 +53,9 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
       .map(Path::of)
       .map(binDirectory -> optionallyChangeRoot(rootPath, binDirectory))
       .forEach(rootDir -> collectUnixPythons(rootDir, candidates));
+
+    collectPyenvPythons(candidates);
+
     return candidates;
   }
 
@@ -72,6 +71,10 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     }
   }
 
+  public static void collectPyenvPythons(@NotNull Collection<Path> candidates) {
+    candidates.addAll(new VirtualEnvReader().findPyenvInterpreters(NAMES, PYTHON_3_RE));
+  }
+
   private static boolean looksLikePythonBinary(@NotNull Path path) {
     if (!Files.isRegularFile(path)) return false;
     return looksLikePythonBinaryFilename(path.getFileName().toString());
@@ -79,6 +82,6 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
 
   private static boolean looksLikePythonBinaryFilename(@NotNull String filename) {
     String childName = StringUtil.toLowerCase(filename);
-    return ArrayUtil.contains(childName, NAMES) || PYTHON_3_RE.matcher(childName).matches();
+    return NAMES.contains(childName) || PYTHON_3_RE.matcher(childName).matches();
   }
 }

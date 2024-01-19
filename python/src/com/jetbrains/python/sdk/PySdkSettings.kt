@@ -12,6 +12,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.jps.model.serialization.PathMacroUtil
+import kotlin.io.path.absolutePathString
 
 @State(name = "PySdkSettings", storages = [Storage(value = "pySdk.xml", roamingType = RoamingType.DISABLED)])
 class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
@@ -98,7 +99,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   }
 
   private val defaultVirtualEnvRoot: @SystemIndependent String?
-    get() = VirtualEnvSdkFlavor.getDefaultLocation()?.path
+    get() = VirtualEnvSdkFlavor.getDefaultLocation()?.absolutePathString()
 
   private val userHome: @SystemIndependent String
     get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())
