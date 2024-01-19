@@ -11,10 +11,10 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.canRunEvaluation
 import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
@@ -77,6 +77,9 @@ fun StackFrameProxyImpl.variableValue(variableName: String): ObjectReference? {
     val continuationVariable = safeVisibleVariableByName(variableName) ?: return null
     return getValue(continuationVariable) as? ObjectReference ?: return null
 }
+
+fun StackFrameProxyImpl.completionVariableValue(): ObjectReference? =
+    variableValue("\$completion")
 
 fun StackFrameProxyImpl.continuationVariableValue(): ObjectReference? =
     variableValue("\$continuation")

@@ -88,7 +88,7 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
 
     private fun extractContinuation(mode: SuspendExitMode, frameProxy: StackFrameProxyImpl): ObjectReference? = when (mode) {
         SuspendExitMode.SUSPEND_LAMBDA -> frameProxy.thisVariableValue()
-        SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue()
+        SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.completionVariableValue() ?: frameProxy.continuationVariableValue()
         else -> null
     }
 
