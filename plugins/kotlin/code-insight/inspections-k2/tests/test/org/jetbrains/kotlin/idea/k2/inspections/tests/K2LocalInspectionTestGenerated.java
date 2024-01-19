@@ -3799,11 +3799,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentThis.kt");
         }
 
-        @TestMetadata("differentThis.k2.kt")
-        public void testDifferentThis_k2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentThis.k2.kt");
-        }
-
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/list.kt");
@@ -3829,6 +3824,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/notSelf.kt");
         }
 
+        @TestMetadata("onFunctionCallResult.kt")
+        public void testOnFunctionCallResult() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/onFunctionCallResult.kt");
+        }
+
         @TestMetadata("openProperty.kt")
         public void testOpenProperty() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/openProperty.kt");
@@ -3837,6 +3837,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("parameter.kt")
         public void testParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/parameter.kt");
+        }
+
+        @TestMetadata("parameterOfConstructor.kt")
+        public void testParameterOfConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/parameterOfConstructor.kt");
         }
 
         @TestMetadata("property1.kt")
@@ -3869,11 +3874,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/propertyHasDelegate.kt");
         }
 
-        @TestMetadata("propertyHasDelegate.k2.kt")
-        public void testPropertyHasDelegate_k2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/propertyHasDelegate.k2.kt");
-        }
-
         @TestMetadata("propertyHasGetter.kt")
         public void testPropertyHasGetter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/propertyHasGetter.kt");
@@ -3892,11 +3892,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("sameThis.kt")
         public void testSameThis() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/sameThis.kt");
-        }
-
-        @TestMetadata("sameThis.k2.kt")
-        public void testSameThis_k2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/sameThis.k2.kt");
         }
 
         @TestMetadata("shadow.kt")

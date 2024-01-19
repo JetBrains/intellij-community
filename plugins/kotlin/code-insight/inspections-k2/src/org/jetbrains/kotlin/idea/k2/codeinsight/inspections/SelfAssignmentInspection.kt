@@ -8,20 +8,18 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SelfAssignmentInspection : AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, String>(), CleanupLocalInspectionTool {
     override fun getProblemDescription(element: KtBinaryExpression, context: String): String =
@@ -47,23 +45,27 @@ class SelfAssignmentInspection : AbstractKotlinApplicableInspectionWithContext<K
         val right = element.right
 
         val leftResolvedCall = left?.resolveCall()?.singleVariableAccessCall()
-        val leftCallee = leftResolvedCall?.symbol ?: return null
+        val callee = leftResolvedCall?.symbol ?: return null
+
         val rightResolvedCall = right?.resolveCall()?.singleVariableAccessCall()
-        val rightCallee = rightResolvedCall?.symbol ?: return null
+        if (rightResolvedCall?.symbol != callee) return null
 
-        if (leftCallee != rightCallee) return null
+        if (callee !is KtVariableSymbol || callee.isVal) return null
+        if (callee is KtPropertySymbol && (callee.modality != Modality.FINAL ||
+                    callee.getter?.isDefault == false || callee.setter?.isDefault == false)) return null
 
-        val rightDeclaration = rightCallee.psi?.safeAs<KtVariableDeclaration>() ?: return null
+        // Only check the dispatch receiver - properties with default accessors cannot have extension receivers.
+        val leftReceiver = leftResolvedCall.partiallyAppliedSymbol.dispatchReceiver
+        val rightReceiver = rightResolvedCall.partiallyAppliedSymbol.dispatchReceiver
 
-        if (!rightDeclaration.isVar) return null
-        if (rightDeclaration is KtProperty) {
-            if (rightDeclaration.isOverridable()) return null
-            if (rightDeclaration.accessors.any { !it.getPropertyAccessorSymbol().isDefault }) return null
+        if (leftReceiver != null || rightReceiver != null) {
+            // If the symbol is null, receiver expression's value might be unstable
+            val leftReceiverSymbol = leftReceiver?.resolveToSymbol() ?: return null
+            val rightReceiverSymbol = rightReceiver?.resolveToSymbol() ?: return null
+            if (leftReceiverSymbol != rightReceiverSymbol) return null
         }
 
-        if (left.receiver(leftCallee) != right.receiver(rightCallee)) return null
-
-        return rightDeclaration.name
+        return callee.name.asString()
     }
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
@@ -81,14 +83,13 @@ class SelfAssignmentInspection : AbstractKotlinApplicableInspectionWithContext<K
     }
 
     context(KtAnalysisSession)
-    private fun KtExpression.receiver(
-        callSymbol: KtVariableLikeSymbol,
-    ): KtSymbol? {
-        when (val receiverExpression = (this as? KtDotQualifiedExpression)?.receiverExpression) {
-            is KtThisExpression -> return receiverExpression.instanceReference.mainReference.resolveToSymbol()
-            is KtNameReferenceExpression -> return receiverExpression.mainReference.resolveToSymbol()
+    private fun KtReceiverValue.resolveToSymbol(): KtSymbol? = when (this) {
+        is KtSmartCastedReceiverValue -> original.resolveToSymbol()
+        is KtImplicitReceiverValue -> symbol
+        is KtExplicitReceiverValue -> when (val receiverExpression = expression) {
+            is KtThisExpression -> receiverExpression.instanceReference.mainReference.resolveToSymbol()
+            is KtNameReferenceExpression -> receiverExpression.mainReference.resolveToSymbol()
+            else -> null
         }
-
-        return callSymbol.getContainingSymbol() as? KtClassOrObjectSymbol
     }
 }

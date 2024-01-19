@@ -15029,6 +15029,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/selfAssignment/notSelf.kt");
         }
 
+        @TestMetadata("onFunctionCallResult.kt")
+        public void testOnFunctionCallResult() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/onFunctionCallResult.kt");
+        }
+
         @TestMetadata("openProperty.kt")
         public void testOpenProperty() throws Exception {
             runTest("testData/inspectionsLocal/selfAssignment/openProperty.kt");
@@ -15037,6 +15042,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("parameter.kt")
         public void testParameter() throws Exception {
             runTest("testData/inspectionsLocal/selfAssignment/parameter.kt");
+        }
+
+        @TestMetadata("parameterOfConstructor.kt")
+        public void testParameterOfConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/parameterOfConstructor.kt");
         }
 
         @TestMetadata("property1.kt")
