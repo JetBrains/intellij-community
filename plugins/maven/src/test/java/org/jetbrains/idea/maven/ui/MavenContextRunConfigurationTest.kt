@@ -37,8 +37,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.resetManagedFilesAndProfilesInTests(listOf(projectPom), MavenExplicitProfiles.NONE)
-    importProjectAsync()
+    projectsManager.projectsTree.resetManagedFilesAndProfiles(listOf(projectPom), MavenExplicitProfiles.NONE)
+    updateAllProjects()
     projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
@@ -55,8 +55,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.resetManagedFilesAndProfilesInTests(listOf(projectPom), MavenExplicitProfiles.NONE)
-    importProjectAsync()
+    projectsManager.projectsTree.resetManagedFilesAndProfiles(listOf(projectPom), MavenExplicitProfiles.NONE)
+    updateAllProjects()
     projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
@@ -97,8 +97,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.resetManagedFilesAndProfilesInTests(listOf(projectPom, m2, m2), MavenExplicitProfiles.NONE)
-    importProjectAsync()
+    projectsManager.projectsTree.resetManagedFilesAndProfiles(listOf(projectPom, m2, m2), MavenExplicitProfiles.NONE)
+    updateAllProjects()
     projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
@@ -154,8 +154,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.resetManagedFilesAndProfilesInTests(listOf(projectPom, m2, m2), MavenExplicitProfiles.NONE)
-    importProjectAsync()
+    projectsManager.projectsTree.resetManagedFilesAndProfiles(listOf(projectPom, m2, m2), MavenExplicitProfiles.NONE)
+    updateAllProjects()
     projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
