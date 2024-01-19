@@ -54,7 +54,7 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
       }
     }
 
-    val data = mapOf("act" to RunConfigurationEventKind.Build.toString())
+    val data = mapOf("act" to RunConfigurationEventKind.Build.eventName)
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.Start, data)
   }
 
