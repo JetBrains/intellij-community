@@ -59,7 +59,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 object KotlinUnusedSymbolUtil {
-  private val KOTLIN_ADDITIONAL_ANNOTATIONS = listOf("kotlin.test.*", "kotlin.js.JsExport")
+  private val KOTLIN_ADDITIONAL_ANNOTATIONS: List<String> = listOf("kotlin.test.*", "kotlin.js.JsExport")
 
   // Simple PSI-based checks
   fun isApplicableByPsi(declaration: KtNamedDeclaration): Boolean {
@@ -147,7 +147,7 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KtAnalysisSession)
-  private fun KtDeclaration.hasKotlinAdditionalAnnotation() =
+  private fun KtDeclaration.hasKotlinAdditionalAnnotation(): Boolean =
       this is KtNamedDeclaration && checkAnnotatedUsingPatterns(this, KOTLIN_ADDITIONAL_ANNOTATIONS)
 
   private fun KtProperty.isSerializationImplicitlyUsedField(): Boolean {
@@ -257,10 +257,7 @@ object KotlinUnusedSymbolUtil {
 
   // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
   context(KtAnalysisSession)
-  private fun checkAnnotatedUsingPatterns(
-      declaration: KtNamedDeclaration,
-      annotationPatterns: Collection<String>
-  ): Boolean {
+  private fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
       if (declaration.annotationEntries.isEmpty()) return false
       val annotationsPresent = declaration.annotationEntries.mapNotNull {
           val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null

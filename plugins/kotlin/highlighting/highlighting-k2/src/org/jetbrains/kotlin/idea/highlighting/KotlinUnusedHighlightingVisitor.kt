@@ -213,7 +213,7 @@ class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntention
        return name
     }
 
-    override fun getFamilyName() = KotlinBaseHighlightingBundle.message("safe.delete.family")
+    override fun getFamilyName(): String = KotlinBaseHighlightingBundle.message("safe.delete.family")
 
     override fun startInWriteAction(): Boolean = false
 
