@@ -6,6 +6,7 @@ package com.intellij.lang.java.request
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.isValidMethodReference
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix.isMethodSignatureExists
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
@@ -70,6 +71,7 @@ private class CreateMethodRequests(val myCall: PsiMethodCallExpression) {
 
   private fun processClass(clazz: PsiClass, inStaticContext: Boolean?) {
     if (isMethodSignatureExists(myCall, clazz)) return // TODO generic check
+    if (!BaseIntentionAction.canModify(clazz)) return
     val visibility = computeVisibility(myCall.project, myCall.parentOfType(), clazz)
     val modifiers = mutableSetOf<JvmModifier>()
     val staticContext = inStaticContext ?: (myCall.isWithinConstructorCall() || myCall.isWithinStaticMemberOf(clazz))

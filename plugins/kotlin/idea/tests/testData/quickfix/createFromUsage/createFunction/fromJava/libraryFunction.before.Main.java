@@ -8,5 +8,3 @@ class J {
         CollectionsKt.qq<caret>();
     }
 }
-
-// IGNORE_K1
