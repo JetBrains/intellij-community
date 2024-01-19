@@ -6,12 +6,11 @@ import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import git4idea.GitRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
-import git4idea.repo.GitRepoInfo
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
-import git4idea.repo.GitRepositoryManager
+import git4idea.repo.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
@@ -28,16 +27,19 @@ fun GitRepository.changesSignalFlow(): Flow<Unit> = channelFlow {
   awaitClose()
 }
 
-fun GitRepository.infoStateIn(cs: CoroutineScope): StateFlow<GitRepoInfo> = channelFlow {
+fun GitRepository.infoStateIn(cs: CoroutineScope): StateFlow<GitRepoInfo> = infoFlow().stateIn(cs, SharingStarted.Eagerly, info)
+
+fun GitRepository.infoFlow(): Flow<GitRepoInfo> = channelFlow {
   project.messageBus
     .connect(this)
     .subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      if (it == this@infoStateIn) {
+      if (it == this@infoFlow) {
         trySend(it.info)
       }
     })
+  send(info)
   awaitClose()
-}.stateIn(cs, SharingStarted.Eagerly, info)
+}
 
 fun gitRemotesFlow(project: Project): Flow<Set<GitRemoteUrlCoordinates>> =
   callbackFlow {
@@ -65,6 +67,17 @@ private fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> 
       }
     }
   }.toSet()
+}
+
+fun GitRemoteUrlCoordinates.currentRemoteBranchFlow(): Flow<GitRemoteBranch?> =
+  repository.infoFlow()
+    .map { it.findRemoteBranchTrackedByCurrent(remote) }
+    .distinctUntilChanged()
+
+fun GitRepoInfo.findRemoteBranchTrackedByCurrent(remote: GitRemote): GitRemoteBranch? {
+  val currentBranch = currentBranch ?: return null
+  return branchTrackInfos.find { it.localBranch == currentBranch && it.remote == remote }
+    ?.remoteBranch
 }
 
 private typealias GitRemotesFlow = Flow<Collection<GitRemoteUrlCoordinates>>
