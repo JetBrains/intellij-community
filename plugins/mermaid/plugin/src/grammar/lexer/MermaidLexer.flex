@@ -235,9 +235,9 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   "direction" { yypushstate(direction_value); return DIRECTION; }
 
-  "linkStyle" { yybegin(link_style); return Flowchart.LINK_STYLE; }
-  "style" { yybegin(style); return Flowchart.STYLE; }
-  "classDef" { yybegin(class_def); return CLASS_DEF; }
+  "linkStyle" { yypushstate(link_style); return Flowchart.LINK_STYLE; }
+  "style" { yypushstate(style); return STYLE; }
+  "classDef" { yypushstate(class_def); return CLASS_DEF; }
 
   "class" { yybegin(flowchart_class); return CLASS; }
 
@@ -328,14 +328,14 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "default" { yybegin(style_opt); return DEFAULT; }
 }
 <style, class_def> {
-  [^\s;\n]+ { yybegin(style_opt); return Flowchart.STYLE_TARGET; }
+  [^\s;\n]+ { yybegin(style_opt); return STYLE_TARGET; }
 }
 <link_style> {
   [^\S\r\n]+ { yybegin(link_style_target); return WHITE_SPACE; }
 }
 <link_style_target> {
-  "default" { return Flowchart.STYLE_TARGET; }
-  \d+ { return Flowchart.STYLE_TARGET; }
+  "default" { return STYLE_TARGET; }
+  \d+ { return STYLE_TARGET; }
   "," { return COMMA; }
   [^\S\r\n]+ { yybegin(style_opt); return WHITE_SPACE; }
 }
@@ -348,8 +348,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\n\r]+ { return WHITE_SPACE; }
   [^\s,:;][^,:\n\r;]* { return STYLE_VAL; }
   "," { yybegin(style_opt); return COMMA; }
-  ";" { yybegin(flowchart_body); return SEMICOLON; }
-  [\n\r] { yybegin(flowchart_body); return EOL; }
+  ";" { yypopstate(); return SEMICOLON; }
+  [\n\r] { yypopstate(); return EOL; }
 }
 <flowchart_class> {
   [^\S\n\r]+ { yybegin(flowchart_class_target); return WHITE_SPACE; }
@@ -361,7 +361,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\n\r]+ { yybegin(flowchart_class_val); return WHITE_SPACE; }
 }
 <flowchart_class_val> {
-  [^\s;\n\r]+ { return Flowchart.STYLE_TARGET; }
+  [^\s;\n\r]+ { return STYLE_TARGET; }
   \s { yybegin(flowchart_body); return WHITE_SPACE; }
   ";" { yybegin(flowchart_body); return SEMICOLON; }
   [\n\r] { yybegin(flowchart_body); return EOL; }
@@ -491,6 +491,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "class"/[^\S\n\r]+.* { return CLASS; }
   "direction" { yypushstate(direction_value); return DIRECTION; }
   "namespace" { yybegin(namespace_body); return ClassDiagram.NAMESPACE; }
+  "style" { yypushstate(style); return STYLE; }
 }
 <class_diagram> {
   [\w_-]+/[^\S\n\r]*[oO]("--"|"..")[^\S\n\r]*[\w_-]+ { yybegin(class_relation_start); return ClassDiagram.CLASS_ID; }

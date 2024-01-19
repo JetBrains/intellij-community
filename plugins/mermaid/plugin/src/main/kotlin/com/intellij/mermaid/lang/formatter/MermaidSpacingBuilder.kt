@@ -37,14 +37,14 @@ internal object MermaidSpacingBuilder {
   //region Flowchart
   private val FLOWCHART_KEYWORDS_SPACE_AFTER = TokenSet.create(
     MermaidTokens.Flowchart.SUBGRAPH,
-    MermaidTokens.Flowchart.STYLE,
+    MermaidTokens.STYLE,
     MermaidTokens.Flowchart.LINK_STYLE,
     MermaidTokens.CLASS_DEF,
     MermaidTokens.CLASS,
     MermaidElements.NODE_STATEMENT
   )
   private val FLOWCHART_KEYWORDS_SPACE_BEFORE = TokenSet.create(
-    MermaidTokens.Flowchart.STYLE_TARGET,
+    MermaidTokens.STYLE_TARGET,
     MermaidElements.STYLE_OPTIONS,
   )
   //endregion
@@ -245,7 +245,7 @@ internal object MermaidSpacingBuilder {
   }
 
   private fun SpacingBuilder.addRulesRequiredByMermaid(): SpacingBuilder {
-    return between(MermaidTokens.COMMA, MermaidTokens.Flowchart.STYLE_TARGET).spaceIf(false)
+    return between(MermaidTokens.COMMA, MermaidTokens.STYLE_TARGET).spaceIf(false)
       .between(MermaidTokens.COMMA, MermaidTokens.Flowchart.CLASS_ID_STYLE).spaceIf(false)
       .between(MermaidTokens.COMMA, MermaidElements.QUOTED_SANKEY_FIELD).spaceIf(false)
       .between(MermaidTokens.COMMA, MermaidElements.IDENTIFYING_QUOTED_SANKEY_FIELD).spaceIf(false)

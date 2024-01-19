@@ -223,6 +223,12 @@ object MermaidTokens {
 
   @JvmField
   val Y_AXIS = MermaidToken("Y_AXIS")
+
+  @JvmField
+  val STYLE = MermaidToken("STYLE")
+
+  @JvmField
+  val STYLE_TARGET = MermaidToken("STYLE_TARGET")
   //endregion
 
   object Directives {
@@ -341,12 +347,6 @@ object MermaidTokens {
 
     @JvmField
     val LINK_STYLE = MermaidToken("Flowchart.LINK_STYLE")
-
-    @JvmField
-    val STYLE = MermaidToken("Flowchart.STYLE")
-
-    @JvmField
-    val STYLE_TARGET = MermaidToken("Flowchart.STYLE_TARGET")
 
     @JvmField
     val CLASS_ID_STYLE = MermaidToken("Flowchart.CLASS_ID_STYLE")

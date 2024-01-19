@@ -182,8 +182,8 @@ private subgraphLine ::= subgraphInnerStatement [separator] | separator
 private subgraphInnerStatement ::= flowchartStatement
   | directionStatement
 
-styleStatement ::= STYLE flowchartStyleTarget styleOptions
-flowchartStyleTarget ::= STYLE_TARGET {
+styleStatement ::= STYLE styleStatementTarget styleOptions
+styleStatementTarget ::= STYLE_TARGET {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
@@ -313,6 +313,7 @@ private classDiagramStatement ::= directionStatement
   | classDiagramNoteStatement
   | classDiagramClickStatement
   | accStatement
+  | styleStatement
 
 classDiagramIdentifier ::= CLASS_ID+ | BACK_QUOTE quotedClassIdentifier BACK_QUOTE {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"

@@ -134,7 +134,7 @@ class SequenceActorParticipantCompletionProvider : MermaidLiveTemplateCompletion
 
 class SequenceSimpleCompletionProvider(string: String) : MermaidSimpleCompletionProvider(listOf(string))
 
-class ClassDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(listOf("class", "direction"))
+class ClassDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(listOf("class", "direction", "style"))
 
 class ClassDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("interface", "abstract", "service", "enumeration"))
