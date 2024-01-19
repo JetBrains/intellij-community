@@ -58,9 +58,11 @@ internal class EntityCell<T : WorkspaceEntity>(
                      newSnapshot: ImmutableEntityStorage): PropagationResult<List<T>> {
     val matchSet = MatchSet()
     prevData.addedMatches()
+      .asSequence()
       .filter { (it as MatchWithEntityId).entityId.clazz.findWorkspaceEntity().kotlin == type }
       .forEach { matchSet.addedMatch(it) }
     prevData.removedMatches()
+      .asSequence()
       .filter { (it as MatchWithEntityId).entityId.clazz.findWorkspaceEntity().kotlin == type }
       .forEach { matchSet.removedMatch(it) }
 
@@ -97,13 +99,14 @@ internal class FlatMapCell<T, K>(
       }
       val target = LongArrayList()
       val tracker = ReadTracker.tracedSnapshot(newSnapshot, target)
+      val res = HashMap<Match, Iterable<K>>()
       prevData.addedMatches().forEach { match ->
         target.clear()
         val mappingTarget = match.getData(tracker)
         val mappedValues = mapping(mappingTarget as T, tracker)
         val newTraces = ReadTraceHashSet(target)
 
-        mutableMemory[match] = mappedValues
+        res[match] = mappedValues
 
         mappedValues.forEach {
           generatedMatches.addedMatch(it.toMatch(match))
@@ -111,6 +114,7 @@ internal class FlatMapCell<T, K>(
         val recalculate = UpdateType.RECALCULATE(match)
         traces += newTraces to recalculate
       }
+      mutableMemory.putAll(res)
     }
     return PropagationResult(FlatMapCell(id, mapping, newMemory), generatedMatches, traces)
   }
@@ -123,6 +127,61 @@ internal class FlatMapCell<T, K>(
     }
 
     val res = memory.values.flatten()
+    this.dataCache = res
+    return res
+  }
+}
+
+@Suppress("UNCHECKED_CAST")
+internal class MapCell<T, K>(
+  id: CellId,
+  val mapping: (T, ImmutableEntityStorage) -> K,
+  private val memory: PersistentMap<Match, K>,
+) : Cell<List<K>>(id) {
+
+  private var dataCache: List<K>? = null
+
+  override fun input(prevData: MatchSet,
+                     newSnapshot: ImmutableEntityStorage): PropagationResult<List<K>> {
+    val generatedMatches = MatchSet()
+    val traces = ArrayList<Pair<ReadTraceHashSet, UpdateType>>()
+    val newMemory = memory.mutate { mutableMemory ->
+      prevData.removedMatches().forEach { match ->
+        val removedValue = mutableMemory.remove(match)
+        removedValue?.let {
+          generatedMatches.removedMatch(it.toMatch(match))
+        }
+      }
+      val target = LongArrayList()
+      val tracker = ReadTracker.tracedSnapshot(newSnapshot, target)
+      val res = HashMap<Match, K>()
+      prevData.addedMatches().forEach { match ->
+        target.clear()
+        val mappingTarget = match.getData(tracker)
+        val mappedValues = mapping(mappingTarget as T, tracker)
+        val newTraces = ReadTraceHashSet(target)
+
+        res[match] = mappedValues
+
+        mappedValues.let {
+          generatedMatches.addedMatch(it.toMatch(match))
+        }
+        val recalculate = UpdateType.RECALCULATE(match)
+        traces += newTraces to recalculate
+      }
+      mutableMemory.putAll(res)
+    }
+    return PropagationResult(MapCell(id, mapping, newMemory), generatedMatches, traces)
+  }
+
+  override fun data(): List<K> {
+    // There is no synchronization as this is okay to calculate data twice
+    val existingData = dataCache
+    if (existingData != null) {
+      return existingData
+    }
+
+    val res = memory.values.toList()
     this.dataCache = res
     return res
   }

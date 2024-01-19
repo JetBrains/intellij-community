@@ -9,13 +9,13 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker.cacheReset
 import com.intellij.platform.workspace.storage.impl.query.MatchSet
 import com.intellij.platform.workspace.storage.impl.query.MatchWithEntityId
-import com.intellij.platform.workspace.storage.impl.query.Operation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import com.intellij.platform.workspace.storage.trace.toTraces
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -66,6 +66,7 @@ internal fun EntityStorageChange.makeTokensForDiff(): MatchSet {
 
 internal fun List<EntityStorageChange>.collapse(): EntityStorageChange {
   if (this.isEmpty()) error("Nothing to collapse")
+  if (this.size == 1) return this[0]
   val firstChange = this[0]
   val target: EntityStorageChange = when (firstChange) {
     is ChangeOnWorkspaceBuilderChangeLog -> {
@@ -112,27 +113,28 @@ internal class ChangeOnWorkspaceBuilderChangeLog(
 
   internal fun makeTokensForDiff(): MatchSet {
     val matchSet = MatchSet()
-    val createdTokens = HashSet<Pair<Operation, EntityId>>()
+    val createdAddTokens = LongOpenHashSet()
+    val createdRemovedTokens = LongOpenHashSet()
 
     changes.changeLog.forEach { (entityId, change) ->
       when (change) {
         is ChangeEntry.AddEntity -> {
-          if (createdTokens.add(Operation.ADDED to entityId)) matchSet.addedMatch(MatchWithEntityId(entityId))
+          if (createdAddTokens.add(entityId)) matchSet.addedMatch(MatchWithEntityId(entityId, null))
         }
         is ChangeEntry.RemoveEntity -> {
-          if (createdTokens.add(Operation.REMOVED to entityId)) matchSet.removedMatch(MatchWithEntityId(entityId))
+          if (createdRemovedTokens.add(entityId)) matchSet.removedMatch(MatchWithEntityId(entityId, null))
         }
         is ChangeEntry.ReplaceEntity -> {
-          if (createdTokens.add(Operation.REMOVED to entityId)) matchSet.removedMatch(MatchWithEntityId(entityId))
-          if (createdTokens.add(Operation.ADDED to entityId)) matchSet.addedMatch(MatchWithEntityId(entityId))
+          if (createdRemovedTokens.add(entityId)) matchSet.removedMatch(MatchWithEntityId(entityId, null))
+          if (createdAddTokens.add(entityId)) matchSet.addedMatch(MatchWithEntityId(entityId, null))
         }
       }
     }
 
     externalMappingChanges.values.forEach { affectedIds ->
       affectedIds.forEach { entityId ->
-        if (createdTokens.add(Operation.REMOVED to entityId)) matchSet.removedMatch(MatchWithEntityId(entityId))
-        if (createdTokens.add(Operation.ADDED to entityId)) matchSet.addedMatch(MatchWithEntityId(entityId))
+        if (createdRemovedTokens.add(entityId)) matchSet.removedMatch(MatchWithEntityId(entityId, null))
+        if (createdAddTokens.add(entityId)) matchSet.addedMatch(MatchWithEntityId(entityId, null))
       }
     }
 

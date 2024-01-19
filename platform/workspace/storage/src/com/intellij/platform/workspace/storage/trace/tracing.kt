@@ -138,7 +138,6 @@ internal class ReadTracker private constructor(
 
 internal typealias ReadTraceHash = Long
 internal typealias ReadTraceHashSet = LongOpenHashSet
-internal fun Long.traceWithDebug(debug: String): ReadTraceHash = this
 
 internal sealed interface ReadTrace {
 
@@ -152,7 +151,7 @@ internal sealed interface ReadTrace {
     override val hash: ReadTraceHash
       get() {
         val mult = 433L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-        return (mult * (mult + ofClass.toClassId())).traceWithDebug(this.toString())
+        return (mult * (mult + ofClass.toClassId()))
       }
   }
 
@@ -165,7 +164,7 @@ internal sealed interface ReadTrace {
         val mult = 569L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
         var res = mult * linkTo.hashCode()
         res = mult * res + inClass.toClassId()
-        return res.traceWithDebug(this.toString())
+        return res
       }
   }
 
@@ -173,7 +172,7 @@ internal sealed interface ReadTrace {
     override val hash: ReadTraceHash
       get() {
         val mult = 859L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-        return (mult + (mult + link.hashCode())).traceWithDebug(this.toString())
+        return (mult + (mult + link.hashCode()))
       }
   }
 
@@ -185,7 +184,7 @@ internal sealed interface ReadTrace {
     override val hash: ReadTraceHash
       get() {
         val mult = 1129L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-        return (mult * (mult + identifier.hashCode())).traceWithDebug(this.toString())
+        return (mult * (mult + identifier.hashCode()))
       }
   }
 
@@ -195,7 +194,7 @@ internal sealed interface ReadTrace {
     override val hash: ReadTraceHash
       get() {
         val mult = 2833L // Prime number id of this trace type to distinguish hashes if they have the same args. The number was chosen randomly.
-        return (mult * (mult + entityId)).traceWithDebug(this.toString())
+        return (mult * (mult + entityId))
       }
 
     override fun toString(): String {
@@ -206,7 +205,7 @@ internal sealed interface ReadTrace {
 
 @OptIn(EntityStorageInstrumentationApi::class)
 internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
-  val patternSet = ReadTraceHashSet()
+  val patternSet = ReadTraceHashSet(this.size)
   this@toTraces.forEach { (id, change) ->
     when (change) {
       is ChangeEntry.AddEntity -> {
@@ -221,9 +220,8 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
           }
         }
 
-        val entity = entityData.createEntity(newSnapshot)
-        if (entity is WorkspaceEntityWithSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
         }
       }
       is ChangeEntry.RemoveEntity -> {
@@ -238,9 +236,8 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
           }
         }
 
-        val entity = entityData.createEntity(newSnapshot)
-        if (entity is WorkspaceEntityWithSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
         }
       }
       is ChangeEntry.ReplaceEntity -> {
@@ -257,9 +254,8 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
         }
 
         // Because maybe we update the field that calculates symbolic id
-        val entity = entityData.createEntity(newSnapshot)
-        if (entity is WorkspaceEntityWithSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entity.symbolicId).hash)
+        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
         }
       }
     }

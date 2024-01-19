@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.query
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.query.*
-import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
@@ -30,6 +30,12 @@ public sealed interface CollectionQuery<T> : StorageQuery<Collection<T>> {
     override val queryId: QueryId,
     public val from: CollectionQuery<T>,
     public val map: (T, ImmutableEntityStorage) -> Iterable<K>,
+  ) : CollectionQuery<K>
+
+  public class MapTo<T, K> internal constructor(
+    override val queryId: QueryId,
+    public val from: CollectionQuery<T>,
+    public val map: (T, ImmutableEntityStorage) -> K,
   ) : CollectionQuery<K>
 }
 
@@ -58,7 +64,11 @@ internal fun <T> StorageQuery<T>.compile(cellCollector: MutableList<Cell<*>> = m
           cellCollector.prepend(EntityCell(CellId(), type))
         }
         is CollectionQuery.FlatMapTo<*, *> -> {
-          cellCollector.prepend(FlatMapCell(CellId(), map, persistentMapOf()))
+          cellCollector.prepend(FlatMapCell(CellId(), map, persistentHashMapOf()))
+          this.from.compile(cellCollector)
+        }
+        is CollectionQuery.MapTo<*, *> -> {
+          cellCollector.prepend(MapCell(CellId(), map, persistentHashMapOf()))
           this.from.compile(cellCollector)
         }
       }
@@ -66,7 +76,7 @@ internal fun <T> StorageQuery<T>.compile(cellCollector: MutableList<Cell<*>> = m
     is AssociationQuery<*, *> -> {
       when (this) {
         is AssociationQuery.GroupBy<*, *, *> -> {
-          cellCollector.prepend(GroupByCell(CellId(), keySelector, valueTransformer, persistentMapOf()))
+          cellCollector.prepend(GroupByCell(CellId(), keySelector, valueTransformer, persistentHashMapOf()))
           this.from.compile(cellCollector)
         }
       }
