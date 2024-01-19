@@ -25,6 +25,8 @@
     <listener class="com.intellij.coverage.CoverageDataManagerImpl$CoverageProjectManagerListener" topic="com.intellij.openapi.project.ProjectCloseListener"/>
   </applicationListeners>
   <actions resource-bundle="messages.CoverageBundle">
+    <action id="ImportCoverage" class="com.intellij.coverage.actions.ExternalReportImportAction"
+            icon="AllIcons.ToolbarDecorator.Import"/>
     <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
       <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
