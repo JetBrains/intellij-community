@@ -20,6 +20,7 @@ import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-final class MinorPythonFacetType extends FacetType<MinorPythonFacet, MinorPythonFacetType.PythonFacetConfiguration> {
+@ApiStatus.Internal
+public final class MinorPythonFacetType extends FacetType<MinorPythonFacet, MinorPythonFacetType.PythonFacetConfiguration> {
   @NonNls
   private static final String ID = "Python";
 
