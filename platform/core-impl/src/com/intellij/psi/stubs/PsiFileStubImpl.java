@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   }
 
   /** Don't call this method, it's public for implementation reasons */
+  @ApiStatus.Internal
   public PsiFileStub @NotNull [] getStubRoots() {
     if (myStubRoots != null) return myStubRoots;
 
