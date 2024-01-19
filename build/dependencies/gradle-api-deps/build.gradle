@@ -1,5 +1,4 @@
 import org.gradle.tooling.GradleConnector
-import org.gradle.util.GradleVersion
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -21,11 +20,6 @@ def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersi
 
 task expandGradleApiJar() {
   doLast {
-    if (GradleVersion.version(gradleApiVersion) < GradleVersion.version("3.0")) {
-      throw new GradleException(
-        "Gradle version 3.0+ is required. Current version is $gradleApiVersion. " +
-        "Please set the 'gradleApiVersion' property at gradle.properties or using -P option.")
-    }
     def projectDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion")
     projectDir.mkdirs()
 
