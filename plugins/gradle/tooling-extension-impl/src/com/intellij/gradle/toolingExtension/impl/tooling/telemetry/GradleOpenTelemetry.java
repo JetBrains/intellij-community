@@ -15,11 +15,9 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
-import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -30,15 +28,10 @@ public final class GradleOpenTelemetry {
 
   private @NotNull OpenTelemetry myOpenTelemetry = OpenTelemetry.noop();
   private @Nullable Scope myScope = null;
-  private @Nullable LazyBatchProtobufSpanExporter mySpanExporter = null;
 
   public void start(@NotNull GradleTracingContext context) {
-    mySpanExporter = new LazyBatchProtobufSpanExporter();
     myOpenTelemetry = OpenTelemetrySdk.builder()
       .setTracerProvider(SdkTracerProvider.builder()
-                           .addSpanProcessor(BatchSpanProcessor.builder(mySpanExporter)
-                                               .setMaxExportBatchSize(128)
-                                               .build())
                            .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), INSTRUMENTATION_NAME)))
                            .build())
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
@@ -93,13 +86,6 @@ public final class GradleOpenTelemetry {
       }
       if (myOpenTelemetry instanceof Closeable) {
         ((Closeable)myOpenTelemetry).close();
-      }
-      // the data should be exported only after OpenTelemetry was closed to prevent data loss
-      if (mySpanExporter != null) {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-          mySpanExporter.exportCollectedSpans(baos);
-          return baos.toByteArray();
-        }
       }
     }
     catch (Exception e) {
