@@ -131,6 +131,9 @@ private fun KtExpression.breakIntoConditions(offset: Int, singleElement: Boolean
 }
 
 private fun KtExpression.isReversedCondition(): Boolean {
+    // This works only for non-primitive classes
+    // For primitive values the condition should not be inverted
+    if (this is KtBinaryExpression && operationToken == KtTokens.ELVIS) return true
     val insideDoWhile = parentOfType<KtDoWhileExpression>()?.condition?.let { it in parents(true) } == true
     return insideDoWhile || isLeftInOrExpression()
 }

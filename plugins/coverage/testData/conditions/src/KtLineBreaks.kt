@@ -90,21 +90,21 @@ class KtLineBreaks {
   private fun <T> T?.g(): T? = this
   private fun <T> h(x: T?): T? = x
 
-  fun testNullCheckVariables(a: Int?, b: Int?) = a
+  fun testNullCheckVariables(a: String?, b: String?) = a
       ?: b
       ?: 42
 
-  fun testNullCheckMethods(a: Int?, b: Int?) = h(a)
+  fun testNullCheckMethods(a: String?, b: String?) = h(a)
     ?: h(b)
     ?: 42
 
 
-  fun testSafeCallSequence(a: Int?) = a
+  fun testSafeCallSequence(a: String?) = a
     ?.g()
     ?.g()
 
   private fun <T> T?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName(): T? = this
-  fun testSafeCallSequenceLongNames(a: Int?) = a
+  fun testSafeCallSequenceLongNames(a: String?) = a
     ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName()
     ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName()
     ?.veryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongMethodName()

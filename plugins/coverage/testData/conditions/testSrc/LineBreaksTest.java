@@ -33,7 +33,7 @@ public class LineBreaksTest extends TestCase {
 
     l.testNullCheckVariables(null, null);
     l.testNullCheckMethods(null, null);
-    l.testSafeCallSequence(1);
-    l.testSafeCallSequenceLongNames(1);
+    l.testSafeCallSequence("1");
+    l.testSafeCallSequenceLongNames("1");
   }
 }
