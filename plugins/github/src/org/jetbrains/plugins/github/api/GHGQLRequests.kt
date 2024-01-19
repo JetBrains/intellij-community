@@ -125,7 +125,7 @@ object GHGQLRequests {
       }
     }
 
-    fun findByBranches(repository: GHRepositoryCoordinates, baseBranch: String, headBranch: String)
+    fun findByBranches(repository: GHRepositoryCoordinates, baseBranch: String?, headBranch: String)
       : GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequest>> =
       GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findOpenPullRequestsByBranches,
                                mapOf("repoOwner" to repository.repositoryPath.owner,

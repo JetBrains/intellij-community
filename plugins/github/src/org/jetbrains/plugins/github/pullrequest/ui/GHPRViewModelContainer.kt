@@ -65,6 +65,12 @@ internal class GHPRViewModelContainer(
         } ?: flowOf(null)
       }.filterNotNull().collect(diffSelectionRequests)
     }
+
+    cs.launchNow {
+      dataProvider.stateData.stateChangeSignal.collectLatest {
+        projectVm.refreshPrOnCurrentBranch()
+      }
+    }
   }
 
   private fun GHPRDiffViewModelImpl.setup() {

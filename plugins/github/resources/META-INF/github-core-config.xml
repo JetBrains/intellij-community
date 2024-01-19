@@ -58,6 +58,8 @@
     <gitRepositoryHostingService implementation="org.jetbrains.plugins.github.extensions.GHRepositoryHostingService"/>
     <gitProtectedBranchProvider implementation="org.jetbrains.plugins.github.util.GithubProtectedBranchProvider"/>
     <gitFetchHandler implementation="org.jetbrains.plugins.github.extensions.GHProtectedBranchRulesLoader"/>
+    <gitCurrentBranchPresenter
+      implementation="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$BranchPresenter"/>
   </extensions>
 
   <actions>
@@ -192,6 +194,15 @@
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"
                     relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
                     anchor="before"/>
+    </group>
+
+    <group id="Github.Pull.Request.Branch.Popup.Actions">
+      <separator/>
+      <action id="Github.Pull.Request.Show.In.Toolwindow"
+              class="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$ShowAction"
+              icon="AllIcons.Vcs.Vendors.Github">
+      </action>
+      <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
     </group>
   </actions>
 

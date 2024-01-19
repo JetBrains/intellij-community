@@ -30,6 +30,15 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
   private var lastKnownBaseSha: String? = null
   private var lastKnownHeadSha: String? = null
 
+  override val stateChangeSignal: Flow<Unit> = callbackFlow {
+    messageBus.connect(this).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
+      override fun onStateChanged() {
+        trySend(Unit)
+      }
+    })
+    awaitClose {  }
+  }
+
   init {
     detailsData.addDetailsLoadedListener(this) {
       val details = detailsData.loadedDetails ?: return@addDetailsLoadedListener

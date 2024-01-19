@@ -60,11 +60,11 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
     }
   }
 
-  override suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch,
+  override suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch?,
                                            headRepo: GHRepositoryPath,
                                            headBranch: GitRemoteBranch): GHPRIdentifier? =
     requestExecutor.executeSuspend(GHGQLRequests.PullRequest.findByBranches(baseRepo.repository,
-                                                                            baseBranch.nameForRemoteOperations,
+                                                                            baseBranch?.nameForRemoteOperations,
                                                                             headBranch.nameForRemoteOperations
     )).nodes.firstOrNull()?.prId
 

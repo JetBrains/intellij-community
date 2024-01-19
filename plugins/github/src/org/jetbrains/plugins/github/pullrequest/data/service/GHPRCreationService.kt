@@ -29,7 +29,7 @@ interface GHPRCreationService {
                       headRepo: GHGitRepositoryMapping,
                       headBranch: GitRemoteBranch): GHPullRequest?
 
-  suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch,
+  suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch?,
                                   headRepo: GHRepositoryPath,
                                   headBranch: GitRemoteBranch): GHPRIdentifier?
 }

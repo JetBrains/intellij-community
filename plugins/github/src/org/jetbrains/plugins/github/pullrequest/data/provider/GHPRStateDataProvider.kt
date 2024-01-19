@@ -12,6 +12,8 @@ interface GHPRStateDataProvider {
 
   val mergeabilityState: Flow<Result<GHPRMergeabilityState>>
 
+  val stateChangeSignal: Flow<Unit>
+
   @RequiresEdt
   fun reloadMergeabilityState()
 

@@ -121,4 +121,9 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
       projectVm.filterNotNull().first().action()
     }
   }
+
+  fun loginIfPossible() {
+    // init selector, so that auto-login is done automatically
+    selectorVm
+  }
 }

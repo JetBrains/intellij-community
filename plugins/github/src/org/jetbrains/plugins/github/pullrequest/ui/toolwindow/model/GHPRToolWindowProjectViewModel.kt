@@ -2,19 +2,25 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.computeEmitting
+import com.intellij.collaboration.util.exceptionOrNull
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitStandardRemoteBranch
 import git4idea.push.GitPushRepoResult
+import git4idea.remote.hosting.currentRemoteBranchFlow
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -24,12 +30,16 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
+
+private val LOG = logger<GHPRToolWindowProjectViewModel>()
 
 @ApiStatus.Experimental
 class GHPRToolWindowProjectViewModel internal constructor(
@@ -83,6 +93,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
   }
 
   fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean = true) {
+    if (requestFocus) {
+      twVm.activate()
+    }
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       if (requestFocus) {
         requestFocus()
@@ -116,6 +129,28 @@ class GHPRToolWindowProjectViewModel internal constructor(
     dataContext.listLoader.loadedData.find { it.id == pullRequest.id }
     ?: dataContext.dataProviderRepository.findDataProvider(pullRequest)?.detailsData?.loadedDetails
 
+  private val prOnCurrentBranchRefreshSignal =
+    MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  val prOnCurrentBranch: StateFlow<ComputedResult<GHPRIdentifier?>?> =
+    connection.repo.remote.currentRemoteBranchFlow()
+      .combineTransform(prOnCurrentBranchRefreshSignal.withInitial(Unit)) { remoteBranch, _ ->
+        if (remoteBranch == null) {
+          emit(ComputedResult.success(null))
+        }
+        else {
+          computeEmitting {
+            val targetRepository = connection.repo.repository.repositoryPath
+            dataContext.creationService.findOpenPullRequest(null, targetRepository, remoteBranch)
+          }?.exceptionOrNull()?.let {
+            LOG.warn("Could not lookup a pull request for current branch", it)
+          }
+        }
+      }.stateIn(cs, SharingStarted.Lazily, null)
+
+  internal fun createPrOnCurrentBranchVmIn(cs: CoroutineScope, pullRequest: GHPRIdentifier): GHPROnCurrentBranchViewModel =
+    GHPROnCurrentBranchViewModelImpl(this, pullRequest)
+
   suspend fun isExistingPullRequest(pushResult: GitPushRepoResult): Boolean? {
     val creationService = dataContext.creationService
     val repositoryDataService = dataContext.repositoryDataService
@@ -130,5 +165,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
     )
 
     return pullRequest != null
+  }
+
+  fun refreshPrOnCurrentBranch() {
+    prOnCurrentBranchRefreshSignal.tryEmit(Unit)
   }
 }

@@ -283,6 +283,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
               projectVm.viewPullRequest(it.prId)
               settings.recentNewPullRequestHead = headRepo.repository
               projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
+              projectVm.refreshPrOnCurrentBranch()
             }
             it
           }

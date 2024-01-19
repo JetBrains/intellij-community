@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.util
 
+import kotlinx.coroutines.flow.FlowCollector
 import java.util.concurrent.CancellationException
 
 /**
@@ -20,7 +21,7 @@ value class ComputedResult<out T> internal constructor(
     fun <T> success(value: T): ComputedResult<T> = ComputedResult(Result.success(value))
     fun <T> failure(error: Throwable): ComputedResult<T> = ComputedResult(Result.failure(error))
 
-    suspend fun <T> compute(computer: suspend () -> T): ComputedResult<T>? =
+    inline fun <T> compute(computer: () -> T): ComputedResult<T>? =
       try {
         val result = computer()
         success(result)
@@ -39,3 +40,13 @@ fun <T> ComputedResult<T>.getOrNull(): T? = result?.getOrNull()
 fun ComputedResult<*>.exceptionOrNull(): Throwable? = result?.exceptionOrNull()
 
 fun <T, R> ComputedResult<T>.map(mapper: (value: T) -> R): ComputedResult<R> = ComputedResult(result?.map(mapper))
+
+/**
+ * Compute the result via [computer] and publish computation states to the collector
+ */
+suspend inline fun <T> FlowCollector<ComputedResult<T>?>.computeEmitting(computer: () -> T): ComputedResult<T>? {
+  emit(ComputedResult.loading())
+  return ComputedResult.compute(computer).also {
+    emit(it)
+  }
+}
