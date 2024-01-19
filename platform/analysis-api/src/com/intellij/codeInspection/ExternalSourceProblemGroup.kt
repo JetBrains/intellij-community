@@ -2,13 +2,15 @@
 package com.intellij.codeInspection
 
 import com.intellij.lang.annotation.ProblemGroup
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
  * This interface needs to be implemented by implementers of {@link ProblemGroup}
  * that created from external annotations.
  */
-interface ExternalAnnotatorProblemGroup : ProblemGroup {
+@ApiStatus.Internal
+interface ExternalSourceProblemGroup : ProblemGroup {
 
   /**
    * Returns the name of inspection or check, performed by external annotator.

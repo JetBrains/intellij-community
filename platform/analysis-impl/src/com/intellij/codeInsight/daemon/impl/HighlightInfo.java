@@ -322,6 +322,12 @@ public class HighlightInfo implements Segment {
     return toolId instanceof String inspectionToolShortName ? inspectionToolShortName : null;
   }
 
+  @ApiStatus.Internal
+  public @Nullable @NonNls String getExternalSourceId() {
+    return myProblemGroup instanceof ExternalSourceProblemGroup ?
+           ((ExternalSourceProblemGroup)myProblemGroup).getExternalCheckName() : null;
+  }
+
   private boolean isFlagSet(@FlagConstant byte mask) {
     return BitUtil.isSet(myFlags, mask);
   }
