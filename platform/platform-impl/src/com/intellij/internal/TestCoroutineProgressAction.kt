@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -179,16 +179,8 @@ internal class TestCoroutineProgressAction : AnAction() {
         }
       }
     }
-    val filtered = progressStep(endFraction = 0.2) {
-      transformed.filterWithProgress(parallel) { item ->
-        progressStep(endFraction = 1.0, text = "Filtering $item") {
-          randomDelay()
-          item % 2 == 0
-        }
-      }
-    }
     val mapped = progressStep(endFraction = 0.3) {
-      filtered.mapWithProgress(parallel) { item ->
+      transformed.mapWithProgress(parallel) { item ->
         progressStep(endFraction = 1.0, text = "Mapping $item") {
           randomDelay()
           item * 2

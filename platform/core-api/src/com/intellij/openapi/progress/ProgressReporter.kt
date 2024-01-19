@@ -1,16 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION_ERROR", "DeprecatedCallableAddReplaceWith")
 
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.platform.util.progress.durationStep
-import com.intellij.platform.util.progress.filterWithProgress
 import com.intellij.platform.util.progress.forEachWithProgress
 import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.transformWithProgress
 import com.intellij.platform.util.progress.withRawProgressReporter
 import kotlinx.coroutines.CoroutineScope
 

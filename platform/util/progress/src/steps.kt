@@ -1,5 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Experimental
+@file:Suppress("DeprecatedCallableAddReplaceWith")
 
 package com.intellij.platform.util.progress
 
@@ -179,13 +180,21 @@ suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean = false, ma
 }
 
 /**
- * @see transformWithProgress
+ * ```
+ * val filtered = items.filterWithProgress(predicate)
+ * filtered.forEachWithProgress(action)
+ * // becomes
+ * items.forEachWithProgress {
+ *   if (predicate(it)) {
+ *     action(it)
+ *   }
+ * }
+ * ```
  */
+@Deprecated("Inline filter step into nearby `mapWithProgress`/`forEachWithProgress`", level = DeprecationLevel.ERROR)
 suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean = false, predicate: suspend (value: T) -> Boolean): List<T> {
-  return transformWithProgress(concurrent) { item ->
-    if (predicate(item)) {
-      out(item)
-    }
+  return filter {
+    predicate(it)
   }
 }
 
