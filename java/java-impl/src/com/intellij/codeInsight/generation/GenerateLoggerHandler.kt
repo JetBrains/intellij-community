@@ -10,6 +10,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.CommonJavaRefactoringUtil
 import com.siyeh.ig.psiutils.JavaLoggingUtils.*
 
 class GenerateLoggerHandler : CodeInsightActionHandler {
@@ -69,17 +70,21 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
       if (JavaLibraryUtil.hasLibraryClass(module, logger.loggerName)) {
         val fieldText = logger.createLoggerFieldText(className)
         val field = factory.createFieldFromText(fieldText, lastClass)
+        val anchor = determineAnchor(lastClass)
 
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true)
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true)
         PsiUtil.setModifierProperty(field, PsiModifier.PRIVATE, true)
 
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(field)
-        lastClass.add(field)
+
+        CommonJavaRefactoringUtil.appendField(lastClass ,field, anchor,null)
         break
       }
     }
   }
+
+  private fun determineAnchor(psiClass: PsiClass) : PsiElement? = psiClass.fields.firstOrNull()
 
   private class LogInfo(val loggerName : String, val factoryName : String, val methodName: String, val classNamePattern: String) {
     fun createLoggerFieldText(className : String) =
