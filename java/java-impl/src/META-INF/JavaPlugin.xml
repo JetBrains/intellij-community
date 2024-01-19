@@ -789,7 +789,7 @@
     <projectConfigurable parentId="project.propDebugger" instance="com.intellij.debugger.settings.CaptureConfigurable"
                          key="async.stacktraces.configurable.display.name" bundle="messages.JavaDebuggerBundle"/>
 
-    <projectConfigurable id="java" parentId="language" instance="com.intellij.ui.JavaConfigurable"
+    <projectConfigurable id="java" parentId="language" instance="com.intellij.settings.JavaConfigurable"
                          bundle="messages.JavaBundle" key="java.configurable.display.name"/>
 
     <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
