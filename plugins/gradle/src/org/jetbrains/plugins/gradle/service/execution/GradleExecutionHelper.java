@@ -74,7 +74,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
-import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea;
+import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmByIdeaIssueChecker.Util.isJavaHomeUnsupportedByIdea;
 
 public class GradleExecutionHelper {
 

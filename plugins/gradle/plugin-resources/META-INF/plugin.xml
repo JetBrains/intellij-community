@@ -59,7 +59,7 @@
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseResolverExtension"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssueChecker"/>
-    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker"/>
+    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmByIdeaIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonStartupIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>

@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
-class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
+class UnsupportedGradleJvmByIdeaIssueChecker : GradleIssueChecker {
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
     if (issueData.error is GradleExecutionHelper.UnsupportedGradleJvmByIdeaException) {
