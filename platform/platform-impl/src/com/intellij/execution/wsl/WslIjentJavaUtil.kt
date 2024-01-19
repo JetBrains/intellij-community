@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("WslIjentJavaUtil")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("WslIjentJavaUtil")  // TODO The file name doesn't describe the content correctly.
 @file:Suppress("RAW_RUN_BLOCKING")  // These functions are called by different legacy code, a ProgressIndicator is not always available.
 package com.intellij.execution.wsl
 
@@ -7,6 +7,7 @@ import com.intellij.execution.CommandLineUtil.posixQuote
 import com.intellij.execution.ijent.IjentChildProcessAdapter
 import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.execution.process.LocalPtyOptions
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ijent.IjentChildProcess
@@ -113,11 +114,20 @@ fun runProcessBlocking(
     IjentExecApi.Pty(initialColumns, initialRows, !consoleMode)
   }
 
+  val workingDirectory = processBuilder.directory()?.toPath()?.let { windowsWorkingDirectory ->
+    wslDistribution.getWslPath(windowsWorkingDirectory)
+    ?: run {
+      LOG.warn("Working directory $windowsWorkingDirectory can't be mapped to WSL distribution ${wslDistribution.id}")
+      null
+    }
+  }
+
   val scope = @OptIn(DelicateCoroutinesApi::class) (wslIjentManager.processAdapterScope)
   when (val processResult = ijentApi.exec.executeProcessBuilder(exePath)
     .args(args)
     .env(explicitEnvironmentVariables)
     .pty(pty)
+    .workingDirectory(workingDirectory)
     .execute()
   ) {
     is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, pty != null)
@@ -130,3 +140,5 @@ private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, isPty: B
     IjentChildPtyProcessAdapter(coroutineScope, this)
   else
     IjentChildProcessAdapter(coroutineScope, this)
+
+private val LOG by lazy { Logger.getInstance("com.intellij.execution.wsl.WslIjentJavaUtil") }
