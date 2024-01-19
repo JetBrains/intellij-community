@@ -729,6 +729,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                        ? new Rectangle(edge, insets.top, size.width - edge + insets.left, size.height)
                        : new Rectangle(insets.left, edge, size.width, size.height - edge + insets.top);
     }
+    else {
+      myAutoPopupRec = null;
+    }
   }
 
   @Override
