@@ -66,6 +66,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   public void testNewStringWrongEquals() { doTest(); }
 
+  public void testSwitchWhenReturnBoolean() { doTest(); }
+  
   public void testSkipSwitchExpressionWithThrow() { doTest(); }
 
   public void testStringTemplates() {
