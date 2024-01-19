@@ -4,6 +4,7 @@ package com.intellij.ui.tabs
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
@@ -102,6 +103,7 @@ internal class FileColorsConfigurable(private val project: Project) : BoundSearc
   override fun apply() {
     super.apply()
     UISettings.getInstance().fireUISettingsChanged()
+    ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true)
   }
 }
 
