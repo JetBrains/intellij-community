@@ -14,7 +14,6 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
-import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
@@ -22,11 +21,11 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.nio.file.Paths
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.properties.Delegates
 
-internal class ProjectStoreTest {
+class ProjectStoreTest {
   companion object {
     @JvmField
     @ClassRule
@@ -38,13 +37,13 @@ internal class ProjectStoreTest {
   val tempDirManager = TemporaryDirectory()
 
   @Language("XML")
-  private val iprFileContent =
-    """<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="AATestComponent">
-    <option name="AAvalue" value="customValue" />
-  </component>
-</project>""".trimIndent()
+  private val iprFileContent = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <project version="4">
+      <component name="AATestComponent">
+        <option name="AAValue" value="customValue" />
+      </component>
+    </project>""".trimIndent()
 
   @State(name = "AATestComponent", allowLoadInTests = true)
   private class TestComponent : PersistentStateComponent<TestState> {
@@ -57,13 +56,14 @@ internal class ProjectStoreTest {
     }
   }
 
-  private data class TestState(var AAvalue: String = "default")
+  @Suppress("PropertyName")
+  private data class TestState(var AAValue: String = "default")
 
   @Test
   fun directoryBasedStorage() = runBlocking {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
-      Paths.get(it.path)
+      it.toNioPath()
     }) { project ->
       val testComponent = test(project as ProjectEx)
 
@@ -71,18 +71,18 @@ internal class ProjectStoreTest {
 
       // test reload on external change
       val file = project.stateStore.storageManager.expandMacro(PROJECT_FILE)
-      file.write(file.readText().replace("""<option name="AAvalue" value="foo" />""", """<option name="AAvalue" value="newValue" />"""))
+      file.writeText(file.readText().replace("""<option name="AAValue" value="foo" />""", """<option name="AAValue" value="newValue" />"""))
 
       refreshProjectConfigDir(project)
       StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 
-      testComponent.state!!.AAvalue = "s".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
+      testComponent.state!!.AAValue = "s".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
       project.stateStore.save()
 
       // we should save twice (first call - virtual file size is not yet set)
-      testComponent.state!!.AAvalue = "b".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
+      testComponent.state!!.AAValue = "b".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
       project.stateStore.save()
     }
   }
@@ -90,7 +90,7 @@ internal class ProjectStoreTest {
   @Test
   fun fileBasedStorage() = runBlocking {
     loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-      Paths.get(it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path)
+      it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).toNioPath()
     }) { project ->
       test(project)
 
@@ -108,7 +108,7 @@ internal class ProjectStoreTest {
       out.write(0xbf)
       out.write(iprFileContent.toByteArray())
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", out.toByteArray())
-      Paths.get(it.path)
+      it.toNioPath()
     }) { project ->
       val store = project.stateStore as ProjectStoreBase
       assertThat(store.getNameFile()).doesNotExist()
@@ -186,7 +186,7 @@ internal class ProjectStoreTest {
   <component name="ProjectLevelLoser" foo="old?" />
 </project>""".trimIndent()
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/foo.xml", expected)
-      Paths.get(it.path)
+      it.toNioPath()
     }) { project ->
       val obsoleteStorageBean = ObsoleteStorageBean()
       val storageFileName = "foo.xml"
@@ -226,7 +226,7 @@ internal class ProjectStoreTest {
     val projectManager = ProjectManagerEx.getInstanceEx()
 
     val testComponent = TestComponent()
-    testComponent.loadState(TestState(AAvalue = "foo"))
+    testComponent.loadState(TestState(AAValue = "foo"))
     (projectManager.defaultProject as ComponentManager).stateStore.initComponent(component = testComponent,
                                                                                  serviceDescriptor = null,
                                                                                  pluginId = null)
@@ -238,7 +238,7 @@ internal class ProjectStoreTest {
         newProject.stateStore.save(forceSavingAllSettings = true)
         val miscXml = newProjectPath.resolve(".idea/misc.xml").readText()
         assertThat(miscXml).contains("AATestComponent")
-        assertThat(miscXml).contains("""<option name="AAvalue" value="foo" />""")
+        assertThat(miscXml).contains("""<option name="AAValue" value="foo" />""")
       }
     }
   }
@@ -248,7 +248,7 @@ internal class ProjectStoreTest {
     project.stateStore.initComponent(testComponent, null, null)
     assertThat(testComponent.state).isEqualTo(TestState("customValue"))
 
-    testComponent.state!!.AAvalue = "foo"
+    testComponent.state!!.AAValue = "foo"
     project.stateStore.save()
 
     val file = project.stateStore.storageManager.expandMacro(PROJECT_FILE)

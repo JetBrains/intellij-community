@@ -16,26 +16,14 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
 
-private suspend fun StateStorageBase<*>.setStateAndSave(componentName: String, state: String?) {
-  val saveSessionProducer = createSaveSessionProducer()!!
-  saveSessionProducer.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state))
-  writeAction {
-    saveSessionProducer.createSaveSession()!!.saveBlocking()
-  }
-}
-
-internal class DirectoryBasedStorageTest {
+class DirectoryBasedStorageTest {
   companion object {
-    @ClassRule
-    @JvmField
-    val projectRule = ProjectRule()
+    @ClassRule @JvmField val projectRule = ProjectRule()
   }
 
   val tempDirManager = TemporaryDirectory()
 
-  @Rule
-  @JvmField
-  val ruleChain = RuleChain(tempDirManager)
+  @Rule @JvmField val ruleChain = RuleChain(tempDirManager)
 
   @Test
   fun readEmptyFile() {
@@ -49,38 +37,41 @@ internal class DirectoryBasedStorageTest {
   fun save() = runBlocking<Unit> {
     val dir = tempDirManager.newPath(refreshVfs = true)
     val storage = DirectoryBasedStorage(dir, TestStateSplitter())
-
     val componentName = "test"
 
-    storage.setStateAndSave(componentName,"""<component name="$componentName"><sub name="foo" /><sub name="bar" /></component>""")
-
+    setStateAndSave(storage, componentName,"""<component name="$componentName"><sub name="foo" /><sub name="bar" /></component>""")
     assertThat(dir).hasChildren("foo.xml", "bar.xml", "main.xml")
-
     assertThat(dir.resolve("foo.xml")).hasContent(generateData("foo"))
     assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar"))
     assertThat(dir.resolve("main.xml")).hasContent(generateData("test"))
 
-    storage.setStateAndSave(componentName, """<component name="$componentName"><sub name="bar" /></component>""")
-
+    setStateAndSave(storage, componentName, """<component name="$componentName"><sub name="bar" /></component>""")
     assertThat(dir).hasChildren("main.xml", "bar.xml")
     assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar"))
     assertThat(dir.resolve("main.xml")).hasContent(generateData("test"))
 
-    storage.setStateAndSave(componentName, null)
+    setStateAndSave(storage, componentName, null)
     assertThat(dir).doesNotExist()
   }
 
-  private fun generateData(name: String): String {
-    return """<component name="test">
-  <${if (name == "test") "component" else "sub"} name="$name" />
-</component>"""
+  private fun generateData(name: String): String = """
+    <component name="test">
+      <${if (name == "test") "component" else "sub"} name="$name" />
+    </component>""".trimIndent()
+
+  private suspend fun setStateAndSave(storage: StateStorageBase<*>, componentName: String, state: String?) {
+    val saveSessionProducer = storage.createSaveSessionProducer()!!
+    saveSessionProducer.setState(null, componentName, if (state == null) Element("state") else JDOMUtil.load(state))
+    writeAction {
+      saveSessionProducer.createSaveSession()!!.saveBlocking()
+    }
   }
-}
 
-private class TestStateSplitter : MainConfigurationStateSplitter() {
-  override fun getComponentStateFileName() = "main"
+  private class TestStateSplitter : MainConfigurationStateSplitter() {
+    override fun getComponentStateFileName() = "main"
 
-  override fun getSubStateTagName() = "sub"
+    override fun getSubStateTagName() = "sub"
 
-  override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")!!
+    override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")!!
+  }
 }

@@ -17,8 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.PathUtil
-import com.intellij.util.io.*
-import com.intellij.util.toByteArray
+import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.xmlb.annotations.Tag
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -29,36 +28,31 @@ import org.junit.Test
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.inputStream
 import kotlin.io.path.readText
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
 
 /**
- * Functionality without stream provider covered, ICS has own test suite
+ * Functionality without stream providers is covered, ICS has own test suite.
  */
-internal class SchemeManagerTest {
+class SchemeManagerTest {
   companion object {
-    internal const val FILE_SPEC = "REMOTE"
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    private const val FILE_SPEC = "REMOTE"
+
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
-  @Rule
-  @JvmField
-  val tempDirManager = TemporaryDirectory()
-
-  @Rule
-  @JvmField
-  val fsRule = InMemoryFsRule()
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
+  @Rule @JvmField val tempDirManager = TemporaryDirectory()
+  @Rule @JvmField val fsRule = InMemoryFsRule()
+  @Rule @JvmField val disposableRule = DisposableRule()
 
   private var localBaseDir: Path? = null
   private var remoteBaseDir: Path? = null
 
-  private fun getTestDataPath(): Path = Paths.get(PlatformTestUtil.getCommunityPath(), "platform/platform-tests/testData/options")
+  private fun getTestDataPath(): Path = Path.of(PlatformTestUtil.getCommunityPath(), "platform/platform-tests/testData/options")
 
   @Test fun loadSchemes() {
     doLoadSaveTest("options1", "1->first;2->second")
@@ -76,6 +70,7 @@ internal class SchemeManagerTest {
     checkSchemes("2->second")
   }
 
+  @Suppress("NonAsciiCharacters")
   @Test fun renameScheme() {
     val manager = createAndLoad("options1")
 
@@ -144,10 +139,6 @@ internal class SchemeManagerTest {
     assertThat("first2").isEqualTo(scheme.name)
   }
 
-  fun TestScheme.save(file: Path) {
-    file.write(serialize(this)!!.toByteArray())
-  }
-
   @Test fun `different extensions - old, new`() {
     doDifferentExtensionTest(listOf("1.xml", "1.icls"))
   }
@@ -160,19 +151,19 @@ internal class SchemeManagerTest {
     val dir = tempDirManager.newPath()
 
     val scheme = TestScheme("local", "true")
-    scheme.save(dir.resolve("1.icls"))
-    TestScheme("local", "false").save(dir.resolve("1.xml"))
+    JDOMUtil.write(serialize(scheme)!!, dir.resolve("1.icls"))
+    JDOMUtil.write(serialize(TestScheme("local", "false"))!!, dir.resolve("1.xml"))
 
     class ATestSchemeProcessor : TestSchemeProcessor(), SchemeExtensionProvider {
       override val schemeExtension = ".icls"
     }
 
-    // use provider to specify exact order of files (it is critical to test both variants - old, new or new, old)
+    // use provider to specify the exact order of files (it is critical to test both variants - old, new or new, old)
     val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
       override val isExclusive = true
 
       override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
-        getFile(fileSpec).write(content)
+        getFile(fileSpec).writeBytes(content)
       }
 
       override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -193,7 +184,7 @@ internal class SchemeManagerTest {
       }
 
       override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-        getFile(fileSpec).delete()
+        getFile(fileSpec).deleteIfExists()
         return true
       }
 
@@ -219,7 +210,7 @@ internal class SchemeManagerTest {
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
 
-    @Suppress("SpellCheckingInspection")
+    @Suppress("SpellCheckingInspection", "NonAsciiCharacters")
     val schemeName = "Grünwald и русский"
     val scheme = TestScheme(schemeName)
     schemeManager.setSchemes(listOf(scheme))
@@ -253,7 +244,7 @@ internal class SchemeManagerTest {
     assertThat(schemeManager.allSchemes).containsOnly(scheme)
     schemeManager.save()
 
-    dir.resolve("s1.xml").write("""<scheme name="s1" data="newData" />""")
+    dir.resolve("s1.xml").writeText("""<scheme name="s1" data="newData" />""")
     schemeManager.reload()
 
     assertThat(schemeManager.allSchemes).containsOnly(TestScheme("s1", "newData"))
@@ -284,7 +275,7 @@ internal class SchemeManagerTest {
     fun writeScheme(index: Int, value: String): TestScheme {
       val name = "s$index"
       val data = "data $value for scheme $index"
-      dir.resolve("$name.xml").write("""<scheme name="$name" data="$data" />""")
+      dir.resolve("$name.xml").writeText("""<scheme name="$name" data="$data" />""")
       return TestScheme(name, data)
     }
 
@@ -329,33 +320,32 @@ internal class SchemeManagerTest {
   }
 
   /**
-   * This test shows how the interaction between [SchemeManagerImpl] and a []StreamProvider] with different
-   * naming styles (e.g. a custom naming logic exposed by [SchemeManagerIprProvider.load]) can put [SchemeManagerImpl]
+   * This test shows how the interaction between [SchemeManagerImpl] and a [StreamProvider] with different
+   * naming styles (e.g., a custom naming logic exposed by [SchemeManagerIprProvider.load]) can put [SchemeManagerImpl]
    * into a bad state where it deletes a scheme right after it tries to save it.
    *
-   * This errors shows up as inconsistent outputs from the stream provider used by the scheme manager.  An in-production
-   * example of this is [com.intellij.execution.impl.RunManagerImpl], where two identical consecutive calls to
-   * [RunManagerImpl.getState] can return different results.
+   * These errors show up as inconsistent outputs from the stream provider used by the scheme manager.
+   * An in-production example of this is [com.intellij.execution.impl.RunManagerImpl], where two identical consecutive calls to
+   * [com.intellij.execution.impl.RunManagerImpl.getState] can return different results.
    *
-   * The steps to reproduce the error is inlined with the code below.
+   * The steps to reproduce the error are inlined with the code below.
    */
   @Test
   fun `scheme manager with dependencies using different scheme naming styles`() {
     /**
-     * A simple schemes processor that names it's scheme keys with a custom suffix.
+     * A simple schemes processor that names its scheme keys with a custom suffix.
      */
-
     val dir = tempDirManager.newPath()
 
     /**
      * 1. Create a [StreamProvider] that will later be used to load scheme elements with custom scheme names.
-     *    An instance of [SchemeManagerIprProvider] satisfies this criteria.
+     *    An instance of [SchemeManagerIprProvider] satisfies this criterion.
      */
     val streamProvider = SchemeManagerIprProvider("scheme")
 
     /**
-     * 2. Create a [SchemeProcessor] with custom naming scheme.  See SchemesProcessorWithUniqueNaming in the test
-     *    as an example.
+     * 2. Create a [com.intellij.openapi.options.SchemeProcessor] with custom naming scheme.
+     *    See SchemesProcessorWithUniqueNaming in the test as an example.
      */
     class SchemeProcessorWithUniqueNaming : TestSchemeProcessor() {
       override fun getSchemeKey(scheme: TestScheme) = scheme.name + "someSuffix"
@@ -364,28 +354,28 @@ internal class SchemeManagerTest {
     val schemeProcessor = SchemeProcessorWithUniqueNaming()
 
     /**
-     * 3. Create a [SchemeManagerImpl] with the [StreamProvider] from #1 and [SchemeProcessor] from #2.  We now have
-     *    a SchemeManager that can be manipulated to exhibit the error.
+     * 3. Create a [SchemeManagerImpl] with the [StreamProvider] from #1 and [com.intellij.openapi.options.SchemeProcessor] from #2.
+     *    We now have a SchemeManager that can be manipulated to exhibit the error.
      */
     val schemeManager = SchemeManagerImpl(FILE_SPEC, schemeProcessor, streamProvider, dir)
 
     /**
      * 4. Add a scheme and save it. The scheme manager will now have a scheme named in the style of our
-     * [SchemeProcessorWithUniqueNaming] from #2.
+     * `SchemeProcessorWithUniqueNaming` from #2.
      */
     schemeManager.addScheme(TestScheme("first"))
     schemeManager.save()
 
     /**
      * 5. Obtain the scheme by writing its contents into an element, and then load the element with a different naming scheme.
-     *    This creates the scenario where schemeManager and streamProvider refers to the same scheme with different names.
+     *    This creates the scenario where `schemeManager` and `streamProvider` refer to the same scheme with different names.
      */
     val element = Element("state")
     streamProvider.writeState(element)
     streamProvider.load(element) { elementToLoad -> elementToLoad.name + "someOtherSuffix" }
 
     /**
-     * 6. [SchemeManagerImpl.reload] reloads it's schemes by deleting it's current set of schemes and reloading it.
+     * 6. [SchemeManagerImpl.reload] reloads its schemes by deleting its current set of schemes and reloading it.
      *    Note that the file to delete here and what scheme manager thinks the scheme belongs to have different names.  These
      *    different names come from the different naming styles we defined earlier in the test.
      */
@@ -393,10 +383,10 @@ internal class SchemeManagerTest {
 
     /**
      * 7. By calling [SchemeManagerImpl.save], we delete the file our currently existing scheme uses.
-     *    Now [SchemeManagerImpl.save] should remove that deleted file from it's list of staged files to delete.
+     *    Now [SchemeManagerImpl.save] should remove that deleted file from its list of staged files to delete.
      *    However, because the file names don't match, the file isn't removed.  This means the file is STILL staged
      *    for deletion.  The saving process also corrects the scheme's file name if it's different from what [SchemeManager]
-     *    sees; this restores our scheme to use the same name given by our scheme processor from #2.
+     *    sees; this restores our scheme to using the same name given by our scheme processor from #2.
      */
     schemeManager.save()
     val firstElement = Element("state")
@@ -405,15 +395,15 @@ internal class SchemeManagerTest {
     /**
      * We have now successfully put our SchemeManagerImpl in the BAD STATE:
      * - [SchemeManagerImpl] has a file staged for deletion.
-     * - [SchemeManagerImpl] ALSO has an existing scheme that is backed by the same file.
+     * - [SchemeManagerImpl] ALSO has an existing scheme backed by the same file.
      *
      * This means [SchemeManagerImpl] will delete the file backing a scheme that's still in use.  The deletion happens
      * on the next call to [SchemeManagerImpl.save].
      */
 
     /**
-     * 8. Calling save will delete the file backing our scheme that's still in use.  [streamProvider.writeState] will now
-     *    write an empty element, because the backing file was deleted.
+     * 8. Calling save will delete the file backing our scheme that's still in use.
+     *    `streamProvider.writeState()` will now write an empty element because the backing file was deleted.
      */
     schemeManager.save()
     val secondElement = Element("state")
@@ -464,7 +454,7 @@ internal class SchemeManagerTest {
 
     schemeManager.setSchemes(emptyList())
 
-    dir.resolve("empty").write(byteArrayOf())
+    dir.resolve("empty").writeBytes(byteArrayOf())
 
     schemeManager.save()
 
