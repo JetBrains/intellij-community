@@ -208,6 +208,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/ktij22295/");
     }
 
+    @TestMetadata("ktij27523")
+    public void testKtij27523() throws Exception {
+        runTest("testData/multiplatform/ktij27523/");
+    }
+
     @TestMetadata("lambdas")
     public void testLambdas() throws Exception {
         runTest("testData/multiplatform/lambdas/");
