@@ -186,20 +186,18 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
     }
   }
 
-  companion object {
-    private fun findParseException(t: Throwable): MavenConfigParseException? {
-      val parseException = ExceptionUtil.findCause(t, MavenConfigParseException::class.java)
-      if (parseException != null) {
-        return parseException
-      }
-      val cause = ExceptionUtil.getRootCause(t)
-      if (cause is InvocationTargetException) {
-        val target = cause.targetException
-        if (target != null) {
-          return ExceptionUtil.findCause(target, MavenConfigParseException::class.java)
-        }
-      }
-      return null
+  private fun findParseException(t: Throwable): MavenConfigParseException? {
+    val parseException = ExceptionUtil.findCause(t, MavenConfigParseException::class.java)
+    if (parseException != null) {
+      return parseException
     }
+    val cause = ExceptionUtil.getRootCause(t)
+    if (cause is InvocationTargetException) {
+      val target = cause.targetException
+      if (target != null) {
+        return ExceptionUtil.findCause(target, MavenConfigParseException::class.java)
+      }
+    }
+    return null
   }
 }
