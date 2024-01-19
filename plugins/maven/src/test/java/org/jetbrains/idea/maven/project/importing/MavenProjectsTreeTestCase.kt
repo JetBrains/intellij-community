@@ -10,7 +10,6 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.project.MavenProjectResolver.Companion.getInstance
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
@@ -87,7 +86,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
 
     override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                  nativeMavenProject: NativeMavenProjectHolder?) {
-      add("resolved", java.util.Set.of(projectWithChanges.first.mavenId.artifactId))
+      add("resolved", setOf(projectWithChanges.first.mavenId.artifactId))
     }
 
     override fun pluginsResolved(project: MavenProject) {
@@ -103,7 +102,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
                         mavenProject: MavenProject,
                         generalSettings: MavenGeneralSettings,
                         embeddersManager: MavenEmbeddersManager) {
-    val resolver = getInstance(project)
+    val resolver = MavenProjectResolver(project)
     val progressReporter = object : RawProgressReporter {}
     resolver.resolve(listOf(mavenProject),
                      tree,

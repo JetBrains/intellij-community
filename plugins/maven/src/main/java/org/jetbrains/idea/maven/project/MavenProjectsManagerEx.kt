@@ -350,7 +350,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                     projectsToResolve: Collection<MavenProject>,
                                     modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     logDebug("importModules started: ${projectsToResolve.size}")
-    val resolver = MavenProjectResolver.getInstance(project)
+    val resolver = MavenProjectResolver(project)
     val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
       withRawProgressReporter {
         runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
@@ -591,7 +591,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       val deleted = result.deleted.map { it }
       return "updated ${updated}, deleted ${deleted}"
     }
-    if (result is MavenProjectResolver.MavenProjectResolutionResult) {
+    if (result is MavenProjectResolutionResult) {
       val mavenProjects = result.mavenProjectMap.flatMap { it.value }.map { it.mavenProject }
       return "resolved ${mavenProjects}"
     }

@@ -9,11 +9,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ExceptionUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
-import org.jetbrains.idea.maven.project.MavenProjectResolver.MavenProjectResolutionResult
 import org.jetbrains.idea.maven.server.MavenConfigParseException
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -24,13 +24,16 @@ import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
-internal class MavenProjectResolverImpl(private val myProject: Project) : MavenProjectResolver {
-  override suspend fun resolve(mavenProjects: Collection<MavenProject>,
-                               tree: MavenProjectsTree,
-                               generalSettings: MavenGeneralSettings,
-                               embeddersManager: MavenEmbeddersManager,
-                               progressReporter: RawProgressReporter,
-                               eventHandler: MavenEventHandler): MavenProjectResolutionResult {
+data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collection<MavenProjectWithHolder>>)
+
+@ApiStatus.Internal
+class MavenProjectResolver(private val myProject: Project) {
+  suspend fun resolve(mavenProjects: Collection<MavenProject>,
+                      tree: MavenProjectsTree,
+                      generalSettings: MavenGeneralSettings,
+                      embeddersManager: MavenEmbeddersManager,
+                      progressReporter: RawProgressReporter,
+                      eventHandler: MavenEventHandler): MavenProjectResolutionResult {
     val updateSnapshots = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
     val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProjectWithHolder>>()
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree)
