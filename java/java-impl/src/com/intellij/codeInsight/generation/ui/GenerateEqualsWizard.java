@@ -7,8 +7,11 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
@@ -31,12 +34,12 @@ import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
 
@@ -102,13 +105,25 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       String title = JavaBundle.message("generate.equals.hashcode.non.null.fields.chooser.title");
       myNonNullPanel = new MemberSelectionPanel(title, Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
-      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-        for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
-          entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()) ||
-                                      entry.getKey() instanceof PsiField field &&
-                                      NullabilityUtil.getNullabilityFromFieldInitializers(field).second == Nullability.NOT_NULL);
-        }
-      });
+
+      ReadAction.nonBlocking(() -> {
+          Map<PsiMember, Boolean> result = new HashMap<>();
+          return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+            for (PsiMember member : myFieldsToNonNull.keySet()) {
+              boolean checked = NullableNotNullManager.isNotNull(member) ||
+                                member instanceof PsiField field &&
+                                NullabilityUtil.getNullabilityFromFieldInitializers(field).second == Nullability.NOT_NULL;
+              result.put(member, checked);
+            }
+            return result;
+          });
+        })
+        .finishOnUiThread(ModalityState.any(), m -> {
+          for (Map.Entry<PsiMember, Boolean> entry : m.entrySet()) {
+            myFieldsToNonNull.get(entry.getKey()).setChecked(entry.getValue());
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
 
     @Override
@@ -214,20 +229,6 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       list.add((PsiField)info.getMember());
     }
     return list.toArray(PsiField.EMPTY_ARRAY);
-  }
-
-  private void equalsFieldsSelected() {
-    Collection<MemberInfo> selectedMemberInfos = myEqualsPanel.getTable().getSelectedMemberInfos();
-    updateHashCodeMemberInfos(selectedMemberInfos);
-    updateNonNullMemberInfos(selectedMemberInfos);
-  }
-
-  @Override
-  protected void doOKAction() {
-    if (myEqualsPanel != null) {
-      equalsFieldsSelected();
-    }
-    super.doOKAction();
   }
 
   @Override
@@ -344,6 +345,8 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   private final class TemplateChooserStep extends StepAdapter {
     private final JComponent myPanel;
+    private final ComboBox<String> myComboBox;
+    private @Nullable Set<String> myInvalidTemplates = null;
 
     private TemplateChooserStep(PsiClass psiClass) {
       myPanel = new JPanel(new VerticalFlowLayout());
@@ -351,23 +354,60 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       final JLabel templateChooserLabel = new JLabel(JavaBundle.message("generate.equals.hashcode.template"));
       templateChooserPanel.add(templateChooserLabel, BorderLayout.WEST);
 
-      final ComboBox<String> comboBox = new ComboBox<>();
-      comboBox.setSwingPopup(false);
+      EqualsHashCodeTemplatesManager templatesManager = EqualsHashCodeTemplatesManager.getInstance();
+      Collection<TemplateResource> templates = templatesManager.getAllTemplates();
+      myComboBox = new ComboBox<>(templates.stream()
+        .map(EqualsHashCodeTemplatesManager::getTemplateBaseName)
+        .distinct()
+        .toArray(String[]::new));
+      myComboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
+      myComboBox.setSwingPopup(false);
       final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
-        new ComponentWithBrowseButton<>(comboBox, new MyEditTemplatesListener(psiClass, myPanel, comboBox));
-      templateChooserLabel.setLabelFor(comboBox);
-      final EqualsHashCodeTemplatesManager manager = EqualsHashCodeTemplatesManager.getInstance();
-      HashSet<String> invalid = new HashSet<>();
-      setupCombobox(manager, comboBox, psiClass, invalid);
-      comboBox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          String item = (String)comboBox.getSelectedItem();
-          manager.setDefaultTemplate(item);
-          updateErrorMessage(item, invalid, manager, comboBox);
+        new ComponentWithBrowseButton<>(myComboBox, e -> {
+          EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(psiClass.getProject(), templatesManager);
+          ui.selectNodeInTree(templatesManager.getDefaultTemplateBaseName());
+          ShowSettingsUtil.getInstance().editConfigurable(myPanel, ui);
+          String[] names = templatesManager.getAllTemplates().stream()
+            .map(EqualsHashCodeTemplatesManager::getTemplateBaseName)
+            .distinct()
+            .toArray(String[]::new);
+          myComboBox.setModel(new DefaultComboBoxModel<>(names));
+          myComboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
+        });
+      templateChooserLabel.setLabelFor(myComboBox);
+      ReadAction.nonBlocking(() -> {
+          GlobalSearchScope resolveScope = psiClass.getResolveScope();
+          JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiClass.getProject());
+          Set<String> names = new LinkedHashSet<>();
+          Set<String> invalid = new HashSet<>();
+
+          DumbService dumbService = DumbService.getInstance(psiClass.getProject());
+          for (TemplateResource resource : templatesManager.getAllTemplates()) {
+            String templateBaseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(resource);
+            if (names.add(templateBaseName)) {
+              String className = resource.getClassName();
+              if (className != null &&
+                  dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(className, resolveScope) == null)) {
+                invalid.add(templateBaseName);
+              }
+            }
+          }
+          return invalid;
+        })
+        .expireWhen(() -> isDisposed())
+        .finishOnUiThread(ModalityState.any(), invalid -> {
+          myInvalidTemplates = invalid;
+          updateErrorMessage();
+          myComboBox.repaint();
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+      myComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+        label.setText(value); //NON-NLS
+        if (myInvalidTemplates != null && myInvalidTemplates.contains(value)) {
+          label.setForeground(JBColor.RED);
         }
-      });
-      updateErrorMessage(manager.getDefaultTemplateBaseName(), invalid, manager, comboBox);
+      }));
+      myComboBox.addActionListener(e -> updateErrorMessage());
 
       templateChooserPanel.add(comboBoxWithBrowseButton, BorderLayout.CENTER);
       myPanel.add(templateChooserPanel);
@@ -408,76 +448,34 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       myPanel.add(gettersCheckbox);
     }
 
-    private void updateErrorMessage(String item, HashSet<String> invalid, EqualsHashCodeTemplatesManager manager, ComboBox<String> comboBox) {
-      if (invalid.contains(item)) {
-        TemplateResource template = manager.findTemplateByName(EqualsHashCodeTemplatesManager.toEqualsName(item));
+    @Override
+    public void _commit(boolean finishChosen) throws CommitStepException {
+      EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate((String)myComboBox.getSelectedItem());
+      super._commit(finishChosen);
+    }
+
+    private void updateErrorMessage() {
+      String item = (String)myComboBox.getSelectedItem();
+      if (myInvalidTemplates != null && myInvalidTemplates.contains(item)) {
+        TemplateResource template =
+          EqualsHashCodeTemplatesManager.getInstance().findTemplateByName(EqualsHashCodeTemplatesManager.toEqualsName(item));
         if (template != null) {
           String className = template.getClassName();
           setErrorText(className != null ? JavaBundle.message("dialog.message.class.not.found", className)
-                                         : JavaBundle.message("dialog.message.template.not.applicable"), comboBox);
+                                         : JavaBundle.message("dialog.message.template.not.applicable"), myComboBox);
         }
         else {
-          setErrorText(JavaBundle.message("dialog.message.template.not.found"), comboBox);
+          setErrorText(JavaBundle.message("dialog.message.template.not.found"), myComboBox);
         }
       }
       else {
-        setErrorText(null, comboBox);
+        setErrorText(null, myComboBox);
       }
     }
 
     @Override
     public JComponent getComponent() {
       return myPanel;
-    }
-
-    private static void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
-                                      ComboBox<String> comboBox,
-                                      PsiClass psiClass,
-                                      Set<String> invalid) {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiClass.getProject());
-      final GlobalSearchScope resolveScope = psiClass.getResolveScope();
-      final Set<String> names = new LinkedHashSet<>();
-
-      DumbService dumbService = DumbService.getInstance(psiClass.getProject());
-      for (TemplateResource resource : templatesManager.getAllTemplates()) {
-        final String templateBaseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(resource);
-        if (names.add(templateBaseName)) {
-          final String className = resource.getClassName();
-          if (className != null &&
-              dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(className, resolveScope) == null)) {
-            invalid.add(templateBaseName);
-          }
-        }
-      }
-      comboBox.setRenderer(SimpleListCellRenderer.create((@NotNull JBLabel label, @NlsContexts.Label String value, int index) -> {
-        label.setText(value);
-        if (invalid.contains(value)) {
-          label.setForeground(JBColor.RED);
-        }
-      }));
-      comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.toStringArray(names)));
-      comboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
-    }
-
-    private static class MyEditTemplatesListener implements ActionListener {
-      private final PsiClass myPsiClass;
-      private final JComponent myParent;
-      private final ComboBox<String> myComboBox;
-
-      MyEditTemplatesListener(PsiClass psiClass, JComponent panel, ComboBox<String> comboBox) {
-        myPsiClass = psiClass;
-        myParent = panel;
-        myComboBox = comboBox;
-      }
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final EqualsHashCodeTemplatesManager templatesManager = EqualsHashCodeTemplatesManager.getInstance();
-        final EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(myPsiClass.getProject(), EqualsHashCodeTemplatesManager.getInstance());
-        ui.selectNodeInTree(templatesManager.getDefaultTemplateBaseName());
-        ShowSettingsUtil.getInstance().editConfigurable(myParent, ui);
-        setupCombobox(templatesManager, myComboBox, myPsiClass, new HashSet<>());
-      }
     }
   }
 }
