@@ -156,9 +156,8 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
     if (superMethods.length == 1) {
       return superMethods[0];
     }
-    else {
-      return StreamEx.of(superMethods).findFirst(candidate -> isNotInterface(candidate.getContainingClass())).orElse(null);
-    }
+    if (ContainerUtil.exists(superMethods, superMethod -> superMethod.hasModifierProperty(PsiModifier.ABSTRACT))) return null;
+    return StreamEx.of(superMethods).findFirst(candidate -> isNotInterface(candidate.getContainingClass())).orElse(null);
   }
 
   private static boolean isNotInterface(@Nullable PsiClass psiClass) {
