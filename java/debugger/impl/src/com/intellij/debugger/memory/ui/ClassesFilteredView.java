@@ -7,6 +7,8 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
+import com.intellij.debugger.memory.filtering.ClassInstancesProvider;
+import com.intellij.debugger.memory.filtering.FixedListProvider;
 import com.intellij.debugger.memory.tracking.ConstructorInstancesTracker;
 import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
 import com.intellij.debugger.memory.utils.AndroidUtil;
@@ -224,7 +226,8 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
   @Override
   protected InstancesWindowBase getInstancesWindow(@NotNull TypeInfo ref, XDebugSession debugSession) {
-    return new InstancesWindow(debugSession, limit -> ref.getInstances(limit), ((JavaTypeInfo)ref).getReferenceType());
+    ReferenceType referenceType = ((JavaTypeInfo)ref).getReferenceType();
+    return new InstancesWindow(debugSession, new ClassInstancesProvider(referenceType), referenceType);
   }
 
   @Override
@@ -323,11 +326,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         if (data != null) {
           final List<ObjectReference> newInstances = strategy.getNewInstances();
           data.getTrackedStacks().pinStacks(ref);
-          final InstancesWindow instancesWindow = new InstancesWindow(
-            debugSession,
-            limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new),
-            ref
-          );
+          final InstancesWindow instancesWindow = new InstancesWindow(debugSession, new FixedListProvider(newInstances), ref);
           Disposer.register(instancesWindow.getDisposable(), () -> data.getTrackedStacks().unpinStacks(ref));
           instancesWindow.show();
         }
