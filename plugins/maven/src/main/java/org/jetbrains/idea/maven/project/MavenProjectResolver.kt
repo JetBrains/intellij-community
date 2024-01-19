@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
+@ApiStatus.Internal
 data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collection<MavenProjectWithHolder>>)
 
 @ApiStatus.Internal
