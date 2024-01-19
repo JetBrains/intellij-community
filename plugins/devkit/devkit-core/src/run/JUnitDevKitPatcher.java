@@ -20,6 +20,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.JavaModuleOptions;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +58,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
         String qualifiedName = "com.intellij.util.lang.UrlClassLoader";
         if (loaderValid(project, module, qualifiedName)) {
           vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+          vm.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true");
         }
       }
       String basePath = project.getBasePath();

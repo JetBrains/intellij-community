@@ -30,8 +30,10 @@ import java.util.function.Predicate;
  * This classloader implementation is separate from {@link PathClassLoader} because it's used in runtime modules with JDK 1.8.
  */
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
+  public static final String CLASSPATH_INDEX_PROPERTY_NAME = "idea.classpath.index.enabled";
+
   private static final boolean isClassPathIndexEnabledGlobalValue =
-    Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
+    Boolean.parseBoolean(System.getProperty(CLASSPATH_INDEX_PROPERTY_NAME, "false"));
 
   private static final boolean mimicJarUrlConnection = Boolean.parseBoolean(System.getProperty("idea.mimic.jar.url.connection", "false"));
 
@@ -651,13 +653,8 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * IDEA's building process does not ensure deletion of cached information upon deletion of some file under a local root,
      * but false positives are not a logical error, since code is prepared for that and disk access is performed upon class/resource loading.
      */
-    public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories(boolean value) {
-      this.isClassPathIndexEnabled = value;
-      return this;
-    }
-
     public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories() {
-      this.isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
+      this.isClassPathIndexEnabled = true;
       return this;
     }
 

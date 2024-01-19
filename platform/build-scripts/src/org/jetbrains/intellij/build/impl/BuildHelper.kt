@@ -96,8 +96,6 @@ suspend fun runApplicationStarter(context: BuildContext,
   BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome.toString())
   BuildUtils.addVmProperty(jvmArgs, "idea.system.path", systemDir.toString())
   BuildUtils.addVmProperty(jvmArgs, "idea.config.path", "$tempDir/config")
-  // reproducible build - avoid touching module outputs, do not write classpath.index
-  BuildUtils.addVmProperty(jvmArgs, "idea.classpath.index.enabled", "false")
   BuildUtils.addVmProperty(jvmArgs, "idea.builtin.server.disabled", "true")
   BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
   BuildUtils.addVmProperty(jvmArgs, "idea.platform.prefix", context.productProperties.platformPrefix)

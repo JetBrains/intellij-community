@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Files
@@ -41,6 +42,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       val qualifiedName = "com.intellij.util.lang.PathClassLoader"
       if (JUnitDevKitPatcher.loaderValid(project, module, qualifiedName)) {
         vmParameters.addProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY, qualifiedName)
+        vmParameters.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true")
       }
     }
 

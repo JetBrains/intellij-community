@@ -583,7 +583,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       .distinct()
       .map { Path.of(it) }
       .toList()
-    val classloader = UrlClassLoader.build().files(classpath).usePersistentClasspathIndexForLocalClassDirectories(false).get()
+    val classloader = UrlClassLoader.build().files(classpath).get()
     val testAnnotation = classloader.loadClass("com.intellij.testFramework.SkipInHeadlessEnvironment")
     return context.project.modules.parallelStream()
       .flatMap { module ->
