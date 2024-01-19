@@ -37,19 +37,18 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
     val rootCauseName = rootCause.javaClass.simpleName
     val rootCauseText = rootCause.toString()
     val rootCauseMessage = rootCause.message ?: rootCauseName
+
     var gradleVersionUsed: GradleVersion? = null
-    var buildEnvironmentJavaHome: File? = null
     if (issueData.buildEnvironment != null) {
       gradleVersionUsed = GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
-      buildEnvironmentJavaHome = issueData.buildEnvironment.java.javaHome
     }
 
-    val couldNotDetermineJavaIssue = couldNotDetermineJavaIssue(rootCause, rootCauseText)
+    val couldNotDetermineJavaIssue = Util.couldNotDetermineJavaIssue(rootCause, rootCauseText)
     val isUnsupportedJavaRuntimeIssue = rootCauseName == UnsupportedJavaRuntimeException::class.java.simpleName ||
                                         couldNotDetermineJavaIssue
-    val javaVersionUsed = detectJavaVersion(couldNotDetermineJavaIssue, rootCauseText, issueData, buildEnvironmentJavaHome)
-    val isRemovedUnsafeDefineClassMethodInJDK11Issue = causedByUnsafeDefineClassApiUsage(gradleVersionUsed, javaVersionUsed,
-                                                                                         rootCause, rootCauseText)
+    val javaVersionUsed = Util.detectJavaVersion(couldNotDetermineJavaIssue, rootCauseText, issueData)
+    val isRemovedUnsafeDefineClassMethodInJDK11Issue = Util.causedByUnsafeDefineClassApiUsage(gradleVersionUsed, javaVersionUsed,
+                                                                                              rootCause, rootCauseText)
     val isUnsupportedClassVersionErrorIssue = rootCauseName == UnsupportedClassVersionError::class.java.simpleName &&
                                               javaVersionUsed != null && javaVersionUsed.feature < 7
     var unableToStartDaemonProcessForJDK9 = false
@@ -222,41 +221,49 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
     return failureCause.startsWith("Could not create service of type ") && failureCause.contains(" using BuildScopeServices.")
   }
 
-  companion object {
-    private const val couldNotDetermineJavaUsingExecutablePrefix = "org.gradle.api.GradleException: Could not determine Java version using executable "
-    private fun couldNotDetermineJavaIssue(rootCause: Throwable, rootCauseText: String) =
-      rootCauseText.startsWith(couldNotDetermineJavaUsingExecutablePrefix) ||
-      rootCause.message == "Could not determine Java version."
+  private object Util {
+
+    private const val COULD_NOT_DETERMINE_JAVA_USING_EXECUTABLE_PREFIX = "org.gradle.api.GradleException: Could not determine Java version using executable "
+
+    fun couldNotDetermineJavaIssue(rootCause: Throwable, rootCauseText: String): Boolean {
+      return rootCauseText.startsWith(COULD_NOT_DETERMINE_JAVA_USING_EXECUTABLE_PREFIX) ||
+             rootCause.message == "Could not determine Java version."
+    }
 
     // https://github.com/gradle/gradle/issues/4860
-    private fun causedByUnsafeDefineClassApiUsage(gradleVersionUsed: GradleVersion?,
-                                                  javaVersion: JavaVersion?,
-                                                  rootCause: Throwable,
-                                                  rootCauseText: String): Boolean {
+    fun causedByUnsafeDefineClassApiUsage(
+      gradleVersionUsed: GradleVersion?,
+      javaVersionUsed: JavaVersion?,
+      rootCause: Throwable,
+      rootCauseText: String
+    ): Boolean {
       val baseVersion = gradleVersionUsed?.baseVersion ?: return false
       if (baseVersion > GradleVersion.version("4.7")) return false
       if (rootCauseText.startsWith("java.lang.NoSuchMethodError: sun.misc.Unsafe.defineClass") &&
-          javaVersion?.feature?.let { it >= 11 } == true) return true
+          javaVersionUsed?.feature?.let { it >= 11 } == true) return true
 
       val message = rootCause.message ?: return false
       if (!message.startsWith("'java.lang.Class sun.misc.Unsafe.defineClass")) return false
       return rootCause.stackTrace.find { it.className == "org.gradle.internal.classloader.ClassLoaderUtils" } != null
     }
 
-    private fun detectJavaVersion(couldNotDetermineJavaIssue: Boolean,
-                                  rootCauseText: String,
-                                  issueData: GradleIssueData,
-                                  javaHome: File?) = if (couldNotDetermineJavaIssue) {
-      val javaExeCandidate = rootCauseText.substringAfter(couldNotDetermineJavaUsingExecutablePrefix).trimEnd('.')
-      val javaHomeCandidate = File(javaExeCandidate).parentFile?.parentFile ?: javaHome
-      javaHomeCandidate?.let {
-        if (it.isDirectory) JdkVersionDetector.getInstance().detectJdkVersionInfo(it.path)?.version else null
+    fun detectJavaVersion(
+      couldNotDetermineJavaIssue: Boolean,
+      rootCauseText: String,
+      issueData: GradleIssueData
+    ): JavaVersion? {
+      var javaHome = issueData.buildEnvironment?.java?.javaHome
+      if (couldNotDetermineJavaIssue) {
+        val javaExeCandidate = rootCauseText.substringAfter(COULD_NOT_DETERMINE_JAVA_USING_EXECUTABLE_PREFIX).trimEnd('.')
+        val javaHomeCandidate = File(javaExeCandidate).parentFile?.parentFile
+        if (javaHomeCandidate != null) {
+          javaHome = javaHomeCandidate
+        }
       }
-    }
-    else {
-      issueData.buildEnvironment?.java?.javaHome?.let {
-        return@let JdkVersionDetector.getInstance().detectJdkVersionInfo(it.path)?.version
+      if (javaHome != null && javaHome.isDirectory) {
+        return JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome.path)?.version
       }
+      return null
     }
   }
 }
