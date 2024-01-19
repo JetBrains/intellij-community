@@ -2,16 +2,21 @@
 package com.intellij.codeInsight.generation
 
 import com.intellij.codeInsight.CodeInsightActionHandler
+import com.intellij.java.JavaBundle
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.CommonJavaRefactoringUtil
 import com.siyeh.ig.psiutils.JavaLoggingUtils.*
+import javax.swing.JComponent
 
 class GenerateLoggerHandler : CodeInsightActionHandler {
   companion object {
@@ -63,6 +68,9 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     val className = lastClass.name ?: return
     val factory = JavaPsiFacade.getElementFactory(project)
 
+    if (!ChooseLoggerDialogWrapper(project).showAndGet()) {
+      return
+    }
 
 
     val module = ModuleUtil.findModuleForFile(file)
@@ -78,16 +86,37 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(field)
 
-        CommonJavaRefactoringUtil.appendField(lastClass ,field, anchor,null)
+        ApplicationManager.getApplication().runWriteAction {
+          CommonJavaRefactoringUtil.appendField(lastClass ,field, anchor,null)
+        }
         break
       }
     }
   }
 
+  override fun startInWriteAction(): Boolean = false
+
   private fun determineAnchor(psiClass: PsiClass) : PsiElement? = psiClass.fields.firstOrNull()
 
   private class LogInfo(val loggerName : String, val factoryName : String, val methodName: String, val classNamePattern: String) {
-    fun createLoggerFieldText(className : String) =
+    fun createLoggerFieldText(className: String) =
       "$loggerName $LOGGER_IDENTIFIER = ${factoryName}.$methodName(${String.format(classNamePattern, className)});"
+  }
+}
+
+
+private class ChooseLoggerDialogWrapper(project: Project) : DialogWrapper(project, true) {
+  init {
+    title = JavaBundle.message("dialog.title.choose.logger")
+    init()
+  }
+
+  override fun createCenterPanel(): JComponent {
+    return panel {
+      row {
+        label(JavaBundle.message("label.configurable.logger.type"))
+        comboBox(listOf("foo", "bar", "baz"))
+      }
+    }
   }
 }
