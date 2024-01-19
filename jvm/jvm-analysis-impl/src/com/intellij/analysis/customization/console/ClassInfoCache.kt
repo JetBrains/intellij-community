@@ -32,6 +32,14 @@ class ClassInfoCache(val project: Project, private val mySearchScope: GlobalSear
       return result.toList()
     }
 
+    /**
+     * @param clazz The class to check.
+     * @param targetPackageName The target package name.
+     * @return True, if clazz package can be shortened to targetPackageName, false otherwise.
+     * There are two popular ways to shorten:
+     * 1. Keep only n last characters of the package: aaa.bbb.ccc -> b.ccc
+     * 2. Keep only the first n characters of each directory: aaa.bbb.ccc -> a.b.cc
+     */
     private fun canBeShortenedPackages(clazz: PsiClass, targetPackageName: String): Boolean {
       val qualifiedName = clazz.qualifiedName ?: return false
       val actualPackageName = StringUtil.getPackageName(qualifiedName)
