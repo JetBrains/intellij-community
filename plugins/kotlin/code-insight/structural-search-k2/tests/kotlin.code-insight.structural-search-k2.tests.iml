@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />

@@ -3,13 +3,12 @@ package org.jetbrains.kotlin.idea.fir.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
-import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import kotlin.io.path.Path
 
 abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
-    override fun getDoc(): @Nls String? {
+    override fun getDoc(): String? {
         val target =
             IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, editor.caretModel.offset).firstOrNull()
                 ?: return null

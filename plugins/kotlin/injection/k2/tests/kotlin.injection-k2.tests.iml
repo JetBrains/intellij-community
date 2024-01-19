@@ -23,6 +23,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.injection.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
