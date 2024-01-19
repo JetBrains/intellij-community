@@ -20,4 +20,9 @@ public interface PyAstOrPattern extends PyAstPattern {
   default boolean isIrrefutable() {
     return ContainerUtil.exists(getAlternatives(), PyAstPattern::isIrrefutable);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyOrPattern(this);
+  }
 }

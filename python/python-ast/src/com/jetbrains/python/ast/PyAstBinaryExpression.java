@@ -140,4 +140,9 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     }
     return false;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyBinaryExpression(this);
+  }
 }

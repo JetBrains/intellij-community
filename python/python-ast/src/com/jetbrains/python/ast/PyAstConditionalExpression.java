@@ -23,4 +23,9 @@ public interface PyAstConditionalExpression extends PyAstExpression {
     final List<PyAstExpression> expressions = PsiTreeUtil.getChildrenOfTypeAsList(this, PyAstExpression.class);
     return expressions.size() == 3 ? expressions.get(2) : null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyConditionalExpression(this);
+  }
 }

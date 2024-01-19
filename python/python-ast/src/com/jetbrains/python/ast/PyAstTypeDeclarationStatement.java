@@ -37,4 +37,9 @@ public interface PyAstTypeDeclarationStatement extends PyAstStatement, PyAstAnno
   default PyAstAnnotation getAnnotation() {
     return findChildByClass(this, PyAstAnnotation.class);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyTypeDeclarationStatement(this);
+  }
 }

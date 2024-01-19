@@ -12,4 +12,9 @@ public interface PyAstReprExpression extends PyAstExpression {
   default PyAstExpression getExpression() {
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyReprExpression(this);
+  }
 }

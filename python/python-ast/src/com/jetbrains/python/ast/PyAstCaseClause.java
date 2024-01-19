@@ -17,4 +17,9 @@ public interface PyAstCaseClause extends PyAstStatementPart {
   default PyAstExpression getGuardCondition() {
     return findChildByClass(this, PyAstExpression.class);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyCaseClause(this);
+  }
 }

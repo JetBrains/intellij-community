@@ -277,4 +277,9 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
     }
     return null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyFunction(this);
+  }
 }

@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstElementVisitor;
 import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
@@ -275,8 +276,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (isAcceptedFor(visitor.getClass())) {
-      if (visitor instanceof PyElementVisitor) {
-        ((PyElementVisitor)visitor).visitPyFile(this);
+      if (visitor instanceof PyElementVisitor pyVisitor) {
+        pyVisitor.visitPyFile(this);
+      }
+      else if (visitor instanceof PyAstElementVisitor pyVisitor) {
+        pyVisitor.visitPyFile(this);
       }
       else {
         super.accept(visitor);

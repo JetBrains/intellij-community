@@ -8,4 +8,9 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface PyAstDelStatement extends PyAstStatement {
   PyAstExpression @NotNull [] getTargets();
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyDelStatement(this);
+  }
 }

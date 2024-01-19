@@ -113,7 +113,11 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
       }
     }
     return result;
+  }
 
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyAssignmentStatement(this);
   }
 
 }

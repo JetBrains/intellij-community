@@ -58,4 +58,9 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
   default PsiLanguageInjectionHost updateText(@NotNull String text) {
     return ElementManipulators.handleContentChange(this, text);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyStringLiteralExpression(this);
+  }
 }

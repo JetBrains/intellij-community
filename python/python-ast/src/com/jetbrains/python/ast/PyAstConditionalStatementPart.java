@@ -36,4 +36,9 @@ public interface PyAstConditionalStatementPart extends PyAstStatementPart {
     }
     return null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyConditionalStatementPart(this);
+  }
 }

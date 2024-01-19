@@ -9,4 +9,9 @@ public interface PyAstSingleStarPattern extends PyAstPattern {
   default boolean isIrrefutable() {
     return true;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPySingleStarPattern(this);
+  }
 }

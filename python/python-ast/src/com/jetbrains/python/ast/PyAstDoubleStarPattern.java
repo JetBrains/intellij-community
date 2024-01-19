@@ -9,4 +9,9 @@ public interface PyAstDoubleStarPattern extends PyAstPattern {
   default boolean isIrrefutable() {
     return true;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyDoubleStarPattern(this);
+  }
 }

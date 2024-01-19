@@ -25,4 +25,9 @@ public interface PyAstParenthesizedExpression extends PyAstExpression {
   default PyAstExpression getContainedExpression() {
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyParenthesizedExpression(this);
+  }
 }

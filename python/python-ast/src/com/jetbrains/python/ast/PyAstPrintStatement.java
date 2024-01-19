@@ -6,4 +6,8 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public interface PyAstPrintStatement extends PyAstStatement {
+  @Override
+  default void acceptPyVisitor(final PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyPrintStatement(this);
+  }
 }

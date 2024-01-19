@@ -90,4 +90,9 @@ public interface PyAstSubscriptionExpression extends PyAstQualifiedExpression, P
   default ASTNode getNameElement() {
     return getNode().findChildByType(PyTokenTypes.LBRACKET);
   }
+
+  @Override
+  default void acceptPyVisitor(final PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPySubscriptionExpression(this);
+  }
 }

@@ -28,4 +28,8 @@ public interface PyAstWhileStatement extends PyAstLoopStatement, PyAstStatementW
   default PyAstWhilePart getWhilePart() {
     return childToPsiNotNull(PyElementTypes.WHILE_PART);
   }
+
+  @Override default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyWhileStatement(this);
+  }
 }

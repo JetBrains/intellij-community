@@ -10,4 +10,9 @@ public interface PyAstBoolLiteralExpression extends PyAstLiteralExpression {
   default boolean getValue() {
     return PyNames.TRUE.equals(getText());
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyBoolLiteralExpression(this);
+  }
 }

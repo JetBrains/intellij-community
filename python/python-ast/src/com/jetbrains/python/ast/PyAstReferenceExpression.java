@@ -55,4 +55,9 @@ public interface PyAstReferenceExpression extends PyAstQualifiedExpression, PyAs
   default String getName() {
     return getReferencedName();
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyReferenceExpression(this);
+  }
 }

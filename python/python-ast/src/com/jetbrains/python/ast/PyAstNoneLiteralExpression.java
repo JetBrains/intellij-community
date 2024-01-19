@@ -12,4 +12,9 @@ public interface PyAstNoneLiteralExpression extends PyAstLiteralExpression {
   default boolean isEllipsis() {
     return getNode().findChildByType(PyTokenTypes.DOT) != null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyNoneLiteralExpression(this);
+  }
 }

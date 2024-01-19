@@ -40,4 +40,9 @@ public interface PyAstTypeAliasStatement extends PyAstStatement, PsiNameIdentifi
     }
     return (PyAstExpression)child;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyTypeAliasStatement(this);
+  }
 }

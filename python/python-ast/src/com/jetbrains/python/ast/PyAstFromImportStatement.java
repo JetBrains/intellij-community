@@ -127,4 +127,9 @@ public interface PyAstFromImportStatement extends PyAstImportStatementBase,
     }
     return result;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyFromImportStatement(this);
+  }
 }

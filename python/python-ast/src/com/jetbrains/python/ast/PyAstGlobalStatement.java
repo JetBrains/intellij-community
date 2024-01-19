@@ -18,4 +18,9 @@ public interface PyAstGlobalStatement extends PyAstStatement, PyAstNamedElementC
   default List<PsiNamedElement> getNamedElements() {
     return Arrays.asList(getGlobals());
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyGlobalStatement(this);
+  }
 }

@@ -32,4 +32,9 @@ public interface PyAstIfStatement extends PyAstCompoundStatement, PyAstStatement
   default PyAstIfPart @NotNull [] getElifParts() {
     return childrenToPsi(PyElementTypes.ELIFS, PyAstIfPart.EMPTY_ARRAY);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyIfStatement(this);
+  }
 }

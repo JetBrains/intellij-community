@@ -31,4 +31,9 @@ public interface PyAstLambdaExpression extends PyAstExpression, PyAstCallable, A
   default PyAstFunction asMethod() {
     return null; // we're never a method
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyLambdaExpression(this);
+  }
 }

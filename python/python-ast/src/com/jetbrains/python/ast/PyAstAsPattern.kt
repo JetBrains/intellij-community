@@ -11,4 +11,8 @@ interface PyAstAsPattern : PyAstPattern {
   override fun isIrrefutable(): Boolean {
     return getPattern().isIrrefutable
   }
+
+  override fun acceptPyVisitor(pyVisitor: PyAstElementVisitor) {
+    pyVisitor.visitPyAsPattern(this)
+  }
 }

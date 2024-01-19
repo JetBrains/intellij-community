@@ -11,4 +11,9 @@ public interface PyAstReturnStatement extends PyAstStatement {
   default @Nullable PyAstExpression getExpression() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyReturnStatement(this);
+  }
 }

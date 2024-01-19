@@ -31,4 +31,9 @@ public interface PyAstWithItem extends PyAstElement {
     }
     return null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyWithItem(this);
+  }
 }

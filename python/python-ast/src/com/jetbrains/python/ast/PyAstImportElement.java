@@ -57,4 +57,9 @@ public interface PyAstImportElement extends PyAstElement, PyAstImportedNameDefin
     PsiElement parent = getParent();
     return parent instanceof PyAstStatement ? (PyAstStatement)parent : null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyImportElement(this);
+  }
 }

@@ -34,4 +34,9 @@ public interface PyAstKeywordArgument extends PyAstExpression, PsiNamedElement {
   default String getName() {
     return getKeyword();
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyKeywordArgument(this);
+  }
 }

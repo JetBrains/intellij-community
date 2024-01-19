@@ -16,4 +16,9 @@ public interface PyAstGroupPattern extends PyAstPattern {
   default boolean isIrrefutable() {
     return getPattern().isIrrefutable();
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyGroupPattern(this);
+  }
 }

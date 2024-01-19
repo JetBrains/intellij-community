@@ -22,4 +22,8 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public interface PyAstStarImportElement extends PyAstImplicitImportNameDefiner {
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyStarImportElement(this);
+  }
 }

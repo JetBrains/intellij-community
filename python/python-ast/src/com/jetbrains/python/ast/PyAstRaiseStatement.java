@@ -8,4 +8,9 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface PyAstRaiseStatement extends PyAstStatement {
   PyAstExpression @NotNull [] getExpressions();
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyRaiseStatement(this);
+  }
 }

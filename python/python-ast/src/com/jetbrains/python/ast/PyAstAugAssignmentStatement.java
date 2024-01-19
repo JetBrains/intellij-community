@@ -30,4 +30,9 @@ public interface PyAstAugAssignmentStatement extends PyAstStatement {
   default PsiElement getOperation() {
     return PyPsiUtilsCore.getChildByFilter(this, PyTokenTypes.AUG_ASSIGN_OPERATIONS, 0);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyAugAssignmentStatement(this);
+  }
 }

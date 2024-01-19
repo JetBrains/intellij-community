@@ -52,4 +52,9 @@ public interface PyAstWithStatement extends PyAstCompoundStatement, PyAstNamedEl
   default boolean isAsync() {
     return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
   }
+
+  @Override
+  default void acceptPyVisitor(final PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyWithStatement(this);
+  }
 }

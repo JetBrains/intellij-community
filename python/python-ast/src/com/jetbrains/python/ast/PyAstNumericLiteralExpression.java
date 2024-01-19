@@ -138,4 +138,9 @@ public interface PyAstNumericLiteralExpression extends PyAstLiteralExpression {
     }
     return text.substring(lastIndex);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyNumericLiteralExpression(this);
+  }
 }

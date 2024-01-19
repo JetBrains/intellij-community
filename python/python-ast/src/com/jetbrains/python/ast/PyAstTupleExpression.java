@@ -15,4 +15,9 @@ public interface PyAstTupleExpression<T extends PyAstExpression> extends PyAstSe
     //noinspection unchecked,rawtypes
     return ((List)Arrays.asList(getElements())).iterator();
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyTupleExpression(this);
+  }
 }

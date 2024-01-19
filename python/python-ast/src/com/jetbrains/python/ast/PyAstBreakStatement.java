@@ -12,4 +12,9 @@ public interface PyAstBreakStatement extends PyAstStatement {
   default PyAstLoopStatement getLoopStatement() {
     return PyUtilCore.getCorrespondingLoop(this);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyBreakStatement(this);
+  }
 }

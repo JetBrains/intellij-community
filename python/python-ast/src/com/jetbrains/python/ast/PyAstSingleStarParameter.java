@@ -40,4 +40,9 @@ public interface PyAstSingleStarParameter extends PyAstParameter {
   default String getDefaultValueText() {
     return null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPySingleStarParameter(this);
+  }
 }

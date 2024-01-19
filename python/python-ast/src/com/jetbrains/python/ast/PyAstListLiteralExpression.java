@@ -6,4 +6,8 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public interface PyAstListLiteralExpression extends PyAstSequenceExpression {
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyListLiteralExpression(this);
+  }
 }

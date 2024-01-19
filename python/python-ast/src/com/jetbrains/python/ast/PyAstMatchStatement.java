@@ -20,4 +20,9 @@ public interface PyAstMatchStatement extends PyAstCompoundStatement {
   default @NotNull List<? extends PyAstCaseClause> getCaseClauses() {
     return findChildrenByType(this, PyElementTypes.CASE_CLAUSE);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyMatchStatement(this);
+  }
 }

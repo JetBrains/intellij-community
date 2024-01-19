@@ -111,4 +111,9 @@ public interface PyAstFormattedStringElement extends PyAstStringElement, PyAstEl
   default boolean isFormatted() {
     return true;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyFormattedStringElement(this);
+  }
 }

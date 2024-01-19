@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstElementVisitor;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -53,8 +54,11 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(this));
-    if (visitor instanceof PyElementVisitor) {
-      acceptPyVisitor(((PyElementVisitor)visitor));
+    if (visitor instanceof PyElementVisitor pyVisitor) {
+      acceptPyVisitor(pyVisitor);
+    }
+    else if (visitor instanceof PyAstElementVisitor pyVisitor) {
+      acceptPyVisitor(pyVisitor);
     }
     else {
       super.accept(visitor);

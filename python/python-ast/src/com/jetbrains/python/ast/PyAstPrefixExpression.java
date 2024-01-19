@@ -84,4 +84,9 @@ public interface PyAstPrefixExpression extends PyAstQualifiedExpression, PyAstRe
     final PsiElement op = getPsiOperator();
     return op != null ? op.getNode() : null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyPrefixExpression(this);
+  }
 }

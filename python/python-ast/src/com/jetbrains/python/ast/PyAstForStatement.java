@@ -53,4 +53,9 @@ public interface PyAstForStatement extends PyAstLoopStatement, PyAstStatementWit
   default boolean isAsync() {
     return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyForStatement(this);
+  }
 }

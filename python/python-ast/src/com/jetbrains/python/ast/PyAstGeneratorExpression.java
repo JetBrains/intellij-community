@@ -35,4 +35,9 @@ public interface PyAstGeneratorExpression extends PyAstComprehensionElement {
     }
     return results;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyGeneratorExpression(this);
+  }
 }

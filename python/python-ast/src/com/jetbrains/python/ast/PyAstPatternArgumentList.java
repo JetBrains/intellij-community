@@ -14,4 +14,9 @@ public interface PyAstPatternArgumentList extends PyAstElement {
   default @NotNull List<? extends PyAstPattern> getPatterns() {
     return Arrays.asList(findChildrenByClass(this, PyAstPattern.class));
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyPatternArgumentList(this);
+  }
 }

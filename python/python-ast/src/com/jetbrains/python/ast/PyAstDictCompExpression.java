@@ -8,4 +8,8 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public interface PyAstDictCompExpression extends PyAstComprehensionElement {
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyDictCompExpression(this);
+  }
 }

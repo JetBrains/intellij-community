@@ -128,5 +128,10 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
     }
     return varargSeen;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyNamedParameter(this);
+  }
 }
 

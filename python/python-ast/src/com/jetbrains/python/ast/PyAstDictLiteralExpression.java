@@ -11,4 +11,9 @@ import org.jetbrains.annotations.NotNull;
 public interface PyAstDictLiteralExpression extends PyAstSequenceExpression {
   @Override
   PyAstKeyValueExpression @NotNull [] getElements();
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyDictLiteralExpression(this);
+  }
 }

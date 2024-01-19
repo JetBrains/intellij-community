@@ -72,4 +72,9 @@ public interface PyAstFStringFragment extends PyAstElement {
   default PsiElement getClosingBrace() {
     return findChildByType(this, PyTokenTypes.RBRACE);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyFStringFragment(this);
+  }
 }

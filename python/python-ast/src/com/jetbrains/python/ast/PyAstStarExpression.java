@@ -44,4 +44,9 @@ public interface PyAstStarExpression extends PyAstExpression {
     return parent instanceof PyAstTupleExpression || parent instanceof PyAstListLiteralExpression || parent instanceof PyAstSetLiteralExpression ||
            isUnpackingInSubscription;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor visitor) {
+    visitor.visitPyStarExpression(this);
+  }
 }

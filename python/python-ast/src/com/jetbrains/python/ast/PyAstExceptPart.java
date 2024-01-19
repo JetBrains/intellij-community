@@ -56,4 +56,9 @@ public interface PyAstExceptPart extends PyAstElement, PyAstNamedElementContaine
     }
     return results;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyExceptBlock(this);
+  }
 }

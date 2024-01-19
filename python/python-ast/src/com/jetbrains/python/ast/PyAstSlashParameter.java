@@ -38,4 +38,9 @@ public interface PyAstSlashParameter extends PyAstParameter {
   default String getDefaultValueText() {
     return null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPySlashParameter(this);
+  }
 }

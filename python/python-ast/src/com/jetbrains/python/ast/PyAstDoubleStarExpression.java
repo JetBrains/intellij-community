@@ -25,4 +25,9 @@ public interface PyAstDoubleStarExpression extends PyAstExpression {
   default PyAstExpression getExpression() {
     return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor visitor) {
+    visitor.visitPyDoubleStarExpression(this);
+  }
 }

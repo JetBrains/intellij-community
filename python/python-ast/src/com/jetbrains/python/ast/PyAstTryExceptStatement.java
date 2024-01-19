@@ -37,4 +37,8 @@ public interface PyAstTryExceptStatement extends PyAstCompoundStatement, PyAstSt
     return childToPsi(PyElementTypes.FINALLY_PART);
   }
 
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyTryExceptStatement(this);
+  }
 }

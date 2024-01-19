@@ -71,4 +71,9 @@ public interface PyAstElement extends NavigatablePsiElement {
   default @Nullable <E extends PsiElement> E getStubOrPsiParentOfType(@NotNull Class<E> parentClass) {
     return PsiTreeUtil.getParentOfType(this, parentClass);
   }
+
+  @ApiStatus.Internal
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyElement(this);
+  }
 }

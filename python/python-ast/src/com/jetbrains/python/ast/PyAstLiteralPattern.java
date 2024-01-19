@@ -16,4 +16,9 @@ public interface PyAstLiteralPattern extends PyAstPattern {
   default boolean isIrrefutable() {
     return false;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyLiteralPattern(this);
+  }
 }

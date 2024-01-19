@@ -17,4 +17,8 @@ interface PyAstAssignmentExpression : PyAstExpression {
    * @return RHS of an expression (after :=), null if assigned value is omitted or not an expression.
    */
   val assignedValue: PyAstExpression? get() = lastChild as? PyAstExpression
+
+  override fun acceptPyVisitor(pyVisitor: PyAstElementVisitor) {
+    pyVisitor.visitPyAssignmentExpression(this)
+  }
 }

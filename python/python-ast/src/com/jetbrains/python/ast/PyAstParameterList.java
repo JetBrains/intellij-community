@@ -29,4 +29,9 @@ public interface PyAstParameterList extends PyAstElement {
    * @return a possibly empty array of named paramaters.
    */
   PyAstParameter @NotNull [] getParameters();
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyParameterList(this);
+  }
 }

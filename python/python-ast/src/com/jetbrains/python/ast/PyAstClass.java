@@ -155,4 +155,9 @@ public interface PyAstClass extends PsiNameIdentifierOwner, PyAstCompoundStateme
   default PyAstStringLiteralExpression getDocStringExpression() {
     return DocStringUtilCore.findDocStringExpression(getStatementList());
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyClass(this);
+  }
 }

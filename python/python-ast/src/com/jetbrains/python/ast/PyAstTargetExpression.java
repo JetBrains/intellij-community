@@ -200,4 +200,9 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
   default String getDocStringValue() {
     return DocStringUtilCore.getDocStringValue(this);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyTargetExpression(this);
+  }
 }

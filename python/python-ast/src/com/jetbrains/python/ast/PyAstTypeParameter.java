@@ -86,4 +86,9 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
     ASTNode nameNode = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
     return nameNode != null ? nameNode.getPsi() : null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyTypeParameter(this);
+  }
 }

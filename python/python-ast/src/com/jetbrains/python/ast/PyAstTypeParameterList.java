@@ -17,4 +17,9 @@ public interface PyAstTypeParameterList extends PyAstElement {
 
   @NotNull
   List<? extends PyAstTypeParameter> getTypeParameters();
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyTypeParameterList(this);
+  }
 }

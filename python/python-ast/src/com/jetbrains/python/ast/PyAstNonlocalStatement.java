@@ -8,4 +8,9 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface PyAstNonlocalStatement extends PyAstStatement {
   PyAstTargetExpression @NotNull [] getVariables();
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor visitor) {
+    visitor.visitPyNonlocalStatement(this);
+  }
 }

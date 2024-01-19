@@ -6,4 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 interface PyAstAnnotation : PyAstElement {
   val value: PyAstExpression?
     get() = findChildByClass(PyAstExpression::class.java)
+
+  override fun acceptPyVisitor(pyVisitor: PyAstElementVisitor) {
+    pyVisitor.visitPyAnnotation(this)
+  }
 }

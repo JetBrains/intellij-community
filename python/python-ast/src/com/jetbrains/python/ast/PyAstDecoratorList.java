@@ -41,4 +41,9 @@ public interface PyAstDecoratorList extends PyAstElement {
     }
     return null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyDecoratorList(this);
+  }
 }

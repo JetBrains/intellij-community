@@ -13,4 +13,9 @@ public interface PyAstExpressionStatement extends PyAstStatement {
   default PyAstExpression getExpression() {
     return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyExpressionStatement(this);
+  }
 }

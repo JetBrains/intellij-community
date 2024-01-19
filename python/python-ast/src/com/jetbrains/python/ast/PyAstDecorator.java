@@ -103,4 +103,9 @@ public interface PyAstDecorator extends PyAstCallExpression {
     final PyAstReferenceExpression refExpr = ObjectUtils.tryCast(getCallee(), PyAstReferenceExpression.class);
     return refExpr != null ? refExpr.asQualifiedName() : null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyDecorator(this);
+  }
 }

@@ -144,4 +144,9 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
     return callee instanceof PyAstReferenceExpression &&
            ContainerUtil.exists(nameCandidates, name -> name.equals(((PyAstReferenceExpression)callee).getReferencedName()));
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyCallExpression(this);
+  }
 }

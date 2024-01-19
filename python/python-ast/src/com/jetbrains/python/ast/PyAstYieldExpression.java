@@ -18,4 +18,9 @@ public interface PyAstYieldExpression extends PyAstExpression {
   default boolean isDelegating() {
     return getNode().findChildByType(PyTokenTypes.FROM_KEYWORD) != null;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyYieldExpression(this);
+  }
 }

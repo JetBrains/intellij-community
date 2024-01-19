@@ -22,4 +22,9 @@ public interface PyAstKeyValuePattern extends PyAstPattern {
   default boolean isIrrefutable() {
     return false;
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyKeyValuePattern(this);
+  }
 }

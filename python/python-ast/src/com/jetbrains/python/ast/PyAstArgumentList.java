@@ -70,4 +70,9 @@ public interface PyAstArgumentList extends PyAstElement {
     final ASTNode[] children = node.getChildren(TokenSet.create(PyTokenTypes.RPAR));
     return children.length == 0 ? null : children[children.length - 1];
   }
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyArgumentList(this);
+  }
 }
