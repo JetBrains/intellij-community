@@ -13,19 +13,27 @@ internal object MetadataStorageResolver {
 
   private const val GENERATED_METADATA_STORAGE_IMPL_NAME = "MetadataStorageImpl"
 
-  internal fun resolveMetadataStorage(typesResolver: EntityTypesResolver, packageName: String,
+  internal fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String,
                                      pluginId: PluginId): MetadataStorage {
+    val packageName = extractPackageName(typeFqn)
     val metadataStorage = metadataStorageCache.getOrPut(pluginId to packageName) {
-      val metadataStorage = typesResolver.resolveClass(metadataStorageFqn(packageName), pluginId).metadataStorageInstance
+      val metadataStorageClass: Class<*>
+      try {
+        metadataStorageClass = typesResolver.resolveClass(metadataStorageFqn(packageName), pluginId)
+      } catch (e : ClassNotFoundException) {
+        throw MissingMetadataStorage(metadataStorageFqn(packageName), typeFqn)
+      }
+      val metadataStorage = metadataStorageClass.metadataStorageInstance
       if (metadataStorage is MetadataStorageBridge) {
         metadataStorage.metadataStorage
       } else {
         metadataStorage
       }
     }
-    return metadataStorage ?: throw MissingMetadataStorage(metadataStorageFqn(packageName))
+    return metadataStorage ?: throw MissingMetadataStorage(metadataStorageFqn(packageName), typeFqn)
   }
 
+  private fun extractPackageName(typeFqn: String): String = typeFqn.substringBeforeLast('.', "")
 
   private fun metadataStorageFqn(packageName: String): String = "$packageName.$GENERATED_METADATA_STORAGE_IMPL_NAME"
 }

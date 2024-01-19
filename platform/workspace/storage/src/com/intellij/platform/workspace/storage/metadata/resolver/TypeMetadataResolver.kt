@@ -52,8 +52,5 @@ internal object TypeMetadataResolverImpl: TypeMetadataResolver {
     metadataStorage.getMetadataHashByTypeFqnOrNull(typeFqn)
 
   override fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage =
-    MetadataStorageResolver.resolveMetadataStorage(typesResolver, extractPackageName(typeFqn), pluginId)
-
-
-  private fun extractPackageName(typeFqn: String): String = typeFqn.substringBeforeLast('.', "")
+    MetadataStorageResolver.resolveMetadataStorage(typesResolver, typeFqn, pluginId)
 }

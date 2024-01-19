@@ -341,4 +341,7 @@ internal class StorageSerializerUtil(
 
 public class UnsupportedClassException(
   pluginId: PluginId, entityClassFqn: String, unsupportedClassFqn: String
-): Exception("Unsupported class $unsupportedClassFqn in the entity $entityClassFqn with $pluginId plugin")
+): Exception(
+  "Unsupported class $unsupportedClassFqn in the entity $entityClassFqn with $pluginId plugin." +
+  "Please make sure that you do not use anonymous implementations of ${EntitySource::class.java.name} and ${SymbolicEntityId::class.java.name}"
+)
