@@ -1,13 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.issue
 
-import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.issue.BuildIssue
-import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix
-import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
@@ -86,19 +82,20 @@ class UnsupportedGradleVersionIssue(
     else -> minimumRequiredGradleVersionCandidate
   }
 
-  override val issueTitle: String
-  override val issueDescription: String
-
   init {
     if (gradleVersion != null) {
-      issueTitle = GradleBundle.message("gradle.build.issue.gradle.unsupported.title", gradleVersion.version, ideVersionName)
-      issueDescription = GradleBundle.message("gradle.build.issue.gradle.unsupported.description", gradleVersion.version, ideVersionName,
-                                              minimumRequiredGradleVersion.version)
+      setTitle(GradleBundle.message("gradle.build.issue.gradle.unsupported.title", gradleVersion.version, ideVersionName))
+      addDescription(GradleBundle.message(
+        "gradle.build.issue.gradle.unsupported.description", gradleVersion.version, ideVersionName,
+        minimumRequiredGradleVersion.version
+      ))
     }
     else {
-      issueTitle = GradleBundle.message("gradle.build.issue.gradle.unsupported.title.unknown", ideVersionName)
-      issueDescription = GradleBundle.message("gradle.build.issue.gradle.unsupported.description.unknown", ideVersionName,
-                                              minimumRequiredGradleVersion.version)
+      setTitle(GradleBundle.message("gradle.build.issue.gradle.unsupported.title.unknown", ideVersionName))
+      addDescription(GradleBundle.message(
+        "gradle.build.issue.gradle.unsupported.description.unknown", ideVersionName,
+        minimumRequiredGradleVersion.version
+      ))
     }
     initBuildIssue()
   }
@@ -113,13 +110,12 @@ class DeprecatedGradleVersionIssue(
   override val minimumRequiredGradleVersion: GradleVersion =
     GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
 
-  override val issueTitle: String
-  override val issueDescription: String
-
   init {
-    issueTitle = GradleBundle.message("gradle.build.issue.gradle.deprecated.title", gradleVersion.version)
-    issueDescription = GradleBundle.message("gradle.build.issue.gradle.deprecated.description", gradleVersion.version, ideVersionName,
-                                            minimumRequiredGradleVersion.version)
+    setTitle(GradleBundle.message("gradle.build.issue.gradle.deprecated.title", gradleVersion.version))
+    addDescription(GradleBundle.message(
+      "gradle.build.issue.gradle.deprecated.description", gradleVersion.version, ideVersionName,
+      minimumRequiredGradleVersion.version
+    ))
 
     initBuildIssue()
   }
@@ -129,59 +125,31 @@ class DeprecatedGradleVersionIssue(
 abstract class AbstractGradleVersionIssue(
   private val gradleVersion: GradleVersion?,
   private val projectPath: String
-) : BuildIssue {
+) : AbstractGradleBuildIssue() {
 
   protected val ideVersionName: String = ApplicationInfoImpl.getShadowInstance().versionName
 
   protected abstract val minimumRequiredGradleVersion: GradleVersion
 
-  @get:BuildEventsNls.Title
-  protected abstract val issueTitle: String
-
-  @get:BuildEventsNls.Description
-  protected abstract val issueDescription: String
-
-  final override lateinit var title: String
-
-  final override lateinit var description: String
-
-  final override lateinit var quickFixes: List<BuildIssueQuickFix>
-
-  override fun getNavigatable(project: Project): Navigatable? = null
-
   protected fun initBuildIssue() {
-    val descriptionBuilder = StringBuilder()
-    val suggestedFixes = mutableListOf<BuildIssueQuickFix>()
-    descriptionBuilder.append(issueDescription)
-    descriptionBuilder.append("\n")
-    descriptionBuilder.append("\n")
-    descriptionBuilder.append(GradleBundle.message("gradle.build.quick.fix.title"))
-    descriptionBuilder.append("\n")
     val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
     if (wrapperPropertiesFile == null || (gradleVersion != null && gradleVersion.baseVersion < minimumRequiredGradleVersion)) {
       val gradleVersionFix = GradleVersionQuickFix(projectPath, minimumRequiredGradleVersion, true)
-      descriptionBuilder.append(" - ")
-      descriptionBuilder.append(
-        GradleBundle.message("gradle.build.quick.fix.gradle.version.auto", gradleVersionFix.id, minimumRequiredGradleVersion.version)
-      )
-      descriptionBuilder.append("\n")
-      suggestedFixes.add(gradleVersionFix)
+      addQuickFixPrompt(GradleBundle.message(
+        "gradle.build.quick.fix.gradle.version.auto", gradleVersionFix.id,
+        minimumRequiredGradleVersion.version
+      ))
+      addQuickFix(gradleVersionFix)
     }
     else {
       val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(projectPath, "distributionUrl")
       val reimportQuickFix = ReimportQuickFix(projectPath, SYSTEM_ID)
-      descriptionBuilder.append(" - ")
-      descriptionBuilder.append(
-        GradleBundle.message("gradle.build.quick.fix.gradle.version.manual", wrapperSettingsOpenQuickFix.id, reimportQuickFix.id,
-                             minimumRequiredGradleVersion.version)
-      )
-      descriptionBuilder.append("\n")
-      suggestedFixes.add(wrapperSettingsOpenQuickFix)
-      suggestedFixes.add(reimportQuickFix)
+      addQuickFixPrompt(GradleBundle.message(
+        "gradle.build.quick.fix.gradle.version.manual", wrapperSettingsOpenQuickFix.id, reimportQuickFix.id,
+        minimumRequiredGradleVersion.version
+      ))
+      addQuickFix(wrapperSettingsOpenQuickFix)
+      addQuickFix(reimportQuickFix)
     }
-
-    title = issueTitle
-    description = descriptionBuilder.toString()
-    quickFixes = suggestedFixes
   }
 }
