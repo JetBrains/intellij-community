@@ -13,7 +13,6 @@ import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
-import org.jetbrains.idea.maven.project.MavenProjectResolutionUtil.Companion.resolveProjectSync
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.ProfileApplicationResult
@@ -227,28 +226,6 @@ class MavenProjectReader(private val myProject: Project) {
     finally {
       recursionGuard.remove(file)
     }
-  }
-
-  // used in third-party plugins
-  @Deprecated("use {@link MavenProjectResolver}")
-  @Throws(MavenProcessCanceledException::class)
-  fun resolveProject(generalSettings: MavenGeneralSettings,
-                     embedder: MavenEmbedderWrapper,
-                     files: Collection<VirtualFile>,
-                     explicitProfiles: MavenExplicitProfiles,
-                     locator: MavenProjectReaderProjectLocator): Collection<MavenProjectReaderResult> {
-    val reporter = object : RawProgressReporter {}
-    return resolveProjectSync(
-      this,
-      generalSettings,
-      embedder,
-      files,
-      explicitProfiles,
-      locator,
-      reporter,
-      MavenLogEventHandler,
-      null,
-      false)
   }
 
   private class SettingsProfilesCache(val profiles: List<MavenProfile>,
@@ -576,5 +553,28 @@ class MavenProjectReader(private val myProject: Project) {
         problems.add(MavenProjectProblem.createSyntaxProblem(file.path, type))
       }
     })
+  }
+
+
+  // used in third-party plugins
+  @Deprecated("use {@link MavenProjectResolver}")
+  @Throws(MavenProcessCanceledException::class)
+  fun resolveProject(generalSettings: MavenGeneralSettings,
+                     embedder: MavenEmbedderWrapper,
+                     files: Collection<VirtualFile>,
+                     explicitProfiles: MavenExplicitProfiles,
+                     locator: MavenProjectReaderProjectLocator): Collection<MavenProjectReaderResult> {
+    val reporter = object : RawProgressReporter {}
+    return MavenProjectResolver(myProject).resolveProjectSync(
+      this,
+      generalSettings,
+      embedder,
+      files,
+      explicitProfiles,
+      locator,
+      reporter,
+      MavenLogEventHandler,
+      null,
+      false)
   }
 }
