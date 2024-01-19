@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("WslIjentJavaUtil")  // TODO The file name doesn't describe the content correctly.
+@file:JvmName("WslIjentUtil")
 @file:Suppress("RAW_RUN_BLOCKING")  // These functions are called by different legacy code, a ProgressIndicator is not always available.
 package com.intellij.execution.wsl
 
@@ -141,4 +141,4 @@ private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, isPty: B
   else
     IjentChildProcessAdapter(coroutineScope, this)
 
-private val LOG by lazy { Logger.getInstance("com.intellij.execution.wsl.WslIjentJavaUtil") }
+private val LOG by lazy { Logger.getInstance("com.intellij.execution.wsl.WslIjentUtil") }
