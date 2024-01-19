@@ -24,7 +24,7 @@ class PoetryDependencyVersionCompletionContributor : CompletionContributor() {
                                               || tableName.contains("source"))) {
       if (parent is TomlLiteral || parent is TomlKeyValue) {
         val name = (if (parent is TomlKeyValue) parent else PsiTreeUtil.getParentOfType(parent, TomlKeyValue::class.java))?.key?.text ?: return
-        completeVersions(name, project, result)
+        completeVersions(name, project, result, true)
       }
     }
   }
