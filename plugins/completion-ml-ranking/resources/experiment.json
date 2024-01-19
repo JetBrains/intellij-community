@@ -135,8 +135,8 @@
     },
     {
       "id": "php",
-      "experimentBucketsCount": 16,
-      "includeGroups": [ 7, 8, 11, 12, 13 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 13, 22 ],
       "shouldLogElementFeatures": false
     },
     {
