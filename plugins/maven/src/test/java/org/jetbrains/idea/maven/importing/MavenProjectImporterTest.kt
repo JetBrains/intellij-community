@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenImportListener
@@ -74,9 +73,6 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
 
     project.messageBus.connect(testRootDisposable)
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
-        override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
-        }
-
         override fun dependencyResolutionStarted(mavenProjects: MutableCollection<MavenProject>) {
           resolvedProjects.addAll(mavenProjects)
         }

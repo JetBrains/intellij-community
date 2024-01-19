@@ -1,12 +1,9 @@
 package org.jetbrains.idea.maven.performancePlugin
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.launch
-import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportListener
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import java.util.concurrent.CompletableFuture
@@ -35,8 +32,6 @@ class DownloadMavenArtifactsCommand(text: String, line: Int) : PerformanceComman
     val promise = CompletableFuture<Any>()
     project.messageBus.connect()
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
-        override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {}
-
         override fun artifactDownloadingFinished() {
           promise.complete(null)
         }

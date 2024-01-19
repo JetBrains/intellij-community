@@ -24,7 +24,7 @@ public interface MavenImportListener {
   /**
    * consider usage {@link MavenSyncListener#importFinished(Project, Collection, List) application level listener} instead
    */
-  void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<@NotNull Module> newModules);
+  default void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<@NotNull Module> newModules) { }
 
   default void pomReadingStarted() { }
 
