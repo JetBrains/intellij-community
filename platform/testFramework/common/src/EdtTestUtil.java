@@ -3,11 +3,8 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.mock.MockApplication;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
@@ -18,7 +15,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 
-import static com.intellij.testFramework.UITestUtil.replaceIdeEventQueueSafely;
 import static com.intellij.testFramework.UITestUtil.setupEventQueue;
 
 public final class EdtTestUtil {
@@ -64,7 +60,7 @@ public final class EdtTestUtil {
     else if (EDT.isCurrentThreadEdt()) {
       if (writeIntent) {
         setupEventQueue();
-        IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(() -> {
+        IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(() -> {
           runnable.run();
           return null;
         });
@@ -80,7 +76,7 @@ public final class EdtTestUtil {
                  () -> {
                    try {
                      setupEventQueue();
-                     IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(() -> {
+                     IdeEventQueue.getInstance().getThreadingSupport().runWriteIntentReadAction(() -> {
                        runnable.run();
                        return null;
                      });
