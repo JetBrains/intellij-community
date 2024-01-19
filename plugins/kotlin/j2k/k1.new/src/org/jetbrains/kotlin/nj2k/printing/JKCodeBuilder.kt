@@ -64,13 +64,14 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
-            val isInterface = modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE
+            val isOpenByDefault = (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE) ||
+                    (modifiersListOwner is JKMethod && modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE)
             val hasOverrideModifier = modifiersListOwner
                 .safeAs<JKOtherModifiersOwner>()
                 ?.hasOtherModifier(OVERRIDE) == true
 
             fun Modifier.isRedundant(): Boolean = when {
-                this == OPEN && isInterface -> true
+                this == OPEN && isOpenByDefault -> true
                 (this == FINAL || this == PUBLIC) && !hasOverrideModifier -> true
                 else -> false
             }
