@@ -354,7 +354,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
       withRawProgressReporter {
         runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
-          resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, rawProgressReporter!!, syncConsole)
+          project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).dependencyResolutionStarted(projectsToResolve)
+          val res = resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, rawProgressReporter!!, syncConsole)
+          project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).dependencyResolutionFinished(
+            res.mavenProjectMap.entries.flatMap { it.value }.map { it.mavenProject })
+          res
         }
       }
     }

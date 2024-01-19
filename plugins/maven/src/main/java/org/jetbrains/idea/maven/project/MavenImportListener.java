@@ -34,6 +34,10 @@ public interface MavenImportListener {
 
   default void pluginResolutionFinished() { }
 
+  default void dependencyResolutionStarted(@NotNull Collection<@NotNull MavenProject> mavenIds) { }
+
+  default void dependencyResolutionFinished(Collection<MavenProject> mavenIds) { }
+
   default void artifactDownloadingScheduled() { }
 
   default void artifactDownloadingStarted() { }
