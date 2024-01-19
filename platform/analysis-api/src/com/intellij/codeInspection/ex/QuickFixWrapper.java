@@ -41,21 +41,24 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
     final QuickFix<?> fix = fixes[fixNumber];
-    return wrap(descriptor, fix);
-  }
-
-  public static @NotNull IntentionAction wrap(@NotNull ProblemDescriptor descriptor, @NotNull QuickFix<?> fix) {
     if (fix instanceof IntentionAction intention) {
       return intention;
     }
-    LocalQuickFix localFix = (LocalQuickFix) fix;
+    LocalQuickFix localFix = (LocalQuickFix)fix;
+    return wrap(descriptor, localFix);
+  }
+
+  public static @NotNull IntentionAction wrap(@NotNull ProblemDescriptor descriptor, @NotNull LocalQuickFix fix) {
+    if (fix instanceof IntentionAction intention) {
+      return intention;
+    }
     if (fix instanceof ModCommandQuickFix modCommandFix) {
       IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
       PsiFile file = descriptor.getPsiElement().getContainingFile();
       intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
       return intention;
     }
-    return new QuickFixWrapper(descriptor, localFix);
+    return new QuickFixWrapper(descriptor, fix);
   }
 
   /**
