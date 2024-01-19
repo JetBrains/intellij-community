@@ -4,11 +4,15 @@ package org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.PlatformConfigurator
+import org.jetbrains.kotlin.resolve.PlatformConfiguratorBase
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.storage.StorageManager
 
 class CompositeAnalyzerServices(val services: List<PlatformDependentAnalyzerServices>) : PlatformDependentAnalyzerServices() {
-    override val platformConfigurator: PlatformConfigurator = CompositePlatformConfigurator(services.map { it.platformConfigurator })
+    // In case of a common source set with multiple native targets a composite platform may duplicate platformConfigurator; we use a set
+    // to deduplicate
+    val uniquePlatformConfigurators = services.mapTo(linkedSetOf()) { it.platformConfigurator as PlatformConfiguratorBase }.toList()
+    override val platformConfigurator: PlatformConfigurator = CompositePlatformConfigurator(uniquePlatformConfigurators)
 
     override fun computePlatformSpecificDefaultImports(storageManager: StorageManager, result: MutableList<ImportPath>) {
         val intersectionOfDefaultImports = services.map { service ->
