@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 
-class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
+internal class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
     fun fromPsiType(type: PsiType): JKType = createPsiType(type)
     fun fromKotlinType(type: KotlinType): JKType = createKotlinType(type)
 

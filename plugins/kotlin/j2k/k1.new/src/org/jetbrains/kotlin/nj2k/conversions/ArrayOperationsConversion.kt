@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
-class ArrayOperationsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ArrayOperationsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
         val selector = element.selector as? JKFieldAccessExpression ?: return recurse(element)

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 
-class EnumFieldAccessConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class EnumFieldAccessConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKFieldAccessExpression) return recurse(element)
         if ((element.parent as? JKQualifiedExpression)?.selector == element) return recurse(element)

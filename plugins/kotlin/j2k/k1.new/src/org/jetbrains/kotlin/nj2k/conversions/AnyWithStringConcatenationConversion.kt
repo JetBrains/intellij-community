@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isStringType
 
-class AnyWithStringConcatenationConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class AnyWithStringConcatenationConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKBinaryExpression) return recurse(element)
         if (element.operator.token == JKOperatorToken.PLUS

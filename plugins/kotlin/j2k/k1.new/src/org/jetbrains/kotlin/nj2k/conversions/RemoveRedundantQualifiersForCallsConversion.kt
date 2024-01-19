@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.isStaticMember
 import org.jetbrains.kotlin.nj2k.tree.*
 
-class RemoveRedundantQualifiersForCallsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class RemoveRedundantQualifiersForCallsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
         val needRemoveQualifier = when (val receiver = element.receiver.receiverExpression()) {

@@ -6,7 +6,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class J2kConverterExtension {
     abstract val isNewJ2k: Boolean
 

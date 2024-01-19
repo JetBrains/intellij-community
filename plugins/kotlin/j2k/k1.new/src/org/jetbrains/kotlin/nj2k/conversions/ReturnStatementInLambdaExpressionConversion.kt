@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.types.JKClassType
 
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ReturnStatementInLambdaExpressionConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ReturnStatementInLambdaExpressionConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     companion object {
         const val DEFAULT_LABEL_NAME = "label"
     }

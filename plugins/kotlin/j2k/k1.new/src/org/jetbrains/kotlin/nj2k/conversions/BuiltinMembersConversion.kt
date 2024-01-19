@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     private val conversions: Map<String, List<Conversion>> =
         ConversionsHolder(symbolProvider, typeFactory).getConversions()
 

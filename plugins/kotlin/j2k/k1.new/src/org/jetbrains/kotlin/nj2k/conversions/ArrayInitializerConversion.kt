@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
-class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         var newElement = element
         if (element is JKJavaNewArray) {

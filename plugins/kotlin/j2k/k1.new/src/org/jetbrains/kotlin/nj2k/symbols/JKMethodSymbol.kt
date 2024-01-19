@@ -15,13 +15,13 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-sealed class JKMethodSymbol : JKSymbol {
+internal sealed class JKMethodSymbol : JKSymbol {
     abstract val receiverType: JKType?
     abstract val parameterTypes: List<JKType>?
     abstract val returnType: JKType?
 }
 
-class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethodSymbol(), JKUniverseSymbol<JKMethod> {
+internal class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethodSymbol(), JKUniverseSymbol<JKMethod> {
     override val receiverType: JKType?
         get() = target.parent.safeAs<JKClass>()?.let {
             JKClassType(symbolProvider.provideUniverseSymbol(it))
@@ -34,7 +34,7 @@ class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethod
     override lateinit var target: JKMethod
 }
 
-class JKMultiverseMethodSymbol(
+internal class JKMultiverseMethodSymbol(
     override val target: PsiMethod,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseSymbol<PsiMethod> {
@@ -55,7 +55,7 @@ class JKMultiverseMethodSymbol(
         }
 }
 
-class JKMultiverseFunctionSymbol(
+internal class JKMultiverseFunctionSymbol(
     override val target: KtFunction,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseKtSymbol<KtFunction> {
@@ -80,7 +80,7 @@ class JKMultiverseFunctionSymbol(
         get() = target.typeReference?.toJK(typeFactory)
 }
 
-class JKUnresolvedMethod(
+internal class JKUnresolvedMethod(
     override val target: String,
     override val typeFactory: JKTypeFactory,
     override val returnType: JKType = JKNoType
@@ -93,7 +93,7 @@ class JKUnresolvedMethod(
         get() = emptyList()
 }
 
-class KtClassImplicitConstructorSymbol(
+internal class KtClassImplicitConstructorSymbol(
     override val target: KtLightMethod,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseSymbol<KtLightMethod> {

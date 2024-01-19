@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
-val JKSymbol.isUnresolved
+internal val JKSymbol.isUnresolved
     get() = this is JKUnresolvedSymbol
 
-fun JKSymbol.getDisplayFqName(): String {
+internal fun JKSymbol.getDisplayFqName(): String {
     fun JKSymbol.isDisplayable() = this is JKClassSymbol || this is JKPackageSymbol
     if (this !is JKUniverseSymbol<*>) return fqName
     return generateSequence(declaredIn?.takeIf { it.isDisplayable() }) { symbol ->
@@ -29,7 +29,7 @@ fun JKSymbol.getDisplayFqName(): String {
     }.fold(name) { acc, symbol -> "${symbol.name}.$acc" }
 }
 
-fun JKSymbol.deepestFqName(): String {
+internal fun JKSymbol.deepestFqName(): String {
     fun Any.deepestFqNameForTarget(): String? =
         when (this) {
             is PsiMethod -> (findDeepestSuperMethods().firstOrNull() ?: this).kotlinFqName?.asString()
@@ -40,10 +40,10 @@ fun JKSymbol.deepestFqName(): String {
     return target.deepestFqNameForTarget() ?: fqName
 }
 
-val JKSymbol.containingClass
+internal val JKSymbol.containingClass
     get() = declaredIn as? JKClassSymbol
 
-val JKSymbol.isStaticMember
+internal val JKSymbol.isStaticMember
     get() = when (val target = target) {
         is PsiModifierListOwner -> target.hasModifier(JvmModifier.STATIC)
         is KtElement -> target.getStrictParentOfType<KtClassOrObject>()
@@ -57,7 +57,7 @@ val JKSymbol.isStaticMember
         else -> false
     }
 
-val JKSymbol.isEnumConstant
+internal val JKSymbol.isEnumConstant
     get() = when (target) {
         is JKEnumConstant -> true
         is PsiEnumConstant -> true
@@ -65,7 +65,7 @@ val JKSymbol.isEnumConstant
         else -> false
     }
 
-val JKSymbol.isUnnamedCompanion
+internal val JKSymbol.isUnnamedCompanion
     get() = when (val target = target) {
         is JKClass -> target.classKind == JKClass.ClassKind.COMPANION
         is KtObjectDeclaration -> target.isCompanion() && target.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.toString()

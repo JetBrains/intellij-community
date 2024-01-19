@@ -5,12 +5,12 @@ package org.jetbrains.kotlin.nj2k.tree
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-interface Modifier {
+internal interface Modifier {
     val text: String
 }
 
 @Suppress("unused")
-enum class OtherModifier(override val text: String) : Modifier {
+internal enum class OtherModifier(override val text: String) : Modifier {
     OVERRIDE("override"),
     ACTUAL("actual"),
     ANNOTATION("annotation"),
@@ -42,89 +42,87 @@ enum class OtherModifier(override val text: String) : Modifier {
     VOLATILE("volatile")
 }
 
-sealed class JKModifierElement : JKTreeElement()
+internal sealed class JKModifierElement : JKTreeElement()
 
-
-interface JKOtherModifiersOwner : JKModifiersListOwner {
+internal interface JKOtherModifiersOwner : JKModifiersListOwner {
     var otherModifierElements: List<JKOtherModifierElement>
 }
 
-class JKMutabilityModifierElement(var mutability: Mutability) : JKModifierElement() {
+internal class JKMutabilityModifierElement(var mutability: Mutability) : JKModifierElement() {
     override fun accept(visitor: JKVisitor) = visitor.visitMutabilityModifierElement(this)
 }
 
-class JKModalityModifierElement(var modality: Modality) : JKModifierElement() {
+internal class JKModalityModifierElement(var modality: Modality) : JKModifierElement() {
     override fun accept(visitor: JKVisitor) = visitor.visitModalityModifierElement(this)
 }
 
-class JKVisibilityModifierElement(var visibility: Visibility) : JKModifierElement() {
+internal class JKVisibilityModifierElement(var visibility: Visibility) : JKModifierElement() {
     override fun accept(visitor: JKVisitor) = visitor.visitVisibilityModifierElement(this)
 }
 
-class JKOtherModifierElement(var otherModifier: OtherModifier) : JKModifierElement() {
+internal class JKOtherModifierElement(var otherModifier: OtherModifier) : JKModifierElement() {
     override fun accept(visitor: JKVisitor) = visitor.visitOtherModifierElement(this)
 }
 
-
-interface JKVisibilityOwner : JKModifiersListOwner {
+internal interface JKVisibilityOwner : JKModifiersListOwner {
     val visibilityElement: JKVisibilityModifierElement
 }
 
-enum class Visibility(override val text: String) : Modifier {
+internal enum class Visibility(override val text: String) : Modifier {
     PUBLIC("public"),
     INTERNAL("internal"),
     PROTECTED("protected"),
     PRIVATE("private")
 }
 
-interface JKModalityOwner : JKModifiersListOwner {
+internal interface JKModalityOwner : JKModifiersListOwner {
     val modalityElement: JKModalityModifierElement
 }
 
-enum class Modality(override val text: String) : Modifier {
+internal enum class Modality(override val text: String) : Modifier {
     OPEN("open"),
     FINAL("final"),
     ABSTRACT("abstract"),
 }
 
-interface JKMutabilityOwner : JKModifiersListOwner {
+internal interface JKMutabilityOwner : JKModifiersListOwner {
     val mutabilityElement: JKMutabilityModifierElement
 }
 
-enum class Mutability(override val text: String) : Modifier {
+internal enum class Mutability(override val text: String) : Modifier {
     MUTABLE("var"),
     IMMUTABLE("val"),
     UNKNOWN("var")
 }
 
-interface JKModifiersListOwner : JKFormattingOwner
+internal interface JKModifiersListOwner : JKFormattingOwner
 
-fun JKOtherModifiersOwner.elementByModifier(modifier: OtherModifier): JKOtherModifierElement? =
+internal fun JKOtherModifiersOwner.elementByModifier(modifier: OtherModifier): JKOtherModifierElement? =
     otherModifierElements.firstOrNull { it.otherModifier == modifier }
 
-fun JKOtherModifiersOwner.hasOtherModifier(modifier: OtherModifier): Boolean =
+internal fun JKOtherModifiersOwner.hasOtherModifier(modifier: OtherModifier): Boolean =
     otherModifierElements.any { it.otherModifier == modifier }
 
-var JKVisibilityOwner.visibility: Visibility
+internal var JKVisibilityOwner.visibility: Visibility
     get() = visibilityElement.visibility
     set(value) {
         visibilityElement.visibility = value
     }
 
-var JKMutabilityOwner.mutability: Mutability
+internal var JKMutabilityOwner.mutability: Mutability
     get() = mutabilityElement.mutability
     set(value) {
         mutabilityElement.mutability = value
     }
 
-var JKModalityOwner.modality: Modality
+internal var JKModalityOwner.modality: Modality
     get() = modalityElement.modality
     set(value) {
         modalityElement.modality = value
     }
 
 
-val JKModifierElement.modifier: Modifier
+internal val JKModifierElement.modifier: Modifier
     get() = when (this) {
         is JKMutabilityModifierElement -> mutability
         is JKModalityModifierElement -> modality
@@ -133,7 +131,7 @@ val JKModifierElement.modifier: Modifier
     }
 
 
-inline fun JKModifiersListOwner.forEachModifier(action: (JKModifierElement) -> Unit) {
+internal inline fun JKModifiersListOwner.forEachModifier(action: (JKModifierElement) -> Unit) {
     safeAs<JKVisibilityOwner>()?.visibilityElement?.let(action)
     safeAs<JKModalityOwner>()?.modalityElement?.let(action)
     safeAs<JKOtherModifiersOwner>()?.otherModifierElements?.forEach(action)

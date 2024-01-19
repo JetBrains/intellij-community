@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 import org.jetbrains.kotlin.psi.*
 
-class JKSymbolProvider(private val resolver: JKResolver) {
+internal class JKSymbolProvider(private val resolver: JKResolver) {
     private val symbolsByFqName = mutableMapOf<String, JKSymbol>()
     private val symbolsByFqNameWithExactSignature = mutableMapOf<List<String>, JKSymbol>()
     val symbolsByPsi = mutableMapOf<PsiElement, JKSymbol>()

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.COMPANION
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.OBJECT
 
-class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClass) return recurse(element)
         if (element.classKind == COMPANION || element.classKind == OBJECT) return element

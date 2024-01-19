@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
-class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         return recurse(
             when (element) {

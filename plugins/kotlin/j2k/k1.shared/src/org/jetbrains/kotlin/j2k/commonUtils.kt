@@ -5,8 +5,10 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiTypes
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
 
+@ApiStatus.Internal
 val toKotlinMutableTypesMap: Map<String, String> = mapOf(
     CommonClassNames.JAVA_UTIL_ITERATOR to StandardNames.FqNames.mutableIterator.asString(),
     CommonClassNames.JAVA_UTIL_LIST to StandardNames.FqNames.mutableList.asString(),
@@ -17,5 +19,6 @@ val toKotlinMutableTypesMap: Map<String, String> = mapOf(
     java.util.ListIterator::class.java.canonicalName to StandardNames.FqNames.mutableListIterator.asString()
 )
 
+@ApiStatus.Internal
 fun PsiExpression.isNullLiteral(): Boolean =
     this is PsiLiteralExpression && type == PsiTypes.nullType()

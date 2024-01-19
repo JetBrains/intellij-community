@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.nj2k.asStatement
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
-class YieldStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionWithState<Boolean>(context, false) {
+internal class YieldStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionWithState<Boolean>(context, false) {
     override fun applyToElement(element: JKTreeElement, state: Boolean/*is yield allowed*/): JKTreeElement {
         when (element) {
             is JKKtWhenExpression -> return recurse(element, true)

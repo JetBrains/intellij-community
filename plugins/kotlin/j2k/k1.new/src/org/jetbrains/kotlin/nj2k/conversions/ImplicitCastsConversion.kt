@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKVariable -> convertVariable(element)

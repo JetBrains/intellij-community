@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 //copied from old j2k
-fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
+internal fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
     if (left.isNullLiteral() || (right?.isNullLiteral() == true)) return true
     when (val type = left.type) {
         is PsiPrimitiveType, is PsiArrayType -> return true
@@ -44,7 +44,6 @@ fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
         else -> return false
     }
 }
-
 
 internal fun PsiMember.visibility(
     referenceSearcher: ReferenceSearcher,
@@ -66,7 +65,7 @@ internal fun PsiMember.visibility(
         }
     }?.firstOrNull() ?: JKVisibilityModifierElement(Visibility.INTERNAL)
 
-fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?): JKModalityModifierElement {
+internal fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?): JKModalityModifierElement {
     val modalityFromModifier = modifierList?.children?.mapNotNull { child ->
         if (child !is PsiKeyword) return@mapNotNull null
         when (child.text) {
@@ -88,7 +87,7 @@ fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -
     }
 }
 
-fun JvmClassKind.toJk() = when (this) {
+internal fun JvmClassKind.toJk(): JKClass.ClassKind = when (this) {
     JvmClassKind.CLASS -> JKClass.ClassKind.CLASS
     JvmClassKind.INTERFACE -> JKClass.ClassKind.INTERFACE
     JvmClassKind.ANNOTATION -> JKClass.ClassKind.ANNOTATION
@@ -129,7 +128,7 @@ private fun allowProtected(element: PsiElement, member: PsiMember, originalClass
     }
 }
 
-fun PsiClass.classKind(): JKClass.ClassKind =
+internal fun PsiClass.classKind(): JKClass.ClassKind =
     when {
         isAnnotationType -> JKClass.ClassKind.ANNOTATION
         isEnum -> JKClass.ClassKind.ENUM
@@ -157,7 +156,7 @@ internal fun <T> runUndoTransparentActionInEdt(inWriteAction: Boolean, action: (
     return result!!
 }
 
-fun PsiElement.getContainingClass(): PsiClass? {
+internal fun PsiElement.getContainingClass(): PsiClass? {
     var context = context
     while (context != null) {
         val _context = context

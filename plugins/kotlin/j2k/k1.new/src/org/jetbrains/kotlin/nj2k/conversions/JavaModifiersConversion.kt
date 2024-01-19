@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
 
-class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKModalityOwner && element is JKAnnotationListOwner) {
             val overrideAnnotation = element.annotationList.annotationByFqName("java.lang.Override")

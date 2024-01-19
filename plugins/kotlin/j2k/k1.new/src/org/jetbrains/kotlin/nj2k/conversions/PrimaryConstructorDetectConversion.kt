@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.nj2k.mutate
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 
-class PrimaryConstructorDetectConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class PrimaryConstructorDetectConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKClass && (element.classKind == CLASS || element.classKind == ENUM || element.classKind == RECORD)) {
             processClass(element)

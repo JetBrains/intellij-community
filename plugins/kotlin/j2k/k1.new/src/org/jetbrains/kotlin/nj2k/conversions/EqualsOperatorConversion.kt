@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
 
-class EqualsOperatorConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class EqualsOperatorConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
         if (element.receiver is JKSuperExpression) return recurse(element)

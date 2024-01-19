@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.nj2k.hasWritableUsages
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.determineType
 
-class ParameterModificationInMethodCallsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ParameterModificationInMethodCallsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKMethod -> convertMethod(element)

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
 
-class ImplicitInitializerConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ImplicitInitializerConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)
         if (element.initializer !is JKStubExpression) return recurse(element)

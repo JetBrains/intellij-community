@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtClass
 
-class TypeMappingConversion(
+internal class TypeMappingConversion(
     context: NewJ2kConverterContext,
     inline val filter: (typeElement: JKTypeElement) -> Boolean = { true }
 ) : RecursiveApplicableConversionBase(context) {
