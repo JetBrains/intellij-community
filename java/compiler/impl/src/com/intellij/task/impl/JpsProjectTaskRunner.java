@@ -313,6 +313,17 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
   }
 
   private static final class MyNotificationCollector implements AutoCloseable {
+    private static final Result FAILED_AND_ABORTED = new Result() {
+      @Override
+      public boolean isAborted() {
+        return true;
+      }
+
+      @Override
+      public boolean hasErrors() {
+        return true;
+      }
+    };
     @NotNull private final ProjectTaskContext myContext;
     private final AsyncPromise<Result> myPromise;
     private boolean myCollectingStopped;
@@ -336,7 +347,8 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
 
     private void notifyFinished() {
       if (myCollectingStopped && myNotifications.isEmpty()) {
-        myPromise.setResult(myAborted ? TaskRunnerResults.ABORTED : 
+        myPromise.setResult(myAborted && myErrors > 0 ? FAILED_AND_ABORTED :
+                            myAborted ? TaskRunnerResults.ABORTED : 
                             myErrors > 0 ? TaskRunnerResults.FAILURE : 
                             TaskRunnerResults.SUCCESS);
       }
