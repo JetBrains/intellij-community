@@ -60,6 +60,9 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
       if (isGradleAtLeast("7.4")) {
         put("testing", "org.gradle.testing.base.internal.DefaultTestingExtension")
       }
+      if (isGradleAtLeast("8.5")) {
+        put("versionCatalogs", "org.gradle.api.internal.catalog.DefaultDependenciesAccessors\$DefaultVersionCatalogsExtension")
+      }
     }
 
     Assertions.assertThat(actualExtensionMap)

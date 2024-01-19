@@ -9,12 +9,12 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 
-@Suppress("GrUnresolvedAccess")
 class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTestCase() {
 
   @Test
   fun `test build script errors on Sync`() {
     createSettingsFile("include 'api', 'impl' ")
+    createProjectSubDir("api")
     createProjectSubFile("impl/build.gradle",
                          "dependencies {\n" +
                          "   ghostConf project(':api')\n" +
@@ -74,12 +74,12 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
 
     val tryText = when {
       isGradleAtLeast("8.2") ->
-                              """|> Run with --stacktrace option to get the stack trace.
+        """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights.
                                  |> Get more help at https://help.gradle.org."""
       isGradleAtLeast("7.4") ->
-                              """|> Run with --stacktrace option to get the stack trace.
+        """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights."""
       else ->
