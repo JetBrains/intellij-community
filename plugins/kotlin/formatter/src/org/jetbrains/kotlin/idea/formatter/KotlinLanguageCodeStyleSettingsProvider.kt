@@ -141,7 +141,7 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
             }
             SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {
                 consumer.showStandardOptions(
-                    // "ALIGN_MULTILINE_CHAINED_METHODS",
+                    "ALIGN_MULTILINE_CHAINED_METHODS",
                     "RIGHT_MARGIN",
                     "WRAP_ON_TYPING",
                     "KEEP_FIRST_COLUMN_COMMENT",

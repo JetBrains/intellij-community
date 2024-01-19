@@ -183,16 +183,94 @@ abstract class KotlinCommonBlock(
     // enforce indent to children when there's a line break before the dot in any call in the chain (meaning that
     // the call chain following that call is indented)
     private fun createIndentForQualifierExpression(enforceIndentToChildren: Boolean): Indent {
+        var spaces = 0
         val indentType = if (settings.kotlinCustomSettings.CONTINUATION_INDENT_FOR_CHAINED_CALLS) {
             if (enforceIndentToChildren) Indent.Type.CONTINUATION else Indent.Type.CONTINUATION_WITHOUT_FIRST
+        } else if (settings.kotlinCommonSettings.ALIGN_MULTILINE_CHAINED_METHODS) {
+            node.qualifierReceiver()?.let {
+                spaces = calculateQualifierIndentSpaces(it)
+                Indent.Type.SPACES
+            } ?: Indent.Type.NORMAL
         } else {
             Indent.Type.NORMAL
         }
 
         return Indent.getIndent(
-            indentType, false,
+            indentType, spaces, false,
             enforceIndentToChildren,
         )
+    }
+
+    private fun calculateQualifierIndentSpaces(qualifierNode: ASTNode): Int {
+        var spaces: Int = qualifierNode.children().first().countNodeSpaces()
+        val siblings = node.siblings(false).filterNot { f -> f.elementType == PROPERTY }
+
+        if(siblings.count() > 0 && siblings.first().elementType == LPAR) {
+            spaces += node.parents()
+                .filter{ f -> f.elementType == PROPERTY}
+                .first()
+                .children()
+                .sumSpacesFromNode()
+                .plus(1)
+        } else if (siblings.count() == 0) {
+            val parentSiblings = node.parents().first().siblings(false)
+            if (parentSiblings.none { e -> e.elementType == ARROW }) {
+                spaces += parentSiblings.sumSpacesFromNode()
+            }
+        }
+
+        spaces += siblings.sumSpacesFromNode()
+
+        val parent = node.parents().first()
+        val parentSiblings = parent.siblings(false)
+        if (parentSiblings.all { p -> p.elementType == WHITE_SPACE
+                    || p.elementType == EQ
+                    || p.elementType == IDENTIFIER
+                    || p.elementType == VAL_KEYWORD
+                    || p.elementType == VAR_KEYWORD } ) {
+            when (parent.elementType) {
+                FUN -> spaces += parentSiblings.sumSpacesFromNode()
+            }
+        }
+
+        return spaces
+    }
+
+    private fun ASTNode.countNodeSpaces(): Int {
+        val safeAccessShift = if(this.siblings().first().elementType == SAFE_ACCESS ) { 1 } else { 0 }
+
+        return when (this.elementType) {
+            SAFE_ACCESS_EXPRESSION -> this.text.split(QUEST.value).first().length
+            DOT_QUALIFIED_EXPRESSION -> this.text.split(DOT.value).first().length
+
+            PARENTHESIZED -> {
+                val secondDotIndex = this.text.indexOf(DOT.value, node.text.indexOf(DOT.value).plus(1))
+                if (secondDotIndex > -1) {
+                    var choppedLength = this.text.substring(0, secondDotIndex.plus(1)).length
+                    if (this.text.substring(secondDotIndex-1, secondDotIndex) == QUEST.value) {
+                        choppedLength - 1
+                    } else {
+                        choppedLength
+                    }
+                } else {
+                    this.textLength
+                }
+            }
+
+            else -> this.textLength
+        }
+    }
+
+    private fun Sequence<ASTNode>.sumSpacesFromNode(): Int {
+        return this.filterNot { f -> f.elementType == LBRACE }
+            .filterNot { f -> f.elementType == LBRACKET }
+            .filterNot { f -> f.elementType == LPAR }
+            .filterNot { f -> f.elementType == DANGLING_NEWLINE }
+            .filterNot { f -> f.elementType == DOT_QUALIFIED_EXPRESSION }
+            .filterNot { f -> f.elementType == SAFE_ACCESS_EXPRESSION }
+            .filterNot { f -> (f.text.any { l -> l == '\n' }) }
+            .map { s -> s.countNodeSpaces() }
+            .sum()
     }
 
     private fun List<ASTBlock>.wrapToBlock(
