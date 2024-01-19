@@ -155,7 +155,11 @@ private object NoDeclarationDescriptorsChecker {
     private fun checkType(type: Type, field: Field) {
         when (type) {
             is Class<*> -> {
-                if (DeclarationDescriptor::class.java.isAssignableFrom(type) || KotlinType::class.java.isAssignableFrom(type)) {
+                if (
+                    DeclarationDescriptor::class.java.isAssignableFrom(type) ||
+                    KotlinType::class.java.isAssignableFrom(type) ||
+                    Diagnostic::class.java.isAssignableFrom(type)
+                ) {
                     LOG.error(
                         "QuickFix class ${field.declaringClass.name} contains field ${field.name} that holds ${type.simpleName}. "
                                 + "This leads to holding too much memory through this quick-fix instance. "
