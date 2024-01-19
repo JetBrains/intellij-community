@@ -7,10 +7,10 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
@@ -71,7 +71,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
 
       val editorManager = manager!!
       editorManager.openFileInNewWindow(childClass.containingFile.virtualFile).first[0]
-      val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditorImpl).editor
+      val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditor).editor
       rehighlight(parentEditor)
 
       WriteCommandAction.runWriteCommandAction(project) {
@@ -104,7 +104,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
 
     // open parent class and rehighlight
     val editorManager = manager!!
-    val parentTextEditor = editorManager.openFile(parentClass.containingFile.virtualFile, true)[0] as TextEditorImpl
+    val parentTextEditor = editorManager.openFile(parentClass.containingFile.virtualFile, true)[0] as TextEditor
     val parentEditor = parentTextEditor.editor
     rehighlight(parentEditor)
     assertEmpty(getProblems(parentEditor))
@@ -156,7 +156,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   fun testSplitChooserSameSideTwice() {
     val classA = myFixture.addClass("public class A {}")
     val editors = manager!!.openFile(classA.containingFile.virtualFile, true)
-    val editor = (UsefulTestCase.assertOneElement(editors) as TextEditorImpl).editor
+    val editor = (UsefulTestCase.assertOneElement(editors) as TextEditor).editor
     EditorTestUtil.executeAction(editor, "SplitChooser", true)
     EditorTestUtil.executeAction(editor, "SplitChooser.SplitLeft", true)
     EditorTestUtil.executeAction(editor, "SplitChooser.SplitLeft", true)
