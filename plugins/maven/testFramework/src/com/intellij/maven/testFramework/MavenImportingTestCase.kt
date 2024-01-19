@@ -515,7 +515,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected fun removeFromLocalRepository(relativePath: String) {
     if (SystemInfo.isWindows) {
-      MavenServerManager.getInstance().shutdown(true)
+      MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
     FileUtil.delete(File(repositoryPath, relativePath))
   }

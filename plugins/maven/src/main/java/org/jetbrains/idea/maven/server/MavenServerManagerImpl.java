@@ -25,6 +25,7 @@ import com.intellij.util.net.NetUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.config.MavenConfigSettings;
@@ -61,7 +62,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       @Override
       public void appWillBeClosed(boolean isRestart) {
         isShutdown.set(true);
-        shutdown(false);
+        closeAllConnectorsEventually();
       }
     });
 
@@ -70,7 +71,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         if (MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
           isShutdown.set(true);
-          shutdown(false);
+          closeAllConnectorsEventually();
         }
       }
     });
@@ -165,7 +166,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
   private MavenServerConnector doGetOrCreateConnector(@NotNull Project project,
                                                       @NotNull String multimoduleDirectory,
                                                       @NotNull Sdk jdk) {
-    if(isShutdown.get()) {
+    if (isShutdown.get()) {
       throw new IllegalStateException("We are closed, sorry. No connectors anymore");
     }
     MavenServerConnector connector;
@@ -230,7 +231,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
 
   @Override
   public void dispose() {
-    shutdown(false);
+    closeAllConnectorsAndWait();
   }
 
   @Override
@@ -261,15 +262,15 @@ final class MavenServerManagerImpl implements MavenServerManager {
    * use MavenUtil.restartMavenConnectors
    */
   @Override
-  public void shutdown(boolean wait) {
-    if (!wait) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        shutdownNow();
-      });
-    }
-    else {
+  @TestOnly
+  public void closeAllConnectorsAndWait() {
+    shutdownNow();
+  }
+
+  private void closeAllConnectorsEventually() {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       shutdownNow();
-    }
+    });
   }
 
   private void shutdownNow() {
@@ -281,6 +282,8 @@ final class MavenServerManagerImpl implements MavenServerManager {
     shutdownConnector(myIndexingConnector, true);
     values.forEach(c -> shutdownConnector(c, true));
   }
+
+
 
   @Override
   public File getMavenEventListener() {

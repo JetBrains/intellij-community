@@ -36,7 +36,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
       ThrowableRunnable {
         super.tearDown()
       },
-      ThrowableRunnable { MavenServerManager.getInstance().shutdown(true) }
+      ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() }
     ).run()
   }
 

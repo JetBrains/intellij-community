@@ -222,7 +222,7 @@ abstract class MavenTestCase : UsefulTestCase() {
           myProject!!.getServiceIfCreated(MavenProgressTracker::class.java)
         mavenProgressTracker?.assertProgressTasksCompleted()
       },
-      ThrowableRunnable { MavenServerManager.getInstance().shutdown(true) },
+      ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() },
       ThrowableRunnable { tearDownEmbedders() },
       ThrowableRunnable { checkAllMavenConnectorsDisposed() },
       ThrowableRunnable { myProject = null },

@@ -86,7 +86,7 @@ public class MavenIndicesTestFixture {
 
   public void tearDown() {
     MavenSystemIndicesManager.getInstance().gc();
-    MavenServerManager.getInstance().shutdown(true);
+    MavenServerManager.getInstance().closeAllConnectorsAndWait();
     Disposer.dispose(getIndicesManager());
   }
 
