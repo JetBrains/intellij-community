@@ -47,12 +47,12 @@ class SelfAssignmentInspection : AbstractKotlinApplicableInspectionWithContext<K
         val leftResolvedCall = left?.resolveCall()?.singleVariableAccessCall()
         val callee = leftResolvedCall?.symbol ?: return null
 
-        val rightResolvedCall = right?.resolveCall()?.singleVariableAccessCall()
-        if (rightResolvedCall?.symbol != callee) return null
-
         if (callee !is KtVariableSymbol || callee.isVal) return null
         if (callee is KtPropertySymbol && (callee.modality != Modality.FINAL ||
                     callee.getter?.isDefault == false || callee.setter?.isDefault == false)) return null
+
+        val rightResolvedCall = right?.resolveCall()?.singleVariableAccessCall()
+        if (rightResolvedCall?.symbol != callee) return null
 
         // Only check the dispatch receiver - properties with default accessors cannot have extension receivers.
         val leftReceiver = leftResolvedCall.partiallyAppliedSymbol.dispatchReceiver
