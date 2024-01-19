@@ -6,7 +6,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.*
@@ -295,13 +295,20 @@ class ProjectWizardJdkComboBox(
         selectedItem
       }
       is AddJdkFromPath -> {
-        addJdk(this)
+        selectAndAddJdk(this)
+        selectedItem
+      }
+      is DetectedJdk -> {
+        registerJdk(anObject.home, this)
         selectedItem
       }
       else -> anObject
     }
     super.setSelectedItem(toSelect)
   }
+
+  val lastRegisteredJdkIndex
+    get() = (0 until itemCount).firstOrNull { getItemAt(it) is AddJdkFromJdkListDownloader } ?: 0
 
   val comment: String?
     get() = when (selectedItem) {
@@ -310,14 +317,21 @@ class ProjectWizardJdkComboBox(
     }
 }
 
-private fun addJdk(combo: ComboBox<ProjectWizardJdkIntent>) {
+private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   combo.popup?.hide()
   SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance()) { path: String ->
-    ApplicationManager.getApplication().invokeLater {
-      SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())?.let {
-        combo.insertItemAt(ExistingJdk(it), 0)
-        combo.selectedIndex = 0
-      }
+    registerJdk(path, combo)
+  }
+}
+
+private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
+  runReadAction {
+    SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())?.let {
+      val comboItem = ExistingJdk(it)
+      val index = combo.lastRegisteredJdkIndex
+      combo.registered.add(comboItem)
+      combo.insertItemAt(ExistingJdk(it), index)
+      combo.selectedIndex = index
     }
   }
 }
@@ -326,10 +340,10 @@ private fun addDownloadItem(extension: SdkDownload, combo: ComboBox<ProjectWizar
   val config = ProjectStructureConfigurable.getInstance(DefaultProjectFactory.getInstance().defaultProject)
   combo.popup?.hide()
   extension.showDownloadUI(JavaSdk.getInstance(), config.projectJdksModel, combo, null) { task: SdkDownloadTask ->
-    val index = when {
-      combo.getItemAt(0) is NoJdk -> 1
-      else -> 0
-    }
+    val index = (0..combo.itemCount).firstOrNull {
+      val item = combo.getItemAt(it)
+      item !is NoJdk && item !is DownloadJdk
+    } ?: 0
     combo.insertItemAt(DownloadJdk(task), index)
     combo.selectedIndex = index
   }
