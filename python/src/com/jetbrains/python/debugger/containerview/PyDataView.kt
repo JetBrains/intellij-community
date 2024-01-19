@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -266,6 +267,6 @@ class PyDataView(private val project: Project) : DumbAware {
       PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value, true)
     }
 
-    fun getInstance(project: Project): PyDataView = project.getService(PyDataView::class.java)
+    fun getInstance(project: Project): PyDataView = project.service<PyDataView>()
   }
 }
