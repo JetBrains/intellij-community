@@ -1,7 +1,6 @@
 import org.gradle.tooling.GradleConnector
 
 import java.nio.file.Files
-import java.nio.file.Paths
 
 plugins {
   id "base"
@@ -10,13 +9,18 @@ plugins {
 
 def intelliJDepsGroupId = 'org.jetbrains.intellij.deps'
 def gradleApiArtifactId = 'gradle-api'
-def dependenciesProperties = new Properties()
-Files.newInputStream(Paths.get(projectDir.toString()).resolve("../dependencies.properties")).withCloseable {
-  dependenciesProperties.load(it)
-}
-def gradleApiVersion = dependenciesProperties.getProperty("gradleApiVersion")
-
+def gradleApiVersion = readGradleApiVersion(project)
+def patchedVersionName = gradleApiVersion + (findProperty('versionNameSuffix') ?: '')
 def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build/apiDeps")
+
+private static String readGradleApiVersion(Project project) {
+  def propertiesPath = project.projectDir.toPath().resolve("../dependencies.properties")
+  def properties = new Properties()
+  Files.newInputStream(propertiesPath).withCloseable {
+    properties.load(it)
+  }
+  return properties.getProperty("gradleApiVersion")
+}
 
 task expandGradleApiJar() {
   doLast {
@@ -96,8 +100,6 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
     }
   }
 }
-
-def patchedVersionName = gradleApiVersion + (findProperty('versionNameSuffix') ?: '')
 
 task gradleApiJar(type: Zip, dependsOn: expandGradleApiJar) {
   extension 'jar'
