@@ -112,7 +112,7 @@
     {
       "id": "java",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 13, 13, 13, 22 ],
+      "includeGroups": [ 13, 22 ],
       "shouldLogElementFeatures": true
     },
     {
