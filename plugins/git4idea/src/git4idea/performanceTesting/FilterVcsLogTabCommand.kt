@@ -26,8 +26,8 @@ import kotlin.io.path.exists
 
 /**
  * This command will filter vcs log tab data by set of filters on the root directory
- * %filterVcsLogTab <user_name>
- * Example - %filterVcsLogTab -name Alexander Kass -path srs/SomeImpl.java
+ * %filterVcsLogTab -name <user_name> -path<slash/divided/path>
+ * Example - '%filterVcsLogTab -name Alexander Kass -path srs/SomeImpl.java'
  */
 class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
@@ -46,11 +46,13 @@ class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCorout
 
     withContext(Dispatchers.IO) {
       val vcsLogData = logManager.dataManager
-      val (dataPack, _) = VcsLogFiltererImpl(vcsLogData)
+      val (dataPack, commitStage) = VcsLogFiltererImpl(vcsLogData)
         .filter(vcsLogData.dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal,
                 generateVcsFilter(context.project.guessProjectDir(), extractCommandArgument(PREFIX), vcsLogData),
                 CommitCountStage.ALL)
+
       logger<FilterVcsLogTabCommand>().info("VisibleCommitCount size ${dataPack.visibleGraph.visibleCommitCount}")
+      logger<FilterVcsLogTabCommand>().info("Commit stage $commitStage")
       //TODO Report filter result 'dataPack.first.visibleGraph.visibleCommitCount' to CSV in meter style
     }
   }
