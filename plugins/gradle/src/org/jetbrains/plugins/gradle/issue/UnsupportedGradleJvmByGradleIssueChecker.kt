@@ -25,12 +25,12 @@ import java.util.function.Consumer
  * This issue checker provides quick fixes for known compatibility issues with Gradle and Java:
  * 1. Gradle versions less than 4.7 do not support JEP-322 (Java starting with JDK 10-ea build 36), see https://github.com/gradle/gradle/issues/4503
  * 2. Gradle versions less than 4.8 fails on JDK 11+ (due to dependency on Unsafe::defineClass which is removed in JDK 11), see https://github.com/gradle/gradle/issues/4860
- * 3. Gradle versions less than 4.7 can not be used by the IDE running on Java 9+, see https://github.com/gradle/gradle/issues/8431, https://github.com/gradle/gradle/issues/3355
+ * 3. Gradle versions less than 4.7 cannot be used by the IDE running on Java 9+, see https://github.com/gradle/gradle/issues/8431, https://github.com/gradle/gradle/issues/3355
  *
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
+class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val rootCause = getRootCauseAndLocation(issueData.error).first
