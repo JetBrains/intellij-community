@@ -116,7 +116,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
       runnable.invoke()
     }
     else {
-      application.invokeLater {
+      application.invokeAndWait {
         application.runWriteAction {
           runnable.invoke()
         }
