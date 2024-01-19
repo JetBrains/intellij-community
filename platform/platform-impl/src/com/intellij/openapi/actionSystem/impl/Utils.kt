@@ -70,6 +70,8 @@ import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
@@ -824,13 +826,17 @@ object Utils {
 
   @JvmStatic
   fun showPopupElapsedMillisIfConfigured(startNanos: Long, comp: Component) {
-    if (startNanos > 0 && Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) {
-      UiNotifyConnector.doWhenFirstShown(comp) {
-        val time = TimeoutUtil.getDurationMillis(startNanos)
-        @Suppress("DEPRECATION", "removal", "HardCodedStringLiteral")
-        Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Popup invocation took $time ms",
-                     NotificationType.INFORMATION).notify(null)
-      }
+    if (startNanos <= 0 || !Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) return
+    UiNotifyConnector.doWhenFirstShown(comp) {
+      UIUtil.getWindow(comp)?.addWindowListener(object : WindowAdapter() {
+        override fun windowOpened(e: WindowEvent) {
+          e.window.removeWindowListener(this)
+          val time = TimeoutUtil.getDurationMillis(startNanos)
+          @Suppress("DEPRECATION", "removal", "HardCodedStringLiteral")
+          Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Popup invocation took $time ms",
+                       NotificationType.INFORMATION).notify(null)
+        }
+      })
     }
   }
 

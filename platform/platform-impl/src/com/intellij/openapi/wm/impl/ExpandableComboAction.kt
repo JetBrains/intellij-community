@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -24,7 +25,7 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val model = MyPopupModel()
     model.addActionListener { actionEvent ->
-      val start = System.nanoTime()
+      val start = IdeEventQueue.getInstance().popupTriggerTime
       val combo = (actionEvent.source as? ToolbarComboButton) ?: return@addActionListener
       val dataContext = DataManager.getInstance().getDataContext(combo)
       val anActionEvent = AnActionEvent.createFromDataContext(place, presentation, dataContext)

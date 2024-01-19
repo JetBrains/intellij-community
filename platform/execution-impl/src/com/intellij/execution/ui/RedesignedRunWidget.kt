@@ -12,6 +12,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -324,7 +325,7 @@ abstract class TogglePopupAction : ToggleAction {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (!state) return
     val component = e.inputEvent?.component as? JComponent ?: return
-    val start = System.nanoTime()
+    val start = IdeEventQueue.getInstance().popupTriggerTime
     val popup = createPopup(e) ?: return
     Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
     popup.showUnderneathOf(component)
