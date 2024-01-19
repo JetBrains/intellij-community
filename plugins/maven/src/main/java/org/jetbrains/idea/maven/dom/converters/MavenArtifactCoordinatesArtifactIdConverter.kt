@@ -6,6 +6,7 @@ import com.intellij.util.xml.ConvertContext
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.idea.reposearch.DependencySearchService
 
@@ -35,7 +36,9 @@ class MavenArtifactCoordinatesArtifactIdConverter : MavenArtifactCoordinatesConv
       }
     }
 
-    return manager.hasLocalArtifactId(id.groupId, id.artifactId)
+    val hasLocalArtifactId = manager.hasLocalArtifactId(id.groupId, id.artifactId)
+    MavenLog.LOG.trace("local index artifact id $id: $hasLocalArtifactId")
+    return hasLocalArtifactId
   }
 
   override fun doGetVariants(id: MavenId, searchService: DependencySearchService): Set<String> {
