@@ -23,6 +23,10 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
     isOpaque = true
     needToScroll = null
     savedSelfieImage = takeSelfie(this)
+    if (savedSelfieImage == null) {
+      isOpaque = false
+      return
+    }
     savedSize = size
     savedPreferredSize = preferredSize
 
@@ -70,8 +74,8 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
 
   companion object {
     @JvmStatic
-    private fun takeSelfie(component: Component): BufferedImage {
-      val graphicsConfiguration = component.graphicsConfiguration
+    private fun takeSelfie(component: Component): BufferedImage? {
+      val graphicsConfiguration = component.graphicsConfiguration ?: return null
       val image = ImageUtil.createImage(graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_ARGB)
       setupAntialiasing(image.graphics)
       component.paint(image.graphics)
