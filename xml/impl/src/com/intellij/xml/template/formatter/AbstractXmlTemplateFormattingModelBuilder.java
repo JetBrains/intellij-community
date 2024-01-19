@@ -337,7 +337,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   }
 
   @NotNull
-  protected List<PsiElement> getTemplateElements(@NotNull TextRange range, TemplateLanguageFileViewProvider viewProvider) {
+  protected List<PsiElement> getTemplateElements(@NotNull TextRange range, @NotNull TemplateLanguageFileViewProvider viewProvider) {
     return TemplateFormatUtil.findAllElementsInside(range,
                                                     viewProvider,
                                                     true);
