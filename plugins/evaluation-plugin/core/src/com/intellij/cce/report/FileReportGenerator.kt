@@ -38,7 +38,7 @@ abstract class FileReportGenerator(
     val resourceFile = File(resourcePath.toString())
     resourceFile.writeText("var sessions = {};\nvar features={};\nvar fullLineLog=[];\nsessions = ${parseJsonInJs(sessionsJson)};\n")
     processStorages(sessions, resourceFile)
-    val reportTitle = "Code Completion Report for file $fileName ($filterName and $comparisonFilterName filter)"
+    val reportTitle = "Evaluation Report for file $fileName (project: ${fileInfo.sessionsInfo.projectName})"
     createHTML().html {
       head {
         createHead(this, reportTitle, resourcePath)
