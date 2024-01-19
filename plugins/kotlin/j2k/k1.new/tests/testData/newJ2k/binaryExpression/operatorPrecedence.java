@@ -19,5 +19,16 @@ class J {
         System.out.println(true & 4 >= 5 >>> 7 | false);
         System.out.println(true & 4 >= 5 == true | false);
         System.out.println(true & true == 5 >= 4 | false);
+
+        int insideMultiline = 1
+                              + 1
+                              - 0x1234 & 0x1234 >>> 1;
+        System.out.println(insideMultiline);
+
+        int insideMultiline2 = 1
+                               + 1
+                               - 0x1234
+                               & 0x1234 >>> 1;
+        System.out.println(insideMultiline2);
     }
 }
