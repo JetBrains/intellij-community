@@ -28,6 +28,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
     fun printCodeOut(root: JKTreeElement): String {
         Visitor().also { root.accept(it) }
         return printer.toString().replace("\r\n", "\n")
+        return printer.toString().replace("\r\n", "\n")
     }
 
     private inner class Visitor : JKVisitorWithCommentsPrinting() {
@@ -65,7 +66,8 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
-            val isInterface = modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE
+            val isInterface = (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE) ||
+                        (modifiersListOwner is JKMethod && modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE)
             val hasOverrideModifier = modifiersListOwner
                 .safeAs<JKOtherModifiersOwner>()
                 ?.hasOtherModifier(OVERRIDE) == true
@@ -574,7 +576,8 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             ktConvertedFromForLoopSyntheticWhileStatement: JKKtConvertedFromForLoopSyntheticWhileStatement
         ) {
             printer.renderList(
-                ktConvertedFromForLoopSyntheticWhileStatement.variableDeclarations, ::ensureLineBreak) {
+                ktConvertedFromForLoopSyntheticWhileStatement.variableDeclarations, ::ensureLineBreak
+            ) {
                 it.accept(this)
             }
             ensureLineBreak()
