@@ -12,7 +12,6 @@ data class TextMatePersistentBundle(val name: String, val enabled: Boolean)
        category = SettingsCategory.TOOLS,
        exportable = true,
        storages = [Storage(value = "textmate.xml", roamingType = RoamingType.DISABLED)])
-@Service
 class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMateUserBundlesSettings.State>(State()) {
   val bundles: Map<String, TextMatePersistentBundle>
     get() = state.bundles

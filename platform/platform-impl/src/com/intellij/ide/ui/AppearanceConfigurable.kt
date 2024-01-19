@@ -63,6 +63,7 @@ import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
+import javax.swing.event.ListDataListener
 
 private val settings: UISettings
   get() = UISettings.getInstance()
@@ -163,9 +164,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     return panel {
       panel {
         row(message("combobox.look.and.feel")) {
-          val theme = comboBox(lafManager.lafComboBoxModel, lafManager.lookAndFeelCellRenderer)
+          val lafComboBoxModelWrapper = LafComboBoxModelWrapper(lafManager.lafComboBoxModel)
+          val theme = comboBox(lafComboBoxModelWrapper, lafManager.lookAndFeelCellRenderer)
             .bindItem(lafProperty)
             .accessibleName(message("combobox.look.and.feel"))
+
+          lafComboBoxModelWrapper.comboBoxComponent = theme.component
 
           val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
             .bindSelected(syncThemeProperty)
@@ -175,19 +179,16 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           theme.enabledIf(autodetectSupportedPredicate.not().or(syncCheckBox.selected.not()))
           cell(lafManager.settingsToolbar)
             .visibleIf(syncCheckBox.selected.and(autodetectSupportedPredicate))
-
-          link(message("link.get.more.themes")) {
-            val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
-            settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
-          }
         }
+      }
 
+      group(message("title.accessibility")) {
         row(message("combobox.ide.scale.percent")) {
           val defaultScale = UISettingsUtils.defaultScale(false)
           var resetZoom: Cell<ActionLink>? = null
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-          val zoomComboBox = comboBox(model, textListCellRenderer { it })
+          comboBox(model, textListCellRenderer { it })
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item, false) != null) return@onChanged
@@ -215,59 +216,57 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           val resetScaleString = KeymapUtil.getShortcutTextOrNull("ResetIdeScaleAction")
 
           if (zoomInString != null && zoomOutString != null && resetScaleString != null) {
-            zoomComboBox.comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
+            comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
           }
 
           resetZoom = link(message("ide.scale.reset.link")) {
             model.selectedItem = defaultScale.percentStringValue
           }.apply { visible(settings.ideScale.percentValue != defaultScale.percentValue) }
         }.topGap(TopGap.SMALL)
-      }
 
-      row {
-        var resetCustomFont: (() -> Unit)? = null
+        row {
+          var resetCustomFont: (() -> Unit)? = null
 
-        val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
-          .gap(RightGap.SMALL)
-          .bindSelected(settings::overrideLafFonts) {
-            NotRoamableUiSettings.getInstance().overrideLafFonts = it
-            if (!it) {
-              getDefaultFont().let { defaultFont ->
-                settings.fontFace = defaultFont.family
-                settings.fontSize = defaultFont.size
+          val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
+            .gap(RightGap.SMALL)
+            .bindSelected(settings::overrideLafFonts) {
+              NotRoamableUiSettings.getInstance().overrideLafFonts = it
+              if (!it) {
+                getDefaultFont().let { defaultFont ->
+                  settings.fontFace = defaultFont.family
+                  settings.fontSize = defaultFont.size
+                }
               }
             }
+            .onChanged { checkbox ->
+              if (!checkbox.isSelected) resetCustomFont?.invoke()
+            }
+
+          val fontFace = cell(FontComboBox())
+            .bind({ it.fontName }, { it, value -> it.fontName = value },
+                  MutableProperty({ if (settings.overrideLafFonts) getFontFamily(settings.fontFace) else getDefaultFont().family },
+                                  { settings.fontFace = it }))
+            .enabledIf(useCustomCheckbox.selected)
+            .accessibleName(message("label.font.name"))
+            .component
+
+          val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else getDefaultFont().size },
+                                          { settings.fontSize = it },
+                                          settings.fontSize)
+            .label(message("label.font.size"))
+            .enabledIf(useCustomCheckbox.selected)
+            .accessibleName(message("label.font.size"))
+            .component
+
+          resetCustomFont = {
+            val defaultFont = getDefaultFont()
+            fontFace.fontName = defaultFont.family
+            val fontSizeValue = defaultFont.size.toString()
+            fontSize.selectedItem = fontSizeValue
+            fontSize.editor.item = fontSizeValue
           }
-          .onChanged { checkbox ->
-            if (!checkbox.isSelected) resetCustomFont?.invoke()
-          }
+        }.topGap(TopGap.SMALL)
 
-        val fontFace = cell(FontComboBox())
-          .bind({ it.fontName }, { it, value -> it.fontName = value },
-                MutableProperty({ if (settings.overrideLafFonts) getFontFamily(settings.fontFace) else getDefaultFont().family },
-                                { settings.fontFace = it }))
-          .enabledIf(useCustomCheckbox.selected)
-          .accessibleName(message("label.font.name"))
-          .component
-
-        val fontSize = fontSizeComboBox({ if (settings.overrideLafFonts) settings.fontSize else getDefaultFont().size },
-                                        { settings.fontSize = it },
-                                        settings.fontSize)
-          .label(message("label.font.size"))
-          .enabledIf(useCustomCheckbox.selected)
-          .accessibleName(message("label.font.size"))
-          .component
-
-        resetCustomFont = {
-          val defaultFont = getDefaultFont()
-          fontFace.fontName = defaultFont.family
-          val fontSizeValue = defaultFont.size.toString()
-          fontSize.selectedItem = fontSizeValue
-          fontSize.editor.item = fontSizeValue
-        }
-      }.topGap(TopGap.SMALL)
-
-      group(message("title.accessibility")) {
         row {
           val isOverridden = isSupportScreenReadersOverridden()
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK))
@@ -612,4 +611,34 @@ private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
     IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
     IdeZoomEventFields.presentationMode.with(isPresentation)
   )
+}
+
+private class LafComboBoxModelWrapper(private val lafComboBoxModel: CollectionComboBoxModel<LafReference>): ComboBoxModel<LafReference> {
+  private val moreAction = LafReference(name = message("link.get.more.themes"), themeId = "")
+  private val additionalItems = listOf(LafReference.SEPARATOR, moreAction)
+  var comboBoxComponent: JComponent? = null
+
+  override fun getSize(): Int = lafComboBoxModel.size.let { if (it > 0) it + additionalItems.size else it }
+
+  override fun getElementAt(index: Int): LafReference =
+    if (index < lafComboBoxModel.size) lafComboBoxModel.getElementAt(index)
+    else additionalItems[index - lafComboBoxModel.size]
+
+  override fun addListDataListener(l: ListDataListener?) {
+    lafComboBoxModel.addListDataListener(l)
+  }
+
+  override fun removeListDataListener(l: ListDataListener?) {
+    lafComboBoxModel.removeListDataListener(l)
+  }
+
+  override fun setSelectedItem(anItem: Any?) {
+    if (anItem == moreAction) {
+      val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(comboBoxComponent))
+      settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+    }
+    else lafComboBoxModel.selectedItem = anItem
+  }
+
+  override fun getSelectedItem(): Any? = lafComboBoxModel.selectedItem
 }

@@ -54,7 +54,9 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empt
     UnixPythonSdkFlavor.collectUnixPythons(Path.of("/usr/local/bin"), candidates);
     if (areCommandLineDeveloperToolsAvailable()) {
       UnixPythonSdkFlavor.collectUnixPythons(Path.of("/usr/bin"), candidates);
+      UnixPythonSdkFlavor.collectPyenvPythons(candidates);
     }
+
     return candidates;
   }
 

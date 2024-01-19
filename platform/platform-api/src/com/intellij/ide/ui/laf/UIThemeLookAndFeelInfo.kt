@@ -16,6 +16,8 @@ interface UIThemeLookAndFeelInfo  {
   @get:NlsSafe
   val name: String
 
+  val author: String?
+
   val isDark: Boolean
 
   val editorSchemeId: String?

@@ -35,27 +35,49 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   private final ProblemDescriptor myDescriptor;
   private final LocalQuickFix myFix;
 
+  /**
+   * Casts or wraps a <code>QuickFix</code> found by index with an <code>IntentionAction</code>.
+   *
+   * @return the found <code>QuickFix</code>
+   * if it implements <code>IntentionAction</code>,
+   * or {@link QuickFixWrapper#wrap(ProblemDescriptor, LocalQuickFix)}.
+   *
+   * @see QuickFixWrapper#unwrap(CommonIntentionAction)
+   */
   public static @NotNull IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
     LOG.assertTrue(fixNumber >= 0, fixNumber);
     QuickFix<?>[] fixes = descriptor.getFixes();
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
     final QuickFix<?> fix = fixes[fixNumber];
-    return wrap(descriptor, fix);
-  }
-
-  public static @NotNull IntentionAction wrap(@NotNull ProblemDescriptor descriptor, @NotNull QuickFix<?> fix) {
     if (fix instanceof IntentionAction intention) {
       return intention;
     }
-    LocalQuickFix localFix = (LocalQuickFix) fix;
+    LocalQuickFix localFix = (LocalQuickFix)fix;
+    return wrap(descriptor, localFix);
+  }
+
+  /**
+   * Casts or wraps a <code>LocalQuickFix</code> with an <code>IntentionAction</code>.
+   *
+   * @return the <code>fix</code> if it implements <code>IntentionAction</code>,
+   * creates a new <code>QuickFixWrapper</code>,
+   * or a mod command-specific wrapper <strong>with cached presentation</strong>.
+   *
+   * @see QuickFixWrapper#wrap(ProblemDescriptor, int)
+   * @see QuickFixWrapper#unwrap(CommonIntentionAction)
+   */
+  public static @NotNull IntentionAction wrap(@NotNull ProblemDescriptor descriptor, @NotNull LocalQuickFix fix) {
+    if (fix instanceof IntentionAction intention) {
+      return intention;
+    }
     if (fix instanceof ModCommandQuickFix modCommandFix) {
       IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
       PsiFile file = descriptor.getPsiElement().getContainingFile();
       intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
       return intention;
     }
-    return new QuickFixWrapper(descriptor, localFix);
+    return new QuickFixWrapper(descriptor, fix);
   }
 
   /**
@@ -93,6 +115,11 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return null;
   }
 
+  /**
+   * @see QuickFixWrapper#wrap(ProblemDescriptor, int)
+   * @see QuickFixWrapper#wrap(ProblemDescriptor, LocalQuickFix)
+   * @see QuickFixWrapper#unwrap(CommonIntentionAction)
+   */
   private QuickFixWrapper(@NotNull ProblemDescriptor descriptor, @NotNull LocalQuickFix fix) {
     myDescriptor = descriptor;
     myFix = fix;
@@ -214,6 +241,11 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     private final @NotNull ModCommandQuickFix myFix;
     private final @Nullable ModCommandAction myUnwrappedAction;
 
+    /**
+     * @see QuickFixWrapper#wrap(ProblemDescriptor, int)
+     * @see QuickFixWrapper#wrap(ProblemDescriptor, LocalQuickFix)
+     * @see QuickFixWrapper#unwrap(CommonIntentionAction)
+     */
     private ModCommandQuickFixAction(@NotNull ProblemDescriptor descriptor, @NotNull ModCommandQuickFix fix) {
       myDescriptor = descriptor;
       myFix = fix;

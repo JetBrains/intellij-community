@@ -463,10 +463,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void debugGutterAreas(Graphics2D g) {
     if (!debug()) return;
     Point p = MouseInfo.getPointerInfo().getLocation();
-    SwingUtilities.convertPointFromScreen(p, this.myEditor.getComponent());
+    SwingUtilities.convertPointFromScreen(p, this);
     if (p.x >= 0 && p.x <= getWidth()) {
       int off = 0;
-      for (EditorGutterLayout.GutterArea area : myLayout.getLayout()) {
+      List<EditorGutterLayout.GutterArea> layout = isMirrored() ? ContainerUtil.reverse(myLayout.getLayout()) : myLayout.getLayout();
+      for (EditorGutterLayout.GutterArea area : layout) {
         int x = off;
         off += area.width();
         if (off >= p.x) {

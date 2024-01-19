@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -25,7 +26,8 @@ public interface MavenServerManager extends Disposable {
 
   boolean shutdownConnector(MavenServerConnector connector, boolean wait);
 
-  void shutdown(boolean wait);
+  @TestOnly
+  void closeAllConnectorsAndWait();
 
   File getMavenEventListener();
 
@@ -41,9 +43,10 @@ public interface MavenServerManager extends Disposable {
     return createEmbedder(project, alwaysOnline, multiModuleProjectDirectory);
   }
 
-  @NotNull MavenEmbedderWrapper createEmbedder(Project project,
-                                               boolean alwaysOnline,
-                                               @NotNull String multiModuleProjectDirectory);
+  @NotNull
+  MavenEmbedderWrapper createEmbedder(Project project,
+                                      boolean alwaysOnline,
+                                      @NotNull String multiModuleProjectDirectory);
 
   /**
    * @deprecated use createIndexer()
@@ -77,12 +80,13 @@ public interface MavenServerManager extends Disposable {
 
   @ApiStatus.Internal
   interface MavenServerConnectorFactory {
-    @NotNull MavenServerConnector create(@NotNull Project project,
-                                         @NotNull Sdk jdk,
-                                         @NotNull String vmOptions,
-                                         @Nullable Integer debugPort,
-                                         @NotNull MavenDistribution mavenDistribution,
-                                         @NotNull String multimoduleDirectory);
+    @NotNull
+    MavenServerConnector create(@NotNull Project project,
+                                @NotNull Sdk jdk,
+                                @NotNull String vmOptions,
+                                @Nullable Integer debugPort,
+                                @NotNull MavenDistribution mavenDistribution,
+                                @NotNull String multimoduleDirectory);
   }
 
   @ApiStatus.Internal

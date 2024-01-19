@@ -84,7 +84,7 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
     }
 }
 
-fun KtSimpleNameExpression.isCalleeExpression() =
+fun KtSimpleNameExpression.isCalleeExpression(): Boolean =
     (parent as? KtCallExpression)?.calleeExpression == this
 
 fun KtSimpleNameExpression.isConstructorCallReference(): Boolean {

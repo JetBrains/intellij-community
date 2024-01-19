@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -13,7 +15,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.repo.GitRepository;
+import git4idea.ui.toolbar.GitMergeRebaseWidgetKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -57,7 +63,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
     if (changes.size() > 1000) {
       return true;
     }
-    return changes.stream().anyMatch(it -> it.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS);
+    return ContainerUtil.exists(changes, it -> it.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS);
   }
 
   @Override
@@ -70,6 +76,15 @@ public class GitResolveConflictsAction extends DumbAwareAction {
     }
 
     presentation.setEnabledAndVisible(isEnabled(project));
+    if (presentation.isVisible() && e.getPlace().equals(GitMergeRebaseWidgetKt.GIT_MERGE_REBASE_WIDGET_PLACE)) {
+      presentation.setIcon(ExpUiIcons.Vcs.ResolveContinue);
+
+      // Hide "Resolve Conflicts" action in case when "Continue Rebase" is available
+      Collection<GitRepository> rebasingRepositories = GitUtil.getRepositoriesInState(project, Repository.State.REBASING);
+      if (!rebasingRepositories.isEmpty()) {
+        presentation.setEnabledAndVisible(false);
+      }
+    }
   }
 
   @Override

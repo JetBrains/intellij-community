@@ -11,6 +11,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
+import com.intellij.ide.ui.LafReference.Companion.SEPARATOR
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
@@ -64,7 +65,7 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.*
@@ -860,8 +861,6 @@ private class LafCellRenderer : SimpleListCellRenderer<LafReference>() {
     text = value.name
   }
 }
-
-private val SEPARATOR = LafReference(name = "", themeId = "")
 
 private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory() {
   companion object {

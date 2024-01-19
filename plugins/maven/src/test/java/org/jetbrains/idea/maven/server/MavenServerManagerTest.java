@@ -41,7 +41,7 @@ public class MavenServerManagerTest extends MavenTestCase {
 
     Future result = ApplicationManager.getApplication().runWriteAction(
       (ThrowableComputable<Future, Exception>)() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        MavenServerManager.getInstance().shutdown(true);
+        MavenServerManager.getInstance().closeAllConnectorsAndWait();
         ensureConnected(MavenServerManager.getInstance().getConnector(getProject(), getProjectRoot().getPath()));
       }));
 

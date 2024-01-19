@@ -844,7 +844,7 @@ class MavenProjectsTree(val project: Project) {
 
   fun getDependentProjects(projects: Collection<MavenProject>): List<MavenProject> {
     return withReadLock {
-      var result: MutableList<MavenProject>? = null
+      val result = mutableListOf<MavenProject>()
       val projectIds: MutableSet<MavenCoordinate> = ObjectOpenCustomHashSet(projects.size, MavenCoordinateHashCodeStrategy())
       for (project in projects) {
         projectIds.add(project.mavenId)
@@ -876,11 +876,10 @@ class MavenProjectsTree(val project: Project) {
         }
 
         if (isDependent) {
-          if (result == null) result = ArrayList()
           result.add(project)
         }
       }
-      result ?: emptyList()
+      result
     }
   }
 

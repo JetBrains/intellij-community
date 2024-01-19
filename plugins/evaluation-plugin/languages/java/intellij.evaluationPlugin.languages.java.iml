@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.core" />
+    <orderEntry type="module" module-name="intellij.gradle.common" />
   </component>
 </module>

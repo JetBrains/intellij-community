@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
   category = SettingsCategory.TOOLS,
   exportable = true,
   storages = @Storage(value = "overrideFileTypes.xml", roamingType = RoamingType.DISABLED))
-@Service
 public final class OverrideFileTypeManager extends PersistentFileSetManager {
   public boolean isMarkedPlainText(@NotNull VirtualFile file) {
     return PlainTextFileType.INSTANCE.getName().equals(getFileValue(file));

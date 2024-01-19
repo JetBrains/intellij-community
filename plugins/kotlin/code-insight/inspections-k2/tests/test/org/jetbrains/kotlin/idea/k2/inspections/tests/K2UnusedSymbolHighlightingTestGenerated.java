@@ -254,6 +254,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk2.kt");
         }
 
+        @TestMetadata("effectivelyFinalFunctionParameter.kt")
+        public void testEffectivelyFinalFunctionParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/effectivelyFinalFunctionParameter.kt");
+        }
+
         @TestMetadata("entryPoint.kt")
         public void testEntryPoint() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/entryPoint.kt");

@@ -245,15 +245,14 @@ public final class DfaUtil {
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
    * (e.g. passed to {@link StandardDataFlowRunner#analyzeMethodRecursively(PsiElement, DfaListener)}) to cover
-   * given expression.
+   * given element.
    *
-   * @param expression expression to cover
+   * @param anchor element to cover
    * @return a dataflow context; null if no applicable context found.
    */
-  static @Nullable PsiElement getDataflowContext(PsiExpression expression) {
-    PsiElement element = expression;
+  static @Nullable PsiElement getDataflowContext(@NotNull PsiElement anchor) {
+    PsiElement element = anchor;
     while (true) {
-      element = element.getParent();
       if (element == null || element instanceof PsiAnnotation) return null;
       if (element instanceof PsiMethod method && !method.isConstructor()) {
         PsiClass containingClass = method.getContainingClass();
@@ -263,6 +262,7 @@ public final class DfaUtil {
         }
       }
       if (element instanceof PsiClass psiClass && !PsiUtil.isLocalOrAnonymousClass(psiClass)) return psiClass;
+      element = element.getParent();
     }
   }
 
@@ -274,6 +274,7 @@ public final class DfaUtil {
    * @return evaluated value or null if cannot be evaluated
    */
   public static @Nullable Boolean evaluateCondition(@Nullable PsiExpression condition) {
+    if (condition == null) return null;
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(condition);
     if (result == null) return null;
     return tryCast(ContainerUtil.getOnlyItem(result.getExpressionValues(condition)), Boolean.class);

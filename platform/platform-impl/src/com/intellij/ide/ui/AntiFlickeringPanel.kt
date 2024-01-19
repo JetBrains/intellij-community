@@ -7,10 +7,7 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.LayoutManager
+import java.awt.*
 import java.awt.image.BufferedImage
 import javax.swing.JPanel
 
@@ -20,10 +17,16 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
   private var savedSelfieImage: BufferedImage? = null
   private var savedSize: Dimension? = null
   private var savedPreferredSize: Dimension? = null
+  private var needToScroll: Rectangle? = null
 
   fun freezePainting(delay: Int) {
     isOpaque = true
+    needToScroll = null
     savedSelfieImage = takeSelfie(this)
+    if (savedSelfieImage == null) {
+      isOpaque = false
+      return
+    }
     savedSize = size
     savedPreferredSize = preferredSize
 
@@ -33,6 +36,10 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
                               savedPreferredSize = null
                               isOpaque = false
                               revalidate()
+                              needToScroll?.let {
+                                needToScroll = null
+                                scrollRectToVisible(it)
+                              }
                               repaint()
                             }, delay, null)
     alarm.request()
@@ -56,10 +63,19 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
     super.paint(g)
   }
 
+  fun scrollRectToVisibleAfterFreeze(needToScroll: Rectangle) {
+    if (savedSize == null) {
+      scrollRectToVisible(needToScroll)
+    }
+    else {
+      this.needToScroll = needToScroll
+    }
+  }
+
   companion object {
     @JvmStatic
-    private fun takeSelfie(component: Component): BufferedImage {
-      val graphicsConfiguration = component.graphicsConfiguration
+    private fun takeSelfie(component: Component): BufferedImage? {
+      val graphicsConfiguration = component.graphicsConfiguration ?: return null
       val image = ImageUtil.createImage(graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_ARGB)
       setupAntialiasing(image.graphics)
       component.paint(image.graphics)

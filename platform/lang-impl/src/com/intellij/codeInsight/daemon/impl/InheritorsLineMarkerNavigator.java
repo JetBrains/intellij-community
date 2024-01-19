@@ -5,13 +5,14 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
 
 public abstract class InheritorsLineMarkerNavigator extends LineMarkerNavigator implements GutterIconNavigationHandler<PsiElement> {
   @Override
-  public final void browse(MouseEvent e, PsiElement element) {
-    PsiElement parent = element.getParent();
+  public final void browse(MouseEvent e, @Nullable PsiElement element) {
+    PsiElement parent = element != null ? element.getParent() : null;
     if (parent == null) return;
     new GotoImplementationHandler().navigateToImplementations(parent, e, getMessageForDumbMode());
   }

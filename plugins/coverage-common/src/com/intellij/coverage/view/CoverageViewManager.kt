@@ -4,6 +4,7 @@ package com.intellij.coverage.view
 import com.intellij.coverage.CoverageBundle
 import com.intellij.coverage.CoverageOptionsProvider
 import com.intellij.coverage.CoverageSuitesBundle
+import com.intellij.coverage.actions.ExternalReportImportManager
 import com.intellij.coverage.view.CoverageViewManager.StateBean
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
@@ -13,9 +14,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.util.ui.ComponentWithEmptyText
 import org.jetbrains.annotations.NonNls
 
 @State(name = "CoverageViewManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
@@ -38,6 +41,10 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
       stripeTitle = CoverageBundle.messagePointer("coverage.view.title")
     }
     toolWindow.helpId = CoverageView.HELP_ID
+    (toolWindow.component as? ComponentWithEmptyText)?.emptyText
+      ?.appendLine(CoverageBundle.message("coverage.import.report.toolwindow.empty.text"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+      ExternalReportImportManager.getInstance(myProject).chooseAndOpenSuites()
+    }
     return toolWindow.contentManager
   }
 

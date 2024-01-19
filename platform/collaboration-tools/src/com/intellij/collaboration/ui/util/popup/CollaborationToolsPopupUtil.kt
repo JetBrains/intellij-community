@@ -13,13 +13,7 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import java.awt.Point
 import javax.swing.JList
 import kotlin.coroutines.resume
@@ -45,20 +39,16 @@ object CollaborationToolsPopupUtil {
   }
 }
 
-suspend fun JBPopup.showAndAwait(point: RelativePoint, showDirection: ShowDirection) = showAndAwait(point, showDirection) {}
-
-suspend fun <T> JBPopup.showAndAwait(point: RelativePoint, showDirection: ShowDirection, getResultOnOk: JBPopup.() -> T): T {
+suspend fun JBPopup.showAndAwait(point: RelativePoint, showDirection: ShowDirection) {
   showPopup(point, showDirection)
-  return waitForResultAsync(getResultOnOk)
+  return awaitClose()
 }
 
-suspend fun JBPopup.awaitClose() = waitForResultAsync { Unit }
-
-private suspend fun <T> JBPopup.waitForResultAsync(getResultOnOk: JBPopup.() -> T): T {
+suspend fun JBPopup.awaitClose() {
   checkDisposed()
   return try {
-    suspendCancellableCoroutine<T> { continuation ->
-      addChoicePopupListener(continuation) { getResultOnOk() }
+    suspendCancellableCoroutine { continuation ->
+      continueWhenPopupClosed(continuation) { }
     }
   }
   catch (e: CancellationException) {
@@ -93,7 +83,7 @@ private suspend fun <T> JBPopup.waitForChoiceAsync(list: JList<T>): T {
   checkDisposed()
   return try {
     suspendCancellableCoroutine<T> { continuation ->
-      addChoicePopupListener(continuation) { list.selectedValue }
+      continueWhenPopupClosed(continuation) { list.selectedValue }
     }
   }
   catch (e: CancellationException) {
@@ -119,7 +109,7 @@ private suspend fun <T> JBPopup.waitForMultipleChoiceAsync(list: JList<Selectabl
   }
 }
 
-private fun <T> JBPopup.addChoicePopupListener(cont: CancellableContinuation<T>, chosenValue: () -> T) {
+private fun <T> JBPopup.continueWhenPopupClosed(cont: CancellableContinuation<T>, chosenValue: () -> T) {
   val listener = object : JBPopupListener {
     override fun onClosed(event: LightweightWindowEvent) {
       when {

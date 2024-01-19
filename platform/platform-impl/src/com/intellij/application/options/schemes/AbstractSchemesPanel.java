@@ -17,8 +17,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -45,7 +47,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
   InfoComponent myInfoComponent;
-  
+
   // region Colors (probably should be standard for platform UI)
   
   private static final Color HINT_FOREGROUND = JBColor.GRAY;
@@ -115,6 +117,19 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
     controlsPanel.add(myToolbar);
     controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
+
+    ActionLink actionLink = createActionLink();
+    if (actionLink != null) {
+      controlsPanel.add(actionLink);
+      controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
+    }
+
+    ContextHelpLabel contextHelpLabel = createContextHelpLabel();
+    if (contextHelpLabel != null) {
+      controlsPanel.add(contextHelpLabel);
+      controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
+    }
+
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
@@ -156,6 +171,12 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   
   public void selectScheme(@Nullable T scheme) {
     mySchemesCombo.selectScheme(scheme);
+  }
+
+  private @Nullable ContextHelpLabel createContextHelpLabel() {
+    String text = getContextHelpLabelText();
+    if (text == null) return null;
+    return ContextHelpLabel.create(text);
   }
   
   public final void resetSchemes(@NotNull Collection<? extends T> schemes) {
@@ -210,6 +231,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   }
 
   protected abstract @NotNull InfoComponent createInfoComponent();
+
+  protected @Nullable ActionLink createActionLink() {
+    return null;
+  }
+
+  protected @Nullable @Nls String getContextHelpLabelText() {
+    return null;
+  }
 
   /**
    * @return a string label to place before the combobox or {@code null} if it is not needed

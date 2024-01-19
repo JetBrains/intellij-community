@@ -4,11 +4,9 @@ import com.intellij.openapi.components.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-@Service(Service.Level.APP)
 @State(name = "MarkdownCodeInsightSettings",
        category = SettingsCategory.CODE,
-       exportable = true,
-       storages = [(Storage("markdown.xml", roamingType = RoamingType.DISABLED))])
+       storages = [(Storage("markdown.xml"))])
 class MarkdownCodeInsightSettings: SimplePersistentStateComponent<MarkdownCodeInsightSettings.State>(State()) {
   class State: BaseState() {
     var reformatTablesOnType: Boolean by property(true)

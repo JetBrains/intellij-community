@@ -4,21 +4,19 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ProjectRule
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 import java.nio.file.Path
 import kotlin.properties.Delegates
 
-internal class StorageManagerTest {
+class StorageManagerTest {
   companion object {
-    const val MACRO = "\$MACRO1$"
+    private const val MACRO = "\$MACRO1$"
 
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
   private var storageManager: StateStorageManagerImpl by Delegates.notNull()
@@ -42,13 +40,9 @@ internal class StorageManagerTest {
 
   @Test
   fun `create storage assertion thrown when unknown macro`() {
-    try {
-      storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml", RoamingType.DEFAULT)
-      TestCase.fail("Exception expected")
-    }
-    catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Cannot resolve \$UNKNOWN_MACRO\$/test.xml in [Macro(key=\$MACRO1\$, value=${FileUtil.toSystemDependentName("/temp/m1")})]")
-    }
+    assertThatThrownBy { storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml", RoamingType.DEFAULT) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessage("Cannot resolve \$UNKNOWN_MACRO\$/test.xml in [Macro(key=\$MACRO1\$, value=${FileUtil.toSystemDependentName("/temp/m1")})]")
   }
 
   @Test

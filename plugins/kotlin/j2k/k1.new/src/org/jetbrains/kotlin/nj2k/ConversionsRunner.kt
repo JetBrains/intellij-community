@@ -11,7 +11,8 @@ import java.util.*
 
 object ConversionsRunner {
     private fun createConversions(context: NewJ2kConverterContext) = listOf(
-        ParenthesizeBinaryExpressionIfNeededConversion(context),
+        ParenthesizeBitwiseOperationConversion(context),
+        ParenthesizeMultilineBinaryExpressionConversion(context),
         NonCodeElementsConversion(context),
         JavaModifiersConversion(context),
         JavaAnnotationsConversion(context),

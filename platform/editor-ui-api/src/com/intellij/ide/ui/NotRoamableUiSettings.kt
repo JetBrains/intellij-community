@@ -9,7 +9,6 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
-@Service(Service.Level.APP)
 @State(name = "NotRoamableUiSettings",
        category = SettingsCategory.UI,
        exportable = true,

@@ -27,9 +27,8 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
-import java.nio.file.Paths
 
-internal class DefaultProjectStoreTest {
+class DefaultProjectStoreTest {
   companion object {
     @JvmField
     @ClassRule
@@ -90,7 +89,7 @@ internal class DefaultProjectStoreTest {
 
   @Test
   fun `new project from default - remove workspace component configuration`() {
-    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
+    val testData = Path.of(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = JDOMUtil.load(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")
@@ -103,7 +102,7 @@ internal class DefaultProjectStoreTest {
 
   @Test
   fun `new IPR project from default - remove workspace component configuration`() {
-    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
+    val testData = Path.of(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = JDOMUtil.load(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")

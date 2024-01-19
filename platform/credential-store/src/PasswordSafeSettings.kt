@@ -12,7 +12,6 @@ import com.intellij.util.xmlb.annotations.OptionTag
 private val defaultProviderType: ProviderType
   get() = CredentialStoreManager.getInstance().defaultProvider()
 
-@Service
 @State(name = "PasswordSafe",
        category = SettingsCategory.SYSTEM,
        exportable = true,

@@ -409,7 +409,9 @@ public final class StubIndexImpl extends StubIndexEx {
     return () -> {
       if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
         ReadAction.run(() -> {
-          ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+          if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl index) {
+            index.getChangedFilesCollector().processFilesToUpdateInReadAction();
+          }
         });
       }
       return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);

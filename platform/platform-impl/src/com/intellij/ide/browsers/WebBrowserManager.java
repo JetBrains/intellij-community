@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@Service(Service.Level.APP)
 @State(name = "WebBrowsersConfiguration",
   category = SettingsCategory.TOOLS,
   exportable = true,

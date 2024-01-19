@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
@@ -16,6 +17,7 @@ import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -324,14 +326,14 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
         else {
           severity = HighlightSeverity.WEAK_WARNING;
         }
-        IntentionAction fix;
+        CommonIntentionAction fix;
         boolean universal;
         if (problem.myCode.equals("E401")) {
           fix = new OptimizeImportsQuickFix();
           universal = true;
         }
         else if (problem.myCode.equals("W391")) {
-          fix = new RemoveTrailingBlankLinesFix().asIntention();
+          fix = new RemoveTrailingBlankLinesFix();
           universal = true;
         }
         else if (problem.myCode.equals("E501")) {
@@ -339,7 +341,7 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
           universal = false;
         }
         else {
-          fix = new ReformatFix().asIntention();
+          fix = new ReformatFix();
           universal = true;
         }
         AnnotationBuilder builder = holder.newAnnotation(severity, message).range(problemRange);

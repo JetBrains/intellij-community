@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
@@ -38,8 +37,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.WindowManagerImpl
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.ui.*
 import com.intellij.ui.icons.IconReplacer
@@ -56,7 +54,10 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Insets
 import java.awt.event.InputEvent
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -244,12 +245,12 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
   }
 }
 
-private class RunWidgetButtonLook : IdeaActionButtonLook() {
+private class RunWidgetButtonLook : HeaderToolbarButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
     val isDisabled = (component as? ActionButton)?.presentation?.isEnabled == false
     val isStopButton = isStopButton(component)
     if (isDisabled || (!isStopButton && !buttonIsRunning(component))) {
-      return getHeaderBackgroundColor(component, state)
+      return super.getStateBackground(component, state)
     }
 
     val color = if (isStopButton) JBUI.CurrentTheme.RunWidget.STOP_BACKGROUND else JBUI.CurrentTheme.RunWidget.RUNNING_BACKGROUND
@@ -261,11 +262,13 @@ private class RunWidgetButtonLook : IdeaActionButtonLook() {
     }
   }
 
-  override fun getDisabledIcon(icon: Icon): Icon {
-    return com.intellij.ui.icons.getDisabledIcon(icon = icon, disableFilter = lightThemeDarkHeaderDisableFilter)
+  override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
+    val iconPos = getIconPosition(actionButton, icon)
+    paintIcon(g, actionButton, icon, iconPos.x, iconPos.y)
   }
 
-  override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
+  override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon, x: Int, y: Int) {
+    actionButton?: return
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
@@ -305,10 +308,6 @@ private class RunWidgetButtonLook : IdeaActionButtonLook() {
 
     paintIconImpl(g, actionButton, resultIcon, x, y)
   }
-
-  override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
-
-  override fun getButtonArc() = JBUI.CurrentTheme.MainToolbar.Button.hoverArc()
 }
 
 internal const val MINIMAL_POPUP_WIDTH = 270

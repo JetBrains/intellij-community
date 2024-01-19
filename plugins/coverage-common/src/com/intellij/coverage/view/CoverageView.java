@@ -370,6 +370,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     installAutoScrollFromSource(actionGroup);
 
     actionGroup.add(ActionManager.getInstance().getAction("GenerateCoverageReport"));
+    actionGroup.add(ActionManager.getInstance().getAction("ImportCoverage"));
 
     List<AnAction> extraActions = myViewExtension.createExtraToolbarActions();
     extraActions.forEach(actionGroup::add);

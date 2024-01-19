@@ -131,7 +131,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState = state;
     if (isInitialized()) {
       applyStateToTree(myProjectsTree, this);
-      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false, false));
+      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false));
     }
   }
 
@@ -270,7 +270,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (runImportOnStartup.get()) {
         var forceImport =
           Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
-        scheduleUpdateAllMavenProjects(new MavenImportSpec(forceImport, forceImport, false));
+        if (forceImport) {
+          scheduleUpdateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT);
+        }
       }
     }
   }
@@ -447,7 +449,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete);
-    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, false));
+    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false));
   }
 
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
@@ -707,22 +709,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
-    if (!isInitialized()) {
-      initAndActivate();
-      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, false));
-    }
-    newTree.addListenersFrom(myProjectsTree);
-    myProjectsTree = newTree;
-    myWatcher.setProjectTree(newTree);
-  }
-
-  @ApiStatus.Internal
-  public EventDispatcher<MavenProjectsTree.Listener> getTreeListenerEventDispatcher() {
-    return myProjectsTreeDispatcher;
-  }
-
-  @ApiStatus.Internal
   @NotNull
   public MavenProjectsTree getProjectsTree() {
     if (myProjectsTree == null) {
@@ -750,7 +736,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true, true));
+    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true));
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {

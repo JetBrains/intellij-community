@@ -2,50 +2,67 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUrls, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : EntityWithUrls, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
 
   override val simpleUrl: VirtualFileUrl
-    get() = dataSource.simpleUrl
+    get() {
+      readField("simpleUrl")
+      return dataSource.simpleUrl
+    }
 
   override val nullableUrl: VirtualFileUrl?
-    get() = dataSource.nullableUrl
+    get() {
+      readField("nullableUrl")
+      return dataSource.nullableUrl
+    }
 
   override val listOfUrls: List<VirtualFileUrl>
-    get() = dataSource.listOfUrls
+    get() {
+      readField("listOfUrls")
+      return dataSource.listOfUrls
+    }
 
   override val dataClassWithUrl: DataClassWithUrl
-    get() = dataSource.dataClassWithUrl
+    get() {
+      readField("dataClassWithUrl")
+      return dataSource.dataClassWithUrl
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(
     result), EntityWithUrls.Builder {
@@ -78,7 +95,7 @@ open class EntityWithUrlsImpl(val dataSource: EntityWithUrlsData) : EntityWithUr
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -188,9 +205,9 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
   lateinit var listOfUrls: MutableList<VirtualFileUrl>
   lateinit var dataClassWithUrl: DataClassWithUrl
 
-  fun isSimpleUrlInitialized(): Boolean = ::simpleUrl.isInitialized
-  fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
-  fun isDataClassWithUrlInitialized(): Boolean = ::dataClassWithUrl.isInitialized
+  internal fun isSimpleUrlInitialized(): Boolean = ::simpleUrl.isInitialized
+  internal fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
+  internal fun isDataClassWithUrlInitialized(): Boolean = ::dataClassWithUrl.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EntityWithUrls> {
     val modifiable = EntityWithUrlsImpl.Builder(null)
@@ -200,13 +217,19 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): EntityWithUrls {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): EntityWithUrls {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = EntityWithUrlsImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.EntityWithUrls") as EntityMetadata
   }
 
   override fun clone(): EntityWithUrlsData {
@@ -280,14 +303,5 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
     result = 31 * result + listOfUrls.hashCode()
     result = 31 * result + dataClassWithUrl.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(DataClassWithUrl::class.java)
-    this.listOfUrls?.let { collector.add(it::class.java) }
-    this.dataClassWithUrl?.let { collector.add(it::class.java) }
-    this.nullableUrl?.let { collector.add(it::class.java) }
-    this.simpleUrl?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

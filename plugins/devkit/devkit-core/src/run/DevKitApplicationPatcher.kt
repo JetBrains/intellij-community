@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Files
@@ -41,17 +42,20 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       val qualifiedName = "com.intellij.util.lang.PathClassLoader"
       if (JUnitDevKitPatcher.loaderValid(project, module, qualifiedName)) {
         vmParameters.addProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY, qualifiedName)
+        vmParameters.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true")
       }
     }
 
     JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
 
+    val is17 = javaParameters.jdk?.versionString?.contains("17") == true
     if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
-      if (javaParameters.jdk?.versionString?.contains("17") == true) {
+      if (is17) {
         vmParameters.addAll("-XX:CICompilerCount=2")
       }
       else {
         vmParameters.addAll("-XX:-TieredCompilation")
+        vmParameters.addAll("-XX:+SegmentedCodeCache")
       }
     }
 
@@ -65,7 +69,15 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")
     }
-    addRequiredVmOptionForTestOrAppRunConfiguration(vmParameters)
+    if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
+      vmParameters.add("-Xmx2g")
+    }
+    if (is17 && vmParametersAsList.none { it.startsWith("-XX:SoftRefLRUPolicyMSPerMB") }) {
+      vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
+    }
+    if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
+      vmParameters.add("-XX:ReservedCodeCacheSize=${if (is17) 512 else 240}m")
+    }
 
     if (!isDev) {
       return
@@ -145,14 +157,4 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
     "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
     "compose.swing.render.on.graphics" to "true",
   )
-}
-
-internal fun addRequiredVmOptionForTestOrAppRunConfiguration(vmParameters: ParametersList) {
-  val list = vmParameters.list
-  if (list.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
-    vmParameters.add("-XX:ReservedCodeCacheSize=512m")
-  }
-  if (list.none { it.startsWith("-XX:SoftRefLRUPolicyMSPerMB") }) {
-    vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
-  }
 }

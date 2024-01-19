@@ -1,7 +1,7 @@
 package foo
 
-import foo.A.Companion.companionExtensionMember
-import foo.O.objectExtensionMember1
+import foo.O.objectExtensionMember2
+import foo.O.objectMember2
 
 fun test() {
     A().classMember()

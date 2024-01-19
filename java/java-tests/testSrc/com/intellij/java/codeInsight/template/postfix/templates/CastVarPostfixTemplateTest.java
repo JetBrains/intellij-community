@@ -13,7 +13,6 @@ public class CastVarPostfixTemplateTest extends PostfixTemplateTestCase {
     return "castvar";
   }
 
-  @NeedsIndex.SmartMode(reason = "DFA is necessary for smart-cast")
   public void testSingleExpression() {
     doTest();
   }
@@ -21,8 +20,11 @@ public class CastVarPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testAssigned() {
     doTest();
   }
+  
+  public void testTypeAnnotations() {
+    doTest();
+  }
 
-  @NeedsIndex.SmartMode(reason = "DFA is necessary for smart-cast")
   public void testFinalSingleExpression() {
     JavaCodeStyleSettings customSettings = JavaCodeStyleSettings.getInstance(getProject());
     customSettings.GENERATE_FINAL_LOCALS = true;

@@ -92,12 +92,7 @@ class B implements AnnotationBuilder {
     Boolean universal;
 
     FixB(@NotNull CommonIntentionAction fix) {
-      ModCommandAction unwrappedModCommandAction = fix.asModCommandAction();
-      if (unwrappedModCommandAction != null) {
-        this.fix = unwrappedModCommandAction;
-      } else {
-        this.fix = fix;
-      }
+      this.fix = fix;
     }
 
     @Override
@@ -164,7 +159,17 @@ class B implements AnnotationBuilder {
   }
 
   @Override
+  public @NotNull AnnotationBuilder withFix(@NotNull CommonIntentionAction fix) {
+    return newFix(fix).registerFix();
+  }
+
+  @Override
   public @NotNull FixBuilder newFix(@NotNull IntentionAction fix) {
+    return new FixB(fix);
+  }
+
+  @Override
+  public @NotNull FixBuilder newFix(@NotNull CommonIntentionAction fix) {
     return new FixB(fix);
   }
 

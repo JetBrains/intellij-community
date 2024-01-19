@@ -34,6 +34,6 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: UnknownPropertyTypeEntity,
-                                      modification: UnknownPropertyTypeEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: UnknownPropertyTypeEntity.Builder.() -> Unit): UnknownPropertyTypeEntity = modifyEntity(
   UnknownPropertyTypeEntity.Builder::class.java, entity, modification)
 //endregion

@@ -15,7 +15,6 @@ import java.nio.file.Path
        category = SettingsCategory.TOOLS,
        exportable = true,
        storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
-@Service(Service.Level.APP)
 class TrustedPaths : TrustedProjectsStateStorage<TrustedPaths.State>(State()) {
 
   companion object {

@@ -59,7 +59,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 object KotlinUnusedSymbolUtil {
-  private val KOTLIN_ADDITIONAL_ANNOTATIONS = listOf("kotlin.test.*", "kotlin.js.JsExport")
+  private val KOTLIN_ADDITIONAL_ANNOTATIONS: List<String> = listOf("kotlin.test.*", "kotlin.js.JsExport")
 
   // Simple PSI-based checks
   fun isApplicableByPsi(declaration: KtNamedDeclaration): Boolean {
@@ -86,27 +86,24 @@ object KotlinUnusedSymbolUtil {
               // do not highlight unused in .forEach { (a,b) -> {} }
               return false
           }
-          else if (ownerFunction is KtFunction) {
-              if (isEffectivelyAbstract(ownerFunction)) {
-                  return false
-              }
-              if (ownerFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                  return false
-              }
-              if (ownerFunction.hasModifier(KtTokens.OPEN_KEYWORD)) { // maybe one of overriders does use this parameter
-                  return false
-              }
+          else if (ownerFunction is KtFunction && isEffectivelyAbstractFunction(ownerFunction)) {
+              return false
           }
       }
 
       return !declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)
   }
 
-    private fun isEffectivelyAbstract(ownerFunction: KtFunction): Boolean {
-        if (ownerFunction.hasModifier(KtTokens.ABSTRACT_KEYWORD) || ownerFunction.hasModifier(KtTokens.EXPECT_KEYWORD)) {
+    private fun isEffectivelyAbstractFunction(ownerFunction: KtFunction): Boolean {
+        val modifierList = ownerFunction.modifierList
+        if (modifierList != null && (modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.EXPECT_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.OPEN_KEYWORD))
+        ) { // maybe one of overriders does use this parameter
             return true
         }
-        return ownerFunction.containingClass()?.isAbstract() == true
+        return ownerFunction.containingClass()?.isInterface() == true
     }
 
     fun isLocalDeclaration(declaration: KtNamedDeclaration): Boolean {
@@ -150,7 +147,7 @@ object KotlinUnusedSymbolUtil {
   }
 
   context(KtAnalysisSession)
-  private fun KtDeclaration.hasKotlinAdditionalAnnotation() =
+  private fun KtDeclaration.hasKotlinAdditionalAnnotation(): Boolean =
       this is KtNamedDeclaration && checkAnnotatedUsingPatterns(this, KOTLIN_ADDITIONAL_ANNOTATIONS)
 
   private fun KtProperty.isSerializationImplicitlyUsedField(): Boolean {
@@ -260,10 +257,7 @@ object KotlinUnusedSymbolUtil {
 
   // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
   context(KtAnalysisSession)
-  private fun checkAnnotatedUsingPatterns(
-      declaration: KtNamedDeclaration,
-      annotationPatterns: Collection<String>
-  ): Boolean {
+  private fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
       if (declaration.annotationEntries.isEmpty()) return false
       val annotationsPresent = declaration.annotationEntries.mapNotNull {
           val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null

@@ -17,7 +17,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -54,19 +54,19 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     else {
       setFocusCycleRoot(true);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
-      textField.addKeyListener(new KeyListener() {
-        @Override
-        public void keyTyped(KeyEvent e) { }
-
+      textField.addKeyListener(new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
           if (e != null && (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_UP)) {
             textField.transferFocus();
           }
         }
-
+      });
+      myTemplatesList.addKeyListener(new KeyAdapter() {
         @Override
-        public void keyReleased(KeyEvent e) { }
+        public void keyPressed(KeyEvent e) {
+          performApplyActionOnEnter(e);
+        }
       });
     }
 

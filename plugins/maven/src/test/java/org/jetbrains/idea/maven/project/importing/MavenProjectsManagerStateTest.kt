@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.assertWithinTimeout
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManagerState
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
@@ -77,11 +77,11 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
     newState.ignoredFiles = setOf(p1.getPath())
     newState.ignoredPathMasks = mutableListOf("*.zzz")
 
-    projectsManager.loadState(newState)
-    assertWithinTimeout {
-      assertUnorderedElementsAreEqual(projectsManager.projectsTreeForTests.rootProjectsFiles, p1, p3)
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    waitForImportWithinTimeout {
+      projectsManager.loadState(newState)
     }
-
+    assertUnorderedElementsAreEqual(projectsManager.projectsTreeForTests.rootProjectsFiles, p1, p3)
     assertUnorderedPathsAreEqual(projectsManager.projectsTreeForTests.managedFilesPaths, listOf(p1.getPath(), p3.getPath()))
     assertUnorderedElementsAreEqual(projectsManager.getExplicitProfiles().enabledProfiles, "three")
     assertUnorderedPathsAreEqual(projectsManager.getIgnoredFilesPaths(), listOf(p1.getPath()))

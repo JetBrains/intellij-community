@@ -326,7 +326,7 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
 
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
     val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    if (!isSeparator(cmp)) {
+    if (!isSeparator(cmp) && currRect.width != 0) {
       currRect.width = max(currRect.width, minSize.width)
     }
     currRect.height = max(currRect.height, minSize.height)

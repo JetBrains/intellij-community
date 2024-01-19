@@ -94,14 +94,14 @@ final class MavenProjectTimestamp {
   @Override
   public int hashCode() {
     int result = 0;
-    result = 31 * result + (int)(myPomTimestamp ^ (myPomTimestamp >>> 32));
-    result = 31 * result + (int)(myParentLastReadStamp ^ (myParentLastReadStamp >>> 32));
-    result = 31 * result + (int)(myProfilesTimestamp ^ (myProfilesTimestamp >>> 32));
-    result = 31 * result + (int)(myUserSettingsTimestamp ^ (myUserSettingsTimestamp >>> 32));
-    result = 31 * result + (int)(myGlobalSettingsTimestamp ^ (myGlobalSettingsTimestamp >>> 32));
-    result = 31 * result + (int)(myExplicitProfilesHashCode ^ (myExplicitProfilesHashCode >>> 32));
-    result = 31 * result + (int)(myJvmConfigTimestamp ^ (myJvmConfigTimestamp >>> 32));
-    result = 31 * result + (int)(myMavenConfigTimestamp ^ (myMavenConfigTimestamp >>> 32));
+    result = 31 * result + Long.hashCode(myPomTimestamp);
+    result = 31 * result + Long.hashCode(myParentLastReadStamp);
+    result = 31 * result + Long.hashCode(myProfilesTimestamp);
+    result = 31 * result + Long.hashCode(myUserSettingsTimestamp);
+    result = 31 * result + Long.hashCode(myGlobalSettingsTimestamp);
+    result = 31 * result + Long.hashCode(myExplicitProfilesHashCode);
+    result = 31 * result + Long.hashCode(myJvmConfigTimestamp);
+    result = 31 * result + Long.hashCode(myMavenConfigTimestamp);
     return result;
   }
 }

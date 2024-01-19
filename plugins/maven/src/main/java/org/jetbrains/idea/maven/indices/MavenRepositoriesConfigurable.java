@@ -217,16 +217,14 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     }
   }
 
-  private class MyCellRenderer extends DefaultTableCellRenderer {
+  private static class MyCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       // reset custom colors and let DefaultTableCellRenderer to set ones
       setForeground(null);
       setBackground(null);
 
-      Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-      return c;
+      return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     }
   }
 

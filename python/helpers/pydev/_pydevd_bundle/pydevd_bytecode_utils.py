@@ -324,18 +324,20 @@ def _get_smart_step_into_candidates_312(code):
     stk = []
     for instruction in dis.get_instructions(code):
         if instruction.opname == 'CALL':
-            if stk[-1].opname == 'PUSH_NULL':
+            while stk and stk[-1].opname not in ('LOAD_NAME', 'LOAD_GLOBAL',
+                                                 'LOAD_ATTR'):
                 stk.pop()
-            tos = stk[-1]
-            if tos.opname == 'LOAD_GLOBAL':
-                result.append(_Instruction(
-                    tos.opname,
-                    tos.opcode,
-                    tos.arg,
-                    tos.argval,
-                    tos.offset,
-                    tos.positions.lineno
-                ))
+            if not stk:
+                continue
+            tos = stk.pop()
+            result.append(_Instruction(
+                tos.opname,
+                tos.opcode,
+                tos.arg,
+                tos.argval,
+                tos.offset,
+                tos.positions.lineno
+            ))
         else:
             stk.append(instruction)
     return result

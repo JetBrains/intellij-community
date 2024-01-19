@@ -577,7 +577,7 @@ class NoRealMavenServerManager : MavenServerManager {
     noRealMavenAllowed()
   }
 
-  override fun shutdown(wait: Boolean) {
+  override fun closeAllConnectorsAndWait() {
     noRealMavenAllowed()
   }
 

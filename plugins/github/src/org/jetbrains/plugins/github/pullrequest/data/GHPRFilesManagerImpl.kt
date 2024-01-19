@@ -70,14 +70,16 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   }
 
   override fun dispose() {
+    if (project.isDisposed) return
+    val fileManager = FileEditorManager.getInstance(project)
     // otherwise the exception is thrown when removing an editor tab
     (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
       for (file in (files.values + diffFiles.values)) {
-        FileEditorManager.getInstance(project).closeFile(file)
+        fileManager.closeFile(file)
       }
       newPRDiffFile.get()?.also {
-        FileEditorManager.getInstance(project).closeFile(it)
+        fileManager.closeFile(it)
       }
-    }
+      }
   }
 }

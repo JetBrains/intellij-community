@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryValidator
-import com.intellij.openapi.util.io.isAncestor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleId
@@ -37,7 +36,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
                             SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context) }
   for (entry in entries) {
-    val (distribution, rootPath) = osSpecificDistPaths.find { it.second.isAncestor(entry.path, false) } 
+    val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) }
                                    ?: continue
 
     val pathInDist = rootPath.relativize(entry.path).pathString
@@ -66,7 +65,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
 fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
   val (repositoryForCompiledModulesPath, compiledModulesDescriptors) = loadForCompiledModules(context)
   val actualEntries = entries.mapNotNull { entry ->
-    if (targetDirectory.isAncestor(entry.path, false)) {
+    if (entry.path.startsWith(targetDirectory)) {
       RuntimeModuleRepositoryEntry(distribution = null,
                                    relativePath = targetDirectory.relativize(entry.path).pathString,
                                    origin = entry)

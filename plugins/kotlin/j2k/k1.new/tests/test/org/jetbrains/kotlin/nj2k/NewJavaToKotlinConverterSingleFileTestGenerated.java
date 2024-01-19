@@ -685,6 +685,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/binaryExpression/minus.java");
         }
 
+        @TestMetadata("multiLine.java")
+        public void testMultiLine() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/multiLine.java");
+        }
+
+        @TestMetadata("multiLine2.java")
+        public void testMultiLine2() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/multiLine2.java");
+        }
+
         @TestMetadata("multiplePlusMinus.java")
         public void testMultiplePlusMinus() throws Exception {
             runTest("testData/newJ2k/binaryExpression/multiplePlusMinus.java");
@@ -708,11 +718,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("or.java")
         public void testOr() throws Exception {
             runTest("testData/newJ2k/binaryExpression/or.java");
-        }
-
-        @TestMetadata("orWithNewLine.java")
-        public void testOrWithNewLine() throws Exception {
-            runTest("testData/newJ2k/binaryExpression/orWithNewLine.java");
         }
 
         @TestMetadata("plus.java")

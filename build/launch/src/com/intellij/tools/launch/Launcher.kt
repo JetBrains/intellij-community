@@ -58,6 +58,7 @@ object Launcher {
       "-Dsun.awt.disablegrab=true",
       "-Dsun.io.useCanonCaches=false",
       "-Dteamcity.build.tempDir=${paths.tempFolder.canonicalPath}",
+      "-Djava.io.tmpdir=${paths.tempFolder.canonicalPath}",
       "-Xmx${options.xmx}m",
       "-XX:+UseG1GC",
       "-XX:-OmitStackTraceInFastThrow",

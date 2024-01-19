@@ -168,9 +168,6 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         vm.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, canonicalSandbox + File.separator + "system");
         vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, canonicalSandbox + File.separator + "plugins");
 
-        if (!vm.hasProperty("idea.classpath.index.enabled")) {
-          vm.defineProperty("idea.classpath.index.enabled", "false");
-        }
         if (!vm.hasProperty("jdk.module.illegalAccess.silent")) {
           vm.defineProperty("jdk.module.illegalAccess.silent", "true");
         }

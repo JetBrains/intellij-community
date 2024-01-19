@@ -14,10 +14,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -28,7 +28,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
-import com.intellij.workspaceModel.codegen.deft.meta.ObjModule
 import com.intellij.workspaceModel.codegen.engine.*
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
@@ -38,8 +37,6 @@ import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.io.IOException
 import java.net.URL
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 import java.util.jar.Manifest
 
@@ -52,12 +49,20 @@ object CodeWriter {
     processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean,
     targetFolderGenerator: () -> VirtualFile?
   ) {
+    val sourceFilePerObjModule = HashMap<String, VirtualFile>()
     val ktClasses = HashMap<String, KtClass>()
     VfsUtilCore.processFilesRecursively(sourceFolder) {
       if (it.extension == "kt") {
         val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile?
-        ktFile?.declarations?.filterIsInstance<KtClass>()?.filter { clazz -> clazz.name != null }?.associateByTo(ktClasses) { clazz ->
-          clazz.fqName!!.asString()
+
+        ktFile?.declarations?.filterIsInstance<KtClass>()?.filter { clazz -> clazz.name != null }?.forEach { clazz ->
+          val fqName = clazz.fqName!!.asString()
+          val objModuleName = fqName.replace(clazz.name!!, "").substringBeforeLast(".")
+
+          /* We find one virtual file for each module. This is necessary to find the relative path for the generated GeneratedObjModuleFile.
+          See [addGeneratedObjModuleFile] method */
+          sourceFilePerObjModule[objModuleName] = it
+          ktClasses[fqName] = clazz
         }
       }
       return@processFilesRecursively true
@@ -103,16 +108,26 @@ object CodeWriter {
         val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
         val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
         val generatedFiles = ArrayList<KtFile>()
+
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
         indicator.isIndeterminate = false
+
         generatedCode.forEachIndexed { i, code ->
           indicator.fraction = 0.15 + 0.1 * i / generatedCode.size
           when (code) {
             is ObjModuleFileGeneratedCode ->
-              addGeneratedObjModuleFile(code, generatedFiles, project, sourceFolder, genFolder, importsByFile, psiFactory)
+              addGeneratedObjModuleFile(
+                code, generatedFiles, project,
+                sourceFolder, genFolder,
+                sourceFilePerObjModule, importsByFile, psiFactory
+              )
             is ObjClassGeneratedCode ->
-              addGeneratedObjClassFile(code, generatedFiles, project, sourceFolder, genFolder, ktClasses,
-                                       importsByFile, topLevelDeclarations, psiFactory)
+              addGeneratedObjClassFile(
+                code, generatedFiles, project,
+                sourceFolder, genFolder,
+                ktClasses, importsByFile,
+                topLevelDeclarations, psiFactory
+              )
           }
         }
 
@@ -259,10 +274,12 @@ object CodeWriter {
 
   private fun addGeneratedObjModuleFile(code: ObjModuleFileGeneratedCode, generatedFiles: MutableList<KtFile>,
                                         project: Project, sourceFolder: VirtualFile, genFolder: VirtualFile,
+                                        sourceFilePerObjModule: Map<String, VirtualFile>,
                                         importsByFile: MutableMap<KtFile, Imports>, psiFactory: KtPsiFactory) {
     val packageFqnName = code.objModuleName
-    val packageFolder = createPackageFolderIfMissing(sourceFolder, packageNameToPath(packageFqnName), genFolder)
-    val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
+
+    val sourceFile = sourceFilePerObjModule[packageFqnName]!!
+    val targetDirectory = getPsiDirectory(project, genFolder, sourceFolder, sourceFile)
 
     val implImports = Imports(packageFqnName)
     val implFile = psiFactory.createFile("${code.fileName}.kt", implImports.findAndRemoveFqns(code.generatedCode))
@@ -295,9 +312,7 @@ object CodeWriter {
     val implementationClassText = code.implementationClass
     if (implementationClassText != null) {
       val sourceFile = apiClass.containingFile.virtualFile
-      val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceFolder, '/')
-      val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
-      val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
+      val targetDirectory = getPsiDirectory(project, genFolder, sourceFolder, sourceFile)
       val implImports = Imports(apiFile.packageFqName.asString())
       val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
       copyHeaderComment(apiFile, implFile)
@@ -310,6 +325,12 @@ object CodeWriter {
       generatedFiles.add(addedFile)
       importsByFile[addedFile] = implImports
     }
+  }
+
+  private fun getPsiDirectory(project: Project, genFolder: VirtualFile, sourceFolder: VirtualFile, sourceFile: VirtualFile): PsiDirectory {
+    val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceFolder, '/')
+    val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
+    return PsiManager.getInstance(project).findDirectory(packageFolder)!!
   }
 
   private fun copyHeaderComment(apiFile: KtFile, implFile: KtFile) {
@@ -404,11 +425,6 @@ object CodeWriter {
     return generatedRegions
   }
 
-  private fun createPackageFolderIfMissing(sourceRoot: VirtualFile, packagePath: String, genFolder: VirtualFile): VirtualFile {
-    val relativePath = getRelativePathWithoutCommonPrefix(sourceRoot.path, packagePath)
-    return VfsUtil.createDirectoryIfMissing(genFolder, relativePath)
-  }
-
 
   private const val GENERATED_REGION_START = "//region generated code"
 
@@ -440,41 +456,9 @@ object CodeWriter {
     const val UNKNOWN_VERSION = "unknown version"
   }
 
-
-  private fun getRelativePathWithoutCommonPrefix(base: String, relative: String): String {
-    val basePath = Paths.get(FileUtil.normalize(base))
-    val relativePath = Paths.get(FileUtil.normalize(relative))
-
-    for (i in 0 until basePath.nameCount) {
-      val basePathSuffix = basePath.subpathOrNull(i, basePath.nameCount)
-      if (basePathSuffix != null && relativePath.startsWith(basePathSuffix)) {
-        return relativePath.subpathOrNull(basePathSuffix.nameCount, relativePath.nameCount)?.toString() ?: ""
-      }
-    }
-
-    return relative
-  }
-
-  private fun Path.subpathOrNull(beginIndex: Int, endIndex: Int): Path? {
-    return if (beginIndex < endIndex) subpath(beginIndex, endIndex).addSeparator() else null
-  }
-
-  private fun Path.addSeparator(): Path = Paths.get("/${toString()}")
-
-  private fun packageNameToPath(packageName: String): String = "/${packageName.replace('.', '/')}"
-
   //Function was added because CodeStyleManager throws an exception for big MetadataStorageImpl files
   private fun Iterable<KtFile>.withoutBigFiles(): Iterable<KtFile> {
     return filterNot { it.name == GENERATED_METADATA_STORAGE_FILE }
   }
 
-  private val ObjModule.isTestEntitiesPackage: Boolean
-    get() = name == TestEntities.CACHE_VERSION_PACKAGE || name == TestEntities.CURRENT_VERSION_PACKAGE
-}
-
-private object TestEntities {
-  private const val TEST_ENTITIES_PACKAGE = "com.intellij.platform.workspace.storage.testEntities.entities"
-
-  const val CACHE_VERSION_PACKAGE = "$TEST_ENTITIES_PACKAGE.cacheVersion"
-  const val CURRENT_VERSION_PACKAGE = "$TEST_ENTITIES_PACKAGE.currentVersion"
 }

@@ -53,7 +53,7 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: SimpleSymbolicIdEntity,
-                                      modification: SimpleSymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: SimpleSymbolicIdEntity.Builder.() -> Unit): SimpleSymbolicIdEntity = modifyEntity(
   SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 

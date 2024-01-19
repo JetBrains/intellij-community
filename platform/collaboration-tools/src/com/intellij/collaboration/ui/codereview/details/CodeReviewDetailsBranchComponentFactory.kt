@@ -52,12 +52,23 @@ object CodeReviewDetailsBranchComponentFactory {
       scope.launchNow {
         branchesVm.showBranchesRequests.collectLatest { (source, target) ->
           val point = RelativePoint.getSouthWestOf(this@apply)
-          JBPopupFactory.getInstance().createPopupChooserBuilder(listOf(CHECKOUT_ACTION_MARKER))
+          val actions = buildList<ReviewAction> {
+            add(ReviewAction.Checkout)
+            if (branchesVm.canShowInLog) {
+              ReviewAction.ShowInLog
+            }
+          }
+          JBPopupFactory.getInstance().createPopupChooserBuilder(actions)
             .setRenderer(popupActionsRenderer(source))
             .setAdText(CollaborationToolsBundle.message("review.details.branch.checkout.remote.ad.label", target, source))
+            .setItemChosenCallback { action ->
+              return@setItemChosenCallback when (action) {
+                is ReviewAction.Checkout -> branchesVm.fetchAndCheckoutRemoteBranch()
+                is ReviewAction.ShowInLog -> branchesVm.fetchAndShowInLog()
+              }
+            }
             .createPopup()
             .showAndAwait(point, ShowDirection.BELOW)
-          branchesVm.fetchAndCheckoutRemoteBranch()
         }
       }
     }
@@ -76,15 +87,20 @@ object CodeReviewDetailsBranchComponentFactory {
   }
 }
 
-private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<Any> {
+private fun popupActionsRenderer(sourceBranch: String): ListCellRenderer<ReviewAction> {
   return SimplePopupItemRenderer.create { item ->
     when (item) {
-      CHECKOUT_ACTION_MARKER -> PopupItemPresentation.Simple(
+      is ReviewAction.Checkout -> PopupItemPresentation.Simple(
         CollaborationToolsBundle.message("review.details.branch.checkout.remote", sourceBranch)
       )
-      else -> PopupItemPresentation.ToString(item)
+      is ReviewAction.ShowInLog -> PopupItemPresentation.Simple(
+        CollaborationToolsBundle.message("review.details.branch.show.remote.in.git.log", sourceBranch)
+      )
     }
   }
 }
 
-private val CHECKOUT_ACTION_MARKER = Any()
+private sealed interface ReviewAction {
+  data object Checkout : ReviewAction
+  data object ShowInLog : ReviewAction
+}

@@ -6,7 +6,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Property
 
 @State(name = "InlineCompletionOnboarding", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
-@Service(Service.Level.APP)
 internal class InlineCompletionOnboardingComponent : PersistentStateComponent<InlineCompletionOnboardingComponent> {
 
   private var shownTimeMs = 0L

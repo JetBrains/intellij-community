@@ -199,6 +199,7 @@
         "fileTypes/java.svg",
         "fileTypes/javaOutsideSource.svg"
       ],
+      "javaClass.svg": "fileTypes/javaClass.svg",
       "javaScript.svg": "fileTypes/javaScript.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",

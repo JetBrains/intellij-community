@@ -78,7 +78,9 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
       }
     }
 
-    return manager.hasLocalVersion(id.groupId, id.artifactId, id.version)
+    val hasLocalVersion = manager.hasLocalVersion(id.groupId, id.artifactId, id.version)
+    //MavenLog.LOG.trace("local index version $id: $hasLocalVersion")
+    return hasLocalVersion
   }
 
   override fun doGetVariants(id: MavenId, searchService: DependencySearchService): Set<String> {

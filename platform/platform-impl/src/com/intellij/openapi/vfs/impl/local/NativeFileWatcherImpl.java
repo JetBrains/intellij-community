@@ -40,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class NativeFileWatcherImpl extends PluggableFileWatcher {
+public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
@@ -127,13 +127,19 @@ public final class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private static boolean isDisabled() {
+  /**
+   * Subclasses should override this method if they want to use custom logic to disable their file watcher.
+   */
+  protected boolean isDisabled() {
     if (Boolean.getBoolean(PROPERTY_WATCHER_DISABLED)) return true;
-    var app = ApplicationManager.getApplication();
+    Application app = ApplicationManager.getApplication();
     return app.isCommandLine() || app.isUnitTestMode();
   }
 
-  private static @Nullable Path getExecutable() {
+  /**
+   * Subclasses should override this method to provide a custom binary to run.
+   */
+  protected @Nullable Path getExecutable() {
     String customPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (customPath != null) {
       Path customFile = PathManager.findBinFile(customPath);

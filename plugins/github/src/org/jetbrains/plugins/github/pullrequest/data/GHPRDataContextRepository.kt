@@ -151,7 +151,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     }
     val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
 
-    val filesManager = GHPRFilesManagerImpl(project, parsedRepositoryCoordinates)
+    val filesManager = GHPRFilesManagerImpl(project, apiRepositoryCoordinates)
 
     val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
     return GHPRDataContext(contextScope, listLoader, listUpdatesChecker, dataProviderRepository,

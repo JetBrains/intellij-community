@@ -51,16 +51,6 @@ fun Path.relativizeToClosestAncestor(relativePath: String): Pair<Path, Path> {
   return normalizedBasePath to normalizedRelativePath
 }
 
-/**
- * Checks that [this] is an ancestor of [path].
- *
- * @param strict if `false` then this method returns `true` if [this] equals to [file].
- * @return `true` if [this] is parent of [path]; `false` otherwise.
- */
-fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
-  return FileUtil.isAncestor(this, path, strict)
-}
-
 fun Path.findOrCreateFile(): Path {
   parent?.createDirectories()
   if (!exists()) {

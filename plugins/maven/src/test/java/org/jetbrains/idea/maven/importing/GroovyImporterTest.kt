@@ -784,7 +784,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     }
     finally {
       // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true)
+      MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
   }
 

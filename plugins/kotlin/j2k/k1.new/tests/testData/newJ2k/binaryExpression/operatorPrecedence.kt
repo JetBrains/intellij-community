@@ -20,5 +20,15 @@ internal object J {
         println(true and (4 >= 5 ushr 7) or false)
         println(true and (4 >= 5 == true) or false)
         println(true and (true == 5 >= 4) or false)
+
+        val insideMultiline = (1
+                + 1
+                - 0x1234) and (0x1234 ushr 1)
+        println(insideMultiline)
+
+        val insideMultiline2 = (1
+                + 1
+                - 0x1234) and (0x1234 ushr 1)
+        println(insideMultiline2)
     }
 }

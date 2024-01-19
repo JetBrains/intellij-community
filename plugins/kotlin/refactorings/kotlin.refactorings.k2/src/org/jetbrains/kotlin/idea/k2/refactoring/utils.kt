@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
@@ -31,6 +32,20 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+
+/**
+ * Computes [block] and removes any possible redundant imports that would be added during this operation, not touching any existing
+ * redundant imports.
+ */
+fun <T> computeWithoutAddingRedundantImports(file: KtFile, block: () -> T): T {
+    fun unusedImports() = KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)?.unusedImports?.toSet().orEmpty()
+    val unusedImportsBefore = unusedImports()
+    val result = block()
+    val afterUnusedImports = unusedImports()
+    val importsToRemove =  afterUnusedImports - unusedImportsBefore
+    importsToRemove.forEach(PsiElement::delete)
+    return result
+}
 
 @JvmOverloads
 fun getOrCreateKotlinFile(

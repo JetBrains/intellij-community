@@ -49,7 +49,9 @@ public final class FileBasedIndexScanUtil {
     NoAccessDuringPsiEvents.checkCallContext(indexId);
     ProgressManager.checkCanceled();
     if (!IndexUpToDateCheckIn.isUpToDateCheckEnabled()) return;
-    ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+    if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl index) {
+      index.getChangedFilesCollector().processFilesToUpdateInReadAction();
+    }
   }
 
   public static <K, V> @Nullable Map<K, V> getIndexData(@NotNull ID<K, V> indexId,
@@ -239,14 +241,15 @@ public final class FileBasedIndexScanUtil {
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked
       FSRecords.processFilesWithNames((Set<String>)keys, id -> {
-        if (idFilter != null && !idFilter.containsFileId(id)) return true;
         ids.add(id);
         return true;
       });
       PersistentFS fs = PersistentFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
-        VirtualFile file = fs.findFileById(iterator.nextInt());
+        int id = iterator.nextInt();
+        if (idFilter != null && !idFilter.containsFileId(id)) continue;
+        VirtualFile file = fs.findFileById(id);
         if (file == null || !scope.contains(file)) continue;
         //noinspection unchecked
         if (valueChecker != null && !valueChecker.value((V)file.getName())) continue;

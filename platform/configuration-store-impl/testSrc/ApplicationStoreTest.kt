@@ -14,8 +14,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.delete
-import com.intellij.util.io.write
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.Dispatchers
@@ -31,11 +29,15 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.writeBytes
+import kotlin.io.path.writeText
 import kotlin.properties.Delegates
 
-internal class ApplicationStoreTest {
+class ApplicationStoreTest {
   companion object {
     @JvmField
     @ClassRule
@@ -112,7 +114,7 @@ internal class ApplicationStoreTest {
     out.write(0xbb)
     out.write(0xbf)
     out.write("<application>${createComponentData("new")}</application>".toByteArray())
-    testAppConfig.resolve("new.xml").write(out.toByteArray())
+    testAppConfig.resolve("new.xml").writeBytes(out.toByteArray())
 
     testAppConfig.refreshVfs()
 
@@ -163,7 +165,7 @@ internal class ApplicationStoreTest {
 
     // additional export path
     val additionalPath = configDir.resolve("foo")
-    additionalPath.resolve("bar.icls").write("".toByteArray())
+    additionalPath.resolve("bar.icls").createParentDirectories().writeText("")
     val exportedData = BufferExposingByteArrayOutputStream()
     exportSettings(setOf(ExportableItem(FileSpec("a.xml", "a.xml", false), ""),
                          ExportableItem(FileSpec("foo", "foo", true), "")), exportedData, mapOf(), storageManager)
@@ -405,7 +407,7 @@ internal class ApplicationStoreTest {
     obsoleteStorageBean.components.addAll(listOf("Loser"))
     ExtensionTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
 
-    testAppConfig.resolve(obsoleteStorageBean.file).write("""
+    testAppConfig.resolve(obsoleteStorageBean.file).createParentDirectories().writeText("""
       <application>
         <component name="Unknown" data="some data" />
         <component name="Loser" foo="old?" />
@@ -534,7 +536,7 @@ internal class ApplicationStoreTest {
     componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
     assertEquals("changed", component.foo)
 
-    testAppConfig.resolve("a.xml").delete()
+    testAppConfig.resolve("a.xml").deleteIfExists()
     componentStore.reloadComponents(changedFileSpecs = emptyList(), deletedFileSpecs = listOf("a.xml"))
     assertEquals("defaultValue", component.foo)
   }
@@ -640,7 +642,8 @@ internal class ApplicationStoreTest {
   @State(name = "A", storages = [Storage(value = "per-os.xml", roamingType = RoamingType.PER_OS)])
   private class PerOsComponent : FooComponent()
 
-  private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.resolve(fileName).write(data.toByteArray())
+  private fun writeConfig(fileName: String, @Language("XML") data: String): Path =
+    testAppConfig.resolve(fileName).createParentDirectories().apply { writeText(data) }
 
   private class MyStreamProvider : StreamProvider {
     override val isExclusive = true

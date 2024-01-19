@@ -289,7 +289,7 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
     }
     finally {
       // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true)
+      MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
   }
 

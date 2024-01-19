@@ -43,6 +43,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.ui.JBUI;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -59,8 +60,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.options.newEditor.ConfigurablesListPanelKt.createConfigurablesListPanel;
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
-  implements EditorOptionsProvider, SchemesModel<EditorColorsScheme>, Configurable.WithEpDependencies {
+  implements EditorOptionsProvider, SchemesModel<EditorColorsScheme>, Configurable.WithEpDependencies, Configurable.NoScroll, Configurable.NoMargin {
   private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
 
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
@@ -361,10 +366,30 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   @Override
   public JComponent createComponent() {
+    JPanel container = new JPanel();
+    container.setLayout(new BorderLayout());
+    container.setBorder(JBUI.Borders.empty(11, 16, 0, 16));
+
     if (myRootSchemesPanel == null) {
       ensureSchemesPanel();
     }
-    return myRootSchemesPanel;
+
+    container.add(BorderLayout.NORTH, myRootSchemesPanel);
+    container.add(BorderLayout.CENTER, createChildSectionLinkList());
+
+    return container;
+  }
+
+  private JComponent createChildSectionLinkList() {
+    JComponent content = new JPanel(new BorderLayout());
+    content.setBorder(JBUI.Borders.emptyTop(11));
+    content.add(BorderLayout.CENTER, createConfigurablesListPanel(ApplicationBundle.message("description.colors.and.fonts"),
+                                                                  Arrays.asList(getConfigurables()),
+                                                                  null));
+
+    JScrollPane pane = createScrollPane(content, true);
+    pane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
+    return pane;
   }
 
   @Override

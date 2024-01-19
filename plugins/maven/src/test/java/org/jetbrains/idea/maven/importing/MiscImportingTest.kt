@@ -58,7 +58,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
     assertModules("project")
     assertEquals("1", projectsTree.rootProjects[0].name)
-    MavenServerManager.getInstance().shutdown(true)
+    MavenServerManager.getInstance().closeAllConnectorsAndWait()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -399,7 +399,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
       PlatformTestUtil.assertPathsEqual(projectPom.getPath(), mavenProject.properties.getProperty("workspace-info"))
     }
     finally {
-      MavenServerManager.getInstance().shutdown(true) // to unlock files
+      MavenServerManager.getInstance().closeAllConnectorsAndWait() // to unlock files
     }
   }
 

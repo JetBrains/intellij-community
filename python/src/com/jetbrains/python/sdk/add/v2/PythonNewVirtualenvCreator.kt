@@ -24,6 +24,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
@@ -63,10 +64,12 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     val firstFixLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
+      PythonNewProjectWizardCollector.logSuggestedVenvDirFixUsed()
       val newPath = suggestedLocation.resolve(suggestedVenvName)
       location.set(newPath.toString())
     }
     val secondFixLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
+      PythonNewProjectWizardCollector.logExistingVenvFixUsed()
       val sdkPath = Paths.get(location.get()).resolve(pythonInVenvPath).toString()
       if (!presenter.state.allSdks.get().any { it.homePath == sdkPath }) {
         presenter.addPythonInterpreter(sdkPath)

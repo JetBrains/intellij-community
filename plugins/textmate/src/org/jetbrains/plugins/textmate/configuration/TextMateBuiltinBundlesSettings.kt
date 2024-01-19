@@ -9,7 +9,6 @@ import java.nio.file.Path
        category = SettingsCategory.TOOLS,
        exportable = true,
        storages = [Storage(value = "textmateBuiltinBundles.xml", roamingType = RoamingType.DISABLED)])
-@Service(Service.Level.APP)
 class TextMateBuiltinBundlesSettings : SerializablePersistentStateComponent<TextMateBuiltinBundlesSettings.State>(State()) {
   companion object {
     @JvmStatic

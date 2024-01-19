@@ -19,7 +19,7 @@ abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjec
 
   override fun tearDown() = runBlocking {
     try {
-      MavenServerManager.getInstance().shutdown(true)
+      MavenServerManager.getInstance().closeAllConnectorsAndWait()
       withContext(Dispatchers.EDT) {
         JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()
       }

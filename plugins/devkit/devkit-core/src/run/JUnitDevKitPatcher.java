@@ -20,6 +20,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.JavaModuleOptions;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
-import static org.jetbrains.idea.devkit.run.DevKitApplicationPatcherKt.addRequiredVmOptionForTestOrAppRunConfiguration;
 
 final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
@@ -59,6 +58,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
         String qualifiedName = "com.intellij.util.lang.UrlClassLoader";
         if (loaderValid(project, module, qualifiedName)) {
           vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+          vm.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true");
         }
       }
       String basePath = project.getBasePath();
@@ -72,7 +72,6 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       }
 
       appendAddOpensWhenNeeded(project, jdk, vm);
-      addRequiredVmOptionForTestOrAppRunConfiguration(vm);
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);

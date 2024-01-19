@@ -361,7 +361,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, new PyUpdateSdkRequestData()));
   }
 
-  static boolean isUpdateScheduled(@NotNull Sdk sdk) {
+  public static boolean isUpdateScheduled(@NotNull Sdk sdk) {
     synchronized (ourLock) {
       return ourUnderRefresh.contains(sdk) || ourToBeRefreshed.containsKey(sdk);
     }

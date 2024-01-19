@@ -489,7 +489,17 @@
 
     <group id="MainToolbarVCSGroup">
       <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
+      <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget"/>
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
+    </group>
+
+    <group id="GitMergeRebaseWidgetGroup">
+      <reference id="Git.ResolveConflicts"/>
+      <reference id="Git.Rebase.Continue"/>
+      <reference id="Git.Rebase.Abort"/>
+      <reference id="Git.Merge.Abort"/>
+      <reference id="Git.CherryPick.Abort"/>
+      <reference id="Git.Revert.Abort"/>
     </group>
 
     <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
@@ -678,6 +688,7 @@
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
     <applicationService serviceImplementation="git4idea.light.LightGitTracker"/>
+    <applicationService serviceImplementation="git4idea.index.ui.GitStageUiApplicationSettings"/>
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 

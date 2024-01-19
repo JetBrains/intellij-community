@@ -31,8 +31,7 @@ class GitStageUiSettingsImpl(val project: Project) : GitStageUiSettings {
   }
 }
 
-@State(name = "Git.Stage.Ui.App.Settings", storages = [Storage("vcs.xml")], category = SettingsCategory.PLUGINS)
-@Service(Service.Level.APP)
+@State(name = "Git.Stage.Ui.App.Settings", storages = [Storage("vcs.xml")], category = SettingsCategory.TOOLS)
 class GitStageUiApplicationSettings : SimplePersistentStateComponent<GitStageUiApplicationSettings.State>(State()) {
   private val eventDispatcher = EventDispatcher.create(GitStageUiSettingsListener::class.java)
 

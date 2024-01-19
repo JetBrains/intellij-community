@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.images
 
 import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.openapi.util.io.isAncestor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.svg.getSvgDocumentSize
@@ -285,9 +284,9 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
   private fun getCopyrightComment(text: String?, module: JpsModule): String {
     if (text == null) {
-      if (openSourceRoot == null || module.contentRootsList.urls.any {
-          !openSourceRoot!!.isAncestor(Path.of(JpsPathUtil.urlToOsPath(it)), false)
-        }) return ""
+      if (openSourceRoot == null || module.contentRootsList.urls.any { !Path.of(JpsPathUtil.urlToOsPath(it)).startsWith(openSourceRoot!!) }) {
+        return ""
+      }
 
       return "// Copyright 2000-${LocalDate.now().year} JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.\n"
     }

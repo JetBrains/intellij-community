@@ -25,6 +25,8 @@ private fun addCommonVmOptions(is21: Boolean): List<String> {
   if (is21) {
     return common + listOf(
       "-XX:-TieredCompilation",
+      "-XX:+SegmentedCodeCache",
+      "-XX:ReservedCodeCacheSize=240m",
     )
   }
   else {
@@ -33,6 +35,7 @@ private fun addCommonVmOptions(is21: Boolean): List<String> {
       "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",
       "-XX:CICompilerCount=2",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:ReservedCodeCacheSize=512m",
     )
   }
 }
@@ -79,7 +82,6 @@ internal fun computeVmOptions(isEAP: Boolean,
     memory.putIfAbsent("-Xms", "128m")
     // must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX]
     memory.putIfAbsent("-Xmx", "2048m")
-    memory.putIfAbsent("-XX:ReservedCodeCacheSize=", "512m")
     for ((k, v) in memory) {
       result.add(k + v)
     }

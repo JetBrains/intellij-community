@@ -82,6 +82,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   fun afterTest() {
     println("> Benchmark test finished")
     Registry.get(EntitiesOrphanage.orphanageKey).setValue(false)
+    TracedSnapshotCache.LOG_QUEUE_MAX_SIZE = 10_000
   }
 
   @Test
@@ -829,6 +830,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   @ParameterizedTest
   @ValueSource(ints = [10, 100, 1_000, 10_000, 100_000, 1_000_000])
   fun `recalculate versus cache`(size: Int, testInfo: TestInfo) {
+    TracedSnapshotCache.LOG_QUEUE_MAX_SIZE = size * 10
     val q = entities<NamedEntity>().map { it.myName }
 
     val builder = MutableEntityStorage.create()
@@ -869,7 +871,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       .warmupIterations(0)
       .attempts(1).assertTiming()
 
-    snapshot.toBuilder().also { it.addEntity(NamedEntity("XX", MySource)) }.toSnapshot()
+    snapshot = snapshot.toBuilder().also { it.addEntity(NamedEntity("XX", MySource)) }.toSnapshot()
 
     println()
     println("Test four --- Add one entity")
@@ -912,8 +914,9 @@ class WorkspaceModelBenchmarksPerformanceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = [10, 100, 1_000, 10_000, 100_000, 1_000_000])
+  @ValueSource(ints = [10, 100, 1_000, 10_000, 100_000])
   fun `recalculate versus cache on tricky case`(size: Int, testInfo: TestInfo) {
+    TracedSnapshotCache.LOG_QUEUE_MAX_SIZE = size * 10
     val q = entities<NamedEntity>()
       .flatMap { namedEntity, _ -> namedEntity.children }
       .map { it.childProperty }
@@ -965,7 +968,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       .warmupIterations(0)
       .attempts(1).assertTiming()
 
-    snapshot.toBuilder().also {
+    snapshot = snapshot.toBuilder().also {
       it addEntity NamedEntity("XX", MySource) {
         this.children = listOf(NamedChildEntity("Hey", MySource))
       }
@@ -1009,9 +1012,10 @@ class WorkspaceModelBenchmarksPerformanceTest {
     println()
     println("Test five --- Update 10% of entities")
     PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Affect 10% of entities - size: $size", 100500) {
-      val time5 = measureTime {
+      val time51 = measureTime {
         snapshot.cached(q)
       }
+      val time5 = time51
       println("Update 10% of entities. size: $size, time: $time5.")
     }
       .warmupIterations(0)

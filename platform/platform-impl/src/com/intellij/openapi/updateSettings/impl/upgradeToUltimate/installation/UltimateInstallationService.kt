@@ -12,11 +12,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -139,11 +141,9 @@ class UltimateInstallationService(
     }
 
     val startResult = runCatching {
-      val openActivity = FUSEventSource.EDITOR.logTryUltimateIdeOpened(project, pluginId)
       indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.opening", suggestedIde.name)) {
-        installer!!.startUltimateAndNotify(installationResult, suggestedIde)
+        installer!!.notifyAndOfferStart(installationResult, suggestedIde, pluginId)
       }
-      openActivity.finished()
     }
 
     if (startResult.isFailure) {
@@ -253,7 +253,7 @@ internal abstract class UltimateInstaller(
     }
   }
 
-  fun startUltimateAndNotify(installationResult: InstallationResult, suggestedIde: SuggestedIde): Boolean {
+  fun notifyAndOfferStart(installationResult: InstallationResult, suggestedIde: SuggestedIde, pluginId: PluginId?) {
     val notification = NotificationGroupManager.getInstance().getNotificationGroup("Ultimate Installed")
       .createNotification(
         IdeBundle.message("notification.group.advertiser.try.ultimate.installed"),
@@ -261,15 +261,20 @@ internal abstract class UltimateInstaller(
         NotificationType.INFORMATION
       )
       .setSuggestionType(true)
-      .addAction(object : NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.close.ide")) {
+      .addAction(object : NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.switch.ide")) {
         override fun actionPerformed(e: AnActionEvent, notification: com.intellij.notification.Notification) {
-          ApplicationManager.getApplication().exit()
+          scope.launch {
+            val openActivity = FUSEventSource.EDITOR.logTryUltimateIdeOpened(project, pluginId)
+            val started = startUltimate(installationResult)
+            if (started) {
+              openActivity.finished()
+              blockingContext { runInEdt { ApplicationManager.getApplication().exit() } }
+            }
+          }
         }
       })
 
     notification.notify(project)
-
-    return startUltimate(installationResult)
   }
 
   abstract fun installUltimate(downloadResult: DownloadResult): InstallationResult?

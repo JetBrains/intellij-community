@@ -89,7 +89,7 @@ class Location {
     public int hashCode() {
         int result = editor != null ? editor.hashCode() : 0;
         result = 31 * result + (ktFile != null ? ktFile.hashCode() : 0);
-        result = 31 * result + (int)(modificationStamp ^ (modificationStamp >>> 32));
+        result = 31 * result + Long.hashCode(modificationStamp);
         result = 31 * result + startOffset;
         result = 31 * result + endOffset;
         return result;
