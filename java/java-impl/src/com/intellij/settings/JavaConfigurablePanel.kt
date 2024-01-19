@@ -6,10 +6,10 @@ import com.intellij.ui.dsl.builder.panel
 import javax.swing.JPanel
 
 class JavaConfigurablePanel(settings: JavaSettingsStorage.State) {
-  var selectedLogger : Logger = settings.logger
+  var selectedLogger : JavaLoggerInfo = settings.logger
     private set
 
-  private val loggerModel = JavaLoggerModel(settings.logger)
+  private val loggerModel = JavaLoggerModel(JavaLoggerInfo.allLoggers, settings.logger)
 
   fun createPanel(): JPanel {
     return panel {

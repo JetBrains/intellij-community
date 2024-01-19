@@ -1,17 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.settings
 
-import com.intellij.settings.Logger.Companion.allLoggers
 import javax.swing.AbstractListModel
 import javax.swing.ComboBoxModel
 
-class JavaLoggerModel(initialLogger : Logger) : AbstractListModel<Logger>(), ComboBoxModel<Logger> {
-  private val loggers = allLoggers
+class JavaLoggerModel(loggersList : List<JavaLoggerInfo>, initialLogger : JavaLoggerInfo) : AbstractListModel<JavaLoggerInfo>(), ComboBoxModel<JavaLoggerInfo> {
+  private val loggers = loggersList
 
   private var currentLogger = initialLogger
 
   override fun setSelectedItem(anItem: Any) {
-    if (anItem !is Logger) return
+    if (anItem !is JavaLoggerInfo) return
     if (currentLogger != anItem) {
       currentLogger = anItem
       fireContentsChanged(this, -1, -1)
@@ -26,7 +25,7 @@ class JavaLoggerModel(initialLogger : Logger) : AbstractListModel<Logger>(), Com
     return loggers.size
   }
 
-  override fun getElementAt(index: Int): Logger {
+  override fun getElementAt(index: Int): JavaLoggerInfo {
     return loggers[index]
   }
 }
