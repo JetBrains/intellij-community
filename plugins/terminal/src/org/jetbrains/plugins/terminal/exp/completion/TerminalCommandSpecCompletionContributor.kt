@@ -51,14 +51,24 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<BaseSuggestion> {
     val aliases = context.runtimeDataProvider.getShellEnvironment()?.aliases ?: emptyMap()
     val expandedTokens = expandAliases(tokens, aliases, context)
+    if (expandedTokens.isEmpty()) {
+      return emptyList()
+    }
 
     val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), context.runtimeDataProvider)
-    val items = completion.computeCompletionItems(expandedTokens)?.takeIf { it.isNotEmpty() }
-    return when {
-      items != null -> items
-      // suggest file names if there is nothing to suggest and completion is invoked manually
-      !context.parameters.isAutoPopup -> completion.computeFileItems(expandedTokens) ?: emptyList()
-      else -> emptyList()
+    val command = expandedTokens.first()
+    val arguments = expandedTokens.subList(1, expandedTokens.size)
+    if (arguments.isEmpty()) {
+      return completion.computeCommandsAndFiles(command)
+    }
+    else {
+      val items = completion.computeCompletionItems(command, arguments) ?: emptyList()
+      return when {
+        items.isNotEmpty() -> items
+        // suggest file names if there is nothing to suggest and completion is invoked manually
+        !context.parameters.isAutoPopup -> completion.computeFileItems(expandedTokens.last())
+        else -> emptyList()
+      }
     }
   }
 
