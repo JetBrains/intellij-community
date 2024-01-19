@@ -302,7 +302,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val syncActivity = importActivityStarted(project, MavenUtil.SYSTEM_ID)
     try {
       val console = syncConsole
-      console.startImport(spec)
+      console.startImport(spec.isExplicitImport)
       if (MavenUtil.enablePreimport()) {
         val result = MavenProjectStaticImporter.getInstance(myProject)
           .syncStatic(
