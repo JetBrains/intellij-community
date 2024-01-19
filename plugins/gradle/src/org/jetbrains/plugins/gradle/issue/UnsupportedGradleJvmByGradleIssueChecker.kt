@@ -54,14 +54,13 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
                                               javaVersionUsed != null && javaVersionUsed.feature < 7
     var unableToStartDaemonProcessForJDK9 = false
     var unableToStartDaemonProcessForJDK11 = false
-    if (!isRemovedUnsafeDefineClassMethodInJDK11Issue &&
+    if (gradleVersionUsed != null && !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
         rootCauseText.startsWith("org.gradle.api.GradleException: Unable to start the daemon process.") &&
-        rootCauseText.contains("FAILURE: Build failed with an exception.") &&
-        gradleVersionUsed != null && GradleVersionUtil.isGradleOlderOrSameAs(gradleVersionUsed, "4.6")) {
+        rootCauseText.contains("FAILURE: Build failed with an exception.")) {
       if (GradleVersionUtil.isGradleOlderThan(gradleVersionUsed, "3.0")) {
         unableToStartDaemonProcessForJDK9 = true
       }
-      else {
+      else if (GradleVersionUtil.isGradleOlderThan(gradleVersionUsed, "4.7")) {
         unableToStartDaemonProcessForJDK11 = true
       }
     }
@@ -91,55 +90,84 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
       else -> newestCompatibleJavaVersion
     }
 
-    val oldestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
-                                        ?: GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
-    val newestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestLatestSupportedGradleVersion(it) }
-    val suggestedGradleVersion = when {
-      newestCompatibleGradleVersion == null -> oldestCompatibleGradleVersion.version + " or newer"
-      oldestCompatibleGradleVersion == newestCompatibleGradleVersion -> oldestCompatibleGradleVersion.version
-      else -> "version from range [${oldestCompatibleGradleVersion.version}, ${newestCompatibleGradleVersion.version}]"
-    }
-
-    val gradleVersionString = gradleVersionUsed?.version ?: "version"
-    val javaVersionString = if (javaVersionUsed != null) "Java $javaVersionUsed" else "incompatible Java"
-
     return object : AbstractGradleBuildIssue() {
       init {
         when {
-          isRemovedUnsafeDefineClassMethodInJDK11Issue -> {
-            setTitle("Unable to start the daemon process")
-            addDescription("Unable to start the daemon process.")
-            addDescription(
-              "The project uses Gradle $gradleVersionString which is incompatible with Java 11 or newer.\n" +
-              "See details at https://github.com/gradle/gradle/issues/4860"
-            )
+          gradleVersionUsed != null && isRemovedUnsafeDefineClassMethodInJDK11Issue -> {
+            setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.cannot.start.daemon.title"))
+            addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.cannot.start.daemon.header"))
+            addDescription(GradleBundle.message(
+              "gradle.build.issue.gradle.jvm.cannot.start.daemon.issue.description", gradleVersionUsed.version, 11
+            ))
           }
-          unableToStartDaemonProcessForJDK9 -> {
-            setTitle("Unable to start the daemon process")
-            addDescription("Unable to start the daemon process.")
-            addDescription("The project uses Gradle $gradleVersionString which is incompatible with Java 9 or newer.")
+          gradleVersionUsed != null && unableToStartDaemonProcessForJDK9 -> {
+            setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.cannot.start.daemon.title"))
+            addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.cannot.start.daemon.header"))
+            addDescription(GradleBundle.message(
+              "gradle.build.issue.gradle.jvm.cannot.start.daemon.description", gradleVersionUsed.version, 9
+            ))
           }
-          unableToStartDaemonProcessForJDK11 -> {
-            setTitle("Unable to start the daemon process")
-            addDescription("Unable to start the daemon process.")
-            addDescription("The project uses Gradle $gradleVersionString which is incompatible with Java 11 or newer.")
+          gradleVersionUsed != null && unableToStartDaemonProcessForJDK11 -> {
+            setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.cannot.start.daemon.title"))
+            addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.cannot.start.daemon.header"))
+            addDescription(GradleBundle.message(
+              "gradle.build.issue.gradle.jvm.cannot.start.daemon.description", gradleVersionUsed.version, 11
+            ))
           }
-          couldNotDetermineJavaIssue -> {
-            setTitle("Unsupported Java")
-            addDescription("Unsupported Java.")
-            addDescription(
-              "Your build is currently configured to use $javaVersionString. It's recommended to use Gradle $suggestedGradleVersion."
-            )
+          isUnsupportedJavaRuntimeIssue -> {
+            val oldestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
+            val newestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestLatestSupportedGradleVersion(it) }
+            val recommendedGradleVersion = GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
+            val newestGradleVersion = GradleJvmSupportMatrix.getLatestSupportedGradleVersionByIdea()
+
+            setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title"))
+            addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.header"))
+            when {
+              javaVersionUsed == null -> {
+                addDescription(GradleBundle.message(
+                  "gradle.build.issue.gradle.jvm.unsupported.unknown.java.description",
+                  recommendedGradleVersion.version
+                ))
+              }
+              oldestCompatibleGradleVersion == null -> {
+                addDescription(GradleBundle.message(
+                  "gradle.build.issue.gradle.jvm.unsupported.open.gradle.description", javaVersionUsed,
+                  recommendedGradleVersion.version
+                ))
+              }
+              newestCompatibleGradleVersion == null || newestCompatibleGradleVersion == newestGradleVersion -> {
+                addDescription(GradleBundle.message(
+                  "gradle.build.issue.gradle.jvm.unsupported.open.gradle.description", javaVersionUsed,
+                  oldestCompatibleGradleVersion.version
+                ))
+              }
+              oldestCompatibleGradleVersion == newestCompatibleGradleVersion -> {
+                addDescription(GradleBundle.message(
+                  "gradle.build.issue.gradle.jvm.unsupported.single.gradle.description", javaVersionUsed,
+                  oldestCompatibleGradleVersion.version
+                ))
+              }
+              else -> {
+                addDescription(GradleBundle.message(
+                  "gradle.build.issue.gradle.jvm.unsupported.range.gradle.description", javaVersionUsed,
+                  oldestCompatibleGradleVersion.version, newestCompatibleGradleVersion.version
+                ))
+              }
+            }
           }
-          isUnsupportedClassVersionErrorIssue -> {
-            setTitle("Unsupported Java")
-            addDescription("Unsupported Java.")
-            addDescription("Your build is currently configured to use $javaVersionString. You need to use at least Java 7.")
+          javaVersionUsed != null && isUnsupportedClassVersionErrorIssue -> {
+            setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title"))
+            addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.header"))
+            addDescription(GradleBundle.message(
+              "gradle.build.issue.gradle.jvm.unsupported.class.version.description", javaVersionUsed, 7
+            ))
           }
-          isUnsupportedJavaVersionForGradle -> {
-            setTitle("Unsupported Java")
-            addDescription("Unsupported Java.")
-            addDescription("Your build is currently configured to use Java $javaVersionUsed and Gradle $gradleVersionString.")
+          gradleVersionUsed != null && javaVersionUsed != null && isUnsupportedJavaVersionForGradle -> {
+            setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title"))
+            addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.header"))
+            addDescription(GradleBundle.message(
+              "gradle.build.issue.gradle.jvm.unsupported.pair.description", javaVersionUsed, gradleVersionUsed.version
+            ))
           }
           else -> {
             addDescription(rootCauseMessage)
@@ -148,32 +176,34 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
 
         val isAndroidStudio = "AndroidStudio" == PlatformUtils.getPlatformPrefix()
         if (!isAndroidStudio) { // Android Studio doesn't have Gradle JVM setting
-          val gradleSettingsFix = GradleSettingsQuickFix(
+          val gradleSettingsQuickFix = GradleSettingsQuickFix(
             issueData.projectPath, true,
             GradleSettingsQuickFix.GradleJvmChangeDetector,
             GradleBundle.message("gradle.settings.text.jvm.path")
           )
-          addQuickFixPrompt("Use Java $suggestedJavaVersion as Gradle JVM: <a href=\"${gradleSettingsFix.id}\">Open Gradle settings</a>")
-          addQuickFix(gradleSettingsFix)
+          addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", gradleSettingsQuickFix.id, suggestedJavaVersion))
+          addQuickFix(gradleSettingsQuickFix)
         }
 
         if (!isUnsupportedClassVersionErrorIssue) {
+          val oldestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
+                                              ?: GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
           val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(issueData.projectPath)
           if (wrapperPropertiesFile == null || gradleVersionUsed != null && gradleVersionUsed.baseVersion < oldestCompatibleGradleVersion) {
             val gradleVersionFix = GradleVersionQuickFix(issueData.projectPath, oldestCompatibleGradleVersion, true)
-            addQuickFixPrompt(
-              "<a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${oldestCompatibleGradleVersion.version} version " +
-              "and re-import the project</a>"
-            )
+            addQuickFixPrompt(GradleBundle.message(
+              "gradle.build.quick.fix.gradle.version.auto", gradleVersionFix.id,
+              oldestCompatibleGradleVersion.version
+            ))
             addQuickFix(gradleVersionFix)
           }
           else {
             val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(issueData.projectPath, "distributionUrl")
             val reimportQuickFix = ReimportQuickFix(issueData.projectPath, GradleConstants.SYSTEM_ID)
-            addQuickFixPrompt(
-              "<a href=\"${wrapperSettingsOpenQuickFix.id}\">Open Gradle wrapper settings</a>, " +
-              "change `distributionUrl` property to use compatible Gradle version and <a href=\"${reimportQuickFix.id}\">reload the project</a>"
-            )
+            addQuickFixPrompt(GradleBundle.message(
+              "gradle.build.quick.fix.gradle.version.manual", wrapperSettingsOpenQuickFix.id, reimportQuickFix.id,
+              oldestCompatibleGradleVersion.version
+            ))
             addQuickFix(wrapperSettingsOpenQuickFix)
             addQuickFix(reimportQuickFix)
           }

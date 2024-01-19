@@ -56,19 +56,20 @@ private class UnsupportedGradleJvmBuildIssue(
     val oldestCompatibleJavaVersion = GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(gradleVersion)
 
     setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title"))
+    addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.header"))
     addDescription(GradleBundle.message(
       "gradle.build.issue.gradle.jvm.unsupported.description",
       ApplicationNamesInfo.getInstance().fullProductName,
       oldestSupportedJavaVersion.feature
     ))
     if (!isAndroidStudio && oldestCompatibleJavaVersion != null) {
-      val quickFix = GradleSettingsQuickFix(
+      val gradleSettingsQuickFix = GradleSettingsQuickFix(
         projectPath, true,
         GradleSettingsQuickFix.GradleJvmChangeDetector,
         GradleBundle.message("gradle.settings.text.jvm.path")
       )
-      addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", oldestCompatibleJavaVersion, quickFix.id))
-      addQuickFix(quickFix)
+      addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", gradleSettingsQuickFix.id, oldestCompatibleJavaVersion))
+      addQuickFix(gradleSettingsQuickFix)
     }
   }
 }
