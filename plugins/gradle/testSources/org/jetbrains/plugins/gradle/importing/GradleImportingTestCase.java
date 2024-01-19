@@ -37,13 +37,11 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.gradle.StartParameter;
 import org.gradle.util.GradleVersion;
-import org.gradle.wrapper.GradleWrapperMain;
 import org.gradle.wrapper.PathAssembler;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.jetbrains.annotations.NonNls;
@@ -55,6 +53,7 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
+import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -70,10 +69,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -82,7 +78,6 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import static org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS;
-import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
 import static org.junit.Assume.assumeThat;
 
 @RunWith(Parameterized.class)
@@ -480,29 +475,11 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return createProjectSubFile("settings.gradle", content);
   }
 
-  private PathAssembler.LocalDistribution configureWrapper() throws IOException, URISyntaxException {
-
-    final URI distributionUri = new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion));
+  private PathAssembler.LocalDistribution configureWrapper() {
 
     myProjectSettings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
-    final VirtualFile wrapperJarFrom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wrapperJar());
-    assert wrapperJarFrom != null;
 
-    final VirtualFile wrapperJarFromTo = createProjectSubFile("gradle/wrapper/gradle-wrapper.jar");
-    WriteAction.runAndWait(() -> wrapperJarFromTo.setBinaryContent(wrapperJarFrom.contentsToByteArray()));
-
-
-    Properties properties = new Properties();
-    properties.setProperty("distributionBase", "GRADLE_USER_HOME");
-    properties.setProperty("distributionPath", "wrapper/dists");
-    properties.setProperty("zipStoreBase", "GRADLE_USER_HOME");
-    properties.setProperty("zipStorePath", "wrapper/dists");
-    properties.setProperty("distributionUrl", distributionUri.toString());
-
-    StringWriter writer = new StringWriter();
-    properties.store(writer, null);
-
-    createProjectSubFile("gradle/wrapper/gradle-wrapper.properties", writer.toString());
+    WriteAction.runAndWait(() -> GradleWrapperUtil.generateGradleWrapper(myProjectRoot.toNioPath(), getCurrentGradleVersion()));
 
     String projectPath = getProjectPath();
     WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(projectPath);
@@ -526,11 +503,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       e.printStackTrace();
     }
     return localDistribution;
-  }
-
-  @NotNull
-  private static File wrapperJar() {
-    return new File(PathUtil.getJarPathForClass(GradleWrapperMain.class));
   }
 
   protected void assertMergedModuleCompileLibDepScope(String moduleName, String depName) {

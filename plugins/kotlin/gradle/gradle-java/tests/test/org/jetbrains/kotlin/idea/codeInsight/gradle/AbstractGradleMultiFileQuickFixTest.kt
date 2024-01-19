@@ -65,7 +65,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                     fun(vFile: VirtualFile): Boolean {
                         if (vFile.parent == projectVFile) {
                             when (vFile.name) {
-                                ".gradle", "gradle", "build", "gradle.properties", ".kotlin" -> return false
+                                ".gradle", "gradle", "build", "gradle.properties", "gradlew", "gradlew.bat", ".kotlin" -> return false
                             }
                         }
 
