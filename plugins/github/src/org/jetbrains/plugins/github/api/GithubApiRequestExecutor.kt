@@ -8,15 +8,15 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
@@ -252,3 +252,11 @@ sealed class GithubApiRequestExecutor {
       SimpleEventListener.addDisposableListener(authDataChangedEventDispatcher, disposable, listener)
   }
 }
+
+internal suspend fun <T> GithubApiRequestExecutor.executeSuspend(request: GithubApiRequest<T>): T =
+  withContext(Dispatchers.IO) {
+    coroutineToIndicator {
+      val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+      execute(indicator, request)
+    }
+  }
