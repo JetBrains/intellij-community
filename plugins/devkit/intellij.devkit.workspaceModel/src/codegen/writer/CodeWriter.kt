@@ -461,13 +461,4 @@ object CodeWriter {
     return filterNot { it.name == GENERATED_METADATA_STORAGE_FILE }
   }
 
-  private val ObjModule.isTestEntitiesPackage: Boolean
-    get() = name == TestEntities.CACHE_VERSION_PACKAGE || name == TestEntities.CURRENT_VERSION_PACKAGE
-}
-
-private object TestEntities {
-  private const val TEST_ENTITIES_PACKAGE = "com.intellij.platform.workspace.storage.testEntities.entities"
-
-  const val CACHE_VERSION_PACKAGE = "$TEST_ENTITIES_PACKAGE.cacheVersion"
-  const val CURRENT_VERSION_PACKAGE = "$TEST_ENTITIES_PACKAGE.currentVersion"
 }
