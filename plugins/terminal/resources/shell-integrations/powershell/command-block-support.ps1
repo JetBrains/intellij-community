@@ -87,8 +87,32 @@ function Global:__JetBrainsIntellijGetCompletions([int]$RequestId, [string]$Comm
   [Console]::Write($CommandEndMarker + $CompletionsOSC)
 }
 
+function Global:__jetbrains_intellij_get_environment([int]$RequestId) {
+  $Global:__JetBrainsIntellijGeneratorRunning = $true
+  $Functions = Get-Command -CommandType "Function, Filter, ExternalScript, Script, Workflow"
+  $Cmdlets = Get-Command -CommandType Cmdlet
+  $Commands = Get-Command -CommandType Application
+  $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
+
+  $EnvObject = [PSCustomObject]@{
+    envs = ""
+    keywords = ""
+    builtins = ($Cmdlets | ForEach-Object { $_.Name }) -join "`n"
+    functions = ($Functions | ForEach-Object { $_.Name }) -join "`n"
+    commands = ($Commands | ForEach-Object { $_.Name }) -join "`n"
+    aliases = $Aliases | ConvertTo-Json -Compress
+  }
+  $EnvJson = $EnvObject | ConvertTo-Json -Compress
+  $EnvOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $EnvJson)"
+  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
+  if ($CommandEndMarker -eq $null) {
+    $CommandEndMarker = ""
+  }
+  [Console]::Write($CommandEndMarker + $EnvOSC)
+}
+
 function Global:__JetBrainsIntellijIsGeneratorCommand([string]$Command) {
-  return $Command -like "__JetBrainsIntellijGetCompletions*"
+  return $Command -like "__JetBrainsIntellijGetCompletions*" -or $Command -like "__jetbrains_intellij_get_environment*"
 }
 
 if (Get-Module -Name PSReadLine) {

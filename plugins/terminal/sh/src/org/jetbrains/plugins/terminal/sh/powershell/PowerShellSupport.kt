@@ -1,9 +1,13 @@
 package org.jetbrains.plugins.terminal.sh.powershell
 
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.sh.getShellCommandTokens
 
@@ -47,5 +51,23 @@ class PowerShellSupport : TerminalShellSupport {
       ind++
     }
     return historyItems
+  }
+
+  override fun parseAliases(aliasesDefinition: String): Map<String, String> {
+    val aliases: List<AliasDefinition> = try {
+      Json.decodeFromString(aliasesDefinition)
+    }
+    catch (t: Throwable) {
+      LOG.error("Failed to parse aliases: '$aliasesDefinition'", t)
+      emptyList()
+    }
+    return aliases.associate { it.name to it.definition }
+  }
+
+  @Serializable
+  private data class AliasDefinition(val name: String, val definition: String)
+
+  companion object {
+    private val LOG: Logger = logger<PowerShellSupport>()
   }
 }
