@@ -123,12 +123,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     res.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          if (myApplyAction == null) return;
-          try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-            myApplyAction.consume(e);
-          }
-        }
+        performApplyActionOnEnter(e);
       }
     });
 
@@ -140,6 +135,15 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     });
 
     return res;
+  }
+
+  protected void performApplyActionOnEnter(KeyEvent e) {
+    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+      if (myApplyAction == null) return;
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        myApplyAction.consume(e);
+      }
+    }
   }
 
   public boolean hasError() {
