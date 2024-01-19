@@ -21,7 +21,6 @@ import com.intellij.testFramework.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
 
 import javax.swing.*;
 import java.io.File;
@@ -216,7 +215,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     VirtualFile file = getFile("/src/Test.java");
     assertNotNull(file);
-    Assume.assumeTrue("JAVA".equals(file.getFileType().getName())); // otherwise, the folding would be incorrect
+    assertEquals("JAVA", file.getFileType().getName()); // otherwise, the folding would be incorrect
     FileEditor[] editors = manager.openFile(file, false);
     assertEquals(1, editors.length);
     assertTrue(editors[0] instanceof TextEditor);
