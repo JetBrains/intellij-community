@@ -171,8 +171,15 @@ class ProjectWizardJdkComboBox(
             }
           }
           is DownloadJdk -> {
-            item.append(JavaUiBundle.message("jdk.download.predefined.item", value.task.suggestedSdkName))
-            item.append(" ${value.task.plannedVersion}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+            when (value.task.productName) {
+              null -> {
+                item.append(JavaUiBundle.message("jdk.download.predefined.item", value.task.suggestedSdkName))
+                item.append(" ${value.task.plannedVersion}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+              }
+              else -> {
+                item.append(JavaUiBundle.message("jdk.download.predefined.item", value.task.productName))
+              }
+            }
           }
 
           is AddJdkFromJdkListDownloader -> item.append(JavaUiBundle.message("jdk.download.item"))
