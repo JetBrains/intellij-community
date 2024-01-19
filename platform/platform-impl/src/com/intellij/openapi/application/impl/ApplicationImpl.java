@@ -69,6 +69,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
+import static com.intellij.openapi.application.RuntimeFlagsKt.isNewLockEnabled;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
@@ -77,6 +78,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return Logger.getInstance(ApplicationImpl.class);
   }
 
+  private final static boolean isNewLockEnabled = isNewLockEnabled();
   private ReadMostlyRWLock myLock;
 
   /**
@@ -276,7 +278,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
-    if (myLock == null) {
+    if (!isNewLockEnabled && myLock == null) {
       getLogger().error("Do not call invokeLater when app is not yet fully initialized");
     }
 
@@ -784,7 +786,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @ApiStatus.Internal
   public boolean isCurrentWriteOnEdt() {
-    return EDT.isEdt(myLock.writeThread);
+    return !isNewLockEnabled && EDT.isEdt(myLock.writeThread);
   }
 
   @Override
@@ -1171,6 +1173,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @NotNull
   private static ThreadingSupport getThreadingSupport() {
-    return RwLockHolder.INSTANCE;
+    return isNewLockEnabled ? AnyThreadWriteThreadingSupport.INSTANCE : RwLockHolder.INSTANCE;
   }
 }
