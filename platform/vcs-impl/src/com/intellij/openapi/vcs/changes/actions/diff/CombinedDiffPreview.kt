@@ -33,7 +33,7 @@ abstract class CombinedDiffPreview(project: Project,
 
   override val previewFile: VirtualFile by lazy {
     object : CombinedDiffPreviewVirtualFile() {
-      override fun createModel(): CombinedDiffModel = this@CombinedDiffPreview.createModel()
+      override fun createModel(): CombinedDiffModel = getOrCreateModel()
     }
   }
 
