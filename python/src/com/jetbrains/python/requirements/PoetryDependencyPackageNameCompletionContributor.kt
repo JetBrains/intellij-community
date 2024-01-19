@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.python.community.impl.requirements.completePackageNames
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlTable
 

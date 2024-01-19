@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.python.community.impl.requirements.completeVersions
 import com.jetbrains.python.requirements.psi.NameReq
 import com.jetbrains.python.requirements.psi.VersionStmt
 
@@ -18,7 +17,7 @@ class RequirementsVersionCompletionContributor : CompletionContributor() {
 
     if (parent is VersionStmt) {
       val name = PsiTreeUtil.getParentOfType(parent, NameReq::class.java)?.simpleName?.text ?: return
-      completeVersions(name, project, result)
+      completeVersions(name, project, result, false)
     }
   }
 }

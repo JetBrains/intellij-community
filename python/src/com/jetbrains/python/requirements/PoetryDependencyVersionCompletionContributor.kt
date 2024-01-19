@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.python.community.impl.requirements.completeVersions
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
@@ -25,7 +24,7 @@ class PoetryDependencyVersionCompletionContributor : CompletionContributor() {
                                               || tableName.contains("source"))) {
       if (parent is TomlLiteral || parent is TomlKeyValue) {
         val name = (if (parent is TomlKeyValue) parent else PsiTreeUtil.getParentOfType(parent, TomlKeyValue::class.java))?.key?.text ?: return
-        completeVersions(name, project, result)
+        completeVersions(name, project, result, true)
       }
     }
   }

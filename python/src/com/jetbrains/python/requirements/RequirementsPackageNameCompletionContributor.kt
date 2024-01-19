@@ -4,7 +4,6 @@ package com.jetbrains.python.requirements
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.python.community.impl.requirements.completePackageNames
 import com.jetbrains.python.requirements.psi.SimpleName
 
 class RequirementsPackageNameCompletionContributor : CompletionContributor() {
