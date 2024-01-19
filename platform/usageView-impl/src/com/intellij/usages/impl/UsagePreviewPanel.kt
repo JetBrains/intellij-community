@@ -191,6 +191,9 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     val editor = EditorFactory.getInstance().createEditor(document, project, psiFile.virtualFile, !myIsEditor, EditorKind.PREVIEW)
     customizeEditorSettings(editor.settings)
     editor.putUserData(PREVIEW_EDITOR_FLAG, this)
+
+    onEditorCreated(editor)
+
     return editor
   }
 

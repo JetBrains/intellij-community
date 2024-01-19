@@ -17,6 +17,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.AppUIExecutor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.usageView.UsageInfo;
@@ -55,6 +56,8 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
   public void dispose() {
     isDisposed = true;
   }
+
+  protected void onEditorCreated(@NotNull Editor editor) {}
 
   @Override
   public final void updateLayout(@Nullable final List<? extends UsageInfo> infos) {

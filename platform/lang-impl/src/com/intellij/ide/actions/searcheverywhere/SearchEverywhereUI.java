@@ -36,6 +36,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -662,6 +663,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       public Dimension getPreferredSize() {
         return new Dimension(myHeader.getComponent().getWidth(), Math.max(getHeight(), getLineHeight() * 10));
       }
+
+      @Override
+      protected void onEditorCreated(@NotNull Editor editor) {
+        editor.getContentComponent().addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusLost(FocusEvent e) {
+            onFocusLost(e);
+          }
+        });
+      }
     };
 
     myUsagePreviewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
@@ -968,16 +979,20 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     mySearchField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        if (StartupUiUtil.isWaylandToolkit()) {
-          // In Wayland focus is always lost when the window is being moved.
-          return;
-        }
-        Component oppositeComponent = e.getOppositeComponent();
-        if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(SearchEverywhereUI.this, oppositeComponent)) {
-          sendStatisticsAndClose();
-        }
+        onFocusLost(e);
       }
     });
+  }
+
+  private void onFocusLost(FocusEvent e) {
+    if (StartupUiUtil.isWaylandToolkit()) {
+      // In Wayland focus is always lost when the window is being moved.
+      return;
+    }
+    Component oppositeComponent = e.getOppositeComponent();
+    if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(SearchEverywhereUI.this, oppositeComponent)) {
+      sendStatisticsAndClose();
+    }
   }
 
   private void schedulePreview(@NotNull Object selectedValue) {
