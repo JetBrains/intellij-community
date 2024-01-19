@@ -130,7 +130,9 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
       final char c = sequence.charAt(offset);
       if (c != ' ' && c != '\t') {
         if (c == '\n') {
-          offset--;
+          if (!hasDocumentSeparatorBefore(offset, sequence)) {
+            offset--;
+          }
         }
         else {
           offset = context.getStartOffset() - 1;
@@ -142,6 +144,12 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
     document.deleteString(offset + 1, context.getTailOffset());
     context.commitDocument();
+  }
+
+  private static boolean hasDocumentSeparatorBefore(int offset, CharSequence sequence) {
+    if (offset < 3) return false;
+    if (!sequence.subSequence(offset - 3, offset).equals("---")) return false;
+    return offset == 3 || sequence.charAt(offset - 4) == '\n';
   }
 
   public static boolean isCharAtCaret(Editor editor, char ch) {
