@@ -41,7 +41,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      projectWizardJdkComboBox(sdkProperty, sdkDownloadTaskProperty, StdModuleTypes.JAVA.id)
+      projectWizardJdkComboBox(context, sdkProperty, sdkDownloadTaskProperty, StdModuleTypes.JAVA.id)
     }.bottomGap(BottomGap.SMALL)
   }
 

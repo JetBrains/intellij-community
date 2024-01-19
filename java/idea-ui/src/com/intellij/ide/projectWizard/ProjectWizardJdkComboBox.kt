@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DefaultProjectFactory
@@ -60,6 +61,7 @@ sealed class ProjectWizardJdkIntent {
 }
 
 fun Row.projectWizardJdkComboBox(
+  context: WizardContext,
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
   sdkPropertyId: String,
@@ -89,6 +91,9 @@ fun Row.projectWizardJdkComboBox(
     }
     .onChanged {
       updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
+    }
+    .onApply {
+      context.projectJdk = sdkProperty.get()
     }
 
   val lastSelected = PropertiesComponent.getInstance().getValue(selectedJdkProperty)
