@@ -660,7 +660,9 @@ enum class RunState {
 private fun getPersistedConfiguration(configuration: RunnerAndConfigurationSettings?): RunnerAndConfigurationSettings? {
   var conf: RunProfile = (configuration ?: return null).configuration
   conf = ExecutionManagerImpl.getDelegatedRunProfile(conf) ?: conf
-  return RunManager.getInstance(configuration.configuration.project).allSettings.find { it.configuration == conf }
+  val project = configuration.configuration.project ?: return null
+  if (project.isDisposed) return null
+  return RunManager.getInstance(project).allSettings.find { it.configuration == conf }
 }
 
 @Nls
