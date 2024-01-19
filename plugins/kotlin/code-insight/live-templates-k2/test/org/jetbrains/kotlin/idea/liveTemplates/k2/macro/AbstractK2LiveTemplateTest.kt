@@ -7,12 +7,10 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import java.nio.file.Paths
 import kotlin.io.path.name
-import kotlin.io.path.relativeTo
 
 abstract class AbstractK2LiveTemplateTest : NewLightKotlinCodeInsightFixtureTestCase() {
     override val pluginKind: KotlinPluginMode
@@ -37,14 +35,14 @@ abstract class AbstractK2LiveTemplateTest : NewLightKotlinCodeInsightFixtureTest
             templateName?.let(myFixture::type)
 
             val fileText = file.text
-            val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $TEMPLATE:")
+            val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, TEMPLATE_DIRECTIVE)
 
             if (template != null) {
                 myFixture.type(template.replace("\\t", "\t"))
             } else {
                 myFixture.type("\t")
             }
-            myFixture.checkContentByExpectedPath(".after", addSuffixAfterExtension = isOldTestData)
+            myFixture.checkContentByExpectedPath(".after")
         }
         val templateState = TemplateManagerImpl.getTemplateState(editor)
         if (templateState?.isFinished() == false) {
@@ -53,15 +51,9 @@ abstract class AbstractK2LiveTemplateTest : NewLightKotlinCodeInsightFixtureTest
     }
 
     private val templateName: String?
-        get() = if (!isOldTestData) Paths.get(testDataPath).name else null
-
-    private val isOldTestData: Boolean
-        get() = Paths.get(testDataPath)
-            .relativeTo(KotlinTestHelpers.getTestRootPath(javaClass))
-            .toString()
-            .contains("oldTestData")
+        get() = Paths.get(testDataPath).name
 
     companion object {
-        const val TEMPLATE = "TEMPLATE"
+        const val TEMPLATE_DIRECTIVE = "TEMPLATE:"
     }
 }
