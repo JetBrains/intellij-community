@@ -31,6 +31,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
@@ -236,13 +237,16 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
 
           comboBox = new ComboBox<>(templates.toArray(new TemplateResource[0]));
           comboBox.addActionListener(e -> updateErrorMessage());
-          final JavaPsiFacade instance = JavaPsiFacade.getInstance(clazz.getProject());
+          Project project = clazz.getProject();
+          final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
           final GlobalSearchScope resolveScope = clazz.getResolveScope();
+          DumbService dumbService = DumbService.getInstance(project);
           ReadAction.nonBlocking(() -> {
               final Set<TemplateResource> invalid = new HashSet<>();
               for (TemplateResource template : templates) {
                 String className = template.getClassName();
-                if (className != null && instance.findClass(className, resolveScope) == null) {
+                if (className != null &&
+                    dumbService.computeWithAlternativeResolveEnabled(() -> instance.findClass(className, resolveScope)) == null) {
                   invalid.add(template);
                 }
               }
@@ -263,13 +267,13 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             settingsButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                  final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
+                  final TemplatesPanel ui = new TemplatesPanel(project);
                   Configurable composite = new TabbedConfigurable() {
                         @Override
                         @NotNull
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<>();
-                            res.add(new GenerateToStringConfigurable(clazz.getProject()));
+                            res.add(new GenerateToStringConfigurable(project));
                             res.add(ui);
                             return res;
                         }
