@@ -7,10 +7,13 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.text.nullize
 import git4idea.GitRemoteBranch
 import org.jetbrains.plugins.github.api.GHGQLRequests
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.util.concurrent.CompletableFuture
 
@@ -57,14 +60,13 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
     }
   }
 
-  override fun findPullRequestAsync(progressIndicator: ProgressIndicator,
-                                    baseBranch: GitRemoteBranch,
-                                    headRepo: GHGitRepositoryMapping,
-                                    headBranch: GitRemoteBranch): CompletableFuture<GHPullRequest?> {
-    return progressManager.submitIOTask(progressIndicator) {
-      findPullRequest(progressIndicator, baseBranch, headRepo, headBranch)
-    }
-  }
+  override suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch,
+                                           headRepo: GHRepositoryPath,
+                                           headBranch: GitRemoteBranch): GHPRIdentifier? =
+    requestExecutor.executeSuspend(GHGQLRequests.PullRequest.findByBranches(baseRepo.repository,
+                                                                            baseBranch.nameForRemoteOperations,
+                                                                            headBranch.nameForRemoteOperations
+    )).nodes.firstOrNull()?.prId
 
   private fun getHeadRepoPrefix(headRepo: GHGitRepositoryMapping) =
     if (baseRepo.repository == headRepo.repository) "" else headRepo.repository.repositoryPath.owner + ":"

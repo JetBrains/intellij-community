@@ -7,10 +7,8 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.io.await
 import git4idea.GitStandardRemoteBranch
 import git4idea.push.GitPushRepoResult
 import git4idea.remote.hosting.knownRepositories
@@ -125,12 +123,11 @@ class GHPRToolWindowProjectViewModel internal constructor(
     val repositoryMapping = repositoryDataService.repositoryMapping
     val defaultRemoteBranch = repositoryDataService.getDefaultRemoteBranch() ?: return null
 
-    val pullRequest = creationService.findPullRequestAsync(
-      EmptyProgressIndicator(),
+    val pullRequest = creationService.findOpenPullRequest(
       baseBranch = defaultRemoteBranch,
-      repositoryMapping,
+      repositoryMapping.repository.repositoryPath,
       headBranch = GitStandardRemoteBranch(repositoryMapping.gitRemote, pushResult.sourceBranch)
-    ).await()
+    )
 
     return pullRequest != null
   }
