@@ -90,6 +90,16 @@ fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter { true })
   return spanToMetricMap
 }
 
+/**
+ * Returns timestamp of event defined as com.intellij.diagnostic.StartUpMeasurer.getCurrentTime
+ */
+fun getStartupTimestampMs(file: Path): Long {
+  val spanElements = OpentelemetryJsonParserWithChildrenFiltering(SpanFilter.nameEquals("bootstrap"), SpanFilter { _ -> false })
+    .getSpanElements(file).filter { it.name == "bootstrap" }.toList()
+  if (spanElements.size != 1) throw IllegalStateException("Unexpected number of \"bootstrap\" spans: ${spanElements.size}")
+  return spanElements[0].startTimestamp
+}
+
 fun getMetricsForStartup(file: Path): List<Metric> {
   val spansToPublish = listOf("bootstrap", "startApplication", "ProjectImpl container")
   val spansSuffixesToIgnore = listOf(": scheduled", ": completing")
