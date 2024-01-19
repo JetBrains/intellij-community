@@ -57,11 +57,20 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
 
   val selectorVm: GHRepositoryAndAccountSelectorViewModel by lazy {
     val vm = GHRepositoryAndAccountSelectorViewModel(cs, repositoriesManager, accountManager, ::connect)
-    settings.selectedRepoAndAccount?.let { (repo, account) ->
-      with(vm) {
-        repoSelectionState.value = repo
-        accountSelectionState.value = account
-        submitSelection()
+    cs.launchNow {
+      repositoriesManager.knownRepositoriesState.collectLatest { repos ->
+        if (connectionManager.connectionState.value != null) {
+          return@collectLatest
+        }
+        val (url, account) = settings.selectedUrlAndAccount ?: return@collectLatest
+        val repo = repos.find {
+          it.remote.url == url
+        } ?: return@collectLatest
+        with(vm) {
+          repoSelectionState.value = repo
+          accountSelectionState.value = account
+          submitSelection()
+        }
       }
     }
 
@@ -83,7 +92,7 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
   private suspend fun connect(repo: GHGitRepositoryMapping, account: GithubAccount) {
     withContext(cs.coroutineContext) {
       connectionManager.openConnection(repo, account)
-      settings.selectedRepoAndAccount = repo to account
+      settings.selectedUrlAndAccount = repo.remote.url to account
     }
   }
 
@@ -97,7 +106,7 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
 
   fun resetRemoteAndAccount() {
     cs.launch {
-      settings.selectedRepoAndAccount = null
+      settings.selectedUrlAndAccount = null
       connectionManager.closeConnection()
     }
   }

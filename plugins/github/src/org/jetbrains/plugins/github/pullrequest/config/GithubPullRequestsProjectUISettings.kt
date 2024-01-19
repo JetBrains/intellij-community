@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.config
 import com.intellij.collaboration.async.mapState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -12,8 +11,6 @@ import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountSerializer
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 @Service(Service.Level.PROJECT)
 @State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
@@ -28,18 +25,15 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     var reviewCommentPreferred by property(true) { !it }
   }
 
-  var selectedRepoAndAccount: Pair<GHGitRepositoryMapping, GithubAccount>?
+  var selectedUrlAndAccount: Pair<String, GithubAccount>?
     get() {
       val (url, accountId) = state.selectedUrlAndAccountId ?: return null
-      val repo = project.service<GHHostedRepositoriesManager>().knownRepositories.find {
-        it.remote.url == url
-      } ?: return null
       val account = GHAccountSerializer.deserialize(accountId) ?: return null
-      return repo to account
+      return url to account
     }
     set(value) {
       state.selectedUrlAndAccountId = value?.let { (repo, account) ->
-        UrlAndAccount(repo.remote.url, GHAccountSerializer.serialize(account))
+        UrlAndAccount(repo, GHAccountSerializer.serialize(account))
       }
     }
 
