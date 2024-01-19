@@ -51,7 +51,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public final String getDownloadUrl() {
+  public final @Nullable String getDownloadUrl() {
     String productUrl = getProductUrl();
     return productUrl != null ? productUrl + "download/" : null;
   }
