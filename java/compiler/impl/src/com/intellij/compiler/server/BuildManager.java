@@ -15,6 +15,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
+import com.intellij.compiler.server.impl.BuildProcessPreloadedStateClearer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
@@ -28,7 +29,6 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -71,13 +71,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
-import com.intellij.platform.workspace.storage.EntityChange;
-import com.intellij.platform.workspace.storage.VersionedStorageChange;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -809,6 +803,10 @@ public final class BuildManager implements Disposable {
     for (String path : paths) {
       cancelPreloadedBuilds(path);
     }
+  }
+
+  public void cancelPreloadedBuilds(@NotNull Project project) {
+    cancelPreloadedBuilds(getProjectPath(project));
   }
 
   private void cancelPreloadedBuilds(@NotNull String projectPath) {
@@ -1989,7 +1987,7 @@ public final class BuildManager implements Disposable {
       }
 
       MessageBusConnection connection = project.getMessageBus().connect();
-      connection.subscribe(WorkspaceModelTopics.CHANGED, new WSModelChangeListener(project));
+      connection.subscribe(WorkspaceModelTopics.CHANGED, new BuildProcessPreloadedStateClearer(project));
 
       connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
         @Override
@@ -2482,99 +2480,5 @@ public final class BuildManager implements Disposable {
         getInstance().scheduleProjectSave();
       }
     }
-  }
-
-  static final class WSModelChangeListener implements WorkspaceModelChangeListener {
-
-    private final Project myProject;
-
-    WSModelChangeListener(Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void changed(@NotNull VersionedStorageChange event) {
-      boolean needFSRescan =
-        processEntityChanges(event, SourceRootEntity.class, ChangeProcessor.anyChange(true, false)) ||
-        processEntityChanges(event, ModuleEntity.class, (before, after) -> before.getDependencies().equals(after.getDependencies()), ChangeProcessor.anyChange(true, false)) ||
-        processEntityChanges(event, JavaModuleSettingsEntity.class, ChangeProcessor.anyChange(true, false));
-
-      if (needFSRescan) {
-        getInstance().clearState(myProject);
-      }
-      else if (event.getAllChanges().iterator().hasNext()) {
-        getInstance().cancelPreloadedBuilds(getProjectPath(myProject));
-      }
-    }
-
-    interface ChangeProcessor<T, R> {
-      default boolean added(T newData) {
-        return true;
-      }
-      default boolean changed(T oldData, T newData) {
-        return true;
-      }
-      default boolean removed(T oldData) {
-        return true;
-      }
-      default R getResult() {
-        return null;
-      }
-
-      static <T, R> ChangeProcessor<T, R> anyChange(R onChangesDetected, R noChanges) {
-        return new ChangeProcessor<>() {
-          private R myResult = noChanges;
-          @Override
-          public boolean added(Object newEntity) {
-            myResult = onChangesDetected;
-            return false;
-          }
-          @Override
-          public boolean changed(Object oldEntity, Object newEntity) {
-            myResult = onChangesDetected;
-            return false;
-          }
-          @Override
-          public boolean removed(Object oldEntity) {
-            myResult = onChangesDetected;
-            return false;
-          }
-          @Override
-          public R getResult() {
-            return myResult;
-          }
-        };
-      }
-    }
-
-    private static <T extends WorkspaceEntity, R> R processEntityChanges(@NotNull VersionedStorageChange event, Class<T> entityClass, ChangeProcessor<T, R> proc) {
-      return processEntityChanges(event, entityClass, Object::equals, proc);
-    }
-
-    private static <T extends WorkspaceEntity, R> R processEntityChanges(@NotNull VersionedStorageChange event, Class<T> entityClass, BiFunction<T, T, Boolean> equalsBy, ChangeProcessor<T, R> proc) {
-      for (EntityChange<T> change : event.getChanges(entityClass)) {
-        final T before = change.getOldEntity();
-        final T after = change.getNewEntity();
-        boolean shouldContinue = true;
-        if (after != null) {
-          if (before != null) {
-            if (!equalsBy.apply(before, after)) {
-              shouldContinue = proc.changed(before, after);
-            }
-          }
-          else {
-            shouldContinue = proc.added(after);
-          }
-        }
-        else if (before != null) {
-          shouldContinue = proc.removed(before);
-        }
-        if (!shouldContinue) {
-          return proc.getResult();
-        }
-      }
-      return proc.getResult();
-    }
-
   }
 }
