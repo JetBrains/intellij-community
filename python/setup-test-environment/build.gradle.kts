@@ -1,26 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import org.apache.tools.ant.taskdefs.condition.Os
-
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.net.URL
+import kotlin.io.path.createSymbolicLinkPointingTo
+import kotlin.io.path.exists
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.31"
+  id("com.jetbrains.python.envs") version "0.0.31"
 }
 
-boolean isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
-boolean isUnix = Os.isFamily(Os.FAMILY_UNIX)
+val pythonsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHONS", File(buildDir, "pythons").path))
+val venvsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", File(buildDir, "envs").path))
 
 /**
- * Installs python interpreters for env. tests using conda or CPython.
+ * Installs python interpreters for env. tests using CPython.
  * Utilizes following env variables:
  *
  * PYCHARM_PYTHONS -- path to install cPythons
  * PYCHARM_PYTHON_VIRTUAL_ENVS -- path to install condas
- *
- * PYCHARM_USE_CONDA -- use conda (cPython will be used if not set)
  *
  * PYCHARM_ZIP_REPOSITORY -- to download unpacked pythons for Windows (default cpython does not support unattended installation)
  * Recommended value: https://repo.labs.intellij.net/pycharm/python-archives-windows/
@@ -28,37 +25,38 @@ boolean isUnix = Os.isFamily(Os.FAMILY_UNIX)
  * Pitfall: TMP var on windows points to very long path inside of user local dir and may lead to errors.
  * It is recommended to create "c:\temp\" with full write access and set TMP="c:\temp\" on Windows.
  *
- * When -DdjangoTrunkOnly passed, only install django_latest for Django Trunk tests
- *
  * ``PyEnvTestSettings`` class uses these vars also.
- *
  *
  */
 
+val isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
+val isUnix = Os.isFamily(Os.FAMILY_UNIX)
+val isMacOs = Os.isFamily(Os.FAMILY_MAC)
+
+val pythonVersionMapping = mapOf(
+  "2.7" to "2.7.18",
+  "3.6" to if (isWindows) "3.6.8" else "3.6.15",
+  "3.7" to "3.7.9",
+  "3.8" to "3.8.10",
+  "3.9" to "3.9.13",
+  "3.10" to "3.10.8",
+  "3.11" to "3.11.0",
+  "3.12" to "3.12.0",
+)
+
 envs {
-  String python27version = "2.7.18"
-  String python36version = (isWindows) ? "3.6.8" : "3.6.15" // 3.6.8 is broken on modern libc and clang, but latest version for Windows
-  String python37version = "3.7.9"
-  String python38version = "3.8.10"
-  String python39version = "3.9.13"
-  String python310version = "3.10.8"
-  String python311version = "3.11.0"
-  String python312version = "3.12.0"
+  bootstrapDirectory = pythonsDirectory
+  envsDirectory = venvsDirectory
 
-  bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
-  envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
-
-  def djangoTrunkOnly = System.getProperty("djangoTrunkOnly") ?: false
-
-
+  // TODO: lift and shifted, consider changing logic
   if (isWindows) {
     // On Windows you almost always want to use cache server except you are outside of JB
-    def zipRepositoryURL = new URL(
+    var zipRepositoryURL: URL? = URL(
       System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", "https://packages.jetbrains.team/files/p/py/python-archives-windows/"))
     try {
-      zipRepositoryURL.getContent()
+      zipRepositoryURL!!.content
     }
-    catch (Exception ignored) {
+    catch (e: Exception) {
       zipRepositoryURL = null
       System.err.println("Cache server is unavailable. Will try to build python from scratch.")
     }
@@ -67,171 +65,121 @@ envs {
       shouldUseZipsFromRepository = true
     }
   }
-
-  Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", "false").toBoolean()
-
-  Closure createPython = { String pythonName,
-                           String version,
-                           List<String> packages = null,
-                           String tags = null,
-                           Boolean createLink = false,
-                           Boolean forceConda = false ->
-    File pythonDirectory
-    if (shouldUseCondaInterpreters || forceConda) {
-      condaenv pythonName, version, packages
-      pythonDirectory = new File(envsDirectory, pythonName)
-    }
-    else {
-      python pythonName, version, packages
-      pythonDirectory = new File(bootstrapDirectory, pythonName)
-    }
-
-    print("Python dir: $pythonDirectory\n")
-    project.tasks.create("Misc for $pythonName") {
-      shouldRunAfter 'build_envs'
-
-      doLast {
-        if (tags) new File(pythonDirectory, "tags.txt").write(tags)
-
-        String versionMajor = version.split(/\./)[0]
-        String versionMinor = version.split(/\./)[1]
-        versionMinor = versionMinor.endsWith("-dev") ? versionMinor.substring(0, versionMinor.indexOf("-dev"))
-                                                     : versionMinor
-        // Pregenerate pyc
-        String linkName = "python$versionMajor.$versionMinor"
-        def path = pythonDirectory.toPath()
-        def python = path.resolve(isWindows ? "python.exe" : "bin/${linkName}").toString()
-        def lib = path.resolve("lib").toString()
-        def command = "import compileall; compileall.compile_dir('${lib}', force=True, quiet=True)"
-
-        def result = new StringBuilder()
-        def error = new StringBuilder()
-        def process = "${python} -c \"$command\"".execute()
-        process.consumeProcessErrorStream(error)
-        process.consumeProcessOutputStream(result)
-        process.waitForOrKill(60000)
-
-        if (createLink) {
-          Closure createLinkClosure = { Path link, Path existing ->
-            if (!link.toFile().exists()) Files.createLink(link, existing)
-          }
-
-          if (isUnix && !shouldUseCondaInterpreters) {
-            createLinkClosure(Paths.get(pythonDirectory.toString(), linkName),
-                              Paths.get(pythonDirectory.toString(), "bin/$linkName"))
-          }
-          else if (isWindows) {
-            createLinkClosure(Paths.get(pythonDirectory.toString(), "${linkName}.exe"),
-                              Paths.get(pythonDirectory.toString(), "python.exe"))
-          }
-        }
-      }
-    }
-  }
-
-
-  createPython("py36_django_latest", python36version, ["django", "behave-django", "behave", "pytest", "untangle"],
-               "python3.6\ndjango\ndjango20\nbehave\nbehave-django\ndjango2\npytest\nuntangle", true)
-  if (djangoTrunkOnly) {
-    return
-  }
-
-  if (isUnix) {
-    // For TensorFlow
-    createPython("py37",
-                 python37version,
-                 ["tensorflow", "pyqt5==5.12", "PySide2==5.12.1"],
-                 "tensorflow\npython3.7\nqt",
-                 true)
-  }
-  else {
-    // qt is for unix only
-    createPython("py37",
-                 python37version,
-                 ["tensorflow"],
-                 "tensorflow\npython3.7",
-                 true)
-  }
-
-  createPython("py38",
-               python38version,
-               // The version of Jinja2 is fixed due to a bug in recent versions which breaks the debugging.
-               // See: https://github.com/pallets/jinja/pull/1178.
-               // The version of NumPy is fixed due to https://tinyurl.com/y3dm3h86.
-               ["ipython==7.8", "django==2.2", "behave", "jinja2==3.1.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
-                "pytest-xdist", "untangle", "numpy==1.19.3", "pandas"],
-               "python3.8\npython3\nipython\nipython780\nskeletons\ndjango\nbehave\nbehave-django\ntox\njinja2\npackaging" +
-               "\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\nxdist\nuntangle\npandas",
-               true)
-
-  createPython("python3.9",
-               python39version,
-               ["pytest", "pytest-xdist"],
-               "python3.9\npython3\npytest\nxdist\npackaging",
-               true)
-
-  createPython("python3.10",
-               python310version,
-               [],
-               "python3.10",
-               true)
-
-  createPython("python3.11",
-               python311version,
-               ["black == 23.1.0", "joblib"],
-               "python3.11\nblack\njoblib",
-               true)
-
-  createPython("python3.12",
-               python312version,
-               ["teamcity-messages"],
-               "python3\npython3.12\nmessages")
-
-  createPython("py27",
-               python27version,
-               ["tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "teamcity-messages",
-                "untangle"] + (isWindows ? ['pypiwin32'] : []), //win32api is required for pypiwin32
-               "python2.7\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
-               true)
 }
 
-/**
- * Kills any process named "python" using windows powershell.
- * Works on Win7+.
- */
-task killPythonWindows(type: Exec) {
+fun createPython(id: String, version: String?, packages: List<String> = listOf(), tags: List<String> = listOf()) {
+  check(version != null)
+
+  // TODO: pythonsDirectory vs venvsDirectory for different types
+  val pythonHome = File(pythonsDirectory, id)
+
+  envs {
+    // TODO: support different python types
+    python(id, pythonVersionMapping[version], packages)
+  }
+
+  project.tasks.create("populate_tags_$id") {
+    dependsOn(tasks.matching { it.name.matches("Bootstrap_[A-Z]*_'$id'.*".toRegex()) })
+    onlyIf { !tags.isEmpty() }
+
+    doLast {
+      val tagsFile = pythonHome.resolve("tags.txt")
+      // keep simple message to be able to see step in execution log if performed
+      println("Adding tags to: $tagsFile")
+      tagsFile.writeText(tags.joinToString(separator = "\n"))
+    }
+  }
+
+  project.tasks.create("populate_symlinks_$id") {
+    dependsOn("populate_tags_$id")
+
+    // as we have non-exact version as a key of hashMap retrieval logic from
+    // the old script may be easily omitted (TBD: will we be able to keep clear mapping..?
+    // maybe one will ever want to add "myCoolPythonVersion" as a key and break the logic)
+    val symlinkPath = pythonHome.resolve("python$version" + if (isWindows) ".exe" else "" ).toPath()
+    val executablePath = pythonHome.resolve( if (isWindows) "python.exe" else "bin/python$version").toPath()
+
+    // only if file doesn't exist
+    onlyIf { !symlinkPath.exists() }
+
+    doLast {
+      println("Generating symlink: $symlinkPath -> $executablePath")
+      symlinkPath.createSymbolicLinkPointingTo(executablePath)
+    }
+  }
+
+  // the task serves as aggregator so that one could just execute `./gradlew setup_python_123`
+  // to build some specific environment
+  project.tasks.create("setup_$id") {
+    mustRunAfter("clean")
+    setDependsOn(listOf("clean", "populate_symlinks_$id"))
+  }
+}
+
+tasks.register<Exec>("kill_python_processes") {
   onlyIf { isWindows }
 
-  commandLine 'powershell', '"Get-Process | where {$_.Name -ieq \\"python\\"} | Stop-Process"'
+  // TODO: looks ugly, how can it be improved?
+  commandLine("powershell", "\"Get-Process | where {${'$'}_.Name -ieq \\\"python\\\"} | Stop-Process\"")
 }
 
-task prepare(type: Delete) {
-  // Python leaked from previous test may prevent this script from
-  // deleting folder because you can't delete file opened by process on Windows
-  dependsOn killPythonWindows
+tasks.register<Delete>("clean") {
+  dependsOn("kill_python_processes")
+  mustRunAfter("kill_python_processes")
 
-  doFirst {
-    new File(envs.bootstrapDirectory, "py36_django_latest").with { djangoLatestFolder ->
-      //     if (djangoLatestFolder.exists() && djangoLatestFolder.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
-      // older then a day
-      println "Cleaning django_latest at" + djangoLatestFolder
-      delete djangoLatestFolder
-      //   }
-    }
-
-//    if (!envs.bootstrapDirectory.exists() || (System.getenv("NO_CLEAN") == null && envs.envsDirectory.exists() &&
-    //                                            envs.envsDirectory.lastModified() < project.buildscript.sourceFile.lastModified())) {
-    // clean the cache if the build script was modified later
-    println "Cleaning cached environments at " + envs.envsDirectory
-    delete envs.envsDirectory
-    println "Cleaning cached pythons at " + envs.bootstrapDirectory
-    delete envs.bootstrapDirectory
-    //}
-  }
+  delete(project.layout.buildDirectory)
 }
 
-task build {
-  mustRunAfter prepare
-  dependsOn prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
+tasks.register("build") {
+  mustRunAfter("clean")
+  dependsOn(tasks.matching { it.name.startsWith("setup_") }, "clean")
 }
 
+createPython("py36_django_latest", "3.6",
+             listOf("django", "behave-django", "behave", "pytest", "untangle"),
+             listOf("python3.6", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
+
+if (isUnix) {
+  // For TensorFlow
+  createPython("py37",
+               "3.7",
+               listOf("tensorflow", "pyqt5==5.12", "PySide2==5.12.1"),
+               listOf("tensorflow", "python3.7", "qt"))
+}
+else {
+  // qt is for unix only
+  createPython("py37", "3.7",
+               listOf("tensorflow"),
+               listOf("tensorflow", "python3.7"))
+}
+
+createPython("py38", "3.8",
+  // The version of Jinja2 is fixed due to a bug in recent versions which breaks the debugging.
+  // See: https://github.com/pallets/jinja/pull/1178.
+  // The version of NumPy is fixed due to https://tinyurl.com/y3dm3h86.
+             listOf("ipython==7.8", "django==2.2", "behave", "jinja2==3.1.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
+                    "pytest-xdist", "untangle", "numpy==1.19.3", "pandas"),
+             listOf("python3.8", "python3", "ipython", "ipython780", "skeletons", "django", "behave", "behave-django", "tox", "jinja2",
+                    "packaging", "pytest", "nose", "django-nose", "behave-django", "django2", "xdist", "untangle", "pandas"))
+
+createPython("python3.9", "3.9",
+             listOf("pytest", "pytest-xdist"),
+             listOf("python3.9", "python3", "pytest", "xdist", "packaging"))
+
+createPython("python3.10", "3.10",
+             listOf(), listOf("python3.10"))
+
+createPython("python3.11", "3.11",
+             listOf("black == 23.1.0", "joblib"),
+             listOf("python3.11", "black", "joblib"))
+
+createPython("python3.12", "3.12",
+             listOf("teamcity-messages"),
+             listOf("python3", "python3.12", "messages"))
+
+createPython("py27", "2.7",
+             listOf("tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "teamcity-messages", "untangle")
+             // TODO: maybe switch to optional dependency Twisted[windows-platform]
+             // https://docs.twisted.org/en/stable/installation/howto/optional.html
+             + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
+             listOf("python2.7", "nose", "pytest", "behave", "packaging", "tox", "twisted", "django-nose", "untangle", "messages"))
