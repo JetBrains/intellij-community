@@ -37,7 +37,6 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -470,20 +469,16 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @RequiresBackgroundThread
-  // TODO: suspend
-  protected fun scheduleProjectImportAndWait() {
+  protected suspend fun scheduleProjectImportAndWait() {
     assertAutoReloadIsInitialized()
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
-    runBlocking {
-      waitForImportWithinTimeout {
-        withContext(Dispatchers.EDT) {
-          myProjectTracker!!.scheduleProjectRefresh()
-        }
+    waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        myProjectTracker!!.scheduleProjectRefresh()
       }
     }
-    MavenUtil.invokeAndWait(project) {}
 
     // otherwise project settings was modified while importing
     assertNoPendingProjectForReload()
