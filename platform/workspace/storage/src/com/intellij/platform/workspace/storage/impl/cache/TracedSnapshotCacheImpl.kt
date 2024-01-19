@@ -25,7 +25,7 @@ internal sealed interface UpdateType {
 
 internal class PropagationResult<T>(
   val newCell: Cell<T>,
-  val tokenSet: TokenSet,
+  val matchSet: MatchSet,
   val subscriptions: List<Pair<ReadTraceHashSet, UpdateType>>,
 )
 
