@@ -46,7 +46,8 @@ interface EntityWithUrls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EntityWithUrls, modification: EntityWithUrls.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: EntityWithUrls,
+                                      modification: EntityWithUrls.Builder.() -> Unit): EntityWithUrls = modifyEntity(
   EntityWithUrls.Builder::class.java, entity, modification)
 //endregion
 

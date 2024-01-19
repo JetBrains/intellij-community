@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -13,38 +12,58 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
 
-  override val version: Int get() = dataSource.version
+  override val version: Int
+    get() {
+      readField("version")
+      return dataSource.version
+    }
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val related: SimpleId
-    get() = dataSource.related
+    get() {
+      readField("related")
+      return dataSource.related
+    }
 
   override val sealedClassWithLinks: SealedClassWithLinks
-    get() = dataSource.sealedClassWithLinks
+    get() {
+      readField("sealedClassWithLinks")
+      return dataSource.sealedClassWithLinks
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SimpleSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(
     result), SimpleSymbolicIdEntity.Builder {
@@ -74,7 +93,7 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -160,9 +179,9 @@ class SimpleSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<
   lateinit var sealedClassWithLinks: SealedClassWithLinks
 
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
-  fun isRelatedInitialized(): Boolean = ::related.isInitialized
-  fun isSealedClassWithLinksInitialized(): Boolean = ::sealedClassWithLinks.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isRelatedInitialized(): Boolean = ::related.isInitialized
+  internal fun isSealedClassWithLinksInitialized(): Boolean = ::sealedClassWithLinks.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleSymbolicIdEntity> {
     val modifiable = SimpleSymbolicIdEntityImpl.Builder(null)
@@ -172,13 +191,19 @@ class SimpleSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): SimpleSymbolicIdEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): SimpleSymbolicIdEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = SimpleSymbolicIdEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -248,17 +273,5 @@ class SimpleSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<
     result = 31 * result + related.hashCode()
     result = 31 * result + sealedClassWithLinks.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(SimpleId::class.java)
-    collector.add(SealedClassWithLinks.Many.Unordered::class.java)
-    collector.add(SealedClassWithLinks.Many::class.java)
-    collector.add(SealedClassWithLinks.Single::class.java)
-    collector.add(SealedClassWithLinks::class.java)
-    collector.add(SealedClassWithLinks.Many.Ordered::class.java)
-    collector.addObject(SealedClassWithLinks.Nothing::class.java)
-    this.sealedClassWithLinks?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = true
   }
 }

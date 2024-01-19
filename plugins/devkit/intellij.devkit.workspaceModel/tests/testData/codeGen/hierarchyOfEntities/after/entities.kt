@@ -101,6 +101,6 @@ interface ChildEntity: ParentEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit): ChildEntity = modifyEntity(
   ChildEntity.Builder::class.java, entity, modification)
 //endregion
