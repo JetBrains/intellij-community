@@ -39,7 +39,7 @@ class HgChangesParser implements VcsChangesLazilyParsedDetails.ChangesParser {
         case NEW -> createChange(project, commit.getRoot(), null, null, filePath, myRevisionNumber, FileStatus.ADDED);
         case DELETED -> createChange(project, commit.getRoot(), filePath, parentRevision, null, myRevisionNumber, FileStatus.DELETED);
         case MOVED -> createChange(project, commit.getRoot(), filePath, parentRevision, info.getSecondPath(), myRevisionNumber,
-                                   HgChangeProvider.RENAMED);
+                                   HgChangeProvider.FileStatuses.RENAMED);
       };
       result.add(change);
     }

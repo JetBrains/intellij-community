@@ -283,8 +283,8 @@ public abstract class HgUtil {
     }
 
     FileStatus status = change.getFileStatus();
-    if (status == HgChangeProvider.COPIED ||
-        status == HgChangeProvider.RENAMED) {
+    if (status == HgChangeProvider.FileStatuses.COPIED ||
+        status == HgChangeProvider.FileStatuses.RENAMED) {
       ContentRevision beforeRevision = change.getBeforeRevision();
       assert beforeRevision != null : "If a file's status is copied or renamed, there must be an previous version";
       return beforeRevision.getFile();
@@ -404,7 +404,7 @@ public abstract class HgUtil {
       return FileStatus.MODIFIED;
     }
     else if (hgstatus.equals(HgFileStatusEnum.COPY)) {
-      return HgChangeProvider.COPIED;
+      return HgChangeProvider.FileStatuses.COPIED;
     }
     else if (hgstatus.equals(HgFileStatusEnum.UNVERSIONED)) {
       return FileStatus.UNKNOWN;
