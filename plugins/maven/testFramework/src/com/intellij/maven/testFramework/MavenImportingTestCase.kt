@@ -413,16 +413,27 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.setIgnoredFilesPatterns(patterns)
   }
 
-  protected open fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
-    doImportProjects(files, failOnReadingError, emptyList<String>(), *profiles)
-  }
-
-
-  protected fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean,
-                                 disabledProfiles: List<String>, vararg profiles: String) {
+  private fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
-    projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(profiles.toList(), disabledProfiles))
+    projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(profiles.toList(), emptyList()))
+    if (failOnReadingError) {
+      for (each in projectsManager.getProjectsTree().projects) {
+        assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
+      }
+    }
+  }
+
+  protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
+    return doImportProjectsAsync(files, failOnReadingError, emptyList(), *profiles)
+  }
+
+  protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean,
+                                              disabledProfiles: List<String>, vararg profiles: String) {
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
+    initProjectsManager(false)
+    projectsManager.projectsTree.resetManagedFilesAndProfiles(files, MavenExplicitProfiles(profiles.toList(), disabledProfiles))
+    updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())

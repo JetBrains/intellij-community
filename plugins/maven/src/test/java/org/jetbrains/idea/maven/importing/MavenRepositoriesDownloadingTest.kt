@@ -195,7 +195,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     createProjectPom(pom())
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
     TestCase.assertEquals(1, projectsManager.rootProjects.size)
     TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)",
                           projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description)
