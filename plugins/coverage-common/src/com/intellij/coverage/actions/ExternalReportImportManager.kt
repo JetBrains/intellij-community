@@ -23,12 +23,15 @@ class ExternalReportImportManager(private val project: Project) {
   fun chooseAndOpenSuites() {
     val suites = chooseAndImportCoverageReportsFromDisc()
     if (suites.isEmpty()) return
-    openSuites(suites)
+    openSuites(suites, false)
   }
 
-  fun openSuites(suites: List<CoverageSuite>) {
+  fun openSuites(suites: List<CoverageSuite>, closeCurrentlyOpened: Boolean) {
     val suitesByEngine = suites.groupBy { it.coverageEngine }
-    closeBundlesThatAreNotChosen(suitesByEngine)
+
+    if (closeCurrentlyOpened) {
+      closeBundlesThatAreNotChosen(suitesByEngine)
+    }
 
     for (engineSuites in suitesByEngine.values) {
       val bundle = CoverageSuitesBundle(engineSuites.toTypedArray<CoverageSuite>())

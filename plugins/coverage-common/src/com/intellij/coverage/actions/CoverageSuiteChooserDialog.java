@@ -93,7 +93,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    ExternalReportImportManager.getInstance(myProject).openSuites(suites);
+    ExternalReportImportManager.getInstance(myProject).openSuites(suites, true);
     super.doOKAction();
   }
 
