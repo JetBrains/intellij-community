@@ -41,13 +41,14 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static org.jetbrains.idea.maven.server.DummyMavenServerConnector.isDummy;
 
 final class MavenServerManagerImpl implements MavenServerManager {
   private final Map<String, MavenServerConnector> myMultimoduleDirToConnectorMap = new HashMap<>();
-
+  private final AtomicBoolean isShutdown = new AtomicBoolean(false);
   //TODO: should be replaced by map, where key is the indexing directory. (local/wsl)
   private MavenIndexingConnectorImpl myIndexingConnector = null;
   private MavenIndexerWrapper myIndexerWrapper = null;
@@ -59,6 +60,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
+        isShutdown.set(true);
         shutdown(false);
       }
     });
@@ -67,6 +69,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         if (MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
+          isShutdown.set(true);
           shutdown(false);
         }
       }
@@ -126,6 +129,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
   }
 
   private MavenServerConnector doGetConnector(@NotNull Project project, @NotNull String workingDirectory) {
+
     String multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirectory);
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
     Sdk jdk = getJdk(project, settings);
@@ -161,6 +165,9 @@ final class MavenServerManagerImpl implements MavenServerManager {
   private MavenServerConnector doGetOrCreateConnector(@NotNull Project project,
                                                       @NotNull String multimoduleDirectory,
                                                       @NotNull Sdk jdk) {
+    if(isShutdown.get()) {
+      throw new IllegalStateException("We are closed, sorry. No connectors anymore");
+    }
     MavenServerConnector connector;
     synchronized (myMultimoduleDirToConnectorMap) {
       connector = myMultimoduleDirToConnectorMap.get(multimoduleDirectory);
@@ -255,13 +262,24 @@ final class MavenServerManagerImpl implements MavenServerManager {
    */
   @Override
   public void shutdown(boolean wait) {
+    if (!wait) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        shutdownNow();
+      });
+    }
+    else {
+      shutdownNow();
+    }
+  }
+
+  private void shutdownNow() {
     Collection<MavenServerConnector> values;
     synchronized (myMultimoduleDirToConnectorMap) {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
 
-    shutdownConnector(myIndexingConnector, wait);
-    values.forEach(c -> shutdownConnector(c, wait));
+    shutdownConnector(myIndexingConnector, true);
+    values.forEach(c -> shutdownConnector(c, true));
   }
 
   @Override
@@ -391,15 +409,16 @@ final class MavenServerManagerImpl implements MavenServerManager {
 
           private MavenServerConnector getIndexingConnector() {
             if (myIndexingConnector != null) return myIndexingConnector;
+            Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
             synchronized (myMultimoduleDirToConnectorMap) {
               if (myIndexingConnector != null) return myIndexingConnector;
-              myIndexingConnector = new MavenIndexingConnectorImpl(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
+              myIndexingConnector = new MavenIndexingConnectorImpl(jdk,
                                                                    "",
                                                                    getFreeDebugPort(),
                                                                    MavenDistributionsCache.resolveEmbeddedMavenHome(),
                                                                    workingDir);
-              myIndexingConnector.connect();
             }
+            myIndexingConnector.connect();
             return myIndexingConnector;
           }
 
