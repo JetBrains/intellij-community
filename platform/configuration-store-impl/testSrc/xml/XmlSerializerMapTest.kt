@@ -1,6 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("PropertyName", "ReplacePutWithAssignment")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
@@ -98,6 +96,7 @@ internal class XmlSerializerMapTest {
   }
 
   @Test fun notSurroundingKeyAndValue() {
+    @Suppress("PropertyName")
     @Tag("bean")
     class Bean {
       @XMap(propertyElementName = "map")
@@ -148,6 +147,7 @@ internal class XmlSerializerMapTest {
   }
 
   @Test fun serialization() {
+    @Suppress("PropertyName")
     @Tag("bean")
     class BeanWithMap {
       var VALUES: MutableMap<String, String> = LinkedHashMap()
@@ -189,6 +189,7 @@ internal class XmlSerializerMapTest {
   }
 
   @Test fun withBeanValue() {
+    @Suppress("PropertyName")
     class BeanWithMapWithBeanValue {
       var VALUES: MutableMap<String, BeanWithProperty> = LinkedHashMap()
     }

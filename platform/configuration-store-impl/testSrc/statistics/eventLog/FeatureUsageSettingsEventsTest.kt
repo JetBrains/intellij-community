@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("UsePropertyAccessSyntax")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.statistics.eventLog
 
 import com.intellij.configurationStore.getStateSpec
@@ -19,12 +18,9 @@ import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Test
 
-@Suppress("SameParameterValue")
 class FeatureUsageSettingsEventsTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
   @Test
@@ -575,12 +571,8 @@ class FeatureUsageSettingsEventsTest {
     assertDefaultState(printer.result[0], "boolOption", false, "bool", withProject, defaultProject)
   }
 
-  private fun assertDefaultState(event: LoggedComponentStateEvents,
-                                 name: String,
-                                 value: Any,
-                                 type: String,
-                                 withProject: Boolean,
-                                 defaultProject: Boolean) {
+  @Suppress("SameParameterValue")
+  private fun assertDefaultState(event: LoggedComponentStateEvents, name: String, value: Any, type: String, withProject: Boolean, defaultProject: Boolean) {
     assertThat(event.group.id).isEqualTo("settings")
     assertThat(event.group.version).isGreaterThan(0)
     assertThat(event.eventId).isEqualTo("option")

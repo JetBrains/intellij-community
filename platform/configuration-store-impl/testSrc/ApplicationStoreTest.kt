@@ -1,6 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet", "ReplacePutWithAssignment")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -39,18 +37,11 @@ import kotlin.properties.Delegates
 
 class ApplicationStoreTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
+    @JvmField @ClassRule val appRule = ApplicationRule()
   }
 
-  @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
-
-  @JvmField
-  @Rule
-  val disposableRule = DisposableRule()
+  @JvmField @Rule val fsRule = InMemoryFsRule()
+  @JvmField @Rule val disposableRule = DisposableRule()
 
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
@@ -73,7 +64,7 @@ class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save()
 
-    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml"))
+    assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"])
       .isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
@@ -135,7 +126,7 @@ class ApplicationStoreTest {
     assertThat(map).isNotEmpty
 
     fun test(item: ExportableItem) {
-      assertNotNull("Map doesn't contain item for ${item.fileSpec}. Whole map: \n${map.entries.joinToString("\n")}", map.get(item.fileSpec))
+      assertNotNull("Map doesn't contain item for ${item.fileSpec}. Whole map: \n${map.entries.joinToString("\n")}", map[item.fileSpec])
     }
 
     test(ExportableItem(FileSpec("filetypes", "filetypes", true), "File types (schemes)"))
@@ -380,7 +371,7 @@ class ApplicationStoreTest {
 
     component.options.foo = ""
 
-    // first looser is deleted since state equals to default (no committed component data)
+    // "loser1" is deleted since state equals to default (no committed component data)
     componentStore.save()
     assertThat(testAppConfig.resolve(obsoleteStorageBean.file)).isEqualTo("""
       <application>
@@ -391,7 +382,7 @@ class ApplicationStoreTest {
 
     component2.options.foo = ""
 
-    // second looser is deleted since state equals to default (no committed component data)
+    // "loser2" is deleted since state equals to default (no committed component data)
     componentStore.save()
     assertThat(testAppConfig.resolve(obsoleteStorageBean.file)).isEqualTo("""
       <application>
@@ -555,7 +546,7 @@ class ApplicationStoreTest {
     assertThat(component.state.bar).isEmpty()
 
     component.state = TestState(bar = "42")
-    // `false` because cache storage doesn't use save session (no need in case of MvStore, where we can do a random write operation)
+    // `false` because cache storage doesn't use save session (no need in the case of MvStore, where we can do a random write operation)
     assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
     // test double save
     assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
@@ -588,7 +579,7 @@ class ApplicationStoreTest {
     assertThat(component.state.bar).isEqualTo("aaa")
 
     component.state = TestState(bar = "42")
-    // `false` because cache storage doesn't use save session (no need in case of MvStore, where we can do a random write operation)
+    // `false` because cache storage doesn't use save session (no need in the case of MvStore, where we can do a random write operation)
     assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
     // test double save
     assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
@@ -625,7 +616,7 @@ class ApplicationStoreTest {
 
     val map = hashMapOf("f" to hashSetOf("1", "2", "3"), "d" to hashSetOf("e", "f", "d"))
     component.state = TestStateWithMap(foo = "42", map)
-    // `false` because cache storage doesn't use save session (no need in case of MvStore, where we can do a random write operation)
+    // `false` because cache storage doesn't use save session (no need in the case of MvStore, where we can do a random write operation)
     assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
     // test double save
     assertThat(componentStore.saveNonVfsComponent(component)).isFalse()
@@ -659,13 +650,13 @@ class ApplicationStoreTest {
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> = data.computeIfAbsent(roamingType) { HashMap() }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-      val data = getMap(roamingType).get(fileSpec)
+      val data = getMap(roamingType)[fileSpec]
       data?.let { ByteArrayInputStream(it.toByteArray()) }.let(consumer)
       return true
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      data.get(roamingType)?.remove(fileSpec)
+      data[roamingType]?.remove(fileSpec)
       return true
     }
   }

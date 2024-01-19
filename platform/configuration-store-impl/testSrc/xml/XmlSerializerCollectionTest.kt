@@ -1,15 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DEPRECATION")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
-import com.intellij.util.xmlb.annotations.AbstractCollection
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
@@ -17,13 +13,12 @@ import org.jdom.Element
 import org.junit.Test
 import java.util.*
 
-@Suppress("PropertyName")
 internal class XmlSerializerCollectionTest {
   @Test fun jdomExternalizableStringList() {
     @Tag("b")
     class Bean3 {
-      @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-      var list = JDOMExternalizableStringList()
+      @Suppress("DEPRECATION")
+      var list = com.intellij.openapi.util.JDOMExternalizableStringList()
     }
 
     val bean = Bean3()
@@ -53,7 +48,8 @@ internal class XmlSerializerCollectionTest {
     }
 
     val result = SmartList<String>()
-    JDOMExternalizableStringList.readList(result, element)
+    @Suppress("DEPRECATION")
+    com.intellij.openapi.util.JDOMExternalizableStringList.readList(result, element)
     assertThat(result).isEqualTo(testList.toList())
   }
 
@@ -73,8 +69,7 @@ internal class XmlSerializerCollectionTest {
   }
 
   @Test fun collectionBeanReadJDOMExternalizableStringList() {
-    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-    val list = JDOMExternalizableStringList()
+    @Suppress("DEPRECATION") val list = com.intellij.openapi.util.JDOMExternalizableStringList()
     list.add("one")
     list.add("two")
     list.add("three")
@@ -88,7 +83,8 @@ internal class XmlSerializerCollectionTest {
   @Test fun polymorphicArray() {
     @Tag("bean")
     class BeanWithPolymorphicArray {
-      @AbstractCollection(elementTypes = [(BeanWithPublicFields::class), (BeanWithPublicFieldsDescendant::class)])
+      @Suppress("DEPRECATION")
+      @com.intellij.util.xmlb.annotations.AbstractCollection(elementTypes = [(BeanWithPublicFields::class), (BeanWithPublicFieldsDescendant::class)])
       var v = arrayOf<BeanWithPublicFields>()
     }
 
@@ -132,6 +128,7 @@ internal class XmlSerializerCollectionTest {
 
   @Test
   fun java9ImmutableSet() {
+    @Suppress("unused")
     class Bean {
       @XCollection
       var foo = mutableSetOf("a", "b")
@@ -150,6 +147,7 @@ internal class XmlSerializerCollectionTest {
 
   @Test
   fun immutableCollections() {
+    @Suppress("unused")
     class Bean {
       @XCollection
       val firstElement: List<String> = listOf("gradle")
@@ -172,7 +170,8 @@ internal class XmlSerializerCollectionTest {
 
   @Test fun arrayAnnotationWithElementTag() {
     @Tag("bean") class Bean {
-      @AbstractCollection(elementTag = "vValue", elementValueAttribute = "v")
+      @Suppress("DEPRECATION")
+      @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vValue", elementValueAttribute = "v")
       var v = arrayOf("a", "b")
     }
 
@@ -235,6 +234,7 @@ internal class XmlSerializerCollectionTest {
     </bean>""", bean)
   }
 
+  @Suppress("PropertyName")
   private data class BeanWithArray(@Suppress("ArrayInDataClass") var ARRAY_V: Array<String> = arrayOf("a", "b"))
 
   @Test fun array() {
@@ -271,15 +271,16 @@ internal class XmlSerializerCollectionTest {
       "</Bean>",
       bean)
   }
-}
 
-@Tag("b")
-private class Bean4 {
-  @CollectionBean
-  val list = SmartList<String>()
-}
+  @Tag("b")
+  private class Bean4 {
+    @CollectionBean
+    val list = SmartList<String>()
+  }
 
-private class BeanWithArrayWithoutTagName {
-  @XCollection
-  var foo = arrayOf("a")
+  @Suppress("unused")
+  private class BeanWithArrayWithoutTagName {
+    @XCollection
+    var foo = arrayOf("a")
+  }
 }

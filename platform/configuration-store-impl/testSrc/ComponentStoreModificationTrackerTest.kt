@@ -1,6 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -24,17 +22,13 @@ import kotlin.properties.Delegates
 
 internal class ComponentStoreModificationTrackerTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ApplicationRule()
+    @JvmField @ClassRule val projectRule = ApplicationRule()
   }
 
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
 
-  @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
+  @JvmField @Rule val fsRule = InMemoryFsRule()
 
   @Before
   fun setUp() {
@@ -75,12 +69,12 @@ internal class ComponentStoreModificationTrackerTest {
     assertThat(component.lastGetStateStackTrace as String?).isNull()
     assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
-    // change modification count - store will be forced to check changes using serialization and A.getState will be called
+    // change modification count - store will be forced to check changes using serialization, and A.getState will be called
     component.incModificationCount()
     componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
-    // test that store correctly save last modification time and doesn't call our state on next save
+    // test that store correctly saves last modification time and doesn't call our state on next save
     componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
@@ -139,12 +133,12 @@ internal class ComponentStoreModificationTrackerTest {
     componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
-    // change modification count - store will be forced to check changes using serialization and A.getState will be called
+    // change modification count - store will be forced to check changes using serialization, and A.getState will be called
     component.incModificationCount()
     componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
-    // test that store correctly save last modification time and doesn't call our state on next save
+    // test that store correctly saves last modification time and doesn't call our state on next save
     componentStore.save()
     assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
@@ -176,7 +170,9 @@ private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStor
 
     override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-    override fun expandMacro(collapsedPath: String): Path = if (collapsedPath[0] == '$') super.expandMacro(collapsedPath) else macros.get(0).value.resolve(collapsedPath)
+    override fun expandMacro(collapsedPath: String): Path =
+      if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
+      else macros[0].value.resolve(collapsedPath)
   }
 
   override val storageManager: StateStorageManagerImpl = MyStorageManager()

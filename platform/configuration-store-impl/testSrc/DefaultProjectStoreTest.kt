@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -30,14 +30,10 @@ import java.nio.file.Path
 
 class DefaultProjectStoreTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
-  @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
+  @JvmField @Rule val fsRule = InMemoryFsRule()
 
   @Test
   fun `new project from default - file-based storage`() {
@@ -52,7 +48,7 @@ class DefaultProjectStoreTest {
   @Test
   fun `new project from default - directory-based storage`() {
     checkDefaultProjectAsTemplate { checkTask ->
-      // obviously, project must be directory-based also
+      // obviously, the project must be directory-based also
       val project = openAsNewProjectAndUseDefaultSettings(fsRule.fs.getPath("/test"))
       project.useProject {
         checkTask(project, true)
