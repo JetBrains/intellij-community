@@ -40,8 +40,10 @@ private fun mergeLabelsWithRevisions(revisions: List<Revision>): List<RevisionIt
   val result = mutableListOf<RevisionItem>()
 
   for (revision in revisions.asReversed()) {
-    if (revision.isLabel && !result.isEmpty()) {
-      result.last().labels.addFirst(revision)
+    if (revision.isLabel) {
+      if (!result.isEmpty()) {
+        result.last().labels.addFirst(revision)
+      }
     }
     else {
       result.add(RevisionItem(revision))
