@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -415,7 +416,8 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   private fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
-    projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(profiles.toList(), emptyList()))
+    projectsManager.projectsTree.resetManagedFilesAndProfiles(files, MavenExplicitProfiles(profiles.toList(), emptyList()))
+    runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
