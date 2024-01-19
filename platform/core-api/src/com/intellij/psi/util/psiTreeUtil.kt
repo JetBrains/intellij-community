@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.reflect.KClass
 
-fun PsiElement.validOrNull() = if (isValid) this else null
+fun PsiElement.validOrNull(): PsiElement? = if (isValid) this else null
 
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
 
