@@ -17405,6 +17405,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk2.kt");
             }
 
+            @TestMetadata("effectivelyFinalFunctionParameter.kt")
+            public void testEffectivelyFinalFunctionParameter() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/effectivelyFinalFunctionParameter.kt");
+            }
+
             @TestMetadata("entryPoint.kt")
             public void testEntryPoint() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/entryPoint.kt");

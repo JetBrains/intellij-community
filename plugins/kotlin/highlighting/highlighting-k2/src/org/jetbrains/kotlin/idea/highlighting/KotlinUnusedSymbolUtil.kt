@@ -86,27 +86,24 @@ object KotlinUnusedSymbolUtil {
               // do not highlight unused in .forEach { (a,b) -> {} }
               return false
           }
-          else if (ownerFunction is KtFunction) {
-              if (isEffectivelyAbstract(ownerFunction)) {
-                  return false
-              }
-              if (ownerFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                  return false
-              }
-              if (ownerFunction.hasModifier(KtTokens.OPEN_KEYWORD)) { // maybe one of overriders does use this parameter
-                  return false
-              }
+          else if (ownerFunction is KtFunction && isEffectivelyAbstractFunction(ownerFunction)) {
+              return false
           }
       }
 
       return !declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)
   }
 
-    private fun isEffectivelyAbstract(ownerFunction: KtFunction): Boolean {
-        if (ownerFunction.hasModifier(KtTokens.ABSTRACT_KEYWORD) || ownerFunction.hasModifier(KtTokens.EXPECT_KEYWORD)) {
+    private fun isEffectivelyAbstractFunction(ownerFunction: KtFunction): Boolean {
+        val modifierList = ownerFunction.modifierList
+        if (modifierList != null && (modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.EXPECT_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)
+                    || modifierList.hasModifier(KtTokens.OPEN_KEYWORD))
+        ) { // maybe one of overriders does use this parameter
             return true
         }
-        return ownerFunction.containingClass()?.isAbstract() == true
+        return ownerFunction.containingClass()?.isInterface() == true
     }
 
     fun isLocalDeclaration(declaration: KtNamedDeclaration): Boolean {
