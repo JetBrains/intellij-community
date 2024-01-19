@@ -48,6 +48,8 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
     super.updateCustomComponent(component, presentation)
     component.isEnabled = presentation.isEnabled
     (component as? AbstractToolbarCombo)?.let {
+      it.text = presentation.text
+      it.toolTipText = presentation.description
       val pLeftIcons = presentation.getClientProperty(LEFT_ICONS_KEY)
       val pRightIcons = presentation.getClientProperty(RIGHT_ICONS_KEY)
       it.leftIcons = when {

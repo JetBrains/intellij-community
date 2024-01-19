@@ -40,6 +40,8 @@ abstract class SplitButtonAction : AnAction(), CustomComponentAction {
     super.updateCustomComponent(component, presentation)
     component.isEnabled = presentation.isEnabled
     (component as? AbstractToolbarCombo)?.let {
+      it.text = presentation.text
+      it.toolTipText = presentation.description
       val pLeftIcons = presentation.getClientProperty(ExpandableComboAction.LEFT_ICONS_KEY)
       val pRightIcons = presentation.getClientProperty(ExpandableComboAction.RIGHT_ICONS_KEY)
       it.leftIcons = when {
