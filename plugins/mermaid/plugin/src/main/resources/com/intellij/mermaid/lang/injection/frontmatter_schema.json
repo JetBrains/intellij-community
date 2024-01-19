@@ -16,9 +16,7 @@
         "theme": {
           "type": "string"
         },
-        "themeVariables": {
-          "type": "any"
-        },
+        "themeVariables": {},
         "themeCSS": {
           "type": "string"
         },
