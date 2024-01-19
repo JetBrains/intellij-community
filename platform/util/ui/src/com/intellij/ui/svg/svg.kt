@@ -39,6 +39,12 @@ import kotlin.math.ceil
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
+const val ATTR_ID: String = "id"
+const val ATTR_FILL: String = "fill"
+const val ATTR_FILL_OPACITY: String = "fill-opacity"
+const val ATTR_STROKE: String = "stroke"
+const val ATTR_STROKE_OPACITY: String = "stroke-opacity"
+
 // https://youtrack.jetbrains.com/issue/IDEA-312509/mvstore.MVStoreException-on-zoom-SVG-with-text
 private const val MAX_SCALE_TO_CACHE = 4
 
@@ -94,8 +100,8 @@ internal fun colorPatcherDigestShim(colorPatcherProvider: SVGLoader.SvgElementCo
 fun newSvgPatcher(newPalette: Map<String, String>, alphaProvider: (String) -> Int?): SvgAttributePatcher {
   return object : SvgAttributePatcher {
     override fun patchColors(attributes: MutableMap<String, String>) {
-      patchColorAttribute(attributes = attributes, attributeName = "fill")
-      patchColorAttribute(attributes = attributes, attributeName = "stroke")
+      patchColorAttribute(attributes = attributes, attributeName = ATTR_FILL)
+      patchColorAttribute(attributes = attributes, attributeName = ATTR_STROKE)
     }
 
     private fun patchColorAttribute(attributes: MutableMap<String, String>, attributeName: String) {

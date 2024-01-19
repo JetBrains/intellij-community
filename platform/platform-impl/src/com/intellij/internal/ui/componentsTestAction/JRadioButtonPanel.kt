@@ -12,27 +12,22 @@ internal class JRadioButtonPanel {
 
   val panel: DialogPanel = panel {
     group("States (Check Focused Manually)") {
+      buttonsGroup("Enabled:") {
+        row {
+          radioButton("radioButton")
+            .comment("To focus radioButton without selection press left mouse button, move mouse outside of the radioButton and release the button")
+        }
+        row {
+          radioButton("radioButtonSelected").selected(true)
+        }
+      }
+    }
+    buttonsGroup("Disabled:") {
       row {
-        panel {
-          buttonsGroup {
-            row {
-              radioButton("radioButton")
-            }
-            row {
-              radioButton("radioButtonSelected").selected(true)
-            }
-          }
-        }
-        panel {
-          buttonsGroup {
-            row {
-              radioButton("radioButtonDisabled").enabled(false)
-            }
-            row {
-              radioButton("radioButtonSelectedDisabled").selected(true).enabled(false)
-            }
-          }
-        }
+        radioButton("radioButtonDisabled").enabled(false)
+      }
+      row {
+        radioButton("radioButtonSelectedDisabled").selected(true).enabled(false)
       }
     }
   }

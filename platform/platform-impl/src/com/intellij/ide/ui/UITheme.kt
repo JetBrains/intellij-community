@@ -197,6 +197,21 @@ class UITheme internal constructor(
       return createTheme(theme = theme, parentTheme = null, classLoader = classLoader, iconMapper = null, themeId = themeId, warn = warn)
     }
 
+    /**
+     * Returns true if root theme is experimental one (Dark or Light)
+     */
+    internal fun isRootThemeExperimental(theme: UIThemeBean): Boolean {
+      var current: UIThemeBean? = theme
+      while (current != null) {
+        if (current.name == "Light" || current.name == "Dark") {
+          return true
+        }
+        val parentTheme = current.parentTheme?: return false
+        current = (UiThemeProviderListManager.getInstance().findThemeById(parentTheme) as? UIThemeLookAndFeelInfoImpl)?.theme?.bean
+      }
+      return false
+    }
+
     private fun resolveParentTheme(theme: UIThemeBean, themeId: @NonNls String): UIThemeBean? {
       val parentThemeId = theme.parentTheme
       if (parentThemeId == null) {
@@ -257,7 +272,7 @@ private fun createTheme(theme: UIThemeBean,
   }
   initializeNamedColors(theme, warn = warn)
 
-  val paletteScopeManager = UiThemePaletteScopeManager()
+  val paletteScopeManager = UiThemePaletteScopeManager(theme)
 
   val iconMap = theme.icons
   var colorPatcher: SvgElementColorPatcherProvider? = null
@@ -288,7 +303,7 @@ private fun createTheme(theme: UIThemeBean,
       override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader = classLoader
     }
 
-    colorPatcher = configureIcons(theme = theme, paletteScopeManager = paletteScopeManager, iconMap = iconMap)
+    colorPatcher = paletteScopeManager.configureIcons(theme = theme, iconMap = iconMap)
   }
 
   val colorsOnSelection = theme.iconColorOnSelectionMap.map
@@ -304,7 +319,7 @@ private fun createTheme(theme: UIThemeBean,
 
     val digest = paletteScopeManager.computeDigest(InsecureHashBuilder())
       .putStringMap(colors)
-      .putLong(415157604330986170 /* id and version of this class implementation */)
+      .putLong(453973187376924038) // id and version of this class implementation, see ColorPatcherIdGenerator
       .build()
 
     selectionColorPatcher = object : SvgElementColorPatcherProvider {
@@ -331,40 +346,7 @@ private fun createTheme(theme: UIThemeBean,
                  selectionColorPatcher = selectionColorPatcher)
 }
 
-private fun configureIcons(theme: UIThemeBean,
-                           paletteScopeManager: UiThemePaletteScopeManager,
-                           iconMap: Map<String, Any?>): SvgElementColorPatcherProvider? {
-  @Suppress("UNCHECKED_CAST")
-  val palette = iconMap.get("ColorPalette") as? Map<String, String> ?: return null
-  for (colorKey in palette.keys) {
-    val scope = paletteScopeManager.getScope(colorKey) ?: continue
-    val key = toColorString(key = colorKey, darkTheme = theme.dark)
-    var v: Any? = palette.get(colorKey)
-    if (v is String) {
-      // named
-      v = theme.colorMap.map.get(v) ?: parseColorOrNull(key, null)
-    }
-
-    val colorFromKey = parseColorOrNull(key, null)
-    if (colorFromKey != null && v is Color) {
-      val fillTransparency = v.alpha
-      val colorHex = "#" + ColorUtil.toHex(v, false)
-      scope.newPalette.put(key, colorHex)
-      scope.alphas.put(colorHex, fillTransparency)
-    }
-  }
-
-  val digest = paletteScopeManager.computeDigest(InsecureHashBuilder()).build()
-  return object : SvgElementColorPatcherProvider {
-    override fun digest() = digest
-
-    override fun attributeForPath(path: String): SvgAttributePatcher? {
-      return paletteScopeManager.getScopeByPath(path)?.svgColorIconPatcher?.get()
-    }
-  }
-}
-
-private fun toColorString(key: String, darkTheme: Boolean): String {
+internal fun toColorString(key: String, darkTheme: Boolean): String {
   if (darkTheme) {
     colorPalette.get("$key.Dark")?.let {
       return it.lowercase()
