@@ -27,7 +27,6 @@ import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -428,7 +427,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     // resolve updated, theirs dependents, and dependents of deleted
     val toResolve: MutableSet<MavenProject> = HashSet(updatedProjects)
-    toResolve.addAll(projectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)))
+    toResolve.addAll(projectsTree.getDependentProjects(updatedProjects + deleted))
 
     // do not try to resolve projects with syntactic errors
     val it = toResolve.iterator()
