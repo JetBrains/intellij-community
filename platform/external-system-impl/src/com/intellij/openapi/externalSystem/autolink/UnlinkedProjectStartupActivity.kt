@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.io.isAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -251,7 +250,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       for (projectRoot in projectRoots) {
         val path = file.toNioPathOrNull() ?: continue
         val projectPath = projectRoot.toNioPathOrNull() ?: continue
-        if (path.isAncestor(projectPath, false)) {
+        if (projectPath.startsWith(path)) {
           changedRoots.add(projectRoot)
         }
         else if (file.isFile && path.parent == projectPath) {
