@@ -162,6 +162,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     when (modificationType) {
       INTERNAL -> appendLine(SAMPLE_TEXT)
       ExternalSystemModificationType.EXTERNAL -> appendLineInIoFile(SAMPLE_TEXT)
+      ExternalSystemModificationType.HIDDEN -> throw UnsupportedOperationException()
       ExternalSystemModificationType.UNKNOWN -> throw UnsupportedOperationException()
     }
   }

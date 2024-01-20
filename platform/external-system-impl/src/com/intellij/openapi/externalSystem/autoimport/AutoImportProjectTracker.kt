@@ -134,11 +134,13 @@ class AutoImportProjectTracker(
       AutoReloadType.ALL -> when (getModificationType()) {
         INTERNAL -> scheduleDelayedSmartProjectReload()
         EXTERNAL -> scheduleDelayedSmartProjectReload()
+        HIDDEN -> updateProjectNotification()
         UNKNOWN -> updateProjectNotification()
       }
       AutoReloadType.SELECTIVE -> when (getModificationType()) {
         INTERNAL -> updateProjectNotification()
         EXTERNAL -> scheduleDelayedSmartProjectReload()
+        HIDDEN -> updateProjectNotification()
         UNKNOWN -> updateProjectNotification()
       }
       AutoReloadType.NONE -> updateProjectNotification()
