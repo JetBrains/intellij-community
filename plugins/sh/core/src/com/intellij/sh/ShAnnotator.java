@@ -7,6 +7,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.sh.highlighter.ShHighlighterColors.*;
 
-final class ShAnnotator implements Annotator {
+final class ShAnnotator implements Annotator, DumbAware {
   @Override
   public void annotate(@NotNull PsiElement o, @NotNull AnnotationHolder holder) {
     // todo comment in case of poor performance because of the issue with EditorGutterComponentImpl#updateSize()
