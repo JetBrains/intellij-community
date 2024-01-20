@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.icons.AllIcons;
@@ -8,6 +8,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -293,7 +294,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
   }
 
-  private final class MyMergeAction extends ToggleAction {
+  private final class MyMergeAction extends DumbAwareToggleAction {
     private MyMergeAction() {
       super(JavaBundle.message("action.text.show.methods.to.implement"), JavaBundle.message(
         "action.text.show.methods.to.implement"), AllIcons.General.Show_to_implement);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -476,7 +477,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (selectedElements == null || selectedElements.isEmpty()) return;
     PsiUtilCore.ensureValid(aClass);
     final ThrowableRunnable<RuntimeException> performImplementOverrideRunnable =
-      () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, showedChooser.getOptions());
+      () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+        () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, showedChooser.getOptions()));
     if (Registry.is("run.refactorings.under.progress")) {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
         return;
