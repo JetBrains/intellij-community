@@ -19,6 +19,13 @@ enum class ExternalSystemModificationType {
   INTERNAL,
 
   /**
+   * Semantically, it is almost identical to [INTERNAL], but if this event occurs,
+   * the project will not be automatically reloaded, even if the auto-reload type
+   * selected is "Any changes".
+   */
+  HIDDEN,
+
+  /**
    * Unknown type of modifications.
    */
   UNKNOWN;
