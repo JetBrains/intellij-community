@@ -1225,6 +1225,10 @@
         <synonym text="Exit Dumb Mode"/>
         <synonym text="Enter Dumb Mode"/>
       </action>
+      <action id="DumbModeTremble" class="com.intellij.internal.DumbModeTrembleAction">
+        <synonym text="Exit Tremble Dumb Mode"/>
+        <synonym text="Enter Tremble Dumb Mode"/>
+      </action>
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
       <action id="SkipWindowDeactivationEvents" class="com.intellij.internal.SkipWindowDeactivationEventsAction" internal="true">
         <synonym text="Disable ProcessCanceledException"/>

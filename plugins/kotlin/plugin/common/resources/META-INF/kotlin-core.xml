@@ -563,9 +563,6 @@
 
     <group id="InternalKotlin" internal="true">
       <separator/>
-
-      <action id="DumbModeTremble"
-              class="org.jetbrains.kotlin.idea.actions.internal.DumbModeTrembleAction"/>
       <action id="HighlightingBenchmarkAction"
               class="org.jetbrains.kotlin.idea.actions.internal.benchmark.HighlightingBenchmarkAction"/>
 
