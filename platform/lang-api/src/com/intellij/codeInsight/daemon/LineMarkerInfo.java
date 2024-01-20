@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -213,7 +214,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return myAccessibleNameProvider;
   }
 
-  public static class LineMarkerGutterIconRenderer<T extends PsiElement> extends GutterIconRenderer {
+  public static class LineMarkerGutterIconRenderer<T extends PsiElement> extends GutterIconRenderer implements DumbAware {
     private final LineMarkerInfo<T> myInfo;
 
     public LineMarkerGutterIconRenderer(@NotNull LineMarkerInfo<T> info) {
