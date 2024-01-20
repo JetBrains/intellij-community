@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.platform.ide.bootstrap
 
@@ -42,7 +42,6 @@ import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.debug.internal.DebugProbesImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
@@ -390,12 +389,7 @@ private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
   launch {
     span("coroutine debug probes init") {
       try {
-        if (System.getProperty("idea.enable.coroutine.dump.using.classloader", "false").toBoolean()) {
-          DebugProbesImpl.install()
-        }
-        else {
-          enableCoroutineDump()
-        }
+        enableCoroutineDump()
       }
       catch (ignore: NoClassDefFoundError) {
         // if for some reason, the class loader has ByteBuddy in the classpath
