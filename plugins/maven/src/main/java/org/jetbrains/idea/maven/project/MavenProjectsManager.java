@@ -34,7 +34,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
-import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -723,16 +722,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
    */
   @Deprecated
   protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
-
-  /**
-   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}} or {@link #updateAllMavenProjects(MavenImportSpec, Continuation)}
-   */
-  @TestOnly
-  @Deprecated
-  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
-    myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
-  }
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
