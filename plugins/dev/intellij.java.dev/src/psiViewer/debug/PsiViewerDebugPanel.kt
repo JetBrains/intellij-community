@@ -206,7 +206,7 @@ class PsiViewerDebugPanel(
                 JavaDevBundle.message("psi.viewer.debug.evaluation.failed"),
                 NotificationType.ERROR,
               )
-              LOG.error("Failed to evaluate PSI expression", e)
+              LOG.warn("Failed to evaluate PSI expression", e)
             }
 
           }
