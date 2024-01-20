@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -33,7 +34,7 @@ import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.Objects.requireNonNull;
 
 @ApiStatus.NonExtendable
-public class HyperlinkAnnotator implements Annotator {
+public class HyperlinkAnnotator implements Annotator, DumbAware {
 
   private static final Key<@Nls String> messageKey = Key.create("hyperlink.message");
 
