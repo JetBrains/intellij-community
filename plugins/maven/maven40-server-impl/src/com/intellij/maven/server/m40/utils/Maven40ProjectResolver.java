@@ -266,8 +266,9 @@ public class Maven40ProjectResolver {
     Collection<String> activatedProfiles = Maven40ProfileUtil.collectActivatedProfiles(mavenProject);
 
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
+    String checksum = Maven40EffectivePomDumper.checksum(mavenProject);
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, mavenModelMap, holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, checksum, mavenModelMap, holder, activatedProfiles);
     if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
       data = null;
     }

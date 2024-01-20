@@ -172,6 +172,7 @@ class MavenProjectResolver(private val myProject: Project) {
         else {
           readerResults.add(MavenProjectReaderResult(
             projectData.mavenModel,
+            projectData.pomChecksum,
             projectData.mavenModelMap,
             MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.disabledProfiles),
             projectData.nativeMavenProject,
