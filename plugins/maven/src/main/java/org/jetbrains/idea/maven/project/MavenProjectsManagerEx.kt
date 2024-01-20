@@ -325,6 +325,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       fireImportAndResolveScheduled()
       val projectsToResolve = collectProjectsToResolve(readingResult)
 
+      logDebug("Reading result: ${readingResult.updated.size}, ${readingResult.deleted.size}; to resolve: ${projectsToResolve.size}")
+
       val result = importModules(syncActivity, projectsToResolve, modelsProvider)
 
       MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
@@ -368,7 +370,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       .associateBy({ it.mavenProject }, { MavenProjectChanges.ALL })
 
     // plugins and artifacts can be resolved in parallel with import
-    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
     val pluginResolutionJob = cs.launch {
       val pluginResolver = MavenPluginResolver(projectsTree)
       withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
@@ -554,11 +555,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     logDebug("Import activity started: ${taskClass.simpleName}")
     val activity = task.activity.startedWithParent(project, parentActivity)
     try {
-      return action()
+      val result = action()
+      logDebug("Import activity finished: ${taskClass.simpleName}, result: ${resultSummary(activity)}")
+      return result
     }
     finally {
       activity.finished()
-      logDebug("Import activity finished: ${taskClass.simpleName}, result: ${resultSummary(activity)}")
     }
 
   }
@@ -570,11 +572,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     logDebug("Import activity started: ${taskClass.simpleName}")
     val activity = task.activity.started(project)
     try {
-      return action()
+      val result = action()
+      logDebug("Import activity finished: ${taskClass.simpleName}, result: ${resultSummary(activity)}")
+      return result
     }
     finally {
       activity.finished()
-      logDebug("Import activity finished: ${taskClass.simpleName}, result: ${resultSummary(activity)}")
     }
 
   }
