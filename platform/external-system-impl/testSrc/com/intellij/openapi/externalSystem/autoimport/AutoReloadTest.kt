@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.FAILURE
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
@@ -1046,6 +1045,85 @@ class AutoReloadTest : AutoReloadTestCase() {
       markDirty()
       scheduleProjectReload()
       assertState(numReload = 6, notified = true, event = "settings file modification during reload")
+    }
+  }
+
+  fun `test adjust modification type to hidden with any changes`() {
+    test { settingsFile ->
+      setAutoReloadType(ALL)
+      setModificationTypeAdjustingRule { path, type ->
+        if (type == INTERNAL && path.endsWith(".hidden")) HIDDEN else type
+      }
+
+      val hiddenSettingsFile = createSettingsVirtualFile("settings.hidden")
+      assertState(numReload = 0, notified = true, event = "settings file creation", autoReloadType = ALL)
+
+      scheduleProjectReload()
+      assertState(numReload = 1, notified = false, event = "reload", autoReloadType = ALL)
+
+      settingsFile.modify(INTERNAL)
+      assertState(numReload = 2, notified = false, event = "settings file modification", autoReloadType = ALL)
+
+      hiddenSettingsFile.modify(INTERNAL)
+      assertState(numReload = 2, notified = true, event = "settings file modification", autoReloadType = ALL)
+
+      scheduleProjectReload()
+      assertState(numReload = 3, notified = false, event = "reload", autoReloadType = ALL)
+
+      settingsFile.modify(EXTERNAL)
+      assertState(numReload = 4, notified = false, event = "settings file modification", autoReloadType = ALL)
+
+      hiddenSettingsFile.modify(EXTERNAL)
+      assertState(numReload = 5, notified = false, event = "settings file modification", autoReloadType = ALL)
+
+      hiddenSettingsFile.modify(INTERNAL)
+      assertState(numReload = 5, notified = true, event = "settings file modification", autoReloadType = ALL)
+
+      settingsFile.modify(INTERNAL)
+      assertState(numReload = 6, notified = false, event = "settings file modification", autoReloadType = ALL)
+    }
+  }
+
+  fun `test adjust modification type to hidden with external changes`() {
+    test { settingsFile ->
+      setModificationTypeAdjustingRule { path, type ->
+        if (type == INTERNAL && path.endsWith(".hidden")) HIDDEN else type
+      }
+
+      val hiddenSettingsFile = createSettingsVirtualFile("settings.hidden")
+      assertState(numReload = 0, notified = true, event = "settings file creation")
+
+      scheduleProjectReload()
+      assertState(numReload = 1, notified = false, event = "reload")
+
+      settingsFile.modify(INTERNAL)
+      assertState(numReload = 1, notified = true, event = "settings file modification")
+
+      scheduleProjectReload()
+      assertState(numReload = 2, notified = false, event = "reload")
+
+      hiddenSettingsFile.modify(INTERNAL)
+      assertState(numReload = 2, notified = true, event = "settings file modification")
+
+      scheduleProjectReload()
+      assertState(numReload = 3, notified = false, event = "reload")
+
+      settingsFile.modify(EXTERNAL)
+      assertState(numReload = 4, notified = false, event = "settings file modification")
+      hiddenSettingsFile.modify(EXTERNAL)
+      assertState(numReload = 5, notified = false, event = "settings file modification")
+
+      hiddenSettingsFile.modify(INTERNAL)
+      assertState(numReload = 5, notified = true, event = "settings file modification")
+
+      scheduleProjectReload()
+      assertState(numReload = 6, notified = false, event = "reload")
+
+      settingsFile.modify(INTERNAL)
+      assertState(numReload = 6, notified = true, event = "settings file modification")
+
+      scheduleProjectReload()
+      assertState(numReload = 7, notified = false, event = "reload")
     }
   }
 }

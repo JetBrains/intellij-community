@@ -456,6 +456,9 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
     fun setReloadCollisionPassType(type: ReloadCollisionPassType) = projectAware.reloadCollisionPassType.set(type)
 
+    fun setModificationTypeAdjustingRule(rule: (path: String, type: ExternalSystemModificationType) -> ExternalSystemModificationType) =
+      projectAware.modificationTypeAdjustingRule.set(rule)
+
     fun resetAssertionCounters() = projectAware.resetAssertionCounters()
 
     fun createSettingsVirtualFile(relativePath: String): VirtualFile {
