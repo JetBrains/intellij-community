@@ -13,11 +13,6 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     return PyArgumentListInspection.class;
   }
 
-  @Override
-  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
-  }
-
   // PY-36158
   public void testDataclassesStarImportNoUnexpectedArgumentWarning() {
     doTestByText("""

@@ -31,11 +31,6 @@ public class DetectClassesToRunTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.addClass("package org.testng.annotations; @interface BeforeGroups { String[] value() default {};}");
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
   public void testNonRelatedBeforeClassIncluded() throws Exception {
     final PsiClass configClass = myFixture.addClass("package p; public class AConfig {@org.testng.annotations.BeforeClass public void setup(){}}");
     final PsiClass testClass = myFixture.addClass("package p; public class ATest {@org.testng.annotations.Test public void testOne(){}}");

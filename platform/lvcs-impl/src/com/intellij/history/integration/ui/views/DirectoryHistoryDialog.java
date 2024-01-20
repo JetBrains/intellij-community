@@ -216,11 +216,6 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     protected abstract void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected);
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return super.getActionUpdateThread();
-    }
-
-    @Override
     protected boolean isEnabled(DirectoryHistoryDialogModel model) {
       final List<DirectoryChange> changes = getSelectedChanges();
       if (changes.isEmpty()) return false;

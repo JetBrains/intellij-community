@@ -118,11 +118,6 @@ final class CookieManagerDialog extends JDialog {
     }
 
     @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return false;
-    }
-
-    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       return rowData.get(rowIndex)[columnIndex];
     }

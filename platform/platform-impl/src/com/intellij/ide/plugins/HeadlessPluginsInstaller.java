@@ -35,11 +35,6 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
   }
 
   @Override
-  public boolean isHeadless() {
-    return ApplicationStarter.super.isHeadless();
-  }
-
-  @Override
   public void main(@NotNull List<String> args) {
     try {
       var pluginIds = new LinkedHashSet<PluginId>();

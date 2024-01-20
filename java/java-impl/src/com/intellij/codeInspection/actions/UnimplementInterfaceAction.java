@@ -156,11 +156,6 @@ public class UnimplementInterfaceAction extends PsiUpdateModCommandAction<PsiEle
       super(className);
     }
 
-    @Override
-    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-      return super.getPresentation(context, element);
-    }
-
     @Nls
     @Override
     @NotNull String getText(@NotNull PsiClass targetClass) {

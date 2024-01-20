@@ -217,12 +217,6 @@ abstract class RecordLayout {
         return Byte.toUnsignedInt(headerByte1);
       }
 
-      @Override
-      public int redirectToId(final ByteBuffer source,
-                              final int offset) {
-        return StreamlinedBlobStorage.NULL_ID;
-      }
-
       public static int capacity(final byte headerByte0) {
         final byte recordSizeType = recordSizeType(headerByte0);
         if (recordSizeType != RECORD_SIZE_TYPE_SMALL) {

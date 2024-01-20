@@ -27,11 +27,6 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     showInSearchEverywherePopup(tabID, e, false, true);
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
   public static void openOptionOrPerformAction(@NotNull Object element,
                                                String enteredText,
                                                @Nullable Project project,

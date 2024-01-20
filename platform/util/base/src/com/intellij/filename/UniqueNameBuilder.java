@@ -162,10 +162,5 @@ public final class UniqueNameBuilder<T> {
       }
       return pathComponent;
     }
-
-    @Override
-    public void remove() {
-      Iterator.super.remove();
-    }
   }
 }

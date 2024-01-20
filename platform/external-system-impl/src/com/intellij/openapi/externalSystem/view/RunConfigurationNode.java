@@ -128,11 +128,6 @@ public class RunConfigurationNode extends ExternalSystemNode {
       public boolean canNavigate() {
         return true;
       }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return false;
-      }
     };
   }
 }

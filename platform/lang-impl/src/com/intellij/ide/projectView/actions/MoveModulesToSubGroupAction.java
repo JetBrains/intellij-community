@@ -27,11 +27,6 @@ public final class MoveModulesToSubGroupAction extends MoveModulesToGroupAction 
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
-  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);

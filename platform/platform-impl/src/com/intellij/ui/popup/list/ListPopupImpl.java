@@ -255,11 +255,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   @Override
-  protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    return super.createPopup(parent, step, parentValue);
-  }
-
-  @Override
   protected JComponent createContent() {
     myMouseMotionListener = new MyMouseMotionListener();
     myMouseListener = new MyMouseListener();

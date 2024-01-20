@@ -290,12 +290,6 @@ public class EditorStressTest extends AbstractEditorTest {
 
     @Override
     public int calcWidthInPixels(@NotNull Inlay inlay) { return width; }
-
-    @Override
-    public void paint(@NotNull Inlay inlay,
-                      @NotNull Graphics g,
-                      @NotNull Rectangle targetRegion,
-                      @NotNull TextAttributes textAttributes) {}
   }
 
   private static final Key<Integer> REGION_WIDTH = Key.create("custom.region.width");

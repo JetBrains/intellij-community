@@ -33,11 +33,6 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   private XmlFile pluginDescriptorToPatch;
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
-  @Override
   protected final PsiElement @NotNull [] invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory) {
     PsiElement[] psiElements = doInvokeDialog(project, directory);
     return psiElements == Holder.CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;

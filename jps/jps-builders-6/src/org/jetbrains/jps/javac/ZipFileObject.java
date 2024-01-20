@@ -49,11 +49,6 @@ public final class ZipFileObject extends JpsFileObject {
   }
 
   @Override
-  public OutputStream openOutputStream() throws IOException {
-    return super.openOutputStream();
-  }
-
-  @Override
   public Writer openWriter() throws IOException {
     throw new UnsupportedOperationException();
   }

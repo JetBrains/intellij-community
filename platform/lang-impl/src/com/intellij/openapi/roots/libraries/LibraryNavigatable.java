@@ -36,9 +36,4 @@ public final class LibraryNavigatable implements Navigatable {
   public boolean canNavigate() {
     return !module.isDisposed() && element != null;
   }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
-  }
 }

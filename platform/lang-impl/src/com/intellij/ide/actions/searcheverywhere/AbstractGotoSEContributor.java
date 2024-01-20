@@ -298,11 +298,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     return createScopes();
   }
 
-  @Override
-  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
-    return WeightedSearchEverywhereContributor.super.getSupportedCommands();
-  }
-
   @NotNull
   protected abstract FilteringGotoByModel<?> createModel(@NotNull Project project);
 

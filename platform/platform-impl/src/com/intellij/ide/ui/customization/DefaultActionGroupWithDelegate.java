@@ -25,9 +25,4 @@ public final class DefaultActionGroupWithDelegate extends DefaultActionGroup imp
   public @NotNull ActionGroup getDelegate() {
     return myDelegate;
   }
-
-  @Override
-  public String getPresentableName() {
-    return ActionWithDelegate.super.getPresentableName();
-  }
 }

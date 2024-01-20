@@ -174,8 +174,4 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
   public boolean close() {
     return disposeActiveWizard();
   }
-
-  @Override
-  public void setRestoreFocusSilently() {
-  }
 }

@@ -33,11 +33,6 @@ final class UIFormEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   @Override
-  public boolean acceptRequiresReadAction() {
-    return true;
-  }
-
-  @Override
   public @NotNull FileEditor createEditor(final @NotNull Project project, final @NotNull VirtualFile file){
     LOG.assertTrue(accept(project, file));
     return new UIFormEditor(project, file);
