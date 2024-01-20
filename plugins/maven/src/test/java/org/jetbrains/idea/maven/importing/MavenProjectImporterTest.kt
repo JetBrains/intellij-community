@@ -73,7 +73,7 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
 
     project.messageBus.connect(testRootDisposable)
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
-        override fun dependencyResolutionStarted(mavenProjects: MutableCollection<MavenProject>) {
+        override fun projectResolutionStarted(mavenProjects: MutableCollection<MavenProject>) {
           resolvedProjects.addAll(mavenProjects)
         }
       })
