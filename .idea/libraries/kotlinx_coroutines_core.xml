@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3">
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-core-jvm:1.7.3-jb.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.7.3/kotlinx-coroutines-core-jvm-1.7.3.jar">
-          <sha256sum>1ab3acc38f3e7355c4f9d1ec62107a46fa73c899f3070d055e5d4373dfe67e12</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.7.3-jb.1/kotlinx-coroutines-core-jvm-1.7.3-jb.1.jar">
+          <sha256sum>e7170c0fa58e337245a0709a4bb7e0c9c1d6f3dce886a585b307e35e9ef9a5ce</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.7.3/kotlinx-coroutines-core-jvm-1.7.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.7.3-jb.1/kotlinx-coroutines-core-jvm-1.7.3-jb.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.7.3/kotlinx-coroutines-core-jvm-1.7.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.7.3-jb.1/kotlinx-coroutines-core-jvm-1.7.3-jb.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
