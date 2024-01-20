@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.Disposable
@@ -19,10 +20,7 @@ import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
-import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.observable.properties.MutableBooleanProperty
-import com.intellij.openapi.observable.properties.whenPropertyChanged
-import com.intellij.openapi.observable.properties.whenPropertySet
+import com.intellij.openapi.observable.properties.*
 import com.intellij.openapi.observable.util.set
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.impl.CoreProgressManager
@@ -55,6 +53,7 @@ class AutoImportProjectTracker(
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
   private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
   private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
+  private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
   private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, false, null, serviceDisposable)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
@@ -81,6 +80,10 @@ class AutoImportProjectTracker(
         projectReloadOperation.traceFinish()
       }
     }
+
+  private fun createProjectCompletionListener() = LookupManagerListener { _, newLookup ->
+    isProjectLookupActivateProperty.set(newLookup != null)
+  }
 
   override fun scheduleProjectRefresh() {
     LOG.debug("Schedule project reload", Throwable())
@@ -178,7 +181,8 @@ class AutoImportProjectTracker(
   private fun isDisabledAutoReload(): Boolean {
     return !isEnabledAutoReload ||
            projectChangeOperation.isOperationInProgress() ||
-           projectReloadOperation.isOperationInProgress()
+           projectReloadOperation.isOperationInProgress() ||
+           isProjectLookupActivateProperty.get()
   }
 
   private fun getModificationType(): ExternalSystemModificationType {
@@ -271,6 +275,8 @@ class AutoImportProjectTracker(
     LOG.debug("Project tracker initialization")
     ApplicationManager.getApplication().messageBus.connect(serviceDisposable)
       .subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
+    project.messageBus.connect(serviceDisposable)
+      .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
     dispatcher.setRestartTimerOnAdd(true)
     dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
     dispatcher.activate()
@@ -293,12 +299,15 @@ class AutoImportProjectTracker(
     projectReloadOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
     projectChangeOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
     projectChangeOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
+    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { scheduleChangeProcessing() }
     settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) { scheduleChangeProcessing() }
     asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }
     projectReloadOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project reload start event") }
     projectReloadOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project reload finish event") }
     projectChangeOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project change start event") }
     projectChangeOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project change finish event") }
+    isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) { LOG.debug("Detected project lookup start event") }
+    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { LOG.debug("Detected project lookup finish event") }
   }
 
   private fun ProjectData.getState() = State.Project(status.isDirty(), settingsTracker.getState())
