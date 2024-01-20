@@ -317,8 +317,9 @@ class ProjectSettingsTracker(
 
     override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
       val operationStamp = currentTime()
-      logModificationAsDebug(path, modificationStamp, modificationType)
-      projectStatus.markModified(operationStamp, modificationType)
+      val adjustedModificationType = projectAware.adjustModificationType(path, modificationType)
+      logModificationAsDebug(path, modificationStamp, modificationType, adjustedModificationType)
+      projectStatus.markModified(operationStamp, adjustedModificationType)
     }
 
     override fun apply() {
@@ -332,11 +333,14 @@ class ProjectSettingsTracker(
       }
     }
 
-    private fun logModificationAsDebug(path: String, modificationStamp: Long, type: ExternalSystemModificationType) {
+    private fun logModificationAsDebug(path: String,
+                                       modificationStamp: Long,
+                                       type: ExternalSystemModificationType,
+                                       adjustedType: ExternalSystemModificationType) {
       if (LOG.isDebugEnabled) {
         val projectPath = projectAware.projectId.externalProjectPath
         val relativePath = FileUtil.getRelativePath(projectPath, path, '/') ?: path
-        LOG.debug("File $relativePath is modified at ${modificationStamp} as $type")
+        LOG.debug("File $relativePath is modified at ${modificationStamp} as $type (adjusted to $adjustedType)")
       }
     }
   }
