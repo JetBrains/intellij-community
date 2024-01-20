@@ -383,6 +383,9 @@
     <registryKey key="maven.legacy.import.available" defaultValue="false"
                  description="Set to true to enable legacy Maven import. If the value is false, only 'fast' Maven import is available. Legacy import will be removed completely in one of the upcoming releases"/>
 
+    <registryKey key="maven.incremental.sync.in.ui" defaultValue="false"
+                 description="Show Maven incremental sync option in UI"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
@@ -595,6 +598,10 @@
 
 
   <actions>
+    <action id="Maven.SyncIncrementally" class="org.jetbrains.idea.maven.project.actions.IncrementalSyncAction"
+            icon="AllIcons.Actions.Refresh">
+    </action>
+
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
             icon="AllIcons.Actions.Refresh">
     </action>
@@ -773,6 +780,7 @@
     </group>
 
     <group id="Maven.NavigatorActionsToolbar">
+      <reference id="Maven.SyncIncrementally"/>
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
 
