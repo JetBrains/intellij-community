@@ -827,7 +827,9 @@ abstract class ComponentManagerImpl(
   /**
    * Use only if approved by core team.
    */
-  fun <T : Any> registerServiceInstance(serviceInterface: Class<T>, instance: T, @Suppress("UNUSED_PARAMETER") pluginDescriptor: PluginDescriptor) {
+  fun <T : Any> registerServiceInstance(serviceInterface: Class<T>,
+                                        instance: T,
+                                        @Suppress("UNUSED_PARAMETER") pluginDescriptor: PluginDescriptor) {
     serviceContainer.replaceInstance(serviceInterface, instance)
   }
 
@@ -1225,7 +1227,13 @@ abstract class ComponentManagerImpl(
   }
 
   fun processAllImplementationClasses(processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
-    fun process(holder: InstanceHolder) {
+    processAllHolders { keyClass, componentClass, plugin ->
+      processor(componentClass, plugin)
+    }
+  }
+
+  fun processAllHolders(processor: (keyClass: String, componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
+    fun process(key: String, holder: InstanceHolder) {
       val clazz = try {
         holder.instanceClass()
       }
@@ -1236,7 +1244,7 @@ abstract class ComponentManagerImpl(
       try {
         val descriptor = (clazz.classLoader as? PluginAwareClassLoader)?.pluginDescriptor
                          ?: fakeCorePluginDescriptor
-        processor(clazz, descriptor)
+        processor(key, clazz, descriptor)
       }
       catch (pce: ProcessCanceledException) {
         throw pce
@@ -1245,11 +1253,11 @@ abstract class ComponentManagerImpl(
         LOG.error(t)
       }
     }
-    for (holder in serviceContainer.instanceHolders()) {
-      process(holder)
+    for ((key, holder) in serviceContainer.instanceHoldersAndKeys()) {
+      process(key, holder)
     }
-    for (holder in componentContainer.instanceHolders()) {
-      process(holder)
+    for ((key, holder) in componentContainer.instanceHoldersAndKeys()) {
+      process(key, holder)
     }
   }
 
