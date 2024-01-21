@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import static com.jetbrains.python.codeInsight.typing.PyProtocolsKt.isProtocol;
+
 /**
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
@@ -219,6 +221,10 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
     private void checkGetter(PyCallable callable, PsiElement beingChecked) {
       if (callable != null) {
         checkOneParameter(callable, beingChecked, true);
+        PyClass cls = PsiTreeUtil.getParentOfType(callable, PyClass.class);
+        if (cls != null && isProtocol(cls, myTypeEvalContext)) {
+          return;
+        }
         checkReturnValueAllowed(callable, beingChecked, true, PyPsiBundle.message("INSP.getter.return.smth"));
       }
     }
