@@ -26,6 +26,8 @@ import java.util.*
 
 private val LOG = logger<FeatureUsageData>()
 
+private val QODANA_PROJECT_ID_HASH: String? = System.getenv("QODANA_PROJECT_ID_HASH")
+
 /**
  * <p>FeatureUsageData represents additional data for reported event.</p>
  *
@@ -54,12 +56,15 @@ class FeatureUsageData(val recorderId: String) {
     if (clientId != null && clientId != ClientId.defaultLocalId) {
       addClientId(clientId.value)
     }
+    if (QODANA_PROJECT_ID_HASH != null && ApplicationManager.getApplication().isHeadlessEnvironment) {
+      data["qodana_project_id"] = QODANA_PROJECT_ID_HASH
+    }
   }
 
   companion object {
     // don't list "version" as "platformDataKeys" because it's format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
-                                                "file_path", "anonymous_id", "client_id")
+                                                "file_path", "anonymous_id", "client_id", "qodana_project_id")
   }
 
   fun addClientId(clientId: String?): FeatureUsageData {
