@@ -4,9 +4,10 @@ package com.intellij.codeInsight.generation
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
 import com.intellij.java.library.JavaLibraryUtil
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
@@ -14,9 +15,10 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.suggested.endOffset
 import com.intellij.settings.JavaLoggerInfo
 import com.intellij.settings.JavaSettingsStorage
-import com.intellij.util.CommonJavaRefactoringUtil
+import org.jetbrains.java.generate.GenerationUtil
 
 class GenerateLoggerHandler : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -35,18 +37,29 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     val chosenLogger = getSelectedLogger(project, availableLoggers) ?: return
 
     val fieldText = chosenLogger.createLoggerFieldText(className)
-    val field = factory.createFieldFromText(fieldText, lastClass)
-    val anchor = determineAnchor(lastClass)
-
-    PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true)
-    PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true)
-    PsiUtil.setModifierProperty(field, PsiModifier.PRIVATE, true)
-
-
-    ApplicationManager.getApplication().runWriteAction {
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(field)
-      CommonJavaRefactoringUtil.appendField(lastClass, field, anchor, null)
+    val field = factory.createFieldFromText(fieldText, lastClass).apply {
+      PsiUtil.setModifierProperty(this, PsiModifier.STATIC, true)
+      PsiUtil.setModifierProperty(this, PsiModifier.FINAL, true)
+      PsiUtil.setModifierProperty(this, PsiModifier.PRIVATE, true)
     }
+
+    try {
+      val appendedField = insertLogger(project, field, lastClass, editor).singleOrNull()?.psiMember ?: return
+      val identifier = appendedField.nameIdentifier
+      editor.caretModel.moveToOffset(identifier.endOffset)
+      editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+    }
+    catch (e: Exception) {
+      GenerationUtil.handleException(project, e)
+    }
+  }
+
+  private fun insertLogger(project: Project,
+                           field: PsiField,
+                           clazz: PsiClass,
+                           editor: Editor): List<PsiGenerationInfo<PsiField>> = WriteAction.compute<List<PsiGenerationInfo<PsiField>>, Exception> {
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(field)
+    GenerateMembersUtil.insertMembersAtOffset(clazz, editor.caretModel.offset, listOf(PsiGenerationInfo(field)))
   }
 
   private fun findSuitableLoggers(module: Module?): List<JavaLoggerInfo> = JavaLoggerInfo.allLoggers.filter {
@@ -77,8 +90,6 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
   override fun startInWriteAction(): Boolean = false
 
-  private fun determineAnchor(psiClass: PsiClass): PsiElement? = psiClass.fields.firstOrNull()
-
   companion object {
     fun getPossiblePlacesForLogger(element: PsiElement): List<PsiClass> {
       val places = mutableListOf<PsiClass>()
@@ -96,15 +107,13 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
     private fun isPossibleToPlaceLogger(psiClass: PsiClass): Boolean {
       for (psiField in psiClass.fields) {
-        if (psiField.name == JavaLoggerInfo.LOGGER_IDENTIFIER) return false
-
         val typeName = psiField.type.canonicalText
 
         for (logger in JavaLoggerInfo.allLoggers) {
           if (logger.loggerName == typeName) return false
         }
       }
-      return true
+      return psiClass.findFieldByName(JavaLoggerInfo.LOGGER_IDENTIFIER, false) == null
     }
   }
 }
