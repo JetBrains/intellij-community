@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -20,19 +21,19 @@ interface GradlePreviewCustomizer {
   companion object {
     var EP_NAME: ExtensionPointName<GradlePreviewCustomizer> = create("org.jetbrains.plugins.gradle.previewCustomizer")
 
-    fun getCustomizer(projectPath: String): GradlePreviewCustomizer =
-      EP_NAME.extensionList.firstOrNull { it.isApplicable(projectPath) } ?: DefaultGradlePreviewCustomizer
+    fun getCustomizer(projectPath: String, taskId: ExternalSystemTaskId): GradlePreviewCustomizer =
+      EP_NAME.extensionList.firstOrNull { it.isApplicable(projectPath, taskId) } ?: DefaultGradlePreviewCustomizer
   }
 
-  fun isApplicable(projectPath: String): Boolean
+  fun isApplicable(projectPath: String, taskId: ExternalSystemTaskId): Boolean
 
-  fun resolvePreviewProjectInfo(projectPath: String, settings: GradleExecutionSettings?): DataNode<ProjectData>
+  fun resolvePreviewProjectInfo(projectPath: String, taskId: ExternalSystemTaskId, settings: GradleExecutionSettings?): DataNode<ProjectData>
 }
 
 object DefaultGradlePreviewCustomizer : GradlePreviewCustomizer {
-  override fun isApplicable(projectPath: String): Boolean = true
+  override fun isApplicable(projectPath: String, taskId: ExternalSystemTaskId): Boolean = true
 
-  override fun resolvePreviewProjectInfo(projectPath: String, settings: GradleExecutionSettings?): DataNode<ProjectData> {
+  override fun resolvePreviewProjectInfo(projectPath: String, taskId: ExternalSystemTaskId, settings: GradleExecutionSettings?): DataNode<ProjectData> {
     val projectName: String = File(projectPath).name
 
     val ideProjectPath = settings?.ideProjectPath

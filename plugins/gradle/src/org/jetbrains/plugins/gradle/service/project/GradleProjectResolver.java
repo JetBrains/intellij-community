@@ -135,7 +135,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading build script dependencies)
     // * Ability to open  an invalid projects (e.g. with errors in build scripts)
     if (isPreviewMode) {
-      return GradlePreviewCustomizer.Companion.getCustomizer(projectPath).resolvePreviewProjectInfo(projectPath, settings);
+      return GradlePreviewCustomizer.Companion.getCustomizer(projectPath, syncTaskId).resolvePreviewProjectInfo(projectPath, syncTaskId, settings);
     }
 
     DefaultProjectResolverContext resolverContext =
