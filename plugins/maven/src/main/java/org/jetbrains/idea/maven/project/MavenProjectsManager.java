@@ -725,7 +725,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, true));
+    scheduleUpdateAllMavenProjects(new MavenImportSpec(true, true));
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {

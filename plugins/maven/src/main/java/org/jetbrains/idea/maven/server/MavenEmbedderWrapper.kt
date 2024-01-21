@@ -52,25 +52,33 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  suspend fun resolveProject(files: Collection<VirtualFile>,
+  suspend fun resolveProject(fileToChecksum: Map<VirtualFile, String?>,
                              explicitProfiles: MavenExplicitProfiles,
                              progressReporter: RawProgressReporter,
                              eventHandler: MavenEventHandler,
                              workspaceMap: MavenWorkspaceMap?,
                              updateSnapshots: Boolean,
                              userProperties: Properties): Collection<MavenServerExecutionResult> {
-    val transformer = if (files.isEmpty()) RemotePathTransformerFactory.Transformer.ID
+    val transformer = if (fileToChecksum.isEmpty()) RemotePathTransformerFactory.Transformer.ID
     else RemotePathTransformerFactory.createForProject(project)
-    val ioFiles = files.map { file: VirtualFile -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
+
+    val mappedFileToChecksum = fileToChecksum.mapNotNull { (file, checkSum) ->
+      transformer.toRemotePath(file.getPath())?.let {
+        File(it) to checkSum
+      }
+    }.toMap()
+
     val serverWorkspaceMap = convertWorkspaceMap(workspaceMap)
+
     val request = ProjectResolutionRequest(
-      ioFiles,
+      mappedFileToChecksum,
       explicitProfiles.enabledProfiles,
       explicitProfiles.disabledProfiles,
       serverWorkspaceMap,
       updateSnapshots,
       userProperties
     )
+
     val results = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
       progressReporter, eventHandler)

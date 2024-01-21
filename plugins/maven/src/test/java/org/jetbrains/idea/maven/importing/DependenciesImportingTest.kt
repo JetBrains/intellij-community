@@ -2052,11 +2052,12 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       assertModuleLibDeps("project", "lib")
     }
 
-    importProjectAsync("""
+    createProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
+    updateAllProjects()
 
     assertProjectLibraries("lib")
 

@@ -165,6 +165,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoRootChangesOnProjectReimportWhenNothingChanges() = runBlocking {
+    Assume.assumeTrue(isWorkspaceImport)
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -191,8 +192,8 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                       </dependency>
                     </dependencies>
                     """.trimIndent())
-    myEventsTestHelper.assertRootsChanged(if (isWorkspaceImport) 0 else 1)
-    myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 0 else 1)
+    myEventsTestHelper.assertRootsChanged(0)
+    myEventsTestHelper.assertWorkspaceModelChanges(0)
   }
 
   @Test

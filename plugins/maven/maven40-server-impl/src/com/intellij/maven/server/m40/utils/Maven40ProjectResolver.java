@@ -66,13 +66,13 @@ public class Maven40ProjectResolver {
 
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
-                                                                @NotNull Collection<File> files,
-                                                                @NotNull List<String> activeProfiles,
-                                                                @NotNull List<String> inactiveProfiles) {
+                                                               @NotNull Map<File, String> fileToChecksum,
+                                                               @NotNull List<String> activeProfiles,
+                                                               @NotNull List<String> inactiveProfiles) {
     try {
       Collection<Maven40ExecutionResult> results = doResolveProject(
         task,
-        files,
+        fileToChecksum,
         activeProfiles,
         inactiveProfiles
       );
@@ -87,9 +87,10 @@ public class Maven40ProjectResolver {
 
   @NotNull
   private Collection<Maven40ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                              @NotNull Collection<File> files,
+                                                              @NotNull Map<File, String> fileToChecksum,
                                                               @NotNull List<String> activeProfiles,
                                                               @NotNull List<String> inactiveProfiles) {
+    Set<File> files = fileToChecksum.keySet();
     File file = !files.isEmpty() ? files.iterator().next() : null;
     MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles, userProperties);
 
@@ -116,6 +117,7 @@ public class Maven40ProjectResolver {
         }
 
         List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
+
         fillSessionCache(mavenSession, repositorySession, buildingResults);
 
         for (ProjectBuildingResult buildingResult : buildingResults) {
@@ -136,7 +138,10 @@ public class Maven40ProjectResolver {
 
           //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
-          buildingResultsToResolveDependencies.put(buildingResult, exceptions);
+          String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
+          if (null == previousChecksum || !previousChecksum.equals(Maven40EffectivePomDumper.checksum(buildingResult.getProject()))) {
+            buildingResultsToResolveDependencies.put(buildingResult, exceptions);
+          }
         }
 
         task.updateTotalRequests(buildingResultsToResolveDependencies.size());

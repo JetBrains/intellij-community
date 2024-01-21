@@ -327,7 +327,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
       logDebug("Reading result: ${readingResult.updated.size}, ${readingResult.deleted.size}; to resolve: ${projectsToResolve.size}")
 
-      val result = importModules(syncActivity, projectsToResolve, modelsProvider)
+      val result = importModules(spec, syncActivity, projectsToResolve, modelsProvider)
 
       MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
 
@@ -348,7 +348,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private suspend fun importModules(syncActivity: StructuredIdeActivity,
+  private suspend fun importModules(spec: MavenImportSpec,
+                                    syncActivity: StructuredIdeActivity,
                                     projectsToResolve: Collection<MavenProject>,
                                     modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     logDebug("importModules started: ${projectsToResolve.size}")
@@ -357,7 +358,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       withRawProgressReporter {
         runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
-          val res = resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, rawProgressReporter!!, syncConsole)
+          val res = resolver.resolve(!spec.isForceReading,
+                                     projectsToResolve,
+                                     projectsTree,
+                                     generalSettings,
+                                     embeddersManager,
+                                     rawProgressReporter!!,
+                                     syncConsole)
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionFinished(
             res.mavenProjectMap.entries.flatMap { it.value }.map { it.mavenProject })
           res

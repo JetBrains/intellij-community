@@ -104,7 +104,8 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
                         embeddersManager: MavenEmbeddersManager) {
     val resolver = MavenProjectResolver(project)
     val progressReporter = object : RawProgressReporter {}
-    resolver.resolve(listOf(mavenProject),
+    resolver.resolve(true,
+                     listOf(mavenProject),
                      tree,
                      generalSettings,
                      embeddersManager,

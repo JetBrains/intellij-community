@@ -35,7 +35,8 @@ data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collect
 
 @ApiStatus.Internal
 class MavenProjectResolver(private val myProject: Project) {
-  suspend fun resolve(mavenProjects: Collection<MavenProject>,
+  suspend fun resolve(incrementally: Boolean,
+                      mavenProjects: Collection<MavenProject>,
                       tree: MavenProjectsTree,
                       generalSettings: MavenGeneralSettings,
                       embeddersManager: MavenEmbeddersManager,
@@ -55,6 +56,7 @@ class MavenProjectResolver(private val myProject: Project) {
           }
         }
         val projectsWithUnresolvedPluginsChunk = doResolve(
+          incrementally,
           mavenProjectsInBaseDir,
           tree,
           generalSettings,
@@ -90,7 +92,8 @@ class MavenProjectResolver(private val myProject: Project) {
     return MavenProjectResolutionResult(projectsWithUnresolvedPlugins)
   }
 
-  private suspend fun doResolve(mavenProjects: Collection<MavenProject>,
+  private suspend fun doResolve(incrementally: Boolean,
+                                mavenProjects: Collection<MavenProject>,
                                 tree: MavenProjectsTree,
                                 generalSettings: MavenGeneralSettings,
                                 embedder: MavenEmbedderWrapper,
@@ -106,12 +109,12 @@ class MavenProjectResolver(private val myProject: Project) {
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))
     val explicitProfiles = tree.explicitProfiles
-    val files: Collection<VirtualFile> = mavenProjects.map { it.file }
+    val fileToChecksum = mavenProjects.associate { it.file to if (incrementally) it.pomChecksum else null }
     val results = resolveProject(
       MavenProjectReader(myProject),
       generalSettings,
       embedder,
-      files,
+      fileToChecksum,
       explicitProfiles,
       tree.projectLocator,
       progressReporter,
@@ -142,7 +145,7 @@ class MavenProjectResolver(private val myProject: Project) {
   private suspend fun resolveProject(reader: MavenProjectReader,
                                      generalSettings: MavenGeneralSettings,
                                      embedder: MavenEmbedderWrapper,
-                                     files: Collection<VirtualFile>,
+                                     fileToChecksum: Map<VirtualFile, String?>,
                                      explicitProfiles: MavenExplicitProfiles,
                                      locator: MavenProjectReaderProjectLocator,
                                      progressReporter: RawProgressReporter,
@@ -150,9 +153,10 @@ class MavenProjectResolver(private val myProject: Project) {
                                      workspaceMap: MavenWorkspaceMap?,
                                      updateSnapshots: Boolean,
                                      userProperties: Properties): Collection<MavenProjectReaderResult> {
+    val files = fileToChecksum.keys
     return try {
       val executionResults = embedder.resolveProject(
-        files, explicitProfiles, progressReporter, eventHandler, workspaceMap, updateSnapshots, userProperties)
+        fileToChecksum, explicitProfiles, progressReporter, eventHandler, workspaceMap, updateSnapshots, userProperties)
       val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
       filesMap.putAll(files.associateBy { it.path })
       val readerResults: MutableCollection<MavenProjectReaderResult> = ArrayList()
@@ -304,7 +308,7 @@ class MavenProjectResolver(private val myProject: Project) {
         reader,
         generalSettings,
         embedder,
-        files,
+        files.associateWith { null },
         explicitProfiles,
         locator,
         progressReporter,

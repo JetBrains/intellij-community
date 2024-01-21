@@ -7,26 +7,23 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class ProjectResolutionRequest implements Serializable {
-  private final @NotNull List<File> pomFiles;
+  private final @NotNull Map<@NotNull File, String> fileToChecksum;
   private final @NotNull List<String> activeProfiles = new ArrayList<>();
   private final @NotNull List<String> inactiveProfiles = new ArrayList<>();
   private final @Nullable MavenWorkspaceMap workspaceMap;
   private final boolean updateSnapshots;
   private final Properties userProperties;
 
-  public ProjectResolutionRequest(@NotNull List<File> pomFiles,
+  public ProjectResolutionRequest(@NotNull Map<@NotNull File, String> fileToChecksum,
                                   @NotNull Collection<String> activeProfiles,
                                   @NotNull Collection<String> inactiveProfiles,
                                   @Nullable MavenWorkspaceMap workspaceMap,
                                   boolean updateSnapshots,
                                   @NotNull Properties userProperties) {
-    this.pomFiles = new ArrayList<>(pomFiles);
+    this.fileToChecksum = new HashMap<>(fileToChecksum);
     this.activeProfiles.addAll(activeProfiles);
     this.inactiveProfiles.addAll(inactiveProfiles);
     this.workspaceMap = workspaceMap;
@@ -35,8 +32,8 @@ public class ProjectResolutionRequest implements Serializable {
   }
 
   @NotNull
-  public List<File> getPomFiles() {
-    return pomFiles;
+  public Map<@NotNull File, String> getFileToChecksum() {
+    return fileToChecksum;
   }
 
   @NotNull

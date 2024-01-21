@@ -81,7 +81,7 @@ public class Maven3XProjectResolver {
 
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
-                                                               @NotNull Collection<File> files,
+                                                               @NotNull Map<File, String> fileToChecksum,
                                                                @NotNull List<String> activeProfiles,
                                                                @NotNull List<String> inactiveProfiles) {
     try {
@@ -89,7 +89,7 @@ public class Maven3XProjectResolver {
 
       Collection<Maven3ExecutionResult> results = doResolveProject(
         task,
-        files,
+        fileToChecksum,
         activeProfiles,
         inactiveProfiles,
         Collections.singletonList(listener)
@@ -107,10 +107,11 @@ public class Maven3XProjectResolver {
 
   @NotNull
   private Collection<Maven3ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                             @NotNull Collection<File> files,
+                                                             @NotNull Map<File, String> fileToChecksum,
                                                              @NotNull List<String> activeProfiles,
                                                              @NotNull List<String> inactiveProfiles,
                                                              List<ResolutionListener> listeners) {
+    Set<File> files = fileToChecksum.keySet();
     File file = !files.isEmpty() ? files.iterator().next() : null;
     files.forEach(f -> MavenServerStatsCollector.fileRead(f));
     MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles, userProperties);
@@ -138,6 +139,7 @@ public class Maven3XProjectResolver {
         }
 
         List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
+
         fillSessionCache(mavenSession, repositorySession, buildingResults);
 
         boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
@@ -164,7 +166,10 @@ public class Maven3XProjectResolver {
             executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, myLocalRepository));
           }
           else {
-            buildingResultsToResolveDependencies.put(buildingResult, exceptions);
+            String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
+            if (null == previousChecksum || !previousChecksum.equals(Maven3EffectivePomDumper.checksum(buildingResult.getProject()))) {
+              buildingResultsToResolveDependencies.put(buildingResult, exceptions);
+            }
           }
         }
 
