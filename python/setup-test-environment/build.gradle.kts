@@ -2,7 +2,7 @@
 
 import org.apache.tools.ant.taskdefs.condition.Os
 import java.net.URL
-import kotlin.io.path.createSymbolicLinkPointingTo
+import kotlin.io.path.createLinkPointingTo
 import kotlin.io.path.exists
 
 plugins {
@@ -76,13 +76,13 @@ tasks.register<Exec>("kill_python_processes") {
 
 tasks.register<Delete>("clean") {
   dependsOn("kill_python_processes")
-  mustRunAfter("kill_python_processes")
 
   delete(project.layout.buildDirectory)
+  delete(pythonsDirectory)
+  delete(venvsDirectory)
 }
 
 tasks.register("build") {
-  mustRunAfter("clean")
   dependsOn(tasks.matching { it.name.startsWith("setup_") }, "clean")
 }
 
@@ -109,29 +109,27 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
     }
   }
 
-  project.tasks.create("populate_symlinks_$id") {
+  project.tasks.create("populate_links_$id") {
     dependsOn("populate_tags_$id")
 
     // as we have non-exact version as a key of hashMap retrieval logic from
     // the old script may be easily omitted (TBD: will we be able to keep clear mapping..?
     // maybe one will ever want to add "myCoolPythonVersion" as a key and break the logic)
-    val symlinkPath = pythonHome.resolve("python$version" + if (isWindows) ".exe" else "" ).toPath()
+    val linkPath = pythonHome.resolve("python$version" + if (isWindows) ".exe" else "" ).toPath()
     val executablePath = pythonHome.resolve( if (isWindows) "python.exe" else "bin/python$version").toPath()
 
-    // only if file doesn't exist
-    onlyIf { !symlinkPath.exists() }
+    onlyIf { !linkPath.exists() }
 
     doLast {
-      println("Generating symlink: $symlinkPath -> $executablePath")
-      symlinkPath.createSymbolicLinkPointingTo(executablePath)
+      println("Generating link: $linkPath -> $executablePath")
+      linkPath.createLinkPointingTo(executablePath)
     }
   }
 
   // the task serves as aggregator so that one could just execute `./gradlew setup_python_123`
   // to build some specific environment
   project.tasks.create("setup_$id") {
-    mustRunAfter("clean")
-    setDependsOn(listOf("clean", "populate_symlinks_$id"))
+    setDependsOn(listOf("clean", "populate_links_$id"))
   }
 }
 
