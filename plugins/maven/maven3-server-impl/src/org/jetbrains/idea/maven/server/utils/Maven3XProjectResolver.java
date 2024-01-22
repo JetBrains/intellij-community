@@ -176,6 +176,12 @@ public class Maven3XProjectResolver {
             continue;
           }
 
+          String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
+          String newChecksum = Maven3EffectivePomDumper.checksum(buildingResult.getProject());
+          if (null != previousChecksum && previousChecksum.equals(newChecksum)) {
+            continue;
+          }
+
           List<Exception> exceptions = new ArrayList<>();
 
           loadExtensions(project, exceptions);
@@ -186,11 +192,7 @@ public class Maven3XProjectResolver {
             executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, myLocalRepository));
           }
           else {
-            String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
-            String newChecksum = Maven3EffectivePomDumper.checksum(buildingResult.getProject());
-            if (null == previousChecksum || !previousChecksum.equals(newChecksum)) {
-              buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newChecksum));
-            }
+            buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newChecksum));
           }
         }
 

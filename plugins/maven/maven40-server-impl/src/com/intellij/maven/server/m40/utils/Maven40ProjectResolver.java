@@ -152,17 +152,19 @@ public class Maven40ProjectResolver {
             continue;
           }
 
+          String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
+          String newChecksum = Maven40EffectivePomDumper.checksum(buildingResult.getProject());
+          if (null != previousChecksum && previousChecksum.equals(newChecksum)) {
+            continue;
+          }
+
           List<Exception> exceptions = new ArrayList<>();
 
           loadExtensions(project, exceptions);
 
           //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
-          String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
-          String newChecksum = Maven40EffectivePomDumper.checksum(buildingResult.getProject());
-          if (null == previousChecksum || !previousChecksum.equals(newChecksum)) {
-            buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newChecksum));
-          }
+          buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newChecksum));
         }
 
         task.updateTotalRequests(buildingResultInfos.size());
