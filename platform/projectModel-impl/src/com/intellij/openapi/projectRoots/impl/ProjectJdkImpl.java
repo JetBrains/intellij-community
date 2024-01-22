@@ -42,11 +42,11 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
     this.modificator = modificator;
   }
 
-  public ProjectJdkImpl(String name, SdkTypeId sdkType) {
+  public ProjectJdkImpl(@NotNull String name, @NotNull SdkTypeId sdkType) {
     this(name, sdkType, "", null);
   }
 
-  public ProjectJdkImpl(String name, SdkTypeId sdkType, String homePath, String version) {
+  public ProjectJdkImpl(@NotNull String name, @NotNull SdkTypeId sdkType, String homePath, String version) {
     if (!GlobalSdkTableBridge.Companion.isEnabled()) {
       delegate = new LegacyProjectJdkDelegate(name, sdkType, homePath, version);
     } else {
