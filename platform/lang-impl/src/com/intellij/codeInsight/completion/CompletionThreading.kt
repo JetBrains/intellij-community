@@ -150,6 +150,10 @@ internal class AsyncCompletion : CompletionThreadingBase() {
   }
 
   override fun flushBatchResult(indicator: CompletionProgressIndicator) {
+    if (batchList.isEmpty()) {
+      return
+    }
+
     val batchListCopy = ArrayList(batchList)
     batchList.clear()
 
