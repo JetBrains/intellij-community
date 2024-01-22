@@ -56,9 +56,10 @@ internal class MacOsInstaller(scope: CoroutineScope, project: Project) : Ultimat
   }
 
   override fun startUltimate(installationResult: InstallationResult): Boolean {
-    val start = GeneralCommandLine(
+   val start = GeneralCommandLine(
       "/usr/bin/open", "-n",
       installationResult.appPath.pathString,
+      "--args", project.basePath
     )
 
     return runCommand(start)

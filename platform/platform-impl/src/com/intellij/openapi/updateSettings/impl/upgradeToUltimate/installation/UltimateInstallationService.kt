@@ -223,7 +223,7 @@ class UltimateInstallationService(
 
 internal abstract class UltimateInstaller(
   private val scope: CoroutineScope,
-  private val project: Project,
+  protected val project: Project,
 ) {
   abstract val postfix: String
 
