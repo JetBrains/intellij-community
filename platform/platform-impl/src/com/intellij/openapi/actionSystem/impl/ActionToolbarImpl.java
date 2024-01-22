@@ -726,11 +726,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       Insets insets = getInsets();
       myFirstOutsideIndex = firstHidden;
       myAutoPopupRec = myOrientation == SwingConstants.HORIZONTAL
-                       ? new Rectangle(edge, insets.top, size.width - edge + insets.left, size.height)
-                       : new Rectangle(insets.left, edge, size.width, size.height - edge + insets.top);
+                       ? new Rectangle(edge, insets.top, size.width - edge - insets.right, size.height - insets.top - insets.bottom)
+                       : new Rectangle(insets.left, edge, size.width - insets.left - insets.right, size.height - edge - insets.bottom);
     }
     else {
       myAutoPopupRec = null;
+      myFirstOutsideIndex = -1;
     }
   }
 
