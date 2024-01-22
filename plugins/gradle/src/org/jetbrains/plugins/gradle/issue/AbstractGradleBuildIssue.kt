@@ -7,6 +7,8 @@ import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
 abstract class AbstractGradleBuildIssue : BuildIssue {
@@ -38,6 +40,12 @@ abstract class AbstractGradleBuildIssue : BuildIssue {
 
   fun addQuickFix(quickFix: BuildIssueQuickFix) {
     configurator.quickFixes.add(quickFix)
+  }
+
+  fun addGradleVersionQuickFix(projectPath: String, gradleVersion: GradleVersion) {
+    val quickFix = GradleVersionQuickFix(projectPath, gradleVersion, true)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.version.auto", quickFix.id, gradleVersion.version))
+    addQuickFix(quickFix)
   }
 
   private class BuildIssueConfigurator {
