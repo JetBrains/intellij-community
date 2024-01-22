@@ -16,11 +16,12 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
     return GROUP
   }
 
-  private val GROUP = EventLogGroup("python.new.project.wizard", 7)
+  private val GROUP = EventLogGroup("python.new.project.wizard", 8)
   const val PROJECT_GENERATED_EVENT_ID = "project.generated"
   private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
   private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
   private val PREVIOUSLY_CONFIGURED = EventFields.Boolean("previously_configured")
+  private val IS_WSL_CONTEXT = EventFields.Boolean("wsl_context")
   private val GENERATOR_FIELD = EventFields.Class("generator")
   private val DJANGO_ADMIN_FIELD = EventFields.Boolean("django_admin")
   private val ADDITIONAL = createAdditionalDataField(GROUP.id, PROJECT_GENERATED_EVENT_ID)
@@ -34,6 +35,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
                                                                   INHERIT_GLOBAL_SITE_PACKAGE_FIELD,
                                                                   MAKE_AVAILABLE_TO_ALL_PROJECTS,
                                                                   PREVIOUSLY_CONFIGURED,
+                                                                  IS_WSL_CONTEXT,
                                                                   ADDITIONAL)
 
   private val DJANGO_ADMIN_CHECKED = GROUP.registerEvent("django.admin.selected", DJANGO_ADMIN_FIELD)
@@ -55,6 +57,7 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
       MAKE_AVAILABLE_TO_ALL_PROJECTS.with(info.makeAvailableToAllProjects),
       PREVIOUSLY_CONFIGURED.with(info.previouslyConfigured),
       GENERATOR_FIELD.with(generatorClass),
+      IS_WSL_CONTEXT.with(info.isWSLContext),
       ADDITIONAL.with(ObjectEventData(additionalData))
     )
   }
@@ -80,5 +83,6 @@ data class InterpreterStatisticsInfo(val type: InterpreterType,
                                      val globalSitePackage: Boolean = false,
                                      val makeAvailableToAllProjects: Boolean = false,
                                      val previouslyConfigured: Boolean = false,
+                                     val isWSLContext: Boolean = false,
                                      val creationMode: InterpreterCreationMode = InterpreterCreationMode.NA)
 

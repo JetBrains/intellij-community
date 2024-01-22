@@ -62,6 +62,7 @@ class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Pyt
                                      false,
                                      false,
                                      false,
+                                     presenter.projectLocationContext is WslContext,
                                      InterpreterCreationMode.CUSTOM)
   }
 }

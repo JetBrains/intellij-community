@@ -244,6 +244,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
                                      inheritSitePackages.get(),
                                      makeAvailable.get(),
                                      false,
+                                     presenter.projectLocationContext is WslContext,
                                      InterpreterCreationMode.CUSTOM)
   }
 }
