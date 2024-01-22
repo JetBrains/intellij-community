@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.EdtInvocationManager
-import java.util.concurrent.ConcurrentHashMap
 
 internal class ProblemsViewHighlightingWatcher(
   private val provider: ProblemsProvider,
@@ -25,8 +24,9 @@ internal class ProblemsViewHighlightingWatcher(
   private val level: Int)
   : MarkupModelListener, Disposable {
 
-  private var disposed: Boolean = false
-  private val problems:MutableMap<RangeHighlighter, Problem> = ConcurrentHashMap()
+  private var disposed: Boolean = false // guarded by EDT
+  private val lock = Any()
+  private val problems: MutableMap<RangeHighlighter, Problem> = HashMap() // guarded by lock
 
   init {
     val markupModel = DocumentMarkupModel.forDocument(document, provider.project, true) as MarkupModelEx
@@ -37,7 +37,7 @@ internal class ProblemsViewHighlightingWatcher(
   }
 
   override fun dispose() {
-    synchronized(problems) {
+    synchronized(lock) {
       val list = problems.values.toList()
       problems.clear()
       list
@@ -58,14 +58,16 @@ internal class ProblemsViewHighlightingWatcher(
 
   override fun beforeRemoved(highlighter: RangeHighlighterEx) {
     val problem = getProblem(highlighter)
-    if (problem != null) {
-      EdtInvocationManager.invokeLaterIfNeeded {
-        if (!disposed) {
-          listener.problemDisappeared(problem)
+      if (problem != null) {
+        EdtInvocationManager.invokeLaterIfNeeded {
+          if (!disposed) {
+            listener.problemDisappeared(problem)
+            synchronized(lock) {
+              problems.remove(highlighter)
+            }
+          }
         }
       }
-      problems.remove(highlighter)
-    }
   }
 
   override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
@@ -79,11 +81,19 @@ internal class ProblemsViewHighlightingWatcher(
     }
   }
 
-  fun findProblem(highlighter: RangeHighlighter): Problem? = problems[highlighter]
+  fun findProblem(highlighter: RangeHighlighter): Problem? {
+    synchronized(lock) {
+      return problems[highlighter]
+    }
+  }
 
   private fun getProblem(highlighter: RangeHighlighter): Problem? = when {
     !isValid(highlighter) -> null
-    else -> problems.computeIfAbsent(highlighter) { HighlightingProblem(provider, file, highlighter) }
+    else -> {
+      synchronized(lock) {
+        problems.computeIfAbsent(highlighter) { HighlightingProblem(provider, file, highlighter) }
+      }
+    }
   }
 
   private fun isValid(highlighter: RangeHighlighter): Boolean {

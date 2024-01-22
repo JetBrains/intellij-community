@@ -3,6 +3,9 @@ package com.intellij.analysis.problemsView
 
 import com.intellij.util.messages.Topic
 
+/**
+ * All methods are expected to be called in EDT.
+ */
 interface ProblemsListener {
   companion object {
 
