@@ -74,6 +74,11 @@ internal fun JKExpression.parenthesizeIfCompoundExpression(): JKExpression = whe
 
 internal fun JKExpression.parenthesize(): JKParenthesizedExpression = JKParenthesizedExpression(this)
 
+internal fun JKBinaryExpression.parenthesizedWithFormatting(): JKParenthesizedExpression =
+    JKParenthesizedExpression(
+        JKBinaryExpression(::left.detached(), ::right.detached(), operator).withFormattingFrom(this)
+    )
+
 internal fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
