@@ -12,9 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 /**
@@ -91,12 +89,4 @@ public abstract class JobLauncher {
    * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
    */
   public abstract @NotNull Job<Void> submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
-
-  @ApiStatus.Internal
-  @NotNull
-  public abstract <T> BooleanSupplier processQueueAsync(@NotNull BlockingQueue<@NotNull T> things,
-                                                        @NotNull ProgressIndicator progress,
-                                                        @NotNull T tombStone,
-                                                        @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException;
-
 }
