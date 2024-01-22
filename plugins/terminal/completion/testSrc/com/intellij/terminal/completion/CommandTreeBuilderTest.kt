@@ -13,6 +13,7 @@ import org.jetbrains.terminal.completion.ShellSuggestionsGenerator
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @RunWith(JUnit4::class)
 class CommandTreeBuilderTest {
@@ -224,19 +225,21 @@ class CommandTreeBuilderTest {
 
   @Test
   fun `subcommand with directory argument`() {
-    mockFilePathsSuggestions("file.txt", "folder/", "dir/")
-    doTest("withFiles", "dir/") {
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "folder$separator", "dir$separator")
+    doTest("withFiles", "dir$separator") {
       assertSubcommandOf("withFiles", commandName)
-      assertArgumentOfSubcommand("dir/", "withFiles")
+      assertArgumentOfSubcommand("dir$separator", "withFiles")
     }
   }
 
   @Test
   fun `subcommand with directory without ending slash`() {
-    mockFilePathsSuggestions("file.txt", "folder/", "dir/")
-    doTest("withFiles", "someDir/folder") {
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "folder$separator", "dir$separator")
+    doTest("withFiles", "someDir${separator}folder") {
       assertSubcommandOf("withFiles", commandName)
-      assertArgumentOfSubcommand("someDir/folder", "withFiles")
+      assertArgumentOfSubcommand("someDir${separator}folder", "withFiles")
     }
   }
 

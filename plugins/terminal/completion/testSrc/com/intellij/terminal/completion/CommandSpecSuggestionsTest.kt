@@ -12,6 +12,7 @@ import org.jetbrains.terminal.completion.ShellCommandParserDirectives
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @RunWith(JUnit4::class)
 class CommandSpecSuggestionsTest {
@@ -271,14 +272,16 @@ class CommandSpecSuggestionsTest {
 
   @Test
   fun `suggest hardcoded suggestions with files`() {
-    mockFilePathsSuggestions("file.txt", "dir/", "folder/")
-    doTest("cd", expected = listOf("dir/", "folder/", "-", "~", "--bcde"))
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
+    doTest("cd", expected = listOf("dir$separator", "folder$separator", "-", "~", "--bcde"))
   }
 
   @Test
   fun `do not suggest hardcoded suggestions with files if some directory already typed`() {
-    mockFilePathsSuggestions("file.txt", "dir/", "folder/")
-    doTest("cd", typedPrefix = "someDir/", expected = listOf("dir/", "folder/"))
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
+    doTest("cd", typedPrefix = "someDir$separator", expected = listOf("dir$separator", "folder$separator"))
   }
 
   @Test

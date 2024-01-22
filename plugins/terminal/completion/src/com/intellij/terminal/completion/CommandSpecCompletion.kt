@@ -3,6 +3,7 @@ package com.intellij.terminal.completion
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellArgument
+import java.io.File
 
 class CommandSpecCompletion(
   private val commandSpecManager: CommandSpecManager,
@@ -36,7 +37,7 @@ class CommandSpecCompletion(
   suspend fun computeCommandsAndFiles(incompleteToken: String): List<BaseSuggestion> {
     if (incompleteToken.isBlank()) return emptyList()
     val files = computeFileItems(incompleteToken)
-    return if (incompleteToken.contains("/")) {
+    return if (incompleteToken.contains(File.separatorChar)) {
       files  // cur token contains path delimiter, so it is a path, and we should not propose commands
     }
     else {

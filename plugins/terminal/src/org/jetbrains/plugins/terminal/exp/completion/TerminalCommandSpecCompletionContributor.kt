@@ -14,7 +14,9 @@ import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.getNextSuggestionsString
+import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.terminal.completion.BaseSuggestion
+import java.io.File
 
 internal class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -26,7 +28,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
     val context = TerminalCompletionContext(session, runtimeDataProvider, shellSupport, parameters)
 
-    val prefix = result.prefixMatcher.prefix.substringAfterLast('/') // take last part if it is a file path
+    val prefix = result.prefixMatcher.prefix.substringAfterLast(File.separatorChar) // take last part if it is a file path
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
     val document = parameters.editor.document
@@ -67,8 +69,11 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       val items = commandVariants.firstNotNullOfOrNull { completion.computeCompletionItems(it, arguments) } ?: emptyList()
       return when {
         items.isNotEmpty() -> items
-        // suggest file names if there is nothing to suggest and completion is invoked manually
-        !context.parameters.isAutoPopup -> completion.computeFileItems(expandedTokens.last())
+        // Suggest file names if there is nothing to suggest, and completion is invoked manually.
+        // But not for PowerShell, here it would be better to fall back to shell-based completion
+        !context.parameters.isAutoPopup && context.session.shellIntegration.shellType != ShellType.POWERSHELL -> {
+          completion.computeFileItems(expandedTokens.last())
+        }
         else -> emptyList()
       }
     }
@@ -109,8 +114,8 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       // It is needed, for example, to place the './' item in the first place when '.' is typed.
       // It is a hack, because generally this logic should be solved by overriding LookupArranger#isPrefixItem.
       // But there is no API to substitute our own implementation of LookupArranger.
-      val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith('/')) {
-        escapedInsertValue.removeSuffix("/") to true
+      val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith(File.separatorChar)) {
+        escapedInsertValue.removeSuffix(File.separator) to true
       }
       else escapedInsertValue to false
       val element = LookupElementBuilder.create(this, lookupString)
@@ -126,7 +131,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
                                 private val appendPathSeparator: Boolean) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
       if (appendPathSeparator) {
-        context.document.insertString(context.tailOffset, "/")
+        context.document.insertString(context.tailOffset, File.separator)
         context.editor.caretModel.moveToOffset(context.tailOffset + 1)
       }
       val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")

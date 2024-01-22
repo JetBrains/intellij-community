@@ -12,6 +12,7 @@ import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellArgument
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption
+import java.io.File
 import javax.swing.Icon
 
 internal object TerminalCompletionUtil {
@@ -68,7 +69,7 @@ internal object TerminalCompletionUtil {
   }
 
   private fun getFileOrFolderIcon(fileName: String): Icon {
-    return if (fileName.endsWith("/") || fileName == "~" || fileName == "-") {
+    return if (fileName.endsWith(File.separatorChar) || fileName == "~" || fileName == "-") {
       AllIcons.Nodes.Folder
     }
     else getFileIcon(fileName)

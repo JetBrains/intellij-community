@@ -87,6 +87,20 @@ function Global:__JetBrainsIntellijGetCompletions([int]$RequestId, [string]$Comm
   [Console]::Write($CommandEndMarker + $CompletionsOSC)
 }
 
+function Global:__jetbrains_intellij_get_directory_files([int]$RequestId, [string]$Path) {
+  $Global:__JetBrainsIntellijGeneratorRunning = $true
+  $Files = Get-ChildItem -Force -Path $Path | Where { $_ -is [System.IO.FileSystemInfo] }
+  $Separator = [System.IO.Path]::DirectorySeparatorChar
+  $FileNames = $Files | ForEach-Object { if ($_ -is [System.IO.DirectoryInfo]) { $_.Name + $Separator } else { $_.Name } }
+  $FilesString = $FileNames -join "`n"
+  $FilesOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $FilesString)"
+  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
+  if ($CommandEndMarker -eq $null) {
+    $CommandEndMarker = ""
+  }
+  [Console]::Write($CommandEndMarker + $FilesOSC)
+}
+
 function Global:__jetbrains_intellij_get_environment([int]$RequestId) {
   $Global:__JetBrainsIntellijGeneratorRunning = $true
   $Functions = Get-Command -CommandType "Function, Filter, ExternalScript, Script, Workflow"
@@ -112,7 +126,9 @@ function Global:__jetbrains_intellij_get_environment([int]$RequestId) {
 }
 
 function Global:__JetBrainsIntellijIsGeneratorCommand([string]$Command) {
-  return $Command -like "__JetBrainsIntellijGetCompletions*" -or $Command -like "__jetbrains_intellij_get_environment*"
+  return $Command -like "__JetBrainsIntellijGetCompletions*" `
+         -or $Command -like "__jetbrains_intellij_get_environment*" `
+         -or $Command -like "__jetbrains_intellij_get_directory_files*"
 }
 
 if (Get-Module -Name PSReadLine) {

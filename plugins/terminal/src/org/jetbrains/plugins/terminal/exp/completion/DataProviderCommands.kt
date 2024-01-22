@@ -15,7 +15,7 @@ internal class GetFilesCommand(path: String) : DataProviderCommand<List<String>>
   override val defaultResult: List<String> = emptyList()
 
   override fun isAvailable(session: BlockTerminalSession): Boolean {
-    return session.isBashOrZsh()
+    return session.isBashZshPwsh()
   }
 
   override fun parseResult(result: String): List<String> {
@@ -29,7 +29,7 @@ internal class GetEnvironmentCommand(private val session: BlockTerminalSession) 
   override val defaultResult: ShellEnvironment? = null
 
   override fun isAvailable(session: BlockTerminalSession): Boolean {
-    return session.isBashOrZsh() || session.shellIntegration.shellType == ShellType.POWERSHELL
+    return session.isBashZshPwsh()
   }
 
   override fun parseResult(result: String): ShellEnvironment? {
@@ -81,7 +81,8 @@ internal class GetEnvironmentCommand(private val session: BlockTerminalSession) 
   }
 }
 
-private fun BlockTerminalSession.isBashOrZsh(): Boolean {
+private fun BlockTerminalSession.isBashZshPwsh(): Boolean {
   return shellIntegration.shellType == ShellType.ZSH
          || shellIntegration.shellType == ShellType.BASH
+         || shellIntegration.shellType == ShellType.POWERSHELL
 }
