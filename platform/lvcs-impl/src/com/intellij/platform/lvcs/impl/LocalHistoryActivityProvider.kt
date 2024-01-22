@@ -27,12 +27,12 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     if (scope is ActivityScope.File) {
       val path = gateway.getPathOrUrl(scope.file)
       gateway.registerUnsavedDocuments(facade)
-      facade.collectChanges(projectId, path, scopeFilter) { changeSet -> result.add(changeSet.toActivityItem()) }
+      facade.collectChanges(projectId, path, scopeFilter) { changeSet -> result.add(changeSet.toActivityItem(scope)) }
     }
     else {
       for (changeSet in facade.changes) {
         if (changeSet.isLabelOnly && !changeSet.changes.any { it.affectsProject(projectId) }) continue
-        result.add(changeSet.toActivityItem())
+        result.add(changeSet.toActivityItem(scope))
       }
     }
     return result
