@@ -31,7 +31,6 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     }
     else {
       for (changeSet in facade.changes) {
-        if (changeSet.name.isNullOrBlank()) continue
         if (changeSet.isLabelOnly && !changeSet.changes.any { it.affectsProject(projectId) }) continue
         result.add(changeSet.toActivityItem())
       }
