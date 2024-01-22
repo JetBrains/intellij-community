@@ -30474,17 +30474,6 @@
     <option name="appenginejdoconfig" hit="AppEngineJdoConfig" />
     <option name="appenginejpaconfig" hit="AppEngineJpaConfig" />
     <option name="appengineweb" hit="AppEngineWeb" />
-    <option name="arquillian" hit="Arquillian Deployment Method" />
-    <option name="deployment" hit="Arquillian Deployment Method" />
-    <option name="method" hit="Arquillian Deployment Method" />
-    <option name="arquillian" hit="Arquillian JUnit Test Class" />
-    <option name="class" hit="Arquillian JUnit Test Class" />
-    <option name="junit" hit="Arquillian JUnit Test Class" />
-    <option name="test" hit="Arquillian JUnit Test Class" />
-    <option name="arquillian" hit="Arquillian TestNG Test Class" />
-    <option name="class" hit="Arquillian TestNG Test Class" />
-    <option name="test" hit="Arquillian TestNG Test Class" />
-    <option name="testng" hit="Arquillian TestNG Test Class" />
     <option name="aspect" hit="Aspect" />
     <option name="broadcast_receiver" hit="Broadcast_Receiver" />
     <option name="body" hit="Catch Statement Body" />
