@@ -68,7 +68,7 @@ internal object CopyTBXReferenceAction {
   private fun parameterIndex(index: Int, size: Int) = if (size == 1) "" else "${index + 1}"
 
   private fun createRefs(isFile: Boolean, reference: String?, index: String): String {
-    val navigationKey = if (isFile) NavigatorWithinProject.NavigationKeyPrefix.PATH else NavigatorWithinProject.NavigationKeyPrefix.FQN
+    val navigationKey = if (isFile) NavigationKeyPrefix.PATH else NavigationKeyPrefix.FQN
     return "&${navigationKey}${index}=$reference"
   }
 
@@ -82,7 +82,7 @@ internal object CopyTBXReferenceAction {
     }
 
     val selectionParameters = getSelectionParameters(editor) ?: ""
-    val projectParameter = "${PROJECT_NAME_KEY}=${project.name}"
+    val projectParameter = "${NavigationKeyPrefix.PROJECT}=${project.name}"
 
     return "${JBProtocolCommand.SCHEME}://${tool}/${NAVIGATE_COMMAND}/${REFERENCE_TARGET}?${projectParameter}${refsParameters}${selectionParameters}"
   }
@@ -105,7 +105,7 @@ internal object CopyTBXReferenceAction {
 
   private fun getSelectionParameters(editor: Editor, caret: Caret, index: String): String? =
     getSelectionRange(editor, caret)?.let {
-      "&$SELECTION$index=$it"
+      "&${NavigationKeyPrefix.SELECTION}$index=$it"
     }
 
   private fun getSelectionRange(editor: Editor, caret: Caret): String? {

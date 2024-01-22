@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl.navigation
 
-import com.intellij.navigation.LocationInFile
+import com.intellij.navigation.finder.LocationInFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.LogicalPosition
@@ -41,13 +41,19 @@ abstract class NavigationTestBase {
     get() = "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
 
   protected inline fun runNavigationTest(crossinline navigationAction: suspend () -> Unit, crossinline checkAction: () -> Unit) {
+    runInProjectTest {
+      navigationAction()
+      withContext(Dispatchers.EDT) {
+        checkAction()
+      }
+    }
+  }
+
+  protected inline fun runInProjectTest(crossinline block: suspend () -> Unit) {
     runBlocking {
       createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
         setUpProject(project)
-        navigationAction()
-        withContext(Dispatchers.EDT) {
-          checkAction()
-        }
+        block()
       }
     }
   }
