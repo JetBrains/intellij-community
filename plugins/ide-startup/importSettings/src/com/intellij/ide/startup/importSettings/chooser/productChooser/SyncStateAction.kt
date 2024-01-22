@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.data.SyncService
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 class SyncStateAction : ChooseProductActionButton() {
@@ -14,6 +15,8 @@ class SyncStateAction : ChooseProductActionButton() {
   override fun displayTextInToolbar(): Boolean {
     return true
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {
     when (syncService.syncState.value) {

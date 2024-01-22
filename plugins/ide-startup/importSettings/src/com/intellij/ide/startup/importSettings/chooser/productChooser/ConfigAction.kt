@@ -5,12 +5,14 @@ import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
 class ConfigAction(val controller: ImportSettingsController) : DumbAwareAction() {
   val service = SettingsService.getInstance().getJbService()
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   init {
     templatePresentation.text = ImportSettingsBundle.message("import.from.custom.dir")
