@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.VcsActivity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,8 @@ public final class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecuto
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myApplyPatchStatus = PatchApplier.executePatchGroup(appliers, localList);
+        myApplyPatchStatus = PatchApplier.executePatchGroup(appliers, localList, VcsBundle.message("activity.name.unshelve"),
+                                                            VcsActivity.Unshelve);
       }
 
       @Override

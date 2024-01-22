@@ -24,6 +24,8 @@ class VcsActivityPresentationProvider : ActivityPresentationProvider {
       VcsActivity.Update.kind -> AllIcons.Actions.CheckOut
       VcsActivity.Get.kind -> AllIcons.Actions.Download
       VcsActivity.Shelve.kind -> AllIcons.Vcs.Shelve
+      VcsActivity.Unshelve.kind -> AllIcons.Vcs.Unshelve
+      VcsActivity.ApplyPatch.kind -> AllIcons.Vcs.Patch
       else -> null
     }
   }
@@ -34,6 +36,7 @@ class VcsActivityPresentationProvider : ActivityPresentationProvider {
 }
 
 object VcsActivity {
+
   @JvmField
   val Commit = createId("Commit")
 
@@ -48,6 +51,12 @@ object VcsActivity {
 
   @JvmField
   val Shelve = createId("Shelve")
+
+  @JvmField
+  val Unshelve = createId("Unshelve")
+
+  @JvmField
+  val ApplyPatch = createId("ApplyPatch")
 
   private fun createId(kind: @NonNls String) = ActivityId(VcsActivityPresentationProvider.ID, kind)
 }

@@ -690,7 +690,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     VirtualFile baseDir = LocalFileSystem.getInstance().findFileByNioFile(ProjectKt.getStateStore(myProject).getProjectBasePath());
     PatchApplier patchApplier = new PatchApplier(myProject, baseDir,
                                                  patches, targetChangeList, commitContext, reverse, leftConflictTitle,
-                                                 rightConflictTitle);
+                                                 rightConflictTitle, VcsBundle.message("activity.name.unshelve"), VcsActivity.Unshelve);
     ApplyPatchStatus status = patchApplier.execute(showSuccessNotification, systemOperation);
     if (removeFilesFromShelf) {
       remainingPatches.addAll(patchApplier.getRemainingPatches());
