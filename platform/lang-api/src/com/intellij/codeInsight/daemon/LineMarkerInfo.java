@@ -206,7 +206,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return MarkupEditorFilter.EMPTY;
   }
 
-  public GutterIconNavigationHandler<T> getNavigationHandler() {
+  public final GutterIconNavigationHandler<T> getNavigationHandler() {
     return myNavigationHandler;
   }
 
