@@ -666,6 +666,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
       @Override
       protected void onEditorCreated(@NotNull Editor editor) {
+        editor.getDocument().setReadOnly(true);
         editor.getContentComponent().addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
