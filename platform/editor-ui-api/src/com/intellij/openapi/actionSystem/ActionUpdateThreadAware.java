@@ -18,7 +18,9 @@ public interface ActionUpdateThreadAware {
     if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
       return ActionUpdateThread.BGT;
     }
-    PluginException.reportDeprecatedDefault(getClass(), "getActionUpdateThread", "OLD_EDT is deprecated for removal");
+    PluginException.reportDeprecatedUsage(
+      getClass(), "ActionUpdateThread.OLD_EDT",
+      "'" + getClass().getName() + "' must override `getActionUpdateThread` and chose EDT or BGT. See ActionUpdateThread javadoc.");
     return ActionUpdateThread.OLD_EDT;
   }
 
