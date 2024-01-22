@@ -21,6 +21,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.ProgressBarLoadingDecorator
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -131,6 +132,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     textArea.emptyText.text = if (model.isScopeFilterSupported) LocalHistoryBundle.message("activity.filter.empty.text.fileName")
     else if (model.isActivityFilterSupported) LocalHistoryBundle.message("activity.filter.empty.text.content")
     else ""
+    TextComponentEmptyText.setupPlaceholderVisibility(textArea)
 
     val searchTextArea = SearchTextArea(textArea, true)
     searchTextArea.setBorder(JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.RIGHT), searchTextArea.border))
