@@ -4,9 +4,11 @@ package com.intellij.execution.ui;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.TextComponentEmptyText;
 
+import javax.swing.text.JTextComponent;
+
 public final class FragmentedSettingsUtil {
   /**
-   * @deprecated use {@link TextComponentEmptyText#setupPlaceholderVisibility(JBTextField)} instead.
+   * @deprecated use {@link TextComponentEmptyText#setupPlaceholderVisibility(JTextComponent)} instead.
    */
   @Deprecated
   public static void setupPlaceholderVisibility(JBTextField textField) {

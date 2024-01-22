@@ -104,10 +104,10 @@ public class TextComponentEmptyText extends StatusText {
   }
 
   /**
-   * Show placeholder when the text field is empty.
-   * @param textField target text field.
+   * Show placeholder when the text component is empty.
+   * @param textComponent target text component.
    */
-  public static void setupPlaceholderVisibility(@NotNull JBTextField textField) {
-    textField.putClientProperty(STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)f -> StringUtil.isEmpty(f.getText()));
+  public static void setupPlaceholderVisibility(@NotNull JTextComponent textComponent) {
+    textComponent.putClientProperty(STATUS_VISIBLE_FUNCTION, (Predicate<JTextComponent>)f -> StringUtil.isEmpty(f.getText()));
   }
 }
