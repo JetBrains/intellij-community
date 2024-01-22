@@ -2,8 +2,6 @@
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
 import com.intellij.gradle.toolingExtension.impl.tooling.telemetry.GradleOpenTelemetry;
-import com.intellij.gradle.toolingExtension.modelAction.DefaultBuild;
-import com.intellij.gradle.toolingExtension.modelAction.DefaultBuildController;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -19,9 +17,7 @@ import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.Build;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 

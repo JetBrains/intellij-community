@@ -4,8 +4,6 @@ package org.jetbrains.plugins.gradle.model;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.tooling.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.tooling.telemetry.GradleTracingContext;
-import com.intellij.gradle.toolingExtension.modelAction.DefaultBuild;
-import com.intellij.gradle.toolingExtension.modelAction.DefaultBuildController;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtilRt;
