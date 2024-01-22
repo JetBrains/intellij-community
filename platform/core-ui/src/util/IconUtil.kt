@@ -9,6 +9,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.fileTypes.DirectoryFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.IconLoader.filterIcon
@@ -563,12 +564,13 @@ private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int
   var icon = providerIcon ?: computeFileTypeIcon(vFile = file, onlyFastChecks = false)
   val dumb = project != null && DumbService.getInstance(project).isDumb
   for (patcher in FileIconPatcher.EP_NAME.extensionList) {
-    if (dumb && !DumbService.isDumbAware(patcher)) {
-      continue
+    try {
+      // render without a locked icon patch since we are going to apply it later anyway
+      icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
     }
+    catch (_: IndexNotReadyException) {
 
-    // render without a locked icon patch since we are going to apply it later anyway
-    icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
+    }
   }
   if (file.`is`(VFileProperty.SYMLINK)) {
     icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.SYMLINK_ICON))
