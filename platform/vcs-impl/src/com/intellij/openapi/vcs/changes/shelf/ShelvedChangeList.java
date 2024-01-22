@@ -159,7 +159,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
       }
       myChanges = changes;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.warn("Failed to parse the file patch: [" + path + "]", e);
       myChanges = Collections.emptyList();
       myChangesLoadingError = VcsBundle.message("shelve.loading.patch.error", e.getMessage());
