@@ -179,6 +179,27 @@
         }
       }
     },
+    "area": {
+      "doc": "",
+      "attrs": {
+        "accesskey": {
+          "url": "$MDN_URL$/web/html/element/area#accesskey",
+          "status": [
+            "StandardTrack",
+            "Deprecated"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "",
+            "Firefox": "",
+            "Opera": "15",
+            "Safari": "4",
+            "SafariIOS": "3.2"
+          }
+        }
+      }
+    },
     "basefont": {
       "status": [
         "StandardTrack",

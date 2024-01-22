@@ -14,6 +14,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
@@ -207,7 +208,9 @@ class MdnSymbolDocumentationAdapter(override val name: String,
     } ?: WebSymbolApiStatus.Stable
 
   override val description: String
-    get() = capitalize(doc.doc ?: "").fixUrls()
+    get() = capitalize(
+      doc.doc?.let { if (it.contains("```")) DocMarkdownToHtmlConverter.convert(it) else it } ?: ""
+    ).fixUrls()
 
   override val sections: Map<String, String>
     get() {
@@ -618,10 +621,12 @@ private fun <T : MdnDocumentation> mergeDocumentation(doc1: T, doc2: T): T =
   when (val src = doc1 as MdnDocumentation) {
     is MdnHtmlDocumentation -> src.copy(
       attrs = src.attrs + (doc2 as MdnHtmlDocumentation).attrs,
-      tags = src.tags + doc2.tags
+      tags = src.tags.mergeWith(doc2.tags) { t1, t2 -> t1.copy(attrs = merge(t1.attrs, t2.attrs)) }
     ) as T
     is MdnCssDocumentation -> src.copy(
-      atRules = src.atRules + (doc2 as MdnCssDocumentation).atRules,
+      atRules = src.atRules.mergeWith((doc2 as MdnCssDocumentation).atRules) { r1, r2 ->
+        r1.copy(properties = merge(r1.properties, r2.properties))
+      },
       properties = src.properties + doc2.properties,
       pseudoClasses = src.pseudoClasses + doc2.pseudoClasses,
       pseudoElements = src.pseudoElements + doc2.pseudoElements,
@@ -634,4 +639,22 @@ private fun <T : MdnDocumentation> mergeDocumentation(doc1: T, doc2: T): T =
     is MdnJsDocumentation -> src.copy(
       symbols = src.symbols + (doc2 as MdnJsDocumentation).symbols,
     ) as T
+  }
+
+private fun <K, V> merge(map1: Map<K, V>?, map2: Map<K, V>?): Map<K, V>? =
+  if (map1 == null && map2 == null)
+    null
+  else if (map1 == null)
+    map2
+  else if (map2 == null)
+    map1
+  else
+    (map1 + map2)
+
+
+private fun <T : Any> Map<String, T>.mergeWith(other: Map<String, T>, mergeFunction: (T, T) -> T): Map<String, T> =
+  toMutableMap().also { result ->
+    other.entries.forEach { (key, value) ->
+      result.merge(key, value, mergeFunction)
+    }
   }

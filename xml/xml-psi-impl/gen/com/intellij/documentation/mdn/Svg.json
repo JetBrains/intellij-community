@@ -55,7 +55,7 @@
         "StandardTrack"
       ],
       "compatibility": {},
-      "doc": "« <a href=\"$MDN_URL$/Web/SVG/Attribute\">SVG Attribute reference home</a>\n<p>The <code>clip-rule</code> attribute only applies to graphics elements that are contained within a <a href=\"$MDN_URL$/Web/SVG/Element/clipPath\"><code>&lt;clipPath&gt;</code></a> element. The <code>clip-rule</code> attribute basically works as the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/fill-rule\">fill-rule</a></code> attribute, except that it applies to <a href=\"$MDN_URL$/Web/SVG/Element/clipPath\"><code>&lt;clipPath&gt;</code></a> definitions.\n<p>The following fragment of code will cause an evenodd clipping rule to be applied to the clipping path because <code>clip-rule</code> is specified on the <a href=\"$MDN_URL$/Web/SVG/Element/path\"><code>&lt;path&gt;</code></a> element that defines the clipping shape:\n<div class=\"code-example\"><p class=\"example-header\"><span class=\"language-name\"><pre class=\"brush: html notranslate\"><code>&lt;g&gt;\n  &lt;clipPath id=\"MyClip\"&gt;\n    &lt;path d=\"...\" clip-rule=\"evenodd\" /&gt;\n  &lt;/clipPath&gt;\n  &lt;rect clip-path=\"url(#MyClip)\" ... /&gt;\n&lt;/g&gt;\n</code></pre></span></div>\n<p>whereas the following fragment of code will not cause an evenodd clipping rule to be applied because the <code>clip-rule</code> is specified on the referencing element, not on the object defining the clipping shape:\n<div class=\"code-example\"><p class=\"example-header\"><span class=\"language-name\"><pre class=\"brush: html notranslate\"><code>&lt;g&gt;\n  &lt;clipPath id=\"MyClip\"&gt;\n    &lt;path d=\"...\" /&gt;\n  &lt;/clipPath&gt;\n  &lt;rect clip-path=\"url(#MyClip)\" clip-rule=\"evenodd\" ... /&gt;\n&lt;/g&gt;\n</code></pre></span></div>\n<p>As a presentation attribute, it also can be used as a property directly inside a CSS stylesheet"
+      "doc": "« <a href=\"$MDN_URL$/Web/SVG/Attribute\">SVG Attribute reference home</a>\n<p>The <code>clip-rule</code> attribute only applies to graphics elements that are contained within a <a href=\"$MDN_URL$/Web/SVG/Element/clipPath\"><code>&lt;clipPath&gt;</code></a> element. The <code>clip-rule</code> attribute basically works as the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/fill-rule\">fill-rule</a></code> attribute, except that it applies to <a href=\"$MDN_URL$/Web/SVG/Element/clipPath\"><code>&lt;clipPath&gt;</code></a> definitions.\n<p>The following fragment of code will cause an evenodd clipping rule to be applied to the clipping path because <code>clip-rule</code> is specified on the <a href=\"$MDN_URL$/Web/SVG/Element/path\"><code>&lt;path&gt;</code></a> element that defines the clipping shape:\n<div class=\"code-example\"><div>\n```html\n<g>\n  <clipPath id=\"MyClip\">\n    <path d=\"...\" clip-rule=\"evenodd\" />\n  </clipPath>\n  <rect clip-path=\"url(#MyClip)\" ... />\n</g>\n```\n</div></div>\n<p>whereas the following fragment of code will not cause an evenodd clipping rule to be applied because the <code>clip-rule</code> is specified on the referencing element, not on the object defining the clipping shape:\n<div class=\"code-example\"><div>\n```html\n<g>\n  <clipPath id=\"MyClip\">\n    <path d=\"...\" />\n  </clipPath>\n  <rect clip-path=\"url(#MyClip)\" clip-rule=\"evenodd\" ... />\n</g>\n```\n</div></div>\n<p>As a presentation attribute, it also can be used as a property directly inside a CSS stylesheet"
     },
     "color": {
       "url": "$MDN_URL$/web/svg/attribute/color",
@@ -112,7 +112,7 @@
         "Safari": "10",
         "SafariIOS": "10"
       },
-      "doc": "The <strong><code>data-*</code></strong> SVG attributes are called custom data attributes. They let SVG markup and its resulting DOM share information that standard attributes can't, usually for scripting purposes. Their custom data are available via the <a href=\"$MDN_URL$/Web/API/SVGElement\"><code>SVGElement</code></a> interface of the element the attributes belong to, with the <a href=\"$MDN_URL$/Web/API/HTMLElement/dataset\" ><code>SVGElement.dataset</code></a> property.\n<p>The <code>*</code> can be replaced by any characters allowed in <a href=\"https://www.w3.org/TR/REC-xml/#NT-Name\" class=\"external\" target=\"_blank\">XML's rules for names</a>, with the following restrictions:\n<ul>\n<li>Can't start with <code>xml</code>.</li>\n<li>No semicolons (<code>;</code>, <code>U+003A</code>).</li>\n<li>No capital <code>A</code> to <code>Z</code> letters.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <a href=\"$MDN_URL$/Web/API/HTMLElement/dataset\" ><code>SVGElement.dataset</code></a> property is a <a href=\"$MDN_URL$/Web/API/DOMStringMap\"><code>DOMStringMap</code></a> that provides the attribute <code>data-test-value</code> via <code>SVGElement.dataset.testValue</code>. Hyphen characters (<code>-</code>, <code>U+002D</code>) are removed and the next letter is capitalized, resulting in the <a class=\"page-not-created\"  >camelCase</a> format.\n</div>\n<p>You can use this attribute with any SVG element."
+      "doc": "The <strong><code>data-*</code></strong> SVG attributes are called custom data attributes. They let SVG markup and its resulting DOM share information that standard attributes can't, usually for scripting purposes. Their custom data are available via the <a href=\"$MDN_URL$/Web/API/SVGElement\"><code>SVGElement</code></a> interface of the element the attributes belong to, with the <a href=\"$MDN_URL$/Web/API/HTMLElement/dataset\"><code>HTMLElement.dataset</code></a> property.\n<p>The <code>*</code> can be replaced by any characters allowed in <a href=\"https://www.w3.org/TR/REC-xml/#NT-Name\" class=\"external\" target=\"_blank\">XML's rules for names</a>, with the following restrictions:\n<ul>\n<li>Can't start with <code>xml</code>.</li>\n<li>No semicolons (<code>;</code>, <code>U+003A</code>).</li>\n<li>No capital <code>A</code> to <code>Z</code> letters.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <a href=\"$MDN_URL$/Web/API/HTMLElement/dataset\"><code>HTMLElement.dataset</code></a> property is a <a href=\"$MDN_URL$/Web/API/DOMStringMap\"><code>DOMStringMap</code></a> that provides the attribute <code>data-test-value</code> via <code>SVGElement.dataset.testValue</code>. Hyphen characters (<code>-</code>, <code>U+002D</code>) are removed and the next letter is capitalized, resulting in the <a href=\"$MDN_URL$/Glossary/Camel_case\">camel case</a> format.\n</div>\n<p>You can use this attribute with any SVG element."
     },
     "direction": {
       "url": "$MDN_URL$/web/svg/attribute/direction",
@@ -170,7 +170,13 @@
       "status": [
         "StandardTrack"
       ],
-      "compatibility": {},
+      "compatibility": {
+        "Chrome": "15",
+        "ChromeAndroid": "",
+        "Edge": "79",
+        "Firefox": "18",
+        "Opera": "15"
+      },
       "doc": "The <strong><code>fill-rule</code></strong> attribute is a presentation attribute defining the algorithm to use to determine the <em>inside</em> part of a shape.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> As a presentation attribute, <code>fill-rule</code> can be used as a CSS property.\n</div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/path\"><code>&lt;path&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/polygon\"><code>&lt;polygon&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/polyline\"><code>&lt;polyline&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/textPath\"><code>&lt;textPath&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n</ul>"
     },
     "filter": {
@@ -759,7 +765,9 @@
             "StandardTrack"
           ],
           "compatibility": {
-            "Firefox": "61"
+            "Firefox": "61",
+            "Safari": "14",
+            "SafariIOS": "14"
           },
           "doc": "The relationship of the target object to the link object.",
           "details": {
@@ -1243,14 +1251,7 @@
         "StandardTrack",
         "Deprecated"
       ],
-      "compatibility": {
-        "Chrome": "",
-        "ChromeAndroid": "",
-        "Edge": "79",
-        "Opera": "15",
-        "Safari": "3",
-        "SafariIOS": "2"
-      },
+      "compatibility": {},
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> The CSS <a href=\"$MDN_URL$/Web/CSS/cursor\"><code>cursor</code></a> property should be used instead of this element.\n</div>\n<p>The <strong><code>&lt;cursor&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element can be used to define a platform-independent custom cursor. A recommended approach for defining a platform-independent custom cursor is to create a PNG image and define a <code>cursor</code> element that references the PNG image and identifies the exact position within the image which is the pointer position (i.e., the hot spot).\n<p>The PNG format is recommended because it supports the ability to define a transparency mask via an alpha channel. If a different image format is used, this format should support the definition of a transparency mask (two options: provide an explicit alpha channel or use a particular pixel color to indicate transparency). If the transparency mask can be determined, the mask defines the shape of the cursor; otherwise, the cursor is an opaque rectangle. Typically, the other pixel information (e.g., the R, G and B channels) defines the colors for those parts of the cursor which are not masked out. Note that cursors usually contain at least two colors so that the cursor can be visible over most backgrounds.",
       "attrs": {
         "href": {
@@ -1259,14 +1260,7 @@
             "StandardTrack",
             "Deprecated"
           ],
-          "compatibility": {
-            "Chrome": "50",
-            "ChromeAndroid": "50",
-            "Edge": "79",
-            "Opera": "37",
-            "Safari": "12.1",
-            "SafariIOS": "12.2"
-          }
+          "compatibility": {}
         },
         "x": {
           "url": "$MDN_URL$/web/svg/attribute/x",
@@ -1274,13 +1268,7 @@
             "StandardTrack",
             "Deprecated"
           ],
-          "compatibility": {
-            "Chrome": "",
-            "ChromeAndroid": "",
-            "Edge": "79",
-            "Safari": "3",
-            "SafariIOS": "2"
-          },
+          "compatibility": {},
           "doc": "The <strong><code>x</code></strong> attribute defines an x-axis coordinate in the user coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/cursor\"><code>&lt;cursor&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feBlend\"><code>&lt;feBlend&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feColorMatrix\"><code>&lt;feColorMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComponentTransfer\"><code>&lt;feComponentTransfer&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feConvolveMatrix\"><code>&lt;feConvolveMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDiffuseLighting\"><code>&lt;feDiffuseLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDisplacementMap\"><code>&lt;feDisplacementMap&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFlood\"><code>&lt;feFlood&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncA\"><code>&lt;feFuncA&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncB\"><code>&lt;feFuncB&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncG\"><code>&lt;feFuncG&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncR\"><code>&lt;feFuncR&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feGaussianBlur\"><code>&lt;feGaussianBlur&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMerge\"><code>&lt;feMerge&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMergeNode\"><code>&lt;feMergeNode&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMorphology\"><code>&lt;feMorphology&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/fePointLight\"><code>&lt;fePointLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpecularLighting\"><code>&lt;feSpecularLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTile\"><code>&lt;feTile&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTurbulence\"><code>&lt;feTurbulence&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyphRef\"><code>&lt;glyphRef&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
         },
         "y": {
@@ -1289,13 +1277,7 @@
             "StandardTrack",
             "Deprecated"
           ],
-          "compatibility": {
-            "Chrome": "",
-            "ChromeAndroid": "",
-            "Edge": "79",
-            "Safari": "3",
-            "SafariIOS": "2"
-          },
+          "compatibility": {},
           "doc": "The <strong><code>y</code></strong> attribute defines a y-axis coordinate in the user coordinate system.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/cursor\"><code>&lt;cursor&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feBlend\"><code>&lt;feBlend&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feColorMatrix\"><code>&lt;feColorMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComponentTransfer\"><code>&lt;feComponentTransfer&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feConvolveMatrix\"><code>&lt;feConvolveMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDiffuseLighting\"><code>&lt;feDiffuseLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDisplacementMap\"><code>&lt;feDisplacementMap&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFlood\"><code>&lt;feFlood&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncA\"><code>&lt;feFuncA&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncB\"><code>&lt;feFuncB&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncG\"><code>&lt;feFuncG&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feFuncR\"><code>&lt;feFuncR&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feGaussianBlur\"><code>&lt;feGaussianBlur&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMerge\"><code>&lt;feMerge&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMergeNode\"><code>&lt;feMergeNode&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMorphology\"><code>&lt;feMorphology&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/fePointLight\"><code>&lt;fePointLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpecularLighting\"><code>&lt;feSpecularLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTile\"><code>&lt;feTile&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTurbulence\"><code>&lt;feTurbulence&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/foreignObject\"><code>&lt;foreignObject&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/glyphRef\"><code>&lt;glyphRef&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/mask\"><code>&lt;mask&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/rect\"><code>&lt;rect&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tref\"><code>&lt;tref&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/use\"><code>&lt;use&gt;</code></a></li>\n</ul>"
         }
       }
@@ -1517,7 +1499,7 @@
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;feColorMatrix&gt;</code></strong> SVG filter element changes colors based on a transformation matrix. Every pixel's color value <code>[R,G,B,A]</code> is <a href=\"https://en.wikipedia.org/wiki/Matrix_multiplication\" class=\"external\" target=\"_blank\">matrix multiplied</a> by a 5 by 5 color matrix to create new color <code>[R',G',B',A']</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The prime symbol <strong><code>'</code></strong> is used in mathematics indicate the result of a transformation.\n</div>\n<pre class=\"brush: plain notranslate\">| R' |     | r1 r2 r3 r4 r5 |   | R |\n| G' |     | g1 g2 g3 g4 g5 |   | G |\n| B' |  =  | b1 b2 b3 b4 b5 | * | B |\n| A' |     | a1 a2 a3 a4 a5 |   | A |\n| 1  |     | 0  0  0  0  1  |   | 1 |\n</pre>\n<p>In simplified terms, below is how each color channel in the new pixel is calculated. The last row is ignored because its values are constant.\n<pre class=\"notranslate\">R' = r1*R + r2*G + r3*B + r4*A + r5\nG' = g1*R + g2*G + g3*B + g4*A + g5\nB' = b1*R + b2*G + b3*B + b4*A + b5\nA' = a1*R + a2*G + a3*B + a4*A + a5\n</pre>\n<p>Take the amount of red in the new pixel, or <code>R'</code>:\n<p>It is the sum of:\n<ul>\n<li><code>r1</code> times the old pixel's red <code>R</code>,</li>\n<li><code>r2</code> times the old pixel's green <code>G</code>,</li>\n<li><code>r3</code> times of the old pixel's blue <code>B</code>,</li>\n<li><code>r4</code> times the old pixel's alpha <code>A</code>,</li>\n<li>plus a shift <code>r5</code>.</li>\n</ul>\n<p>These specified amounts can be any real number, though the final <strong>R'</strong> will be clamped between 0 and 1. The same goes for <strong>G'</strong>, <strong>B'</strong>, and <strong>A'</strong>.\n<pre class=\"brush: plain notranslate\">R'      =      r1 * R      +        r2 * G      +       r3 * B      +       r4 * A       +       r5\nNew red = [ r1 * old red ] + [ r2 * old green ] + [ r3 * old Blue ] + [ r4 * old Alpha ] + [ shift of r5 ]\n</pre>\n<p>If, say, we want to make a completely black image redder, we can make the <code>r5</code> a positive real number <em>x</em>, boosting the redness on every pixel of the new image by <em>x</em>.\n<p>An <strong>identity matrix</strong> looks like this:\n<pre class=\"brush: plain notranslate\">     R G B A W\nR' | 1 0 0 0 0 |\nG' | 0 1 0 0 0 |\nB' | 0 0 1 0 0 |\nA' | 0 0 0 1 0 |\n</pre>\n<p>In it, every new value is exactly 1 times its old value, with nothing else added. It is recommended to start manipulating the matrix from here.",
+      "doc": "The <strong><code>&lt;feColorMatrix&gt;</code></strong> SVG filter element changes colors based on a transformation matrix. Every pixel's color value <code>[R,G,B,A]</code> is <a href=\"https://en.wikipedia.org/wiki/Matrix_multiplication\" class=\"external\" target=\"_blank\">matrix multiplied</a> by a 5 by 5 color matrix to create new color <code>[R',G',B',A']</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The prime symbol <strong><code>'</code></strong> is used in mathematics indicate the result of a transformation.\n</div>\n<pre class=\"brush: plain notranslate\">| R' |     | r1 r2 r3 r4 r5 |   | R |\n| G' |     | g1 g2 g3 g4 g5 |   | G |\n| B' |  =  | b1 b2 b3 b4 b5 | * | B |\n| A' |     | a1 a2 a3 a4 a5 |   | A |\n| 1  |     | 0  0  0  0  1  |   | 1 |\n</pre>\n<p>In simplified terms, below is how each color channel in the new pixel is calculated. The last row is ignored because its values are constant.\n<pre class=\"brush: plain notranslate\">R' = r1*R + r2*G + r3*B + r4*A + r5\nG' = g1*R + g2*G + g3*B + g4*A + g5\nB' = b1*R + b2*G + b3*B + b4*A + b5\nA' = a1*R + a2*G + a3*B + a4*A + a5\n</pre>\n<p>Take the amount of red in the new pixel, or <code>R'</code>:\n<p>It is the sum of:\n<ul>\n<li><code>r1</code> times the old pixel's red <code>R</code>,</li>\n<li><code>r2</code> times the old pixel's green <code>G</code>,</li>\n<li><code>r3</code> times of the old pixel's blue <code>B</code>,</li>\n<li><code>r4</code> times the old pixel's alpha <code>A</code>,</li>\n<li>plus a shift <code>r5</code>.</li>\n</ul>\n<p>These specified amounts can be any real number, though the final <strong>R'</strong> will be clamped between 0 and 1. The same goes for <strong>G'</strong>, <strong>B'</strong>, and <strong>A'</strong>.\n<pre class=\"brush: plain notranslate\">R'      =      r1 * R      +        r2 * G      +       r3 * B      +       r4 * A       +       r5\nNew red = [ r1 * old red ] + [ r2 * old green ] + [ r3 * old Blue ] + [ r4 * old Alpha ] + [ shift of r5 ]\n</pre>\n<p>If, say, we want to make a completely black image redder, we can make the <code>r5</code> a positive real number <em>x</em>, boosting the redness on every pixel of the new image by <em>x</em>.\n<p>An <strong>identity matrix</strong> looks like this:\n<pre class=\"brush: plain notranslate\">     R G B A W\nR' | 1 0 0 0 0 |\nG' | 0 1 0 0 0 |\nB' | 0 0 1 0 0 |\nA' | 0 0 0 1 0 |\n</pre>\n<p>In it, every new value is exactly 1 times its old value, with nothing else added. It is recommended to start manipulating the matrix from here.",
       "attrs": {
         "in": {
           "url": "$MDN_URL$/web/svg/attribute/in",
@@ -1665,7 +1647,7 @@
             "Safari": "6",
             "SafariIOS": "6"
           },
-          "doc": "The <strong><code>k1</code></strong> attribute defines one of the values to be used within the <code>arithmetic</code> operation of the <a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a> filter primitive.\n<p>The pixel composition is computed using the following formula:\n<div class=\"code-example\"><p class=\"example-header\"><span class=\"language-name\"><pre class=\"brush: js notranslate\"><code>result = k1 * i1 * i2 + k2 * i1 + k3 * i2 + k4;\n</code></pre></span></div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n</ul>"
+          "doc": "The <strong><code>k1</code></strong> attribute defines one of the values to be used within the <code>arithmetic</code> operation of the <a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a> filter primitive.\n<p>The pixel composition is computed using the following formula:\n<div class=\"code-example\"><div>\n```js\nresult = k1 * i1 * i2 + k2 * i1 + k3 * i2 + k4;\n```\n</div></div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n</ul>"
         },
         "k2": {
           "url": "$MDN_URL$/web/svg/attribute/k2",
@@ -1681,7 +1663,7 @@
             "Safari": "6",
             "SafariIOS": "6"
           },
-          "doc": "The <strong><code>k2</code></strong> attribute defines one of the values to be used within the <code>arithmetic</code> operation of the <a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a> filter primitive.\n<p>The pixel composition is computed using the following formula:\n<div class=\"code-example\"><p class=\"example-header\"><span class=\"language-name\"><pre class=\"brush: js notranslate\"><code>result = k1 * i1 * i2 + k2 * i1 + k3 * i2 + k4;\n</code></pre></span></div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n</ul>"
+          "doc": "The <strong><code>k2</code></strong> attribute defines one of the values to be used within the <code>arithmetic</code> operation of the <a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a> filter primitive.\n<p>The pixel composition is computed using the following formula:\n<div class=\"code-example\"><div>\n```js\nresult = k1 * i1 * i2 + k2 * i1 + k3 * i2 + k4;\n```\n</div></div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n</ul>"
         },
         "k3": {
           "url": "$MDN_URL$/web/svg/attribute/k3",
@@ -1697,7 +1679,7 @@
             "Safari": "6",
             "SafariIOS": "6"
           },
-          "doc": "The <strong><code>k3</code></strong> attribute defines one of the values to be used within the <code>arithmetic</code> operation of the <a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a> filter primitive.\n<p>The pixel composition is computed using the following formula:\n<div class=\"code-example\"><p class=\"example-header\"><span class=\"language-name\"><pre class=\"brush: js notranslate\"><code>result = k1 * i1 * i2 + k2 * i1 + k3 * i2 + k4;\n</code></pre></span></div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n</ul>"
+          "doc": "The <strong><code>k3</code></strong> attribute defines one of the values to be used within the <code>arithmetic</code> operation of the <a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a> filter primitive.\n<p>The pixel composition is computed using the following formula:\n<div class=\"code-example\"><div>\n```js\nresult = k1 * i1 * i2 + k2 * i1 + k3 * i2 + k4;\n```\n</div></div>\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n</ul>"
         },
         "k4": {
           "url": "$MDN_URL$/web/svg/attribute/k4",
@@ -2471,11 +2453,13 @@
             "StandardTrack"
           ],
           "compatibility": {
-            "Chrome": "",
+            "Chrome": "5",
             "ChromeAndroid": "",
             "Edge": "",
             "Firefox": "4",
-            "Opera": "9"
+            "Opera": "9",
+            "Safari": "6",
+            "SafariIOS": "6"
           },
           "doc": "The <strong><code>in</code></strong> attribute identifies input for the given filter primitive.\n<p>The value can be either one of the six keywords defined below, or a string which matches a previous <code><a href=\"$MDN_URL$/Web/SVG/Attribute/result\">result</a></code> attribute value within the same <a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a> element. If no value is provided and this is the first filter primitive, then this filter primitive will use <code>SourceGraphic</code> as its input. If no value is provided and this is a subsequent filter primitive, then this filter primitive will use the result from the previous filter primitive as its input.\n<p>If the value for <code><a href=\"$MDN_URL$/Web/SVG/Attribute/result\">result</a></code> appears multiple times within a given <a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a> element, then a reference to that result will use the closest preceding filter primitive with the given value for attribute <code><a href=\"$MDN_URL$/Web/SVG/Attribute/result\">result</a></code>.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feBlend\"><code>&lt;feBlend&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feColorMatrix\"><code>&lt;feColorMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComponentTransfer\"><code>&lt;feComponentTransfer&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feComposite\"><code>&lt;feComposite&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feConvolveMatrix\"><code>&lt;feConvolveMatrix&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDiffuseLighting\"><code>&lt;feDiffuseLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDisplacementMap\"><code>&lt;feDisplacementMap&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feDropShadow\"><code>&lt;feDropShadow&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feGaussianBlur\"><code>&lt;feGaussianBlur&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMergeNode\"><code>&lt;feMergeNode&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feMorphology\"><code>&lt;feMorphology&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feOffset\"><code>&lt;feOffset&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feSpecularLighting\"><code>&lt;feSpecularLighting&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/feTile\"><code>&lt;feTile&gt;</code></a></li>\n</ul>"
         }
@@ -3069,23 +3053,6 @@
       },
       "doc": "The <strong><code>&lt;filter&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element defines a custom filter effect by grouping atomic filter primitives. It is never rendered itself, but must be used by the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/filter\">filter</a></code> attribute on SVG elements, or the <a href=\"$MDN_URL$/Web/CSS/filter\"><code>filter</code></a> <a href=\"$MDN_URL$/Glossary/CSS\">CSS</a> property for SVG/HTML elements.",
       "attrs": {
-        "filterres": {
-          "url": "$MDN_URL$/web/svg/attribute/filterres",
-          "status": [
-            "StandardTrack",
-            "Deprecated"
-          ],
-          "compatibility": {
-            "Chrome": "5",
-            "ChromeAndroid": "",
-            "Edge": "79",
-            "Firefox": "3",
-            "Opera": "15",
-            "Safari": "6",
-            "SafariIOS": "6"
-          },
-          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>filterRes</code></strong> attribute indicates the width and height of the intermediate images in pixels of a filter primitive.\n<p>Take care when assigning a non-default value to this attribute. Too small of a value may result in unwanted pixelation in the result. Too large of a value may result in slow processing and large memory usage.\n<p>Note that negative values or zero values disable the rendering of the element which referenced the filter.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/filter\"><code>&lt;filter&gt;</code></a></li>\n</ul>"
-        },
         "filterunits": {
           "url": "$MDN_URL$/web/svg/attribute/filterunits",
           "status": [
@@ -3678,7 +3645,7 @@
           "doc": "The crossorigin attribute, valid on the <a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a> and <a href=\"$MDN_URL$/Web/SVG/Element/feImage\"><code>&lt;feImage&gt;</code></a> elements, provides support for configuration of the Cross-Origin Resource Sharing (<a href=\"$MDN_URL$/Web/HTTP/CORS\">CORS</a>) requests for the element's fetched data.\n<p>This table shows possible keywords and their meaning:\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Keyword</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>anonymous</code></td>\n<td>Client CORS requests for this element will have the credentials flag set to 'same-origin'.</td>\n</tr>\n<tr>\n<td><code>use-credentials</code></td>\n<td>Client CORS requests for this element will have the credentials flag set to 'include'.</td>\n</tr>\n<tr>\n<td><code>\"\"</code></td>\n<td>Setting the attribute name to an empty value, like <code>crossorigin</code> or <code>crossorigin=\"\"</code>, is the same as <code>anonymous</code>.</td>\n</tr>\n</tbody>\n</table></figure>\n<p>It follows the same processing rules as the HTML attribute <a href=\"$MDN_URL$/Web/HTML/Global_attributes#crossorigin\"><code>crossorigin</code></a>."
         },
         "decoding": {
-          "url": "$MDN_URL$/web/svg/element/image#decoding",
+          "url": "$MDN_URL$/web/svg/attribute/decoding",
           "status": [
             "StandardTrack"
           ],
@@ -3690,7 +3657,8 @@
             "Opera": "52",
             "Safari": "11.1",
             "SafariIOS": "11.3"
-          }
+          },
+          "doc": "The <code>decoding</code> attribute, valid on <a href=\"$MDN_URL$/Web/SVG/Element/image\"><code>&lt;image&gt;</code></a> elements, provides a hint to the browser as to whether it should perform image decoding along with rendering other content in a single presentation step that looks more \"correct\" (<code>sync</code>), or render and present the other content first and then decode the image and present it later (<code>async</code>). In practice, <code>async</code> means that the next paint does not wait for the image to decode.\n<p>It is often difficult to perceive any noticeable effect when using <code>decoding</code> on static <code>&lt;image&gt;</code> elements. They'll likely be initially rendered as empty images while the image files are fetched (either from the network or from the cache) and then handled independently anyway, so the \"syncing\" of content updates is less apparent. However, the blocking of rendering while decoding happens, while often quite small, <em>can</em> be measured — even if it is difficult to observe with the human eye.\n<p>Using different <code>decoding</code> types can result in more noticeable differences when dynamically inserting <code>&lt;image&gt;</code> elements into the DOM via JavaScript — see <a href=\"$MDN_URL$/Web/API/SVGImageElement/decoding\"><code>SVGImageElement.decoding</code></a> for more details.\n<p>Allowed values:\n<dl>\n<dt id=\"sync\"><a href=\"#sync\"><code>sync</code></a></dt>\n<dd>\n<p>Decode the image synchronously along with rendering the other content, and present everything together.\n</dd>\n<dt id=\"async\"><a href=\"#async\"><code>async</code></a></dt>\n<dd>\n<p>Decode the image asynchronously, after rendering and presenting the other content.\n</dd>\n<dt id=\"auto\"><a href=\"#auto\"><code>auto</code></a></dt>\n<dd>\n<p>No preference for the decoding mode; the browser decides what is best for the user. This is the default value.\n</dd>\n</dl>"
         },
         "height": {
           "url": "$MDN_URL$/web/svg/attribute/height",
@@ -3996,7 +3964,7 @@
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/lineargradient#xlink:href",
-          "doc": "<div class=\"notecard deprecated\" id=\"sect2\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\nAn\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;IRI&gt;</a>\nreference to another\n<code>&lt;linearGradient&gt;</code>\nelement that will be used as a template.",
+          "doc": "An <a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;IRI&gt;</a> reference to another <code>&lt;linearGradient&gt;</code> element that will be used as a template.",
           "details": {
             "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong>&lt;IRI&gt;</strong></a>",
             "Default": "none",
@@ -4580,7 +4548,7 @@
           "details": {
             "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong>&lt;URL&gt;</strong></a>",
             "Default": "<em>none</em>",
-            "Animatable": "<strong>yes</strong>\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> For browsers implementing <code>href</code>, if both <code>href</code> and <code>xlink:href</code> are set, <code>xlink:href</code> will be ignored and only <code>href</code> will be used.\n</div>"
+            "Animatable": "<strong>yes</strong>\n<div class=\"notecard note\" id=\"sect4\">\n<p><strong>Note:</strong> For browsers implementing <code>href</code>, if both <code>href</code> and <code>xlink:href</code> are set, <code>xlink:href</code> will be ignored and only <code>href</code> will be used.\n</div>"
           }
         },
         "y": {
@@ -4704,7 +4672,7 @@
         "Safari": "3",
         "SafariIOS": "2"
       },
-      "doc": "The <strong><code>&lt;radialGradient&gt;</code></strong> element lets authors define radial gradients that can be applied to fill or stroke of graphical elements.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Don't be confused with CSS <a href=\"$MDN_URL$/Web/CSS/gradient/radial-gradient\" ><code>radial-gradient()</code></a> as CSS gradients can only apply to HTML elements where SVG gradient can only apply to SVG elements.\n</div>",
+      "doc": "The <strong><code>&lt;radialGradient&gt;</code></strong> element lets authors define radial gradients that can be applied to fill or stroke of graphical elements.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Don't be confused with CSS <a href=\"$MDN_URL$/Web/CSS/gradient/radial-gradient\"><code>radial-gradient()</code></a> as CSS gradients can only apply to HTML elements where SVG gradient can only apply to SVG elements.\n</div>",
       "attrs": {
         "cx": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#cx",
@@ -4903,7 +4871,7 @@
         },
         "xlink:href": {
           "url": "$MDN_URL$/web/svg/element/radialgradient#xlink:href",
-          "doc": "<div class=\"notecard deprecated\" id=\"sect3\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\nAn\n<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;IRI&gt;</a>\nreference to another\n<code>&lt;radialGradient&gt;</code>\nelement that will be used as a template.",
+          "doc": "An <a href=\"$MDN_URL$/Web/SVG/Content_type#iri\">&lt;IRI&gt;</a> reference to another <code>&lt;radialGradient&gt;</code> element that will be used as a template.",
           "details": {
             "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#iri\"><strong>&lt;IRI&gt;</strong></a>",
             "Default": "none",
@@ -5075,6 +5043,16 @@
       },
       "doc": "The SVG <code>script</code> element allows to add scripts to an SVG document.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> While SVG's <code>script</code> element is equivalent to the HTML <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a> element, it has some discrepancies, like it uses the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/href\">href</a></code> attribute instead of <a href=\"$MDN_URL$/Web/HTML/Element/script#src\"><code>src</code></a> and it doesn't support ECMAScript modules so far (See browser compatibility below for details)\n</div>",
       "attrs": {
+        "async": {
+          "url": "$MDN_URL$/web/svg/element/script#async",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Firefox": "117"
+          }
+        },
         "crossorigin": {
           "url": "$MDN_URL$/web/svg/element/script#crossorigin",
           "doc": "This attribute defines <a href=\"$MDN_URL$/Web/HTML/Attributes/crossorigin\">CORS settings</a> as define for the HTML <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a> element.",
@@ -5082,6 +5060,16 @@
             "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#string\"><strong>&lt;string&gt;</strong></a>",
             "Default": "<code>?</code>",
             "Animatable": "<strong>yes</strong>"
+          }
+        },
+        "defer": {
+          "url": "$MDN_URL$/web/svg/element/script#defer",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Firefox": "117"
           }
         },
         "href": {
@@ -5335,32 +5323,6 @@
           },
           "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>baseProfile</code></strong> attribute describes the minimum SVG language profile that the author believes is necessary to correctly render the content. The attribute does not specify any processing restrictions; It can be considered metadata.\n<p>For example, the value of the attribute could be used by an authoring tool to warn the user when they are modifying the document beyond the scope of the specified base profile.\n<p>Each SVG profile should define the text that is appropriate for this attribute.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n</ul>"
         },
-        "contentscripttype": {
-          "url": "$MDN_URL$/web/svg/attribute/contentscripttype",
-          "status": [
-            "StandardTrack",
-            "Deprecated"
-          ],
-          "compatibility": {
-            "Firefox": "1.5",
-            "Safari": "3",
-            "SafariIOS": "2"
-          },
-          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>contentScriptType</code></strong> attribute specifies the default scripting language for the given document fragment on the <a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a> element.\n<p>This attribute sets the default scripting language used to process the value strings in <a href=\"$MDN_URL$/Web/SVG/Attribute#document_event_attributes\">event attributes</a>. This language must be used for all instances of script that do not specify their own scripting language. The value specifies a media type, per <a href=\"https://www.ietf.org/rfc/rfc2046.txt\" class=\"external\" target=\"_blank\">MIME Part Two: Media Types [RFC2046]</a>."
-        },
-        "contentstyletype": {
-          "url": "$MDN_URL$/web/svg/attribute/contentstyletype",
-          "status": [
-            "StandardTrack",
-            "Deprecated"
-          ],
-          "compatibility": {
-            "Firefox": "1.5",
-            "Safari": "3",
-            "SafariIOS": "2"
-          },
-          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>contentStyleType</code></strong> attribute specifies the style sheet language for the given document fragment on the <a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a> element.\n<p>This language is used for all instances of style that do not specify their own styling language, such as the <code><a href=\"$MDN_URL$/Web/SVG/Attribute/style\">style</a></code> attribute that is available on many elements. The value specifies a media type, per <a href=\"https://www.ietf.org/rfc/rfc2046.txt\" class=\"external\" target=\"_blank\">MIME Part Two: Media Types [RFC2046]</a>."
-        },
         "height": {
           "url": "$MDN_URL$/web/svg/element/svg#height",
           "status": [
@@ -5532,23 +5494,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <strong><code>&lt;switch&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element evaluates any <code><a href=\"$MDN_URL$/Web/SVG/Attribute/requiredFeatures\">requiredFeatures</a></code>, <code><a href=\"$MDN_URL$/Web/SVG/Attribute/requiredExtensions\" class=\"page-not-created\" >requiredExtensions</a></code> and <code><a href=\"$MDN_URL$/Web/SVG/Attribute/systemLanguage\">systemLanguage</a></code> attributes on its direct child elements in order, and then renders the first child where these attributes evaluate to true.\n<p>Other direct children will be bypassed and therefore not rendered. If a child element is a container element, like <a href=\"$MDN_URL$/Web/SVG/Element/g\"><code>&lt;g&gt;</code></a>, then its subtree is also processed/rendered or bypassed/not rendered.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <code>display</code> and <code>visibility</code> properties have no effect on <code>&lt;switch&gt;</code> element processing. In particular, setting <code>display:none</code> on a child has no effect on the true/false testing for <code>&lt;switch&gt;</code> processing.\n</div>",
-      "attrs": {
-        "allowreorder": {
-          "url": "$MDN_URL$/web/svg/element/switch#allowreorder",
-          "status": [
-            "Deprecated"
-          ],
-          "compatibility": {
-            "Chrome": "",
-            "ChromeAndroid": "",
-            "Edge": "79",
-            "Opera": "15",
-            "Safari": "3.1",
-            "SafariIOS": "2"
-          }
-        }
-      }
+      "doc": "The <strong><code>&lt;switch&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element evaluates any <code><a href=\"$MDN_URL$/Web/SVG/Attribute/requiredFeatures\">requiredFeatures</a></code>, <code><a href=\"$MDN_URL$/Web/SVG/Attribute/requiredExtensions\" class=\"page-not-created\" >requiredExtensions</a></code> and <code><a href=\"$MDN_URL$/Web/SVG/Attribute/systemLanguage\">systemLanguage</a></code> attributes on its direct child elements in order, and then renders the first child where these attributes evaluate to true.\n<p>Other direct children will be bypassed and therefore not rendered. If a child element is a container element, like <a href=\"$MDN_URL$/Web/SVG/Element/g\"><code>&lt;g&gt;</code></a>, then its subtree is also processed/rendered or bypassed/not rendered.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <code>display</code> and <code>visibility</code> properties have no effect on <code>&lt;switch&gt;</code> element processing. In particular, setting <code>display:none</code> on a child has no effect on the true/false testing for <code>&lt;switch&gt;</code> processing.\n</div>"
     },
     "symbol": {
       "url": "$MDN_URL$/web/svg/element/symbol",
@@ -6149,7 +6095,7 @@
             "Safari": "12.1",
             "SafariIOS": "12.2"
           },
-          "doc": "The URL to an element/fragment that needs to be duplicated.",
+          "doc": "The URL to an element/fragment that needs to be duplicated. See <a href=\"#usage_notes\">Usage notes</a> for details on common pitfalls.",
           "details": {
             "Value type": "<a href=\"$MDN_URL$/Web/SVG/Content_type#url\"><strong><code>&lt;URL&gt;</code></strong></a>",
             "Default": "none",
@@ -6277,23 +6223,6 @@
             "SafariIOS": "2"
           },
           "doc": "The <strong><code>viewBox</code></strong> attribute defines the position and dimension, in user space, of an SVG viewport.\n<p>The value of the <code>viewBox</code> attribute is a list of four numbers: <code>min-x</code>, <code>min-y</code>, <code>width</code> and <code>height</code>. The numbers <code>min-x</code> and <code>min-y</code> represent the top left coordinates of the viewport. The numbers <code>width</code> and <code>height</code> represent its dimensions. These numbers, which are separated by whitespace and/or a comma, specify a rectangle in user space which is mapped to the bounds of the viewport established for the associated SVG element (not the <a href=\"$MDN_URL$/Glossary/Viewport\">browser viewport</a>).\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/marker\"><code>&lt;marker&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/pattern\"><code>&lt;pattern&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/svg\"><code>&lt;svg&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/symbol\"><code>&lt;symbol&gt;</code></a></li>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/view\"><code>&lt;view&gt;</code></a></li>\n</ul>"
-        },
-        "viewtarget": {
-          "url": "$MDN_URL$/web/svg/attribute/viewtarget",
-          "status": [
-            "StandardTrack",
-            "Deprecated"
-          ],
-          "compatibility": {
-            "Chrome": "",
-            "ChromeAndroid": "",
-            "Edge": "79",
-            "Firefox": "15",
-            "Opera": "15",
-            "Safari": "3",
-            "SafariIOS": "2"
-          },
-          "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>viewTarget</code></strong> attribute indicates the target object associated with the view.\n<p>You can use this attribute with the following SVG elements:\n<ul>\n<li><a href=\"$MDN_URL$/Web/SVG/Element/view\"><code>&lt;view&gt;</code></a></li>\n</ul>"
         },
         "zoomandpan": {
           "url": "$MDN_URL$/web/svg/attribute/zoomandpan",

@@ -176,7 +176,7 @@
         "Safari": "3",
         "SafariIOS": ""
       },
-      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>Range.compareNode()</code></strong> returns a constant indicating the\nposition of the <a href=\"$MDN_URL$/Web/API/Node\"><code>Node</code></a>.\n<p>The possible values are:\n<dl>\n<dt id=\"node_before\"><a href=\"#node_before\"><code>NODE_BEFORE</code></a> (<code>0</code>)</dt>\n<dd>\n<p>Node starts before the Range\n</dd>\n<dt id=\"node_after\"><a href=\"#node_after\"><code>NODE_AFTER</code></a> (<code>1</code>)</dt>\n<dd>\n<p>Node ends after the Range\n</dd>\n<dt id=\"node_before_and_after\"><a href=\"#node_before_and_after\"><code>NODE_BEFORE_AND_AFTER</code></a> (<code>2</code>)</dt>\n<dd>\n<p>Node starts before and ends after the Range\n</dd>\n<dt id=\"node_inside\"><a href=\"#node_inside\"><code>NODE_INSIDE</code></a> (<code>3</code>)</dt>\n<dd>\n<p>Node starts after and ends before the Range, i.e. the Node is completely selected by\nthe Range.\n</dd>\n</dl>\n<div class=\"notecard warning\" id=\"sect3\">\n<p><strong>Warning:</strong> This method <a href=\"$MDN_URL$/Mozilla/Firefox/Releases/3/Site_compatibility\">has been removed</a> from <a href=\"$MDN_URL$/Mozilla/Firefox/Releases/3\">Gecko 1.9</a> and\nwill not exist in future versions of Firefox, which was the only browser implementing\nit; you should switch to <a href=\"$MDN_URL$/Web/API/Range/compareBoundaryPoints\"><code>Range.compareBoundaryPoints()</code></a> as soon as\npossible.\n</div>\n<p>The following function can be used as replacement:\n<div class=\"code-example\"><pre class=\"brush: js notranslate\"><code>function rangeCompareNode(range, node) {\n  const nodeRange = node.ownerDocument.createRange();\n  try {\n    nodeRange.selectNode(node);\n  } catch (e) {\n    nodeRange.selectNodeContents(node);\n  }\n  const nodeIsBefore =\n    range.compareBoundaryPoints(Range.START_TO_START, nodeRange) === 1;\n  const nodeIsAfter =\n    range.compareBoundaryPoints(Range.END_TO_END, nodeRange) === -1;\n  if (nodeIsBefore &amp;&amp; !nodeIsAfter) return 0;\n  if (!nodeIsBefore &amp;&amp; nodeIsAfter) return 1;\n  if (nodeIsBefore &amp;&amp; nodeIsAfter) return 2;\n  return 3;\n}\n</code></pre></div>",
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>Range.compareNode()</code></strong> returns a constant indicating the\nposition of the <a href=\"$MDN_URL$/Web/API/Node\"><code>Node</code></a>.\n<p>The possible values are:\n<dl>\n<dt id=\"node_before\"><a href=\"#node_before\"><code>NODE_BEFORE</code></a> (<code>0</code>)</dt>\n<dd>\n<p>Node starts before the Range\n</dd>\n<dt id=\"node_after\"><a href=\"#node_after\"><code>NODE_AFTER</code></a> (<code>1</code>)</dt>\n<dd>\n<p>Node ends after the Range\n</dd>\n<dt id=\"node_before_and_after\"><a href=\"#node_before_and_after\"><code>NODE_BEFORE_AND_AFTER</code></a> (<code>2</code>)</dt>\n<dd>\n<p>Node starts before and ends after the Range\n</dd>\n<dt id=\"node_inside\"><a href=\"#node_inside\"><code>NODE_INSIDE</code></a> (<code>3</code>)</dt>\n<dd>\n<p>Node starts after and ends before the Range, i.e. the Node is completely selected by\nthe Range.\n</dd>\n</dl>\n<div class=\"notecard warning\" id=\"sect3\">\n<p><strong>Warning:</strong> This method <a href=\"$MDN_URL$/Mozilla/Firefox/Releases/3/Site_compatibility\">has been removed</a> from <a href=\"$MDN_URL$/Mozilla/Firefox/Releases/3\">Gecko 1.9</a> and\nwill not exist in future versions of Firefox, which was the only browser implementing\nit; you should switch to <a href=\"$MDN_URL$/Web/API/Range/compareBoundaryPoints\"><code>Range.compareBoundaryPoints()</code></a> as soon as\npossible.\n</div>\n<p>The following function can be used as replacement:\n<div class=\"code-example\"><div>\n```js\nfunction rangeCompareNode(range, node) {\n  const nodeRange = node.ownerDocument.createRange();\n  try {\n    nodeRange.selectNode(node);\n  } catch (e) {\n    nodeRange.selectNodeContents(node);\n  }\n  const nodeIsBefore =\n    range.compareBoundaryPoints(Range.START_TO_START, nodeRange) === 1;\n  const nodeIsAfter =\n    range.compareBoundaryPoints(Range.END_TO_END, nodeRange) === -1;\n  if (nodeIsBefore && !nodeIsAfter) return 0;\n  if (!nodeIsBefore && nodeIsAfter) return 1;\n  if (nodeIsBefore && nodeIsAfter) return 2;\n  return 3;\n}\n```\n</div></div>",
       "parameters": {
         "referenceNode": "The <a href=\"$MDN_URL$/Web/API/Node\"><code>Node</code></a> to compare with the <code>Range</code>."
       },
@@ -2078,7 +2078,7 @@
       "doc": "The <strong><code>Request()</code></strong> constructor creates a new\n<a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> object.",
       "parameters": {
         "input": "Defines the resource that you wish to fetch. This can either be: <ul> <li>A string containing the URL of the resource you want to fetch. The URL may be relative to the base URL, which is the document's <a href=\"$MDN_URL$/Web/API/Node/baseURI\" ><code>baseURI</code></a> in a window context, or <a href=\"$MDN_URL$/Web/API/WorkerGlobalScope/location\"><code>WorkerGlobalScope.location</code></a> in a worker context.</li> <li> A <a href=\"$MDN_URL$/Web/API/Request\"><code>Request</code></a> object, effectively creating a copy. Note the following behavioral updates to retain security while making the constructor less likely to throw exceptions: <ul> <li> If this object exists on another origin to the constructor call, the <a href=\"$MDN_URL$/Web/API/Request/referrer\"><code>Request.referrer</code></a> is stripped out. </li> <li> If this object has a <a href=\"$MDN_URL$/Web/API/Request/mode\"><code>Request.mode</code></a> of <code>navigate</code>, the <code>mode</code> value is converted to <code>same-origin</code>. </li> </ul> </li> </ul>",
-        "options": "An object containing any custom settings that you want to apply to the request. The possible options are: <dl> <dt id=\"method\"><a href=\"#method\"><code>method</code></a></dt> <dd> <p>The request method, e.g., <code>GET</code>, <code>POST</code>. The default is <code>GET</code>. </dd> <dt id=\"headers\"><a href=\"#headers\"><code>headers</code></a></dt> <dd> <p>Any headers you want to add to your request, contained within a <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> object or an object literal with <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a> values. </dd> <dt id=\"body\"><a href=\"#body\"><code>body</code></a></dt> <dd> <p>Any body that you want to add to your request: this can be a <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a>, an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypedArray\"><code>TypedArray</code></a>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/DataView\"><code>DataView</code></a>, a <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a>, a <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a>, a string, or a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> object. Note that a request using the <code>GET</code> or <code>HEAD</code> method cannot have a body. </dd> <dt id=\"mode\"><a href=\"#mode\"><code>mode</code></a></dt> <dd> <p>The mode you want to use for the request, e.g., <code>cors</code>, <code>no-cors</code>, <code>same-origin</code>, or <code>navigate</code>. The default is <code>cors</code>. </dd> <dt id=\"credentials\"><a href=\"#credentials\"><code>credentials</code></a></dt> <dd> <p>The request credentials you want to use for the request: <code>omit</code>, <code>same-origin</code>, or <code>include</code>. The default is <code>same-origin</code>. </dd> <dt id=\"cache\"><a href=\"#cache\"><code>cache</code></a></dt> <dd> <p>The <a href=\"$MDN_URL$/Web/API/Request/cache\">cache mode</a> you want to use for the request. </dd> <dt id=\"redirect\"><a href=\"#redirect\"><code>redirect</code></a></dt> <dd> <p>The redirect mode to use: <code>follow</code>, <code>error</code>, or <code>manual</code>. The default is <code>follow</code>. </dd> <dt id=\"referrer\"><a href=\"#referrer\"><code>referrer</code></a></dt> <dd> <p>A string specifying <code>no-referrer</code>, <code>client</code>, or a URL. The default is <code>about:client</code>. </dd> <dt id=\"referrerpolicy\"><a href=\"#referrerpolicy\"><code>referrerPolicy</code></a></dt> <dd> <p>A string that changes how the referrer header is populated during certain actions (e.g., fetching subresources, prefetching, performing navigations). </dd> <dt id=\"integrity\"><a href=\"#integrity\"><code>integrity</code></a></dt> <dd> <p>Contains the <a href=\"$MDN_URL$/Web/Security/Subresource_Integrity\">subresource integrity</a> value of the request (e.g., <code>sha256-BpfBw7ivV8q2jLiT13fxDYAe2tJllusRSZ273h2nFSE=</code>). </dd> <dt id=\"keepalive\"><a href=\"#keepalive\"><code>keepalive</code></a></dt> <dd> <p>A boolean that indicates whether to make a persistent connection for multiple requests/responses. </dd> <dt id=\"signal\"><a href=\"#signal\"><code>signal</code></a></dt> <dd> <p>An <a href=\"$MDN_URL$/Web/API/AbortSignal\">AbortSignal</a> object which can be used to communicate with/abort a request. </dd> <dt id=\"priority\"><a href=\"#priority\"><code>priority</code></a></dt> <dd> <p>Specifies the priority of the fetch request relative to other requests of the same type. Must be one of the following strings: <ul> <li><code>high</code>: A high priority fetch request relative to other requests of the same type.</li> <li><code>low</code>: A low priority fetch request relative to other requests of the same type.</li> <li><code>auto</code>: Automatically determine the priority of the fetch request relative to other requests of the same type (default).</li> </ul> </dd> </dl> <p>If you construct a new <code>Request</code> from an existing <code>Request</code>, any options you set in an <em>options</em> argument for the new request replace any corresponding options set in the original <code>Request</code>. For example: <div class=\"code-example\"><pre class=\"brush: js notranslate\"><code>const oldRequest = new Request(   \"https://github.com/mdn/content/issues/12959\",   { headers: { From: \"webmaster@example.org\" } }, ); oldRequest.headers.get(\"From\"); // \"webmaster@example.org\" const newRequest = new Request(oldRequest, {   headers: { From: \"developer@example.org\" }, }); newRequest.headers.get(\"From\"); // \"developer@example.org\" </code></pre></div>"
+        "options": "An object containing any custom settings that you want to apply to the request. The possible options are: <dl> <dt id=\"method\"><a href=\"#method\"><code>method</code></a></dt> <dd> <p>The request method, e.g., <code>GET</code>, <code>POST</code>. The default is <code>GET</code>. </dd> <dt id=\"headers\"><a href=\"#headers\"><code>headers</code></a></dt> <dd> <p>Any headers you want to add to your request, contained within a <a href=\"$MDN_URL$/Web/API/Headers\"><code>Headers</code></a> object or an object literal with <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/String\"><code>String</code></a> values. </dd> <dt id=\"body\"><a href=\"#body\"><code>body</code></a></dt> <dd> <p>Any body that you want to add to your request: this can be a <a href=\"$MDN_URL$/Web/API/Blob\"><code>Blob</code></a>, an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypedArray\"><code>TypedArray</code></a>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/DataView\"><code>DataView</code></a>, a <a href=\"$MDN_URL$/Web/API/FormData\"><code>FormData</code></a>, a <a href=\"$MDN_URL$/Web/API/URLSearchParams\"><code>URLSearchParams</code></a>, a string, or a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> object. Note that a request using the <code>GET</code> or <code>HEAD</code> method cannot have a body. </dd> <dt id=\"mode\"><a href=\"#mode\"><code>mode</code></a></dt> <dd> <p>The mode you want to use for the request, e.g., <code>cors</code>, <code>no-cors</code>, <code>same-origin</code>, or <code>navigate</code>. The default is <code>cors</code>. </dd> <dt id=\"credentials\"><a href=\"#credentials\"><code>credentials</code></a></dt> <dd> <p>The request credentials you want to use for the request: <code>omit</code>, <code>same-origin</code>, or <code>include</code>. The default is <code>same-origin</code>. </dd> <dt id=\"cache\"><a href=\"#cache\"><code>cache</code></a></dt> <dd> <p>The <a href=\"$MDN_URL$/Web/API/Request/cache\">cache mode</a> you want to use for the request. </dd> <dt id=\"redirect\"><a href=\"#redirect\"><code>redirect</code></a></dt> <dd> <p>The redirect mode to use: <code>follow</code>, <code>error</code>, or <code>manual</code>. The default is <code>follow</code>. </dd> <dt id=\"referrer\"><a href=\"#referrer\"><code>referrer</code></a></dt> <dd> <p>A string specifying <code>no-referrer</code>, <code>client</code>, or a URL. The default is <code>about:client</code>. </dd> <dt id=\"referrerpolicy\"><a href=\"#referrerpolicy\"><code>referrerPolicy</code></a></dt> <dd> <p>A string that changes how the referrer header is populated during certain actions (e.g., fetching subresources, prefetching, performing navigations). </dd> <dt id=\"integrity\"><a href=\"#integrity\"><code>integrity</code></a></dt> <dd> <p>Contains the <a href=\"$MDN_URL$/Web/Security/Subresource_Integrity\">subresource integrity</a> value of the request (e.g., <code>sha256-BpfBw7ivV8q2jLiT13fxDYAe2tJllusRSZ273h2nFSE=</code>). </dd> <dt id=\"keepalive\"><a href=\"#keepalive\"><code>keepalive</code></a></dt> <dd> <p>A boolean that indicates whether to make a persistent connection for multiple requests/responses. </dd> <dt id=\"signal\"><a href=\"#signal\"><code>signal</code></a></dt> <dd> <p>An <a href=\"$MDN_URL$/Web/API/AbortSignal\">AbortSignal</a> object which can be used to communicate with/abort a request. </dd> <dt id=\"priority\"><a href=\"#priority\"><code>priority</code></a></dt> <dd> <p>Specifies the priority of the fetch request relative to other requests of the same type. Must be one of the following strings: <ul> <li><code>high</code>: A high priority fetch request relative to other requests of the same type.</li> <li><code>low</code>: A low priority fetch request relative to other requests of the same type.</li> <li><code>auto</code>: Automatically determine the priority of the fetch request relative to other requests of the same type (default).</li> </ul> </dd> </dl> <p>If you construct a new <code>Request</code> from an existing <code>Request</code>, any options you set in an <em>options</em> argument for the new request replace any corresponding options set in the original <code>Request</code>. For example: <div class=\"code-example\"><div> ```js const oldRequest = new Request(   \"https://github.com/mdn/content/issues/12959\",   { headers: { From: \"webmaster@example.org\" } }, ); oldRequest.headers.get(\"From\"); // \"webmaster@example.org\" const newRequest = new Request(oldRequest, {   headers: { From: \"developer@example.org\" }, }); newRequest.headers.get(\"From\"); // \"developer@example.org\" ``` </div></div>"
       }
     },
     "request.signal": {
@@ -2203,7 +2203,7 @@
       },
       "doc": "The <strong><code>ResizeObserver</code></strong> constructor creates a\nnew <a href=\"$MDN_URL$/Web/API/ResizeObserver\"><code>ResizeObserver</code></a> object, which can be used to report changes to the\ncontent or border box of an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> or the bounding box of an\n<a href=\"$MDN_URL$/Web/API/SVGElement\"><code>SVGElement</code></a>.",
       "parameters": {
-        "callback": "The function called whenever an observed resize occurs. The function is called with two parameters: <dl> <dt id=\"entries\"><a href=\"#entries\"><code>entries</code></a></dt> <dd> <p>An array of <a href=\"$MDN_URL$/Web/API/ResizeObserverEntry\"><code>ResizeObserverEntry</code></a> objects that can be used to access the new dimensions of the element after each change. </dd> <dt id=\"observer\"><a href=\"#observer\"><code>observer</code></a></dt> <dd> <p>A reference to the <code>ResizeObserver</code> itself, so it will definitely be accessible from inside the callback, should you need it. This could be used for example to automatically unobserve the observer when a certain condition is reached, but you can omit it if you don't need it. </dd> </dl> <p>The callback will generally follow a pattern along the lines of: <div class=\"code-example\"><pre class=\"brush: js notranslate\"><code>function callback(entries, observer) {   for (const entry of entries) {     // Do something to each entry     // and possibly something to the observer itself   } } </code></pre></div>"
+        "callback": "The function called whenever an observed resize occurs. The function is called with two parameters: <dl> <dt id=\"entries\"><a href=\"#entries\"><code>entries</code></a></dt> <dd> <p>An array of <a href=\"$MDN_URL$/Web/API/ResizeObserverEntry\"><code>ResizeObserverEntry</code></a> objects that can be used to access the new dimensions of the element after each change. </dd> <dt id=\"observer\"><a href=\"#observer\"><code>observer</code></a></dt> <dd> <p>A reference to the <code>ResizeObserver</code> itself, so it will definitely be accessible from inside the callback, should you need it. This could be used for example to automatically unobserve the observer when a certain condition is reached, but you can omit it if you don't need it. </dd> </dl> <p>The callback will generally follow a pattern along the lines of: <div class=\"code-example\"><div> ```js function callback(entries, observer) {   for (const entry of entries) {     // Do something to each entry     // and possibly something to the observer itself   } } ``` </div></div>"
       }
     },
     "resizeobserver.unobserve": {
@@ -7867,7 +7867,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>ServiceWorker</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Worker API</a> provides a reference to a service worker. Multiple <a href=\"$MDN_URL$/Glossary/Browsing_context\">browsing contexts</a> (e.g. pages, workers, etc.) can be associated with the same service worker, each through a unique <code>ServiceWorker</code> object.\n<p>A <code>ServiceWorker</code> object is available via a number of propertes:\n<ul>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration/active\"><code>ServiceWorkerRegistration.active</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/serviceWorker\"><code>ServiceWorkerGlobalScope.serviceWorker</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer/controller\"><code>ServiceWorkerContainer.controller</code></a> — when the service worker is in <code>activating</code> or <code>activated</code> state</li>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration/installing\"><code>ServiceWorkerRegistration.installing</code></a> — when the service worker is in <code>installing</code> state</li>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration/waiting\"><code>ServiceWorkerRegistration.waiting</code></a> — when the service worker is in <code>installed</code> state</li>\n</ul>\n<p>The <code>ServiceWorker</code> interface is dispatched a set of lifecycle events — <code>install</code> and <code>activate</code> — and functional events including <code>fetch</code>. A <code>ServiceWorker</code> object has an associated <a href=\"$MDN_URL$/Web/API/ServiceWorker/state\"><code>ServiceWorker.state</code></a>, related to its lifecycle.\n<p>Service workers allow static import of <a href=\"$MDN_URL$/Web/JavaScript/Guide/Modules\">ECMAScript modules</a>, if supported, using <a href=\"$MDN_URL$/Web/JavaScript/Reference/Statements/import\"><code>import</code></a>.\nDynamic import is disallowed by the specification — calling <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/import\"><code>import()</code></a> will throw."
+      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>ServiceWorker</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Worker API</a> provides a reference to a service worker. Multiple <a href=\"$MDN_URL$/Glossary/Browsing_context\">browsing contexts</a> (e.g. pages, workers, etc.) can be associated with the same service worker, each through a unique <code>ServiceWorker</code> object.\n<p>A <code>ServiceWorker</code> object is available via a number of properties:\n<ul>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration/active\"><code>ServiceWorkerRegistration.active</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/serviceWorker\"><code>ServiceWorkerGlobalScope.serviceWorker</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer/controller\"><code>ServiceWorkerContainer.controller</code></a> — when the service worker is in <code>activating</code> or <code>activated</code> state</li>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration/installing\"><code>ServiceWorkerRegistration.installing</code></a> — when the service worker is in <code>installing</code> state</li>\n<li><a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration/waiting\"><code>ServiceWorkerRegistration.waiting</code></a> — when the service worker is in <code>installed</code> state</li>\n</ul>\n<p>The <code>ServiceWorker</code> interface is dispatched a set of lifecycle events — <code>install</code> and <code>activate</code> — and functional events including <code>fetch</code>. A <code>ServiceWorker</code> object has an associated <a href=\"$MDN_URL$/Web/API/ServiceWorker/state\"><code>ServiceWorker.state</code></a>, related to its lifecycle.\n<p>Service workers allow static import of <a href=\"$MDN_URL$/Web/JavaScript/Guide/Modules\">ECMAScript modules</a>, if supported, using <a href=\"$MDN_URL$/Web/JavaScript/Reference/Statements/import\"><code>import</code></a>.\nDynamic import is disallowed by the specification — calling <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/import\"><code>import()</code></a> will throw."
     },
     "serviceworker.postmessage": {
       "url": "$MDN_URL$/web/api/serviceworker/postmessage",
@@ -8028,7 +8028,7 @@
       "doc": "The <strong><code>register()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer\"><code>ServiceWorkerContainer</code></a> interface creates or updates a\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> for the given <code>scriptURL</code>.\n<p>If successful, a service worker registration ties the provided script URL to a\n<em>scope</em>, which is subsequently used for navigation matching. You can call this\nmethod unconditionally from the controlled page. I.e., you don't need to first check\nwhether there's an active registration.\n<p>There is frequent confusion surrounding the meaning and use of <em>scope</em>. Since a\nservice worker can't have a scope broader than its own location, only use the\n<code>scope</code> option when you need a scope that is narrower than the default.",
       "parameters": {
         "scriptURL": "The URL of the service worker script. The registered service worker file needs to have a valid <a href=\"$MDN_URL$/Web/HTTP/Basics_of_HTTP/MIME_types#textjavascript\">JavaScript MIME type</a>.",
-        "options": "An object containing registration options. Currently available options are: <dl> <dt id=\"scope\"><a href=\"#scope\"><code>scope</code></a></dt> <dd> <p>A string representing a URL that defines a service worker's registration scope; that is, what range of URLs a service worker can control. This is usually a relative URL. It is relative to the base URL of the application. By default, the <code>scope</code> value for a service worker registration is set to the directory where the service worker script is located. See the <a href=\"#examples\">Examples</a> section for more information on how it works. </dd> <dt id=\"type\"><a href=\"#type\"><code>type</code></a></dt> <dd> <p>A string specifying the type of worker to create. Valid values are: <dl> <dt id=\"classic\"><a href=\"#classic\"><code>'classic'</code></a></dt> <dd> <p>The loaded service worker is in a standard script. This is the default. </dd> <dt id=\"module\"><a href=\"#module\"><code>'module'</code></a></dt> <dd> <p>The loaded service worker is in an <a href=\"$MDN_URL$/Web/JavaScript/Guide/Modules\">ES module</a> and the import statement is available on worker contexts. </dd> </dl> </dd> <dt id=\"updateviacache\"><a href=\"#updateviacache\"><code>updateViaCache</code></a></dt> <dd> <p>A string indicating how the HTTP cache is used for service worker scripts resources during updates. Note: This only refers to the service worker script and its imports, not other resources fetched by these scripts. <dl> <dt id=\"all\"><a href=\"#all\"><code>'all'</code></a></dt> <dd> <p>The HTTP cache will be queried for the main script, and all imported scripts. If no fresh entry is found in the HTTP cache, then the scripts are fetched from the network. </dd> <dt id=\"imports\"><a href=\"#imports\"><code>'imports'</code></a></dt> <dd> <p>The HTTP cache will be queried for imports, but the main script will always be updated from the network. If no fresh entry is found in the HTTP cache for the imports, they're fetched from the network. </dd> <dt id=\"none\"><a href=\"#none\"><code>'none'</code></a></dt> <dd> <p>The HTTP cache will not be used for the main script or its imports. All service worker script resources will be updated from the network. </dd> </dl> </dd> </dl>"
+        "options": "An object containing registration options. Currently available options are: <dl> <dt id=\"scope\"><a href=\"#scope\"><code>scope</code></a></dt> <dd> <p>A string representing a URL that defines a service worker's registration scope; that is, what range of URLs a service worker can control. This is usually a relative URL. It is relative to the base URL of the application. By default, the <code>scope</code> value for a service worker registration is set to the directory where the service worker script is located. See the <a href=\"#examples\">Examples</a> section for more information on how it works. </dd> <dt id=\"type\"><a href=\"#type\"><code>type</code></a></dt> <dd> <p>A string specifying the type of worker to create. Valid values are: <dl> <dt id=\"classic\"><a href=\"#classic\"><code>'classic'</code></a></dt> <dd> <p>The loaded service worker is in a standard script. This is the default. </dd> <dt id=\"module\"><a href=\"#module\"><code>'module'</code></a></dt> <dd> <p>The loaded service worker is in an <a href=\"$MDN_URL$/Web/JavaScript/Guide/Modules\">ES module</a> and the import statement is available on worker contexts. For ES module compatibility info, see the <a href=\"$MDN_URL$/Web/API/ServiceWorker#browser_compatibility\">browser compatibility data table for the <code>ServiceWorker</code> interface</a>. </dd> </dl> </dd> <dt id=\"updateviacache\"><a href=\"#updateviacache\"><code>updateViaCache</code></a></dt> <dd> <p>A string indicating how the HTTP cache is used for service worker scripts resources during updates. Note: This only refers to the service worker script and its imports, not other resources fetched by these scripts. <dl> <dt id=\"all\"><a href=\"#all\"><code>'all'</code></a></dt> <dd> <p>The HTTP cache will be queried for the main script, and all imported scripts. If no fresh entry is found in the HTTP cache, then the scripts are fetched from the network. </dd> <dt id=\"imports\"><a href=\"#imports\"><code>'imports'</code></a></dt> <dd> <p>The HTTP cache will be queried for imports, but the main script will always be updated from the network. If no fresh entry is found in the HTTP cache for the imports, they're fetched from the network. </dd> <dt id=\"none\"><a href=\"#none\"><code>'none'</code></a></dt> <dd> <p>The HTTP cache will not be used for the main script or its imports. All service worker script resources will be updated from the network. </dd> </dl> </dd> </dl>"
       },
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with a <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a>\n  object."
     },
@@ -8080,6 +8080,20 @@
         "SafariIOS": "11.3"
       },
       "doc": "The <strong><code>clients</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/Clients\"><code>Clients</code></a>\nobject associated with the service worker."
+    },
+    "serviceworkerglobalscope.cookiestore": {
+      "url": "$MDN_URL$/web/api/serviceworkerglobalscope/cookieStore",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "87",
+        "ChromeAndroid": "87",
+        "Edge": "87",
+        "Opera": "73"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>cookieStore</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> interface returns a reference to the <a href=\"$MDN_URL$/Web/API/CookieStore\"><code>CookieStore</code></a> object associated with this service worker."
     },
     "serviceworkerglobalscope.registration": {
       "url": "$MDN_URL$/web/api/serviceworkerglobalscope/registration",
@@ -8143,7 +8157,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "The <strong><code>ServiceWorkerRegistration</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Worker API</a> represents the service worker registration. You register a service worker to control one or more pages that share the same origin.\n<p>The lifetime of a service worker registration is beyond that of the <code>ServiceWorkerRegistration</code> objects that represent them within the lifetime of their corresponding service worker clients. The browser maintains a persistent list of active <code>ServiceWorkerRegistration</code> objects.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>"
+      "doc": "The <strong><code>ServiceWorkerRegistration</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Worker API</a> represents the service worker registration. You register a service worker to control one or more pages that share the same origin.\n<p>The lifetime of a service worker registration is beyond that of the <code>ServiceWorkerRegistration</code> objects that represent them within the lifetime of their corresponding service worker clients. The browser maintains a persistent list of active <code>ServiceWorkerRegistration</code> objects.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.active": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/active",
@@ -8159,7 +8173,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "The <strong><code>active</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a service worker whose\n<a href=\"$MDN_URL$/Web/API/ServiceWorker/state\"><code>ServiceWorker.state</code></a> is <code>activating</code> or <code>activated</code>.\nThis property is initially set to <code>null</code>.\n<p>An active worker controls a <a href=\"$MDN_URL$/Web/API/Client\"><code>Client</code></a> if the client's URL\nfalls within the scope of the registration (the <code>scope</code> option set when\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer/register\"><code>ServiceWorkerContainer.register</code></a> is first called.)\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Once an active worker is <code>activating</code>, neither a\nruntime script error nor a force termination of the active worker prevents the active\nworker from getting <code>activated</code>.\n</div>"
+      "doc": "The <strong><code>active</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a service worker whose\n<a href=\"$MDN_URL$/Web/API/ServiceWorker/state\"><code>ServiceWorker.state</code></a> is <code>activating</code> or <code>activated</code>.\nThis property is initially set to <code>null</code>.\n<p>An active worker controls a <a href=\"$MDN_URL$/Web/API/Client\"><code>Client</code></a> if the client's URL\nfalls within the scope of the registration (the <code>scope</code> option set when\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer/register\"><code>ServiceWorkerContainer.register</code></a> is first called.)\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Once an active worker is <code>activating</code>, neither a\nruntime script error nor a force termination of the active worker prevents the active\nworker from getting <code>activated</code>.\n</div><div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.backgroundfetch": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/backgroundfetch",
@@ -8173,7 +8187,21 @@
         "Edge": "79",
         "Opera": "62"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>backgroundFetch</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to a\n<a href=\"$MDN_URL$/Web/API/BackgroundFetchManager\"><code>BackgroundFetchManager</code></a> object, which can be used to initiate background fetch operations."
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>backgroundFetch</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to a\n<a href=\"$MDN_URL$/Web/API/BackgroundFetchManager\"><code>BackgroundFetchManager</code></a> object, which can be used to initiate background fetch operations.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
+    },
+    "serviceworkerregistration.cookies": {
+      "url": "$MDN_URL$/web/api/serviceworkerregistration/cookies",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "87",
+        "ChromeAndroid": "87",
+        "Edge": "87",
+        "Opera": "73"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>cookies</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the <a href=\"$MDN_URL$/Web/API/CookieStoreManager\"><code>CookieStoreManager</code></a> interface, which enables a web app to subscribe to and unsubscribe from cookie change events in a <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">service worker</a>. This is an entry point for the <a href=\"$MDN_URL$/Web/API/Cookie_Store_API\">Cookie Store API</a>."
     },
     "serviceworkerregistration.getnotifications": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/getnotifications",
@@ -8186,11 +8214,12 @@
         "Edge": "17",
         "Firefox": "44",
         "Opera": "27",
+        "Safari": "16",
         "SafariIOS": "16.4"
       },
-      "doc": "The <strong><code>getNotifications()</code></strong> method of\nthe <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a list of the\nnotifications in the order that they were created from the current origin via the\ncurrent service worker registration. Origins can have many active but\ndifferently-scoped service worker registrations. Notifications created by one service\nworker on the same origin will not be available to other active service workers on\nthat same origin.",
+      "doc": "The <strong><code>getNotifications()</code></strong> method of\nthe <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a list of the\nnotifications in the order that they were created from the current origin via the\ncurrent service worker registration. Origins can have many active but\ndifferently-scoped service worker registrations. Notifications created by one service\nworker on the same origin will not be available to other active service workers on\nthat same origin.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
-        "options": "An object containing options to filter the notifications returned. The available options are: <dl> <dt id=\"tag\"><a href=\"#tag\"><code>tag</code></a></dt> <dd> <p>A string representing a notification tag. If specified, only notifications that have this tag will be returned. </dd> </dl>"
+        "options": "An object containing options to filter the notifications returned. The available options are: <dl> <dt id=\"tag\"><a href=\"#tag\"><code>tag</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>A string representing a notification tag. If specified, only notifications that have this tag will be returned. </dd> </dl>"
       },
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to a list of <a href=\"$MDN_URL$/Web/API/Notification\"><code>Notification</code></a> objects."
     },
@@ -8208,7 +8237,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "The <strong><code>installing</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a service worker whose\n<a href=\"$MDN_URL$/Web/API/ServiceWorker/state\"><code>ServiceWorker.state</code></a> is <code>installing</code>. This property is\ninitially set to <code>null</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>"
+      "doc": "The <strong><code>installing</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a service worker whose\n<a href=\"$MDN_URL$/Web/API/ServiceWorker/state\"><code>ServiceWorker.state</code></a> is <code>installing</code>. This property is\ninitially set to <code>null</code>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.navigationpreload": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/navigationpreload",
@@ -8224,7 +8253,7 @@
         "Safari": "15.4",
         "SafariIOS": "15.4"
       },
-      "doc": "The <strong><code>navigationPreload</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/NavigationPreloadManager\"><code>NavigationPreloadManager</code></a> associated with the current service worker registration.\n<p>The returned object allows resources managed by a service worker to be preemptively downloaded in parallel with service worker boot up."
+      "doc": "The <strong><code>navigationPreload</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/NavigationPreloadManager\"><code>NavigationPreloadManager</code></a> associated with the current service worker registration.\n<p>The returned object allows resources managed by a service worker to be preemptively downloaded in parallel with service worker boot up.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.paymentmanager": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/paymentmanager",
@@ -8238,7 +8267,7 @@
         "Edge": "79",
         "Opera": "57"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>paymentManager</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a payment app's <a href=\"$MDN_URL$/Web/API/PaymentManager\"><code>PaymentManager</code></a> instance, which is used to manage various payment app functionality."
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>paymentManager</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a payment app's <a href=\"$MDN_URL$/Web/API/PaymentManager\"><code>PaymentManager</code></a> instance, which is used to manage various payment app functionality.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.periodicsync": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/periodicsync",
@@ -8252,7 +8281,7 @@
         "Edge": "80",
         "Opera": "67"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>periodicSync</code></strong> read-only property of\nthe <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the\n<a href=\"$MDN_URL$/Web/API/PeriodicSyncManager\"><code>PeriodicSyncManager</code></a> interface, which allows for registering of tasks to\nrun at specific intervals."
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>periodicSync</code></strong> read-only property of\nthe <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the\n<a href=\"$MDN_URL$/Web/API/PeriodicSyncManager\"><code>PeriodicSyncManager</code></a> interface, which allows for registering of tasks to\nrun at specific intervals.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.pushmanager": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/pushmanager",
@@ -8265,9 +8294,10 @@
         "Edge": "17",
         "Firefox": "44",
         "Opera": "27",
+        "Safari": "16",
         "SafariIOS": "16.4"
       },
-      "doc": "The <strong><code>pushManager</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the\n<a href=\"$MDN_URL$/Web/API/PushManager\"><code>PushManager</code></a> interface for managing push subscriptions; this includes\nsupport for subscribing, getting an active subscription, and accessing push permission\nstatus."
+      "doc": "The <strong><code>pushManager</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the\n<a href=\"$MDN_URL$/Web/API/PushManager\"><code>PushManager</code></a> interface for managing push subscriptions; this includes\nsupport for subscribing, getting an active subscription, and accessing push permission\nstatus.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.scope": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/scope",
@@ -8283,7 +8313,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "The <strong><code>scope</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a unique identifier for a\nservice worker registration. The service worker must be on the same origin as the\ndocument that registers the <a href=\"$MDN_URL$/Web/API/ServiceWorker\"><code>ServiceWorker</code></a>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>"
+      "doc": "The <strong><code>scope</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a unique identifier for a\nservice worker registration. The service worker must be on the same origin as the\ndocument that registers the <a href=\"$MDN_URL$/Web/API/ServiceWorker\"><code>ServiceWorker</code></a>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.shownotification": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/shownotification",
@@ -8296,14 +8326,18 @@
         "Edge": "17",
         "Firefox": "44",
         "Opera": "29",
+        "Safari": "16",
         "SafariIOS": "16.4"
       },
-      "doc": "The <code>showNotification()</code> method of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface creates a notification on an active\nservice worker.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
+      "doc": "The <strong><code>showNotification()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface creates a notification on an active\nservice worker.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "parameters": {
         "title": "The title that must be shown within the notification",
-        "options": "An object that allows configuring the notification. It can have the following properties: <dl> <dt id=\"actions\"><a href=\"#actions\"><code>actions</code></a> </dt> <dd> <p>An array of actions to display in the notification. Each element in the array is an object with the following members: <dl> <dt id=\"action\"><a href=\"#action\"><code>action</code></a></dt> <dd> <p>A string identifying a user action to be displayed on the notification. </dd> <dt id=\"title_2\"><a href=\"#title_2\"><code>title</code></a></dt> <dd> <p>A string containing action text to be shown to the user. </dd> <dt id=\"icon\"><a href=\"#icon\"><code>icon</code></a></dt> <dd> <p>A string containing the URL of an icon to display with the action. </dd> </dl> <p>Appropriate responses are built using <code>event.action</code> within the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/notificationclick_event\" ><code>notificationclick</code></a> event. </dd> <dt id=\"badge\"><a href=\"#badge\"><code>badge</code></a> </dt> <dd> <p>a string containing the URL of an image to represent the notification when there is not enough space to display the notification itself such as for example, the Android Notification Bar. On Android devices, the badge should accommodate devices up to 4x resolution, about 96 by 96 px, and the image will be automatically masked. </dd> <dt id=\"body\"><a href=\"#body\"><code>body</code></a></dt> <dd> <p>A string representing an extra content to display within the notification. </dd> <dt id=\"data\"><a href=\"#data\"><code>data</code></a> </dt> <dd> <p>Arbitrary data that you want to be associated with the notification. This can be of any data type. </dd> <dt id=\"dir\"><a href=\"#dir\"><code>dir</code></a></dt> <dd> <p>The direction of the notification; it can be <code>auto</code>, <code>ltr</code> or <code>rtl</code>. </dd> <dt id=\"icon_2\"><a href=\"#icon_2\"><code>icon</code></a></dt> <dd> <p>a string containing the URL of an image to be used as an icon by the notification. </dd> <dt id=\"image\"><a href=\"#image\"><code>image</code></a> </dt> <dd> <p>a string containing the URL of an image to be displayed in the notification. </dd> <dt id=\"lang\"><a href=\"#lang\"><code>lang</code></a></dt> <dd> <p>Specify the lang used within the notification. This string must be a valid language tag according to <a href=\"https://datatracker.ietf.org/doc/html/rfc5646\" class=\"external\" target=\"_blank\">RFC 5646: Tags for Identifying Languages (also known as BCP 47)</a>. </dd> <dt id=\"renotify\"><a href=\"#renotify\"><code>renotify</code></a> </dt> <dd> <p>A boolean that indicates whether to suppress vibrations and audible alerts when reusing a <code>tag</code> value. If <em>options</em>'s <code>renotify</code> is true and <em>options</em>'s <code>tag</code> is the empty string a TypeError will be thrown. The default is <code>false</code>. </dd> <dt id=\"requireinteraction\"><a href=\"#requireinteraction\"><code>requireInteraction</code></a> </dt> <dd> <p>Indicates that on devices with sufficiently large screens, a notification should remain active until the user clicks or dismisses it. If this value is absent or false, the desktop version of Chrome will auto-minimize notifications after approximately twenty seconds. The default value is <code>false</code>. </dd> <dt id=\"silent\"><a href=\"#silent\"><code>silent</code></a></dt> <dd> <p>When set indicates that no sounds or vibrations should be made. If <em>options</em>'s <code>silent</code> is true and <em>options</em>'s <code>vibrate</code> is present a TypeError exception will be thrown. The default value is <code>false</code>. </dd> <dt id=\"tag\"><a href=\"#tag\"><code>tag</code></a></dt> <dd> <p>An ID for a given notification that allows you to find, replace, or remove the notification using a script if necessary. </dd> <dt id=\"timestamp\"><a href=\"#timestamp\"><code>timestamp</code></a></dt> <dd> <p>A timestamp, given as <a href=\"$MDN_URL$/Glossary/Unix_time\">Unix time</a> in milliseconds, representing the time associated with the notification. This could be in the past when a notification is used for a message that couldn't immediately be delivered because the device was offline, or in the future for a meeting that is about to start. </dd> <dt id=\"vibrate\"><a href=\"#vibrate\"><code>vibrate</code></a> </dt> <dd> <p>A vibration pattern to run with the display of the notification. A vibration pattern can be an array with as few as one member. The values are times in milliseconds where the even indices (0, 2, 4, etc.) indicate how long to vibrate and the odd indices indicate how long to pause. For example, <code>[300, 100, 400]</code> would vibrate 300ms, pause 100ms, then vibrate 400ms. </dd> </dl>"
+        "options": "An object that allows configuring the notification. It can have the following properties: <dl> <dt id=\"actions\"><a href=\"#actions\"><code>actions</code></a> <span class=\"badge inline optional\">Optional</span> </dt> <dd> <p>An array of actions to display in the notification. Each element in the array is an object with the following members: <dl> <dt id=\"action\"><a href=\"#action\"><code>action</code></a></dt> <dd> <p>A string identifying a user action to be displayed on the notification. </dd> <dt id=\"title_2\"><a href=\"#title_2\"><code>title</code></a></dt> <dd> <p>A string containing action text to be shown to the user. </dd> <dt id=\"icon\"><a href=\"#icon\"><code>icon</code></a></dt> <dd> <p>A string containing the URL of an icon to display with the action. </dd> </dl> <p>Appropriate responses are built using <code>event.action</code> within the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/notificationclick_event\" ><code>notificationclick</code></a> event. </dd> <dt id=\"badge\"><a href=\"#badge\"><code>badge</code></a> <span class=\"badge inline optional\">Optional</span> </dt> <dd> <p>a string containing the URL of an image to represent the notification when there is not enough space to display the notification itself such as for example, the Android Notification Bar. On Android devices, the badge should accommodate devices up to 4x resolution, about 96 by 96 px, and the image will be automatically masked. </dd> <dt id=\"body\"><a href=\"#body\"><code>body</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>A string representing an extra content to display within the notification. </dd> <dt id=\"data\"><a href=\"#data\"><code>data</code></a> <span class=\"badge inline optional\">Optional</span> </dt> <dd> <p>Arbitrary data that you want to be associated with the notification. This can be of any data type. </dd> <dt id=\"dir\"><a href=\"#dir\"><code>dir</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>The direction of the notification; it can be <code>auto</code>, <code>ltr</code> or <code>rtl</code>. </dd> <dt id=\"icon_2\"><a href=\"#icon_2\"><code>icon</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>a string containing the URL of an image to be used as an icon by the notification. </dd> <dt id=\"image\"><a href=\"#image\"><code>image</code></a> <span class=\"badge inline optional\">Optional</span> </dt> <dd> <p>a string containing the URL of an image to be displayed in the notification. </dd> <dt id=\"lang\"><a href=\"#lang\"><code>lang</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>Specify the lang used within the notification. This string must be a valid language tag according to <a href=\"https://datatracker.ietf.org/doc/html/rfc5646\" class=\"external\" target=\"_blank\">RFC 5646: Tags for Identifying Languages (also known as BCP 47)</a>. </dd> <dt id=\"renotify\"><a href=\"#renotify\"><code>renotify</code></a> <span class=\"badge inline optional\">Optional</span> </dt> <dd> <p>A boolean that indicates whether to suppress vibrations and audible alerts when reusing a <code>tag</code> value. If <em>options</em>'s <code>renotify</code> is true and <em>options</em>'s <code>tag</code> is the empty string a TypeError will be thrown. The default is <code>false</code>. </dd> <dt id=\"requireinteraction\"><a href=\"#requireinteraction\"><code>requireInteraction</code></a> <span class=\"badge inline optional\">Optional</span> </dt> <dd> <p>Indicates that on devices with sufficiently large screens, a notification should remain active until the user clicks or dismisses it. If this value is absent or false, the desktop version of Chrome will auto-minimize notifications after approximately twenty seconds. The default value is <code>false</code>. </dd> <dt id=\"silent\"><a href=\"#silent\"><code>silent</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>When set indicates that no sounds or vibrations should be made. If <em>options</em>'s <code>silent</code> is true and <em>options</em>'s <code>vibrate</code> is present a TypeError exception will be thrown. The default value is <code>false</code>. </dd> <dt id=\"tag\"><a href=\"#tag\"><code>tag</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>An ID for a given notification that allows you to find, replace, or remove the notification using a script if necessary. </dd> <dt id=\"timestamp\"><a href=\"#timestamp\"><code>timestamp</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>A timestamp, given as <a href=\"$MDN_URL$/Glossary/Unix_time\">Unix time</a> in milliseconds, representing the time associated with the notification. This could be in the past when a notification is used for a message that couldn't immediately be delivered because the device was offline, or in the future for a meeting that is about to start. </dd> <dt id=\"vibrate\"><a href=\"#vibrate\"><code>vibrate</code></a> <span class=\"badge inline optional\">Optional</span> </dt> <dd> <p>A vibration pattern to run with the display of the notification. A vibration pattern can be an array with as few as one member. The values are times in milliseconds where the even indices (0, 2, 4, etc.) indicate how long to vibrate and the odd indices indicate how long to pause. For example, <code>[300, 100, 400]</code> would vibrate 300ms, pause 100ms, then vibrate 400ms. </dd> </dl>"
       },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to <code>undefined</code>."
+      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to <code>undefined</code>.",
+      "throws": {
+        "TypeError": "Thrown if current service worker's state is not <code>activating</code> or <code>activated</code>, or if the user has explicitly denied the browser's permission request to use the API."
+      }
     },
     "serviceworkerregistration.sync": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/sync",
@@ -8317,7 +8351,7 @@
         "Edge": "79",
         "Opera": "36"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>sync</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the\n<a href=\"$MDN_URL$/Web/API/SyncManager\"><code>SyncManager</code></a> interface, which manages background synchronization\nprocesses."
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>sync</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the\n<a href=\"$MDN_URL$/Web/API/SyncManager\"><code>SyncManager</code></a> interface, which manages background synchronization\nprocesses.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.unregister": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/unregister",
@@ -8333,7 +8367,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "The <strong><code>unregister()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface unregisters the service worker\nregistration and returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>. The promise will resolve to\n<code>false</code> if no registration was found, otherwise it resolves to\n<code>true</code> irrespective of whether unregistration happened or not (it may not\nunregister if someone else just called <a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer/register\"><code>ServiceWorkerContainer.register()</code></a>\nwith the same scope.) The service worker will finish any ongoing operations before it is\nunregistered.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
+      "doc": "The <strong><code>unregister()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface unregisters the service worker\nregistration and returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a>. The promise will resolve to\n<code>false</code> if no registration was found, otherwise it resolves to\n<code>true</code> irrespective of whether unregistration happened or not (it may not\nunregister if someone else just called <a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer/register\"><code>ServiceWorkerContainer.register()</code></a>\nwith the same scope.) The service worker will finish any ongoing operations before it is\nunregistered.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> resolves with a boolean indicating whether the service worker has\n  unregistered or not."
     },
     "serviceworkerregistration.update": {
@@ -8350,7 +8384,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "The <strong><code>update()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface attempts to update the service\nworker. It fetches the worker's script URL, and if the new worker is not byte-by-byte\nidentical to the current worker, it installs the new worker. The fetch of the worker\nbypasses any browser caches if the previous fetch occurred over 24 hours ago.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>",
+      "doc": "The <strong><code>update()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface attempts to update the service\nworker. It fetches the worker's script URL, and if the new worker is not byte-by-byte\nidentical to the current worker, it installs the new worker. The fetch of the worker\nbypasses any browser caches if the previous fetch occurred over 24 hours ago.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves with a <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a>\n  object."
     },
     "serviceworkerregistration.updateviacache": {
@@ -8367,7 +8401,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "The <strong><code>updateViaCache</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface updates the cache using\nthe mode specified in the call to <a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer/register\"><code>ServiceWorkerContainer.register</code></a>.\nRequests for <code>importScripts</code> still go via the HTTP cache. <code>updateViaCache</code> offers\ncontrol over this behavior."
+      "doc": "The <strong><code>updateViaCache</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface updates the cache using\nthe mode specified in the call to <a href=\"$MDN_URL$/Web/API/ServiceWorkerContainer/register\"><code>ServiceWorkerContainer.register</code></a>.\nRequests for <code>importScripts</code> still go via the HTTP cache. <code>updateViaCache</code> offers\ncontrol over this behavior.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.waiting": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/waiting",
@@ -8383,7 +8417,7 @@
         "Safari": "11.1",
         "SafariIOS": "11.3"
       },
-      "doc": "The <strong><code>waiting</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a service worker whose\n<a href=\"$MDN_URL$/Web/API/ServiceWorker/state\"><code>ServiceWorker.state</code></a> is <code>installed</code>. This property is initially\nset to <code>null</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.\n</div>"
+      "doc": "The <strong><code>waiting</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a service worker whose\n<a href=\"$MDN_URL$/Web/API/ServiceWorker/state\"><code>ServiceWorker.state</code></a> is <code>installed</code>. This property is initially\nset to <code>null</code>.<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "setinterval": {
       "url": "$MDN_URL$/web/api/setinterval",
@@ -10806,7 +10840,7 @@
         "Safari": "15.2",
         "SafariIOS": "15.2"
       },
-      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div><div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>\n<p>The <strong><code>StorageManager</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Storage_API\">Storage API</a> provides an interface for managing persistence permissions and estimating available storage. You can get a reference to this interface using either <a href=\"$MDN_URL$/Web/API/Navigator/storage\"><code>navigator.storage</code></a> or <a href=\"$MDN_URL$/Web/API/WorkerNavigator/storage\"><code>WorkerNavigator.storage</code></a>."
+      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>StorageManager</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Storage_API\">Storage API</a> provides an interface for managing persistence permissions and estimating available storage. You can get a reference to this interface using either <a href=\"$MDN_URL$/Web/API/Navigator/storage\"><code>navigator.storage</code></a> or <a href=\"$MDN_URL$/Web/API/WorkerNavigator/storage\"><code>WorkerNavigator.storage</code></a>.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "storagemanager.estimate": {
       "url": "$MDN_URL$/web/api/storagemanager/estimate",
@@ -10822,7 +10856,7 @@
         "Safari": "17",
         "SafariIOS": "17"
       },
-      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div><div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>\n<p>The <strong><code>estimate()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface asks the Storage Manager for how much storage the current <a href=\"$MDN_URL$/Glossary/Same-origin_policy\">origin</a> takes up (<code>usage</code>), and how much space is available (<code>quota</code>).\n<p>This method operates asynchronously, so it returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which resolves once the information is available. The promise's fulfillment handler is called with an object containing the usage and quota data.",
+      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>estimate()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface asks the Storage Manager for how much storage the current <a href=\"$MDN_URL$/Glossary/Same-origin_policy\">origin</a> takes up (<code>usage</code>), and how much space is available (<code>quota</code>).\n<p>This method operates asynchronously, so it returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> which resolves once the information is available. The promise's fulfillment handler is called with an object containing the usage and quota data.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to an object with the following properties:\n<dl>\n  <dt id=\"quota\"><a href=\"#quota\"><code>quota</code></a></dt>\n  <dd>\n    <p>A numeric value in bytes which provides a conservative approximation of the total storage the user's device or computer has available for the site origin or Web app. It's possible that there's more than this amount of space available though you can't rely on that being the case.\n  </dd>\n  <dt id=\"usage\"><a href=\"#usage\"><code>usage</code></a></dt>\n  <dd>\n    <p>A numeric value in bytes approximating the amount of storage space currently being used by the site or Web app, out of the available space as indicated by <code>quota</code>. Unit is byte.\n  </dd>\n  <dt id=\"usagedetails\"><a href=\"#usagedetails\"><code>usageDetails</code></a> <abbr class=\"icon icon-nonstandard\" title=\"Non-standard. Check cross-browser support before using.\">\n    <span class=\"visually-hidden\">Non-standard</span>\n</abbr></dt>\n  <dd>\n    <p>An object containing a breakdown of <code>usage</code> by storage system. All included properties will have a <code>usage</code> greater than 0 and any storage system with 0 <code>usage</code> will be excluded from the object.\n  </dd>\n</dl>\n<div class=\"notecard note\" id=\"sect3\">\n  <p><strong>Note:</strong> The returned values are not exact: between compression, deduplication, and obfuscation for security reasons, they will be imprecise.\n</div>\n<p>You may find that the <code>quota</code> varies from origin to origin. This variance is based on factors such as:\n<ul>\n  <li>How often the user visits</li>\n  <li>Public site popularity data</li>\n  <li>User engagement signals like bookmarking, adding to homescreen, or accepting push notifications</li>\n</ul>",
       "throws": {
         "TypeError": "Thrown if obtaining a local storage shelf failed. For example, if the current origin is an opaque origin or if the user has disabled storage."
@@ -10842,7 +10876,7 @@
         "Safari": "15.2",
         "SafariIOS": "15.2"
       },
-      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div><div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>\n<p>The <strong><code>getDirectory()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface is used to obtain a reference to a <a href=\"$MDN_URL$/Web/API/FileSystemDirectoryHandle\"><code>FileSystemDirectoryHandle</code></a> object allowing access to a directory and its contents, stored in the <a href=\"$MDN_URL$/Web/API/File_System_API/Origin_private_file_system\">origin private file system</a> (OPFS).",
+      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>getDirectory()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface is used to obtain a reference to a <a href=\"$MDN_URL$/Web/API/FileSystemDirectoryHandle\"><code>FileSystemDirectoryHandle</code></a> object allowing access to a directory and its contents, stored in the <a href=\"$MDN_URL$/Web/API/File_System_API/Origin_private_file_system\">origin private file system</a> (OPFS).<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with a <a href=\"$MDN_URL$/Web/API/FileSystemDirectoryHandle\"><code>FileSystemDirectoryHandle</code></a> object.",
       "throws": {
         "SecurityError DOMException": "Thrown if the user agent is not able to map the requested directory to the local OPFS."
@@ -10862,7 +10896,7 @@
         "Safari": "15.2",
         "SafariIOS": "15.2"
       },
-      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>persist()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface requests permission to use persistent storage, and returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to <code>true</code> if permission is granted and bucket mode is persistent, and <code>false</code> otherwise.",
+      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>persist()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface requests permission to use persistent storage, and returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to <code>true</code> if permission is granted and bucket mode is persistent, and <code>false</code> otherwise.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This method is not available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>, though the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface is.\n</div>",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Boolean\"><code>Boolean</code></a>.",
       "throws": {
         "TypeError": "Thrown if obtaining a local storage shelf failed. For example, if the current origin is an opaque origin or if the user has disabled storage."
@@ -10882,7 +10916,7 @@
         "Safari": "15.2",
         "SafariIOS": "15.2"
       },
-      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div><div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>\n<p>The <strong><code>persisted()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to <code>true</code> if your site's storage bucket is persistent.",
+      "doc": "<div class=\"notecard secure\" id=\"sect1\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<p>The <strong><code>persisted()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/StorageManager\"><code>StorageManager</code></a> interface returns a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to <code>true</code> if your site's storage bucket is persistent.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>",
       "throws": {
         "TypeError": "Thrown if obtaining a local storage shelf failed. For example, if the current origin is an opaque origin or if the user has disabled storage."
       }
@@ -12312,10 +12346,7 @@
         "StandardTrack",
         "Deprecated"
       ],
-      "compatibility": {
-        "Safari": "3",
-        "SafariIOS": ""
-      },
+      "compatibility": {},
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>SVGCursorElement</code></strong> interface provides access to the properties of <a href=\"$MDN_URL$/Web/SVG/Element/cursor\"><code>&lt;cursor&gt;</code></a> elements, as well as methods to manipulate them."
     },
     "svgdefselement": {
@@ -14132,11 +14163,13 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "102",
-        "ChromeAndroid": "102",
-        "Edge": "102",
+        "Chrome": "45",
+        "ChromeAndroid": "45",
+        "Edge": "79",
         "Firefox": "104",
-        "Opera": "88"
+        "Opera": "32",
+        "Safari": "6",
+        "SafariIOS": "6"
       },
       "doc": "The <strong><code>SVGStyleElement.disabled</code></strong> property can be used to get and set whether the stylesheet is disabled (<code>true</code>) or not (<code>false</code>).\n<p>Note that there is no corresponding <code>disabled</code> attribute on the <a href=\"$MDN_URL$/Web/SVG/Element/style\">SVG <code>&lt;style&gt;</code> element</a>."
     },
@@ -14791,7 +14824,7 @@
         "Safari": "",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>Text</code></strong> interface represents a text <a href=\"$MDN_URL$/Web/API/Node\" ><code>node</code></a> in a DOM tree.\n<p>To understand what a text node is, consider the following document:\n<div class=\"code-example\"><pre class=\"brush: html notranslate\"><code>&lt;html lang=\"en\" class=\"e\"&gt;\n  &lt;head&gt;\n    &lt;title&gt;Aliens?&lt;/title&gt;\n  &lt;/head&gt;\n  &lt;body&gt;\n    Why yes.\n  &lt;/body&gt;\n&lt;/html&gt;\n</code></pre></div>\n<p>In that document, there are five text nodes, with the following contents:\n<ul>\n<li><code>\"\\n \"</code> (after the <code>&lt;head&gt;</code> start tag, a newline followed by four spaces)</li>\n<li><code>\"Aliens?\"</code> (the contents of the <code>title</code> element)</li>\n<li><code>\"\\n \"</code> (after the <code>&lt;/head&gt;</code> end tag, a newline followed by two spaces)</li>\n<li><code>\"\\n \"</code> (after the <code>&lt;body&gt;</code> start tag, a newline followed by two spaces)</li>\n<li><code>\"\\n Why yes.\\n \\n\\n\"</code> (the contents of the <code>body</code> element)</li>\n</ul>\n<p>Each of those text nodes is an object that has the properties and methods documented in this article."
+      "doc": "The <strong><code>Text</code></strong> interface represents a text <a href=\"$MDN_URL$/Web/API/Node\" ><code>node</code></a> in a DOM tree.\n<p>To understand what a text node is, consider the following document:\n<div class=\"code-example\"><div>\n```html\n<html lang=\"en\" class=\"e\">\n  <head>\n    <title>Aliens?</title>\n  </head>\n  <body>\n    Why yes.\n  </body>\n</html>\n```\n</div></div>\n<p>In that document, there are five text nodes, with the following contents:\n<ul>\n<li><code>\"\\n \"</code> (after the <code>&lt;head&gt;</code> start tag, a newline followed by four spaces)</li>\n<li><code>\"Aliens?\"</code> (the contents of the <code>title</code> element)</li>\n<li><code>\"\\n \"</code> (after the <code>&lt;/head&gt;</code> end tag, a newline followed by two spaces)</li>\n<li><code>\"\\n \"</code> (after the <code>&lt;body&gt;</code> start tag, a newline followed by two spaces)</li>\n<li><code>\"\\n Why yes.\\n \\n\\n\"</code> (the contents of the <code>body</code> element)</li>\n</ul>\n<p>Each of those text nodes is an object that has the properties and methods documented in this article."
     },
     "text.assignedslot": {
       "url": "$MDN_URL$/web/api/text/assignedslot",
@@ -15310,6 +15343,122 @@
         "Deno": "1.11"
       },
       "doc": "The <strong><code>writable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/TextEncoderStream\"><code>TextEncoderStream</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a>."
+    },
+    "textformat": {
+      "url": "$MDN_URL$/web/api/textformat",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextFormat</code></strong> interface represents specific formatting that should be applied to a range of text in an editable text region that's attached to an <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> instance. The text formatting is requested by the <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window that the user is composing text with.\n<p>When using one of the default editable regions of the web, such as a <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> element, IME composition is handled by the browser and operating system for you. For example, when using Japanese IME in a textarea, on Windows, the following text formats can be applied:\n<ul>\n<li>\nWhen text is being composed with the keyboard, the typed characters have a thin wavy underline:\n</li>\n<li>\nWhen the user selects a suggestion from the list of candidates in the IME window, the text is replaced and is underlined with a thick solid line:\n</li>\n</ul>\n<p>When creating your own custom editable region by using the <a href=\"$MDN_URL$/Web/API/EditContext_API\">EditContext API</a>, you need to handle IME composition yourself. You should listen for the <a href=\"$MDN_URL$/Web/API/EditContext/textformatupdate_event\" ><code>textformatupdate</code></a> event, which gives you the list of text formats that the IME window wants to apply to the text being composed. You should then update the formatting of the text displayed in your editable region accordingly."
+    },
+    "textformat.rangeend": {
+      "url": "$MDN_URL$/web/api/textformat/rangeend",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>rangeEnd</code></strong> property of the <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> interface indicates the end position of the text range that needs to be formatted with the given text format."
+    },
+    "textformat.rangestart": {
+      "url": "$MDN_URL$/web/api/textformat/rangestart",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>rangeStart</code></strong> property of the <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> interface indicates the start position of the text range that needs to be formatted with the given text format."
+    },
+    "textformat.textformat": {
+      "url": "$MDN_URL$/web/api/textformat/textformat",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextFormat()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> object.",
+      "parameters": {
+        "options": "An optional object with the following properties: <dl> <dt id=\"rangestart\"><a href=\"#rangestart\"><code>rangeStart</code></a></dt> <dd> <p>A number representing the start position of the text range that needs to be formatted. </dd> <dt id=\"rangeend\"><a href=\"#rangeend\"><code>rangeEnd</code></a></dt> <dd> <p>A number representing the end position of the text range that needs to be formatted. </dd> <dt id=\"underlinestyle\"><a href=\"#underlinestyle\"><code>underlineStyle</code></a></dt> <dd> <p>A string representing the underline style of the text range that needs to be formatted. </dd> <dt id=\"underlinerthickness\"><a href=\"#underlinerthickness\"><code>underlinerThickness</code></a></dt> <dd> <p>A string representing the underline thickness of the text range that needs to be formatted. </dd> </dl>"
+      }
+    },
+    "textformat.underlinestyle": {
+      "url": "$MDN_URL$/web/api/textformat/underlinestyle",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>underlineStyle</code></strong> property of the <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> interface indicates the style of the underline that needs to be applied to the text range that is being formatted."
+    },
+    "textformat.underlinethickness": {
+      "url": "$MDN_URL$/web/api/textformat/underlinethickness",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>underlineThickness</code></strong> property of the <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> interface indicates the thickness of the underline that needs to be applied to the text range that is being formatted."
+    },
+    "textformatupdateevent": {
+      "url": "$MDN_URL$/web/api/textformatupdateevent",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextFormatUpdateEvent</code></strong> interface is a <a href=\"$MDN_URL$/Web/API/Event\" ><code>DOM event</code></a> that represents a list of text formats that an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window wants to apply to the text being composed in an editable region that's attached to an <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> instance.\n<p>This interface inherits properties from <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>."
+    },
+    "textformatupdateevent.gettextformats": {
+      "url": "$MDN_URL$/web/api/textformatupdateevent/gettextformats",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>getTextFormats()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/TextFormatUpdateEvent\"><code>TextFormatUpdateEvent</code></a> interface returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> of <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> objects that represent the formats that an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window wants to apply to the text being composed.",
+      "returns": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> containing <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> objects."
+    },
+    "textformatupdateevent.textformatupdateevent": {
+      "url": "$MDN_URL$/web/api/textformatupdateevent/textformatupdateevent",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextFormatUpdateEvent()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/TextFormatUpdateEvent\"><code>TextFormatUpdateEvent</code></a> object.",
+      "parameters": {
+        "type": "A string representing the type of the event. Possible values: <code>\"textformatupdate\"</code>.",
+        "options": "An optional object with the following properties: <dl> <dt id=\"textformats\"><a href=\"#textformats\"><code>textFormats</code></a></dt> <dd> <p>An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> of <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> objects representing the text formats that need to be applied with this event. </dd> </dl>"
+      }
     },
     "textmetrics": {
       "url": "$MDN_URL$/web/api/textmetrics",
@@ -15900,6 +16049,94 @@
         "SafariIOS": "7"
       },
       "doc": "The read-only <strong><a href=\"$MDN_URL$/Web/API/TextTrackList\"><code>TextTrackList</code></a></strong>\nproperty <strong><code>length</code></strong> returns the number of entries in the\n<code>TextTrackList</code>, each of which is a <a href=\"$MDN_URL$/Web/API/TextTrack\"><code>TextTrack</code></a> representing\none track in the media element.\n<p>A value of 0 indicates that there are no text\ntracks in the media."
+    },
+    "textupdateevent": {
+      "url": "$MDN_URL$/web/api/textupdateevent",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent</code></strong> interface is a <a href=\"$MDN_URL$/Web/API/Event\" ><code>DOM event</code></a> that represents a text or selection update in an editable text region that's attached to an <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> instance.\n<p>This interface inherits properties from <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>."
+    },
+    "textupdateevent.selectionend": {
+      "url": "$MDN_URL$/web/api/textupdateevent/selectionend",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.selectionEnd</code></strong> read-only property indicates the position of the end of the selection (or caret) within the text content of the editable region attached to the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object."
+    },
+    "textupdateevent.selectionstart": {
+      "url": "$MDN_URL$/web/api/textupdateevent/selectionstart",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.selectionStart</code></strong> read-only property indicates the position of the end of the selection (or caret) within the text content of the editable region attached to the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object."
+    },
+    "textupdateevent.text": {
+      "url": "$MDN_URL$/web/api/textupdateevent/text",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.text</code></strong> read-only property contains the text that was inserted within the updated range of a <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a>'s <code>textupdate</code> event."
+    },
+    "textupdateevent.textupdateevent": {
+      "url": "$MDN_URL$/web/api/textupdateevent/textupdateevent",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/TextUpdateEvent\"><code>TextUpdateEvent</code></a> object.",
+      "parameters": {
+        "type": "A string representing the type of the event. Possible values: <code>\"textupdate\"</code>.",
+        "options": "An optional object with the following properties: <dl> <dt id=\"updaterangestart\"><a href=\"#updaterangestart\"><code>updateRangeStart</code></a></dt> <dd> <p>A number representing the offset of the first character within the editable region text that needs to be updated. </dd> <dt id=\"updaterangeend\"><a href=\"#updaterangeend\"><code>updateRangeEnd</code></a></dt> <dd> <p>A number representing the offset of the last character within the editable region text that needs to be updated. </dd> <dt id=\"text\"><a href=\"#text\"><code>text</code></a></dt> <dd> <p>A string representing the text that needs to be inserted or deleted. </dd> <dt id=\"selectionstart\"><a href=\"#selectionstart\"><code>selectionStart</code></a></dt> <dd> <p>A number representing the offset of the selection start within the editable region text. </dd> <dt id=\"selectionend\"><a href=\"#selectionend\"><code>selectionEnd</code></a></dt> <dd> <p>A number representing the offset of the selection end within the editable region text. </dd> <dt id=\"compositionstart\"><a href=\"#compositionstart\"><code>compositionStart</code></a></dt> <dd> <p>A number representing the offset of the start of the composition within the editable region text. </dd> <dt id=\"compositionend\"><a href=\"#compositionend\"><code>compositionEnd</code></a></dt> <dd> <p>A number representing the offset of the end of the composition within the editable region text. </dd> </dl>"
+      }
+    },
+    "textupdateevent.updaterangeend": {
+      "url": "$MDN_URL$/web/api/textupdateevent/updaterangeend",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.updateRangeEnd</code></strong> read-only property indicates the end position of the text range that is being replaced in the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object."
+    },
+    "textupdateevent.updaterangestart": {
+      "url": "$MDN_URL$/web/api/textupdateevent/updaterangestart",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "121",
+        "Edge": "121"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.updateRangeStart</code></strong> read-only property indicates the start position of the text range that is being replaced in the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object."
     },
     "timeevent": {
       "url": "$MDN_URL$/web/api/TimeEvent",
@@ -17331,6 +17568,19 @@
         "value": "A <a href=\"$MDN_URL$/Web/API/TrustedScriptURL\"><code>TrustedScriptURL</code></a> object."
       },
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Boolean\"><code>boolean</code></a>that is true if the object is a valid <a href=\"$MDN_URL$/Web/API/TrustedScriptURL\"><code>TrustedScriptURL</code></a> object."
+    },
+    "trustedtypes": {
+      "url": "$MDN_URL$/web/api/trustedtypes",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "83",
+        "ChromeAndroid": "83",
+        "Edge": "83",
+        "Opera": "69"
+      },
+      "doc": "<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>\n<p>The global <strong><code>trustedTypes</code></strong> read-only property returns the <a href=\"$MDN_URL$/Web/API/TrustedTypePolicyFactory\"><code>TrustedTypePolicyFactory</code></a> object associated with the global object, providing the entry point for using the <a href=\"$MDN_URL$/Web/API/Trusted_Types_API\">Trusted Types API</a>."
     }
   }
 }

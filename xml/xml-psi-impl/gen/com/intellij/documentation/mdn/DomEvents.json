@@ -27,7 +27,7 @@
       "doc": "The <strong><code>DOMActivate</code></strong> event is fired at an element when it becomes active, such as when it is clicked on using the mouse or a keypress is used to navigate to it."
     },
     "domcontentloaded": {
-      "url": "$MDN_URL$/web/api/window/domcontentloaded_event",
+      "url": "$MDN_URL$/web/api/document/domcontentloaded_event",
       "status": [
         "StandardTrack"
       ],
@@ -40,7 +40,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <strong><code>DOMContentLoaded</code></strong> event fires when the HTML document has been completely parsed, and all deferred scripts (<code>&lt;script defer src=\"…\"&gt;</code> and <code>&lt;script type=\"module\"&gt;</code>) have downloaded and executed. It doesn't wait for other things like images, subframes, and async scripts to finish loading.\n<code>DOMContentLoaded</code> does not wait for stylesheets to load, however deferred scripts <em>do</em> wait for stylesheets, and the <code>DOMContentLoaded</code> event is queued after deferred scripts. Also, scripts which aren't deferred or async (e.g. <code>&lt;script&gt;</code>) will wait for already-parsed stylesheets to load.\nThe original target for this event is the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> that has loaded. You can listen for this event on the <code>Window</code> interface to handle it in the capture or bubbling phases. For full details on this event please see the page on the Document: <a href=\"$MDN_URL$/Web/API/Document/DOMContentLoaded_event\" ><code>DOMContentLoaded</code></a> event.\nA different event, <a href=\"$MDN_URL$/Web/API/Window/load_event\" ><code>load</code></a>, should be used only to detect a fully-loaded page. It is a common mistake to use <code>load</code> where <code>DOMContentLoaded</code> would be more appropriate.\nThis event is not cancelable."
+      "doc": "The <strong><code>DOMContentLoaded</code></strong> event fires when the HTML document has been completely parsed, and all deferred scripts (<a href=\"$MDN_URL$/Web/HTML/Element/script#defer\"><code>&lt;script defer src=\"…\"&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/script#module\"><code>&lt;script type=\"module\"&gt;</code></a>) have downloaded and executed. It doesn't wait for other things like images, subframes, and async scripts to finish loading.\n<code>DOMContentLoaded</code> does not wait for stylesheets to load, however deferred scripts <em>do</em> wait for stylesheets, and the <code>DOMContentLoaded</code> event is queued after deferred scripts. Also, scripts which aren't deferred or async (e.g. <code>&lt;script&gt;</code>) will wait for already-parsed stylesheets to load.\nA different event, <a href=\"$MDN_URL$/Web/API/Window/load_event\" ><code>load</code></a>, should be used only to detect a fully-loaded page. It is a common mistake to use <code>load</code> where <code>DOMContentLoaded</code> would be more appropriate.\nThis event is not cancelable."
     },
     "dommousescroll": {
       "url": "$MDN_URL$/web/api/element/dommousescroll_event",
@@ -162,7 +162,7 @@
         "Safari": "13",
         "SafariIOS": "13"
       },
-      "doc": "The <strong><code>afterprint</code></strong> event is fired after the associated document has started printing or the print preview has been closed.\nThe <a href=\"$MDN_URL$/Web/API/Window/beforeprint_event\" ><code>beforeprint</code></a> and <code>afterprint</code> events allow pages to change their content before printing starts (perhaps to remove a banner, for example) and then revert those changes after printing has completed. In general, you should prefer the use of a <a href=\"$MDN_URL$/Web/CSS/CSS_media_queries/Using_media_queries#targeting_media_types\" data-flaw=\"link1\"><code>@media print</code></a> CSS at-rule, but it may be necessary to use these events in some cases."
+      "doc": "The <strong><code>afterprint</code></strong> event is fired after the associated document has started printing or the print preview has been closed.\nThe <a href=\"$MDN_URL$/Web/API/Window/beforeprint_event\" ><code>beforeprint</code></a> and <code>afterprint</code> events allow pages to change their content before printing starts (perhaps to remove a banner, for example) and then revert those changes after printing has completed. In general, you should prefer the use of a <a href=\"$MDN_URL$/Web/CSS/CSS_media_queries/Using_media_queries#targeting_media_types\"><code>@media print</code></a> CSS at-rule, but it may be necessary to use these events in some cases."
     },
     "afterscriptexecute": {
       "url": "$MDN_URL$/web/api/element/afterscriptexecute_event",
@@ -181,7 +181,7 @@
         "Safari": "13.1",
         "SafariIOS": "13.4"
       },
-      "doc": "The <strong><code>animationcancel</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\" data-flaw=\"link1\">CSS Animation</a> unexpectedly aborts. In other words, any time it stops running without sending an <a href=\"$MDN_URL$/Web/API/Element/animationend_event\" ><code>animationend</code></a> event. This might happen when the <a href=\"$MDN_URL$/Web/CSS/animation-name\"><code>animation-name</code></a> is changed such that the animation is removed, or when the animating node is hidden using CSS. Therefore, either directly or because any of its containing nodes are hidden.\nAn event handler for this event can be added by setting the <code>onanimationcancel</code> property, or using <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\" ><code>addEventListener()</code></a>."
+      "doc": "The <strong><code>animationcancel</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\">CSS Animation</a> unexpectedly aborts. In other words, any time it stops running without sending an <a href=\"$MDN_URL$/Web/API/Element/animationend_event\" ><code>animationend</code></a> event. This might happen when the <a href=\"$MDN_URL$/Web/CSS/animation-name\"><code>animation-name</code></a> is changed such that the animation is removed, or when the animating node is hidden using CSS. Therefore, either directly or because any of its containing nodes are hidden.\nAn event handler for this event can be added by setting the <code>onanimationcancel</code> property, or using <a href=\"$MDN_URL$/Web/API/EventTarget/addEventListener\" ><code>addEventListener()</code></a>."
     },
     "animationend": {
       "url": "$MDN_URL$/web/api/element/animationend_event",
@@ -197,7 +197,7 @@
         "Safari": "9",
         "SafariIOS": "9"
       },
-      "doc": "The <strong><code>animationend</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\" data-flaw=\"link1\">CSS Animation</a> has completed. If the animation aborts before reaching completion, such as if the element is removed from the DOM or the animation is removed from the element, the <code>animationend</code> event is not fired."
+      "doc": "The <strong><code>animationend</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\">CSS Animation</a> has completed. If the animation aborts before reaching completion, such as if the element is removed from the DOM or the animation is removed from the element, the <code>animationend</code> event is not fired."
     },
     "animationiteration": {
       "url": "$MDN_URL$/web/api/element/animationiteration_event",
@@ -213,7 +213,7 @@
         "Safari": "9",
         "SafariIOS": "9"
       },
-      "doc": "The <strong><code>animationiteration</code></strong> event is fired when an iteration of a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\" data-flaw=\"link1\">CSS Animation</a> ends, and another one begins. This event does not occur at the same time as the <a href=\"$MDN_URL$/Web/API/Element/animationend_event\" ><code>animationend</code></a> event, and therefore does not occur for animations with an <code>animation-iteration-count</code> of one."
+      "doc": "The <strong><code>animationiteration</code></strong> event is fired when an iteration of a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\">CSS Animation</a> ends, and another one begins. This event does not occur at the same time as the <a href=\"$MDN_URL$/Web/API/Element/animationend_event\" ><code>animationend</code></a> event, and therefore does not occur for animations with an <code>animation-iteration-count</code> of one."
     },
     "animationstart": {
       "url": "$MDN_URL$/web/api/element/animationstart_event",
@@ -229,7 +229,7 @@
         "Safari": "9",
         "SafariIOS": "9"
       },
-      "doc": "The <strong><code>animationstart</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\" data-flaw=\"link1\">CSS Animation</a> has started. If there is an <a href=\"$MDN_URL$/Web/CSS/animation-delay\"><code>animation-delay</code></a>, this event will fire once the delay period has expired. A negative delay will cause the event to fire with an <a href=\"$MDN_URL$/Web/API/AnimationEvent/elapsedTime\" ><code>elapsedTime</code></a> equal to the absolute value of the delay (and, correspondingly, the animation will begin playing at that time index into the sequence)."
+      "doc": "The <strong><code>animationstart</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_animations\">CSS Animation</a> has started. If there is an <a href=\"$MDN_URL$/Web/CSS/animation-delay\"><code>animation-delay</code></a>, this event will fire once the delay period has expired. A negative delay will cause the event to fire with an <a href=\"$MDN_URL$/Web/API/AnimationEvent/elapsedTime\" ><code>elapsedTime</code></a> equal to the absolute value of the delay (and, correspondingly, the animation will begin playing at that time index into the sequence)."
     },
     "appinstalled": {
       "url": "$MDN_URL$/web/api/window/appinstalled_event",
@@ -305,7 +305,7 @@
       "doc": "The <strong><code>auxclick</code></strong> event is fired at an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> when a non-primary pointing device button (any mouse button other than the primary—usually leftmost—button) has been pressed and released both within the same element.\n<code>auxclick</code> is fired after the <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> and <a href=\"$MDN_URL$/Web/API/Element/mouseup_event\" ><code>mouseup</code></a> events have been fired, in that order."
     },
     "beforeinput": {
-      "url": "$MDN_URL$/web/api/htmlelement/beforeinput_event",
+      "url": "$MDN_URL$/web/api/element/beforeinput_event",
       "status": [
         "StandardTrack"
       ],
@@ -318,7 +318,7 @@
         "Safari": "10.1",
         "SafariIOS": "10.3"
       },
-      "doc": "The DOM <strong><code>beforeinput</code></strong> event fires when the value of an <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a>, or <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> element is about to be modified. The event also applies to elements with <a href=\"$MDN_URL$/Web/API/HTMLElement/contentEditable\" ><code>contenteditable</code></a> enabled, and to any element when <a href=\"$MDN_URL$/Web/API/Document/designMode\" ><code>designMode</code></a> is turned on.\nThis allows web apps to override text edit behavior before the browser modifies the DOM tree, and provides more control over input events to improve performance.\nIn the case of <code>contenteditable</code> and <code>designMode</code>, the event target is the <strong>editing host</strong>. If these properties apply to multiple elements, the editing host is the nearest ancestor element whose parent isn't editable."
+      "doc": "The DOM <strong><code>beforeinput</code></strong> event fires when the value of an <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> or <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> element is about to be modified. But in contrast to the <a href=\"$MDN_URL$/Web/API/Element/input_event\" ><code>input</code></a> event, it does not fire on the <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a> element. The event also applies to elements with <a href=\"$MDN_URL$/Web/API/HTMLElement/contentEditable\" ><code>contenteditable</code></a> enabled, and to any element when <a href=\"$MDN_URL$/Web/API/Document/designMode\" ><code>designMode</code></a> is turned on.\nThis allows web apps to override text edit behavior before the browser modifies the DOM tree, and provides more control over input events to improve performance.\nIn the case of <code>contenteditable</code> and <code>designMode</code>, the event target is the <strong>editing host</strong>. If these properties apply to multiple elements, the editing host is the nearest ancestor element whose parent isn't editable."
     },
     "beforeprint": {
       "url": "$MDN_URL$/web/api/window/beforeprint_event",
@@ -334,7 +334,7 @@
         "Safari": "13",
         "SafariIOS": "13"
       },
-      "doc": "The <strong><code>beforeprint</code></strong> event is fired when the associated document is about to be printed or previewed for printing.\nThe <a href=\"$MDN_URL$/Web/API/Window/afterprint_event\" ><code>afterprint</code></a> and <code>beforeprint</code> events allow pages to change their content before printing starts (perhaps to remove a banner, for example) and then revert those changes after printing has completed. In general, you should prefer the use of a <a href=\"$MDN_URL$/Web/CSS/CSS_media_queries/Using_media_queries#targeting_media_types\" data-flaw=\"link1\"><code>@media print</code></a> CSS at-rule, but it may be necessary to use these events in some cases."
+      "doc": "The <strong><code>beforeprint</code></strong> event is fired when the associated document is about to be printed or previewed for printing.\nThe <a href=\"$MDN_URL$/Web/API/Window/afterprint_event\" ><code>afterprint</code></a> and <code>beforeprint</code> events allow pages to change their content before printing starts (perhaps to remove a banner, for example) and then revert those changes after printing has completed. In general, you should prefer the use of a <a href=\"$MDN_URL$/Web/CSS/CSS_media_queries/Using_media_queries#targeting_media_types\"><code>@media print</code></a> CSS at-rule, but it may be necessary to use these events in some cases."
     },
     "beforescriptexecute": {
       "url": "$MDN_URL$/web/api/element/beforescriptexecute_event",
@@ -357,7 +357,7 @@
         "Safari": "3",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>beforeunload</code></strong> event is fired when the window, the document and its resources are about to be unloaded. The document is still visible and the event is still cancelable at this point.\nThis event enables a web page to trigger a confirmation dialog asking the user if they really want to leave the page. If the user confirms, the browser navigates to the new page, otherwise it cancels the navigation.\nAccording to the specification, to show the confirmation dialog an event handler should call <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>preventDefault()</code></a> on the event.\nThe HTML specification states that calls to <a href=\"$MDN_URL$/Web/API/Window/alert\"><code>window.alert()</code></a>, <a href=\"$MDN_URL$/Web/API/Window/confirm\"><code>window.confirm()</code></a>, and <a href=\"$MDN_URL$/Web/API/Window/prompt\"><code>window.prompt()</code></a> methods may be ignored during this event. See the <a href=\"https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#user-prompts\" class=\"external\" target=\"_blank\">HTML specification</a> for more details."
+      "doc": "The <strong><code>beforeunload</code></strong> event is fired when the current window, contained document, and associated resources are about to be unloaded. The document is still visible and the event is still cancelable at this point.\nThe main use case for this event is to trigger a browser-generated confirmation dialog that asks users to confirm if they <em>really</em> want to leave the page when they try to close or reload it, or navigate somewhere else. This is intended to help prevent loss of unsaved data.\nThe dialog can be triggered in the following ways:\nThe last two mechanisms are legacy features; best practice is to trigger the dialog by invoking <code>preventDefault()</code> on the event object, while also setting <code>returnValue</code> to support legacy cases."
     },
     "beginevent": {
       "url": "$MDN_URL$/web/api/svganimationelement/beginevent_event",
@@ -411,7 +411,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "33",
         "Edge": "14",
         "Firefox": "49",
         "Opera": "21",
@@ -437,19 +436,12 @@
       "doc": "A <strong><code>bufferedamountlow</code></strong> event is sent to an <a href=\"$MDN_URL$/Web/API/RTCDataChannel\"><code>RTCDataChannel</code></a> when the number of bytes currently in the outbound data transfer buffer falls below the threshold specified in <a href=\"$MDN_URL$/Web/API/RTCDataChannel/bufferedAmountLowThreshold\" ><code>bufferedAmountLowThreshold</code></a>. <code>bufferedamountlow</code> events aren't sent if <code>bufferedAmountLowThreshold</code> is 0.\nThis event is not cancelable and does not bubble."
     },
     "cancel": {
-      "url": "$MDN_URL$/web/api/htmldialogelement/cancel_event",
+      "url": "$MDN_URL$/web/api/htmlelement/cancel_event",
       "status": [
-        "StandardTrack"
+        "Experimental",
+        "Deprecated"
       ],
-      "compatibility": {
-        "Chrome": "37",
-        "Edge": "79",
-        "Firefox": "98",
-        "Opera": "24",
-        "Safari": "15.4",
-        "SafariIOS": "15.4"
-      },
-      "doc": "The <strong><code>cancel</code></strong> event fires on a <a href=\"$MDN_URL$/Web/HTML/Element/dialog\"><code>&lt;dialog&gt;</code></a> when the user instructs the browser that they wish to dismiss the current open dialog. The browser fires this event when the user presses the <kbd>Esc</kbd> key.\nThis event does not bubble.\nWhen a <code>&lt;dialog&gt;</code> is dismissed with the <kbd>Esc</kbd> key, both the <code>cancel</code> and <a href=\"$MDN_URL$/Web/API/HTMLDialogElement/close_event\" ><code>close</code></a> events are fired."
+      "doc": "The <strong><code>cancel</code></strong> event is fired by <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/dialog\"><code>&lt;dialog&gt;</code></a> elements. The event is fired when the user cancels the currently open dialog by closing it with the <kbd>Esc</kbd> key. It is also fired by the <a href=\"$MDN_URL$/Web/HTML/Element/input/file\">file input</a> when the user cancels the file picker dialog via the <kbd>Esc</kbd> key or the cancel button and when the user re-selects the same files that were previously selected.\nThis event does not bubble.\nWhen a <code>&lt;dialog&gt;</code> is dismissed with the <kbd>Esc</kbd> key, both the <code>cancel</code> and <a href=\"$MDN_URL$/Web/API/HTMLDialogElement/close_event\" ><code>close</code></a> events are fired."
     },
     "canplay": {
       "url": "$MDN_URL$/web/api/htmlmediaelement/canplay_event",
@@ -497,7 +489,7 @@
         "Safari": "3",
         "SafariIOS": "2"
       },
-      "doc": "The <code>change</code> event is fired for <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a>, and <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> elements when the user modifies the element's value. Unlike the <a href=\"$MDN_URL$/Web/API/HTMLElement/input_event\" ><code>input</code></a> event, the <code>change</code> event is not necessarily fired for each alteration to an element's <code>value</code>.\nDepending on the kind of element being changed and the way the user interacts with the element, the <code>change</code> event fires at a different moment:\nThe HTML specification lists <a href=\"https://html.spec.whatwg.org/multipage/forms.html#concept-input-apply\" class=\"external\" target=\"_blank\">the <code>&lt;input&gt;</code> types that should fire the <code>change</code> event</a>."
+      "doc": "The <code>change</code> event is fired for <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a>, and <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> elements when the user modifies the element's value. Unlike the <a href=\"$MDN_URL$/Web/API/Element/input_event\" ><code>input</code></a> event, the <code>change</code> event is not necessarily fired for each alteration to an element's <code>value</code>.\nDepending on the kind of element being changed and the way the user interacts with the element, the <code>change</code> event fires at a different moment:\nThe HTML specification lists <a href=\"https://html.spec.whatwg.org/multipage/forms.html#concept-input-apply\" class=\"external\" target=\"_blank\">the <code>&lt;input&gt;</code> types that should fire the <code>change</code> event</a>."
     },
     "click": {
       "url": "$MDN_URL$/web/api/element/click_event",
@@ -513,7 +505,7 @@
         "Safari": "3",
         "SafariIOS": ""
       },
-      "doc": "An element receives a <strong><code>click</code></strong> event when a pointing device button (such as a mouse's primary mouse button) is both pressed and released while the pointer is located inside the element.\nIf the button is pressed on one element and the pointer is moved outside the element before the button is released, the event is fired on the most specific ancestor element that contained both elements.\n<code>click</code> fires after both the <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> and <a href=\"$MDN_URL$/Web/API/Element/mouseup_event\" ><code>mouseup</code></a> events have fired, in that order."
+      "doc": "An element receives a <strong><code>click</code></strong> event when any of the following occurs:\nIf the button is pressed on one element and the pointer is moved outside the element before the button is released, the event is fired on the most specific ancestor element that contained both elements.\n<code>click</code> fires after both the <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> and <a href=\"$MDN_URL$/Web/API/Element/mouseup_event\" ><code>mouseup</code></a> events have fired, in that order.\nThe event is a device-independent event — meaning it can be activated by touch, keyboard, mouse, and any other mechanism provided by assistive technology."
     },
     "close": {
       "url": "$MDN_URL$/web/api/htmldialogelement/close_event",
@@ -522,6 +514,7 @@
       ],
       "compatibility": {
         "Chrome": "37",
+        "ChromeAndroid": "37",
         "Edge": "79",
         "Firefox": "98",
         "Opera": "24",
@@ -560,7 +553,7 @@
         "Safari": "5",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>compositionend</code></strong> event is fired when a text composition system such as an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">input method editor</a> completes or cancels the current composition session.\nFor example, this event could be fired after a user finishes entering a Chinese character using a <a href=\"https://en.wikipedia.org/wiki/Pinyin\" class=\"external\" target=\"_blank\">Pinyin</a> IME."
+      "doc": "The <strong><code>compositionend</code></strong> event is fired when a text composition system such as an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">input method editor</a> completes or cancels the current composition session.\nFor example, this event could be fired after a user finishes entering a Chinese character using a <a href=\"https://en.wikipedia.org/wiki/Pinyin\" class=\"external\" target=\"_blank\">Pinyin</a> <a class=\"page-not-created\"  >IME</a>."
     },
     "compositionstart": {
       "url": "$MDN_URL$/web/api/element/compositionstart_event",
@@ -576,7 +569,7 @@
         "Safari": "5",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>compositionstart</code></strong> event is fired when a text composition system such as an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">input method editor</a> starts a new composition session.\nFor example, this event could be fired after a user starts entering a Chinese character using a <a href=\"https://en.wikipedia.org/wiki/Pinyin\" class=\"external\" target=\"_blank\">Pinyin</a> IME."
+      "doc": "The <strong><code>compositionstart</code></strong> event is fired when a text composition system such as an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">input method editor</a> starts a new composition session.\nFor example, this event could be fired after a user starts entering a Chinese character using a <a href=\"https://en.wikipedia.org/wiki/Pinyin\" class=\"external\" target=\"_blank\">Pinyin</a> <a class=\"page-not-created\"  >IME</a>."
     },
     "compositionupdate": {
       "url": "$MDN_URL$/web/api/element/compositionupdate_event",
@@ -592,7 +585,7 @@
         "Safari": "5",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>compositionupdate</code></strong> event is fired when a new character is received in the context of a text composition session controlled by a text composition system such as an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">input method editor</a>.\nFor example, this event could be fired while a user enters a Chinese character using a <a href=\"https://en.wikipedia.org/wiki/Pinyin\" class=\"external\" target=\"_blank\">Pinyin</a> IME."
+      "doc": "The <strong><code>compositionupdate</code></strong> event is fired when a new character is received in the context of a text composition session controlled by a text composition system such as an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">input method editor</a>.\nFor example, this event could be fired while a user enters a Chinese character using a <a href=\"https://en.wikipedia.org/wiki/Pinyin\" class=\"external\" target=\"_blank\">Pinyin</a> <a class=\"page-not-created\"  >IME</a>."
     },
     "connect": {
       "url": "$MDN_URL$/web/api/sharedworkerglobalscope/connect_event",
@@ -623,7 +616,7 @@
         "Opera": "10.5",
         "Safari": "3"
       },
-      "doc": "The <strong><code>contextmenu</code></strong> event fires when the user attempts to open a context menu. This event is typically triggered by clicking the right mouse button, or by pressing the context menu key.\nIn the latter case, the context menu is displayed at the bottom left of the focused element, unless the element is a tree, in which case the context menu is displayed at the bottom left of the current row.\nAny right-click event that is not disabled (by calling the click event's <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>preventDefault()</code></a> method) will result in a <code>contextmenu</code> event being fired at the targeted element. One exception to this is that in Firefox, if the user holds down the <kbd>Shift</kbd> key while right-clicking, then the context menu will be shown without a <code>contextmenu</code> event being fired."
+      "doc": "The <strong><code>contextmenu</code></strong> event fires when the user attempts to open a context menu. This event is typically triggered by clicking the right mouse button, or by pressing the context menu key.\nIn the latter case, the context menu is displayed at the bottom left of the focused element, unless the element is a tree, in which case the context menu is displayed at the bottom left of the current row.\nAny right-click event that is not disabled (by calling the click event's <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>preventDefault()</code></a> method) will result in a <code>contextmenu</code> event being fired at the targeted element."
     },
     "copy": {
       "url": "$MDN_URL$/web/api/element/copy_event",
@@ -639,7 +632,7 @@
         "Safari": "3",
         "SafariIOS": "3"
       },
-      "doc": "The <strong><code>copy</code></strong> event fires when the user initiates a copy action through the browser's user interface.\nThe event's default action is to copy the selection (if any) to the clipboard.\nA handler for this event can <em>modify</em> the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/setData\" ><code>setData(format, data)</code></a> on the event's <a href=\"$MDN_URL$/Web/API/ClipboardEvent/clipboardData\"><code>ClipboardEvent.clipboardData</code></a> property, and cancelling the event's default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>.\nHowever, the handler cannot <em>read</em> the clipboard data.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>copy</code> event, but this will not affect the system clipboard."
+      "doc": "The <strong><code>copy</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> fires when the user initiates a copy action through the browser's user interface.\nThe event's default action is to copy the selection (if any) to the clipboard.\nA handler for this event can <em>modify</em> the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/setData\" ><code>setData(format, data)</code></a> on the event's <a href=\"$MDN_URL$/Web/API/ClipboardEvent/clipboardData\"><code>ClipboardEvent.clipboardData</code></a> property, and cancelling the event's default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>.\nHowever, the handler cannot <em>read</em> the clipboard data.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>copy</code> event, but this will not affect the system clipboard.\nThis event <a href=\"$MDN_URL$/Learn/JavaScript/Building_blocks/Events#event_bubbling_and_capture\">bubbles</a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
     },
     "cuechange": {
       "url": "$MDN_URL$/web/api/texttrack/cuechange_event",
@@ -671,7 +664,7 @@
         "Safari": "3",
         "SafariIOS": "3"
       },
-      "doc": "The <strong><code>cut</code></strong> event is fired when the user has initiated a \"cut\" action through the browser's user interface.\nIf the user attempts a cut action on uneditable content, the <code>cut</code> event still fires but the event object contains no data.\nThe event's default action is to copy the current selection (if any) to the system clipboard and remove it from the document.\nA handler for this event can <em>modify</em> the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/setData\" ><code>setData(format, data)</code></a> on the event's <a href=\"$MDN_URL$/Web/API/ClipboardEvent/clipboardData\"><code>ClipboardEvent.clipboardData</code></a> property, and cancelling the default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>.\nNote though that cancelling the default action will also prevent the document from being updated. So an event handler which wants to emulate the default action for \"cut\" while modifying the clipboard must also manually remove the selection from the document.\nThe handler cannot <em>read</em> the clipboard data.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>cut</code> event, but this will not affect the system clipboard or the document's contents."
+      "doc": "The <strong><code>cut</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> is fired when the user has initiated a \"cut\" action through the browser's user interface.\nIf the user attempts a cut action on uneditable content, the <code>cut</code> event still fires but the event object contains no data.\nThe event's default action is to copy the current selection (if any) to the system clipboard and remove it from the document.\nA handler for this event can <em>modify</em> the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/setData\" ><code>setData(format, data)</code></a> on the event's <a href=\"$MDN_URL$/Web/API/ClipboardEvent/clipboardData\"><code>ClipboardEvent.clipboardData</code></a> property, and cancelling the default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>.\nNote though that cancelling the default action will also prevent the document from being updated. So an event handler which wants to emulate the default action for \"cut\" while modifying the clipboard must also manually remove the selection from the document.\nThe handler cannot <em>read</em> the clipboard data.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>cut</code> event, but this will not affect the system clipboard or the document's contents.\nThis event <a href=\"$MDN_URL$/Learn/JavaScript/Building_blocks/Events#event_bubbling_and_capture\">bubbles</a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
     },
     "datachannel": {
       "url": "$MDN_URL$/web/api/rtcpeerconnection/datachannel_event",
@@ -696,6 +689,7 @@
       ],
       "compatibility": {
         "Chrome": "",
+        "ChromeAndroid": "",
         "Edge": "",
         "Firefox": "6",
         "Opera": "11.6",
@@ -738,9 +732,10 @@
         "Edge": "",
         "Firefox": "6",
         "Opera": "18",
+        "Safari": "17",
         "SafariIOS": "4.2"
       },
-      "doc": "The <code>devicemotion</code> event is fired at a regular interval and indicates the amount of physical force of acceleration the device is receiving at that time. It also provides information about the rate of rotation, if available.\nThis event is not cancelable and does not bubble."
+      "doc": "The <strong><code>devicemotion</code></strong> event is fired at a regular interval and indicates the amount of physical force of acceleration the device is receiving at that time. It also provides information about the rate of rotation, if available.\nThis event is not cancelable and does not bubble."
     },
     "devicenoise": {
       "url": "$MDN_URL$/web/events",
@@ -761,6 +756,7 @@
         "Edge": "",
         "Firefox": "6",
         "Opera": "12",
+        "Safari": "17",
         "SafariIOS": "4.2"
       },
       "doc": "The <strong><code>deviceorientation</code></strong> event is fired when fresh data is available from an orientation sensor about the current orientation of the device as compared to the Earth coordinate frame. This data is gathered from a magnetometer inside the device.\nSee <a href=\"$MDN_URL$/Web/API/Device_orientation_events/Orientation_and_motion_data_explained\">Orientation and motion data explained</a> for details.\nThis event is not cancelable and does not bubble."
@@ -795,7 +791,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <code>drag</code> event is fired every few hundred milliseconds as an element or text selection is being dragged by the user."
+      "doc": "The <code>drag</code> event is fired every few hundred milliseconds as an element or text selection is being dragged by the user.\nThis event is cancelable and may bubble up to the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> objects."
     },
     "dragend": {
       "url": "$MDN_URL$/web/api/htmlelement/dragend_event",
@@ -811,7 +807,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <code>dragend</code> event is fired when a drag operation is being ended (by releasing a mouse button or hitting the escape key)."
+      "doc": "The <code>dragend</code> event is fired when a drag operation ends (by releasing a mouse button or hitting the escape key).\nThis event is cancelable and may bubble up to the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> objects."
     },
     "dragenter": {
       "url": "$MDN_URL$/web/api/htmlelement/dragenter_event",
@@ -827,7 +823,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <code>dragenter</code> event is fired when a dragged element or text selection enters a valid drop target.\nThe target object is the <em>immediate user selection</em> (the element directly indicated by the user as the drop target), or the <a href=\"$MDN_URL$/Web/HTML/Element/body\"><code>&lt;body&gt;</code></a> element."
+      "doc": "The <code>dragenter</code> event is fired when a dragged element or text selection enters a valid drop target. The target object is the <em>immediate user selection</em> (the element directly indicated by the user as the drop target), or the <a href=\"$MDN_URL$/Web/HTML/Element/body\"><code>&lt;body&gt;</code></a> element.\nThis event is cancelable and may bubble up to the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> objects."
     },
     "dragleave": {
       "url": "$MDN_URL$/web/api/htmlelement/dragleave_event",
@@ -843,7 +839,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <code>dragleave</code> event is fired when a dragged element or text selection leaves a valid drop target.\nThis event is not cancelable."
+      "doc": "The <code>dragleave</code> event is fired when a dragged element or text selection leaves a valid drop target.\nThis event is not cancelable and may bubble up to the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> objects."
     },
     "dragover": {
       "url": "$MDN_URL$/web/api/htmlelement/dragover_event",
@@ -859,7 +855,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <code>dragover</code> event is fired when an element or text selection is being dragged over a valid drop target (every few hundred milliseconds).\nThe event is fired on the drop target(s)."
+      "doc": "The <code>dragover</code> event is fired when an element or text selection is being dragged over a valid drop target (every few hundred milliseconds).\nThis event is cancelable and may bubble up to the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> objects."
     },
     "dragstart": {
       "url": "$MDN_URL$/web/api/htmlelement/dragstart_event",
@@ -875,7 +871,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <code>dragstart</code> event is fired when the user starts dragging an element or text selection."
+      "doc": "The <code>dragstart</code> event is fired when the user starts dragging an element or text selection.\nThis event is cancelable and may bubble up to the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> objects."
     },
     "drop": {
       "url": "$MDN_URL$/web/api/htmlelement/drop_event",
@@ -891,7 +887,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <strong><code>drop</code></strong> event is fired when an element or text selection is dropped on a valid drop target."
+      "doc": "The <strong><code>drop</code></strong> event is fired when an element or text selection is dropped on a valid drop target. To ensure that the <code>drop</code> event always fires as expected, you should always include a <a href=\"$MDN_URL$/Web/API/Event/preventDefault\"><code>preventDefault()</code></a> call in the part of your code which handles the <a href=\"$MDN_URL$/Web/API/HTMLElement/dragover_event\"><code>dragover</code></a> event.\nThis event is cancelable and may bubble up to the <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> and <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> objects."
     },
     "durationchange": {
       "url": "$MDN_URL$/web/api/htmlmediaelement/durationchange_event",
@@ -1008,10 +1004,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "",
-        "ChromeAndroid": "",
         "Edge": "",
-        "Firefox": "52",
         "Opera": "11.6",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -1024,10 +1017,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "",
-        "ChromeAndroid": "",
         "Edge": "",
-        "Firefox": "52",
         "Opera": "11.6",
         "Safari": "5",
         "SafariIOS": "4.2"
@@ -1118,7 +1108,6 @@
     "gesturechange": {
       "url": "$MDN_URL$/web/api/element/gesturechange_event",
       "compatibility": {
-        "Safari": "9.1",
         "SafariIOS": "2"
       },
       "doc": "The <strong><code>gesturechange</code></strong> event is fired when digits move during a touch gesture.\nIt is a proprietary event specific to WebKit."
@@ -1126,7 +1115,6 @@
     "gestureend": {
       "url": "$MDN_URL$/web/api/element/gestureend_event",
       "compatibility": {
-        "Safari": "9.1",
         "SafariIOS": "2"
       },
       "doc": "The <strong><code>gestureend</code></strong> event is fired when there are no longer multiple fingers contacting the touch surface, thus ending the gesture.\nIt is a proprietary event specific to WebKit."
@@ -1134,7 +1122,6 @@
     "gesturestart": {
       "url": "$MDN_URL$/web/api/element/gesturestart_event",
       "compatibility": {
-        "Safari": "9.1",
         "SafariIOS": "2"
       },
       "doc": "The <strong><code>gesturestart</code></strong> event is fired when multiple fingers contact the touch surface, thus starting a new gesture. During the gesture, <a href=\"$MDN_URL$/Web/API/Element/gesturechange_event\" ><code>gesturechange</code></a> events will be fired. When the gesture has ended, a <a href=\"$MDN_URL$/Web/API/Element/gestureend_event\" ><code>gestureend</code></a> event will be fired.\nIt is a proprietary event specific to WebKit."
@@ -1185,7 +1172,7 @@
         "Safari": "11",
         "SafariIOS": "11"
       },
-      "doc": "An <strong><code>icecandidate</code></strong> event is sent to an <a href=\"$MDN_URL$/Web/API/RTCPeerConnection\"><code>RTCPeerConnection</code></a> when an <a href=\"$MDN_URL$/Web/API/RTCIceCandidate\"><code>RTCIceCandidate</code></a> has been identified and added to the local peer by a call to <a href=\"$MDN_URL$/Web/API/RTCPeerConnection/setLocalDescription\"><code>RTCPeerConnection.setLocalDescription()</code></a>. The event handler should transmit the candidate to the remote peer over the signaling channel so the remote peer can add it to its set of remote candidates.\nThis event is not cancelable and does not bubble."
+      "doc": "An <strong><code>icecandidate</code></strong> event is sent to an <a href=\"$MDN_URL$/Web/API/RTCPeerConnection\"><code>RTCPeerConnection</code></a> when:\nIn the first two cases, the event handler should transmit the candidate to the remote peer over the signaling channel so the remote peer can add it to its set of remote candidates.\nThis event is not cancelable and does not bubble."
     },
     "iceconnectionstatechange": {
       "url": "$MDN_URL$/web/api/rtcpeerconnection/iceconnectionstatechange_event",
@@ -1220,7 +1207,7 @@
       "doc": "The <strong><code>icegatheringstatechange</code></strong> event is sent to the <code>onicegatheringstatechange</code> event handler on an <a href=\"$MDN_URL$/Web/API/RTCPeerConnection\"><code>RTCPeerConnection</code></a> when the state of the <a href=\"$MDN_URL$/Glossary/ICE\">ICE</a> candidate gathering process changes.\nThis signifies that the value of the connection's <a href=\"$MDN_URL$/Web/API/RTCPeerConnection/iceGatheringState\" ><code>iceGatheringState</code></a> property has changed.\nWhen ICE first starts to gather connection candidates, the value changes from <code>new</code> to <code>gathering</code> to indicate that the process of collecting candidate configurations for the connection has begun. When the value changes to <code>complete</code>, all of the transports that make up the <code>RTCPeerConnection</code> have finished gathering ICE candidates.\nThis event is not cancelable and does not bubble."
     },
     "input": {
-      "url": "$MDN_URL$/web/api/htmlelement/input_event",
+      "url": "$MDN_URL$/web/api/element/input_event",
       "status": [
         "StandardTrack"
       ],
@@ -1233,7 +1220,7 @@
         "Safari": "3.1",
         "SafariIOS": "2"
       },
-      "doc": "The <strong><code>input</code></strong> event fires when the <code>value</code> of an <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a>, or <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> element has been changed.\nThe event also applies to elements with <a href=\"$MDN_URL$/Web/API/HTMLElement/contentEditable\" ><code>contenteditable</code></a> enabled, and to any element when <a href=\"$MDN_URL$/Web/API/Document/designMode\" ><code>designMode</code></a> is turned on. In the case of <code>contenteditable</code> and <code>designMode</code>, the event target is the <em>editing host</em>. If these properties apply to multiple elements, the editing host is the nearest ancestor element whose parent isn't editable.\nFor <code>&lt;input&gt;</code> elements with <code>type=checkbox</code> or <code>type=radio</code>, the <code>input</code> event should fire whenever a user toggles the control, per the <a href=\"https://html.spec.whatwg.org/multipage/input.html#the-input-element:event-input-2\" class=\"external\" target=\"_blank\">HTML Living Standard specification</a>. However, historically this has not always been the case. Check compatibility, or use the <a href=\"$MDN_URL$/Web/API/HTMLElement/change_event\" ><code>change</code></a> event instead for elements of these types.\nFor <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> elements that accept text input (<code>type=text</code>, <code>type=tel</code>, etc.), the interface is <a href=\"$MDN_URL$/Web/API/InputEvent\"><code>InputEvent</code></a>; for others, the interface is <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>."
+      "doc": "The <strong><code>input</code></strong> event fires when the <code>value</code> of an <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a>, or <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> element has been changed as a direct result of a user action (such as typing in a textbox or checking a checkbox).\nThe event also applies to elements with <a href=\"$MDN_URL$/Web/API/HTMLElement/contentEditable\" ><code>contenteditable</code></a> enabled, and to any element when <a href=\"$MDN_URL$/Web/API/Document/designMode\" ><code>designMode</code></a> is turned on. In the case of <code>contenteditable</code> and <code>designMode</code>, the event target is the <em>editing host</em>. If these properties apply to multiple elements, the editing host is the nearest ancestor element whose parent isn't editable.\nFor <code>&lt;input&gt;</code> elements with <code>type=checkbox</code> or <code>type=radio</code>, the <code>input</code> event should fire whenever a user toggles the control, per the <a href=\"https://html.spec.whatwg.org/multipage/input.html#the-input-element:event-input-2\" class=\"external\" target=\"_blank\">HTML Living Standard specification</a>. However, historically this has not always been the case. Check compatibility, or use the <a href=\"$MDN_URL$/Web/API/HTMLElement/change_event\" ><code>change</code></a> event instead for elements of these types.\nFor <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> elements that accept text input (<code>type=text</code>, <code>type=tel</code>, etc.), the interface is <a href=\"$MDN_URL$/Web/API/InputEvent\"><code>InputEvent</code></a>; for others, the interface is <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>.\nThe <code>input</code> event is fired every time the <code>value</code> of the element changes. This is unlike the <a href=\"$MDN_URL$/Web/API/HTMLElement/change_event\" ><code>change</code></a> event, which only fires when the value is committed, such as by pressing the enter key or selecting a value from a list of options. Note that the <code>input</code> event is not fired when JavaScript changes an element's <code>value</code> programmatically."
     },
     "install": {
       "url": "$MDN_URL$/web/api/window/appinstalled_event",
@@ -1277,7 +1264,7 @@
         "Safari": "1.2",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>keydown</code></strong> event is fired when a key is pressed.\nUnlike the deprecated <a href=\"$MDN_URL$/Web/API/Element/keypress_event\" ><code>keypress</code></a> event, the <code>keydown</code> event is fired for all keys, regardless of whether they produce a character value.\nThe <code>keydown</code> and <a href=\"$MDN_URL$/Web/API/Element/keyup_event\"><code>keyup</code></a> events provide a code indicating which key is pressed, while <code>keypress</code> indicates which character was entered. For example, a lowercase \"a\" will be reported as 65 by <code>keydown</code> and <code>keyup</code>, but as 97 by <code>keypress</code>. An uppercase \"A\" is reported as 65 by all events.\nKeyboard events are only generated by <code>&lt;input&gt;</code>, <code>&lt;textarea&gt;</code>, <code>&lt;summary&gt;</code> and anything with the <code>contentEditable</code> or <code>tabindex</code> attribute. If not caught, they <a href=\"$MDN_URL$/Learn/JavaScript/Building_blocks/Events#event_bubbling\">bubble</a> up the <a href=\"$MDN_URL$/Web/API/Document_object_model/Using_the_Document_Object_Model#what_is_a_dom_tree\">DOM tree</a> until they reach <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>.\nSince Firefox 65, the <code>keydown</code> and <a href=\"$MDN_URL$/Web/API/Element/keyup_event\"><code>keyup</code></a> events are now fired during IME composition, to improve cross-browser compatibility for CJKT users (<a href=\"https://bugzil.la/354358\" class=\"external\" target=\"_blank\">Firefox bug 354358</a>). To ignore all <code>keydown</code> events that are part of composition, do something like this (229 is a special value set for a <code>keyCode</code> relating to an event that has been processed by an IME):"
+      "doc": "The <strong><code>keydown</code></strong> event is fired when a key is pressed.\nUnlike the deprecated <a href=\"$MDN_URL$/Web/API/Element/keypress_event\" ><code>keypress</code></a> event, the <code>keydown</code> event is fired for all keys, regardless of whether they produce a character value.\nThe <code>keydown</code> and <a href=\"$MDN_URL$/Web/API/Element/keyup_event\"><code>keyup</code></a> events provide a code indicating which key is pressed, while <code>keypress</code> indicates which character was entered. For example, a lowercase \"a\" will be reported as 65 by <code>keydown</code> and <code>keyup</code>, but as 97 by <code>keypress</code>. An uppercase \"A\" is reported as 65 by all events.\nKeyboard events are only generated by <code>&lt;input&gt;</code>, <code>&lt;textarea&gt;</code>, <code>&lt;summary&gt;</code> and anything with the <code>contentEditable</code> or <code>tabindex</code> attribute. If not caught, they <a href=\"$MDN_URL$/Learn/JavaScript/Building_blocks/Events#event_bubbling\">bubble</a> up the <a href=\"$MDN_URL$/Web/API/Document_object_model/Using_the_Document_Object_Model#what_is_a_dom_tree\">DOM tree</a> until they reach <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a>.\nSince Firefox 65, the <code>keydown</code> and <a href=\"$MDN_URL$/Web/API/Element/keyup_event\"><code>keyup</code></a> events are now fired during <a class=\"page-not-created\"  >IME</a> composition, to improve cross-browser compatibility for CJKT users (<a href=\"https://bugzil.la/354358\" class=\"external\" target=\"_blank\">Firefox bug 354358</a>). To ignore all <code>keydown</code> events that are part of composition, do something like this (229 is a special value set for a <code>keyCode</code> relating to an event that has been processed by an IME):"
     },
     "keypress": {
       "url": "$MDN_URL$/web/api/element/keypress_event",
@@ -1310,7 +1297,7 @@
         "Safari": "1.2",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>keyup</code></strong> event is fired when a key is released.\nThe <a href=\"$MDN_URL$/Web/API/Element/keydown_event\"><code>keydown</code></a> and <code>keyup</code> events provide a code indicating which key is pressed, while <code>keypress</code> indicates which character was entered. For example, a lowercase \"a\" will be reported as 65 by <code>keydown</code> and <code>keyup</code>, but as 97 by <code>keypress</code>. An uppercase \"A\" is reported as 65 by all events.\nKeyboard events are only generated by <code>&lt;input&gt;</code>, <code>&lt;textarea&gt;</code>, <code>&lt;summary&gt;</code> and anything with the <code>contentEditable</code> or <code>tabindex</code> attribute.\nSince Firefox 65, the <code>keyup</code> and <a href=\"$MDN_URL$/Web/API/Element/keydown_event\"><code>keydown</code></a> events are now fired during IME composition, to improve cross-browser compatibility for CJKT users (<a href=\"https://bugzil.la/354358\" class=\"external\" target=\"_blank\">Firefox bug 354358</a>. To ignore all <code>keyup</code> events that are part of composition, do something like this (229 is a special value set for a <code>keyCode</code> relating to an event that has been processed by an input-method editor (<a href=\"https://www.w3.org/TR/ime-api/#IME\" class=\"external\" target=\"_blank\">IME</a>)):"
+      "doc": "The <strong><code>keyup</code></strong> event is fired when a key is released.\nThe <a href=\"$MDN_URL$/Web/API/Element/keydown_event\"><code>keydown</code></a> and <code>keyup</code> events provide a code indicating which key is pressed, while <code>keypress</code> indicates which character was entered. For example, a lowercase \"a\" will be reported as 65 by <code>keydown</code> and <code>keyup</code>, but as 97 by <code>keypress</code>. An uppercase \"A\" is reported as 65 by all events.\nKeyboard events are only generated by <code>&lt;input&gt;</code>, <code>&lt;textarea&gt;</code>, <code>&lt;summary&gt;</code> and anything with the <code>contentEditable</code> or <code>tabindex</code> attribute.\nSince Firefox 65, the <code>keyup</code> and <a href=\"$MDN_URL$/Web/API/Element/keydown_event\"><code>keydown</code></a> events are now fired during <a class=\"page-not-created\"  >IME</a> composition, to improve cross-browser compatibility for CJKT users (<a href=\"https://bugzil.la/354358\" class=\"external\" target=\"_blank\">Firefox bug 354358</a>. To ignore all <code>keyup</code> events that are part of composition, do something like this (229 is a special value set for a <code>keyCode</code> relating to an event that has been processed by an input-method editor (<a href=\"https://www.w3.org/TR/ime-api/#IME\" class=\"external\" target=\"_blank\">IME</a>)):"
     },
     "languagechange": {
       "url": "$MDN_URL$/web/api/window/languagechange_event",
@@ -1533,7 +1520,7 @@
         "Safari": "7",
         "SafariIOS": "7"
       },
-      "doc": "The <strong><code>mouseleave</code></strong> event is fired at an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> when the cursor of a pointing device (usually a mouse) is moved out of it.\n<code>mouseleave</code> and <a href=\"$MDN_URL$/Web/API/Element/mouseout_event\" ><code>mouseout</code></a> are similar but differ in that <code>mouseleave</code> does not bubble and <code>mouseout</code> does. This means that <code>mouseleave</code> is fired when the pointer has exited the element <em>and</em> all of its descendants, whereas <code>mouseout</code> is fired when the pointer leaves the element <em>or</em> leaves one of the element's descendants (even if the pointer is still within the element)."
+      "doc": "The <strong><code>mouseleave</code></strong> event is fired at an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> when the cursor of a pointing device (usually a mouse) is moved out of it.\n<code>mouseleave</code> and <a href=\"$MDN_URL$/Web/API/Element/mouseout_event\" ><code>mouseout</code></a> are similar but differ in that <code>mouseleave</code> does not bubble and <code>mouseout</code> does. This means that <code>mouseleave</code> is fired when the pointer has exited the element <em>and</em> all of its descendants, whereas <code>mouseout</code> is fired when the pointer leaves the element <em>or</em> leaves one of the element's descendants (even if the pointer is still within the element).\nThe <code>mouseleave</code> and <code>mouseout</code> events will not be triggered when the element is replaced or removed from the DOM."
     },
     "mousemove": {
       "url": "$MDN_URL$/web/api/element/mousemove_event",
@@ -1671,7 +1658,8 @@
         "ChromeAndroid": "40",
         "Edge": "17",
         "Firefox": "44",
-        "Opera": "24"
+        "Opera": "24",
+        "Safari": "16"
       },
       "doc": "The <strong><code>notificationclick</code></strong> event is fired to indicate that a system notification spawned by <a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration/showNotification\"><code>ServiceWorkerRegistration.showNotification()</code></a> has been clicked.\nThis event is not cancelable and does not bubble."
     },
@@ -1731,10 +1719,9 @@
       ],
       "compatibility": {
         "ChromeAndroid": "",
-        "Safari": "16.4",
         "SafariIOS": "3"
       },
-      "doc": "The <code>orientationchange</code> event is fired when the orientation of the device has changed.\nThis event is not cancelable and does not bubble.\nThis event is deprecated. Listen for the <a href=\"$MDN_URL$/Web/API/ScreenOrientation\"  ><code>ScreenOrientation.onchange</code></a> event instead."
+      "doc": "The <code>orientationchange</code> event is fired when the orientation of the device has changed.\nThis event is not cancelable and does not bubble.\nThis event is deprecated. Listen for the <a href=\"$MDN_URL$/Web/API/ScreenOrientation/change_event\" ><code>change</code></a> event of the <a href=\"$MDN_URL$/Web/API/ScreenOrientation\"><code>ScreenOrientation</code></a> interface instead."
     },
     "pagehide": {
       "url": "$MDN_URL$/web/api/window/pagehide_event",
@@ -1782,7 +1769,7 @@
         "Safari": "3",
         "SafariIOS": "3"
       },
-      "doc": "The <strong><code>paste</code></strong> event is fired when the user has initiated a \"paste\" action through the browser's user interface.\nIf the cursor is in an editable context (for example, in a <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> or an element with <a href=\"$MDN_URL$/Web/HTML/Global_attributes/contenteditable\"><code>contenteditable</code></a> attribute set to <code>true</code>) then the default action is to insert the contents of the clipboard into the document at the cursor position.\nA handler for this event can access the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/getData\" ><code>getData()</code></a> on the event's <code>clipboardData</code> property.\nTo override the default behavior (for example to insert some different data or a transformation of the clipboard contents) an event handler must cancel the default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>, and then insert its desired data manually.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>paste</code> event, but this will not affect the document's contents."
+      "doc": "The <strong><code>paste</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Clipboard_API\">Clipboard API</a> is fired when the user has initiated a \"paste\" action through the browser's user interface.\nIf the cursor is in an editable context (for example, in a <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> or an element with <a href=\"$MDN_URL$/Web/HTML/Global_attributes/contenteditable\"><code>contenteditable</code></a> attribute set to <code>true</code>) then the default action is to insert the contents of the clipboard into the document at the cursor position.\nA handler for this event can access the clipboard contents by calling <a href=\"$MDN_URL$/Web/API/DataTransfer/getData\" ><code>getData()</code></a> on the event's <code>clipboardData</code> property.\nTo override the default behavior (for example to insert some different data or a transformation of the clipboard contents) an event handler must cancel the default action using <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>event.preventDefault()</code></a>, and then insert its desired data manually.\nIt's possible to construct and dispatch a <a href=\"$MDN_URL$/Web/Events/Creating_and_triggering_events\">synthetic</a> <code>paste</code> event, but this will not affect the document's contents.\nThis event <a href=\"$MDN_URL$/Learn/JavaScript/Building_blocks/Events#event_bubbling_and_capture\">bubbles</a>, is <a href=\"$MDN_URL$/Web/API/Event/cancelable\">cancelable</a> and is <a href=\"$MDN_URL$/Web/API/Event/composed\">composed</a>."
     },
     "pause": {
       "url": "$MDN_URL$/web/api/htmlmediaelement/pause_event",
@@ -1953,7 +1940,7 @@
         "Opera": "23",
         "Safari": "10.1"
       },
-      "doc": "The <code>pointerlockchange</code> event is fired when the pointer is locked/unlocked.\nThis event is not cancelable."
+      "doc": "The <strong><code>pointerlockchange</code></strong> event is fired when the pointer is locked/unlocked.\nThe event handler can use <a href=\"$MDN_URL$/Web/API/Document/pointerLockElement\"><code>Document.pointerLockElement</code></a> to determine whether the pointer is locked, and if so, to which element it is locked.\nThis event is not cancelable and does not bubble."
     },
     "pointerlockerror": {
       "url": "$MDN_URL$/web/api/document/pointerlockerror_event",
@@ -1968,7 +1955,7 @@
         "Opera": "23",
         "Safari": "10.1"
       },
-      "doc": "The <code>pointerlockerror</code> event is fired when locking the pointer failed (for technical reasons or because the permission was denied).\nThis event is not cancelable."
+      "doc": "The <strong><code>pointerlockerror</code></strong> event is fired when locking the pointer failed (for technical reasons or because the permission was denied).\nThis event is not cancelable and does not bubble."
     },
     "pointermove": {
       "url": "$MDN_URL$/web/api/element/pointermove_event",
@@ -2032,7 +2019,7 @@
         "Safari": "13",
         "SafariIOS": "13"
       },
-      "doc": "The <code>pointerup</code> event is fired when a pointer is no longer active."
+      "doc": "The <code>pointerup</code> event is fired when a pointer is no longer active. Remember that it is possible to get a <a href=\"$MDN_URL$/Web/API/Element/pointercancel_event\"><code>pointercancel</code></a> event instead."
     },
     "popstate": {
       "url": "$MDN_URL$/web/api/window/popstate_event",
@@ -2076,7 +2063,8 @@
         "ChromeAndroid": "40",
         "Edge": "17",
         "Firefox": "44",
-        "Opera": "24"
+        "Opera": "24",
+        "Safari": "16"
       },
       "doc": "The <strong><code>push</code></strong> event is sent to a service worker's global scope (represented by the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> interface) when the service worker has received a push message.\nThis event is not cancelable and does not bubble."
     },
@@ -2086,7 +2074,8 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Firefox": "44"
+        "Firefox": "44",
+        "Safari": "16"
       },
       "doc": "The <strong><code>pushsubscriptionchange</code></strong> event is sent to the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\">global scope</a> of a <a href=\"$MDN_URL$/Web/API/ServiceWorker\"><code>ServiceWorker</code></a> to indicate a change in push subscription that was triggered outside the application's control.\nThis may occur if the subscription was refreshed by the browser, but it may also happen if the subscription has been revoked or lost.\nThis event is not cancelable and does not bubble."
     },
@@ -2276,9 +2265,7 @@
         "Chrome": "",
         "ChromeAndroid": "",
         "Edge": "79",
-        "Opera": "15",
-        "Safari": "2",
-        "SafariIOS": ""
+        "Opera": "15"
       },
       "doc": "The <strong><code>search</code></strong> event is fired when a search is initiated using an <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> element of <code>type=\"search\"</code>.\nThere are several ways a search can be initiated, such as by pressing <kbd>Enter</kbd> while the <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> is focused, or, if the <a href=\"$MDN_URL$/Web/HTML/Element/input#incremental\"><code>incremental</code></a> attribute is present, after a UA-defined timeout elapses since the most recent keystroke (with new keystrokes resetting the timeout so the firing of the event is debounced).\nCurrent UA implementations of <code>&lt;input type=\"search\"&gt;</code> have an additional control to clear the field. Using this control also fires the <code>search</code> event. In that case the <code>value</code> of the <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> element will be the empty string.\nThis event is not cancelable."
     },
@@ -2552,7 +2539,7 @@
         "Safari": "4",
         "SafariIOS": "4"
       },
-      "doc": "The <strong><code>storage</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> interface fires when a storage area (<code>localStorage</code>) has been modified in the context of another document."
+      "doc": "The <strong><code>storage</code></strong> event of the <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> interface fires when a storage area (<code>localStorage</code> or <code>sessionStorage</code>) has been modified in the context of another document.\nThis event is not cancelable and does not bubble."
     },
     "submit": {
       "url": "$MDN_URL$/web/api/htmlformelement/submit_event",
@@ -2568,7 +2555,7 @@
         "Safari": "3",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>submit</code></strong> event fires when a <a href=\"$MDN_URL$/Web/HTML/Element/form\"><code>&lt;form&gt;</code></a> is submitted.\nNote that the <code>submit</code> event fires on the <code>&lt;form&gt;</code> element itself, and not on any <a href=\"$MDN_URL$/Web/HTML/Element/button\"><code>&lt;button&gt;</code></a> or <a href=\"$MDN_URL$/Web/HTML/Element/input/submit\">&lt;input type=\"submit\"&gt;</a> inside it. However, the <a href=\"$MDN_URL$/Web/API/SubmitEvent\"><code>SubmitEvent</code></a> which is sent to indicate the form's submit action has been triggered includes a <a href=\"$MDN_URL$/Web/API/SubmitEvent/submitter\" ><code>submitter</code></a> property, which is the button that was invoked to trigger the submit request.\nThe <code>submit</code> event fires when the user clicks a <a href=\"$MDN_URL$/Glossary/Submit_button\">submit button</a> or presses <kbd>Enter</kbd> while editing a field (e.g. <a href=\"$MDN_URL$/Web/HTML/Element/input/text\">&lt;input type=\"text\"&gt;</a>) in a form. The event is not sent to the form when calling the <a href=\"$MDN_URL$/Web/API/HTMLFormElement/submit\" ><code>form.submit()</code></a> method directly."
+      "doc": "The <strong><code>submit</code></strong> event fires when a <a href=\"$MDN_URL$/Web/HTML/Element/form\"><code>&lt;form&gt;</code></a> is submitted.\nNote that the <code>submit</code> event fires on the <code>&lt;form&gt;</code> element itself, and not on any <a href=\"$MDN_URL$/Web/HTML/Element/button\"><code>&lt;button&gt;</code></a> or <code><a href=\"$MDN_URL$/Web/HTML/Element/input/submit\">&lt;input type=\"submit\"&gt;</a></code> inside it. However, the <a href=\"$MDN_URL$/Web/API/SubmitEvent\"><code>SubmitEvent</code></a> which is sent to indicate the form's submit action has been triggered includes a <a href=\"$MDN_URL$/Web/API/SubmitEvent/submitter\" ><code>submitter</code></a> property, which is the button that was invoked to trigger the submit request.\nThe <code>submit</code> event fires when:\nHowever, the event is <em>not</em> sent to the form when a script calls the <a href=\"$MDN_URL$/Web/API/HTMLFormElement/submit\" ><code>form.submit()</code></a> method directly."
     },
     "success": {
       "url": "$MDN_URL$/web/api/idbrequest/success_event",
@@ -2678,7 +2665,7 @@
         "Firefox": "52",
         "SafariIOS": "3"
       },
-      "doc": "The <code>touchcancel</code> event is fired when one or more touch points have been disrupted in an implementation-specific manner (for example, too many touch points are created)."
+      "doc": "The <code>touchcancel</code> event is fired when one or more touch points have been disrupted in an implementation-specific manner.\nSome examples of situations that will trigger a <code>touchcancel</code> event:"
     },
     "touchend": {
       "url": "$MDN_URL$/web/api/element/touchend_event",
@@ -2692,7 +2679,7 @@
         "Firefox": "52",
         "SafariIOS": "3"
       },
-      "doc": "The <code>touchend</code> event fires when one or more touch points are removed from the touch surface."
+      "doc": "The <code>touchend</code> event fires when one or more touch points are removed from the touch surface. Remember that it is possible to get a <a href=\"$MDN_URL$/Web/API/Element/touchcancel_event\"><code>touchcancel</code></a> event instead."
     },
     "touchmove": {
       "url": "$MDN_URL$/web/api/element/touchmove_event",
@@ -2752,7 +2739,7 @@
         "Safari": "13.1",
         "SafariIOS": "13.4"
       },
-      "doc": "The <strong><code>transitioncancel</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\" data-flaw=\"link1\">CSS transition</a> is canceled."
+      "doc": "The <strong><code>transitioncancel</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\">CSS transition</a> is canceled."
     },
     "transitionend": {
       "url": "$MDN_URL$/web/api/element/transitionend_event",
@@ -2768,7 +2755,7 @@
         "Safari": "7",
         "SafariIOS": "7"
       },
-      "doc": "The <strong><code>transitionend</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\" data-flaw=\"link1\">CSS transition</a> has completed. In the case where a transition is removed before completion, such as if the <a href=\"$MDN_URL$/Web/CSS/transition-property\"><code>transition-property</code></a> is removed or <a href=\"$MDN_URL$/Web/CSS/display\"><code>display</code></a> is set to <code>none</code>, then the event will not be generated.\nThe <code>transitionend</code> event is fired in both directions - as it finishes transitioning to the transitioned state, and when it fully reverts to the default or non-transitioned state. If there is no transition delay or duration, if both are 0s or neither is declared, there is no transition, and none of the transition events are fired. If the <code>transitioncancel</code> event is fired, the <code>transitionend</code> event will not fire.\nThis event is not cancelable."
+      "doc": "The <strong><code>transitionend</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\">CSS transition</a> has completed. In the case where a transition is removed before completion, such as if the <a href=\"$MDN_URL$/Web/CSS/transition-property\"><code>transition-property</code></a> is removed or <a href=\"$MDN_URL$/Web/CSS/display\"><code>display</code></a> is set to <code>none</code>, then the event will not be generated.\nThe <code>transitionend</code> event is fired in both directions - as it finishes transitioning to the transitioned state, and when it fully reverts to the default or non-transitioned state. If there is no transition delay or duration, if both are 0s or neither is declared, there is no transition, and none of the transition events are fired. If the <code>transitioncancel</code> event is fired, the <code>transitionend</code> event will not fire.\nThis event is not cancelable."
     },
     "transitionrun": {
       "url": "$MDN_URL$/web/api/element/transitionrun_event",
@@ -2784,7 +2771,7 @@
         "Safari": "13.1",
         "SafariIOS": "13.4"
       },
-      "doc": "The <strong><code>transitionrun</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\" data-flaw=\"link1\">CSS transition</a> is first created, i.e. before any <a href=\"$MDN_URL$/Web/CSS/transition-delay\"><code>transition-delay</code></a> has begun.\nThis event is not cancelable."
+      "doc": "The <strong><code>transitionrun</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\">CSS transition</a> is first created, i.e. before any <a href=\"$MDN_URL$/Web/CSS/transition-delay\"><code>transition-delay</code></a> has begun.\nThis event is not cancelable."
     },
     "transitionstart": {
       "url": "$MDN_URL$/web/api/element/transitionstart_event",
@@ -2800,7 +2787,7 @@
         "Safari": "13.1",
         "SafariIOS": "13.4"
       },
-      "doc": "The <strong><code>transitionstart</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\" data-flaw=\"link1\">CSS transition</a> has actually started, i.e., after any <a href=\"$MDN_URL$/Web/CSS/transition-delay\"><code>transition-delay</code></a> has ended.\nThis event is not cancelable."
+      "doc": "The <strong><code>transitionstart</code></strong> event is fired when a <a href=\"$MDN_URL$/Web/CSS/CSS_transitions/Using_CSS_transitions\">CSS transition</a> has actually started, i.e., after any <a href=\"$MDN_URL$/Web/CSS/transition-delay\"><code>transition-delay</code></a> has ended.\nThis event is not cancelable."
     },
     "unhandledrejection": {
       "url": "$MDN_URL$/web/api/window/unhandledrejection_event",
@@ -2822,7 +2809,8 @@
     "unload": {
       "url": "$MDN_URL$/web/api/window/unload_event",
       "status": [
-        "StandardTrack"
+        "StandardTrack",
+        "Deprecated"
       ],
       "compatibility": {
         "Chrome": "",
@@ -3063,28 +3051,28 @@
       "compatibility": {
         "Safari": "9"
       },
-      "doc": "The non-standard <strong><code>webkitmouseforcechanged</code></strong> event is fired by Safari each time the amount of pressure changes on the trackpad/touchscreen.\n<strong><code>webkitmouseforcechanged</code></strong> is a proprietary, WebKit-specific event introduced by Apple to support their <a href=\"$MDN_URL$/Web/API/Force_Touch_events\">Force Touch events</a> feature.\nThis event first fires after the <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> event and stops firing before the <a href=\"$MDN_URL$/Web/API/Element/mouseup_event\" ><code>mouseup</code></a> event."
+      "doc": "The non-standard <strong><code>webkitmouseforcechanged</code></strong> event is fired by Safari each time the amount of pressure changes on the trackpad/touchscreen.\n<strong><code>webkitmouseforcechanged</code></strong> is a proprietary, WebKit-specific event introduced by Apple to support their <a href=\"$MDN_URL$/Web/API/Force_Touch_events\"><code>Force Touch Events</code></a> feature.\nThis event first fires after the <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> event and stops firing before the <a href=\"$MDN_URL$/Web/API/Element/mouseup_event\" ><code>mouseup</code></a> event."
     },
     "webkitmouseforcedown": {
       "url": "$MDN_URL$/web/api/element/webkitmouseforcedown_event",
       "compatibility": {
         "Safari": "9"
       },
-      "doc": "After a <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> event has been fired at the element, if and when sufficient pressure has been applied to the mouse or trackpad button to qualify as a \"force click,\" Safari begins sending <strong><code>webkitmouseforcedown</code></strong> events to the element.\n<strong><code>webkitmouseforcedown</code></strong> is a proprietary, WebKit-specific event. It is part of the <a href=\"$MDN_URL$/Web/API/Force_Touch_events\">Force Touch events</a> feature."
+      "doc": "After a <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> event has been fired at the element, if and when sufficient pressure has been applied to the mouse or trackpad button to qualify as a \"force click,\" Safari begins sending <strong><code>webkitmouseforcedown</code></strong> events to the element.\n<strong><code>webkitmouseforcedown</code></strong> is a proprietary, WebKit-specific event. It is part of the <a href=\"$MDN_URL$/Web/API/Force_Touch_events\"><code>Force Touch Events</code></a> feature."
     },
     "webkitmouseforceup": {
       "url": "$MDN_URL$/web/api/element/webkitmouseforceup_event",
       "compatibility": {
         "Safari": "9"
       },
-      "doc": "The non-standard <strong><code>webkitmouseforceup</code></strong> event is fired by Safari at an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> some time after the <a href=\"$MDN_URL$/Web/API/Element/webkitmouseforcedown_event\" ><code>webkitmouseforcedown</code></a> event, when pressure on the button has been reduced sufficiently to end the \"force click\".\n<strong><code>webkitmouseforceup</code></strong> is a proprietary, WebKit-specific event. It is part of the <a href=\"$MDN_URL$/Web/API/Force_Touch_events\">Force Touch events</a> feature."
+      "doc": "The non-standard <strong><code>webkitmouseforceup</code></strong> event is fired by Safari at an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> some time after the <a href=\"$MDN_URL$/Web/API/Element/webkitmouseforcedown_event\" ><code>webkitmouseforcedown</code></a> event, when pressure on the button has been reduced sufficiently to end the \"force click\".\n<strong><code>webkitmouseforceup</code></strong> is a proprietary, WebKit-specific event. It is part of the <a href=\"$MDN_URL$/Web/API/Force_Touch_events\"><code>Force Touch Events</code></a> feature."
     },
     "webkitmouseforcewillbegin": {
       "url": "$MDN_URL$/web/api/element/webkitmouseforcewillbegin_event",
       "compatibility": {
         "Safari": "9"
       },
-      "doc": "Safari for macOS fires the non-standard <strong><code>webkitmouseforcewillbegin</code></strong> event at an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> before firing the initial <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> event.\nThis offers the opportunity to tell the system not to trigger any default Force Touch actions if and when the click turns into a <a href=\"$MDN_URL$/Web/API/Force_Touch_events\">Force Touch event</a>.\nTo instruct macOS not to engage any default Force Touch actions if the user apply enough pressure to activate a Force Touch event, call <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>preventDefault()</code></a> on the <code>webkitmouseforcewillbegin</code> event object.\n<strong><code>webkitmouseforcewillbegin</code></strong> is a proprietary, WebKit-specific event. It is part of the <a href=\"$MDN_URL$/Web/API/Force_Touch_events\">Force Touch events</a> feature."
+      "doc": "Safari for macOS fires the non-standard <strong><code>webkitmouseforcewillbegin</code></strong> event at an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> before firing the initial <a href=\"$MDN_URL$/Web/API/Element/mousedown_event\" ><code>mousedown</code></a> event.\nThis offers the opportunity to tell the system not to trigger any default Force Touch actions if and when the click turns into a <a href=\"$MDN_URL$/Web/API/Force_Touch_events\"><code>Force Touch Events</code></a>.\nTo instruct macOS not to engage any default Force Touch actions if the user apply enough pressure to activate a Force Touch event, call <a href=\"$MDN_URL$/Web/API/Event/preventDefault\" ><code>preventDefault()</code></a> on the <code>webkitmouseforcewillbegin</code> event object.\n<strong><code>webkitmouseforcewillbegin</code></strong> is a proprietary, WebKit-specific event. It is part of the <a href=\"$MDN_URL$/Web/API/Force_Touch_events\"><code>Force Touch Events</code></a> feature."
     },
     "wheel": {
       "url": "$MDN_URL$/web/api/element/wheel_event",

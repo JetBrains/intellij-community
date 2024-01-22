@@ -182,7 +182,7 @@ object QuickDocCodeHighlightingHelper {
 
   private fun StringBuilder.appendHighlightedCode(doHighlighting: Boolean, code: CharSequence, language: Language?, project: Project?,
                                                   isForRenderedDoc: Boolean): StringBuilder {
-    val trimmedCode = code.toString().trim('\n', '\r').trimIndent()
+    val trimmedCode = code.toString().trim('\n', '\r').trimIndent().replace(' ', ' ')
     if (language != null && doHighlighting) {
       HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         this, project ?: DefaultProjectFactory.getInstance().defaultProject, language, trimmedCode,

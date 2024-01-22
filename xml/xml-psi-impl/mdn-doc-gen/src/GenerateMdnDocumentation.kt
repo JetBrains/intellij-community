@@ -77,6 +77,10 @@ val knownBcdIds = setOf(
   "support_of_hue_interpolation_method",
   "support_of_fit-content",
   "support_of_fit-content_function",
+  "support_of_hsl",
+  "support_of_hwb",
+  "support_of_lch",
+  "support_of_oklch",
 
   //JS - by default not translated
   "support_of_compressedTexImage2D",
@@ -105,8 +109,9 @@ const val SEE_REFERENCE = "\$SEE_REFERENCE\$"
 val seePattern = Regex("<p>See <a href=\"/$BUILT_LANG/$WEB_DOCS/([a-z0-9_\\-/]+)(#[a-z]+)?\"><code>[a-z0-9_\\-]+</code></a>\\.</p>",
                        RegexOption.IGNORE_CASE)
 
-val svgAttributeSectionsPattern = Regex("(.*)<em>Value type</em>\\s*:(.*);\\s*<em>Default value(?:</em>)?\\s*:(.*);\\s*(?:<em>)?Animatable</em>\\s*:\\s*(.*)",
-                                        RegexOption.DOT_MATCHES_ALL)
+val svgAttributeSectionsPattern = Regex(
+  "(.*)<em>Value type</em>\\s*:(.*);\\s*<em>Default value(?:</em>)?\\s*:(.*);\\s*(?:<em>)?Animatable</em>\\s*:\\s*(.*)",
+  RegexOption.DOT_MATCHES_ALL)
 
 val bcd: Bcd = readBcd(BROWSER_COMPAT_DATA_PATH)
 
@@ -284,8 +289,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         if (!nameFilter(name)) return@flatMap emptyList()
         try {
           val mdnUrl = bcdInfo.compat?.mdnUrl?.lowercase(Locale.US)?.removePrefix("https://developer.mozilla.org/docs/web/")
-                        ?: mdnUrlBuilder?.invoke(name, bcdInfo)
-                        ?: "$mdnPath/$name"
+                       ?: mdnUrlBuilder?.invoke(name, bcdInfo)
+                       ?: "$mdnPath/$name"
           val dir = getMdnDir(mdnUrl).let {
             if (it.name.endsWith("()") && !it.exists()) {
               val suffixed = File(it.parentFile, it.name.removeSuffix("()") + "_function")
@@ -296,7 +301,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           if (!dir.exists()) {
             System.err.println("Dir not found: $dir")
             emptyList()
-          } else {
+          }
+          else {
             namesWithBcd.add(dir.name.takeLastWhile { it != '/' }.lowercase(Locale.US))
             extractor(dir, bcdInfo)
           }
@@ -408,9 +414,9 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       val contents = DocContents(dir, compatData)
       val thisNamePrefix = "$namePrefix${dir.name.lowercase(Locale.US)}".removeSuffix("_static")
       return extractInformation(dir.toMdnUrl(), compatData, jsWebApiNameFilter) { subDir, subBcdInfo ->
-               extractJavascriptDocumentation(
-                 subDir, subBcdInfo, "$thisNamePrefix.")
-             }.toList() +
+        extractJavascriptDocumentation(
+          subDir, subBcdInfo, "$thisNamePrefix.")
+      }.toList() +
              Pair(thisNamePrefix,
                   MdnJsSymbolDocumentation(getMdnDocsUrl(dir), compatData?.let { extractStatus(contents) },
                                            compatData?.let { extractCompatibilityInfo(contents) },
@@ -564,7 +570,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         result.append(str[i++])
       }
       else {
-        val prevChar = if (i <=0 ) ' ' else str[i - 1]
+        val prevChar = if (i <= 0) ' ' else str[i - 1]
         when (val ch = str[i++]) {
           ' ' ->
             if (prevChar != ' ')
@@ -692,11 +698,13 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     return Pair(fixSpaces(htmlFile.patchedText()), sections)
   }
 
+  private val BRUSH_REGEX = Regex("brush: ?(js|html|css|xml|http)[a-z0-9-;\\[\\] ]*")
+
   private fun createHtmlFile(contents: RawProse): HtmlFileImpl {
     val htmlFile = PsiFileFactory.getInstance(project)
       .createFileFromText("dummy.html", HTMLLanguage.INSTANCE, contents.content, false, true)
     val toRemove = mutableSetOf<PsiElement>()
-    val toSimplify = mutableSetOf<XmlTag>()
+    val codeBlocks = mutableSetOf<XmlTag>()
     htmlFile.acceptChildren(object : XmlRecursiveElementVisitor() {
 
       override fun visitXmlComment(comment: XmlComment) {
@@ -705,10 +713,11 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
       override fun visitXmlTag(tag: XmlTag) {
         if (tag.name == "pre"
-            && tag.getAttributeValue("class")?.matches(Regex("brush: ?(js|html|css|xml|http)[a-z0-9-;\\[\\] ]*")) == true) {
-          tag.findSubTag("code")?.let { toSimplify.add(it) }
-        } else if (tag.name == "span"
-                   && tag.getAttributeValue("class")?.trim() == "language-name") {
+            && tag.getAttributeValue("class")?.matches(BRUSH_REGEX) == true) {
+          tag.findSubTag("code")?.let { codeBlocks.add(tag) }
+        }
+        else if (tag.name == "span"
+                 && tag.getAttributeValue("class")?.trim() == "language-name") {
           tag.children.filterTo(toRemove) { it is XmlText }
           super.visitXmlTag(tag)
         }
@@ -763,7 +772,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     })
     toRemove.forEach { it.delete() }
     removeEmptyTags(htmlFile)
-    toSimplify.forEach(::simplifyTag)
+    codeBlocks.forEach(::processCodeBlock)
     val text = fixSpaces(htmlFile.text)
     if (text.contains("The source for this interact"))
       throw Exception("Unhidden stuff!")
@@ -789,10 +798,15 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     toRemove.forEach { it.delete() }
   }
 
-  private fun simplifyTag(tag: XmlTag) {
-    tag.replace(
-      XmlElementFactory.getInstance(tag.project).createTagFromText("""<${tag.name}>${extractText(tag)}</${tag.name}>""",
-                                                                   HTMLLanguage.INSTANCE))
+  private fun processCodeBlock(tag: XmlTag) {
+    val language = BRUSH_REGEX
+      .matchEntire(tag.getAttributeValue("class")!!)!!
+      .groupValues[1]
+    val code = tag.findSubTag("code")
+      ?.let { extractText(it) }
+      ?.let { StringUtil.unescapeXmlEntities(it) }
+    tag.replace(XmlElementFactory.getInstance(tag.project).createTagFromText(
+      "<div>\n```$language\n$code\n```\n</div>", HTMLLanguage.INSTANCE))
   }
 
   private fun extractText(tag: XmlTag): String {
@@ -1102,7 +1116,8 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       ) {
         name = if (dirName.endsWith("_function")) {
           dirName.removeSuffix("_function") + "()"
-        } else dirName
+        }
+        else dirName
       }
       else {
         val doc = parseIndexJson(docDir).getAsJsonObject("doc")
@@ -1171,7 +1186,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 }
 
-private fun String?.extractSvgAttributesSections(): Pair<String?, Map<String,String>?> {
+private fun String?.extractSvgAttributesSections(): Pair<String?, Map<String, String>?> {
   if (this == null) return Pair(null, null)
   val match = svgAttributeSectionsPattern.matchEntire(this)
               ?: return Pair(this, null)
