@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -15,7 +16,9 @@ private object ShowOnDoubleClickToggleAction {
       VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK == isEditorPreview
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK = isEditorPreview
+      // Make the action behave as "Option" in "ShowOnDoubleClick" group.
+      val newState = if (ActionPlaces.isPopupPlace(e.place) || state) isEditorPreview else !isEditorPreview
+      VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK = newState
     }
 
     override fun update(e: AnActionEvent) {
@@ -39,7 +42,9 @@ private object ShowOnDoubleClickToggleAction {
       VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK == isEditorPreview
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK = isEditorPreview
+      // Make the action behave as "Option" in "ShowOnDoubleClick" group.
+      val newState = if (ActionPlaces.isPopupPlace(e.place) || state) isEditorPreview else !isEditorPreview
+      VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK = newState
     }
 
     override fun update(e: AnActionEvent) {
