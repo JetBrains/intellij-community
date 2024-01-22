@@ -23,9 +23,6 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     if (session == null || runtimeDataProvider == null || parameters.completionType != CompletionType.BASIC) {
       return
     }
-    // stop even if we can't suggest something to not execute contributors from the ShellScript plugin
-    result.stopHere()
-
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
     val context = TerminalCompletionContext(session, runtimeDataProvider, shellSupport, parameters)
 
@@ -46,6 +43,10 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
 
     val elements = suggestions.flatMap { it.toLookupElements() }
     resultSet.addAllElements(elements)
+
+    if (elements.isNotEmpty()) {
+      resultSet.stopHere()
+    }
   }
 
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<BaseSuggestion> {
