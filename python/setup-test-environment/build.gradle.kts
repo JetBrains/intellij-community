@@ -48,23 +48,11 @@ envs {
   bootstrapDirectory = pythonsDirectory
   envsDirectory = venvsDirectory
 
-  // TODO: lift and shifted, consider changing logic
-  if (isWindows) {
-    // On Windows you almost always want to use cache server except you are outside of JB
-    var zipRepositoryURL: URL? = URL(
-      System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", "https://packages.jetbrains.team/files/p/py/python-archives-windows/"))
-    try {
-      zipRepositoryURL!!.content
-    }
-    catch (e: Exception) {
-      zipRepositoryURL = null
-      System.err.println("Cache server is unavailable. Will try to build python from scratch.")
-    }
-    if (zipRepositoryURL != null) {
-      zipRepository = zipRepositoryURL
-      shouldUseZipsFromRepository = true
-    }
-  }
+  // I don't think that it's desired behaviour to install pythons for tests user-wide what will be done
+  // if we don't force these options (also there may be conflicts with existing installations)
+  zipRepository = URL(System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY",
+                                                   "https://packages.jetbrains.team/files/p/py/python-archives-windows/"))
+  shouldUseZipsFromRepository = isWindows
 }
 
 tasks.register<Exec>("kill_python_processes") {
