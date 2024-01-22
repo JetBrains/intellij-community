@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -43,15 +44,17 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
       PsiUtil.setModifierProperty(this, PsiModifier.PRIVATE, true)
     }
 
-    try {
-      val appendedField = insertLogger(project, field, lastClass, editor).singleOrNull()?.psiMember ?: return
-      val identifier = appendedField.nameIdentifier
-      editor.caretModel.moveToOffset(identifier.endOffset)
-      editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
-    }
-    catch (e: Exception) {
-      GenerationUtil.handleException(project, e)
-    }
+    CommandProcessor.getInstance().executeCommand(project, {
+      try {
+        val appendedField = insertLogger(project, field, lastClass, editor).singleOrNull()?.psiMember ?: return@executeCommand
+        val identifier = appendedField.nameIdentifier
+        editor.caretModel.moveToOffset(identifier.endOffset)
+        editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+      }
+      catch (e: Exception) {
+        GenerationUtil.handleException(project, e)
+      }
+    }, null, null)
   }
 
   private fun insertLogger(project: Project,
