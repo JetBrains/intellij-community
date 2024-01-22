@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.ABSTRACT
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Modality.OPEN
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
@@ -27,7 +28,6 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
     fun printCodeOut(root: JKTreeElement): String {
         Visitor().also { root.accept(it) }
-        return printer.toString().replace("\r\n", "\n")
         return printer.toString().replace("\r\n", "\n")
     }
 
@@ -66,14 +66,15 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
-            val isInterface = (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE) ||
-                        (modifiersListOwner is JKMethod && modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE)
+            val isInterface = (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE)
+            val isInsideInterface =
+                (modifiersListOwner is JKMethod || modifiersListOwner is JKField) && modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE
             val hasOverrideModifier = modifiersListOwner
                 .safeAs<JKOtherModifiersOwner>()
                 ?.hasOtherModifier(OVERRIDE) == true
 
             fun Modifier.isRedundant(): Boolean = when {
-                this == OPEN && isInterface -> true
+                (this == OPEN || this == ABSTRACT) && (isInterface || isInsideInterface) -> true
                 (this == FINAL || this == PUBLIC) && !hasOverrideModifier -> true
                 else -> false
             }
