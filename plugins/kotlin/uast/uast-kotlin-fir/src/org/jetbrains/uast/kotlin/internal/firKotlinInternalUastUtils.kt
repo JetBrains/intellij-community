@@ -309,10 +309,7 @@ internal tailrec fun psiForUast(symbol: KtSymbol, project: Project): PsiElement?
         // UAST/Lint CLI: use [DecompiledPsiDeclarationProvider] / [KotlinStaticPsiDeclarationFromBinaryModuleProvider]
         return findPsi(symbol, project)
             // UAST/Lint IDE: decompiled PSI
-            ?: symbol.psi?.let {
-                // Attempt to convert (decompiled) library source to LC element
-                (it as? KtElement)?.toPsiElementAsLightElement() ?: it
-            }
+            ?: symbol.psi
     }
 
     if (symbol is KtCallableSymbol) {
