@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.JBUI;
@@ -55,7 +56,7 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
     String message = ExecutionBundle.message("run.configuration.program.parameters.placeholder");
     programArguments.getEditorField().getEmptyText().setText(message);
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
-    FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
+    TextComponentEmptyText.setupPlaceholderVisibility(programArguments.getEditorField());
     setMonospaced(programArguments.getTextField());
     MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, () -> myHasModule.compute() != null);
     SettingsEditorFragment<Settings, RawCommandLineEditor> parameters =

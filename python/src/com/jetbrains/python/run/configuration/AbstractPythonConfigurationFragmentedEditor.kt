@@ -5,6 +5,7 @@ import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ui.*
 import com.intellij.openapi.components.service
 import com.intellij.ui.RawCommandLineEditor
+import com.intellij.ui.components.TextComponentEmptyText
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PyCommonFragmentsBuilder
@@ -52,7 +53,7 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
       { config: T, field: RawCommandLineEditor -> config.interpreterOptions = field.text.trim() },
       { config: T -> !config.interpreterOptions.trim().isEmpty() })
     interpreterOptionsField.editorField.emptyText.setText(PyBundle.message("python.run.configuration.fragments.interpreter.options.placeholder"))
-    FragmentedSettingsUtil.setupPlaceholderVisibility(interpreterOptionsField.editorField)
+    TextComponentEmptyText.setupPlaceholderVisibility(interpreterOptionsField.editorField)
     interpreterOptionsFragment.setHint(PyBundle.message("python.run.configuration.fragments.interpreter.options.hint"))
     interpreterOptionsFragment.actionHint = PyBundle.message("python.run.configuration.fragments.interpreter.options.hint")
     fragments.add(interpreterOptionsFragment)

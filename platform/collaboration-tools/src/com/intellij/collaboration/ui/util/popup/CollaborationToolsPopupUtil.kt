@@ -3,7 +3,6 @@ package com.intellij.collaboration.ui.util.popup
 
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.ui.items
-import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -11,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -35,7 +35,7 @@ object CollaborationToolsPopupUtil {
   private fun setSearchFieldPlaceholder(searchTextField: SearchTextField, placeholderText: @NlsContexts.StatusText String?) {
     placeholderText ?: return
     searchTextField.textEditor.emptyText.text = placeholderText
-    FragmentedSettingsUtil.setupPlaceholderVisibility(searchTextField.textEditor)
+    TextComponentEmptyText.setupPlaceholderVisibility(searchTextField.textEditor)
   }
 }
 

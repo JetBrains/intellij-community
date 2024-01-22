@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter
 
-import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -19,6 +18,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.SearchFieldWithExtension
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -215,7 +215,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     init {
       text = textFilterModel.text
       textEditor.emptyText.setText(VcsLogBundle.message("vcs.log.filter.text.hash.empty.text"))
-      FragmentedSettingsUtil.setupPlaceholderVisibility(textEditor);
+      TextComponentEmptyText.setupPlaceholderVisibility(textEditor);
       textEditor.addActionListener { e: ActionEvent? -> applyFilter(true) }
       addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {

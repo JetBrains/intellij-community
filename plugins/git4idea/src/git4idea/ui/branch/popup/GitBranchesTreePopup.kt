@@ -4,7 +4,6 @@ package git4idea.ui.branch.popup
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.*
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
@@ -23,6 +22,7 @@ import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
@@ -137,7 +137,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   override fun setHeaderComponent(c: JComponent?) {
     mySpeedSearchPatternField.textEditor.apply {
       updateEmptyText()
-      FragmentedSettingsUtil.setupPlaceholderVisibility(mySpeedSearchPatternField.textEditor)
+      TextComponentEmptyText.setupPlaceholderVisibility(mySpeedSearchPatternField.textEditor)
     }
 
     if (!isNewUI) {

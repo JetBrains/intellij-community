@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
-import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
@@ -22,6 +21,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase
 import com.intellij.ui.*
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -132,7 +132,7 @@ internal class RecentProjectFilteringTree(
         border = JBUI.Borders.empty()
         emptyText.text = IdeBundle.message("welcome.screen.search.projects.empty.text")
         accessibleContext.accessibleName = IdeBundle.message("welcome.screen.search.projects.empty.text")
-        FragmentedSettingsUtil.setupPlaceholderVisibility(this)
+        TextComponentEmptyText.setupPlaceholderVisibility(this)
 
         addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItems(tree) }
         addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.ALT_DOWN_MASK)) { removeItem(tree) }

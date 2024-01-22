@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -100,5 +101,13 @@ public class TextComponentEmptyText extends StatusText {
     return component == getComponent()
            ? new Rectangle(bounds.x, bounds.y, width, bounds.height)
            : new Rectangle(bounds.x + bounds.width - width, bounds.y, width, bounds.height);
+  }
+
+  /**
+   * Show placeholder when the text field is empty.
+   * @param textField target text field.
+   */
+  public static void setupPlaceholderVisibility(@NotNull JBTextField textField) {
+    textField.putClientProperty(STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)f -> StringUtil.isEmpty(f.getText()));
   }
 }
