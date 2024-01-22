@@ -63,24 +63,21 @@ internal class SyncCompletion : CompletionThreadingBase() {
   }
 }
 
+private val LOG = logger<AsyncCompletion>()
+
+internal fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
+  if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction {
+      indicator.checkCanceled()
+      runnable.run()
+    }) {
+    indicator.cancel()
+    indicator.checkCanceled()
+  }
+}
+
 internal class AsyncCompletion : CompletionThreadingBase() {
   private val batchList = ArrayList<CompletionResult>()
   private val queue = LinkedBlockingQueue<Computable<Boolean>>()
-
-  companion object {
-    private val LOG = logger<AsyncCompletion>()
-
-    @JvmStatic
-    fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction {
-          indicator.checkCanceled()
-          runnable.run()
-        }) {
-        indicator.cancel()
-        indicator.checkCanceled()
-      }
-    }
-  }
 
   override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Future<*> {
     val startSemaphore = Semaphore()
