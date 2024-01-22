@@ -27,7 +27,7 @@
                  description="Enable new terminal UI"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
-    <registryKey key="terminal.new.ui.powershell" defaultValue="false"
+    <registryKey key="terminal.new.ui.powershell" defaultValue="true"
                  description="Enable new terminal for PowerShell"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
