@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -121,9 +121,13 @@ public final class PackageSetFactoryImpl extends PackageSetFactory {
 
     private PackageSet parsePattern() throws ParsingException {
       String scope = null;
+      PackageSetParserExtension usedExtension = null;
       for (PackageSetParserExtension extension : PackageSetParserExtension.EP_NAME.getExtensionList()) {
         scope = extension.parseScope(myLexer);
-        if (scope != null) break;
+        if (scope != null) {
+          usedExtension = extension;
+          break;
+        }
       }
       if (scope == null) error("Unknown scope type");
       String modulePattern = parseModulePattern();
@@ -131,10 +135,8 @@ public final class PackageSetFactoryImpl extends PackageSetFactory {
       if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
         myLexer.advance();
       }
-      for (PackageSetParserExtension extension : PackageSetParserExtension.EP_NAME.getExtensionList()) {
-        final PackageSet packageSet = extension.parsePackageSet(myLexer, scope, modulePattern);
-        if (packageSet != null) return packageSet;
-      }
+      final PackageSet packageSet = usedExtension.parsePackageSet(myLexer, scope, modulePattern);
+      if (packageSet != null) return packageSet;
       error("Unknown scope type");
       return null; //not reachable
     }
@@ -176,7 +178,7 @@ public final class PackageSetFactoryImpl extends PackageSetFactory {
         }
         myLexer.advance();
       }
-      if (pattern.length() == 0) {
+      if (pattern.isEmpty()) {
         error(CodeInsightBundle.message("error.package.set.pattern.expectations"));
       }
       return pattern.toString();
