@@ -547,6 +547,8 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.ThreadingInlayHintsProvider"
       isEnabledByDefault="false"
       language="UAST"/>
+    <registryKey key="devkit.inlay.threading" defaultValue="false"
+                 description="Experimental inlays for Threading Annotations"/>
 
     <smartUpdateStep implementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesStep" order="first"/>
     <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
