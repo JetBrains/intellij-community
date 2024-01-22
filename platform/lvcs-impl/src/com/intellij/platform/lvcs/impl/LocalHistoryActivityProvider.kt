@@ -32,9 +32,19 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     if (scope is ActivityScope.File) {
       val path = gateway.getPathOrUrl(scope.file)
       gateway.registerUnsavedDocuments(facade)
+      var lastLabel: ChangeSet? = null
       facade.collectChanges(projectId, path, scopeFilter) { changeSet ->
         if (changeSet.isSystemLabelOnly) return@collectChanges
-        result.add(changeSet.toActivityItem(scope))
+        if (changeSet.isLabelOnly) {
+          lastLabel = changeSet
+        }
+        else {
+          if (lastLabel != null) {
+            result.add(lastLabel!!.toActivityItem(scope))
+            lastLabel = null
+          }
+          result.add(changeSet.toActivityItem(scope))
+        }
       }
     }
     else {
