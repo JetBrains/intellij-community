@@ -84,7 +84,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
 
     launchNow {
       try {
-        model.shiftedReviewRanges.collect {
+        model.reviewRanges.collect {
           renderer.scheduleUpdate()
         }
       }
