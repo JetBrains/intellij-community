@@ -117,7 +117,7 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
     val indexedJarDirectories = (storage.getVirtualFileUrlIndex() as VirtualFileIndex).getIndexedJarDirectories()
     var parentVirtualFileUrl: VirtualFileUrl? = virtualFileUrl
     while (parentVirtualFileUrl != null && parentVirtualFileUrl !in indexedJarDirectories) {
-      parentVirtualFileUrl = virtualFileManager.getParentVirtualUrl(parentVirtualFileUrl)
+      parentVirtualFileUrl = parentVirtualFileUrl.parent
     }
     return if (parentVirtualFileUrl != null && parentVirtualFileUrl in indexedJarDirectories) parentVirtualFileUrl else null
   }

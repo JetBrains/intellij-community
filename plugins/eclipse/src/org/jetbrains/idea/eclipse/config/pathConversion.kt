@@ -204,7 +204,7 @@ internal val ModuleEntity.mainContentRoot: ContentRootEntity?
   }
 
 internal fun getStorageRoot(imlFileUrl: VirtualFileUrl, customDir: String?, virtualFileManager: VirtualFileUrlManager): VirtualFileUrl {
-  val moduleRoot = virtualFileManager.getParentVirtualUrl(imlFileUrl)!!
+  val moduleRoot = imlFileUrl.parent!!
   if (customDir == null) return moduleRoot
   if (OSAgnosticPathUtil.isAbsolute(customDir)) {
     return virtualFileManager.fromPath(customDir)

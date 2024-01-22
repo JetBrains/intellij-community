@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.url;
 
 import com.intellij.platform.workspace.storage.EntityStorage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -26,6 +27,11 @@ public interface VirtualFileUrl {
   String getUrl();
 
   String getFileName();
+
+  /**
+   * @return the parent of the VirtualFileUrl, or null if there are no parent.
+   */
+  @Nullable VirtualFileUrl getParent();
 
   /**
    * @return representation of the url without protocol

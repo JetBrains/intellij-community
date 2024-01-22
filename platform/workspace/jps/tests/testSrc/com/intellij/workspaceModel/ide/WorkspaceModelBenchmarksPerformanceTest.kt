@@ -1185,7 +1185,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   private fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
     if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
       val iprFile = file.toVirtualFileUrl(virtualFileManager)
-      return JpsProjectConfigLocation.FileBased(iprFile, virtualFileManager.getParentVirtualUrl(iprFile)!!)
+      return JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
     }
     else {
       val projectDir = file.toVirtualFileUrl(virtualFileManager)

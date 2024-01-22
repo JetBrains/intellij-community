@@ -43,7 +43,7 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   }
 
   @Synchronized
-  override fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl? {
+  internal fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl? {
     vfu as VirtualFileUrlImpl
     return id2NodeMapping.get(vfu.id)?.parent?.getVirtualFileUrl(this)
   }
