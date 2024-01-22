@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -65,6 +66,15 @@ public class MavenServerCMDState extends CommandLineState {
     myDebugPort = debugPort;
   }
 
+  private static String getProfilerVMString() {
+    String profilerOptionPrefix = "-agentpath:";
+    String profilerVMOption = VMOptions.readOption(profilerOptionPrefix, true);
+    Long currentTime = System.currentTimeMillis();
+    return profilerVMOption != null ? profilerOptionPrefix + profilerVMOption
+      .replace(".jfr", currentTime + "-maven.jfr")
+      .replace(".log", currentTime + "-maven.log") : null;
+  }
+
   protected SimpleJavaParameters createJavaParameters() {
     final SimpleJavaParameters params = new SimpleJavaParameters();
 
@@ -92,6 +102,12 @@ public class MavenServerCMDState extends CommandLineState {
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
     if (Registry.is("maven.collect.local.stat")) {
       params.getVMParametersList().addProperty("maven.collect.local.stat", "true");
+    }
+
+    String profilerOption = getProfilerVMString();
+    if (profilerOption != null) {
+      params.getVMParametersList()
+        .addParametersString(profilerOption);
     }
 
     String xmxProperty = null;
