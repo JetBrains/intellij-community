@@ -53,8 +53,7 @@ public final class StatisticsUploadAssistant {
   }
 
   private static boolean isForceCollectEnabled() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    return externalEventLogSettings != null && externalEventLogSettings.forceLoggingAlwaysEnabled();
+    return StatisticsEventLogProviderUtil.forceLoggingAlwaysEnabled();
   }
 
   public static boolean isCollectAllowedOrForced() {

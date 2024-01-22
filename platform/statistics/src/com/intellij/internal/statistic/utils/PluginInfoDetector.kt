@@ -184,6 +184,7 @@ fun findPluginTypeByValue(value: String): PluginType? {
 }
 
 private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
+private const val aePluginId = "com.jetbrains.ae.experiments"
 
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
   /**
@@ -198,6 +199,7 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
 
   fun isAllowedToInjectIntoFUS(): Boolean {
     return (id == tbePluginId && type.isDevelopedByJetBrains()) ||
+           (id == aePluginId && type.isDevelopedByJetBrains()) ||
            (PluginManagerCore.isUnitTestMode && (type == PluginType.PLATFORM || type == PluginType.FROM_SOURCES))
   }
 }

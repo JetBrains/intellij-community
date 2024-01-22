@@ -19,7 +19,7 @@ import java.util.Map;
  * Only one instance of this EP can be used - provided by Toolbox Enterprise plugin.
  */
 @ApiStatus.Internal
-public interface ExternalEventLogSettings {
+public interface ExternalEventLogSettings extends ExternalEventLogListenerProvider {
   ExtensionPointName<ExternalEventLogSettings> EP_NAME = new ExtensionPointName<>("com.intellij.statistic.eventLog.externalEventLogSettings");
 
   /**
@@ -45,32 +45,8 @@ public interface ExternalEventLogSettings {
   }
 
   /**
-   * Enables statistics logging ({@link StatisticsEventLoggerProviderExt#isLoggingAlwaysActive()}) independently of
-   * recording to file ({@link StatisticsEventLoggerProvider#isRecordEnabled()}) for <b>supported</b> loggers.
-   * <br/>
-   * Logger must implement {@link StatisticsEventLoggerProviderExt}.
-   * <br/>
-   * Is not affected by {@link ExternalEventLogSettings#forceDisableCollectionConsent()}
-   *
-   * @return true if statistics collection must be force-enabled by supported logger
-   */
-  default boolean forceLoggingAlwaysEnabled() {
-    return false;
-  }
-
-  /**
    * Provide extra headers to AP log upload requests. E.g. a shared secret to fence off data pollution
    */
   @NotNull Map<String, String> getExtraLogUploadHeaders();
 
-  /**
-   * Provides implementations of {@link StatisticsEventLogListener} to be used in {@link EventLogListenersManager}
-   * <br/>
-   * This method will be called only once per recorder on IDE start or plugin loading (for dynamic plugins)
-   *
-   * @param recorderId of a recorder which logs will trigger provided listener
-   * */
-  default @Nullable StatisticsEventLogListener getEventLogListener(@NotNull String recorderId) {
-    return null;
-  }
 }
