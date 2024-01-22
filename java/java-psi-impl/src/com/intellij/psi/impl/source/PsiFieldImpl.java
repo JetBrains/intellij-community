@@ -263,8 +263,14 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   public Icon getElementIcon(int flags) {
     IconManager iconManager = IconManager.getInstance();
     RowIcon baseIcon =
-      iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Field), ElementPresentationUtil.getFlags(this, false));
+      iconManager.createLayeredIcon(this, getBaseIcon(), ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  }
+
+  @Override
+  protected @NotNull Icon getBaseIcon() {
+    IconManager iconManager = IconManager.getInstance();
+    return iconManager.getPlatformIcon(PlatformIcons.Field);
   }
 
   private static final class OurConstValueComputer implements JavaResolveCache.ConstValueComputer {
