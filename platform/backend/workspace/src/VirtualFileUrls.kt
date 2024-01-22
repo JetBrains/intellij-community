@@ -24,7 +24,7 @@ public fun getVirtualFileUrlManager(project: Project): VirtualFileUrlManager = p
  * [VirtualFileManager.findFileByUrl].
  */
 public val VirtualFileUrl.virtualFile: VirtualFile?
-  get() = if (this is VirtualFilePointer) file else VirtualFileManager.getInstance().findFileByUrl(url)
+  get() = (this as VirtualFilePointer).file
 
 /**
  * Returns instance of [VirtualFileUrl] describing this [VirtualFile]. Note that if URL of this file wasn't registered in [virtualFileManager],
