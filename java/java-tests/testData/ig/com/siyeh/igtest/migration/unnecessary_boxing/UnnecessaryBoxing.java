@@ -186,4 +186,11 @@ class WithLambdaUnfriendlyOverloads {
       default -> Integer.<warning descr="Unnecessary boxing">valueOf</warning>(x);
     };
   }
+
+  public static String foo(int bar) {
+    return switch (Integer.valueOf(bar)) {
+      case Integer i when i <= 42 -> "42";
+      default -> throw new IllegalStateException("Unexpected value: " + bar);
+    };
+  }
 }
