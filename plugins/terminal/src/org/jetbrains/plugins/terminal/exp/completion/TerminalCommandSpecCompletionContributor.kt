@@ -63,7 +63,8 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       return completion.computeCommandsAndFiles(command)
     }
     else {
-      val items = completion.computeCompletionItems(command, arguments) ?: emptyList()
+      val commandVariants = if (command.endsWith(".exe")) listOf(command.removeSuffix(".exe"), command) else listOf(command)
+      val items = commandVariants.firstNotNullOfOrNull { completion.computeCompletionItems(it, arguments) } ?: emptyList()
       return when {
         items.isNotEmpty() -> items
         // suggest file names if there is nothing to suggest and completion is invoked manually
