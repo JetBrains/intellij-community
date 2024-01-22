@@ -553,8 +553,13 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
 
+  /**
+   * @return The IntentionAction that performs the deletion of the default element.
+   *         Returns null if the fix cannot be created
+   *         (for example, if the file is not physical, it can happen when highlighting is run on the copy of the file).
+   */
   @Nullable
-  public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement duplicateElement);
+  public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement);
 
   public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
 

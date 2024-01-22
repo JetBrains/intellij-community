@@ -1124,10 +1124,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @Nullable IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement duplicateElement) {
+  public @Nullable IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement) {
     if(!file.isPhysical()) return null;
     ProblemDescriptor descriptor =
-      new ProblemDescriptorBase(duplicateElement, duplicateElement, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null,
+      new ProblemDescriptorBase(defaultElement, defaultElement, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null,
                                 false, false);
     return QuickFixWrapper.wrap(descriptor, new UnnecessaryDefaultInspection.DeleteDefaultFix());
   }
