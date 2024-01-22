@@ -182,9 +182,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       if (pluginDescriptor != null && pluginIds != null && !pluginIds.contains(pluginDescriptor.pluginId.idString))
         return@processAllHolders
 
-      val stateAnnotation = clazz.getAnnotation(State::class.java)
-                            ?: clazz.superclass.getAnnotation(State::class.java)
-                            ?: return@processAllHolders
+      val stateAnnotation = getStateOrNull(clazz) ?: return@processAllHolders
       val componentName = stateAnnotation.name
       if (componentsToLoad.contains(componentName)) {
         val service: Any? = componentManagerImpl.getServiceByClassName(key)
@@ -242,10 +240,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     val retval = hashMapOf<String, String>()
     val osFolderName = getPerOsSettingsStorageFolderName()
     componentManager.processAllImplementationClasses { aClass, _ ->
-      if (!PersistentStateComponent::class.java.isAssignableFrom(aClass))
-        return@processAllImplementationClasses
-
-      val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
+      val state = getStateOrNull(aClass) ?: return@processAllImplementationClasses
       if (!categories.contains(state.category))
         return@processAllImplementationClasses
 
@@ -262,6 +257,17 @@ class JbSettingsImporter(private val configDirPath: Path,
       }
     }
     return retval
+  }
+
+  private fun getStateOrNull(aClass: Class<*>): State? {
+    var clazz = aClass
+    while (PersistentStateComponent::class.java.isAssignableFrom(clazz)) {
+      val state = clazz.getAnnotation(State::class.java)
+      if (state != null)
+        return state
+      clazz = clazz.superclass
+    }
+    return null
   }
 
   private fun filterSchemes(allFiles: Set<String>, categories: Set<SettingsCategory>): Set<String> {
