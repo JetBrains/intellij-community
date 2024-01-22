@@ -68,33 +68,6 @@ public interface PyAstElement extends NavigatablePsiElement {
     return (T)child;
   }
 
-  /**
-   * Returns a child of specified type. The default implementation takes it from AST.
-   * Implementation classes that also inherit StubBasedPsiElementBase have this method overridden and may take it from stubs if available.
-   * See {@link com.intellij.extapi.psi.StubBasedPsiElementBase#getStubOrPsiChild(IStubElementType)}
-   */
-  default @Nullable <Psi extends PsiElement> Psi getStubOrPsiChild(@NotNull IStubElementType<? extends StubElement, Psi> elementType) {
-    final ASTNode childNode = getNode().findChildByType(elementType);
-    if (childNode != null) {
-      //noinspection unchecked
-      return (Psi)childNode.getPsi();
-    }
-    return null;
-  }
-
-  /**
-   * Returns a not-null child of specified type. The default implementation takes it from AST.
-   * Implementation classes that also inherit StubBasedPsiElementBase have this method overridden and may take it from stubs if available.
-   * See {@link com.intellij.extapi.psi.StubBasedPsiElementBase#getRequiredStubOrPsiChild(IStubElementType)}
-   */
-  default @NotNull <S extends StubElement<?>, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
-    Psi result = getStubOrPsiChild(elementType);
-    if (result == null) {
-      throw new AssertionError("Missing required child of type " + elementType);
-    }
-    return result;
-  }
-
   default @Nullable <E extends PsiElement> E getStubOrPsiParentOfType(@NotNull Class<E> parentClass) {
     return PsiTreeUtil.getParentOfType(this, parentClass);
   }
