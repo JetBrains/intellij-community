@@ -223,9 +223,9 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
       }
     }
 
-    override fun isEnabled(editor: Editor, range: Range): Boolean = editor.getUserData(GitLabMergeRequestEditorReviewUIModel.KEY) != null
+    override fun isEnabled(editor: Editor, range: Range): Boolean = true
     override fun actionPerformed(editor: Editor, range: Range) {
-      editor.getUserData(GitLabMergeRequestEditorReviewUIModel.KEY)?.showDiff(range.line1)
+      model.showDiff(range.line1)
     }
   }
 
