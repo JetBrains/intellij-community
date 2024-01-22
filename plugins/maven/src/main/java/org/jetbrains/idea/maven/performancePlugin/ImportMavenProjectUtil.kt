@@ -40,7 +40,7 @@ internal fun importProject(project: Project) {
       mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
     }
     else {
-      mavenManager.updateAllMavenProjects(MavenSyncSpec.FULL_EXPLICIT)
+      mavenManager.updateAllMavenProjects(MavenSyncSpec.full("ImportMavenProjectUtil"))
     }
   }
 }

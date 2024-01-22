@@ -55,7 +55,7 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
                 mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
               }
               else {
-                mavenManager.updateAllMavenProjects(MavenSyncSpec.FULL_EXPLICIT)
+                mavenManager.updateAllMavenProjects(MavenSyncSpec.full("ImportMavenProjectCommand"))
               }
             }
             context.message("Import of the maven project has been finished", line)

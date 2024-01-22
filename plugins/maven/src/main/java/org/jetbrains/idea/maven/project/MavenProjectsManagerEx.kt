@@ -58,7 +58,10 @@ interface MavenAsyncProjectsManager {
     scheduleForceUpdateMavenProjects(listOf(mavenProject))
 
   fun scheduleForceUpdateMavenProjects(mavenProjects: List<MavenProject>) =
-    scheduleUpdateMavenProjects(MavenSyncSpec.FULL_EXPLICIT, mavenProjects.map { it.file }, emptyList())
+    scheduleUpdateMavenProjects(
+      MavenSyncSpec.full("MavenProjectsManagerEx.scheduleForceUpdateMavenProjects", true),
+      mavenProjects.map { it.file },
+      emptyList())
 
   fun scheduleUpdateMavenProjects(spec: MavenSyncSpec,
                                   filesToUpdate: List<VirtualFile>,
@@ -96,7 +99,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                                             modelsProvider: IdeModifiableModelsProvider?,
                                                             previewModule: Module?): List<Module> {
     blockingContext { doAddManagedFilesWithProfiles(files, profiles, previewModule) }
-    return updateAllMavenProjects(MavenSyncSpec.INCREMENTAL, modelsProvider)
+    return updateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManagerEx.addManagedFilesWithProfilesAndUpdate"), modelsProvider)
   }
 
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>) {
@@ -200,7 +203,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   override fun doForceUpdateProjects(projects: Collection<MavenProject>): AsyncPromise<Void> {
     val promise = AsyncPromise<Void>()
     cs.launch {
-      updateMavenProjects(MavenSyncSpec.FULL_EXPLICIT, projects.map { it.file }, emptyList())
+      updateMavenProjects(MavenSyncSpec.full("MavenProjectsManagerEx.doForceUpdateProjects"), projects.map { it.file }, emptyList())
       promise.setResult(null)
     }
     return promise
@@ -244,7 +247,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   @Deprecated("Use {@link #scheduleUpdateAllMavenProjects(List)}}")
   override fun updateAllMavenProjectsSync(deprecatedSpec: MavenImportSpec): List<Module> {
     MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
-    val spec = MavenSyncSpec.FULL
+    val spec = MavenSyncSpec.full("MavenProjectsManagerEx.updateAllMavenProjectsSync")
     try {
       // unit tests
       if (ApplicationManager.getApplication().isDispatchThread) {

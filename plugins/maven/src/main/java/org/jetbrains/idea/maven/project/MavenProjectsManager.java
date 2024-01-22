@@ -131,7 +131,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState = state;
     if (isInitialized()) {
       applyStateToTree(myProjectsTree, this);
-      scheduleUpdateAllMavenProjects(MavenSyncSpec.INCREMENTAL);
+      scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManager.loadState"));
     }
   }
 
@@ -271,7 +271,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         var forceImport =
           Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
         if (forceImport) {
-          scheduleUpdateAllMavenProjects(MavenSyncSpec.FULL);
+          scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
         }
       }
     }
@@ -449,7 +449,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete);
-    scheduleUpdateAllMavenProjects(MavenSyncSpec.INCREMENTAL);
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManager.addManagedFilesWithProfiles"));
   }
 
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
@@ -726,7 +726,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAllMavenProjects(MavenSyncSpec.FULL_EXPLICIT);
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.removeManagedFiles", true));
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
@@ -735,7 +735,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public void forceUpdateProjects() {
-    scheduleUpdateAllMavenProjects(MavenSyncSpec.FULL_EXPLICIT);
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.forceUpdateProjects", true));
   }
 
   /**
@@ -751,7 +751,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected abstract AsyncPromise<Void> doForceUpdateProjects(@NotNull Collection<@NotNull MavenProject> projects);
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
-    forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenSyncSpec.FULL_EXPLICIT);
+    forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenSyncSpec.full("MavenProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles", true));
   }
 
   @ApiStatus.Internal
@@ -823,7 +823,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @Deprecated(forRemoval = true)
   // used in third-party plugins
   public List<Module> importProjects() {
-    scheduleUpdateAllMavenProjects(MavenSyncSpec.FULL);
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.importProjects"));
     return List.of();
   }
 

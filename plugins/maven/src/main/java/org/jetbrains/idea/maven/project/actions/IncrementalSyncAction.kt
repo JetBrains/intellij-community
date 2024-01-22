@@ -24,6 +24,6 @@ class IncrementalSyncAction : MavenProjectsManagerAction() {
   override fun perform(manager: MavenProjectsManager) {
     ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(manager.project, MavenUtil.SYSTEM_ID)
     FileDocumentManager.getInstance().saveAllDocuments()
-    manager.scheduleUpdateAllMavenProjects(MavenSyncSpec.INCREMENTAL_EXPLICIT)
+    manager.scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("IncrementalSyncAction", true))
   }
 }

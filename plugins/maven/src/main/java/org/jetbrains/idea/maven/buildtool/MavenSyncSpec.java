@@ -6,11 +6,21 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.NonExtendable
 @ApiStatus.Experimental
 public interface MavenSyncSpec {
-  MavenSyncSpec INCREMENTAL = new MavenSyncSpecImpl(false, false, "");
-  MavenSyncSpec INCREMENTAL_EXPLICIT = new MavenSyncSpecImpl(false, true, "");
+  static MavenSyncSpec incremental(String description) {
+    return incremental(description, false);
+  }
 
-  MavenSyncSpec FULL = new MavenSyncSpecImpl(true, false, "");
-  MavenSyncSpec FULL_EXPLICIT = new MavenSyncSpecImpl(true, true, "");
+  static MavenSyncSpec incremental(String description, boolean explicit) {
+    return new MavenSyncSpecImpl(false, explicit, description);
+  }
+
+  static MavenSyncSpec full(String description) {
+    return full(description, false);
+  }
+
+  static MavenSyncSpec full(String description, boolean explicit) {
+    return new MavenSyncSpecImpl(true, explicit, description);
+  }
 
   boolean isForceReading();
 
@@ -40,7 +50,7 @@ class MavenSyncSpecImpl implements MavenSyncSpec {
 
   @Override
   public String toString() {
-    return "MavenImportSpec{" +
+    return "MavenSyncSpec{" +
            "forceReading=" + myForceReading +
            ", explicit=" + myExplicitImport +
            '}';

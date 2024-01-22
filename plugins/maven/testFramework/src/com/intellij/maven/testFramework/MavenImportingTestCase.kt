@@ -502,7 +502,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun updateAllProjects() {
-    projectsManager.updateAllMavenProjects(MavenSyncSpec.FULL)
+    projectsManager.updateAllMavenProjects(MavenSyncSpec.full("MavenImportingTestCase"))
   }
 
   protected suspend fun downloadArtifacts() {

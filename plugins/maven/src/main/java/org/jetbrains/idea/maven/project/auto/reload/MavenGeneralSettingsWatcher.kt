@@ -39,7 +39,7 @@ class MavenGeneralSettingsWatcher(
     MavenDistributionsCache.getInstance(project).cleanCaches()
     val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
     cs.launch {
-      manager.updateAllMavenProjects(MavenSyncSpec.FULL)
+      manager.updateAllMavenProjects(MavenSyncSpec.full("MavenGeneralSettingsWatcher.fireSettingsChange"))
     }
   }
 

@@ -82,6 +82,6 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val manager = MavenProjectsManager.getInstance(project)
     manager.initForTests()
     manager.addManagedFiles(listOf(file))
-    manager.updateAllMavenProjects(MavenSyncSpec.FULL)
+    manager.updateAllMavenProjects(MavenSyncSpec.full("MavenMultiProjectImportTest"))
   }
 }
