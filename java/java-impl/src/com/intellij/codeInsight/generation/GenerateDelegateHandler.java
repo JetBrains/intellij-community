@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -21,13 +23,14 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler {
+public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler, DumbAware {
   private static final Logger LOG = Logger.getInstance(GenerateDelegateHandler.class);
   private boolean myToCopyJavaDoc;
 
@@ -47,20 +50,25 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     final PsiElementClassMember target = chooseTarget(file, editor, project);
     if (target == null) return;
 
-    final PsiMethodMember[] candidates = chooseMethods(target, file, editor, project);
+    DumbService dumbService = DumbService.getInstance(project);
+    final PsiMethodMember[] candidates = dumbService.computeWithAlternativeResolveEnabled(
+      () -> chooseMethods(target, file, editor, project));
     if (candidates == null || candidates.length == 0) return;
-
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         int offset = editor.getCaretModel().getOffset();
 
         List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<>(candidates.length);
-        for (PsiMethodMember candidate : candidates) {
-          prototypes.add(generateDelegatePrototype(candidate, target.getElement()));
-        }
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+          () -> {
+            for (PsiMethodMember candidate : candidates) {
+              prototypes.add(generateDelegatePrototype(candidate, target.getElement()));
+            }
+          });
 
-        List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
+        List<PsiGenerationInfo<PsiMethod>> results = dumbService.computeWithAlternativeResolveEnabled(
+          () -> GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes));
 
         if (!results.isEmpty()) {
           PsiMethod firstMethod = results.get(0).getPsiMember();
@@ -311,7 +319,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
       final List<PsiElementClassMember> selectedElements = chooser.getSelectedElements();
 
-      if (selectedElements != null && selectedElements.size() > 0) return selectedElements.get(0);
+      if (selectedElements != null && !selectedElements.isEmpty()) return selectedElements.get(0);
     }
     else {
       return targetElements[0];
@@ -320,22 +328,24 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
   }
 
   private static PsiElementClassMember @Nullable [] getTargetElements(PsiFile file, Editor editor) {
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
-    final PsiClass targetClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    PsiClass aClass = targetClass;
-    if (aClass == null) return null;
+    return DumbService.getInstance(file.getProject()).computeWithAlternativeResolveEnabled(() -> {
+      int offset = editor.getCaretModel().getOffset();
+      PsiElement element = file.findElementAt(offset);
+      if (element == null) return null;
+      final PsiClass targetClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      PsiClass aClass = targetClass;
+      if (aClass == null) return null;
 
-    List<PsiElementClassMember> result = new ArrayList<>();
+      List<PsiElementClassMember> result = new ArrayList<>();
 
-    while (aClass != null) {
-      collectTargetsInClass(element, targetClass, aClass, result);
-      if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
-      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-    }
+      while (aClass != null) {
+        collectTargetsInClass(element, targetClass, aClass, result);
+        if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
+        aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+      }
 
-    return result.toArray(new PsiElementClassMember[0]);
+      return result.toArray(new PsiElementClassMember[0]);
+    });
   }
 
   private static void collectTargetsInClass(PsiElement element,
