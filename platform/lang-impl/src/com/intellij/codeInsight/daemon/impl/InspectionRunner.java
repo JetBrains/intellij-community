@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -17,6 +16,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.*;
@@ -37,12 +38,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 class InspectionRunner {
+  private static final Logger LOG = Logger.getInstance(InspectionRunner.class);
   private final PsiFile myPsiFile;
   private final TextRange myRestrictRange;
   private final TextRange myPriorityRange;
@@ -76,21 +80,22 @@ class InspectionRunner {
   record InspectionContext(@NotNull LocalInspectionToolWrapper tool,
                            @NotNull InspectionProblemHolder holder,
                            @NotNull PsiElementVisitor visitor,
-                           @NotNull List<? extends PsiElement> elements,
+                           @NotNull List<? extends PsiElement> elementsInside,
+                           @NotNull List<? extends PsiElement> elementsOutside,
                            boolean isVisible,
                            @NotNull List<Class<?>> acceptingPsiTypes,
                            // the containing file this tool was called for. In the case of injected context, this will be the injected file.
                            @NotNull PsiFile psiFile) {
     @Override
     public String toString() {
-      return tool +"; elements:"+elements.size();
+      return tool +"; inside:"+elementsInside().size()+"; outside:"+elementsOutside().size();
     }
   }
 
   @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                      @Nullable HighlightSeverity minimumSeverity,
                                                      boolean addRedundantSuppressions,
-                                                     @NotNull BiConsumer<? super ProblemDescriptor, ? super InspectionProblemHolder> applyIncrementallyCallback,
+                                                     @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
                                                      @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
                                                      @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     if (!shouldInspect(myPsiFile)) {
@@ -108,14 +113,22 @@ class InspectionRunner {
     List<LocalInspectionToolWrapper> applicableByLanguage =
       InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside));
 
-    List<InspectionContext> init = new ArrayList<>(applicableByLanguage.size()*2); // tools for 'inside' + tools for 'outside'
-    List<InspectionContext> invisibleContexts = new ArrayList<>(applicableByLanguage.size()*2); // tools for 'inside' + tools for 'outside'
+    List<InspectionContext> init = new ArrayList<>(applicableByLanguage.size());
     List<InspectionContext> redundantContexts = new ArrayList<>();
+    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(myPsiFile.getProject());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("inspect: "+myPsiFile+"; host="+InjectedLanguageManager.getInstance(myPsiFile.getProject()).injectedToHost(myPsiFile, myPsiFile.getTextRange())+";" +
+                                    "\n"+" inside:"+inside.size()+ ": "+inside+
+                                    "\n"+"; outside:"+outside.size()+": "+outside);
+    }
     InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRangeScalarUtil.create(finalPriorityRange), minimumSeverity, myIsOnTheFly, session -> {
       for (LocalInspectionToolWrapper toolWrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(toolWrapper)) {
           LocalInspectionTool tool = toolWrapper.getTool();
-          InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, toolWrapper, myIsOnTheFly, myInspectionProfileWrapper, applyIncrementallyCallback);
+          AtomicInteger toolWasProcessed = new AtomicInteger();
+          ToolStampInfo toolStamps = new ToolStampInfo();
+          InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, toolWrapper, myIsOnTheFly, myInspectionProfileWrapper,
+                                                                       toolWasProcessed, toolStamps, applyIncrementallyCallback);
           PsiElementVisitor visitor = InspectionEngine.createVisitor(tool, holder, myIsOnTheFly, session);
           // if inspection returned the empty visitor, then it should be skipped
           if (visitor == PsiElementVisitor.EMPTY_VISITOR) {
@@ -124,48 +137,68 @@ class InspectionRunner {
           tool.inspectionStarted(session, myIsOnTheFly);
 
           List<Class<?>> acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
-          init.add(new InspectionContext(toolWrapper, holder, visitor, inside, true, acceptingPsiTypes, myPsiFile));
-          if (toolWrapper.getID().equals("SSBasedInspection")) {
-            // todo remove when SSBasedVisitor is thread-safe, see https://youtrack.jetbrains.com/issue/IDEA-335546
-            visitor = InspectionEngine.createVisitor(tool, holder, myIsOnTheFly, session);
+          List<? extends PsiElement> sortedInside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, inside);
+          List<? extends PsiElement> sortedOutside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, outside);
+          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, sortedOutside, true, acceptingPsiTypes, myPsiFile);
+          init.add(context);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("inspect: created context: "+myPsiFile+"; host="+InjectedLanguageManager.getInstance(myPsiFile.getProject()).injectedToHost(myPsiFile, myPsiFile.getTextRange())+"; context="+context+"; acceptingPsiTypes="+acceptingPsiTypes+
+                                          "\n"+" inside:"+context.elementsInside()+
+                                          "\n"+"; outside:"+context.elementsOutside());
           }
-          invisibleContexts.add(new InspectionContext(toolWrapper, holder, visitor, outside, false, acceptingPsiTypes, myPsiFile));
         }
       }
       //sort `init`, according to the priorities, saved earlier to run in order
       // but only for visible elements, because we don't care about the order in 'outside', and spending CPU on their rearrangement would be counterproductive
-      InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myPsiFile.getProject());
-      profileData.sortAndRetrieveFavoriteElement(myPsiFile, init);
+      InspectionProfilerDataHolder.sortByLatencies(myPsiFile, init);
 
-      long start = System.nanoTime();
-      // injected -> host
       InspectionContext TOMB_STONE = createTombStone();
+      int initSize = init.size();
+      BlockingQueue<InspectionContext> contextQueue = new ArrayBlockingQueue<>(initSize * 2 + 1, false);
+      AtomicInteger addedInvisibles = new AtomicInteger();
       Consumer<InspectionContext> onComplete = context -> {
-        // an inspection is considered finished only when it visited both 'inside' and 'outside' elements
-        InspectionProblemHolder holder = context.holder;
-        if (holder.toolWasProcessed.incrementAndGet() == 2) {
-          holder.finishTimeStamp = System.nanoTime();
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("onComplete: " + context + "; visible=" + context.isVisible()+"; holder:"+context.holder.getResults());
+        }
+        if (context.isVisible()) {
+          // after the visible part is finished, queue the invisible part
+          InspectionContext invisibleContext =
+            new InspectionContext(context.tool(), context.holder(), context.visitor(), context.elementsInside(), context.elementsOutside(),
+                                  false, context.acceptingPsiTypes(), context.psiFile());
+          contextQueue.add(invisibleContext);
+          if (addedInvisibles.incrementAndGet() == initSize) {
+            contextQueue.add(TOMB_STONE);
+          }
+        }
+        else {
+          // both 'inside' and 'outside' elements are visited, the inspection is considered finished
+          InspectionProblemHolder holder = context.holder;
+          holder.toolStamps.finishTimeStamp = System.nanoTime();
           context.tool.getTool().inspectionFinished(session, holder);
+          // report descriptors which were added by crazy inspections in their inspectionFinished() as the result of "visiting" fake element
+          holder.reportAddedDescriptors(HighlightInfoUpdater.FAKE_ELEMENT);
           contextFinishedCallback.accept(context);
         }
       };
 
-      List<InspectionContext> allContexts = ContainerUtil.concat(init, invisibleContexts);
-      // have to do all this even for empty elements, in order to perform correct cleanup/inspectionFinished
-      BlockingQueue<InspectionContext> contexts = new ArrayBlockingQueue<>(allContexts.size() + 1, false, allContexts);
-      boolean added = contexts.offer(TOMB_STONE);
-      assert added;
-      ForkJoinTask<Boolean> regularElementsFuture = processInOrderAsync(contexts, TOMB_STONE,
-          context -> processContext(finalPriorityRange, myRestrictRange, context, onComplete));
+      // have to do all this even for empty elements, to perform correct cleanup/inspectionFinished
+      if (init.isEmpty()) {
+        contextQueue.add(TOMB_STONE);
+      }
+      else {
+        boolean added = contextQueue.addAll(init);
+        assert added;
+      }
 
-      ForkJoinTask<Boolean> injectedElementsFuture = null;
+      BooleanSupplier regularElementsFuture = processInOrderAsync(contextQueue, TOMB_STONE, context -> processContext(context, onComplete));
+
+      BooleanSupplier injectedElementsFuture = null;
       if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
         BlockingQueue<Pair<PsiFile, PsiElement>> queue = new LinkedBlockingQueue<>();
         Pair<PsiFile, PsiElement> tombStone = Pair.create(null, null);
         try {
-          injectedElementsFuture =
-            startInspectingInjectedPsi(session, queue, toolWrappers, injectedContexts, applyIncrementallyCallback, contextFinishedCallback, enabledToolsPredicate,
-                                       tombStone);
+          injectedElementsFuture = startInspectingInjectedPsi(session, queue, toolWrappers, injectedContexts, applyIncrementallyCallback,
+                                                              contextFinishedCallback, enabledToolsPredicate, tombStone);
           getInjectedWithHosts(ContainerUtil.concat(inside, outside), queue);
         }
         finally {
@@ -178,11 +211,10 @@ class InspectionRunner {
         }
       }
 
-      reportIdsOfInspectionsReportedAnyProblemToFUS(allContexts);
+      reportIdsOfInspectionsReportedAnyProblemToFUS(init);
 
       try {
-        // do not call .get() to avoid overcompensation
-        if (!regularElementsFuture.invoke() | (injectedElementsFuture != null && !injectedElementsFuture.invoke())) {
+        if (!regularElementsFuture.getAsBoolean() | (injectedElementsFuture != null && !injectedElementsFuture.getAsBoolean())) {
           throw new ProcessCanceledException();
         }
       }
@@ -192,13 +224,13 @@ class InspectionRunner {
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for the batch process, there could be too many files
-        profileData.saveStats(myPsiFile, init, System.nanoTime() - start);
+        InspectionProfilerDataHolder.saveStats(myPsiFile, init);
       }
       if (myIsOnTheFly && addRedundantSuppressions) {
-        addRedundantSuppressions(allContexts, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback);
+        addRedundantSuppressions(init, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback);
       }
     });
-    return ContainerUtil.concat(init, invisibleContexts, redundantContexts, injectedContexts);
+    return ContainerUtil.concat(init, redundantContexts, injectedContexts);
   }
 
   private void reportIdsOfInspectionsReportedAnyProblemToFUS(@NotNull List<? extends InspectionContext> init) {
@@ -207,7 +239,7 @@ class InspectionRunner {
     InspectionProblemHolder holder;
     for (InspectionContext context : init) {
       holder = context.holder;
-      if (holder.anyProblemWasReported()) {
+      if (holder.toolStamps.anyProblemWasReported()) {
         inspectionIdsReportedProblems.add(context.tool.getID());
       }
     }
@@ -225,8 +257,10 @@ class InspectionRunner {
 
   private @NotNull InspectionContext createTombStone() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new LocalInspectionEP());
-    InspectionProblemHolder fake = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, emptyBiCallback);
-    return new InspectionContext(tool, fake, new PsiElementVisitor() {}, List.of(), false, List.of(), myPsiFile);
+    InspectionProblemHolder fake = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, new AtomicInteger(),
+                                                               new ToolStampInfo(), emptyIncrementalCallback
+    );
+    return new InspectionContext(tool, fake, new PsiElementVisitor() {}, List.of(), List.of(), false, List.of(), myPsiFile);
   }
 
   private static @NotNull <T> Map<PsiFile, T> createInjectedFileMap() {
@@ -272,7 +306,7 @@ class InspectionRunner {
   private void addRedundantSuppressions(@NotNull List<? extends InspectionContext> init,
                                         @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                         @NotNull List<? super InspectionContext> result,
-                                        @NotNull BiConsumer<? super ProblemDescriptor, ? super InspectionProblemHolder> applyIncrementallyCallback,
+                                        @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
                                         @NotNull Consumer<? super InspectionContext> contextFinishedCallback) {
     for (InspectionContext context : init) {
       LocalInspectionToolWrapper toolWrapper = context.tool;
@@ -318,17 +352,17 @@ class InspectionRunner {
     result.addAll(runner.inspect(wrappers, HighlightSeverity.WARNING, false, applyIncrementallyCallback, contextFinishedCallback, null));
   }
 
-  private static final @NotNull BiConsumer<ProblemDescriptor, InspectionProblemHolder> emptyBiCallback = (__,___) -> { };
+  private static final @NotNull ApplyIncrementallyCallback emptyIncrementalCallback = (__1, __2, __3, __4) -> { };
 
-  private <T> ForkJoinTask<Boolean> processInOrderAsync(@NotNull BlockingQueue<T> contexts,
-                                                        @NotNull T TOMB_STONE,
-                                                        @NotNull Consumer<? super T> processor) {
+  @NotNull
+  private <T> BooleanSupplier processInOrderAsync(@NotNull BlockingQueue<T> contexts,
+                                                  @NotNull T TOMB_STONE,
+                                                  @NotNull Consumer<? super T> processor) {
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     boolean shouldFailFastAcquiringReadAction = application.isInImpatientReader();
 
     return
-      ((JobLauncherImpl)JobLauncher.getInstance()).processQueueAsync(contexts, new SensitiveProgressWrapper(myProgress),
-                                                                     TOMB_STONE, context ->
+      JobLauncher.getInstance().processQueueAsync(contexts, new SensitiveProgressWrapper(myProgress), TOMB_STONE, context ->
         AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(myPsiFile, () -> {
           Runnable runnable = () -> {
             if (!application.tryRunReadAction(() -> processor.accept(context))) {
@@ -348,47 +382,36 @@ class InspectionRunner {
   }
 
   /**
-   * for each tool in {@code init} (in this order) call its {@link InspectionContext#visitor} on every PsiElement in {@code inside} list (starting from this inspection's {@link InspectionProblemHolder#myFavoriteElement} if any),
+   * for each tool in {@code init} (in this order) call its {@link InspectionContext#visitor} on every PsiElement in {@code inside} list
+   * (starting from this inspection's most fertile elements if any),
    * maintaining parallelism during this process (i.e., several visitors from {@code init} can be executed concurrently, but elements from the list head get higher priority than the list tail).
    */
-  private static void processContext(long priorityRange,
-                                     @NotNull TextRange restrictRange,
-                                     @NotNull InspectionContext context,
+  private static void processContext(@NotNull InspectionContext context,
                                      @NotNull Consumer<? super InspectionContext> afterProcessCallback) {
-    List<? extends PsiElement> elements = context.elements();
+    List<? extends PsiElement> elements = context.isVisible() ? context.elementsInside() : context.elementsOutside();
     Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
     InspectionProblemHolder holder = context.holder;
-    PsiElement oldFavoriteElement = holder.myFavoriteElement;
-
-    // accept favoriteElement only if it belongs to the correct inside/outside list
-    Document document = context.psiFile.getViewProvider().getDocument();
-    if (oldFavoriteElement != null &&
-        context.isVisible() == TextRangeScalarUtil.intersects(oldFavoriteElement.getTextRange(), priorityRange) &&
-        restrictRange.contains(oldFavoriteElement.getTextRange())) {
-      holder.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
-      // run first for the element we know resulted in the diagnostics during the previous run
-      holder.visitElement(oldFavoriteElement, context.visitor, document);
-    }
-
     if (context.acceptingPsiTypes == InspectionVisitorsOptimizer.ALL_ELEMENTS_VISIT_LIST) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("processContext: " + context + "; elements(" + elements.size() + "): " + StringUtil.join( elements, e->e+"("+e.getClass()+")", ", ") + "; accepts: all");
+      }
       for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
-
-        if (element == oldFavoriteElement) continue; // already visited
-
         ProgressManager.checkCanceled();
-        holder.visitElement(element, context.visitor, document);
+        holder.visitElement(element, context.visitor);
       }
     }
     else {
       Set<Class<?>> accepts = InspectionVisitorsOptimizer.getVisitorAcceptClasses(targetPsiClasses, context.acceptingPsiTypes);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("processContext: " + context + "; elements(" + elements.size() + "): " + StringUtil.join( elements, e->e+"("+e.getClass()+")", ", ") + "; accepts=" + accepts+"; targetPsiClasses="+targetPsiClasses);
+      }
       if (accepts != null && !accepts.isEmpty()) {
         for (int i = 0; i < elements.size(); i++) {
           PsiElement element = elements.get(i);
-          if (element == oldFavoriteElement) continue; // already visited
           if (accepts.contains(element.getClass())) {
             ProgressManager.checkCanceled();
-            holder.visitElement(element, context.visitor, document);
+            holder.visitElement(element, context.visitor);
           }
         }
       }
@@ -396,33 +419,24 @@ class InspectionRunner {
     afterProcessCallback.accept(context);
   }
 
-  private ForkJoinTask<Boolean> startInspectingInjectedPsi(@NotNull LocalInspectionToolSession session,
-                                               @NotNull BlockingQueue<Pair<PsiFile, PsiElement>> injectedFilesWithHosts,
-                                               @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
-                                               @NotNull List<? super InspectionContext> outInjectedContexts,
-                                               @NotNull BiConsumer<? super ProblemDescriptor, ? super InspectionProblemHolder> addDescriptorIncrementallyCallback,
-                                               @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
-                                               @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate,
-                                               @NotNull Pair<PsiFile, PsiElement> tombStone) {
+  @NotNull
+  private BooleanSupplier startInspectingInjectedPsi(@NotNull LocalInspectionToolSession session,
+                                                     @NotNull BlockingQueue<Pair<PsiFile, PsiElement>> injectedFilesWithHosts,
+                                                     @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
+                                                     @NotNull List<? super InspectionContext> outInjectedContexts,
+                                                     @NotNull ApplyIncrementallyCallback addDescriptorIncrementallyCallback,
+                                                     @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
+                                                     @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate,
+                                                     @NotNull Pair<PsiFile, PsiElement> tombStone) {
     return processInOrderAsync(injectedFilesWithHosts, tombStone, pair -> {
       PsiFile injectedPsi = pair.getFirst();
       if (!shouldInspect(injectedPsi)) {
         return;
       }
       PsiElement host = pair.getSecond();
-      BiConsumer<? super ProblemDescriptor, ? super InspectionProblemHolder> applyIncrementallyCallback = (descriptor, holder) -> {
-        PsiElement descriptorPsiElement = descriptor.getPsiElement();
-        LocalInspectionToolWrapper wrapper = holder.myToolWrapper;
-        if (myIgnoreSuppressed &&
-            (wrapper.getTool().isSuppressedFor(host)
-             || descriptorPsiElement != null && wrapper.getTool().isSuppressedFor(descriptorPsiElement))) {
-          registerSuppressedElements(host, wrapper.getID(), wrapper.getAlternativeID());
-          return/* false*/;
-        }
-        if (myIsOnTheFly) {
-          addDescriptorIncrementallyCallback.accept(descriptor, holder);
-        }
-      };
+      ApplyIncrementallyCallback applyInjectionsIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) ->
+        applyInjectedDescriptor(descriptors, holder, visitingPsiElement, shortName, host, addDescriptorIncrementallyCallback);
+
       // convert host priority range to the injected
       Document document = PsiDocumentManager.getInstance(myPsiFile.getProject()).getDocument(injectedPsi);
       TextRange injectedPriorityRange;
@@ -430,77 +444,94 @@ class InspectionRunner {
         int start = documentWindow.hostToInjected(myPriorityRange.getStartOffset());
         int end = documentWindow.hostToInjected(myPriorityRange.getEndOffset());
         injectedPriorityRange = TextRange.isProperRange(start, end) ? new TextRange(start, end) : TextRange.EMPTY_RANGE;
+
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("startInspectingInjectedPsi: psi=" + injectedPsi + "; host ranges= " + Arrays.toString(documentWindow.getHostRanges())+"; wrappers="+wrappers+"; injectedPsi.getTextRange()="+injectedPsi.getTextRange()+"; shouldInspect="+shouldInspect(injectedPsi));
+        }
       }
       else {
         injectedPriorityRange = TextRange.EMPTY_RANGE;
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("startInspectingInjectedPsi: psi=" + injectedPsi + "; document = " + document+"; wrappers="+wrappers+"; injectedPsi.getTextRange()="+injectedPsi.getTextRange()+"; shouldInspect="+shouldInspect(injectedPsi));
+        }
       }
       InspectionRunner injectedRunner = new InspectionRunner(injectedPsi, injectedPsi.getTextRange(),
                                                              injectedPriorityRange, false, myIsOnTheFly, myProgress,
                                                              myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
       List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(
-        wrappers, session.getMinimumSeverity(), true, applyIncrementallyCallback,
+        wrappers, session.getMinimumSeverity(), true, applyInjectionsIncrementallyCallback,
         contextFinishedCallback, enabledToolsPredicate);
       outInjectedContexts.addAll(injectedContexts);
     });
+  }
+
+  private void applyInjectedDescriptor(@NotNull List<? extends ProblemDescriptor> descriptors,
+                                       @NotNull InspectionProblemHolder holder,
+                                       @NotNull PsiElement visitingPsiElement,
+                                       @NotNull String shortName,
+                                       @NotNull PsiElement host,
+                                       @NotNull ApplyIncrementallyCallback addDescriptorIncrementallyCallback) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("startInspectingInjectedPsi:applyInjectedDescriptor visitingPsiElement=" + visitingPsiElement + "; tool=" + shortName + "; desc=" +
+                                    descriptors + "; holder=" + holder.getResults() + "; onTheFly=" + myIsOnTheFly);
+    }
+    Boolean isSuppressedForHost = null;
+    if (myIgnoreSuppressed) {
+      for (int i = descriptors.size() - 1; i >= 0; i--) {
+        ProblemDescriptor descriptor = descriptors.get(i);
+        PsiElement descriptorPsiElement = descriptor.getPsiElement();
+        LocalInspectionToolWrapper wrapper = holder.myToolWrapper;
+        if (isSuppressedForHost == null) {
+          isSuppressedForHost = wrapper.getTool().isSuppressedFor(host);
+        }
+        if (isSuppressedForHost || descriptorPsiElement != null && wrapper.getTool().isSuppressedFor(descriptorPsiElement)) {
+          registerSuppressedElements(host, wrapper.getID(), wrapper.getAlternativeID());
+          // remove descriptor at index i from applying
+          descriptors = ContainerUtil.concat(descriptors.subList(0, i), descriptors.subList(i+1, descriptors.size()));
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("startInspectingInjectedPsi:applyInjectedDescriptor: suppressed " + descriptor + " for tool " + wrapper);
+          }
+        }
+      }
+    }
+    if (myIsOnTheFly) {
+      addDescriptorIncrementallyCallback.apply(descriptors, holder, visitingPsiElement, shortName);
+    }
   }
 
   private void getInjectedWithHosts(@NotNull List<? extends PsiElement> elements, @NotNull BlockingQueue<? super Pair<PsiFile, PsiElement>> result) {
     Map<PsiFile, PsiElement> injectedToHost = createInjectedFileMap();
     Project project = myPsiFile.getProject();
     for (PsiElement element : elements) {
-      InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false,
-                                                               (injectedPsi, __) -> {
-                                                                 if (injectedToHost.put(injectedPsi, element) == null) {
-                                                                   try {
-                                                                     result.put(Pair.create(injectedPsi, element));
-                                                                   }
-                                                                   catch (InterruptedException e) {
-                                                                     throw new ProcessCanceledException(e);
-                                                                   }
-                                                                 }
-                                                               });
+      InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false, (injectedPsi, places) -> {
+         if (injectedToHost.put(injectedPsi, element) == null) {
+           try {
+             if (LOG.isTraceEnabled()) {
+               LOG.trace("getInjectedWithHosts: found injected " +injectedPsi+ " at "+places.size()+" places: "+places+"; "+injectedPsi);
+             }
+             result.put(Pair.create(injectedPsi, element));
+           }
+           catch (InterruptedException e) {
+             throw new ProcessCanceledException(e);
+           }
+         }
+      });
     }
   }
 
-  static final class InspectionProblemHolder extends ProblemsHolder {
-    final @NotNull LocalInspectionToolWrapper myToolWrapper;
-    private final InspectionProfileWrapper myProfileWrapper;
-    @NotNull
-    private final BiConsumer<? super ProblemDescriptor, ? super InspectionProblemHolder> applyIncrementallyCallback;
-    private final Iterator<HighlightInfo> infoIterator; // iterator into toolInfos, guarded by toolInfos
+  interface ApplyIncrementallyCallback {
+    void apply(@NotNull List<? extends ProblemDescriptor> descriptors,
+               @NotNull InspectionProblemHolder holder,
+               @NotNull PsiElement visitingPsiElement,
+               @NotNull String toolShortName);
+  }
+  static class ToolStampInfo {
     long errorStamp; // nano-stamp of the first error created
     long warningStamp; // nano-stamp of the first warning created
-    long otherStamp; // nano-stamp of the first info/weak warn/etc. created
+    long otherStamp; // nano-stamp of the first created problem descriptor with severity other than error/warn
     final long initTimeStamp = System.nanoTime();
     volatile long finishTimeStamp;
-    volatile PsiElement myFavoriteElement; // the element during visiting which, some diagnostics were generated in the previous run
-    @NotNull final AtomicInteger toolWasProcessed = new AtomicInteger();
-    // has to ignore duplicates which can sometimes appear due to high-concurrent process/retry in processQueueAsync
-    @NotNull final Collection<HighlightInfo> toolInfos = new HashSetQueue<>(); // guarded by toolInfos
-    private int resultCount;
-    private boolean favoriteElementStored;
-
-    InspectionProblemHolder(@NotNull PsiFile file,
-                            @NotNull LocalInspectionToolWrapper toolWrapper,
-                            boolean isOnTheFly,
-                            @NotNull InspectionProfileWrapper inspectionProfileWrapper,
-                            @NotNull BiConsumer<? super ProblemDescriptor, ? super InspectionProblemHolder> applyIncrementallyCallback) {
-      super(InspectionManager.getInstance(file.getProject()), file, isOnTheFly);
-      myToolWrapper = toolWrapper;
-      myProfileWrapper = inspectionProfileWrapper;
-      this.applyIncrementallyCallback = applyIncrementallyCallback;
-      synchronized (toolInfos) {
-        infoIterator = toolInfos.iterator();
-      }
-    }
-
-    @Override
-    public void registerProblem(@NotNull ProblemDescriptor descriptor) {
-      applyIncrementallyCallback.accept(descriptor, this);
-      synchronized (this) {
-        super.registerProblem(descriptor);
-      }
-      HighlightSeverity severity = myProfileWrapper.getErrorLevel(myToolWrapper.getDisplayKey(), getFile()).getSeverity();
+    private void updateToolStamps(@NotNull HighlightSeverity severity) {
       if (severity.compareTo(HighlightSeverity.ERROR) >= 0) {
         if (errorStamp == 0) {
           errorStamp = System.nanoTime();
@@ -517,32 +548,68 @@ class InspectionRunner {
         }
       }
     }
+    private boolean anyProblemWasReported() {
+      return errorStamp > 0 || warningStamp > 0 || otherStamp > 0;
+    }
+  }
+
+  static final class InspectionProblemHolder extends ProblemsHolder {
+    final @NotNull LocalInspectionToolWrapper myToolWrapper;
+    private final InspectionProfileWrapper myProfileWrapper;
+    @NotNull
+    private final ApplyIncrementallyCallback applyIncrementallyCallback;
+    @NotNull final AtomicInteger toolWasProcessed;
+    // has to ignore duplicates which can sometimes appear due to high-concurrent process/retry in processQueueAsync
+    @NotNull final Collection<HighlightInfo> toolInfos = new HashSetQueue<>(); // guarded by toolInfos
+    private int resultCount;
+    final ToolStampInfo toolStamps;
+
+    InspectionProblemHolder(@NotNull PsiFile file,
+                            @NotNull LocalInspectionToolWrapper toolWrapper,
+                            boolean isOnTheFly,
+                            @NotNull InspectionProfileWrapper inspectionProfileWrapper,
+                            @NotNull AtomicInteger toolWasProcessed,
+                            @NotNull ToolStampInfo toolStamps,
+                            @NotNull ApplyIncrementallyCallback applyIncrementallyCallback) {
+      super(InspectionManager.getInstance(file.getProject()), file, isOnTheFly);
+      myToolWrapper = toolWrapper;
+      myProfileWrapper = inspectionProfileWrapper;
+      this.applyIncrementallyCallback = applyIncrementallyCallback;
+      this.toolWasProcessed = toolWasProcessed;
+      this.toolStamps = toolStamps;
+    }
+
+    @Override
+    protected void saveProblem(@NotNull ProblemDescriptor descriptor) {
+      synchronized (this) {
+        super.saveProblem(descriptor);
+      }
+      toolStamps.updateToolStamps(myProfileWrapper.getErrorLevel(myToolWrapper.getDisplayKey(), getFile()).getSeverity());
+    }
 
     @Override
     public synchronized int getResultCount() {
       return super.getResultCount();
     }
 
-    private boolean anyProblemWasReported() {
-      return errorStamp > 0 || warningStamp > 0 || otherStamp > 0;
+    private void visitElement(@NotNull PsiElement element, @NotNull PsiElementVisitor visitor) {
+      element.accept(visitor);
+      reportAddedDescriptors(element);
     }
 
-    private void visitElement(@NotNull PsiElement element, @NotNull PsiElementVisitor visitor, @NotNull Document document) {
-      element.accept(visitor);
-      if (getResultCount() != resultCount) {
-        if (!favoriteElementStored) {
-          myFavoriteElement = element;
-          favoriteElementStored = true;
-        }
-        resultCount = getResultCount();
-        long elementRange = TextRangeScalarUtil.toScalarRange(element.getTextRange());
-        synchronized (toolInfos) {
-          while (infoIterator.hasNext()) {
-            HighlightInfo next = infoIterator.next();
-            next.setVisitingTextRange(getFile(), document, elementRange);
-          }
-        }
+    private void reportAddedDescriptors(@NotNull PsiElement element) {
+      int newCount = getResultCount();
+      int oldCount = resultCount;
+      List<ProblemDescriptor> descriptors;
+      if (newCount == oldCount) {
+        descriptors = Collections.emptyList();
       }
+      else {
+        List<ProblemDescriptor> results = getResults();
+        descriptors = results.subList(oldCount, newCount);
+        resultCount = newCount;
+      }
+      applyIncrementallyCallback.apply(descriptors, this, element, myToolWrapper.getShortName());
     }
   }
 
