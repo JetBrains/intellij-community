@@ -87,7 +87,7 @@ class BlockTerminalTest(private val shellPath: Path) {
   fun `concurrent command and generator execution`() {
     val session = startBlockTerminalSession()
     // ShellType.FISH doesn't support generators yet
-    Assume.assumeTrue(setOf(ShellType.ZSH, ShellType.BASH).contains(session.shellIntegration.shellType))
+    Assume.assumeTrue(setOf(ShellType.ZSH, ShellType.BASH, ShellType.POWERSHELL).contains(session.shellIntegration.shellType))
     runBlocking {
       for (stepId in 1..100) {
         val startTime = TimeSource.Monotonic.markNow()
@@ -100,7 +100,7 @@ class BlockTerminalTest(private val shellPath: Path) {
         delay((1..50).random().milliseconds) // wait a little to start generator
         session.sendCommandlineToExecuteWithoutAddingToHistory("echo foo")
         val env: ShellEnvironment? = withTimeout(20.seconds) { envListDeferred.await() }
-        Assert.assertTrue(env != null && env.envs.isNotEmpty())
+        Assert.assertTrue(env != null && env.commands.isNotEmpty())
         assertCommandResult(0, "foo\n", outputFuture)
         println("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
       }
