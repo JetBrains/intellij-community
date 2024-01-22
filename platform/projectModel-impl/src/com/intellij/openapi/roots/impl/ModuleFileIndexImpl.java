@@ -63,6 +63,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       Collection<VirtualFile> filteredRecursiveRoots = ContainerUtil.filter(recursiveRoots, root -> !isNestedRootOfModuleContent(root));
       return new Pair<>(filteredRecursiveRoots, nonRecursiveRoots);
     }).executeSynchronously();
+    if (rootsPair == null) return false; // project is disposed
     return iterateProvidedRootsOfContent(processor, filter, rootsPair.getFirst(), rootsPair.getSecond());
   }
 
