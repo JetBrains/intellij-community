@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
 internal const val USE_OLD_CONTENT = true
-private const val MAX_RECENT_ITEMS = 20
 
 internal class LocalHistoryActivityProvider(val project: Project, private val gateway: IdeaGateway) : ActivityProvider {
   private val facade = LocalHistoryImpl.getInstanceImpl().facade!!
@@ -35,7 +34,6 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
         if (changeSet.name.isNullOrBlank()) continue
         if (changeSet.isLabelOnly && !changeSet.changes.any { it.affectsProject(projectId) }) continue
         result.add(changeSet.toActivityItem())
-        if (result.size >= MAX_RECENT_ITEMS) break
       }
     }
     return result
