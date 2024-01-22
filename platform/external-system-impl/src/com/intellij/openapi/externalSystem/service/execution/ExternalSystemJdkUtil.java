@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,6 +189,13 @@ public final class ExternalSystemJdkUtil {
   @NotNull
   public static SdkType getJavaSdkType() {
     return getJavaSdk();
+  }
+
+  @Nullable
+  public static JavaVersion getJavaVersion(@NotNull String javaHome) {
+    var javaSdkType = getJavaSdkType();
+    var javaVersionString = javaSdkType.getVersionString(javaHome);
+    return JavaVersion.tryParse(javaVersionString);
   }
 
   @Contract("null -> false")

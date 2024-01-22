@@ -7,7 +7,10 @@ import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
+import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
@@ -46,6 +49,18 @@ abstract class AbstractGradleBuildIssue : BuildIssue {
     val quickFix = GradleVersionQuickFix(projectPath, gradleVersion, true)
     addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.version.auto", quickFix.id, gradleVersion.version))
     addQuickFix(quickFix)
+  }
+
+  fun addGradleJvmQuickFix(projectPath: String, javaVersion: JavaVersion) {
+    if ("AndroidStudio" != PlatformUtils.getPlatformPrefix()) {
+      val gradleSettingsQuickFix = GradleSettingsQuickFix(
+        projectPath, true,
+        GradleSettingsQuickFix.GradleJvmChangeDetector,
+        GradleBundle.message("gradle.settings.text.jvm.path")
+      )
+      addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", gradleSettingsQuickFix.id, javaVersion))
+      addQuickFix(gradleSettingsQuickFix)
+    }
   }
 
   private class BuildIssueConfigurator {
