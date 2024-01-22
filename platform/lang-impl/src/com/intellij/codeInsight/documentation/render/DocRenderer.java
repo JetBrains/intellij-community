@@ -7,6 +7,7 @@ import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -54,7 +55,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.*;
+import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.createAdditionalStylesForTips;
+import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.unwrapTipsText;
 
 @ApiStatus.Internal
 public final class DocRenderer implements CustomFoldRegionRenderer {
@@ -73,7 +75,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static final int ARC_RADIUS = 5;
 
   private static StyleSheet ourCachedStyleSheet;
-  private static String ourCachedStyleSheetLinkColor = "non-existing";
+  private static String ourCachedStyleSheetCheckColors = "non-existing";
 
   private final DocRenderItem myItem;
   private boolean myContentUpdateNeeded;
@@ -361,17 +363,15 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static StyleSheet getStyleSheet(@NotNull Editor editor, boolean useTipsKit) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
+    Color backgroundColor = colorsScheme.getDefaultBackground();
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
-    String linkColorHex = ColorUtil.toHex(linkColor);
-    if (useTipsKit || !Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
-      String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
+    String checkColors = ColorUtil.toHex(backgroundColor) + ColorUtil.toHex(linkColor);
+    if (useTipsKit || !Objects.equals(checkColors, ourCachedStyleSheetCheckColors)) {
+      // When updating styles here, consider updating styles in DocumentationHtmlUtil#getDocumentationPaneDefaultCssRules
       @Language("CSS") String input =
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
-        "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
-        "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +
-        "white-space: pre-wrap}" + // supported by JetBrains Runtime
         "h1, h2, h3, h4, h5, h6 {margin-top: 0; padding-top: 1}" +
-        "a {color: #" + linkColorHex + "; text-decoration: none}" +
+        "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
         "p {padding: 7 0 2 0}" +
         "ol {padding: 0 20 0 0}" +
         "ul {padding: 0 20 0 0}" +
@@ -385,11 +385,12 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         ".section {padding-right: 5; white-space: nowrap}" +
         ".content {padding: 2 0 2 0}" +
         (useTipsKit ? createAdditionalStylesForTips(editor) : "") +
-        createAdditionalStylesForStyledCode(editor);
+        StringUtil.join(QuickDocCodeHighlightingHelper.getDefaultDocCodeStyles(
+          colorsScheme, colorsScheme.getDefaultBackground()), "\n");
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
       if (!useTipsKit) {
         ourCachedStyleSheet = result;
-        ourCachedStyleSheetLinkColor = linkColorHex;
+        ourCachedStyleSheetCheckColors = checkColors;
       }
       return result;
     }

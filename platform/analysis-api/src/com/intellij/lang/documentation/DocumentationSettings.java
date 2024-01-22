@@ -56,6 +56,7 @@ public final class DocumentationSettings {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
+  //TODO Move the code to QuickDocCodeHighlightingHelper once safe to remove
   public static int getMonospaceFontSizeCorrection(boolean isForRenderedDoc) {
     if (isForRenderedDoc) {
       return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;

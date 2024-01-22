@@ -27,6 +27,7 @@ import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,7 +35,7 @@ import java.awt.event.KeyEvent;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.addDocumentationPaneDefaultCssRules;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocumentationPaneDefaultCssRules;
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 
 @Internal
@@ -57,6 +58,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   private final Map<KeyStroke, ActionListener> myKeyboardActions;
   private final @NotNull DocumentationImageResolver myImageResolver;
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
+  private StyleSheet myCurrentDefaultStyleSheet = null;
 
   protected DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
@@ -80,7 +82,14 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
       .replaceViewFactoryExtensions(DocumentationHtmlUtil.getIconsExtension(iconResolver), Extensions.BASE64_IMAGES,
                                     Extensions.INLINE_VIEW_EX)
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
-    addDocumentationPaneDefaultCssRules(editorKit);
+    updateDocumentationPaneDefaultCssRules(editorKit);
+
+    addPropertyChangeListener(evt -> {
+      var propertyName = evt.getPropertyName();
+      if ("background".equals(propertyName) || "UI".equals(propertyName)) {
+        updateDocumentationPaneDefaultCssRules(editorKit);
+      }
+    });
 
     setEditorKit(editorKit);
     setBorder(JBUI.Borders.empty());
@@ -100,6 +109,18 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   public void setText(@Nls String t) {
     myText = t;
     super.setText(t);
+  }
+
+  private void updateDocumentationPaneDefaultCssRules(@NotNull HTMLEditorKit editorKit) {
+    StyleSheet editorStyleSheet = editorKit.getStyleSheet();
+    if (myCurrentDefaultStyleSheet != null) {
+      editorStyleSheet.removeStyleSheet(myCurrentDefaultStyleSheet);
+    }
+    myCurrentDefaultStyleSheet = new StyleSheet();
+    for (String rule : getDocumentationPaneDefaultCssRules(getBackground())) {
+      myCurrentDefaultStyleSheet.addRule(rule);
+    }
+    editorStyleSheet.addStyleSheet(myCurrentDefaultStyleSheet);
   }
 
   @Override
