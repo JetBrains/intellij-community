@@ -8,11 +8,10 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 
-class JavaConfigurable(private val project: Project) : SearchableConfigurable, NoScroll {
+class JavaConfigurable(project: Project) : SearchableConfigurable, NoScroll {
   private val settings = project.service<JavaSettingsStorage>().state
-  private val panel = JavaConfigurablePanel(settings)
 
-
+  private val delegateWithPanel = JavaConfigurablePanel(settings)
 
   override fun getDisplayName(): String {
     return JavaBundle.message("java.configurable.display.name")
@@ -23,19 +22,12 @@ class JavaConfigurable(private val project: Project) : SearchableConfigurable, N
   }
 
   override fun createComponent(): JComponent {
-    return panel.getMainPanel()
+    return delegateWithPanel.getMainPanel()
   }
 
-  override fun isModified(): Boolean {
-   return settings.logger != panel.selectedLogger
-  }
+  override fun isModified(): Boolean = delegateWithPanel.isModified()
 
-  override fun reset() {
-    panel.reset(settings)
-  }
+  override fun reset() = delegateWithPanel.reset()
 
-  override fun apply() {
-    settings.logger = panel.selectedLogger
-    project.service<JavaSettingsStorage>().loadState(settings)
-  }
+  override fun apply() = delegateWithPanel.apply()
 }
