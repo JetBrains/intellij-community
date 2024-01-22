@@ -18,6 +18,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
+import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.statistics.InterpreterCreationMode
@@ -147,12 +148,14 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
                                               false,
                                               false,
                                               false,
+                                              presenter.projectLocationContext is WslContext,
                                               InterpreterCreationMode.SIMPLE)
     BASE_CONDA -> InterpreterStatisticsInfo(InterpreterType.BASE_CONDA,
                                             InterpreterTarget.LOCAL,
                                             false,
                                             false,
                                             true,
+                                            presenter.projectLocationContext is WslContext,
                                             InterpreterCreationMode.SIMPLE)
     CUSTOM -> custom.createStatisticsInfo()
   }
