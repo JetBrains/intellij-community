@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,6 +11,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
@@ -28,7 +29,8 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
     FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID);
 
     int offset = editor.getCaretModel().getOffset();
-    new PsiTargetNavigator<>(() -> Arrays.asList(findSuperElements(file, offset)))
+    new PsiTargetNavigator<>(() -> Arrays.asList(DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
+      () -> findSuperElements(file, offset))))
       .elementsConsumer((elements, navigator) -> {
         if (!elements.isEmpty() && elements.iterator().next() instanceof PsiMethod) {
           boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(elements.toArray(PsiMethod.EMPTY_ARRAY));
