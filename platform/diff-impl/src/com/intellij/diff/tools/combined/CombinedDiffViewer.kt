@@ -482,35 +482,33 @@ class CombinedDiffViewer(
   override fun moveCaretPageDown() = movePageUpDown(pageUp = false)
 
   private fun movePageUpDown(pageUp: Boolean) {
-    // move viewport in the new position
-    val viewRect = scrollPane.viewport.viewRect
-
-    val pageHeightWithoutStickyHeader = viewRect.height - stickyHeaderPanel.height
     val editor = getCurrentDiffViewer()?.currentEditor ?: return
-    val lineHeight = editor.lineHeight
-    val pageOffset = (if (pageUp) -pageHeightWithoutStickyHeader else pageHeightWithoutStickyHeader) / lineHeight * lineHeight
+    val caretModel = editor.caretModel
 
-    val maxNewY = scrollPane.viewport.view.height - 1
-    viewRect.y = (viewRect.y + pageOffset).coerceAtLeast(0).coerceAtMost(maxNewY)
+    val caretPositionBeforeJump = caretModel.currentCaret.visualPosition
 
-    scrollPane.viewport.viewPosition = Point(viewRect.x, viewRect.y)
-
-    // move caret
-    val visualPositionInCurrentEditor = editor.caretModel.visualPosition
-    val pointInCurrentEditor = editor.visualPositionToXY(visualPositionInCurrentEditor)
-    val pointInView = SwingUtilities.convertPoint(editor.component, pointInCurrentEditor, scrollPane.viewport.view)
-
-    val newPointInView = Point(pointInView.x, (pointInView.y + pageOffset).coerceAtLeast(0).coerceAtMost(maxNewY))
-    val newComponent = scrollPane.viewport.view.getComponentAt(newPointInView)
-    if (newComponent is CombinedSimpleDiffBlock) {
-      selectDiffBlock(newComponent.id, true, null)
-      val newEditor = getCurrentDiffViewer()?.currentEditor ?: return
-      val pointInNewEditor = SwingUtilities.convertPoint(scrollPane.viewport.view, newPointInView, newEditor.component)
-      val visualPositionInNewEditor = newEditor.xyToVisualPosition(pointInNewEditor)
-      newEditor.caretModel.moveToVisualPosition(visualPositionInNewEditor)
-      requestFocusInDiffViewer(blockState.currentBlock)
+    if (pageUp) {
+      EditorActionUtil.moveCaretPageUp(editor, false)
+    } else {
+      EditorActionUtil.moveCaretPageDown(editor, false)
     }
-    scrollToCaret()
+
+    val caretPositionAfterJump = caretModel.currentCaret.visualPosition
+
+    if (caretPositionBeforeJump != caretPositionAfterJump) {
+      scrollToCaret()
+      return
+    }
+
+    if (pageUp) {
+      if (canGoPrevBlock()) {
+        moveCaretToPrevBlock()
+      }
+    } else {
+      if (canGoNextBlock()) {
+        moveCaretToNextBlock()
+      }
+    }
   }
 
   fun scrollToCaret() {
