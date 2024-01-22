@@ -148,27 +148,35 @@ final class HighlightInfoUpdater {
     return tool instanceof LocalInspectionToolWrapper local && local.runForWholeFile();
   }
 
-  @NotNull
-  private List<? extends HighlightInfo> replaceInfosForVisitedPsi(@NotNull PsiFile psiFile,
-                                                                  @NotNull @NonNls Object toolId,
-                                                                  @NotNull PsiElement visitedPsi,
-                                                                  @NotNull List<? extends HighlightInfo> newInfos) {
+  private void putInfosForVisitedPsi(@NotNull PsiFile psiFile,
+                                     @NotNull @NonNls Object toolId,
+                                     @NotNull PsiElement visitedPsi,
+                                     @NotNull List<? extends HighlightInfo> newInfos) {
     Map<Object, ToolHighlights> map = data.computeIfAbsent(psiFile, __ -> new ConcurrentHashMap<>());
-    ToolHighlights toolHighlights = map.computeIfAbsent(toolId, __ -> newInfos.isEmpty() ? null : new ToolHighlights());
-    List<? extends HighlightInfo> oldInfos = toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsi);
-    if (toolHighlights != null) {
-      if (newInfos.isEmpty()) {
+    ToolHighlights toolHighlights;
+    if (newInfos.isEmpty()) {
+      toolHighlights = map.get(toolId);
+      if (toolHighlights != null) {
         toolHighlights.elementHighlights.remove(visitedPsi);
       }
-      else {
-        toolHighlights.elementHighlights.put(visitedPsi, newInfos);
-      }
     }
+    else {
+      toolHighlights = map.computeIfAbsent(toolId, __ -> new ToolHighlights());
+      toolHighlights.elementHighlights.put(visitedPsi, newInfos);
+    }
+  }
+  @NotNull
+  private List<? extends HighlightInfo> getInfosForVisitedPsi(@NotNull PsiFile psiFile,
+                                                              @NotNull @NonNls Object toolId,
+                                                              @NotNull PsiElement visitedPsi) {
+    Map<Object, ToolHighlights> map = data.get(psiFile);
+    ToolHighlights toolHighlights = map == null ? null : map.get(toolId);
+    List<? extends HighlightInfo> oldInfos = toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsi);
     return oldInfos == null ? Collections.emptyList() : oldInfos;
   }
 
   /**
-   * Tool {@code toolId} has generated (maybe empty) {@code newInfosGenerated} highlights during visiting PsiElement {@code visitedPsiElement}.
+   * Tool {@code toolId} has generated (maybe empty) {@code newInfos} highlights during visiting PsiElement {@code visitedPsiElement}.
    * Remove all highlights that this tool had generated earlier during visiting this psi element, and replace them with {@code newInfosGenerated}
    */
   void psiElementVisited(@NotNull Object toolId,
@@ -179,7 +187,7 @@ final class HighlightInfoUpdater {
                          @NotNull Project project,
                          @NotNull HighlightersRecycler invalidElementRecycler,
                          @NotNull HighlightingSession session) {
-    List<? extends HighlightInfo> oldInfos = replaceInfosForVisitedPsi(psiFile, toolId, visitedPsiElement, newInfos);
+    List<? extends HighlightInfo> oldInfos = getInfosForVisitedPsi(psiFile, toolId, visitedPsiElement);
     synchronized (oldInfos) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("psiElementVisited: " + visitedPsiElement+ " in "+psiFile+" injected in "+InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange())+
@@ -191,6 +199,8 @@ final class HighlightInfoUpdater {
         setHighlightersInRange(newInfos, oldInfos, markup, session, invalidElementRecycler);
       }
     }
+    // store back only after markup model changes are applied to avoid PCE thrown in the middle leaving corrupted data behind
+    putInfosForVisitedPsi(psiFile, toolId, visitedPsiElement, newInfos);
   }
 
   private static void setHighlightersInRange(@NotNull List<? extends HighlightInfo> newInfos,
