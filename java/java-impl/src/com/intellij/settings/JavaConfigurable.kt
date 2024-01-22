@@ -12,6 +12,8 @@ class JavaConfigurable(private val project: Project) : SearchableConfigurable, N
   private val settings = project.service<JavaSettingsStorage>().state
   private val panel = JavaConfigurablePanel(settings)
 
+
+
   override fun getDisplayName(): String {
     return JavaBundle.message("java.configurable.display.name")
   }
@@ -21,7 +23,7 @@ class JavaConfigurable(private val project: Project) : SearchableConfigurable, N
   }
 
   override fun createComponent(): JComponent {
-    return panel.createPanel()
+    return panel.getMainPanel()
   }
 
   override fun isModified(): Boolean {
