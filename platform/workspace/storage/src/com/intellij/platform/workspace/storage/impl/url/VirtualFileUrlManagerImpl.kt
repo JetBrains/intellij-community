@@ -49,7 +49,7 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   }
 
   @Synchronized
-  override fun getSubtreeVirtualUrlsById(vfu: VirtualFileUrl): List<VirtualFileUrl>  {
+  internal fun getSubtreeVirtualUrlsById(vfu: VirtualFileUrl): List<VirtualFileUrl>  {
     vfu as VirtualFileUrlImpl
     return id2NodeMapping.get(vfu.id).getSubtreeNodes().map { it.getVirtualFileUrl(this) }
   }
