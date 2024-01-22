@@ -42,7 +42,7 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
@@ -502,7 +502,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun updateAllProjects() {
-    projectsManager.updateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT)
+    projectsManager.updateAllMavenProjects(MavenSyncSpec.FULL)
   }
 
   protected suspend fun downloadArtifacts() {

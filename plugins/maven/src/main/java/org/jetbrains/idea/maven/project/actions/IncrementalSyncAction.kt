@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
@@ -24,6 +24,6 @@ class IncrementalSyncAction : MavenProjectsManagerAction() {
   override fun perform(manager: MavenProjectsManager) {
     ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(manager.project, MavenUtil.SYSTEM_ID)
     FileDocumentManager.getInstance().saveAllDocuments()
-    manager.scheduleUpdateAllMavenProjects(MavenImportSpec(false, true))
+    manager.scheduleUpdateAllMavenProjects(MavenSyncSpec.INCREMENTAL_EXPLICIT)
   }
 }

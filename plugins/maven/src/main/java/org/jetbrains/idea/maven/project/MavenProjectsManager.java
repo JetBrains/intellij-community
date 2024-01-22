@@ -42,6 +42,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
 import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
@@ -130,7 +131,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState = state;
     if (isInitialized()) {
       applyStateToTree(myProjectsTree, this);
-      scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false));
+      scheduleUpdateAllMavenProjects(MavenSyncSpec.INCREMENTAL);
     }
   }
 
@@ -270,7 +271,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         var forceImport =
           Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
         if (forceImport) {
-          scheduleUpdateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT);
+          scheduleUpdateAllMavenProjects(MavenSyncSpec.FULL);
         }
       }
     }
@@ -448,7 +449,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete);
-    scheduleUpdateAllMavenProjects(new MavenImportSpec(false, false));
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.INCREMENTAL);
   }
 
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
@@ -718,14 +719,14 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   /**
-   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}
+   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenSyncSpec)}
    */
   @Deprecated
   protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAllMavenProjects(new MavenImportSpec(true, true));
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.FULL_EXPLICIT);
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
@@ -734,7 +735,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public void forceUpdateProjects() {
-    scheduleUpdateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT);
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.FULL_EXPLICIT);
   }
 
   /**
@@ -750,7 +751,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected abstract AsyncPromise<Void> doForceUpdateProjects(@NotNull Collection<@NotNull MavenProject> projects);
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
-    forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec.EXPLICIT_IMPORT);
+    forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenSyncSpec.FULL_EXPLICIT);
   }
 
   @ApiStatus.Internal
@@ -760,7 +761,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  private void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
+  private void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenSyncSpec spec) {
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
       return;
@@ -772,13 +773,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
    *
-   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}}
+   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenSyncSpec)}}
    */
   // used in third-party plugins
   @Deprecated
   public Promise<List<Module>> scheduleImportAndResolve() {
     var promise = new AsyncPromise<List<Module>>();
-    var modules = updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    var modules = updateAllMavenProjectsSync(MavenImportSpec.IMPLICIT_IMPORT);
     promise.setResult(modules);
     return promise;
   }
@@ -817,12 +818,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   /**
-   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenImportSpec)}}
+   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenSyncSpec)}}
    */
   @Deprecated(forRemoval = true)
   // used in third-party plugins
   public List<Module> importProjects() {
-    scheduleUpdateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT);
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.FULL);
     return List.of();
   }
 

@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -82,6 +82,6 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val manager = MavenProjectsManager.getInstance(project)
     manager.initForTests()
     manager.addManagedFiles(listOf(file))
-    manager.updateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT)
+    manager.updateAllMavenProjects(MavenSyncSpec.FULL)
   }
 }

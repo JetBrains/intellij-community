@@ -18,7 +18,7 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
@@ -55,7 +55,7 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
                 mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
               }
               else {
-                mavenManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+                mavenManager.updateAllMavenProjects(MavenSyncSpec.FULL_EXPLICIT)
               }
             }
             context.message("Import of the maven project has been finished", line)

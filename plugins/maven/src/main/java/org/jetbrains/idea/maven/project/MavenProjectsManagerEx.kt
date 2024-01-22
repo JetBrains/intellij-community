@@ -35,6 +35,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.importing.importActivityStarted
@@ -50,20 +51,20 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
-  fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec)
-  suspend fun updateAllMavenProjects(spec: MavenImportSpec)
+  fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec)
+  suspend fun updateAllMavenProjects(spec: MavenSyncSpec)
 
   fun scheduleForceUpdateMavenProject(mavenProject: MavenProject) =
     scheduleForceUpdateMavenProjects(listOf(mavenProject))
 
   fun scheduleForceUpdateMavenProjects(mavenProjects: List<MavenProject>) =
-    scheduleUpdateMavenProjects(MavenImportSpec.EXPLICIT_IMPORT, mavenProjects.map { it.file }, emptyList())
+    scheduleUpdateMavenProjects(MavenSyncSpec.FULL_EXPLICIT, mavenProjects.map { it.file }, emptyList())
 
-  fun scheduleUpdateMavenProjects(spec: MavenImportSpec,
+  fun scheduleUpdateMavenProjects(spec: MavenSyncSpec,
                                   filesToUpdate: List<VirtualFile>,
                                   filesToDelete: List<VirtualFile>)
 
-  suspend fun updateMavenProjects(spec: MavenImportSpec,
+  suspend fun updateMavenProjects(spec: MavenSyncSpec,
                                   filesToUpdate: List<VirtualFile>,
                                   filesToDelete: List<VirtualFile>)
 
@@ -95,7 +96,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                                             modelsProvider: IdeModifiableModelsProvider?,
                                                             previewModule: Module?): List<Module> {
     blockingContext { doAddManagedFilesWithProfiles(files, profiles, previewModule) }
-    return updateAllMavenProjects(MavenImportSpec(false, false), modelsProvider)
+    return updateAllMavenProjects(MavenSyncSpec.INCREMENTAL, modelsProvider)
   }
 
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>) {
@@ -199,19 +200,19 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   override fun doForceUpdateProjects(projects: Collection<MavenProject>): AsyncPromise<Void> {
     val promise = AsyncPromise<Void>()
     cs.launch {
-      updateMavenProjects(MavenImportSpec.EXPLICIT_IMPORT, projects.map { it.file }, emptyList())
+      updateMavenProjects(MavenSyncSpec.FULL_EXPLICIT, projects.map { it.file }, emptyList())
       promise.setResult(null)
     }
     return promise
   }
 
-  override fun scheduleUpdateMavenProjects(spec: MavenImportSpec,
+  override fun scheduleUpdateMavenProjects(spec: MavenSyncSpec,
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>) {
     cs.launch { updateMavenProjects(spec, filesToUpdate, filesToDelete) }
   }
 
-  override suspend fun updateMavenProjects(spec: MavenImportSpec,
+  override suspend fun updateMavenProjects(spec: MavenSyncSpec,
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>) {
     importMutex.withLock {
@@ -223,13 +224,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
+  private suspend fun doUpdateMavenProjects(spec: MavenSyncSpec,
                                             filesToUpdate: List<VirtualFile>,
                                             filesToDelete: List<VirtualFile>): List<Module> {
     return doUpdateMavenProjects(spec, null) { readMavenProjects(spec, filesToUpdate, filesToDelete) }
   }
 
-  private suspend fun readMavenProjects(spec: MavenImportSpec,
+  private suspend fun readMavenProjects(spec: MavenSyncSpec,
                                         filesToUpdate: List<VirtualFile>,
                                         filesToDelete: List<VirtualFile>): MavenProjectsTreeUpdateResult {
     return withRawProgressReporter {
@@ -241,8 +242,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   @Deprecated("Use {@link #scheduleUpdateAllMavenProjects(List)}}")
-  override fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module> {
+  override fun updateAllMavenProjectsSync(deprecatedSpec: MavenImportSpec): List<Module> {
     MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
+    val spec = MavenSyncSpec.FULL
     try {
       // unit tests
       if (ApplicationManager.getApplication().isDispatchThread) {
@@ -263,7 +265,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private val importMutex = Mutex()
 
-  override fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec) {
+  override fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec) {
     cs.launch {
       project.trackActivity(MavenActivityKey) {
         updateAllMavenProjects(spec)
@@ -271,11 +273,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  override suspend fun updateAllMavenProjects(spec: MavenImportSpec) {
+  override suspend fun updateAllMavenProjects(spec: MavenSyncSpec) {
     updateAllMavenProjects(spec, null)
   }
 
-  private suspend fun updateAllMavenProjects(spec: MavenImportSpec,
+  private suspend fun updateAllMavenProjects(spec: MavenSyncSpec,
                                              modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     importMutex.withLock {
       MavenLog.LOG.warn("updateAllMavenProjects started: ${spec.isForceReading} ${spec.isExplicitImport}")
@@ -285,13 +287,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec,
+  private suspend fun doUpdateAllMavenProjects(spec: MavenSyncSpec,
                                                modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     checkOrInstallMavenWrapper(project)
     return doUpdateMavenProjects(spec, modelsProvider) { readAllMavenProjects(spec) }
   }
 
-  private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
+  private suspend fun doUpdateMavenProjects(spec: MavenSyncSpec,
                                             modelsProvider: IdeModifiableModelsProvider?,
                                             read: suspend () -> MavenProjectsTreeUpdateResult): List<Module> {
     // display all import activities using the same build progress
@@ -348,7 +350,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private suspend fun importModules(spec: MavenImportSpec,
+  private suspend fun importModules(spec: MavenSyncSpec,
                                     syncActivity: StructuredIdeActivity,
                                     projectsToResolve: Collection<MavenProject>,
                                     modelsProvider: IdeModifiableModelsProvider?): List<Module> {
@@ -425,7 +427,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private suspend fun readAllMavenProjects(spec: MavenImportSpec): MavenProjectsTreeUpdateResult {
+  private suspend fun readAllMavenProjects(spec: MavenSyncSpec): MavenProjectsTreeUpdateResult {
     return withRawProgressReporter {
       projectsTree.updateAll(spec.isForceReading, generalSettings, rawProgressReporter!!)
     }
