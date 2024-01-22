@@ -706,6 +706,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/singleBreakpoint/frame/remapThis.kt");
             }
 
+            @TestMetadata("runToCursorSimple.kt")
+            public void testRunToCursorSimple() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/runToCursorSimple.kt");
+            }
+
             @TestMetadata("showPropertiesFromMethods.kt")
             public void testShowPropertiesFromMethods() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/showPropertiesFromMethods.kt");
