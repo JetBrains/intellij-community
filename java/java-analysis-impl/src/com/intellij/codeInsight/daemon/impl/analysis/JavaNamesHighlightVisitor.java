@@ -271,7 +271,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
     }
   }
 
-  private <T> T computeIfSmartMode(@NotNull Project project, Supplier<T> operation) {
+  private static <T> T computeIfSmartMode(@NotNull Project project, Supplier<T> operation) {
     if (DumbService.isDumb(project)) return null;
     return operation.get();
   }
