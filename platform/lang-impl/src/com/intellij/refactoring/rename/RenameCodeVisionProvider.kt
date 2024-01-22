@@ -7,11 +7,10 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.findPsiFile
@@ -54,24 +53,22 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
 
-    return runBlockingCancellable {
-      readAction {
-        val file = editor.virtualFile?.findPsiFile(project) ?: return@readAction CodeVisionState.READY_EMPTY
-        val refactoring = file.getUserData(REFACTORING_DATA_KEY) ?: editor.getUserData(REFACTORING_DATA_KEY)
+    return runReadAction {
+      val file = editor.virtualFile?.findPsiFile(project) ?: return@runReadAction CodeVisionState.READY_EMPTY
+      val refactoring = file.getUserData(REFACTORING_DATA_KEY) ?: editor.getUserData(REFACTORING_DATA_KEY)
 
-        if (refactoring != null) {
-          if (refactoring is SuggestedRenameData) {
-            if (refactoring.oldName == refactoring.declaration.name) return@readAction CodeVisionState.READY_EMPTY
-            val text = RefactoringBundle.message("rename.code.vision.text")
-            val tooltip = RefactoringBundle.message("rename.code.vision.tooltip", refactoring.oldName, refactoring.declaration.name)
-            return@readAction CodeVisionState.Ready(listOf(
-              refactoring.declaration.textRange to RenameCodeVisionEntry(project, text, tooltip, id)
-            ))
-          }
+      if (refactoring != null) {
+        if (refactoring is SuggestedRenameData) {
+          if (refactoring.oldName == refactoring.declaration.name) return@runReadAction CodeVisionState.READY_EMPTY
+          val text = RefactoringBundle.message("rename.code.vision.text")
+          val tooltip = RefactoringBundle.message("rename.code.vision.tooltip", refactoring.oldName, refactoring.declaration.name)
+          return@runReadAction CodeVisionState.Ready(listOf(
+            refactoring.declaration.textRange to RenameCodeVisionEntry(project, text, tooltip, id)
+          ))
         }
-
-        return@readAction CodeVisionState.READY_EMPTY
       }
+
+      return@runReadAction CodeVisionState.READY_EMPTY
     }
   }
 
