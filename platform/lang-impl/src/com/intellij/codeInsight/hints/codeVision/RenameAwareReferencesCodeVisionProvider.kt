@@ -39,6 +39,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Any?
 
   override fun computeCodeVision(editor: Editor, uiData: Any?): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
+    if (DumbService.isDumb(project)) return CodeVisionState.NotReady
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
     val cached = cacheService.getVisionDataForEditor(editor, id)
     val stamp = editor.getModificationStamp()
