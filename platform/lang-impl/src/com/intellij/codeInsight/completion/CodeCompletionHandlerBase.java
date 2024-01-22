@@ -57,6 +57,8 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
+import kotlin.Unit;
+import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,8 +68,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Future;
 
+import static com.intellij.codeInsight.completion.CompletionThreadingKt.checkForExceptions;
 import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck.DeliberateAdditionalCheckInCompletion;
@@ -83,7 +85,7 @@ public class CodeCompletionHandlerBase {
    */
   public static final Key<Boolean> DIRECT_INSERTION = Key.create("CodeCompletionHandlerBase.directInsertion");
 
-  @NotNull final CompletionType completionType;
+  final @NotNull CompletionType completionType;
   final boolean invokedExplicitly;
   final boolean synchronous;
   final boolean autopopup;
@@ -140,7 +142,7 @@ public class CodeCompletionHandlerBase {
     invokeCompletion(project, editor, 1);
   }
 
-  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time) {
+  public final void invokeCompletion(final @NotNull Project project, final @NotNull Editor editor, int time) {
     invokeCompletion(project, editor, time, false);
   }
 
@@ -239,8 +241,7 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  @NotNull
-  private LookupImpl obtainLookup(Editor editor, Project project) {
+  private @NotNull LookupImpl obtainLookup(Editor editor, Project project) {
     CompletionAssertions.checkEditorValid(editor);
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null && existing.isCompletion()) {
@@ -331,7 +332,7 @@ public class CodeCompletionHandlerBase {
                                         CompletionProgressIndicator indicator, OffsetsInFile hostCopyOffsets) {
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Synchronous(indicator));
 
-    Future<?> future = startContributorThread(initContext, indicator, hostCopyOffsets, hasModifiers);
+    var future = startContributorThread(initContext, indicator, hostCopyOffsets, hasModifiers);
     if (future == null) {
       return;
     }
@@ -355,11 +356,10 @@ public class CodeCompletionHandlerBase {
     indicator.showLookup();
   }
 
-  @Nullable
-  private Future<?> startContributorThread(CompletionInitializationContextImpl initContext,
-                                           CompletionProgressIndicator indicator,
-                                           OffsetsInFile hostCopyOffsets,
-                                           boolean hasModifiers) {
+  private @Nullable Deferred<Unit> startContributorThread(CompletionInitializationContextImpl initContext,
+                                                          CompletionProgressIndicator indicator,
+                                                          OffsetsInFile hostCopyOffsets,
+                                                          boolean hasModifiers) {
     if (!hostCopyOffsets.getFile().isValid()) {
       completionFinished(indicator, hasModifiers);
       return null;
@@ -368,28 +368,18 @@ public class CodeCompletionHandlerBase {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionContributorListener.TOPIC)
       .beforeCompletionContributorThreadStarted(indicator, initContext);
     return indicator.getCompletionThreading()
-      .startThread(indicator, Context.current().wrap(() -> CompletionThreadingKt.tryReadOrCancel(indicator, Context.current().wrap(() -> {
-        OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
-        indicator.registerChildDisposable(finalOffsets::getOffsets);
+      .startThread(indicator, Context.current().wrap(() -> {
+        CompletionThreadingKt.tryReadOrCancel(indicator, Context.current().wrap(() -> {
+          OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
+          indicator.registerChildDisposable(finalOffsets::getOffsets);
 
-        CompletionParameters parameters =
-          CompletionInitializationUtil.createCompletionParameters(initContext, indicator, finalOffsets);
-        parameters.setIsTestingMode(isTestingMode());
-        indicator.setParameters(parameters);
+          CompletionParameters parameters = CompletionInitializationUtil.createCompletionParameters(initContext, indicator, finalOffsets);
+          parameters.setIsTestingMode(isTestingMode());
+          indicator.setParameters(parameters);
 
-        indicator.runContributors(initContext);
-      }))));
-  }
-
-  private static void checkForExceptions(Future<?> future) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      try {
-        future.get();
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+          indicator.runContributors(initContext);
+        }));
+      }));
   }
 
   private static void checkNotSync(CompletionProgressIndicator indicator, List<LookupElement> allItems) {
@@ -441,8 +431,7 @@ public class CodeCompletionHandlerBase {
     return AutoCompletionDecision.SHOW_LOOKUP;
   }
 
-  @Nullable
-  private static AutoCompletionPolicy getAutocompletionPolicy(LookupElement element) {
+  private static @Nullable AutoCompletionPolicy getAutocompletionPolicy(LookupElement element) {
     return element.getAutoCompletionPolicy();
   }
 
@@ -505,8 +494,8 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  protected void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,
-                                         final List<LookupElement> items) {
+  protected void lookupItemSelected(final CompletionProgressIndicator indicator, final @NotNull LookupElement item, final char completionChar,
+                                    final List<LookupElement> items) {
     WatchingInsertionContext context = null;
     try {
       StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
@@ -828,8 +817,7 @@ public class CodeCompletionHandlerBase {
     return null;
   }
 
-  @Nullable
-  private <T> T withTimeout(long maxDurationMillis, @NotNull Computable<T> task) {
+  private @Nullable <T> T withTimeout(long maxDurationMillis, @NotNull Computable<T> task) {
     if (isTestingMode()) {
       return task.compute();
     }

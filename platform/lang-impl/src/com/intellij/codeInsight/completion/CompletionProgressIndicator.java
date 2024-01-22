@@ -168,7 +168,9 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || myHandler.isTestingCompletionQualityMode() ? new SyncCompletion() : new AsyncCompletion();
+    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || myHandler.isTestingCompletionQualityMode()
+                  ? new SyncCompletion()
+                  : new AsyncCompletion(editor.getProject());
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
@@ -937,9 +939,11 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   void runContributors(CompletionInitializationContext initContext) {
     CompletionParameters parameters = Objects.requireNonNull(myParameters);
-    myThreading.startThread(ProgressWrapper.wrap(this), ()-> CompletionThreadingKt.tryReadOrCancel(this, () -> scheduleAdvertising(parameters)));
-    WeighingDelegate weigher = myThreading.delegateWeighing(this);
+    myThreading.startThread(ProgressWrapper.wrap(this), () -> {
+      CompletionThreadingKt.tryReadOrCancel(this, () -> scheduleAdvertising(parameters));
+    });
 
+    WeighingDelegate weigher = myThreading.delegateWeighing(this);
     try {
       calculateItems(initContext, weigher, parameters);
     }

@@ -1,20 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Computable.PredefinedValueComputable
 import com.intellij.util.concurrency.Semaphore
-import java.util.concurrent.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
 internal sealed interface CompletionThreading {
-  fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Future<*>?
+  // Deferred<Unit> and not Job - client should get error
+  fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<Unit>?
 
   fun delegateWeighing(indicator: CompletionProgressIndicator): WeighingDelegate
 }
@@ -27,9 +35,9 @@ internal interface WeighingDelegate : com.intellij.util.Consumer<CompletionResul
 internal class SyncCompletion : CompletionThreadingBase() {
   private val batchList = ArrayList<CompletionResult>()
 
-  override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Future<*> {
+  override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<Unit>? {
     ProgressManager.getInstance().runProcess(runnable, progressIndicator)
-    return CompletableFuture.completedFuture(true)
+    return null
   }
 
   override fun delegateWeighing(indicator: CompletionProgressIndicator): WeighingDelegate {
@@ -63,8 +71,6 @@ internal class SyncCompletion : CompletionThreadingBase() {
   }
 }
 
-private val LOG = logger<AsyncCompletion>()
-
 internal fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
   if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction {
       indicator.checkCanceled()
@@ -75,14 +81,16 @@ internal fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
   }
 }
 
-internal class AsyncCompletion : CompletionThreadingBase() {
+internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
   private val batchList = ArrayList<CompletionResult>()
   private val queue = LinkedBlockingQueue<Computable<Boolean>>()
 
-  override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Future<*> {
+  private val coroutineScope = ((project ?: ApplicationManagerEx.getApplicationEx()) as ComponentManagerEx).getCoroutineScope()
+
+  override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<Unit> {
     val startSemaphore = Semaphore()
     startSemaphore.down()
-    val future = ApplicationManager.getApplication().executeOnPooledThread {
+    val task = ClientId.decorateRunnable {
       ProgressManager.getInstance().runProcess(
         {
           try {
@@ -92,7 +100,12 @@ internal class AsyncCompletion : CompletionThreadingBase() {
           }
           catch (ignored: ProcessCanceledException) {
           }
-        }, progressIndicator)
+        },
+        progressIndicator,
+      )
+    }
+    val future = coroutineScope.async {
+      task.run()
     }
     startSemaphore.waitFor()
     return future
@@ -112,7 +125,7 @@ internal class AsyncCompletion : CompletionThreadingBase() {
           }
         }
         catch (e: InterruptedException) {
-          LOG.error(e)
+          logger<AsyncCompletion>().error(e)
         }
       }
     }
@@ -122,13 +135,13 @@ internal class AsyncCompletion : CompletionThreadingBase() {
       override fun waitFor() {
         queue.offer(PredefinedValueComputable(false))
         try {
-          future.get()
+          @Suppress("SSBasedInspection")
+          runBlocking {
+            future.join()
+          }
         }
-        catch (e: InterruptedException) {
-          LOG.error(e)
-        }
-        catch (e: ExecutionException) {
-          LOG.error(e)
+        catch (e: Exception) {
+          logger<AsyncCompletion>().error(e)
         }
       }
 
@@ -167,3 +180,11 @@ internal class AsyncCompletion : CompletionThreadingBase() {
   }
 }
 
+internal fun checkForExceptions(future: Deferred<Unit>) {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    @Suppress("SSBasedInspection")
+    runBlocking {
+      future.await()
+    }
+  }
+}
