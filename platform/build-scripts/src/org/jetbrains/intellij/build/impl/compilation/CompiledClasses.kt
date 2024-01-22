@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.jps.api.CanceledStatus
+import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -82,6 +83,11 @@ internal object CompiledClasses {
     if (options.forceRebuild && context.options.pathToCompiledClassesArchivesMetadata != null) {
       messages.error(
         "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified"
+      )
+    }
+    if (options.isInDevelopmentMode && ProjectStamps.PORTABLE_CACHES) {
+      messages.error(
+        "${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty"
       )
     }
     if (!options.useCompiledClassesFromProjectOutput) {
