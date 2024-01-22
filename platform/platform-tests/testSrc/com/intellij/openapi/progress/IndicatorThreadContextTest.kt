@@ -3,7 +3,6 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.contextModality
-import com.intellij.platform.util.progress.progressReporter
 import com.intellij.util.parent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -26,7 +25,6 @@ class IndicatorThreadContextTest : CancellationTest() {
         assertNull(ProgressManager.getGlobalProgressIndicator())
         assertNull(ctx.job.parent())
         assertSame(indicator.modalityState, ctx.contextModality())
-        assertNull(ctx.progressReporter)
         assertEquals(2, ctx.fold(0) { acc, _ -> acc + 1 })
       }
 

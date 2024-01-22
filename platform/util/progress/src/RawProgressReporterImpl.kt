@@ -2,9 +2,9 @@
 package com.intellij.platform.util.progress
 
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.platform.util.progress.impl.LOG
 import com.intellij.platform.util.progress.impl.ProgressText
 import com.intellij.platform.util.progress.impl.StepConfig
-import com.intellij.platform.util.progress.impl.checkFraction
 import com.intellij.platform.util.progress.impl.initialState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +33,8 @@ internal class RawProgressReporterImpl(private val config: StepConfig) : RawProg
   }
 
   override fun fraction(fraction: Double?) {
-    if (!checkFraction(fraction)) {
+    if (fraction != null && fraction !in 0.0..1.0) {
+      LOG.error(IllegalArgumentException("Fraction is expected to be `null` or a value in [0.0; 1.0], got $fraction"))
       return
     }
     if (!config.isIndeterminate) {

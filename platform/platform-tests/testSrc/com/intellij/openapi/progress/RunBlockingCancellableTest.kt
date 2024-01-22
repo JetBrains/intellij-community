@@ -3,10 +3,6 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.platform.util.progress.progressReporter
-import com.intellij.platform.util.progress.progressReporterTest
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
@@ -238,32 +234,6 @@ class RunBlockingCancellableTest : CancellationTest() {
       }
     }
     assertSame(t, thrown)
-  }
-
-  @Test
-  fun `propagates context reporter`() {
-    progressReporterTest {
-      val reporter = checkNotNull(progressReporter)
-      assertTrue(rawProgressReporter == null)
-      blockingContext {
-        runBlockingCancellable {
-          assertSame(reporter, progressReporter)
-          assertTrue(rawProgressReporter == null)
-        }
-      }
-    }
-    progressReporterTest {
-      withRawProgressReporter {
-        assertTrue(progressReporter == null)
-        val reporter = checkNotNull(rawProgressReporter)
-        blockingContext {
-          runBlockingCancellable {
-            assertTrue(progressReporter == null)
-            assertSame(reporter, rawProgressReporter)
-          }
-        }
-      }
-    }
   }
 
   @Test
