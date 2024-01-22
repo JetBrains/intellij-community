@@ -343,32 +343,6 @@ public final class ActionUtil {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT);
   }
 
-  /**
-   * Tries to find an 'action' and 'target action' by text and put the 'action' just before of after the 'target action'
-   */
-  public static void moveActionTo(@NotNull List<AnAction> list,
-                                  @NotNull String actionText,
-                                  @NotNull String targetActionText,
-                                  boolean before) {
-    if (Objects.equals(actionText, targetActionText)) {
-      return;
-    }
-
-    int actionIndex = -1;
-    int targetIndex = -1;
-    for (int i = 0; i < list.size(); i++) {
-      AnAction action = list.get(i);
-      if (actionIndex == -1 && Objects.equals(actionText, action.getTemplateText())) actionIndex = i;
-      if (targetIndex == -1 && Objects.equals(targetActionText, action.getTemplateText())) targetIndex = i;
-      if (actionIndex != -1 && targetIndex != -1) {
-        if (actionIndex < targetIndex) targetIndex--;
-        AnAction anAction = list.remove(actionIndex);
-        list.add(before ? targetIndex : targetIndex + 1, anAction);
-        return;
-      }
-    }
-  }
-
   public static @NotNull List<AnAction> getActions(@NotNull JComponent component) {
     List<AnAction> list = ClientProperty.get(component, AnAction.ACTIONS_KEY);
     return list == null ? List.of() : list;
