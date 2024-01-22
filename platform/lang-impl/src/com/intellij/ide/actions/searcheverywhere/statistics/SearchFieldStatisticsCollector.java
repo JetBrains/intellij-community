@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 
@@ -14,21 +15,25 @@ public final class SearchFieldStatisticsCollector implements Disposable {
 
   private final Project myProject;
   private final JTextField myTextField;
+  private final SearchEverywhereMlService myMlService;
   private final SearchPerformanceTracker myPerformanceTracker;
 
   private int mySymbolKeysTyped;
   private int myNavKeysTyped;
 
-  private SearchFieldStatisticsCollector(JTextField field, SearchPerformanceTracker performanceTracker, Project project) {
+  private SearchFieldStatisticsCollector(JTextField field, SearchPerformanceTracker performanceTracker,
+                                         SearchEverywhereMlService mlService, Project project) {
     myProject = project;
     myPerformanceTracker = performanceTracker;
+    myMlService = mlService;
     myTextField = field;
   }
 
   public static SearchFieldStatisticsCollector createAndStart(JTextField field,
                                                               SearchPerformanceTracker performanceTracker,
+                                                              SearchEverywhereMlService mlService,
                                                               Project project) {
-    SearchFieldStatisticsCollector res = new SearchFieldStatisticsCollector(field, performanceTracker, project);
+    SearchFieldStatisticsCollector res = new SearchFieldStatisticsCollector(field, performanceTracker, mlService, project);
     res.initListeners();
     return res;
   }
@@ -52,6 +57,11 @@ public final class SearchFieldStatisticsCollector implements Disposable {
       pairs.add(TYPED_NAVIGATION_KEYS.with(myNavKeysTyped));
       pairs.add(TYPED_SYMBOL_KEYS.with(mySymbolKeysTyped));
       pairs.add(DURATION_MS.with(info.getDuration()));
+
+      if (myMlService != null) {
+        pairs.add(ML_EXPERIMENT_VERSION.with(myMlService.getExperimentVersion()));
+        pairs.add(ML_EXPERIMENT_GROUP.with(myMlService.getExperimentGroup()));
+      }
     });
   }
 

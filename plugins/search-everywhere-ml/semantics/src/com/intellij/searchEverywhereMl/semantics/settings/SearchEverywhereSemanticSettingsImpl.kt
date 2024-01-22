@@ -10,8 +10,9 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.search.services.*
-import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
-import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature.ENABLED
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.ExperimentType.ENABLE_SEMANTIC_SEARCH
 import com.intellij.util.xmlb.annotations.OptionTag
 
 @Service(Service.Level.APP)
@@ -33,7 +34,8 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       }
       val providerId = ActionSearchEverywhereContributor::class.java.simpleName
       return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.actions.enable") ||
-             isInternal || (isEAP && SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(providerId) == ENABLED)
+             isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+        SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
     }
     set(newValue) {
       state.actionsTabManuallySet = true
@@ -50,7 +52,8 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       }
       val providerId = FileSearchEverywhereContributor::class.java.simpleName
       return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.files.enable") ||
-             (isEAP && SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(providerId) == ENABLED)
+             (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+               SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
     }
     set(newValue) {
       state.filesTabManuallySet = true
@@ -67,7 +70,8 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       }
       val providerId = ClassSearchEverywhereContributor::class.java.simpleName
       return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.classes.enable") ||
-             (isEAP && SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(providerId) == ENABLED)
+             (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+               SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
     }
     set(newValue) {
       state.classesTabManuallySet = true
@@ -84,7 +88,8 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       }
       val providerId = SymbolSearchEverywhereContributor::class.java.simpleName
       return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.symbols.enable") ||
-             (isEAP && SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(providerId) == ENABLED)
+             (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+               SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
     }
     set(newValue) {
       state.symbolsTabManuallySet = true
