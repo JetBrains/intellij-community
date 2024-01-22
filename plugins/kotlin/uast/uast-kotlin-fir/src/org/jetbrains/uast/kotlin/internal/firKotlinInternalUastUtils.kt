@@ -78,9 +78,11 @@ internal fun toPsiMethod(
     functionSymbol: KtFunctionLikeSymbol,
     context: KtElement,
 ): PsiMethod? {
-    // `inline` from binary dependency, which we can't find source PSI, so fake it
+    // `inline` w/ `reified` type param from binary dependency,
+    // which we can't find source PSI, so fake it
     if (functionSymbol.origin == KtSymbolOrigin.LIBRARY &&
-        (functionSymbol as? KtFunctionSymbol)?.isInline == true
+        (functionSymbol as? KtFunctionSymbol)?.isInline == true &&
+        functionSymbol.typeParameters.any { it.isReified }
     ) {
         functionSymbol.getContainingJvmClassName()?.let { fqName ->
             JavaPsiFacade.getInstance(context.project)

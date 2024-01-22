@@ -2038,7 +2038,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
     }
 
-    fun checkResolveTopLevelInlineFromLibrary(myFixture: JavaCodeInsightTestFixture, withJvmName: Boolean) {
+    fun checkResolveTopLevelInlineReifiedFromLibrary(myFixture: JavaCodeInsightTestFixture, withJvmName: Boolean) {
         val anno = if (withJvmName) "@file:JvmName(\"Mocking\")" else ""
         val mockLibraryFacility = myFixture.configureLibraryByText(
             "Mocking.kt", """
@@ -2084,6 +2084,49 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                         resolved.containingClass?.name
                     )
                 }
+
+                return super.visitCallExpression(node)
+            }
+        })
+
+        mockLibraryFacility.tearDown(myFixture.module)
+    }
+
+    fun checkResolveTopLevelInlineInFacadeFromLibrary(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "MyStringJVM.kt", """
+                @file:kotlin.jvm.JvmMultifileClass
+                @file:kotlin.jvm.JvmName("MyStringsKt")
+                
+                package test.pkg
+                
+                inline fun belongsToClassPart(): String = TODO()
+                
+                inline fun <reified T : Any> needFake(): String = TODO()
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.*
+                
+                fun test() {
+                  belongsToClassPart()
+                  needFake()
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                val resolved = node.resolve()
+                TestCase.assertNotNull(resolved)
+
+                val containingClass = resolved!!.containingClass
+                val expectedName =
+                    if (isK2) "MyStringsKt" // multi-file facade
+                    else "MyStringsKt__MyStringJVMKt" // multi-file class part
+                TestCase.assertEquals(expectedName, containingClass?.name)
 
                 return super.visitCallExpression(node)
             }

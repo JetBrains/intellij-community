@@ -19,7 +19,8 @@ import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.analyzeForUast
 
 /**
- * A fake light method from binary, which is not materialized for some reason (e.g., `inline`)
+ * A fake light method from binary, which is not materialized for some reason
+ * (e.g., `inline` with `reified` type parameter)
  *
  * Due to its origin, BINARY, we don't have source PSI, but at least we have a pointer to
  * Analysis API symbol if it's resolved.
