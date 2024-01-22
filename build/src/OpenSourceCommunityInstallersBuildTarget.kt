@@ -20,8 +20,10 @@ object OpenSourceCommunityInstallersBuildTarget {
       buildStepsToSkip += BuildOptions.MAC_SIGN_STEP
     }
 
+    val klass = javaClass
+
     runBlocking(Dispatchers.Default) {
-      val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(javaClass), options)
+      val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(klass), options)
       BuildTasks.create(context).compileProjectAndTests(listOf("intellij.platform.jps.build.tests"))
       buildDistributions(context)
       spanBuilder("build standalone JPS").useWithScope {
