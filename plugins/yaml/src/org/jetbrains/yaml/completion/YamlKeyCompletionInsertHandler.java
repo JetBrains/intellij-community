@@ -31,6 +31,9 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull T item) {
+    // keyValue is created by handler, there is no need in inserting completion char
+    context.setAddCompletionChar(false);
+
     final PsiElement currentElement = context.getFile().findElementAt(context.getStartOffset());
     assert currentElement != null : "no element at " + context.getStartOffset();
 
