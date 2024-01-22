@@ -7,10 +7,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,21 +35,23 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     // keyValue is created by handler, there is no need in inserting completion char
     context.setAddCompletionChar(false);
 
-    final PsiElement currentElement = context.getFile().findElementAt(context.getStartOffset());
-    assert currentElement != null : "no element at " + context.getStartOffset();
-
-    YAMLKeyValue parent = PsiTreeUtil.getParentOfType(currentElement, YAMLKeyValue.class);
-    final YAMLDocument holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
-    assert holdingDocument != null;
-
-    YAMLValue oldValue = (holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
-                         deleteLookupTextAndRetrieveOldValue(context, currentElement) :
+    YamlOffsetContext offsetContext = new YamlOffsetContext(context.getFile(), context.getStartOffset());
+    @SuppressWarnings("DataFlowIssue")
+    YAMLValue oldValue = (offsetContext.holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
+                         deleteLookupTextAndRetrieveOldValue(context, offsetContext.currentElement) :
                          null; // Inheritors must handle lookup text removal since otherwise holdingDocument may become invalid.
     if (oldValue instanceof YAMLSequence) {
       trimSequenceItemIndents((YAMLSequence)oldValue);
     }
 
-    final YAMLKeyValue created = createNewEntry(holdingDocument, item, parent != null && parent.isValid() ? parent : null);
+    if (oldValue == null && !offsetContext.holdingDocument.isValid()) {
+      offsetContext = new YamlOffsetContext(context.getFile(), context.getStartOffset());
+    }
+    @SuppressWarnings("DataFlowIssue") final YAMLKeyValue created = createNewEntry(offsetContext.holdingDocument, item,
+                                                                                   offsetContext.parent != null &&
+                                                                                   offsetContext.parent.isValid()
+                                                                                   ? offsetContext.parent
+                                                                                   : null);
 
     YAMLValue createdValue = created.getValue();
     if (createdValue != null) {
@@ -73,7 +76,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
       context.getEditor().getCaretModel().moveToOffset(valueItem.getTextOffset() + 1);
     }
     if (!isCharAtCaret(context.getEditor(), ' ')) {
-      EditorModificationUtil.insertStringAtCaret(context.getEditor(), " ");
+      EditorModificationUtilEx.insertStringAtCaret(context.getEditor(), " ");
     }
     else {
       context.getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, true);
@@ -179,6 +182,21 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
           element.replace(newIndent);
         }
       }
+    }
+  }
+
+  private static class YamlOffsetContext {
+    final PsiElement currentElement;
+    final YAMLKeyValue parent;
+    final YAMLDocument holdingDocument;
+
+    YamlOffsetContext(@NotNull PsiFile psiFile, int offset) {
+      currentElement = psiFile.findElementAt(offset);
+      assert currentElement != null : "no element at " + offset;
+
+      parent = PsiTreeUtil.getParentOfType(currentElement, YAMLKeyValue.class);
+      holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
+      assert holdingDocument != null;
     }
   }
 }
