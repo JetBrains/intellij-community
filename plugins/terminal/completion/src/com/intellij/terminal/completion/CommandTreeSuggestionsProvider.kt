@@ -162,8 +162,9 @@ internal class CommandTreeSuggestionsProvider(
 
   suspend fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
     val separator = File.separatorChar
-    val basePath = if (nextNodeText.contains(separator)) {
-      nextNodeText.substringBeforeLast(separator) + separator
+    val nodeText = nextNodeText.removePrefix("\"").removeSuffix("'")
+    val basePath = if (nodeText.contains(separator)) {
+      nodeText.substringBeforeLast(separator) + separator
     }
     else "."
     val files = runtimeDataProvider.getFilesFromDirectory(basePath)

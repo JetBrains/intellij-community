@@ -131,8 +131,9 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
                                 private val appendPathSeparator: Boolean) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
       if (appendPathSeparator) {
-        context.document.insertString(context.tailOffset, File.separator)
-        context.editor.caretModel.moveToOffset(context.tailOffset + 1)
+        val tailOffset = context.tailOffset
+        context.document.insertString(tailOffset, File.separator)
+        context.editor.caretModel.moveToOffset(tailOffset + 1)
       }
       val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
       if (cursorOffset != null && cursorOffset != -1) {

@@ -285,6 +285,13 @@ class CommandSpecSuggestionsTest {
   }
 
   @Test
+  fun `suggest filenames for path in quotes`() {
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
+    doTest("cd", typedPrefix = "\"someDir$separator", expected = listOf("dir$separator", "folder$separator"))
+  }
+
+  @Test
   fun `suggest command names for command argument`() {
     val commands = listOf("cmd", "ls", "git")
     mockShellEnvironment(ShellEnvironment(commands = commands))
