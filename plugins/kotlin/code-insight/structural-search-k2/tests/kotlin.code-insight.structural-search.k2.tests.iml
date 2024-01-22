@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
   </component>
 </module>

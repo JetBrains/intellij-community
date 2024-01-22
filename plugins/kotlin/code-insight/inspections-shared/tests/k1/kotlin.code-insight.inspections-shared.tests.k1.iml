@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />

@@ -11,21 +11,16 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
-    <orderEntry type="module" module-name="kotlin.base.indices" />
-    <orderEntry type="module" module-name="kotlin.base.resources" />
-    <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k1" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.structuralSearch" />
-    <orderEntry type="module" module-name="intellij.platform.duplicates.analysis" />
-    <orderEntry type="module" module-name="intellij.java.indexing.impl" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
   </component>
 </module>

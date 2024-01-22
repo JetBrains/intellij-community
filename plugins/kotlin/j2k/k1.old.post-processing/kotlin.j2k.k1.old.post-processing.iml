@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="kotlin.base.psi" />

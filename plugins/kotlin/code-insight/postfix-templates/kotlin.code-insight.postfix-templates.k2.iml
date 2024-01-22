@@ -37,8 +37,8 @@
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k2" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />

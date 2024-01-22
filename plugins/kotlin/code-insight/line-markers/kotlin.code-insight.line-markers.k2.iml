@@ -52,7 +52,7 @@
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
   </component>
 </module>

@@ -32,7 +32,7 @@
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
   </component>
 </module>

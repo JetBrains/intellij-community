@@ -7,8 +7,8 @@
   </extensions>
 
   <dependencies>
-    <module name="kotlin.code-insight.inspections-shared"/>
-    <module name="kotlin.code-insight.intentions-shared"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
+    <module name="kotlin.code-insight.intentions.shared"/>
   </dependencies>
 
 </idea-plugin>

@@ -53,7 +53,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="RUNTIME" />
@@ -62,7 +62,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" scope="RUNTIME" />
@@ -77,10 +77,10 @@
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.completion.api" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-shared" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-k1" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.shared" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.k1" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
@@ -92,8 +92,8 @@
     <orderEntry type="module" module-name="kotlin.inspections" />
     <orderEntry type="module" module-name="kotlin.base.injection.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.preferences" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k1" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="TEST" />
@@ -118,16 +118,16 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.searching.base" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.old.post-processing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api" level="project" />

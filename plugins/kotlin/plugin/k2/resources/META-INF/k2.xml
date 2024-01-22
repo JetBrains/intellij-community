@@ -20,7 +20,7 @@
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlin.highlighting-shared.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="kotlin.highlighting.shared.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsights.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -255,15 +255,15 @@
 
     <module name="kotlin.jvm-decompiler"/>
 
-    <module name="kotlin.code-insight.intentions-shared"/>
-    <module name="kotlin.code-insight.inspections-shared"/>
-    <module name="kotlin.code-insight.live-templates-shared"/>
-    <module name="kotlin.code-insight.intentions-k2"/>
-    <module name="kotlin.code-insight.inspections-k2"/>
+    <module name="kotlin.code-insight.intentions.shared"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
+    <module name="kotlin.code-insight.live-templates.shared"/>
+    <module name="kotlin.code-insight.intentions.k2"/>
+    <module name="kotlin.code-insight.inspections.k2"/>
     <module name="kotlin.code-insight.k2"/>
-    <module name="kotlin.code-insight.live-templates-k2"/>
-    <module name="kotlin.code-insight.postfix-templates-k2"/>
-    <module name="kotlin.code-insight.structural-search-k2"/>
+    <module name="kotlin.code-insight.live-templates.k2"/>
+    <module name="kotlin.code-insight.postfix-templates.k2"/>
+    <module name="kotlin.code-insight.structural-search.k2"/>
 
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.refactorings.k2"/>
@@ -272,13 +272,13 @@
     <module name="kotlin.refactorings.introduce.k2"/>
 
     <module name="kotlin.navigation"/>
-    <module name="kotlin.code-insight.line-markers-k2"/>
+    <module name="kotlin.code-insight.line-markers.k2"/>
 
     <module name="kotlin.highlighting.k2"/>
 
     <module name="kotlin.compiler-reference-index"/>
 
-    <module name="kotlin.compiler-plugins.assignment.common-k2"/>
+    <module name="kotlin.compiler-plugins.assignment.common.k2"/>
     <module name="kotlin.compiler-plugins.scripting"/>
     <module name="kotlin.compiler-plugins.compiler-plugin-support.maven"/>
     <module name="kotlin.compiler-plugins.allopen.maven"/>
@@ -288,7 +288,7 @@
     <module name="kotlin.compiler-plugins.lombok.maven"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>
 
-    <module name="kotlin.injection-k2"/>
+    <module name="kotlin.injection.k2"/>
     <module name="kotlin.base.injection"/>
   </content>
 </idea-plugin>

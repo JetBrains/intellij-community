@@ -111,22 +111,22 @@
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" />
     <orderEntry type="module" module-name="kotlin.completion.api" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-shared" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-k1" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.shared" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.k1" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k1" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.k1" />
     <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" />
     <orderEntry type="module" module-name="kotlin.ide" />
   </component>
 </module>

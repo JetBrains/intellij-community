@@ -54,8 +54,8 @@
     <orderEntry type="library" exported="" name="kotlin-tooling-core" level="project" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.k1" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
   </component>
 </module>

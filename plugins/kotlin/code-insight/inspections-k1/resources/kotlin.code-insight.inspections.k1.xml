@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k1.codeinsight.inspections">
   <dependencies>
-    <module name="kotlin.code-insight.inspections-shared"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k1.codeinsight.inspections.FunctionNameInspection"

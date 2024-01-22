@@ -8,7 +8,7 @@
   <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="resolution-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlin.highlighting-shared.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="kotlin.highlighting.shared.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -55,7 +55,7 @@
     <module name="kotlin.maven"/>
     <module name="kotlin.onboarding"/>
     <module name="kotlin.project-wizard.idea"/>
-    <module name="kotlin.project-wizard.idea-k1"/>
+    <module name="kotlin.project-wizard.idea.k1"/>
     <module name="kotlin.project-wizard.gradle"/>
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.project-wizard.compose"/>
@@ -86,7 +86,7 @@
     <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
     <module name="kotlin.compiler-plugins.lombok.gradle"/>
     <module name="kotlin.compiler-plugins.lombok.maven"/>
-    <module name="kotlin.compiler-plugins.assignment.common-k1"/>
+    <module name="kotlin.compiler-plugins.assignment.common.k1"/>
     <module name="kotlin.compiler-plugins.assignment.gradle"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>
 
@@ -95,16 +95,16 @@
     <module name="kotlin.j2k.k1.old.post-processing"/>
 
     <module name="kotlin.copyright"/>
-    <module name="kotlin.injection"/>
+    <module name="kotlin.injection.k1"/>
     <module name="kotlin.base.injection"/>
 
-    <module name="kotlin.code-insight.intentions-shared"/>
-    <module name="kotlin.code-insight.inspections-shared"/>
-    <module name="kotlin.code-insight.inspections-k1"/>
-    <module name="kotlin.code-insight.live-templates-shared"/>
-    <module name="kotlin.code-insight.live-templates-k1"/>
-    <module name="kotlin.code-insight.postfix-templates-k1"/>
-    <module name="kotlin.code-insight.structural-search-k1"/>
+    <module name="kotlin.code-insight.intentions.shared"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
+    <module name="kotlin.code-insight.inspections.k1"/>
+    <module name="kotlin.code-insight.live-templates.shared"/>
+    <module name="kotlin.code-insight.live-templates.k1"/>
+    <module name="kotlin.code-insight.postfix-templates.k1"/>
+    <module name="kotlin.code-insight.structural-search.k1"/>
     <module name="kotlin.code-insight.k1"/>
 
     <module name="kotlin.compiler-reference-index"/>

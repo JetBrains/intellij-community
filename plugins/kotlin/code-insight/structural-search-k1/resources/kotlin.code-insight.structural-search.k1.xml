@@ -2,7 +2,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.structuralsearch"/>
-    <module name="kotlin.code-insight.live-templates-shared"/>
+    <module name="kotlin.code-insight.live-templates.shared"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

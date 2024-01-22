@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.compose" scope="RUNTIME" />
@@ -25,12 +25,12 @@
     <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.k2.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k2.tests" />
-    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k2.tests" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.navigation.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" scope="RUNTIME" />
@@ -44,13 +44,13 @@
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.fir.tests" />
-    <orderEntry type="module" module-name="kotlin.injection-k2.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.injection.k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k2" scope="RUNTIME" />
   </component>
 </module>

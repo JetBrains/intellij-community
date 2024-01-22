@@ -46,6 +46,6 @@
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.k2" scope="TEST" />
   </component>
 </module>

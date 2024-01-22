@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.tests-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="RUNTIME" />
@@ -55,10 +55,10 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.k1" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />

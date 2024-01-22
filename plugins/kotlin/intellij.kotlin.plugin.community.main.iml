@@ -43,25 +43,25 @@
     <orderEntry type="module" module-name="kotlin.code-insight.api" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common-k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" exported="" />
@@ -77,8 +77,8 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common-k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" exported="" />
@@ -87,16 +87,16 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.completion.api" exported="" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-shared" exported="" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.core" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" exported="" />
     <orderEntry type="module" module-name="kotlin.fir" exported="" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" exported="" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-fir" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
@@ -120,18 +120,18 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" exported="" />
-    <orderEntry type="module" module-name="kotlin.injection" exported="" />
+    <orderEntry type="module" module-name="kotlin.injection.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.base.injection" exported="" />
-    <orderEntry type="module" module-name="kotlin.injection-k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.injection.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.native" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" exported="" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.idea-k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.idea.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.compose" exported="" />
     <orderEntry type="module" module-name="kotlin.repl" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting" exported="" />
@@ -161,7 +161,7 @@
     <orderEntry type="module" module-name="kotlin.highlighting.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
-    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" exported="" />

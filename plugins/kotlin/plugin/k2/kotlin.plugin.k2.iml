@@ -34,8 +34,8 @@
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.api" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-shared" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.coverage" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
@@ -68,25 +68,25 @@
     <orderEntry type="module" module-name="kotlin.spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.navigation" scope="TEST" />
@@ -99,13 +99,13 @@
     <orderEntry type="module" module-name="kotlin.searching.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common-k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k2" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k2" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.injection-k2" />
+    <orderEntry type="module" module-name="kotlin.injection.k2" />
     <orderEntry type="module" module-name="kotlin.base.injection" />
     <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" scope="RUNTIME" />

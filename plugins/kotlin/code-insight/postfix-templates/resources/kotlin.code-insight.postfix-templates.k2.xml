@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.postfix">
   <dependencies>
-    <module name="kotlin.code-insight.live-templates-shared"/>
-    <module name="kotlin.code-insight.live-templates-k2"/>
+    <module name="kotlin.code-insight.live-templates.shared"/>
+    <module name="kotlin.code-insight.live-templates.k2"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

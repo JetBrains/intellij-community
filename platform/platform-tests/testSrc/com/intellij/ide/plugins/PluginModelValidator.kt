@@ -38,6 +38,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.hunspell", /* MP-3656 Marketplace doesn't allow uploading plugins without dependencies */
   "intellij.android.device-explorer", /* android plugin doesn't follow new plugin model yet, $modulename$.xml is not a module descriptor */
   "intellij.bigdatatools.plugin.spark", /* Spark Scala depends on Scala, Scala is not in monorepo*/
+  "kotlin.highlighting.shared"
 )
 
 class PluginModelValidator(sourceModules: List<Module>) {

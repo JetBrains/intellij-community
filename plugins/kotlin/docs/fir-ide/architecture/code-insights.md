@@ -6,8 +6,8 @@ Intentions are actions that a user can apply to change code, like specifying a v
 Intentions can be considered as small refactoring actions.
 
 ### Location
-- `kotlin.code-insight.intentions-k2`
-- `kotlin.code-insight.intentions-shared`
+- `kotlin.code-insight.intentions.k2`
+- `kotlin.code-insight.intentions.shared`
 
 Preferably, an intention should extend `AbstractKotlinApplicableModCommandIntention` or `AbstractKotlinModCommandWithContext`.
 It works over the ModCommand API (see `ModCommand`) that allows to perform analysis on a background thread.
@@ -43,8 +43,8 @@ Inspections are some kind of checkers, or linters.
 They inspect code and report some kind of warnings and can recommend how to change code to improve it.
 
 ### Location
-- `kotlin.code-insight.inspections-k2`
-- `kotlin.code-insight.inspections-shared`
+- `kotlin.code-insight.inspections.k2`
+- `kotlin.code-insight.inspections.shared`
 
 There are two base classes for inspections: `AbstractKotlinApplicableInspection` and `AbstractKotlinApplicableInspectionWithContext`
 

@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" />
   </component>
 </module>
