@@ -4,6 +4,7 @@ package com.intellij.openapi.project
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.PingProgress
@@ -40,6 +41,8 @@ class UnindexedFilesScannerExecutor(project: Project)
   }
 
   fun submitTask(task: FilesScanningTask) {
+    thisLogger().debug(Throwable("submit task, thread=${Thread.currentThread()}"))
+
     // Two tasks with limited checks should be just run one after another.
     // A case of a full check followed by a limited change cancelling first one and making a full check anew results
     // in endless restart of full checks on Windows with empty Maven cache.
