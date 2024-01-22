@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
 
 import java.util.List;
@@ -112,11 +113,17 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
                                              YAMLBundle.message("YamlKeyCompletionInsertHandler.remove.key"),
                                              null,
                                              () -> {
-                                               YAMLMapping parentMapping = keyValue.getParentMapping();
-                                               boolean delete = parentMapping.getNode().getChildren(null).length == 1;
-                                               parentMapping.deleteKeyValue(keyValue);
+                                               PsiElement parent = keyValue.getParent();
+                                               boolean delete = parent.getNode().getChildren(null).length == 1;
+                                               if (parent instanceof YAMLMapping parentMapping) {
+                                                 parentMapping.deleteKeyValue(keyValue);
+                                               }
+                                               else {
+                                                 YAMLUtil.deleteSurroundingWhitespace(keyValue);
+                                                 keyValue.delete();
+                                               }
                                                if (delete) {
-                                                 parentMapping.delete();
+                                                 parent.delete();
                                                }
                                              });
     return oldValue;
