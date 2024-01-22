@@ -144,6 +144,7 @@ fun KtExpression.safeDeparenthesize(): KtExpression = KtPsiUtil.safeDeparenthesi
 fun KtDeclaration.isExpectDeclaration(): Boolean =
     when {
         hasExpectModifier() -> true
+        this is KtParameter -> ownerFunction?.isExpectDeclaration() == true
         else -> containingClassOrObject?.isExpectDeclaration() == true
     }
 
