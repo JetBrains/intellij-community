@@ -299,6 +299,9 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportImpl"/>
 
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.search.ExpectActualSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinExpectActualSupportImpl"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
                     serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
 

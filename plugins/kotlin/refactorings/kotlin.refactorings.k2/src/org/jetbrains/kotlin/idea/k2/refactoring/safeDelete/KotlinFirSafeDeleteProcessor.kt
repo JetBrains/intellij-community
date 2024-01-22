@@ -35,11 +35,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.KotlinK2RefactoringsBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.canDeleteElement
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.*
-import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.actualsForExpected
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -72,7 +69,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         if (element is KtDeclaration) {
             val additionalElementsToDeleteArray = additionalElementsToDelete.toTypedArray()
             //group declarations into expected to receive conflicts once per expected/actuals group
-            val expected = KotlinRenameRefactoringSupport.getInstance().liftToExpected(element) ?: element
+            val expected = ExpectActualUtils.liftToExpected(element) ?: element
             ReferencesSearch.search(element).forEach(Processor {
                 val e = it.element
                 if (!isInside(e) && !isInside(e, additionalElementsToDeleteArray)) {
@@ -231,7 +228,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     ): Collection<PsiElement> {
         return ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
             val mapToExpected: (PsiElement) -> List<PsiElement> = { e ->
-                (e as? KtDeclaration)?.let { KotlinRenameRefactoringSupport.getInstance().withExpectedActuals(it) } ?: listOf(e)
+                (e as? KtDeclaration)?.let { ExpectActualUtils.withExpectedActuals(it) } ?: listOf(e)
             }
             when (element) {
                 is KtParameter -> {

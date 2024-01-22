@@ -7,15 +7,9 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.actualsForExpected
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.expectedDeclarationIfAny
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
 
 /**
  * Service for various functionality which have different implementation in K1 and K2 plugin
@@ -49,22 +43,6 @@ interface KotlinRenameRefactoringSupport {
     fun isCompanionObjectClassReference(psiReference: PsiReference): Boolean
 
     fun shortenReferencesLater(element: KtElement)
-
-    fun liftToExpected(declaration: KtDeclaration): KtDeclaration? {
-        if (declaration is KtParameter) {
-            val function = declaration.ownerFunction as? KtCallableDeclaration ?: return null
-            val index = function.valueParameters.indexOf(declaration)
-            return (liftToExpected(function) as? KtCallableDeclaration)?.valueParameters?.getOrNull(index)
-        }
-
-        return if (declaration.isExpectDeclaration()) declaration else declaration.expectedDeclarationIfAny()
-    }
-
-    fun withExpectedActuals(classOrObject: KtDeclaration): List<KtDeclaration> {
-        val expect = liftToExpected(classOrObject) ?: return listOf(classOrObject)
-        val actuals = expect.actualsForExpected()
-        return listOf(expect) + actuals
-    }
 
     fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration)
 

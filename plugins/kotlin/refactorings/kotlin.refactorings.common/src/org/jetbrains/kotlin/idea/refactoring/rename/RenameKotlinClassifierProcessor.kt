@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.psi.*
 
 class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
@@ -43,7 +44,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 
     val classOrObject = getClassOrObject(element) as? KtClassOrObject ?: return
     val topLevelClassifiers = ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
-        renameRefactoringSupport.withExpectedActuals(classOrObject).filter { it.parent is KtFile }
+        ExpectActualUtils.withExpectedActuals(classOrObject).filter { it.parent is KtFile }
     }
 
     topLevelClassifiers.forEach {
