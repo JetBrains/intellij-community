@@ -40,9 +40,6 @@ internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
         ""
     }
 
-/**
- * @param skipJavaGettersAndSetters if true, skips Java getters and setters that are mapped to Kotlin properties.
- */
 context(KtAnalysisSession)
 internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     scopeContext: KtScopeContext,
@@ -92,7 +89,6 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
     }
 
 /**
- * @param skipJavaGettersAndSetters if true, skips Java getters and setters that are mapped to Kotlin properties.
  * @param indexInTower index of implicit receiver's scope in scope tower if it is known, otherwise null.
  */
 context(KtAnalysisSession)
@@ -125,8 +121,8 @@ internal fun collectNonExtensionsForType(
 }
 
 context(KtAnalysisSession)
-private val KtSyntheticJavaPropertySymbol.getterAndSetter: List<KtCallableSymbol>
-    get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol)
+private val KtSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KtCallableSymbol>
+    get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnit })
 
 context(KtAnalysisSession)
 private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
@@ -139,9 +135,10 @@ private fun Sequence<KtCallableSignature<*>>.filterOutJavaGettersAndSetters(
     val syntheticProperties = syntheticJavaPropertiesTypeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
         .filterNonExtensions(visibilityChecker, symbolFilter)
         .filterIsInstance<KtCallableSignature<KtSyntheticJavaPropertySymbol>>()
-    val javaGetterAndSetterSymbols = syntheticProperties.flatMapTo(mutableSetOf()) { it.symbol.getterAndSetter }
+    // non-Unit setters are not filtered out because they are likely to be used in a call chain
+    val javaGetterAndUnitSetterSymbols = syntheticProperties.flatMapTo(mutableSetOf()) { it.symbol.getterAndUnitSetter }
 
-    return filter { it.symbol !in javaGetterAndSetterSymbols }
+    return filter { it.symbol !in javaGetterAndUnitSetterSymbols }
 }
 
 /**
