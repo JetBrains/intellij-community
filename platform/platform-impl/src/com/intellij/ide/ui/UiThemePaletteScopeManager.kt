@@ -47,12 +47,12 @@ private class UiThemePaletteScopeImpl : UiThemePaletteScope {
 
 internal class UiThemePaletteScopeManager(theme: UIThemeBean) {
 
-  private val isRootThemeExperimental = UITheme.isRootThemeExperimental(theme)
+  private val isBasedOnExperimentalTheme = UITheme.isBasedOnExperimentalTheme(theme)
 
   private val ui = UiThemePaletteScopeImpl()
   private val checkBoxes = UiThemePaletteScopeImpl()
   private val trees = UiThemePaletteScopeImpl()
-  private val checkBoxesNewThemes = UiThemePaletteCheckBoxScope(theme.dark)
+  private val checkBoxesExperimentalThemes = UiThemePaletteCheckBoxScope(theme.dark)
 
   fun configureIcons(theme: UIThemeBean,
                      iconMap: Map<String, Any?>): SVGLoader.SvgElementColorPatcherProvider? {
@@ -102,17 +102,17 @@ internal class UiThemePaletteScopeManager(theme: UIThemeBean) {
   fun computeDigest(builder: InsecureHashBuilder): InsecureHashBuilder {
     // id and version of this class implementation, see ColorPatcherIdGenerator
     builder.putLong(453973057740471735)
-      .putBoolean(isRootThemeExperimental)
+      .putBoolean(isBasedOnExperimentalTheme)
     ui.updateHash(builder)
     checkBoxes.updateHash(builder)
     trees.updateHash(builder)
-    checkBoxesNewThemes.updateHash(builder)
+    checkBoxesExperimentalThemes.updateHash(builder)
     return builder
   }
 
   private fun getScope(colorKey: String): UiThemePaletteScope? {
     return when {
-      colorKey.startsWith("Checkbox.") -> if (isRootThemeExperimental) checkBoxesNewThemes else checkBoxes
+      colorKey.startsWith("Checkbox.") -> if (isBasedOnExperimentalTheme) checkBoxesExperimentalThemes else checkBoxes
       colorKey.startsWith("Tree.iconColor") -> trees
       colorKey.startsWith("Objects.") -> ui
       colorKey.startsWith("Actions.") -> ui
@@ -126,8 +126,8 @@ internal class UiThemePaletteScopeManager(theme: UIThemeBean) {
 
   fun getScopeByPath(path: String?): UiThemePaletteScope? {
     if (path != null) {
-      if (isRootThemeExperimental && path.contains("themes/expUI/icons/dark/")) {
-        return checkBoxesNewThemes
+      if (isBasedOnExperimentalTheme && path.contains("themes/expUI/icons/dark/")) {
+        return checkBoxesExperimentalThemes
       }
 
       if (path.contains("com/intellij/ide/ui/laf/icons/")) {

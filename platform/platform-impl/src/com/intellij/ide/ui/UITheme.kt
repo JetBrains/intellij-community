@@ -198,9 +198,9 @@ class UITheme internal constructor(
     }
 
     /**
-     * Returns true if root theme is experimental one (Dark or Light)
+     * Returns true if [theme] is based on experimental theme Dark or Light
      */
-    internal fun isRootThemeExperimental(theme: UIThemeBean): Boolean {
+    internal fun isBasedOnExperimentalTheme(theme: UIThemeBean): Boolean {
       var current: UIThemeBean? = theme
       while (current != null) {
         if (current.name == "Light" || current.name == "Dark") {
