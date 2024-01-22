@@ -17,6 +17,14 @@ function Global:__JetBrainsIntellijOSC([string]$body) {
   # return "$([char]0x9D)1341;$body$([char]0x9C)"
 }
 
+function Global:__JetBrainsIntellijGetCommandEndMarker() {
+  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
+  if ($CommandEndMarker -eq $null) {
+    $CommandEndMarker = ""
+  }
+  return $CommandEndMarker
+}
+
 $Global:__JetBrainsIntellijTerminalInitialized=$false
 $Global:__JetBrainsIntellijGeneratorRunning=$false
 
@@ -31,10 +39,7 @@ function Global:Prompt() {
 
   $OriginalPrompt = $Global:__JetBrainsIntellijOriginalPrompt.Invoke()
   $Result = ""
-  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
-  if ($CommandEndMarker -eq $null) {
-    $CommandEndMarker = ""
-  }
+  $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
   if ($__JetBrainsIntellijTerminalInitialized) {
     $ExitCode = "0"
     if ($LASTEXITCODE -ne $null) {
@@ -80,10 +85,7 @@ function Global:__JetBrainsIntellijGetCompletions([int]$RequestId, [string]$Comm
     $CompletionsJson = ""
   }
   $CompletionsOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $CompletionsJson)"
-  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
-  if ($CommandEndMarker -eq $null) {
-    $CommandEndMarker = ""
-  }
+  $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
   [Console]::Write($CommandEndMarker + $CompletionsOSC)
 }
 
@@ -94,10 +96,7 @@ function Global:__jetbrains_intellij_get_directory_files([int]$RequestId, [strin
   $FileNames = $Files | ForEach-Object { if ($_ -is [System.IO.DirectoryInfo]) { $_.Name + $Separator } else { $_.Name } }
   $FilesString = $FileNames -join "`n"
   $FilesOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $FilesString)"
-  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
-  if ($CommandEndMarker -eq $null) {
-    $CommandEndMarker = ""
-  }
+  $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
   [Console]::Write($CommandEndMarker + $FilesOSC)
 }
 
@@ -118,10 +117,7 @@ function Global:__jetbrains_intellij_get_environment([int]$RequestId) {
   }
   $EnvJson = $EnvObject | ConvertTo-Json -Compress
   $EnvOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $EnvJson)"
-  $CommandEndMarker = $Env:JETBRAINS_INTELLIJ_COMMAND_END_MARKER
-  if ($CommandEndMarker -eq $null) {
-    $CommandEndMarker = ""
-  }
+  $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
   [Console]::Write($CommandEndMarker + $EnvOSC)
 }
 
