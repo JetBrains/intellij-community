@@ -86,7 +86,7 @@ class WSLDistributionTest {
         myExecuteCommandInLoginShell = true
         myExecuteCommandInShell = true
         myInitShellCommands = []
-        myLaunchWithWslExe = true
+        myLaunchWithWslExe = false
         myPassEnvVarsUsingInterop = false
         myRemoteWorkingDirectory = null
         mySleepTimeoutSec = 0.0

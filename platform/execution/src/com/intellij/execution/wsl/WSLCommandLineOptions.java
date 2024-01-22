@@ -15,7 +15,7 @@ import java.util.List;
 
 public final class WSLCommandLineOptions {
 
-  private boolean myLaunchWithWslExe = !Registry.is("wsl.use.remote.agent.for.launch.processes", false);
+  private boolean myLaunchWithWslExe = !Registry.is("wsl.use.remote.agent.for.launch.processes", true);
   private boolean myExecuteCommandInShell = true;
   private boolean myExecuteCommandInInteractiveShell = false;
   private boolean myExecuteCommandInLoginShell = true;

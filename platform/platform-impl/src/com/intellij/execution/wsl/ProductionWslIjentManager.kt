@@ -25,7 +25,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   override val isIjentAvailable: Boolean
     get() {
       val id = PluginId.getId("intellij.platform.ijent.impl")
-      return Registry.`is`("wsl.use.remote.agent.for.launch.processes", false) && PluginManagerCore.getPlugin(id)?.isEnabled == true
+      return Registry.`is`("wsl.use.remote.agent.for.launch.processes", true) && PluginManagerCore.getPlugin(id)?.isEnabled == true
     }
 
   @DelicateCoroutinesApi
