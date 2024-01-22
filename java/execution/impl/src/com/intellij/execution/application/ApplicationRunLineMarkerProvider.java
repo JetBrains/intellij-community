@@ -59,6 +59,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiClass aClass) {
       if (PsiMethodUtil.findMainInClass(aClass) == null) return null;
+      if (PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null) return null;
     }
     else if (parent instanceof PsiMethod method) {
       if (!"main".equals(method.getName()) || !PsiMethodUtil.isMainMethod(method)) return null;

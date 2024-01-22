@@ -74,6 +74,21 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
+  public void testClassInsideInnerClassInImplicitClassHasNoGutter() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("MainTest.java", """
+      void foo() {
+      }
+      
+      public class A<caret> {
+        public void main() {}
+      }
+      """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(0, marks.size());
+    });
+  }
+
   public void testStaticWithParameterHasHigherPriority() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
