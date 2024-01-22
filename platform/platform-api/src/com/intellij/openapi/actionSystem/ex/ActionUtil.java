@@ -109,17 +109,6 @@ public final class ActionUtil {
   }
 
   /**
-   * @deprecated Use {@link #performDumbAwareUpdate(AnAction, AnActionEvent, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean performDumbAwareUpdate(boolean isInModalContext,
-                                               @NotNull AnAction action,
-                                               @NotNull AnActionEvent e,
-                                               boolean beforeActionPerformed) {
-    return performDumbAwareUpdate(action, e, beforeActionPerformed);
-  }
-
-  /**
    * Calls {@link AnAction#update(AnActionEvent)} or {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}
    * depending on {@code beforeActionPerformed} value with all the required extra logic around it.
    *
@@ -265,15 +254,6 @@ public final class ActionUtil {
     return !visibilityMatters || e.getPresentation().isVisible();
   }
 
-  /**
-   * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
-    LOG.assertTrue(e.getDataContext() == context, "event context does not match the argument");
-    performActionDumbAwareWithCallbacks(action, e);
-  }
-
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e) {
     performDumbAwareWithCallbacks(action, e, () -> doPerformActionOrShowPopup(action, e, null));
   }
@@ -359,22 +339,6 @@ public final class ActionUtil {
     }
   }
 
-  /**
-   * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)} or
-   * {@link AnAction#actionPerformed(AnActionEvent)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent event) {
-    Project project = event.getProject();
-    try {
-      doPerformActionOrShowPopup(action, event, null);
-    }
-    catch (IndexNotReadyException ex) {
-      LOG.info(ex);
-      showDumbModeWarning(project, action, event);
-    }
-  }
-
   public static @NotNull AnActionEvent createEmptyEvent() {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT);
   }
@@ -434,10 +398,14 @@ public final class ActionUtil {
     }
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
   public static boolean recursiveContainsAction(@NotNull ActionGroup group, @NotNull AnAction action) {
     return anyActionFromGroupMatches(group, true, Predicate.isEqual(action));
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
   public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
                                                   @NotNull Predicate<? super AnAction> condition) {
     for (AnAction child : group.getChildren(null)) {
