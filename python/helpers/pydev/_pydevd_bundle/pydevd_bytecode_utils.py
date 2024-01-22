@@ -8,7 +8,7 @@ import os
 import sys
 from collections import namedtuple
 
-from _pydevd_bundle.pydevd_constants import IS_PY3K, IS_CPYTHON, IS_PY312_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY3K, IS_CPYTHON, IS_PY311_OR_GREATER
 
 __all__ = [
     'find_last_call_name',
@@ -46,7 +46,7 @@ if IS_PY3K:
         _LOAD_OPNAMES.add(each_opname)
     for each_opname in ('CALL_FUNCTION_EX', 'CALL_METHOD'):
         _CALL_OPNAMES.add(each_opname)
-    if IS_PY312_OR_GREATER:
+    if IS_PY311_OR_GREATER:
         _CALL_OPNAMES.add('CALL')
 else:
     _LOAD_OPNAMES.add('LOAD_LOCALS')
@@ -249,7 +249,7 @@ def _get_smart_step_into_candidates(code):
                 if opname == 'LOAD_CONST':
                     argval = constants[arg]
                 elif opname == 'LOAD_NAME' or opname == 'LOAD_GLOBAL':
-                    if IS_PY312_OR_GREATER:
+                    if IS_PY311_OR_GREATER:
                         argval = names[arg >> 1]
                     else:
                         argval = names[arg]
@@ -319,13 +319,13 @@ def _get_smart_step_into_candidates(code):
     return result
 
 
-def _get_smart_step_into_candidates_312(code):
+def _get_smart_step_into_candidates_311(code):
     result = []
     stk = []
     for instruction in dis.get_instructions(code):
         if instruction.opname == 'CALL':
             while stk and stk[-1].opname not in ('LOAD_NAME', 'LOAD_GLOBAL',
-                                                 'LOAD_ATTR'):
+                                                 'LOAD_ATTR', 'LOAD_METHOD'):
                 stk.pop()
             if not stk:
                 continue
@@ -343,8 +343,8 @@ def _get_smart_step_into_candidates_312(code):
     return result
 
 
-if IS_PY312_OR_GREATER:
-    get_smart_step_into_candidates = _get_smart_step_into_candidates_312
+if IS_PY311_OR_GREATER:
+    get_smart_step_into_candidates = _get_smart_step_into_candidates_311
 else:
     get_smart_step_into_candidates = _get_smart_step_into_candidates
 
