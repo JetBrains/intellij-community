@@ -17,6 +17,7 @@ public class Maven40ExecutionResult {
   private final List<Exception> myExceptions;
   private final List<ModelProblem> myModelProblems;
   private final DependencyResolutionResult myDependencyResolutionResult;
+  private String checksum;
 
   public Maven40ExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
     this(mavenProject, null, exceptions, Collections.emptyList());
@@ -69,5 +70,13 @@ public class Maven40ExecutionResult {
   @Nullable
   public File getPomFile() {
     return myMavenProject != null ? myMavenProject.getFile() : myPomFile;
+  }
+
+  public String getChecksum() {
+    return checksum;
+  }
+
+  public void setChecksum(String checksum) {
+    this.checksum = checksum;
   }
 }

@@ -85,6 +85,26 @@ public class Maven40ProjectResolver {
     }
   }
 
+  private static class ProjectBuildingResultInfo {
+    ProjectBuildingResult buildingResult;
+    List<Exception> exceptions;
+    String checksum;
+
+    private ProjectBuildingResultInfo(ProjectBuildingResult buildingResult, List<Exception> exceptions, String checksum) {
+      this.buildingResult = buildingResult;
+      this.exceptions = exceptions;
+      this.checksum = checksum;
+    }
+
+    @Override
+    public String toString() {
+      return "ProjectBuildingResultData{" +
+             "projectId=" + buildingResult.getProjectId() +
+             ", checksum=" + checksum +
+             '}';
+    }
+  }
+
   @NotNull
   private Collection<Maven40ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
                                                               @NotNull Map<File, String> fileToChecksum,
@@ -97,7 +117,7 @@ public class Maven40ProjectResolver {
     request.setUpdateSnapshots(myUpdateSnapshots);
 
     Collection<Maven40ExecutionResult> executionResults = new ArrayList<>();
-    Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
+    List<ProjectBuildingResultInfo> buildingResultInfos = new ArrayList<>();
 
     myEmbedder.executeWithMavenSession(request, () -> {
       try {
@@ -139,19 +159,21 @@ public class Maven40ProjectResolver {
           //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
           String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
-          if (null == previousChecksum || !previousChecksum.equals(Maven40EffectivePomDumper.checksum(buildingResult.getProject()))) {
-            buildingResultsToResolveDependencies.put(buildingResult, exceptions);
+          String newChecksum = Maven40EffectivePomDumper.checksum(buildingResult.getProject());
+          if (null == previousChecksum || !previousChecksum.equals(newChecksum)) {
+            buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newChecksum));
           }
         }
 
-        task.updateTotalRequests(buildingResultsToResolveDependencies.size());
+        task.updateTotalRequests(buildingResultInfos.size());
         boolean runInParallel = myResolveInParallel;
         Collection<Maven40ExecutionResult> execResults =
           ParallelRunnerForServer.execute(
             runInParallel,
-            buildingResultsToResolveDependencies.entrySet(), entry -> {
+            buildingResultInfos, br -> {
               if (task.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
-              Maven40ExecutionResult result = resolveBuildingResult(repositorySession, entry.getKey(), entry.getValue());
+              Maven40ExecutionResult result = resolveBuildingResult(repositorySession, br.buildingResult, br.exceptions);
+              result.setChecksum(br.checksum);
               task.incrementFinishedRequests();
               return result;
             }
@@ -271,9 +293,8 @@ public class Maven40ProjectResolver {
     Collection<String> activatedProfiles = Maven40ProfileUtil.collectActivatedProfiles(mavenProject);
 
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
-    String checksum = Maven40EffectivePomDumper.checksum(mavenProject);
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, checksum, mavenModelMap, holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, result.getChecksum(), mavenModelMap, holder, activatedProfiles);
     if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
       data = null;
     }

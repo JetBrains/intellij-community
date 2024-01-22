@@ -105,6 +105,26 @@ public class Maven3XProjectResolver {
     }
   }
 
+  private static class ProjectBuildingResultInfo {
+    ProjectBuildingResult buildingResult;
+    List<Exception> exceptions;
+    String checksum;
+
+    private ProjectBuildingResultInfo(ProjectBuildingResult buildingResult, List<Exception> exceptions, String checksum) {
+      this.buildingResult = buildingResult;
+      this.exceptions = exceptions;
+      this.checksum = checksum;
+    }
+
+    @Override
+    public String toString() {
+      return "ProjectBuildingResultData{" +
+             "projectId=" + buildingResult.getProjectId() +
+             ", checksum=" + checksum +
+             '}';
+    }
+  }
+
   @NotNull
   private Collection<Maven3ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
                                                              @NotNull Map<File, String> fileToChecksum,
@@ -119,7 +139,7 @@ public class Maven3XProjectResolver {
     request.setUpdateSnapshots(myUpdateSnapshots);
 
     Collection<Maven3ExecutionResult> executionResults = new ArrayList<>();
-    Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
+    List<ProjectBuildingResultInfo> buildingResultInfos = new ArrayList<>();
 
     myEmbedder.executeWithMavenSession(request, () -> {
       try {
@@ -167,20 +187,22 @@ public class Maven3XProjectResolver {
           }
           else {
             String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
-            if (null == previousChecksum || !previousChecksum.equals(Maven3EffectivePomDumper.checksum(buildingResult.getProject()))) {
-              buildingResultsToResolveDependencies.put(buildingResult, exceptions);
+            String newChecksum = Maven3EffectivePomDumper.checksum(buildingResult.getProject());
+            if (null == previousChecksum || !previousChecksum.equals(newChecksum)) {
+              buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newChecksum));
             }
           }
         }
 
-        task.updateTotalRequests(buildingResultsToResolveDependencies.size());
+        task.updateTotalRequests(buildingResultInfos.size());
         boolean runInParallel = myResolveInParallel;
         Collection<Maven3ExecutionResult> execResults =
           ParallelRunnerForServer.execute(
             runInParallel,
-            buildingResultsToResolveDependencies.entrySet(), entry -> {
+            buildingResultInfos, br -> {
               if (task.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
-              Maven3ExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, entry.getKey(), entry.getValue());
+              Maven3ExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult, br.exceptions);
+              result.setChecksum(br.checksum);
               task.incrementFinishedRequests();
               return result;
             }
@@ -267,9 +289,8 @@ public class Maven3XProjectResolver {
     Collection<String> activatedProfiles = Maven3XProfileUtil.collectActivatedProfiles(mavenProject);
 
     Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
-    String checksum = Maven3EffectivePomDumper.checksum(mavenProject);
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, checksum, mavenModelMap, holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, result.getChecksum(), mavenModelMap, holder, activatedProfiles);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
