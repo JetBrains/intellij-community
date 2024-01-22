@@ -11,7 +11,7 @@ public interface MavenSyncSpec {
   }
 
   static MavenSyncSpec incremental(String description, boolean explicit) {
-    return new MavenSyncSpecImpl(false, explicit, description);
+    return new MavenSyncSpecImpl(true, explicit, description);
   }
 
   static MavenSyncSpec full(String description) {
@@ -19,40 +19,44 @@ public interface MavenSyncSpec {
   }
 
   static MavenSyncSpec full(String description, boolean explicit) {
-    return new MavenSyncSpecImpl(true, explicit, description);
+    return new MavenSyncSpecImpl(false, explicit, description);
   }
 
-  boolean isForceReading();
+  boolean forceReading();
 
-  boolean isExplicitImport();
+  boolean resolveIncrementally();
+
+  boolean isExplicit();
 }
 
 class MavenSyncSpecImpl implements MavenSyncSpec {
-  private final boolean myForceReading;
-  private final boolean myExplicitImport;
+  private final boolean incremental;
+  private final boolean explicit;
   private final String description;
 
-  MavenSyncSpecImpl(boolean forceReading, boolean explicitImport, String description) {
-    myForceReading = forceReading;
-    myExplicitImport = explicitImport;
+  MavenSyncSpecImpl(boolean incremental, boolean explicit, String description) {
+    this.incremental = incremental;
+    this.explicit = explicit;
     this.description = description;
   }
 
   @Override
-  public boolean isForceReading() {
-    return myForceReading;
+  public boolean forceReading() {
+    return !incremental;
   }
 
   @Override
-  public boolean isExplicitImport() {
-    return myExplicitImport;
+  public boolean resolveIncrementally() {
+    return incremental;
+  }
+
+  @Override
+  public boolean isExplicit() {
+    return explicit;
   }
 
   @Override
   public String toString() {
-    return "MavenSyncSpec{" +
-           "forceReading=" + myForceReading +
-           ", explicit=" + myExplicitImport +
-           '}';
+    return "incremental=" + incremental + ", " + description;
   }
 }

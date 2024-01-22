@@ -218,11 +218,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>) {
     importMutex.withLock {
-      MavenLog.LOG.warn(
-        "updateMavenProjects started: ${spec.isForceReading} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+      MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ")
       doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
-      MavenLog.LOG.warn(
-        "updateMavenProjects finished: ${spec.isForceReading} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+      MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size}")
     }
   }
 
@@ -238,7 +236,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return reportRawProgress { reporter ->
       val progressReporter = reporter
       val deleted = projectsTree.delete(filesToDelete, generalSettings, progressReporter)
-      val updated = projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, progressReporter)
+      val updated = projectsTree.update(filesToUpdate, spec.forceReading(), generalSettings, progressReporter)
       deleted + updated
     }
   }
@@ -282,9 +280,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun updateAllMavenProjects(spec: MavenSyncSpec,
                                              modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     importMutex.withLock {
-      MavenLog.LOG.warn("updateAllMavenProjects started: ${spec.isForceReading} ${spec.isExplicitImport}")
+      MavenLog.LOG.warn("updateAllMavenProjects started: $spec")
       val result = doUpdateAllMavenProjects(spec, modelsProvider)
-      MavenLog.LOG.warn("updateAllMavenProjects finished: ${spec.isForceReading} ${spec.isExplicitImport}")
+      MavenLog.LOG.warn("updateAllMavenProjects finished: $spec")
       return result
     }
   }
@@ -299,14 +297,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                             modelsProvider: IdeModifiableModelsProvider?,
                                             read: suspend () -> MavenProjectsTreeUpdateResult): List<Module> {
     // display all import activities using the same build progress
-    logDebug("Start update ${project.name}, ${spec.isForceReading}, ${spec.isExplicitImport}")
+    logDebug("Start update ${project.name}, $spec")
     ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncStarted(myProject)
 
     MavenSyncConsole.startTransaction(myProject)
     val syncActivity = importActivityStarted(project, MavenUtil.SYSTEM_ID)
     try {
       val console = syncConsole
-      console.startImport(spec.isExplicitImport)
+      console.startImport(spec.isExplicit)
       if (MavenUtil.enablePreimport()) {
         val result = MavenProjectStaticImporter.getInstance(myProject)
           .syncStatic(
@@ -342,7 +340,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       return emptyList()
     }
     finally {
-      logDebug("Finish update ${project.name}, ${spec.isForceReading}, ${spec.isExplicitImport}")
+      logDebug("Finish update ${project.name}, $spec")
       MavenSyncConsole.finishTransaction(myProject)
       syncActivity.finished {
         listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
@@ -362,7 +360,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       reportRawProgress { reporter ->
         runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
-          val res = resolver.resolve(!spec.isForceReading,
+          val res = resolver.resolve(spec.resolveIncrementally(),
                                      projectsToResolve,
                                      projectsTree,
                                      generalSettings,
@@ -431,7 +429,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private suspend fun readAllMavenProjects(spec: MavenSyncSpec): MavenProjectsTreeUpdateResult {
     return reportRawProgress { reporter ->
-      projectsTree.updateAll(spec.isForceReading, generalSettings, reporter)
+      projectsTree.updateAll(spec.forceReading(), generalSettings, reporter)
     }
   }
 
