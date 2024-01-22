@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.platform.ide.bootstrap
 
@@ -43,7 +42,6 @@ import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.debug.DebugProbes
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
@@ -100,10 +98,6 @@ fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
-  launch(CoroutineName("coroutine debug probes init")) {
-    DebugProbes.enableCreationStackTraces = false
-    DebugProbes.install()
-  }
   launch {
     Java11Shim.INSTANCE = Java11ShimImpl()
   }
@@ -345,6 +339,8 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
+  scheduleEnableCoroutineDumpAndJstack()
+
   launch {
     // required for appStarter.prepareStart
     appInfoDeferred.join()
@@ -365,8 +361,6 @@ fun CoroutineScope.startApplication(args: List<String>,
       appStarter.start(InitAppContext(appRegistered = appRegisteredJob, appLoaded = appLoaded))
     }
   }
-
-  scheduleEnableJstack()
 }
 
 private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
@@ -387,13 +381,31 @@ private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
 @JvmField
 internal var isInitialStart: CompletableDeferred<Boolean>? = null
 
-private fun CoroutineScope.scheduleEnableJstack() {
-  launch(CoroutineName("coroutine jstack configuration")) {
-    JBR.getJstack()?.includeInfoFrom {
-      """
+private fun CoroutineScope.scheduleEnableCoroutineDumpAndJstack() {
+  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+    return
+  }
+
+  launch {
+    span("coroutine debug probes init") {
+      try {
+        enableCoroutineDump()
+      }
+      catch (ignore: NoClassDefFoundError) {
+        // if for some reason, the class loader has ByteBuddy in the classpath
+        // (it is an error, and should be fixed - our dev mode and production behaves correctly)
+      }
+      catch (e: Exception) {
+        e.printStackTrace()
+      }
+    }
+    span("coroutine jstack configuration") {
+      JBR.getJstack()?.includeInfoFrom {
+        """
 $COROUTINE_DUMP_HEADER
 ${dumpCoroutines(stripDump = false)}
 """
+      }
     }
   }
 }
