@@ -178,7 +178,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
     fun shellCommand(): String {
       val joinedParams = when (session.shellIntegration.shellType) {
-        ShellType.POWERSHELL -> parameters.joinToString(" ") { StringUtil.wrapWithDoubleQuote(it) }
+        ShellType.POWERSHELL -> parameters.joinToString(" ") { StringUtil.wrapWithDoubleQuote(escapePowerShellParameter(it)) }
         else -> ParametersListUtil.join(parameters)
       }
       return "$name $requestId $joinedParams"
@@ -207,6 +207,28 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
   companion object {
     private val NEXT_REQUEST_ID = AtomicInteger(0)
+
+    private val pwshCharsToEscape: Map<Char, String> = mapOf(
+      '`' to "``",
+      '\"' to "`\"",
+      '\u0000' to "`0",
+      '\u0007' to "`a",
+      '\u0008' to "`b",
+      '\u000c' to "`f",
+      '\n' to "`n",
+      '\r' to "`r",
+      '\t' to "`t",
+      '\u000B' to "'v",
+      '$' to "`$"
+    )
+
+    private fun escapePowerShellParameter(parameter: String): String {
+      return buildString(parameter.length) {
+        for (ch in parameter) {
+          append(pwshCharsToEscape[ch] ?: ch)
+        }
+      }
+    }
   }
 }
 
