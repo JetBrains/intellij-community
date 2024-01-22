@@ -54,10 +54,14 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return id2NodeMapping.get(vfu.id).getSubtreeNodes().map { it.getVirtualFileUrl(this) }
   }
 
-  override fun processChildrenRecursively(url: VirtualFileUrl, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
-    val node = synchronized(this) { id2NodeMapping.get ((url as VirtualFileUrlImpl).id) }
+  /**
+   * Processes children of [url] and their children recursively using [processor]. [url] itself isn't processed.
+   * @return `true` if processing finished normally, or `false` if [processor] returned [STOP][TreeNodeProcessingResult.STOP].
+   */
+  public fun processChildrenRecursively(url: VirtualFileUrl, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
+    val node = synchronized(this) { id2NodeMapping.get((url as VirtualFileUrlImpl).id) }
     return node.processChildrenRecursively {
-      val childUrl = synchronized(this) { it.getVirtualFileUrl (this) }
+      val childUrl = synchronized(this) { it.getVirtualFileUrl(this) }
       processor(childUrl)
     }
   }
