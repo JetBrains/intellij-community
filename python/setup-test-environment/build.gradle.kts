@@ -9,6 +9,8 @@ plugins {
   id("com.jetbrains.python.envs") version "0.0.31"
 }
 
+apply(from = "tasks.gradle.kts")
+
 val pythonsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHONS", File(buildDir, "pythons").path))
 val venvsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", File(buildDir, "envs").path))
 
@@ -80,7 +82,7 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
 
   project.tasks.create("populate_tags_$id") {
     dependsOn(tasks.matching { it.name.matches("Bootstrap_[A-Z]*_'$id'.*".toRegex()) })
-    onlyIf { !tags.isEmpty() }
+    onlyIf { tags.isNotEmpty() }
 
     doLast {
       val tagsFile = pythonHome.resolve("tags.txt")
@@ -114,25 +116,6 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
     mustRunAfter("clean")
     setDependsOn(listOf("clean", "populate_symlinks_$id"))
   }
-}
-
-tasks.register<Exec>("kill_python_processes") {
-  onlyIf { isWindows }
-
-  // TODO: looks ugly, how can it be improved?
-  commandLine("powershell", "\"Get-Process | where {${'$'}_.Name -ieq \\\"python\\\"} | Stop-Process\"")
-}
-
-tasks.register<Delete>("clean") {
-  dependsOn("kill_python_processes")
-  mustRunAfter("kill_python_processes")
-
-  delete(project.layout.buildDirectory)
-}
-
-tasks.register("build") {
-  mustRunAfter("clean")
-  dependsOn(tasks.matching { it.name.startsWith("setup_") }, "clean")
 }
 
 createPython("py36_django_latest", "3.6",
