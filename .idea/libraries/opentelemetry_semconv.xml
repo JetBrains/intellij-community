@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="opentelemetry-semconv" type="repository">
+    <properties maven-id="io.opentelemetry.semconv:opentelemetry-semconv:1.23.1-alpha">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.23.1-alpha/opentelemetry-semconv-1.23.1-alpha.jar">
+          <sha256sum>ae8cace98274227cd4b04f1dacee9309a88f3208e2e2bd96df7f8d7d57fb7d4d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.23.1-alpha/opentelemetry-semconv-1.23.1-alpha.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.23.1-alpha/opentelemetry-semconv-1.23.1-alpha-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

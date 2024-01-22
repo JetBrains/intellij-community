@@ -45,6 +45,7 @@
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="module-library">
       <library name="mvstore" type="repository">
         <properties maven-id="com.h2database:h2-mvstore:2.2.224">

@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableNotNullFunction
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
@@ -13,6 +12,7 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
+import io.opentelemetry.semconv.SemanticAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
@@ -52,11 +52,11 @@ suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = Empt
       operation(span)
     }
     catch (e: CancellationException) {
-      span.recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
+      span.recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
       throw e
     }
     catch (e: Throwable) {
-      span.recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
+      span.recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
       span.setStatus(StatusCode.ERROR)
       throw e
     }
@@ -128,15 +128,15 @@ inline fun <T> Span.use(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
-    recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
+    recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: ProcessCanceledException) {
-    recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
+    recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: Throwable) {
-    recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
+    recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
     setStatus(StatusCode.ERROR)
     throw e
   }

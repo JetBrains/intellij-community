@@ -945,6 +945,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "opentelemetry-extension-kotlin", url = "https://opentelemetry.io/",
                    licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0")
       .suppliedByOrganizations("The OpenTelemetry Authors"),
+    LibraryLicense(libraryName = "opentelemetry-semconv", url = "https://opentelemetry.io/",
+                   licenseUrl = "https://github.com/open-telemetry/semantic-conventions-java/blob/main/LICENSE", license = "Apache 2.0")
+      .suppliedByOrganizations("The OpenTelemetry Authors"),
     LibraryLicense(libraryName = "opentest4j", url = "https://github.com/ota4j-team/opentest4j")
       .apache("https://github.com/ota4j-team/opentest4j/blob/master/LICENSE"),
     LibraryLicense(name = "OverlayScrollbars", attachedTo = "intellij.idea.community.main",

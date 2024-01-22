@@ -36,6 +36,7 @@
     <orderEntry type="library" name="ktor-client-encoding" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
   </component>
 </module>

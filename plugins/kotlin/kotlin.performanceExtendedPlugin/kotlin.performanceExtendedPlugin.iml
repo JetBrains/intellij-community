@@ -17,6 +17,7 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-project-structure" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
