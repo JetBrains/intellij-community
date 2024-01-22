@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -363,7 +364,7 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
   private class DetachedRoot(val root: VirtualFile, val isDuringRebase: Boolean)
 }
 
-private abstract class GitCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck {
+private abstract class GitCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck, DumbAware {
   final override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     if (!commitInfo.isVcsCommit) return null
     return runGitCheck(commitInfo)
