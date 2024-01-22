@@ -122,26 +122,22 @@ createPython("py36_django_latest", "3.6",
              listOf("django", "behave-django", "behave", "pytest", "untangle"),
              listOf("python3.6", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
 
-if (isUnix) {
-  // For TensorFlow
+if (isUnix && !isMacOs) {
   createPython("py37",
                "3.7",
-               listOf("tensorflow", "pyqt5==5.12", "PySide2==5.12.1"),
-               listOf("tensorflow", "python3.7", "qt"))
+               listOf("pyqt5==5.12", "PySide2==5.12.1"),
+               listOf("python3.7", "qt"))
 }
 else {
   // qt is for unix only
   createPython("py37", "3.7",
-               listOf("tensorflow"),
-               listOf("tensorflow", "python3.7"))
+               listOf(),
+               listOf("python3.7"))
 }
 
 createPython("py38", "3.8",
-  // The version of Jinja2 is fixed due to a bug in recent versions which breaks the debugging.
-  // See: https://github.com/pallets/jinja/pull/1178.
-  // The version of NumPy is fixed due to https://tinyurl.com/y3dm3h86.
-             listOf("ipython==7.8", "django==2.2", "behave", "jinja2==3.1.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
-                    "pytest-xdist", "untangle", "numpy==1.19.3", "pandas"),
+             listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
+                    "pytest-xdist", "untangle", "numpy", "pandas"),
              listOf("python3.8", "python3", "ipython", "ipython780", "skeletons", "django", "behave", "behave-django", "tox", "jinja2",
                     "packaging", "pytest", "nose", "django-nose", "behave-django", "django2", "xdist", "untangle", "pandas"))
 
@@ -153,8 +149,8 @@ createPython("python3.10", "3.10",
              listOf(), listOf("python3.10"))
 
 createPython("python3.11", "3.11",
-             listOf("black == 23.1.0", "joblib"),
-             listOf("python3.11", "black", "joblib"))
+             listOf("black == 23.1.0", "joblib", "tensorflow"),
+             listOf("python3.11", "black", "joblib", "tensorflow"))
 
 createPython("python3.12", "3.12",
              listOf("teamcity-messages"),
