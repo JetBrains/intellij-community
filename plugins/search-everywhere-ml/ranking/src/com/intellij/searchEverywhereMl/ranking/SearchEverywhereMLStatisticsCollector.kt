@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SE_TABS
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.features.*
@@ -217,6 +218,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       add(IS_MIXED_LIST.with(isMixedList))
       add(ORDER_BY_ML_GROUP.with(orderByMl))
       add(EXPERIMENT_GROUP.with(experimentGroup))
+      add(EXPERIMENT_VERSION.with(SearchEverywhereMlExperiment.VERSION))
       add(IS_INTERNAL.with(isInternal))
     }
   }
@@ -285,6 +287,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
   private val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
+  private val EXPERIMENT_VERSION = EventFields.Int("experimentVersion")
   private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
   private val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("timeToFirstResult")
 
@@ -374,6 +377,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       TOTAL_NUMBER_OF_ITEMS_DATA_KEY,
       SE_TAB_ID_KEY,
       EXPERIMENT_GROUP,
+      EXPERIMENT_VERSION,
       ORDER_BY_ML_GROUP,
       IS_INTERNAL,
       SEARCH_START_TIME_KEY,
