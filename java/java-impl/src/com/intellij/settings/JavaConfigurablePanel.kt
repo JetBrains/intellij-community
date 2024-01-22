@@ -3,22 +3,48 @@ package com.intellij.settings
 
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
+import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
+import com.intellij.util.concurrency.AppExecutorUtil
 import javax.swing.JPanel
 
-class JavaConfigurablePanel(private val settings: JavaSettingsStorage.State) {
-  private val panel = panel {
-    row {
-      label(JavaBundle.message("label.configurable.logger.type"))
-      comboBox(JavaLoggerModel(JavaLoggerInfo.allLoggers, settings.logger)).bindItem(settings::logger.toNullableProperty())
+class JavaConfigurablePanel(
+  private val project: Project,
+  private val settings: JavaSettingsStorage.State) {
+  private lateinit var warningRow: Row
+  private lateinit var panel: DialogPanel
+  private val boundedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("ScalingImagePanel", 1)
+
+  fun getMainPanel(): JPanel {
+    panel = panel {
+      row {
+        label(JavaBundle.message("label.configurable.logger.type"))
+        comboBox(JavaLoggerModel(JavaLoggerInfo.allLoggers, settings.logger)).bindItem(settings::logger.toNullableProperty()).onChanged {
+          updateWarningRow(it.item.loggerName)
+        }
+      }
+      warningRow = row {
+        icon(AllIcons.General.Warning).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
+        text(JavaBundle.message("java.configurable.logger.not.found"))
+      }.visible(false)
     }
-    row {
-      icon(AllIcons.General.Warning).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
-      text(JavaBundle.message("java.configurable.logger.not.found"))
-    }.visible(false)
+    updateWarningRow(settings.logger.loggerName)
+    return panel
   }
 
-  fun getMainPanel(): JPanel = panel
+  private fun updateWarningRow(loggerName : String) {
+    ReadAction.nonBlocking<Boolean> {
+      !JavaLibraryUtil.hasLibraryClass(project, loggerName)
+    }.finishOnUiThread(ModalityState.any()) { isVisible ->
+      warningRow.visible(isVisible)
+    }.submit(boundedExecutor)
+  }
+
+  fun dispose() = boundedExecutor.shutdown()
 
   fun isModified(): Boolean = panel.isModified()
 

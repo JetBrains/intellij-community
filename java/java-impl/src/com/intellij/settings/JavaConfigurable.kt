@@ -9,25 +9,19 @@ import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 
 class JavaConfigurable(project: Project) : SearchableConfigurable, NoScroll {
-  private val settings = project.service<JavaSettingsStorage>().state
+  private val delegate = JavaConfigurablePanel(project, project.service<JavaSettingsStorage>().state)
 
-  private val delegateWithPanel = JavaConfigurablePanel(settings)
+  override fun getDisplayName(): String = JavaBundle.message("java.configurable.display.name")
 
-  override fun getDisplayName(): String {
-    return JavaBundle.message("java.configurable.display.name")
-  }
+  override fun getId(): String = JavaBundle.message("java.configurable.id")
 
-  override fun getId(): String {
-    return JavaBundle.message("java.configurable.id")
-  }
+  override fun createComponent(): JComponent = delegate.getMainPanel()
 
-  override fun createComponent(): JComponent {
-    return delegateWithPanel.getMainPanel()
-  }
+  override fun isModified(): Boolean = delegate.isModified()
 
-  override fun isModified(): Boolean = delegateWithPanel.isModified()
+  override fun reset() = delegate.reset()
 
-  override fun reset() = delegateWithPanel.reset()
+  override fun apply() = delegate.apply()
 
-  override fun apply() = delegateWithPanel.apply()
+  override fun disposeUIResources() = delegate.dispose()
 }
