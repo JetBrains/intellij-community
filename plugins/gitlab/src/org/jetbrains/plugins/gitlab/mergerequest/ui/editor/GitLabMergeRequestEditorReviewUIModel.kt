@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.stateInNow
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 import com.intellij.collaboration.ui.codereview.editor.DocumentTrackerCodeReviewEditorGutterChangesModel
@@ -22,18 +22,20 @@ import com.intellij.openapi.vcs.ex.LstRange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 
 /**
  * A wrapper over [GitLabMergeRequestEditorReviewFileViewModel] to encapsulate LST integration
  */
 internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   cs: CoroutineScope,
+  private val preferences: GitLabMergeRequestsPreferences,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   document: Document
 ) : LineStatusMarkerRangesSource<LstRange>,
     CodeReviewEditorInlaysModel<GitLabMergeRequestEditorMappedComponentModel>,
     CodeReviewEditorGutterControlsModel,
-    CodeReviewEditorGutterChangesModel,
+    CodeReviewEditorGutterActionableChangesModel,
     Disposable {
 
   private val changesModel = DocumentTrackerCodeReviewEditorGutterChangesModel(cs, document,
@@ -45,6 +47,12 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   override fun findRange(range: LstRange): LstRange? = changesModel.findRange(range)
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO> = fileVm.avatarIconsProvider
+
+  override var highlightDiffRanges: Boolean
+    get() = preferences.highlightDiffLinesInEditor
+    set(value) {
+      preferences.highlightDiffLinesInEditor = value
+    }
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     combine(changesModel.postReviewRanges,
@@ -82,14 +90,24 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     fileVm.cancelNewDiscussion(originalLine)
   }
 
-  fun getOriginalContent(lines: LineRange): String? {
+  override fun getOriginalContent(lines: LineRange): String? {
     return fileVm.getOriginalContent(lines)
   }
 
-  fun showDiff(lineIdx: Int?) {
+  override fun showDiff(lineIdx: Int?) {
     val ranges = changesModel.postReviewRanges.value ?: return
     val originalLine = lineIdx?.let { transferLineFromAfter(ranges, it, true) }?.takeIf { it >= 0 }
     fileVm.showDiff(originalLine)
+  }
+
+  override fun addDiffHighlightListener(disposable: Disposable, listener: () -> Unit) {
+    var lastKnown = preferences.highlightDiffLinesInEditor
+    preferences.addListener(disposable) {
+      if (lastKnown != it.highlightDiffLinesInEditor) {
+        listener()
+      }
+      lastKnown = it.highlightDiffLinesInEditor
+    }
   }
 
   private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =

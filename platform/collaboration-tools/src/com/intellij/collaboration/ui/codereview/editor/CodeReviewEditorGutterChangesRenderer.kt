@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.collaboration.ui.codereview.editor
 
-import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.DiffUtil
@@ -11,7 +11,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Editor
@@ -33,8 +32,7 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.EditorTextField
-import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
@@ -43,9 +41,10 @@ import java.awt.datatransfer.StringSelection
 /**
  * Draws and handles review changes markers in gutter
  */
-internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: GitLabMergeRequestEditorReviewUIModel,
-                                                             private val editor: Editor,
-                                                             disposable: Disposable)
+@ApiStatus.Internal
+class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorGutterActionableChangesModel,
+                                            private val editor: Editor,
+                                            disposable: Disposable)
   : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
 
   override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
@@ -65,13 +64,9 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
                                 disposable: Disposable): LineStatusMarkerPopupPanel {
     val vcsContent = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))?.removeSuffix("\n")
 
-    val preferences = project?.service<GitLabMergeRequestsPreferences>()
-
     val editorComponent = if (!vcsContent.isNullOrEmpty()) {
       val popupEditor = createPopupEditor(project, editor, vcsContent, disposable)
-      if (preferences != null) {
-        showLineDiff(preferences, editor, popupEditor, range, vcsContent, disposable)
-      }
+      showLineDiff(editor, popupEditor, range, vcsContent, disposable)
       LineStatusMarkerPopupPanel.createEditorComponent(editor, popupEditor.component)
     }
     else {
@@ -82,11 +77,9 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
       ShowPrevChangeMarkerAction(range),
       ShowNextChangeMarkerAction(range),
       CopyLineStatusRangeAction(range),
-      ShowDiffAction(range)
+      ShowDiffAction(range),
+      ToggleByWordDiffAction()
     )
-    if (preferences != null) {
-      actions.add(ToggleByWordDiffAction(preferences))
-    }
 
     val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
     return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, null)
@@ -124,8 +117,7 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
     return editor
   }
 
-  private fun showLineDiff(preferences: GitLabMergeRequestsPreferences,
-                           editor: Editor,
+  private fun showLineDiff(editor: Editor,
                            popupEditor: Editor,
                            range: Range, vcsContent: CharSequence,
                            disposable: Disposable) {
@@ -161,10 +153,10 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
       }
     }
 
-    preferences.addListener(disposable) { state: GitLabMergeRequestsPreferences.SettingsState ->
-      update(state.highlightDiffLinesInEditor)
+    model.addDiffHighlightListener(disposable) {
+      update(model.highlightDiffRanges)
     }
-    update(preferences.highlightDiffLinesInEditor)
+    update(model.highlightDiffRanges)
   }
 
   private inner class ShowNextChangeMarkerAction(range: Range)
@@ -218,8 +210,8 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
       setShortcutSet(CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Vcs.ShowDiffChangedLines"),
                                           KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_DIFF_COMMON)))
       with(templatePresentation) {
-        text = GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Show.Diff.text")
-        description = GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Show.Diff.description")
+        text = CollaborationToolsBundle.message("review.diff.action.show.text")
+        description = CollaborationToolsBundle.message("review.diff.action.show.description")
       }
     }
 
@@ -229,16 +221,16 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
     }
   }
 
-  private class ToggleByWordDiffAction(private val preferences: GitLabMergeRequestsPreferences)
-    : ToggleAction(GitLabBundle.message("action.highlight.lines.text"), null, AllIcons.Actions.Highlighting),
+  private inner class ToggleByWordDiffAction
+    : ToggleAction(CollaborationToolsBundle.message("review.editor.action.highlight.lines.text"), null, AllIcons.Actions.Highlighting),
       DumbAware, LightEditCompatible {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-    override fun isSelected(e: AnActionEvent): Boolean = preferences.highlightDiffLinesInEditor
+    override fun isSelected(e: AnActionEvent): Boolean = model.highlightDiffRanges
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      preferences.highlightDiffLinesInEditor = state
+      model.highlightDiffRanges = state
     }
   }
 }
