@@ -24,7 +24,7 @@ fun copyFileToDir(file: Path, targetDir: Path) {
 
 fun moveFile(source: Path, target: Path) {
   Files.createDirectories(target.parent)
-  Files.move(source, target)
+  Files.move(source, target, StandardCopyOption.REPLACE_EXISTING)
 }
 
 fun moveFileToDir(file: Path, targetDir: Path): Path {
@@ -38,7 +38,7 @@ fun copyFile(file: Path, target: Path) {
 
 private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
   Files.createDirectories(targetDir)
-  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
 }
 
 @JvmOverloads

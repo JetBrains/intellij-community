@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.withTrailingSlash
+import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
@@ -104,7 +105,7 @@ internal class PortableCompilationCacheUploader(
     spanBuilder("upload metadata").setAttribute("path", metadataPath).useWithScopeBlocking {
       val sourceStateFile = sourcesStateProcessor.sourceStateFile
       uploader.upload(metadataPath, sourceStateFile)
-        moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+      copyFile(sourceStateFile, s3Folder.resolve(metadataPath))
     }
   }
 
