@@ -20,7 +20,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
-import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.FileHistoryDialog;
 import com.intellij.openapi.util.Disposer;
@@ -56,9 +55,9 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     assertEquals(FileUtil.toSystemDependentName(f.getPath()), m.getDifferenceModel().getTitle());
 
     assertEquals(DateFormatUtil.formatDateTime(leftTime) + " - old.txt",
-                 m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
+                 m.getDifferenceModel().getLeftTitle(RevisionProcessingProgress.EMPTY));
     assertEquals(DateFormatUtil.formatDateTime(rightTime) + " - new.txt",
-                 m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
+                 m.getDifferenceModel().getRightTitle(RevisionProcessingProgress.EMPTY));
   }
 
   public void testContent() {
@@ -116,13 +115,11 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   private DiffContent getLeftDiffContent(FileHistoryDialogModel m) {
-    RevisionProcessingProgress p = new NullRevisionsProgress();
-    return m.getDifferenceModel().getLeftDiffContent(p);
+    return m.getDifferenceModel().getLeftDiffContent(RevisionProcessingProgress.EMPTY);
   }
 
   private DiffContent getRightDiffContent(FileHistoryDialogModel m) {
-    RevisionProcessingProgress p = new NullRevisionsProgress();
-    return m.getDifferenceModel().getRightDiffContent(p);
+    return m.getDifferenceModel().getRightDiffContent(RevisionProcessingProgress.EMPTY);
   }
 
   private FileHistoryDialogModel createFileModel(VirtualFile f) {
