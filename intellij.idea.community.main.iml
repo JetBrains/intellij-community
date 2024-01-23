@@ -214,5 +214,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.onboarding-promoter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.execution.process.elevation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.github.community" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress.tests" scope="TEST" />
   </component>
 </module>
