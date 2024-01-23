@@ -63,7 +63,7 @@ class CombinedDiffViewer(
     Disposable {
   private val project = context.project!! // CombinedDiffContext expected
 
-  private val blockState = BlockState(keys.map { it.id }, blockToSelect ?: keys.first().id)
+  val blockState = BlockState(keys.map { it.id }, blockToSelect ?: keys.first().id)
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
   private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = hashMapOf()
@@ -763,7 +763,7 @@ internal interface BlockOrder {
   val blocksCount: Int
 }
 
-private class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNextDifferenceIterable, BlockOrder {
+class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNextDifferenceIterable, BlockOrder {
   private val blocks: List<CombinedBlockId> = list.toList()
 
   private val blockByIndex: MutableMap<CombinedBlockId, Int> = mutableMapOf()

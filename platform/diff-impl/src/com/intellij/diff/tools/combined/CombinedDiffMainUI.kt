@@ -137,7 +137,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     else {
       diffInfoWrapper.setContent(null)
     }
-    buildToolbar(toolbarComponents.toolbarActions)
+    buildToolbar(viewer, toolbarComponents.toolbarActions)
     buildActionPopup(toolbarComponents.popupActions)
     toolbarStatusPanel.setContent(toolbarComponents.statusPanel)
   }
@@ -178,8 +178,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
 
-  private fun buildToolbar(viewerActions: List<AnAction?>?) {
-    collectToolbarActions(viewerActions)
+  private fun buildToolbar(viewer: CombinedDiffViewer, viewerActions: List<AnAction?>?) {
+    collectToolbarActions(viewer, viewerActions)
     (leftToolbar as ActionToolbarImpl).reset()
     leftToolbar.updateActionsImmediately()
     leftToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
@@ -193,9 +193,9 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
   }
 
-  private fun collectToolbarActions(viewerActions: List<AnAction?>?) {
+  private fun collectToolbarActions(viewer: CombinedDiffViewer, viewerActions: List<AnAction?>?) {
     leftToolbarGroup.removeAll()
-    val navigationActions = ArrayList<AnAction>(collectNavigationActions())
+    val navigationActions = ArrayList<AnAction>(collectNavigationActions(viewer))
 
     rightToolbarGroup.add(diffToolChooser)
 
@@ -206,10 +206,11 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     DiffUtil.addActionBlock(leftToolbarGroup, contextActions)
   }
 
-  private fun collectNavigationActions(): List<AnAction> {
+  private fun collectNavigationActions(viewer: CombinedDiffViewer): List<AnAction> {
     return listOfNotNull(
       CombinedPrevBlockAction(context),
       CombinedPrevDifferenceAction(context),
+      FilesLabelAction(goToChangeAction, leftToolbar.component, blockState),
       CombinedNextDifferenceAction(context),
       CombinedNextBlockAction(context),
       openInEditorAction,
