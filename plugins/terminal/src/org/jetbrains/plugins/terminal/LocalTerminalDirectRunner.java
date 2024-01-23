@@ -53,8 +53,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY;
-import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_REGISTRY;
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -465,10 +464,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         resultCommand.addAll(arguments);
         arguments.clear();
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));
+        var isBlockTerminal = SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY, false) ||
+                              SystemInfo.isWin10OrNewer && !SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY, false);
         integration = new ShellIntegration(ShellType.POWERSHELL,
-                                           Registry.is(BLOCK_TERMINAL_POWERSHELL_REGISTRY, false)
-                                           ? new CommandBlockIntegration(true)
-                                           : null);
+                                           isBlockTerminal ? new CommandBlockIntegration(true) : null);
       }
     }
 

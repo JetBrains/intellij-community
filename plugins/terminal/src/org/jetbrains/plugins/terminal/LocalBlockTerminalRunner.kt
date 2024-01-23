@@ -35,6 +35,7 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
   companion object {
     const val BLOCK_TERMINAL_REGISTRY: String = "terminal.new.ui"
     const val BLOCK_TERMINAL_FISH_REGISTRY: String = "terminal.new.ui.fish"
-    const val BLOCK_TERMINAL_POWERSHELL_REGISTRY: String = "terminal.new.ui.powershell"
+    const val BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY: String = "terminal.new.ui.powershell.win11"
+    const val BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY: String = "terminal.new.ui.powershell.win10"
   }
 }
