@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,10 +21,12 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   private volatile boolean myWasStarted;
   private TaskInfo myOwnerTask;
 
+  @Obsolete
   public AbstractProgressIndicatorExBase(boolean reusable) {
     myReusable = reusable;
   }
 
+  @Obsolete
   public AbstractProgressIndicatorExBase() {
     this(false);
   }

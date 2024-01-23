@@ -1,15 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implements StandardProgressIndicator {
   private volatile boolean myIsCanceled;
 
+  @Obsolete
   public EmptyProgressIndicator() { }
 
+  @Obsolete
   public EmptyProgressIndicator(@NotNull ModalityState modalityState) {
     super(modalityState);
   }

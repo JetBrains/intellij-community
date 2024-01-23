@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,11 +14,13 @@ import org.jetbrains.annotations.NotNull;
 public class DelegatingProgressIndicator implements WrappedProgressIndicator, StandardProgressIndicator {
   private final ProgressIndicator myIndicator;
 
+  @Obsolete
   public DelegatingProgressIndicator(@NotNull ProgressIndicator indicator) {
     myIndicator = indicator;
     ProgressManager.assertNotCircular(indicator);
   }
 
+  @Obsolete
   public DelegatingProgressIndicator() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null) {

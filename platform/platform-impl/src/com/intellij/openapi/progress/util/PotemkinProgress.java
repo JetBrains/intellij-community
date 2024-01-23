@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private long myLastInteraction = myLastUiUpdate;
   private long myLastWatcherPing = myLastUiUpdate;
 
+  @Obsolete
   public PotemkinProgress(@NotNull @NlsContexts.ProgressTitle String title,
                           @Nullable Project project,
                           @Nullable JComponent parentComponent,

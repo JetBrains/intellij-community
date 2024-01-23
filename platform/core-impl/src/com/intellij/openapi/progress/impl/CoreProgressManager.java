@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -30,6 +30,7 @@ import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 
 import javax.swing.*;
 import java.io.StringWriter;
@@ -448,11 +449,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   // from any: bg
+  @Obsolete
   public @NotNull Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     return runProcessWithProgressAsynchronously(task, createDefaultAsynchronousProgressIndicator(task), null);
   }
 
   // from any: bg
+  @Obsolete
   public @NotNull Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task,
                                                         @NotNull ProgressIndicator progressIndicator,
                                                         @Nullable Runnable continuation) {
@@ -494,6 +497,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   // from any: bg, task.finish on "UI/EDT"
+  @Obsolete
   public @NotNull Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task,
                                                         @NotNull ProgressIndicator progressIndicator,
                                                         @Nullable Runnable continuation,
@@ -546,6 +550,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   // ASSERT IS EDT->UI bg or calling if can't
   // NEW: no assert; bg or calling ...
+  @Obsolete
   protected boolean runProcessWithProgressSynchronously(@NotNull Task task) {
     if (LOG.isDebugEnabled()) LOG.debug("CoreProgressManager#runProcessWithProgressSynchronously, " + task, new Throwable());
     Ref<Throwable> exceptionRef = new Ref<>();
@@ -585,6 +590,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
            isSynchronous(task.asBackgroundable());
   }
 
+  @Obsolete
   public void runProcessWithProgressInCurrentThread(@NotNull Task task,
                                                     @NotNull ProgressIndicator progressIndicator,
                                                     @NotNull ModalityState modalityState) {

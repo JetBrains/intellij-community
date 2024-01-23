@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    *
    * @see CoroutinesKt#coroutineToIndicator
    */
+  @Obsolete
   public abstract void runProcess(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   /**
@@ -68,12 +70,14 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    *
    * @see CoroutinesKt#coroutineToIndicator
    */
+  @Obsolete
   public final <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
     Ref<T> ref = new Ref<>();
     runProcess(() -> ref.set(process.compute()), progress);
     return ref.get();
   }
 
+  @Obsolete
   @Override
   public abstract ProgressIndicator getProgressIndicator();
 
@@ -127,6 +131,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param project       the project in the context of which the operation is executed.
    * @return true if the operation completed successfully, false if it was cancelled.
    */
+  @Obsolete
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                                               @NotNull @NlsContexts.DialogTitle String progressTitle,
                                                               boolean canBeCanceled,
@@ -145,6 +150,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true result of operation
    * @throws E exception thrown by process
    */
+  @Obsolete
   public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
                                                                                  @NotNull @NlsContexts.DialogTitle String progressTitle,
                                                                                  boolean canBeCanceled,
@@ -163,6 +169,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param parentComponent the component which will be used to calculate the progress window ancestor
    * @return true if the operation completed successfully, false if it was cancelled.
    */
+  @Obsolete
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                                               @NotNull @NlsContexts.DialogTitle String progressTitle,
                                                               boolean canBeCanceled,
@@ -201,18 +208,21 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @see com.intellij.openapi.progress.TasksKt#withModalProgress
    * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
    */
+  @Obsolete
   @RequiresBlockingContext
   public abstract void run(@NotNull Task task);
 
   /**
    * Runs a specified computation with a modal progress dialog.
    */
+  @Obsolete
   @RequiresBlockingContext
   public <T, E extends Exception> T run(@NotNull Task.WithResult<T, E> task) throws E {
     run((Task)task);
     return task.getResult();
   }
 
+  @Obsolete
   public abstract void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator progressIndicator);
 
   protected void indicatorCanceled(@NotNull ProgressIndicator indicator) { }
@@ -238,6 +248,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param progress an indicator to use, {@code null} means reuse current progress
    *        The methods {@link ProgressIndicator#start()} or {@link ProgressIndicator#stop()} are not called because it's assumed the {@code progress} is already running.
    */
+  @Obsolete
   public abstract void executeProcessUnderProgress(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   public static void assertNotCircular(@NotNull ProgressIndicator original) {
@@ -268,6 +279,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
    *                 The progress is {@link ProgressIndicator#start started} before running {@code process} and {@link ProgressIndicator#stop() stopped} afterward.
    */
+  @Obsolete
   public abstract boolean runInReadActionWithWriteActionPriority(final @NotNull Runnable process, @Nullable ProgressIndicator indicator);
 
   @RequiresBlockingContext
