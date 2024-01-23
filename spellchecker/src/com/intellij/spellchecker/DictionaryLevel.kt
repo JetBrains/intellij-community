@@ -90,5 +90,5 @@ class ApplicationDictionaryLayer : DictionaryLayer {
   }
 
   override val name = Companion.name
-  override val dictionary: EditableDictionary = AppDictionaryState.getInstance().dictionary
+  override val dictionary: EditableDictionary by lazy { AppDictionaryState.getInstance().dictionary }
 }
