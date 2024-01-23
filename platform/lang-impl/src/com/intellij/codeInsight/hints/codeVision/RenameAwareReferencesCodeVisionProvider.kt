@@ -50,7 +50,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Any?
     if (DumbService.isDumb(project)) return CodeVisionState.NotReady
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
     val cached = cacheService.getVisionDataForEditor(editor, id)
-    val stamp = editor.getModificationStamp()
+    val stamp = ModificationStampUtil.getModificationStamp(editor)
     if (stamp != null && cached?.modificationStamp == stamp) return CodeVisionState.Ready(cached.codeVisionEntries)
 
     try {
