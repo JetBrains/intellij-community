@@ -15,6 +15,8 @@ class SearchEverywhereMlSettings {
   fun isSortingByMlEnabled(tab: SearchEverywhereTabWithMlRanking): Boolean {
     if (tab == SearchEverywhereTabWithMlRanking.ALL) {
       return SearchEverywhereMlSettingsStorage.getInstance().enableMlRankingInAll
+    } else if (tab == SearchEverywhereTabWithMlRanking.SYMBOLS) {
+      return false
     }
 
     val settingsKey = getSettingsKey(tab)
@@ -24,6 +26,8 @@ class SearchEverywhereMlSettings {
   fun isSortingByMlEnabledByDefault(tab: SearchEverywhereTabWithMlRanking): Boolean {
     if (tab == SearchEverywhereTabWithMlRanking.ALL) {
       return SearchEverywhereMlSettingsStorage.getInstance().enabledMlRankingInAllDefaultState
+    } else if (tab == SearchEverywhereTabWithMlRanking.SYMBOLS) {
+      return false
     }
 
     val settingsKey = getSettingsKey(tab)
