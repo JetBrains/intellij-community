@@ -5,6 +5,7 @@ import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -34,6 +35,8 @@ interface GitLabProject {
   val members: SharedFlow<Result<List<GitLabUserDTO>>>
   val defaultBranch: Deferred<String>
   val allowsMultipleReviewers: SharedFlow<Boolean>
+
+  val emojis: Deferred<List<ParsedGitLabEmoji>>
 
   /**
    * Creates a merge request on the GitLab server and returns a DTO containing the merge request
@@ -107,6 +110,8 @@ class GitLabLazyProject(
 
     send(false)
   }.modelFlow(parentCs, LOG)
+
+  override val emojis: Deferred<List<ParsedGitLabEmoji>> = project.service<GitLabEmojiService>().emojis
 
   @Throws(GitLabGraphQLMutationException::class)
   override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {

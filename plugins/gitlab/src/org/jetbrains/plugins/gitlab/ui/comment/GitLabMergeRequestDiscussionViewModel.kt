@@ -44,9 +44,9 @@ private val LOG = logger<GitLabMergeRequestDiscussionViewModel>()
 internal class GitLabMergeRequestDiscussionViewModelBase(
   project: Project,
   parentCs: CoroutineScope,
+  projectData: GitLabProject,
   currentUser: GitLabUserDTO,
-  private val discussion: GitLabMergeRequestDiscussion,
-  glProject: GitLabProjectCoordinates
+  private val discussion: GitLabMergeRequestDiscussion
 ) : GitLabMergeRequestDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -74,7 +74,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
       initialNotesSize = it.size
     }
   }.mapModelsToViewModels { note ->
-    GitLabNoteViewModelImpl(project, this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, currentUser, glProject)
+    GitLabNoteViewModelImpl(project, this, projectData, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, currentUser)
   }.combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
       notes.map { NoteItem.Note(it) }

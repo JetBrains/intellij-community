@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
@@ -38,6 +39,7 @@ private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 class LoadAllGitLabMergeRequestTimelineViewModel(
   private val project: Project,
   parentCs: CoroutineScope,
+  private val projectData: GitLabProject,
   private val preferences: GitLabMergeRequestsPreferences,
   override val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest
@@ -142,7 +144,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       is GitLabMergeRequestTimelineItem.Immutable ->
         GitLabMergeRequestTimelineItemViewModel.Immutable(item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, currentUser, mr, item.discussion).also {
+        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mr, item.discussion).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->

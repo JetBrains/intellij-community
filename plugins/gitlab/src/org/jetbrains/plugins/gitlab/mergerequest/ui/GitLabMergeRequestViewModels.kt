@@ -49,13 +49,13 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
   val detailsVm: GitLabMergeRequestDetailsViewModel by lazyDetailsVm
 
   val timelineVm: GitLabMergeRequestTimelineViewModel by lazy {
-    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, project.service(), currentUser, mergeRequest).also {
+    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, projectData, project.service(), currentUser, mergeRequest).also {
       setupTimelineVm(it)
     }
   }
 
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels by lazy {
-    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, currentUser, mergeRequest)
+    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, projectData, currentUser, mergeRequest)
   }
 
   val diffVm: GitLabMergeRequestDiffViewModel by lazy {

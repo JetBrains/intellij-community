@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.ui.comment.*
 
@@ -53,6 +54,7 @@ private val LOG = logger<GitLabMergeRequestDiscussionsViewModelsImpl>()
 internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   private val project: Project,
   parentCs: CoroutineScope,
+  projectData: GitLabProject,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestDiscussionsViewModels {
@@ -61,7 +63,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .throwFailure()
-    .mapModelsToViewModels { GitLabMergeRequestDiscussionViewModelBase(project, this, currentUser, it, mergeRequest.glProject) }
+    .mapModelsToViewModels { GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it) }
     .modelFlow(cs, LOG)
 
   override val draftNotes: DraftNotesFlow = mergeRequest.draftNotes

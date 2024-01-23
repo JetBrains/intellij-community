@@ -5,15 +5,15 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReaction
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReactionImpl
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
 
 interface GitLabReactionsViewModel {
+  val availableParsedEmojis: Deferred<List<ParsedGitLabEmoji>>
   val reactionsWithInfo: StateFlow<Map<GitLabReaction, ReactionInfo>>
 
   fun toggle(reaction: GitLabReaction)
@@ -21,10 +21,13 @@ interface GitLabReactionsViewModel {
 
 class GitLabReactionsViewModelImpl(
   parentCs: CoroutineScope,
+  projectData: GitLabProject,
   private val note: GitLabMergeRequestNote,
   private val currentUser: GitLabUserDTO
 ) : GitLabReactionsViewModel {
   private val cs = parentCs.childScope(CoroutineName("GitLab Reactions View Model"))
+
+  override val availableParsedEmojis: Deferred<List<ParsedGitLabEmoji>> = projectData.emojis
 
   override val reactionsWithInfo: StateFlow<Map<GitLabReaction, ReactionInfo>> = note.awardEmoji.mapState(cs) { data ->
     val reactionToUsers = data.groupBy({ dto -> GitLabReactionImpl(dto) }, GitLabAwardEmojiDTO::user)

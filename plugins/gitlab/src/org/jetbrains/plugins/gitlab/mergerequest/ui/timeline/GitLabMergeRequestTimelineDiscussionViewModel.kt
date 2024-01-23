@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
@@ -49,6 +50,7 @@ private val LOG = logger<GitLabMergeRequestTimelineDiscussionViewModel>()
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
+  projectData: GitLabProject,
   currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest,
   private val discussion: GitLabMergeRequestDiscussion
@@ -60,7 +62,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(project, this, it, flowOf(true), currentUser, mr.glProject) }
+    .mapScoped { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(true), currentUser) }
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id.toString()
@@ -81,7 +83,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val replies: Flow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
-    .mapModelsToViewModels { GitLabNoteViewModelImpl(project, this, it, flowOf(false), currentUser, mr.glProject) }
+    .mapModelsToViewModels { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser) }
     .modelFlow(cs, LOG)
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy

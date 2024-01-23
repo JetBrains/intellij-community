@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
@@ -43,10 +42,10 @@ private val LOG = logger<GitLabNoteViewModel>()
 class GitLabNoteViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
+  projectData: GitLabProject,
   note: GitLabNote,
   isMainNote: Flow<Boolean>,
-  currentUser: GitLabUserDTO,
-  glProject: GitLabProjectCoordinates
+  currentUser: GitLabUserDTO
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
@@ -55,12 +54,12 @@ class GitLabNoteViewModelImpl(
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = note is GitLabMergeRequestDraftNote
-  override val serverUrl: URL = glProject.serverPath.toURL()
+  override val serverUrl: URL = projectData.projectMapping.repository.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
   override val reactionsVm: GitLabReactionsViewModel? =
-    if (note is GitLabMergeRequestNote) GitLabReactionsViewModelImpl(cs, note, currentUser) else null
+    if (note is GitLabMergeRequestNote) GitLabReactionsViewModelImpl(cs, projectData, note, currentUser) else null
 
   override val body: Flow<String> = note.body
   override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)

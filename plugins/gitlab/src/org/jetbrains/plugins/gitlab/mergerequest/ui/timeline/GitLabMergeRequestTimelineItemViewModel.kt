@@ -28,12 +28,13 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
   class Discussion(
     project: Project,
     parentCs: CoroutineScope,
+    projectData: GitLabProject,
     currentUser: GitLabUserDTO,
     mr: GitLabMergeRequest,
     discussion: GitLabMergeRequestDiscussion
   ) : GitLabMergeRequestTimelineItemViewModel,
       GitLabMergeRequestTimelineDiscussionViewModel
-      by GitLabMergeRequestTimelineDiscussionViewModelImpl(project, parentCs, currentUser, mr, discussion) {
+      by GitLabMergeRequestTimelineDiscussionViewModelImpl(project, parentCs, projectData, currentUser, mr, discussion) {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is Discussion) return false

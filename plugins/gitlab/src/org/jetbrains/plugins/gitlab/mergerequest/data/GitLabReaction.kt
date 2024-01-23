@@ -6,11 +6,17 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiDTO
 interface GitLabReaction {
   val name: String
   val emoji: String
+  val category: String?
 }
 
-class GitLabReactionImpl(dto: GitLabAwardEmojiDTO) : GitLabReaction {
-  override val name: String = dto.name
-  override val emoji: String = dto.emoji
+class GitLabReactionImpl private constructor(
+  override val name: String,
+  override val emoji: String,
+  override val category: String? = null
+) : GitLabReaction {
+
+  constructor(dto: GitLabAwardEmojiDTO) : this(dto.name, dto.emoji)
+  constructor(parsedEmoji: ParsedGitLabEmoji) : this(parsedEmoji.name, parsedEmoji.moji, parsedEmoji.category)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
