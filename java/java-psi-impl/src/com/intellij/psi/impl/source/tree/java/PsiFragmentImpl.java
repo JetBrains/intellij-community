@@ -2,9 +2,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +40,24 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
     final CharSequence sequence = CodeInsightUtilCore.parseStringCharacters(content, null);
     if (sequence == null) return null;
     return sequence.toString();
+  }
+
+  @Override
+  public boolean isValidHost() {
+    return true;
+  }
+
+  @Override
+  public PsiLanguageInjectionHost updateText(@NotNull String text) {
+    ASTNode valueNode = getNode().getFirstChildNode();
+    assert valueNode instanceof LeafElement;
+    ((LeafElement)valueNode).replaceWithText(text);
+    return this;
+  }
+
+  @Override
+  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    return new StringLiteralEscaper<>(this);
   }
 
   private static String getFragmentContent(PsiFragment fragment) {

@@ -19,6 +19,9 @@ public final class JavaConcatenationToInjectorAdapter extends ConcatenationInjec
   public Pair<PsiElement, PsiElement[]> computeAnchorAndOperands(@NotNull PsiElement context) {
     PsiElement element = context;
     PsiElement parent = context.getParent();
+    if (element instanceof PsiFragment && parent instanceof PsiTemplate) {
+      return Pair.create(parent, parent.getChildren());
+    }
     while (parent instanceof PsiPolyadicExpression polyadic && polyadic.getOperationTokenType() == JavaTokenType.PLUS
            || parent instanceof PsiAssignmentExpression assignment && assignment.getOperationTokenType() == JavaTokenType.PLUSEQ
            || parent instanceof PsiConditionalExpression cond && cond.getCondition() != element
@@ -52,5 +55,5 @@ public final class JavaConcatenationToInjectorAdapter extends ConcatenationInjec
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return LITERALS;
   }
-  private static final List<Class<PsiLiteralExpression>> LITERALS = Collections.singletonList(PsiLiteralExpression.class);
+  private static final List<Class<? extends PsiElement>> LITERALS = List.of(PsiLiteralExpression.class, PsiFragment.class);
 }

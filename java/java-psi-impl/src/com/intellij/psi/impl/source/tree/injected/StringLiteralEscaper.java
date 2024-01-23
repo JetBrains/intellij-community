@@ -16,9 +16,9 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends LiteralTextEscaper<T> {
@@ -49,6 +49,58 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
 
   @Override
   public @NotNull TextRange getRelevantTextRange() {
+    if (myHost instanceof PsiFragment) {
+      PsiFragment fragment = (PsiFragment)myHost;
+      int length = fragment.getTextLength();
+      IElementType tokenType = fragment.getTokenType();
+      if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
+        final String text = fragment.getText();
+        int startOffset = findBlockStart(text);
+        return startOffset < 0
+               ? new TextRange(0, length)
+               : new TextRange(startOffset, length - 2); // ends with \{
+      }
+      else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID) {
+        // Begins with } and ends with \{
+        return new TextRange(1, Math.max(1, length - 2));
+      }
+      else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) {
+        String text = fragment.getText();
+        if (text.endsWith("\"\"\"")) {
+          // Begins with } and ends with """
+          return new TextRange(1, Math.max(1, length - 3));
+        }
+        return new TextRange(1, length);
+      }
+      else if (tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN || tokenType == JavaTokenType.STRING_TEMPLATE_MID) {
+        // Begins with " or } and ends with \{
+        return new TextRange(1, Math.max(1, length - 2));
+      }
+      else if (tokenType == JavaTokenType.STRING_TEMPLATE_END) {
+        String text = fragment.getText();
+        if (text.endsWith("\"")) {
+          // Begins with } and ends with "
+          return new TextRange(1, Math.max(1, length - 1));
+        }
+        return new TextRange(1, length);
+      }
+      throw new IllegalStateException("Unexpected tokenType: " + tokenType);
+    }
+    else if (myHost instanceof PsiLiteralExpression) {
+      PsiLiteralExpression expression = (PsiLiteralExpression)myHost;
+      int length = expression.getTextLength();
+      if (expression.isTextBlock()) {
+        final String text = expression.getText();
+        int startOffset = findBlockStart(text);
+        return startOffset < 0
+               ? new TextRange(0, length)
+               : new TextRange(startOffset, length - (text.endsWith("\"\"\"") ? 3 : 0));
+      }
+      // avoid calling PsiLiteralExpression.getValue(): it allocates new string, it returns null for invalid escapes
+      final PsiType type = expression.getType();
+      boolean isQuoted = PsiTypes.charType().equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+      return isQuoted ? new TextRange(1, Math.max(1, length - 1)) : TextRange.from(0, length);
+    }
     int textLength = myHost.getTextLength();
     if (textLength >= 2) {
       return TextRange.from(1, textLength - 2);
@@ -56,5 +108,16 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
     else {
       return super.getRelevantTextRange();
     }
+  }
+
+  static int findBlockStart(String text) {
+    if (!text.startsWith("\"\"\"")) return -1;
+    final int length = text.length();
+    for (int i = 3; i < length; i++) {
+      final char c = text.charAt(i);
+      if (c == '\n') return i + 1;
+      if (!Character.isWhitespace(c)) return -1;
+    }
+    return -1;
   }
 }

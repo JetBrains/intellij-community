@@ -34,28 +34,17 @@ public final class StringLiteralManipulator extends AbstractElementManipulator<P
 
   @NotNull
   public static TextRange getValueRange(@NotNull PsiLiteralExpression expression) {
-    int length = expression.getTextLength();
+    if (expression instanceof PsiLanguageInjectionHost) {
+      return ((PsiLanguageInjectionHost)expression).createLiteralTextEscaper().getRelevantTextRange();
+    }
+    // Normally, we go to the previous branch. Probably third-party implementations or ClsLiteralExpressionImpl may reach here
     if (expression.isTextBlock()) {
-      final String text = expression.getText();
-      int startOffset = findBlockStart(text);
-      return startOffset < 0
-             ? new TextRange(0, length)
-             : new TextRange(startOffset, length - (text.endsWith("\"\"\"") ? 3 : 0));
+      throw new UnsupportedOperationException();
     }
     // avoid calling PsiLiteralExpression.getValue(): it allocates new string, it returns null for invalid escapes
+    int length = expression.getTextLength();
     final PsiType type = expression.getType();
     boolean isQuoted = PsiTypes.charType().equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     return isQuoted ? new TextRange(1, Math.max(1, length - 1)) : TextRange.from(0, length);
-  }
-
-  private static int findBlockStart(String text) {
-    if (!text.startsWith("\"\"\"")) return -1;
-    final int length = text.length();
-    for (int i = 3; i < length; i++) {
-      final char c = text.charAt(i);
-      if (c == '\n') return i + 1;
-      if (!Character.isWhitespace(c)) return -1;
-    }
-    return -1;
   }
 }
