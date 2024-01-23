@@ -1,4 +1,3 @@
-// IGNORE_K2
 // DISABLE-ERRORS
 val array = Array(2) { it }
 

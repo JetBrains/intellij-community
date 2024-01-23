@@ -1,4 +1,3 @@
-// IGNORE_K2
 // DISABLE-ERRORS
 fun Int.invoke() = this + 1
 

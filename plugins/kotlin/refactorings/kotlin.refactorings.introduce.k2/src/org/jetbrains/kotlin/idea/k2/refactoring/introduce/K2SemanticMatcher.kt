@@ -2,13 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.calls
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 object K2SemanticMatcher {
@@ -41,15 +40,19 @@ object K2SemanticMatcher {
 
         override fun visitExpression(expression: KtExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtExpression ?: return false
-
-            if (expression.isInsideKtTypeReference != patternExpression.isInsideKtTypeReference) return false
-
-            return when (patternExpression) {
-                is KtQualifiedExpression,
-                is KtReferenceExpression -> with(analysisSession) { areCallsMatchingByResolve(expression, patternExpression) }
-
-                else -> false
+            if (patternExpression is KtQualifiedExpression) {
+                return patternExpression.selectorExpression?.let { visitExpression(expression, it) } == true
             }
+            if (expression.isSafeCall() != patternExpression.isSafeCall()) return false
+            if (expression.isAssignmentOperation() != patternExpression.isAssignmentOperation()) return false
+            if (expression.isInsideKtTypeReference != patternExpression.isInsideKtTypeReference) return false
+            if (expression is KtSimpleNameExpression != patternExpression is KtSimpleNameExpression) return false
+            if (patternExpression !is KtReferenceExpression && patternExpression !is KtOperationExpression) return false
+
+            with(analysisSession) {
+                if (!areCallsMatchingByResolve(expression, patternExpression)) return false
+            }
+            return true
         }
 
         override fun visitLoopExpression(loopExpression: KtLoopExpression, data: KtElement): Boolean = false // TODO()
@@ -86,14 +89,8 @@ object K2SemanticMatcher {
         override fun visitAnnotatedExpression(expression: KtAnnotatedExpression, data: KtElement): Boolean = false // TODO()
 
         override fun visitQualifiedExpression(expression: KtQualifiedExpression, data: KtElement): Boolean {
-            val patternExpression = data.deparenthesized() as? KtExpression ?: return false
-
-            return when (patternExpression) {
-                is KtQualifiedExpression,
-                is KtReferenceExpression -> with(analysisSession) { areCallsMatchingByResolve(expression, patternExpression) }
-
-                else -> false
-            }
+            val targetSelectorExpression = expression.selectorExpression ?: return false
+            return visitExpression(targetSelectorExpression, data)
         }
 
         override fun visitDoubleColonExpression(expression: KtDoubleColonExpression, data: KtElement): Boolean = false // TODO()
@@ -118,17 +115,34 @@ object K2SemanticMatcher {
         val patternCall = patternExpression.resolveCall()?.calls?.singleOrNull() ?: return false
 
         if (targetCall is KtCallableMemberCall<*, *> && patternCall is KtCallableMemberCall<*, *>) {
-            val targetPartiallyAppliedSymbol = targetCall.partiallyAppliedSymbol
-
-            if (targetPartiallyAppliedSymbol.dispatchReceiver != null) return false // TODO
-            if (targetPartiallyAppliedSymbol.extensionReceiver != null) return false // TODO
+            val targetAppliedSymbol = targetCall.partiallyAppliedSymbol
+            val patternAppliedSymbol = patternCall.partiallyAppliedSymbol
 
             if (targetCall.symbol != patternCall.symbol) return false
+
+            if (!areReceiversMatching(targetAppliedSymbol.dispatchReceiver, patternAppliedSymbol.dispatchReceiver)) return false
+            if (!areReceiversMatching(targetAppliedSymbol.extensionReceiver, patternAppliedSymbol.extensionReceiver)) return false
 
             return true
         }
 
         return false
+    }
+
+    context(KtAnalysisSession)
+    private fun areReceiversMatching(targetReceiver: KtReceiverValue?, patternReceiver: KtReceiverValue?): Boolean {
+        return when (targetReceiver) {
+            is KtImplicitReceiverValue,
+            is KtSmartCastedReceiverValue -> false // TODO()
+
+            is KtExplicitReceiverValue -> {
+                if (patternReceiver !is KtExplicitReceiverValue) return false // TODO()
+
+                targetReceiver.expression.isSemanticMatch(patternReceiver.expression)
+            }
+
+            null -> patternReceiver == null
+        }
     }
 
     context(KtAnalysisSession)
@@ -141,4 +155,9 @@ object K2SemanticMatcher {
         is KtExpression -> this.safeDeparenthesize()
         else -> this
     }
+
+    private fun KtExpression.isSafeCall(): Boolean = (parent as? KtSafeQualifiedExpression)?.selectorExpression == this
+
+    private fun KtExpression.isAssignmentOperation(): Boolean =
+        (this as? KtOperationReferenceExpression)?.operationSignTokenType == KtTokens.EQ
 }

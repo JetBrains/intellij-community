@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun test(index: Int, array: Array<() -> Unit>) {
     val a = <selection>array[index]</selection>()
     val b = array[index]

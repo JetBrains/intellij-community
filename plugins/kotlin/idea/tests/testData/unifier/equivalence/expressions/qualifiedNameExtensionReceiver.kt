@@ -4,9 +4,8 @@ package p.q.r
 val n = 1
 
 class A {
-    class B {
-        val n = 1
-    }
+
+    class B
 
     fun with(b: B, lambda: B.() -> Unit) {}
 
@@ -23,10 +22,10 @@ class A {
     }
 }
 
+val A.B.n get() = 1
+
 fun foo() {
     B().n
     A.B().n
     p.q.r.A.B().n
-    (A.B()).n
-    (A.B().n)
 }

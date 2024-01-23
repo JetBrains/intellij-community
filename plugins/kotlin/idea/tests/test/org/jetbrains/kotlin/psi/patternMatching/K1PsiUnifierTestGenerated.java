@@ -603,6 +603,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     runTest("testData/unifier/equivalence/expressions/qualifiedName.kt");
                 }
 
+                @TestMetadata("qualifiedNameExtensionReceiver.kt")
+                public void testQualifiedNameExtensionReceiver() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/qualifiedNameExtensionReceiver.kt");
+                }
+
                 @TestMetadata("qualifiedNameNoReceiver.kt")
                 public void testQualifiedNameNoReceiver() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/qualifiedNameNoReceiver.kt");
@@ -616,6 +621,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @TestMetadata("stringTemplate.kt")
                 public void testStringTemplate() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/stringTemplate.kt");
+                }
+
+                @TestMetadata("variable.kt")
+                public void testVariable() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/variable.kt");
                 }
             }
         }
