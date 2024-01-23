@@ -468,7 +468,7 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.roots.impl.BundledResourceUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.openapi.roots.impl.BundledResourcePathValidationRule"/>
-    
+
     <statistics.applicationUsagesCollector implementation="com.intellij.ide.scratch.ScratchFilesUsagesCollector"/>
 
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
@@ -838,7 +838,7 @@
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
-     <undoReportHandler implementation="com.intellij.openapi.command.impl.DefaultUndoReportHandler" order="last" id="default"/>
+    <undoReportHandler implementation="com.intellij.openapi.command.impl.DefaultUndoReportHandler" order="last" id="default"/>
 
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvider"/>
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.NewInlaySettingsProvider"/>
@@ -905,10 +905,14 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerMPCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagsListValidator"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceVendorsListValidator"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerMPCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceTagsListValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.ide.plugins.marketplace.statistics.validators.MarketplaceVendorsListValidator"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateRunLogger"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.diff.impl.DiffUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
@@ -967,7 +971,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"
                                            allowOnStartup="true"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.mp.MarketplaceEventLoggerProvider" />
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.mp.MarketplaceEventLoggerProvider"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.OsDataCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.IdeSessionDataCollector"
@@ -1436,7 +1440,8 @@
     <notificationGroup id="Diff Changes Loading Error" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="System shortcuts conflicts" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle"
                        key="notification.group.shortcut.conflicts"/>
-    <notificationGroup id="Required Plugins" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.required.plugins"/>
+    <notificationGroup id="Required Plugins" displayType="STICKY_BALLOON" bundle="messages.IdeBundle"
+                       key="notification.group.required.plugins"/>
     <notificationGroup id="System Health" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.system.health"
                        notificationIds="mixed.bag.installation;implicit.plugin.directory.path;implicit.log.directory.path;
                                         bundled.jre.m1.arch.message;bundled.jre.version.message;code.cache.warn.message;
@@ -1569,11 +1574,14 @@
                      groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.fill.character.background.including.line.spacing" default="false"
                      groupKey="group.advanced.settings.terminal"/>
-    <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="false"
+    <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="AS_DEFAULT_CODE"
+                     enumClass="com.intellij.lang.documentation.DocumentationSettings$InlineCodeHighlightingMode"
                      groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.code.blocks.highlighting" default="true"
                      groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false"
+                     groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.components.enable.code.background" default="true"
                      groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="search.everywhere.wait.for.contributors" default="true" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.contributors.wait.timeout" default="2000" groupKey="group.advanced.settings.se"/>
@@ -1724,7 +1732,8 @@
 
     <registryKey key="code.toolbar.debugger.actions" defaultValue="true" description="Add debugger actions into floating toolbar."/>
 
-    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"/>
+    <actionConfigurationCustomizer
+      implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"/>
 
     <applicationService serviceImplementation="com.intellij.credentialStore.PasswordSafeSettings" />
     <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserManager" />

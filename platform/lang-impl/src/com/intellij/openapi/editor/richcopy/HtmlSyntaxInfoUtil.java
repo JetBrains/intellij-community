@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
+import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -46,6 +47,10 @@ public final class HtmlSyntaxInfoUtil {
     return appendStyledSpan(new StringBuilder(), attributes, value, saturationFactor).toString();
   }
 
+  /**
+   * @deprecated Use {@link QuickDocCodeHighlightingHelper} for adding code fragments to documentation
+   */
+  @Deprecated(forRemoval = true)
   public static @NotNull String getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
     @NotNull Project project,
     @NotNull Language language,
@@ -236,7 +241,7 @@ public final class HtmlSyntaxInfoUtil {
     builder.append(value);
     builder.append(";");
   }
-  
+
   private static @NotNull Color tuneSaturationEspeciallyGrey(@NotNull Color color, int howMuch, float saturationFactor) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return color;

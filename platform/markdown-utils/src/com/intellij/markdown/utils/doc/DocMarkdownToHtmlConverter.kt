@@ -4,6 +4,7 @@ package com.intellij.markdown.utils.doc
 import com.intellij.markdown.utils.doc.impl.DocFlavourDescriptor
 import com.intellij.markdown.utils.doc.impl.DocTagRenderer
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -65,7 +66,8 @@ object DocMarkdownToHtmlConverter {
 
   @Contract(pure = true)
   @JvmStatic
-  fun convert(markdownText: String): String {
+  @JvmOverloads
+  fun convert(markdownText: String, project: Project? = null): String {
     val lines = SPLIT_BY_LINE_PATTERN.split(markdownText)
     val processedLines = ArrayList<String>(lines.size)
     var isInCode = false
@@ -95,7 +97,7 @@ object DocMarkdownToHtmlConverter {
           if (!ContainerUtil.isEmpty(tableFormats)) {
             val parts = splitTableCols(processedLine)
             if (isTableHeaderSeparator(parts)) continue
-            processedLine = getProcessedRow(isInTable, parts, tableFormats)
+            processedLine = getProcessedRow(isInTable, parts, tableFormats, project)
             if (!isInTable) processedLine = "<table style=\"border: 0px;\" cellspacing=\"0\">$processedLine"
             isInTable = true
           }
@@ -112,7 +114,7 @@ object DocMarkdownToHtmlConverter {
     var normalizedMarkdown = StringUtil.join(processedLines, "\n")
     if (isInTable) normalizedMarkdown += "</table>" //NON-NLS
 
-    var html = performConversion(normalizedMarkdown)
+    var html = performConversion(normalizedMarkdown, project)
     if (html == null) {
       html = replaceProhibitedTags(convertNewLinePlaceholdersToTags(markdownText), ContainerUtil.emptyList())
     }
@@ -150,7 +152,8 @@ object DocMarkdownToHtmlConverter {
 
   private fun getProcessedRow(isInTable: Boolean,
                               parts: List<String>,
-                              tableFormats: List<String>?): String {
+                              tableFormats: List<String>?,
+                              project: Project?): String {
     val openingTagStart = if (isInTable)
       "<td style=\"$border\" "
     else
@@ -162,7 +165,7 @@ object DocMarkdownToHtmlConverter {
       if (i > 0) {
         resultBuilder.append(closingTag).append(openingTagStart).append("align=\"").append(getAlign(i, tableFormats)).append("\">")
       }
-      resultBuilder.append(performConversion(parts[i].trim { it <= ' ' }))
+      resultBuilder.append(performConversion(parts[i].trim { it <= ' ' }, project))
     }
     resultBuilder.append(closingTag).append("</tr>")
     return resultBuilder.toString()
@@ -181,9 +184,9 @@ object DocMarkdownToHtmlConverter {
 
   private val embeddedHtmlType = IElementType("ROOT")
 
-  private fun performConversion(text: @Nls String): @NlsSafe String? {
+  private fun performConversion(text: @Nls String, project: Project?): @NlsSafe String? {
     try {
-      val flavour = DocFlavourDescriptor()
+      val flavour = DocFlavourDescriptor(project)
       val parsedTree = MarkdownParser(flavour).parse(embeddedHtmlType, text, true)
       return HtmlGenerator(text, parsedTree, flavour, false)
         .generateHtml(DocTagRenderer(text))

@@ -3,6 +3,7 @@ package com.intellij.webSymbols.customElements
 
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
@@ -63,6 +64,7 @@ abstract class CustomElementsManifestScopeBase :
 
   protected class CustomElementsManifestJsonOriginImpl(
     override val library: String,
+    private val project: Project?,
     override val version: String? = null,
     override val typeSupport: WebSymbolTypeSupport? = null,
     private val sourceSymbolResolver: (source: SourceReference, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
@@ -74,7 +76,7 @@ abstract class CustomElementsManifestScopeBase :
       sourceSymbolResolver(source, cacheHolder)
 
     override fun renderDescription(description: String): String =
-      DocMarkdownToHtmlConverter.convert(description)
+      DocMarkdownToHtmlConverter.convert(description, project)
 
     override fun toString(): String {
       return "$library@$version"

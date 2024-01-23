@@ -12,7 +12,6 @@ import javax.swing.text.TabExpander
 import javax.swing.text.View
 import javax.swing.text.html.CSS
 import javax.swing.text.html.HTMLDocument
-import javax.swing.text.html.HTMLDocument.BlockElement
 import javax.swing.text.html.InlineView
 import javax.swing.text.html.StyleSheet
 import kotlin.math.max
@@ -30,19 +29,20 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
   override fun setPropertiesFromAttributes() {
     super.setPropertiesFromAttributes()
 
-    val parent = element.parentElement as BlockElement
-    val index = parent.getElementIndex(element.startOffset)
+    val parentView = parent
+    val index = (0..parentView.viewCount).firstOrNull { parentView.getView(it) === this } ?: -1
+
 
     // Heuristics to determine whether we are within the same inline (e.g. <span>) element with paddings.
     // Nested inline element insets are not supported, because hierarchy of inline elements is not preserved.
-    val prevSibling = if (index > 0) parent.getElement(index - 1) else null
-    val nextSibling = if (index < parent.elementCount - 1) parent.getElement(index + 1) else null
+    val prevSibling = if (index > 0) parentView.getView(index - 1) else null
+    val nextSibling = if (index < parentView.viewCount - 1) parentView.getView(index + 1) else null
 
-    padding = element.padding
-    margin = element.margin
+    padding = attributes.padding
+    margin = attributes.margin
 
-    val startView = prevSibling?.padding != padding || prevSibling.margin != margin
-    val endView = nextSibling?.padding != padding || nextSibling.margin != margin
+    val startView = prevSibling?.attributes?.padding != padding || prevSibling.attributes.margin != margin
+    val endView = nextSibling?.attributes?.padding != padding || nextSibling.attributes.margin != margin
 
     padding.set(
       padding.top,
@@ -66,25 +66,25 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
     )
   }
 
-  private val Element.padding: JBInsets
+  private val AttributeSet.padding: JBInsets
     get() {
       val styleSheet = getStyleSheet()
       return JBUI.insets(
-        attributes.getLength(CSS.Attribute.PADDING_TOP, styleSheet).toInt(),
-        attributes.getLength(CSS.Attribute.PADDING_LEFT, styleSheet).toInt(),
-        attributes.getLength(CSS.Attribute.PADDING_BOTTOM, styleSheet).toInt(),
-        attributes.getLength(CSS.Attribute.PADDING_RIGHT, styleSheet).toInt(),
+        getLength(CSS.Attribute.PADDING_TOP, styleSheet).toInt(),
+        getLength(CSS.Attribute.PADDING_LEFT, styleSheet).toInt(),
+        getLength(CSS.Attribute.PADDING_BOTTOM, styleSheet).toInt(),
+        getLength(CSS.Attribute.PADDING_RIGHT, styleSheet).toInt(),
       )
     }
 
-  private val Element.margin: JBInsets
+  private val AttributeSet.margin: JBInsets
     get() {
       val styleSheet = getStyleSheet()
       return JBUI.insets(
-        attributes.getLength(CSS.Attribute.MARGIN_TOP, styleSheet).toInt(),
-        attributes.getLength(CSS.Attribute.MARGIN_LEFT, styleSheet).toInt(),
-        attributes.getLength(CSS.Attribute.MARGIN_BOTTOM, styleSheet).toInt(),
-        attributes.getLength(CSS.Attribute.MARGIN_RIGHT, styleSheet).toInt(),
+        getLength(CSS.Attribute.MARGIN_TOP, styleSheet).toInt(),
+        getLength(CSS.Attribute.MARGIN_LEFT, styleSheet).toInt(),
+        getLength(CSS.Attribute.MARGIN_BOTTOM, styleSheet).toInt(),
+        getLength(CSS.Attribute.MARGIN_RIGHT, styleSheet).toInt(),
       )
     }
 

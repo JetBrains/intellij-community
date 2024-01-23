@@ -12,6 +12,7 @@ internal class CustomElementsManifestMockScopeImpl : CustomElementsManifestScope
     val manifest = readCustomElementsManifest(file.toString())
     val context = CustomElementsManifestJsonOriginImpl(
       file.name.takeWhile { it != '.' },
+      project = null,
       typeSupport = WebSymbolsMockTypeSupport
     )
     addCustomElementsManifest(manifest, context)

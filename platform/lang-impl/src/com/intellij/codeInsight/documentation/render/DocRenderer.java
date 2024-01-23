@@ -23,7 +23,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.ShortcutExtension;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
@@ -51,8 +54,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.createAdditionalStylesForTips;
-import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.unwrapTipsText;
+import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.*;
 
 @ApiStatus.Internal
 public final class DocRenderer implements CustomFoldRegionRenderer {
@@ -382,7 +384,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         ".sections {border-spacing: 0}" +
         ".section {padding-right: 5; white-space: nowrap}" +
         ".content {padding: 2 0 2 0}" +
-        (useTipsKit ? createAdditionalStylesForTips(editor) : "");
+        (useTipsKit ? createAdditionalStylesForTips(editor) : "") +
+        createAdditionalStylesForStyledCode(editor);
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
       if (!useTipsKit) {
         ourCachedStyleSheet = result;
@@ -468,7 +471,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       return getSelectionStart() != getSelectionEnd();
     }
 
-    @Nullable Point getSelectionPositionInEditor() {
+    @Nullable
+    Point getSelectionPositionInEditor() {
       if (myPane != this) {
         return null;
       }

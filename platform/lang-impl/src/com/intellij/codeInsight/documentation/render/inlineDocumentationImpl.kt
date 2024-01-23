@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render
 
+import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.documentation.InlineDocumentation
 import com.intellij.platform.backend.documentation.InlineDocumentationProvider.EP_NAME
@@ -29,24 +32,51 @@ internal fun findInlineDocumentation(file: PsiFile, textRange: TextRange): Inlin
   return EP_NAME.extensionList.mapNotNull { it.findInlineDocumentation(file, textRange) }.firstOrNull()
 }
 
-@Nls
-@JvmField
-val START_TIP_PREFIX = "<tip>"
+@NlsSafe
+const val START_TIP_PREFIX = "<tip>"
 
-@Nls
-@JvmField
-val END_TIP_SUFFIX = "</tip>"
+@NlsSafe
+const val END_TIP_SUFFIX = "</tip>"
 
 internal fun unwrapTipsText(text: @Nls String): @Nls String {
   if (!text.startsWith(START_TIP_PREFIX) || !text.endsWith(END_TIP_SUFFIX)) error("Invalid text: $text")
   return text.substring(START_TIP_PREFIX.length, text.length - END_TIP_SUFFIX.length)
 }
 
-fun createAdditionalStylesForTips(editor: Editor): String {
+internal fun createAdditionalStylesForTips(editor: Editor): String {
   val defaultBackground = ColorUtil.toHtmlColor(editor.colorsScheme.getDefaultBackground())
   val foreground = ColorUtil.toHtmlColor(JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND)
   val border = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Button.disabledOutlineColor())
 
   // BOLD redefine is not working well: "b {font-weight: normal; color: #000000} " +
   return ".shortcut {font-weight: bold; color: $foreground; background-color: $defaultBackground; border-color: $border}"
+}
+
+internal fun createAdditionalStylesForStyledCode(editor: Editor): String {
+  if (!DocumentationSettings.isCodeBackgroundEnabled()) return ""
+  val scheme = editor.colorsScheme
+  val codeBg = ColorUtil.toHtmlColor(scheme.defaultBackground.let {
+    val luminance = ColorUtil.getLuminance(it)
+    if (luminance < 0.1)
+    // In case of a very dark theme, make background lighter
+      ColorUtil.hackBrightness(it, 1, 1.2f)
+    else
+    // In any other case make background darker
+      ColorUtil.hackBrightness(it, 1, 0.97f)
+  })
+  val codeFg = ColorUtil.toHtmlColor(scheme.defaultForeground)
+
+  val result = StringBuilder()
+  val codeColorStyle = "{ background-color: $codeBg; color: $codeFg; }"
+
+  if (DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING) {
+    result.append(".content code, .sections code $codeColorStyle")
+    result.append(".content code, .sections code { padding: 1px 4px; margin: 1px 0px; }")
+  }
+  if (DocumentationSettings.isHighlightingOfCodeBlocksEnabled()) {
+    result.append("div.styled-code $codeColorStyle")
+    result.append("div.styled-code {  margin: 5px 0px 5px 10px; padding: 6px; }")
+    result.append("div.styled-code pre { padding: 0px; margin: 0px }")
+  }
+  return result.toString()
 }

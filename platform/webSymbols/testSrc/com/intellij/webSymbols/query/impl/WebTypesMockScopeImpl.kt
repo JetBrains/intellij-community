@@ -12,7 +12,8 @@ internal class WebTypesMockScopeImpl : WebTypesScopeBase() {
     val webTypes = WebTypesJsonFilesCache.fromUrlNoCache(file.toURI().toString())
     val context = WebTypesJsonOriginImpl(
       webTypes,
-      typeSupport = WebSymbolsMockTypeSupport
+      typeSupport = WebSymbolsMockTypeSupport,
+      project = null
     )
     addWebTypes(webTypes, context)
   }

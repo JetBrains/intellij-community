@@ -24,6 +24,10 @@ public final class DocumentationSettings {
     return ClientDocumentationSettings.getCurrentInstance().isHighlightingOfCodeBlocksEnabled();
   }
 
+  public static boolean isCodeBackgroundEnabled() {
+    return ClientDocumentationSettings.getCurrentInstance().isCodeBackgroundEnabled();
+  }
+
   public static boolean isSemanticHighlightingOfLinksEnabled() {
     return ClientDocumentationSettings.getCurrentInstance().isSemanticHighlightingOfLinksEnabled();
   }
@@ -47,7 +51,11 @@ public final class DocumentationSettings {
    * Swing HTML Editor Kit processes values in percents of 'font-size' css property really weirdly
    * and even in not a cross-platform way.
    * So we have to do some hacks to align fonts.
+   *
+   * @deprecated Use {@link QuickDocCodeHighlightingHelper} for adding code fragments to documentation
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
   public static int getMonospaceFontSizeCorrection(boolean isForRenderedDoc) {
     if (isForRenderedDoc) {
       return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;

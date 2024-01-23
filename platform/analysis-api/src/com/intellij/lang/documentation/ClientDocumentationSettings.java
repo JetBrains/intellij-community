@@ -18,5 +18,8 @@ public interface ClientDocumentationSettings {
 
   boolean isSemanticHighlightingOfLinksEnabled();
 
-  @NotNull DocumentationSettings.InlineCodeHighlightingMode getInlineCodeHighlightingMode();
+  boolean isCodeBackgroundEnabled();
+
+  @NotNull
+  DocumentationSettings.InlineCodeHighlightingMode getInlineCodeHighlightingMode();
 }
