@@ -11,11 +11,6 @@ RUN apt-get update && \
                        llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python3-pip default-jre-headless && \
     rm -rf /var/lib/apt/lists/*
 
-# Install conda to location known by ``suggestCondaPath`` to be found by test runner
-ARG MINICONDA_INSTALLER="Miniconda3-py310_23.3.1-0-Linux-x86_64.sh"
-ADD --chmod=544 https://repo.anaconda.com/miniconda/$MINICONDA_INSTALLER ./
-RUN ./$MINICONDA_INSTALLER -b -p /opt/miniconda3/
-
 ADD . .
 RUN ./gradlew build
 
@@ -33,9 +28,9 @@ RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
 
 ENV LC_ALL en_US.UTF-8
 ENV PYCHARM_PYTHONS=/pythons/
+ENV CONDA_PATH=/pythons/conda/bin/conda
 
 COPY --from=builder /pythons/ /pythons
-COPY --from=builder /opt/miniconda3 /opt/miniconda3
 
 # To make sure all pythons are executable
 RUN find / -executable  -type f,l -name "python"  -print0  | xargs -0 -I '{}' sh -c "'{}' --version"

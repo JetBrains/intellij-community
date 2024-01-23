@@ -9,6 +9,8 @@ plugins {
   id("com.jetbrains.python.envs") version "0.0.31"
 }
 
+enum class PythonType { PYTHON, CONDA }
+
 val pythonsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHONS", File(buildDir, "pythons").path))
 val venvsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", File(buildDir, "envs").path))
 
@@ -74,15 +76,17 @@ tasks.register("build") {
   dependsOn(tasks.matching { it.name.startsWith("setup_") }, "clean")
 }
 
-fun createPython(id: String, version: String?, packages: List<String> = listOf(), tags: List<String> = listOf()) {
+fun createPython(id: String, version: String?, packages: List<String> = listOf(),
+                 tags: List<String> = listOf(), type: PythonType = PythonType.PYTHON) {
   check(version != null)
 
-  // TODO: pythonsDirectory vs venvsDirectory for different types
   val pythonHome = File(pythonsDirectory, id)
 
   envs {
-    // TODO: support different python types
-    python(id, pythonVersionMapping[version], packages)
+    when(type) {
+      PythonType.PYTHON -> python(id, pythonVersionMapping[version], packages)
+      PythonType.CONDA -> conda(id, version, packages)
+    }
   }
 
   project.tasks.create("populate_tags_$id") {
@@ -91,7 +95,6 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
 
     doLast {
       val tagsFile = pythonHome.resolve("tags.txt")
-      // keep simple message to be able to see step in execution log if performed
       println("Adding tags to: $tagsFile")
       tagsFile.writeText(tags.joinToString(separator = "\n"))
     }
@@ -106,7 +109,7 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
     val linkPath = pythonHome.resolve("python$version" + if (isWindows) ".exe" else "" ).toPath()
     val executablePath = pythonHome.resolve( if (isWindows) "python.exe" else "bin/python$version").toPath()
 
-    onlyIf { !linkPath.exists() }
+    onlyIf { !linkPath.exists() && type == PythonType.PYTHON }
 
     doLast {
       println("Generating link: $linkPath -> $executablePath")
@@ -165,3 +168,5 @@ createPython("py27", "2.7",
              // https://docs.twisted.org/en/stable/installation/howto/optional.html
              + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
              listOf("python2.7", "nose", "pytest", "behave", "packaging", "tox", "twisted", "django-nose", "untangle", "messages"))
+
+createPython("conda", "Miniconda3-py310_23.3.1-0", type = PythonType.CONDA)
