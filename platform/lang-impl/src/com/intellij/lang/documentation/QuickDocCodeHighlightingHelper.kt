@@ -6,10 +6,12 @@ import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlight
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColorUtil
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.xml.util.XmlStringUtil
@@ -24,11 +26,13 @@ object QuickDocCodeHighlightingHelper {
   const val INLINE_CODE_SUFFIX = "</code>"
 
   @JvmStatic
-  fun getStyledCodeBlock(code: CharSequence, language: Language?, project: Project? = null): String =
+  fun getStyledCodeBlock(code: @NlsSafe CharSequence, language: Language?, project: Project? = null): @NlsSafe String =
     StringBuilder().apply { appendStyledCodeBlock(code, language, project) }.toString()
 
   @JvmStatic
-  fun StringBuilder.appendStyledCodeBlock(code: CharSequence, language: Language?, project: Project? = null): StringBuilder =
+  fun StringBuilder.appendStyledCodeBlock(code: @NlsSafe CharSequence,
+                                          language: Language?,
+                                          project: Project? = null): @NlsSafe StringBuilder =
     append(CODE_BLOCK_PREFIX)
       .appendHighlightedCode(DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code, language, project, true)
       .append(CODE_BLOCK_SUFFIX)
@@ -39,12 +43,12 @@ object QuickDocCodeHighlightingHelper {
 
   @JvmStatic
   @JvmOverloads
-  fun getStyledInlineCode(code: String, language: Language? = null, project: Project? = null): String =
+  fun getStyledInlineCode(@NlsSafe code: String, language: Language? = null, project: Project? = null): @NlsSafe String =
     StringBuilder().apply { appendStyledInlineCode(code, language, project) }.toString()
 
   @JvmStatic
   @JvmOverloads
-  fun StringBuilder.appendStyledInlineCode(code: String, language: Language? = null, project: Project? = null): StringBuilder =
+  fun StringBuilder.appendStyledInlineCode(@NlsSafe code: String, language: Language? = null, project: Project? = null): StringBuilder =
     append(INLINE_CODE_PREFIX)
       .appendHighlightedCode(
         DocumentationSettings.getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING, code, language, project,
@@ -62,8 +66,8 @@ object QuickDocCodeHighlightingHelper {
     appendHighlightedCode(true, code, language, project, false)
 
   @JvmStatic
-  fun StringBuilder.appendStyledInlineCodeFragment(contents: String, textAttributesKey: TextAttributesKey): StringBuilder =
-    appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), textAttributesKey,
+  fun StringBuilder.appendStyledLinkFragment(contents: String, textAttributes: TextAttributes): StringBuilder =
+    appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), textAttributes,
                      contents, false)
 
   @JvmStatic
@@ -72,9 +76,44 @@ object QuickDocCodeHighlightingHelper {
                      contents, false)
 
   @JvmStatic
+  fun StringBuilder.appendStyledSignatureFragment(contents: String, textAttributes: TextAttributes): StringBuilder =
+    appendStyledSpan(DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), textAttributes,
+                     contents, false)
+
+  @JvmStatic
   fun StringBuilder.appendStyledSignatureFragment(contents: String, textAttributesKey: TextAttributesKey): StringBuilder =
     appendStyledSpan(DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), textAttributesKey,
                      contents, false)
+
+  @JvmStatic
+  fun StringBuilder.appendStyledFragment(contents: String, textAttributes: TextAttributes): StringBuilder =
+    appendStyledSpan(true, textAttributes, contents, false)
+
+  @JvmStatic
+  fun StringBuilder.appendStyledFragment(contents: String, textAttributesKey: TextAttributesKey): StringBuilder =
+    appendStyledSpan(true, textAttributesKey, contents, false)
+
+  @JvmStatic
+  fun StringBuilder.appendWrappedWithInlineCodeTag(@NlsSafe contents: CharSequence): @NlsSafe StringBuilder =
+    if (!contents.isBlank())
+      append(INLINE_CODE_PREFIX, contents, INLINE_CODE_SUFFIX)
+    else
+      this
+
+  @JvmStatic
+  fun StringBuilder.wrapWithInlineCodeTag(): @NlsSafe StringBuilder =
+    if (!isBlank())
+      insert(0, INLINE_CODE_PREFIX)
+        .append(INLINE_CODE_SUFFIX)
+    else
+      this
+
+  @JvmStatic
+  fun wrapWithInlineCodeTag(string: String): @NlsSafe String =
+    if (!string.isBlank())
+      INLINE_CODE_PREFIX + string + INLINE_CODE_SUFFIX
+    else
+      string
 
   @JvmStatic
   fun guessLanguage(language: String?): Language? =
@@ -159,6 +198,17 @@ object QuickDocCodeHighlightingHelper {
                                              value: String?, isForRenderedDoc: Boolean): StringBuilder {
     if (doHighlighting) {
       HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
+    }
+    else {
+      append(XmlStringUtil.escapeString(value))
+    }
+    return this
+  }
+
+  private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributes: TextAttributes,
+                                             value: String?, isForRenderedDoc: Boolean): StringBuilder {
+    if (doHighlighting) {
+      HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes, value, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
     }
     else {
       append(XmlStringUtil.escapeString(value))
