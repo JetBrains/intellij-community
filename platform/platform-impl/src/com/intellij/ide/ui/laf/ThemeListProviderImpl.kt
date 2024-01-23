@@ -36,9 +36,9 @@ private class ThemeListProviderImpl : ThemeListProvider {
         else customThemes.add(info)
       }
 
-    newUiThemes.sortedBy { it.name }
-    classicUiThemes.sortedBy { it.name }
-    customThemes.sortedBy { it.name }
+    newUiThemes.sortBy { it.name }
+    classicUiThemes.sortBy { it.name }
+    customThemes.sortBy { it.name }
 
     if (newUiThemes.isNotEmpty()) result.add(newUiThemes)
     if (classicUiThemes.isNotEmpty()) result.add(classicUiThemes)
