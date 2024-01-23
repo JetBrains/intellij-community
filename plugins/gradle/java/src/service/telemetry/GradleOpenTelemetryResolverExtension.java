@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.telemetry;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.TracerProvider;
+import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,7 @@ public class GradleOpenTelemetryResolverExtension extends AbstractProjectResolve
 
   @Override
   public @NotNull Set<Class<?>> getToolingExtensionsClasses() {
-    return Set.of(Span.class, TracerProvider.class, SdkTracerProvider.class, OpenTelemetry.class, OpenTelemetrySdk.class);
+    return Set.of(Span.class, TracerProvider.class, SdkTracerProvider.class, OpenTelemetry.class, OpenTelemetrySdk.class,
+                  TraceRequestMarshaler.class);
   }
 }

@@ -22,5 +22,6 @@
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
+    <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
   </component>
 </module>

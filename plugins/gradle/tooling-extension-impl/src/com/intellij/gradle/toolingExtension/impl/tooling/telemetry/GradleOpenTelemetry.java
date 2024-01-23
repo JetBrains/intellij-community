@@ -15,10 +15,13 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.data.SpanData;
+import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -28,10 +31,15 @@ public final class GradleOpenTelemetry {
 
   private @NotNull OpenTelemetry myOpenTelemetry = OpenTelemetry.noop();
   private @Nullable Scope myScope = null;
+  private @Nullable FilteringSpanDataCollector mySpanDataCollector = null;
 
   public void start(@NotNull GradleTracingContext context) {
+    mySpanDataCollector = new FilteringSpanDataCollector();
     myOpenTelemetry = OpenTelemetrySdk.builder()
       .setTracerProvider(SdkTracerProvider.builder()
+                           .addSpanProcessor(BatchSpanProcessor.builder(mySpanDataCollector)
+                                               .setMaxExportBatchSize(128)
+                                               .build())
                            .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), INSTRUMENTATION_NAME)))
                            .build())
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
@@ -58,8 +66,8 @@ public final class GradleOpenTelemetry {
   }
 
   public <T> T callWithSpan(@NotNull String spanName,
-                                      @NotNull Consumer<SpanBuilder> configurator,
-                                      @NotNull Function<Span, T> fn) {
+                            @NotNull Consumer<SpanBuilder> configurator,
+                            @NotNull Function<Span, T> fn) {
     SpanBuilder spanBuilder = getTracer()
       .spanBuilder(spanName);
     configurator.accept(spanBuilder);
@@ -86,6 +94,11 @@ public final class GradleOpenTelemetry {
       }
       if (myOpenTelemetry instanceof Closeable) {
         ((Closeable)myOpenTelemetry).close();
+      }
+      // the data should be exported only after OpenTelemetry was closed to prevent data loss
+      if (mySpanDataCollector != null) {
+        List<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
+        return SpanDataSerializer.serialize(collectedSpans);
       }
     }
     catch (Exception e) {
