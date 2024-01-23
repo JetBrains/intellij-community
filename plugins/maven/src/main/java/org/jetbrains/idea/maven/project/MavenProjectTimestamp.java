@@ -10,7 +10,7 @@ import java.io.IOException;
 @ApiStatus.Internal
 final class MavenProjectTimestamp {
   private final long myPomTimestamp;
-  private final long myParentLastReadStamp;
+  private final long myParentTimestamp;
   private final long myProfilesTimestamp;
   private final long myUserSettingsTimestamp;
   private final long myGlobalSettingsTimestamp;
@@ -21,7 +21,7 @@ final class MavenProjectTimestamp {
   static MavenProjectTimestamp NULL = new MavenProjectTimestamp(0, 0, 0, 0, 0, 0, 0, 0);
 
   MavenProjectTimestamp(long pomTimestamp,
-                        long parentLastReadStamp,
+                        long parentTimestamp,
                         long profilesTimestamp,
                         long userSettingsTimestamp,
                         long globalSettingsTimestamp,
@@ -29,7 +29,7 @@ final class MavenProjectTimestamp {
                         long jvmConfigTimestamp,
                         long mavenConfigTimestamp) {
     myPomTimestamp = pomTimestamp;
-    myParentLastReadStamp = parentLastReadStamp;
+    myParentTimestamp = parentTimestamp;
     myProfilesTimestamp = profilesTimestamp;
     myUserSettingsTimestamp = userSettingsTimestamp;
     myGlobalSettingsTimestamp = globalSettingsTimestamp;
@@ -51,7 +51,7 @@ final class MavenProjectTimestamp {
 
   public void write(DataOutputStream out) throws IOException {
     out.writeLong(myPomTimestamp);
-    out.writeLong(myParentLastReadStamp);
+    out.writeLong(myParentTimestamp);
     out.writeLong(myProfilesTimestamp);
     out.writeLong(myUserSettingsTimestamp);
     out.writeLong(myGlobalSettingsTimestamp);
@@ -63,7 +63,7 @@ final class MavenProjectTimestamp {
   @Override
   public String toString() {
     return "(" + myPomTimestamp
-           + ":" + myParentLastReadStamp
+           + ":" + myParentTimestamp
            + ":" + myProfilesTimestamp
            + ":" + myUserSettingsTimestamp
            + ":" + myGlobalSettingsTimestamp
@@ -80,7 +80,7 @@ final class MavenProjectTimestamp {
     MavenProjectTimestamp timestamp = (MavenProjectTimestamp)o;
 
     if (myPomTimestamp != timestamp.myPomTimestamp) return false;
-    if (myParentLastReadStamp != timestamp.myParentLastReadStamp) return false;
+    if (myParentTimestamp != timestamp.myParentTimestamp) return false;
     if (myProfilesTimestamp != timestamp.myProfilesTimestamp) return false;
     if (myUserSettingsTimestamp != timestamp.myUserSettingsTimestamp) return false;
     if (myGlobalSettingsTimestamp != timestamp.myGlobalSettingsTimestamp) return false;
@@ -95,7 +95,7 @@ final class MavenProjectTimestamp {
   public int hashCode() {
     int result = 0;
     result = 31 * result + Long.hashCode(myPomTimestamp);
-    result = 31 * result + Long.hashCode(myParentLastReadStamp);
+    result = 31 * result + Long.hashCode(myParentTimestamp);
     result = 31 * result + Long.hashCode(myProfilesTimestamp);
     result = 31 * result + Long.hashCode(myUserSettingsTimestamp);
     result = 31 * result + Long.hashCode(myGlobalSettingsTimestamp);
