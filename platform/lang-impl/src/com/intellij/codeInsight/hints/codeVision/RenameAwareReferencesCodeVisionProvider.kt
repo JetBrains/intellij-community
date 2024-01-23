@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Computable
@@ -58,6 +59,8 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Any?
         EmptyProgressIndicator()
       )
     } catch (e: ProcessCanceledException) {
+      return CodeVisionState.NotReady
+    } catch (e: IndexNotReadyException) {
       return CodeVisionState.NotReady
     }
   }
