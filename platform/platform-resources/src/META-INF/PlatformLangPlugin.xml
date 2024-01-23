@@ -155,10 +155,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="/META-INF/compose.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <xi:include href="/META-INF/ml.xml">
     <xi:fallback/>
   </xi:include>

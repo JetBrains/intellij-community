@@ -53,7 +53,6 @@ import git4idea.ui.branch.GitBranchPopupFetchAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
-import git4idea.ui.branch.popup.compose.createComposeBranchesPopup
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
@@ -775,9 +774,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
       val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
       val selectedRepoIfNeeded = if (GitBranchActionsUtil.userWantsSyncControl(project)) null else selectedRepository
-      if (Registry.`is`("git.experimental.compose.branches.popup")) {
-        return createComposeBranchesPopup(project, selectedRepoIfNeeded ?: repositories.first())
-      }
       return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true))
     }
 

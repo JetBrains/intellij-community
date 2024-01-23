@@ -917,9 +917,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/code-style-impl/intellij.platform.codeStyle.impl.iml" filepath="$PROJECT_DIR$/platform/code-style-impl/intellij.platform.codeStyle.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/collaboration-tools/intellij.platform.collaborationTools.iml" filepath="$PROJECT_DIR$/platform/collaboration-tools/intellij.platform.collaborationTools.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/collaboration-tools/auth/intellij.platform.collaborationTools.auth.iml" filepath="$PROJECT_DIR$/platform/collaboration-tools/auth/intellij.platform.collaborationTools.auth.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/compose/intellij.platform.compose.iml" filepath="$PROJECT_DIR$/platform/compose/intellij.platform.compose.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/compose/compiler-plugin/intellij.platform.compose.compilerPlugin.iml" filepath="$PROJECT_DIR$/platform/compose/compiler-plugin/intellij.platform.compose.compilerPlugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/compose/skiko-runtime/intellij.platform.compose.skikoRuntime.iml" filepath="$PROJECT_DIR$/platform/compose/skiko-runtime/intellij.platform.compose.skikoRuntime.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/intellij.platform.concurrency.iml" filepath="$PROJECT_DIR$/platform/util/intellij.platform.concurrency.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.impl.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml" />

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
@@ -16,16 +16,6 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-
-/**
- * Set of native files that shouldn't be signed.
- */
-@Suppress("SpellCheckingInspection")
-private val nonSignFiles = java.util.Set.of(
-  // Native file used by skiko (Compose backend) for Windows.
-  // It cannot be signed.
-  "icudtl.dat"
-)
 
 internal suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, dryRun: Boolean, context: BuildContext) {
   coroutineScope {
@@ -80,7 +70,6 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
 
       var file: Path? = if (
         os == OsFamily.LINUX ||
-        fileName in nonSignFiles ||
         signTool.signNativeFileMode != SignNativeFileMode.ENABLED
       ) {
         null
@@ -107,7 +96,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
           }
         }
 
-        if (os != OsFamily.LINUX && fileName !in nonSignFiles) {
+        if (os != OsFamily.LINUX) {
           unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
         }
       }
@@ -176,23 +165,7 @@ private fun determineArch(os: OsFamily, path: String, fileName: String): NativeF
     }
   }
 
-  // if we couldn't detect using subfolder
-  // try to detect architecture from file name e.g. "libskiko-macos-arm64.dylib"
-  // otherwise return null
-  return when {
-    fileName.contains("arm64") -> {
-      return AARCH_64
-    }
-    fileName.contains("x64") -> {
-      return X_64
-    }
-    // for now only "icudtl.dat" used by skiko is known as a universal library
-    fileName == "icudtl.dat" -> {
-      return UNIVERSAL
-    }
-    // couldn't detect architecture
-    else -> null
-  }
+  return null
 }
 
 private fun determineOsFamily(path: String, fileName: String): OsFamily? {
@@ -206,23 +179,7 @@ private fun determineOsFamily(path: String, fileName: String): OsFamily? {
     else -> null
   }
 
-  if (osFromPath != null) {
-    return osFromPath
-  }
-
-  // see skiko-runtime library as an example of a library where
-  // native files are not separated by folders like it is done in async-profiler and other libs,
-  // but files contain OS in their names e.g. "libskiko-macos-arm64.dylib"
-  val osFromFileName = when {
-    // skiko brings "icudtl.dat" for windows only
-    fileName == "icudtl.dat" -> OsFamily.WINDOWS
-    fileName.contains("macos") -> OsFamily.MACOS
-    fileName.contains("windows") -> OsFamily.WINDOWS
-    fileName.contains("linux") -> OsFamily.LINUX
-    else -> null
-  }
-
-  return osFromFileName
+  return osFromPath
 }
 
 // each library has own implementation of handling path property

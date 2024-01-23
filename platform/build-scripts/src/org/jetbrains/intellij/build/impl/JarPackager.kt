@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
@@ -64,7 +64,7 @@ private val libsThatUsedInJps = java.util.Set.of(
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val presignedLibNames = java.util.Set.of(
-  "pty4j", "jna", "sqlite-native", "async-profiler", "jetbrains.skiko.awt.runtime.all"
+  "pty4j", "jna", "sqlite-native", "async-profiler"
 )
 
 private val notImportantKotlinLibs = java.util.Set.of(
@@ -745,8 +745,7 @@ private class NativeFileHandlerImpl(private val context: BuildContext) : NativeF
     // we allow to use .so for macOS binraries (binaries/macos/libasyncProfiler.so), but removing obvious linux binaries
     // (binaries/linux-aarch64/libasyncProfiler.so) to avoid detecting by binary content
     if (
-      name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-") ||
-      name.contains("icudtl.dat")
+      name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-")
     ) {
       return null
     }

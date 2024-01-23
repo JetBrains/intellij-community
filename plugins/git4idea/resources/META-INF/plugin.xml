@@ -623,8 +623,6 @@
     <registryKey key="git.show.recent.checkout.branches" defaultValue="5"
                  description="Max count of recently checkout branches to show (e.g. in branches tree popup)"/>
     <registryKey key="git.log.index.inexact.renames" description="Detect and store inexact renames during indexing" defaultValue="false"/>
-    <registryKey key="git.experimental.compose.branches.popup" defaultValue="false"
-                 description="Introduce new experimental branches popup written in Compose"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

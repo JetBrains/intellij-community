@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
@@ -304,9 +304,6 @@ class BuildContextImpl(
 
     // https://youtrack.jetbrains.com/issue/IDEA-269280
     jvmArgs.add("-Daether.connector.resumeDownloads=false")
-
-    jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all".let { if (isScript) '"' + it + '"' else it })
-    jvmArgs.add("-Dcompose.swing.render.on.graphics=true")
 
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
 

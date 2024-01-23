@@ -17,7 +17,6 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.4/compiler-hosted-1.5.4.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -93,7 +92,6 @@
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
-    <orderEntry type="module" module-name="intellij.platform.compose" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

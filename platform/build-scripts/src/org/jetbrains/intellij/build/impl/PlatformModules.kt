@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -94,9 +94,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.collaborationTools",
   "intellij.platform.collaborationTools.auth",
 
-  "intellij.platform.compose",
-  "intellij.platform.compose.skikoRuntime",
-
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim"
 )
@@ -188,13 +185,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     "intellij.platform.util.trove",
   ), productLayout = productLayout, layout = layout)
   layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_8_JAR)
-
-  // skiko-runtime needed for Compose
-  layout.withModuleLibrary(
-    libraryName = "jetbrains.skiko.awt.runtime.all",
-    moduleName = "intellij.platform.compose.skikoRuntime",
-    relativeOutputPath = "skiko-runtime.jar"
-  )
 
   // maven uses JDOM in an external process
   addModule(UTIL_8_JAR, listOf(

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.devServer
@@ -49,9 +49,7 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
       // require bundled JNA dispatcher lib
       "jna.nosys" to "true",
       "jna.noclasspath" to "true",
-      "jb.vmOptionsFile" to "${runDir.parent.listDirectoryEntries(glob = "*.vmoptions").singleOrNull()}",
-      "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
-      "compose.swing.render.on.graphics" to "true",
+      "jb.vmOptionsFile" to "${runDir.parent.listDirectoryEntries(glob = "*.vmoptions").singleOrNull()}"
   ))
 }
 

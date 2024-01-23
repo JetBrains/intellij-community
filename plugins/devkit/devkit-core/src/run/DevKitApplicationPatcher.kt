@@ -154,7 +154,5 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
     // require bundled JNA dispatcher lib
     "jna.nosys" to "true",
     "jna.noclasspath" to "true",
-    "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
-    "compose.swing.render.on.graphics" to "true",
   )
 }
