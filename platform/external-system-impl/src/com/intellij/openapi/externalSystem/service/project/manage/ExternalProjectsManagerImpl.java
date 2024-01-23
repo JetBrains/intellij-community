@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -35,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,18 +68,20 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   private final ExternalSystemRunManagerListener myRunManagerListener;
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
+  private final CoroutineScope coroutineScope;
   private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
   private final ExternalSystemProjectsWatcherImpl myWatcher;
 
-  public ExternalProjectsManagerImpl(@NotNull Project project) {
+  public ExternalProjectsManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myShortcutsManager = new ExternalSystemShortcutsManager(project);
+    this.coroutineScope = coroutineScope;
     Disposer.register(this, myShortcutsManager);
     myTaskActivator = new ExternalSystemTaskActivator(project);
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
     myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
 
-    ApplicationManager.getApplication().getMessageBus().connect(project)
+    ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
       .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
         public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
@@ -205,7 +209,9 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
         myPostInitializationActivities.run();
         myPostInitializationActivities.clear();
       });
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+
+      //noinspection deprecation
+      ProjectUtilKt.executeOnPooledThread(myProject, coroutineScope, () -> {
         myPostInitializationBGActivities.run();
         myPostInitializationBGActivities.clear();
       });

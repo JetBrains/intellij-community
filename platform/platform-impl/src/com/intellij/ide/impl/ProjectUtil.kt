@@ -727,6 +727,13 @@ fun Project.executeOnPooledThread(task: Runnable) {
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
+@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
+fun Project.executeOnPooledThread(coroutineScope: CoroutineScope, task: Runnable) {
+  coroutineScope.launch { blockingContext { task.run() } }
+}
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Internal
 @ScheduledForRemoval
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledIoThread(task: Runnable) {
