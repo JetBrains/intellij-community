@@ -327,7 +327,8 @@ public class JavaCoverageEngine extends CoverageEngine {
         final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(project);
         for (PsiClass aClass : classes) {
           final PsiFile containingFile = ReadAction.compute(aClass::getContainingFile);
-          if (psiFile.equals(containingFile)) {
+          final VirtualFile classVirtualFile = containingFile.getVirtualFile();
+          if (virtualFile.equals(classVirtualFile)) {
             return true;
           }
         }
