@@ -43,7 +43,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
 
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     Objects.requireNonNull(myFilePath, "filePath is not specified");
-    VirtualFileUrl fileUrl = fileUrlManager.fromUrl(VfsUtilCore.pathToUrl(myFilePath));
+    VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(myFilePath));
     DirectoryCopyPackagingElementEntity addedEntity = diff.addEntity(DirectoryCopyPackagingElementEntity.create(fileUrl, source));
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
     return addedEntity;

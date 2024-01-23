@@ -62,7 +62,7 @@ class JpsProjectSaveAllEntitiesTest {
     val projectDir = FileUtil.createTempDirectory("jpsSaveTest", null)
     val (serializers, configLocation) = createProjectSerializers(projectDir, virtualFileManager)
     val builder = MutableEntityStorage.create()
-    val jarUrl = virtualFileManager.fromUrl("jar://${projectDir.systemIndependentPath}/lib/foo.jar!/")
+    val jarUrl = virtualFileManager.getOrCreateFromUri("jar://${projectDir.systemIndependentPath}/lib/foo.jar!/")
     val libraryRoot = LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)
     val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
     builder addEntity LibraryEntity("foo", LibraryTableId.ProjectLibraryTableId, listOf(libraryRoot), source)

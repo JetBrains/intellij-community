@@ -329,7 +329,7 @@ class GlobalWorkspaceModel : Disposable {
   }
 }
 
-private fun VirtualFileUrl.createCopyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.fromUrl(url)
+private fun VirtualFileUrl.createCopyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.getOrCreateFromUri(url)
 
 private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFileUrlManager): ExcludeUrlEntity =
   ExcludeUrlEntity(url.createCopyAtManager(manager), entitySource)

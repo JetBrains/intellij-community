@@ -28,7 +28,6 @@ import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuil
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.toExternalSource
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
@@ -175,7 +174,7 @@ open class ArtifactBridge(
   }
 
   override fun setOutputPath(outputPath: String?) {
-    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromUrl(VfsUtilCore.pathToUrl(it)) }
+    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).getOrCreateFromUri(VfsUtilCore.pathToUrl(it)) }
     val entity = diff.get(artifactId)
     diff.modifyEntity(entity) {
       this.outputUrl = outputUrl

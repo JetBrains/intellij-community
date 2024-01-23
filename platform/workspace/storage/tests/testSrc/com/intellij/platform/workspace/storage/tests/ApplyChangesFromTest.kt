@@ -49,9 +49,9 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `add entity`() {
     val source = createEmptyBuilder()
-    source addEntity SampleEntity(false, "first", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    source addEntity SampleEntity(false, "first", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                   SampleEntitySource("test"))
-    target addEntity SampleEntity(false, "second", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    target addEntity SampleEntity(false, "second", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                   SampleEntitySource("test"))
     val storage = target.applyChanges(source)
     assertEquals(setOf("first", "second"), storage.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
@@ -59,9 +59,9 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `remove entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                                SampleEntitySource("test"))
-    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                                 SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     source.removeEntity(entity.from(source))
@@ -71,7 +71,7 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `modify entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                                SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     source.modifyEntity(entity.from(source)) {
@@ -83,9 +83,9 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `remove removed entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                                SampleEntitySource("test"))
-    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                                 SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     target.removeEntity(entity)
@@ -98,7 +98,7 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `modify removed entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                                SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     target.removeEntity(entity)
@@ -134,7 +134,7 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `remove modified entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                                SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     target.modifyEntity(entity) {
@@ -149,10 +149,10 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `add entity with refs at the same slot`() {
     val source = createEmptyBuilder()
-    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                   SampleEntitySource("test"))
     val parentEntity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
     target addEntity ChildSampleEntity("data", SampleEntitySource("test")) {
       this@ChildSampleEntity.parentEntity = parentEntity
     }
@@ -172,13 +172,13 @@ class ApplyChangesFromTest {
   fun `add remove and add with refs`() {
     val source = createEmptyBuilder()
     val parent = source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(),
-                                               virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+                                               virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
     source addEntity ChildSampleEntity("String", SampleEntitySource("test")) {
       parentEntity = parent
     }
 
     val parentEntity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
     target addEntity ChildSampleEntity("data", SampleEntitySource("test")) {
       this@ChildSampleEntity.parentEntity = parentEntity
     }
@@ -202,7 +202,7 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `add dependency without changing entities`() {
     val source = createEmptyBuilder()
-    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                   SampleEntitySource("test"))
     source addEntity ChildSampleEntity("String", SampleEntitySource("test"))
 
@@ -321,12 +321,12 @@ class ApplyChangesFromTest {
   fun `checking external mapping`() {
     val target = createEmptyBuilder()
 
-    target addEntity SampleEntity(false, "Entity at index 0", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    target addEntity SampleEntity(false, "Entity at index 0", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                   SampleEntitySource("test"))
 
     val source = createEmptyBuilder()
     val sourceSample = source addEntity SampleEntity(false, "Entity at index 1", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
     val mutableExternalMapping = source.getMutableExternalMapping(externalMappingName)
     val anyObj = Any()
     mutableExternalMapping.addMapping(sourceSample, anyObj)
@@ -365,7 +365,7 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `change source in diff`() {
     val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.fromUrl("file:///tmp"), MySource)
+                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
     source.modifyEntity(sampleEntity.from(source)) {
@@ -384,7 +384,7 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `change source and data in diff`() {
     val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.fromUrl("file:///tmp"), MySource)
+                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
     source.modifyEntity(sampleEntity.from(source)) {
@@ -410,7 +410,7 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `change source in target`() {
     val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.fromUrl("file:///tmp"), MySource)
+                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
     target.modifyEntity(sampleEntity) {
@@ -490,7 +490,7 @@ class ApplyChangesFromTest {
   fun `removing non-existing entity while adding the new one`() {
     val initial = createEmptyBuilder()
     val toBeRemoved = initial addEntity SampleEntity(false, "En1", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
+                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
 
     val source = createBuilderFrom(initial)
 
@@ -498,7 +498,7 @@ class ApplyChangesFromTest {
     val target = createBuilderFrom(initial.toSnapshot())
 
     // In the incorrect implementation remove event will remove added entity
-    source addEntity SampleEntity(false, "En2", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
+    source addEntity SampleEntity(false, "En2", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
                                   SampleEntitySource("test"))
     source.removeEntity(toBeRemoved.from(source))
 
@@ -648,7 +648,7 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `change source and data`() {
     val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.fromUrl("file:///tmp"), MySource)
+                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
     source.modifyEntity(sampleEntity.from(source)) {

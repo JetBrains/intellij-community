@@ -75,7 +75,7 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
         builder.modifyEntity(FileOrDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
           VirtualFileUrlManager manager = VirtualFileUrls.getVirtualFileUrlManager(myProject);
           if (filePath != null) {
-            VirtualFileUrl fileUrl = manager.fromUrl(VfsUtilCore.pathToUrl(filePath));
+            VirtualFileUrl fileUrl = manager.getOrCreateFromUri(VfsUtilCore.pathToUrl(filePath));
             ent.setFilePath(fileUrl);
           }
           else {

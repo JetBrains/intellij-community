@@ -18,14 +18,14 @@ fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
       val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
       val ideaFolder = project.stateStore.directoryStorePath!!.toVirtualFileUrl(virtualFileUrlManager)
       val baseUrl = VfsUtilCore.pathToUrl(it)
-      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.fromUrl(baseUrl), ideaFolder)
+      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.getOrCreateFromUri(baseUrl), ideaFolder)
     }
   }
   else {
     project.projectFilePath?.let {
       val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
       val projectFileUrl = VfsUtilCore.pathToUrl(it)
-      val iprFile = virtualFileUrlManager.fromUrl(projectFileUrl)
+      val iprFile = virtualFileUrlManager.getOrCreateFromUri(projectFileUrl)
       JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
     }
   }

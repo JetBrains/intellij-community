@@ -44,13 +44,13 @@ internal fun convertToJavadocUrl(originalPath: String,
   if (javadocPath.startsWith(EclipseXml.FILE_PROTOCOL)) {
     val path = javadocPath.removePrefix(EclipseXml.FILE_PROTOCOL)
     if (File(path).exists()) {
-      return virtualUrlManager.fromUrl(pathToUrl(path))
+      return virtualUrlManager.getOrCreateFromUri(pathToUrl(path))
     }
   }
   else {
     val protocol = VirtualFileManager.extractProtocol(javadocPath)
     if (protocol == HttpFileSystem.getInstance().protocol) {
-      return virtualUrlManager.fromUrl(javadocPath)
+      return virtualUrlManager.getOrCreateFromUri(javadocPath)
     }
     else if (javadocPath.startsWith(EclipseXml.JAR_PREFIX)) {
       val jarJavadocPath = javadocPath.removePrefix(EclipseXml.JAR_PREFIX)
@@ -61,7 +61,7 @@ internal fun convertToJavadocUrl(originalPath: String,
           (moduleEntity.entitySource as EclipseProjectFile).projectLocation.baseDirectoryUrl.url)
         val currentModulePath = basePath + relativeToPlatform
         if (EJavadocUtil.isJarFileExist(currentModulePath)) {
-          return virtualUrlManager.fromUrl(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, currentModulePath))
+          return virtualUrlManager.getOrCreateFromUri(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, currentModulePath))
         }
         else {
           val moduleName = EPathCommonUtil.getRelativeModuleName(relativeToPlatform)
@@ -77,19 +77,19 @@ internal fun convertToJavadocUrl(originalPath: String,
             if (relativeToModulePath!!.length < relativeToModulePathWithJarSuffix!!.length) {
               url += relativeToModulePathWithJarSuffix.substring(relativeToModulePath.length)
             }
-            return virtualUrlManager.fromUrl(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, VfsUtil.urlToPath(url)))
+            return virtualUrlManager.getOrCreateFromUri(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, VfsUtil.urlToPath(url)))
           }
         }
       }
       else if (jarJavadocPath.startsWith(EclipseXml.FILE_PROTOCOL)) {
         val localFile = jarJavadocPath.substring(EclipseXml.FILE_PROTOCOL.length)
         if (EJavadocUtil.isJarFileExist(localFile)) {
-          return virtualUrlManager.fromUrl(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, localFile))
+          return virtualUrlManager.getOrCreateFromUri(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, localFile))
         }
       }
     }
   }
-  return virtualUrlManager.fromUrl(javadocPath)
+  return virtualUrlManager.getOrCreateFromUri(javadocPath)
 }
 
 internal fun convertToEclipseJavadocPath(javadocRoot: VirtualFileUrl,
@@ -141,11 +141,11 @@ internal fun convertToRootUrl(path: String, virtualUrlManager: VirtualFileUrlMan
   if (localFile != null) {
     val jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile)
     if (jarFile != null) {
-      return virtualUrlManager.fromUrl(jarFile.url)
+      return virtualUrlManager.getOrCreateFromUri(jarFile.url)
     }
   }
 
-  return virtualUrlManager.fromUrl(url)
+  return virtualUrlManager.getOrCreateFromUri(url)
 }
 
 internal fun pathToUrl(path: String): String = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(path))
@@ -171,7 +171,7 @@ internal fun convertRelativePathToUrl(path: String,
       if (moduleName != contentRootEntity.module.name) {
         val url = pathResolver.resolve(moduleName, relativeToRootPath)
         if (url != null) {
-          return virtualUrlManager.fromUrl(url)
+          return virtualUrlManager.getOrCreateFromUri(url)
         }
       }
     }
@@ -207,7 +207,7 @@ internal fun getStorageRoot(imlFileUrl: VirtualFileUrl, customDir: String?, virt
   val moduleRoot = imlFileUrl.parent!!
   if (customDir == null) return moduleRoot
   if (OSAgnosticPathUtil.isAbsolute(customDir)) {
-    return virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(customDir))
+    return virtualFileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(customDir))
   }
   return moduleRoot.append(customDir)
 }

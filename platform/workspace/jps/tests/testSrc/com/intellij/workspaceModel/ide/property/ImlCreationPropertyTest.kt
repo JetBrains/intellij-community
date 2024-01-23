@@ -194,7 +194,7 @@ class ImlCreationPropertyTest {
 
       val path = configLocation.baseDirectoryUrl.toPath().resolve(contentRootPath).createDirectories()
 
-      storage addEntity ContentRootEntity(virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path.toString())), emptyList(), moduleEntity.entitySource) {
+      storage addEntity ContentRootEntity(virtualFileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(path.toString())), emptyList(), moduleEntity.entitySource) {
         this.module = moduleEntity
       }
     }

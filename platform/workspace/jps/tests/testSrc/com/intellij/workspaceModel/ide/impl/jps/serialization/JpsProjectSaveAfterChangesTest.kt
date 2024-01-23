@@ -87,7 +87,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `add library and check vfu index not empty`() {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, _, _, configLocation ->
       val root = LibraryRoot(
-        virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
+        virtualFileManager.getOrCreateFromUri("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
         LibraryRootTypeId.COMPILED)
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
       builder addEntity LibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), source)
@@ -151,7 +151,7 @@ class JpsProjectSaveAfterChangesTest {
     checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, _, _, configLocation ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       val root = LibraryRoot(
-        virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
+        virtualFileManager.getOrCreateFromUri("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
         LibraryRootTypeId.COMPILED)
       builder.modifyEntity(junitLibrary) {
         roots = mutableListOf(root)

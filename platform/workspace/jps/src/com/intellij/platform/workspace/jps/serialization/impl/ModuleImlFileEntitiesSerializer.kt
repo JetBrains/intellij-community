@@ -4,7 +4,6 @@ package com.intellij.platform.workspace.jps.serialization.impl
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
@@ -485,7 +484,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val isDumb = contentElement.getAttributeValue(DUMB_ATTRIBUTE).toBoolean()
       val contentRoot = alreadyLoadedContentRoots[contentRootUrlString]
       if (contentRoot == null) {
-        val contentRootUrl = contentRootUrlString.let { virtualFileManager.fromUrl(it) }
+        val contentRootUrl = contentRootUrlString.let { virtualFileManager.getOrCreateFromUri(it) }
         val excludePatterns = contentElement.getChildren(EXCLUDE_PATTERN_TAG).map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
         val source = if (isDumb) OrphanageWorkerEntitySource else contentRootEntitySource
         ContentRootEntity(contentRootUrl, excludePatterns, source) {
@@ -534,7 +533,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   ): List<ExcludeUrlEntity> {
     return contentElement
       .getChildren(EXCLUDE_FOLDER_TAG)
-      .map { virtualFileManager.fromUrl(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
+      .map { virtualFileManager.getOrCreateFromUri(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
       .map { exclude ->
         ExcludeUrlEntity(exclude, entitySource)
       }
@@ -552,7 +551,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                  ?: (if (isTestSource) JAVA_TEST_ROOT_TYPE_ID else JAVA_SOURCE_ROOT_TYPE_ID)
 
       val sourceRoot = SourceRootEntity(
-        url = virtualFileManager.fromUrl(sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)),
+        url = virtualFileManager.getOrCreateFromUri(sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)),
         rootType = type,
         entitySource = sourceRootSource
       )
@@ -1020,7 +1019,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
     val moduleManagerTag = reader.loadComponent(fileUrl, componentName) ?: return emptyList()
     return ModulePath.getPathsToModuleFiles(moduleManagerTag).map {
-      virtualFileManager.fromUrl("file://${it.path}") to it.group
+      virtualFileManager.getOrCreateFromUri("file://${it.path}") to it.group
     }
   }
 

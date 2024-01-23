@@ -215,7 +215,7 @@ class ModifiableRootModelBridgeImpl(
   }
 
   private fun addEntityAndContentEntry(url: String, entitySource: EntitySource): ContentEntry {
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
     val existingEntry = contentEntries.firstOrNull { it.contentEntryUrl == virtualFileUrl }
     if (existingEntry != null) {
       return existingEntry

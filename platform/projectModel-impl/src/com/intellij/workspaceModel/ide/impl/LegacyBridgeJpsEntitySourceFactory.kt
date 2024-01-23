@@ -60,7 +60,7 @@ object LegacyBridgeJpsEntitySourceFactory {
 
   fun createEntitySourceForGlobalLibrary(): EntitySource {
     val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
-    val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
+    val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUri(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
     return JpsGlobalFileEntitySource(globalLibrariesFile)
   }
 

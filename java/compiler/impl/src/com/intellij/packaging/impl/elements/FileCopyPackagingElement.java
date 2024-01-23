@@ -148,7 +148,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     Objects.requireNonNull(filePath, "filePath is not specified");
     FileCopyPackagingElementEntity addedEntity;
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
-    VirtualFileUrl fileUrl = fileUrlManager.fromUrl(VfsUtilCore.pathToUrl(filePath));
+    VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(filePath));
     if (renamedOutputFileName != null) {
       addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source, entityBuilder -> {
         entityBuilder.setRenamedOutputFileName(renamedOutputFileName);

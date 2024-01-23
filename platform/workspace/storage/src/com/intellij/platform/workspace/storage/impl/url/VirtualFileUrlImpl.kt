@@ -72,5 +72,5 @@ public fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): Vir
 
 public fun String.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl {
   val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(this)
-  return virtualFileManager.fromUrl(url)
+  return virtualFileManager.getOrCreateFromUri(url)
 }

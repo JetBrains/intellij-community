@@ -33,4 +33,4 @@ public val VirtualFileUrl.virtualFile: VirtualFile?
  *
  * **Important Note:** method can return different instances of `VirtualFileUrl` for the same `VirtualFile`, e.g. if the file was moved.
  */
-public fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromUrl(this.url)
+public fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.getOrCreateFromUri(this.url)

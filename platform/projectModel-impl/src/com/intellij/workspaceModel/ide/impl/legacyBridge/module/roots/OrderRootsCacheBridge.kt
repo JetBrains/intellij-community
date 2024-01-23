@@ -43,12 +43,12 @@ class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) 
     val key = CacheKey(rootType, flags)
     var virtualFileUrls: List<VirtualFileUrlBridge>? = null
     if (myRootUrls.get()?.get(key) == null) {
-      virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.fromUrl(it) as VirtualFileUrlBridge }
+      virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUri(it) as VirtualFileUrlBridge }
       ConcurrencyUtil.cacheOrGet(myRootUrls, ConcurrentHashMap()).computeIfAbsent(key) { ArrayUtil.toStringArray(virtualFileUrls!!.map { it.url }) }
     }
     if (myRootVirtualFiles.get()?.get(key) == null) {
       if (virtualFileUrls == null) {
-        virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.fromUrl(it) as VirtualFileUrlBridge }
+        virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUri(it) as VirtualFileUrlBridge }
       }
       ConcurrencyUtil.cacheOrGet(myRootVirtualFiles, ConcurrentHashMap()).computeIfAbsent(key) {
         VfsUtilCore.toVirtualFileArray(virtualFileUrls.mapNotNull { it.file })

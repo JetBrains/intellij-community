@@ -9,7 +9,6 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -46,7 +45,7 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding content root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -89,7 +88,7 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding content root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -135,8 +134,8 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding content root to existing one`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val url2 = virtualFileManager.fromUrl("/1234")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val url2 = virtualFileManager.getOrCreateFromUri("/1234")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -180,7 +179,7 @@ class EntitiesOrphanageTest {
 
   @Test
   fun `adding content root to removed module`() = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
     writeAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
@@ -213,7 +212,7 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `do not add orphan content root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -258,7 +257,7 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `add content root to existing module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -302,8 +301,8 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `add content root to existing module and module remain in orphanage`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val url2 = virtualFileManager.fromUrl("/1233")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val url2 = virtualFileManager.getOrCreateFromUri("/1233")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -351,8 +350,8 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding source root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val sourceUrl = virtualFileManager.fromUrl("/123/source")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val sourceUrl = virtualFileManager.getOrCreateFromUri("/123/source")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -399,8 +398,8 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding source root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val sourceUrl = virtualFileManager.fromUrl("/123/source")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val sourceUrl = virtualFileManager.getOrCreateFromUri("/123/source")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -449,9 +448,9 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding source root to existing one`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val sourceUrl1 = virtualFileManager.fromUrl("/123/source1")
-    val sourceUrl2 = virtualFileManager.fromUrl("/123/source2")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val sourceUrl1 = virtualFileManager.getOrCreateFromUri("/123/source1")
+    val sourceUrl2 = virtualFileManager.getOrCreateFromUri("/123/source2")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -500,8 +499,8 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding source root to removed module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val sourceUrl = virtualFileManager.fromUrl("/123/source1")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val sourceUrl = virtualFileManager.getOrCreateFromUri("/123/source1")
     writeAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
@@ -538,8 +537,8 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding exclude root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val excludeUrl = virtualFileManager.fromUrl("/123/source")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val excludeUrl = virtualFileManager.getOrCreateFromUri("/123/source")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -586,8 +585,8 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding exclude root to existing one duplicate`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val excludeUrl = virtualFileManager.fromUrl("/123/source")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val excludeUrl = virtualFileManager.getOrCreateFromUri("/123/source")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -636,9 +635,9 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding exclude root to existing one`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val excludeUrl1 = virtualFileManager.fromUrl("/123/exclude1")
-    val excludeUrl2 = virtualFileManager.fromUrl("/123/exclude2")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val excludeUrl1 = virtualFileManager.getOrCreateFromUri("/123/exclude1")
+    val excludeUrl2 = virtualFileManager.getOrCreateFromUri("/123/exclude2")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(
@@ -687,8 +686,8 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `adding exclude root to removed module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val excludeUrl = virtualFileManager.fromUrl("/123/source1")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val excludeUrl = virtualFileManager.getOrCreateFromUri("/123/source1")
     writeAction {
       EntitiesOrphanage.getInstance(projectModel.project).update { builder ->
         builder addEntity ModuleEntity("MyName", emptyList(), OrphanageWorkerEntitySource) {
@@ -725,9 +724,9 @@ class EntitiesOrphanageTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `move both source and exclude root`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
-    val url = virtualFileManager.fromUrl("/123")
-    val excludeUrl = virtualFileManager.fromUrl("/123/source1")
-    val sourceUrl = virtualFileManager.fromUrl("/123/source2")
+    val url = virtualFileManager.getOrCreateFromUri("/123")
+    val excludeUrl = virtualFileManager.getOrCreateFromUri("/123/source1")
+    val sourceUrl = virtualFileManager.getOrCreateFromUri("/123/source2")
     writeAction {
       // List of operations as functions to support parametrized test. We call them in different order
       val operations = listOf(

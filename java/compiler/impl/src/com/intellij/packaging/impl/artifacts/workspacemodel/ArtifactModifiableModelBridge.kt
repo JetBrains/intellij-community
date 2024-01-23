@@ -34,7 +34,6 @@ import com.intellij.util.containers.mapInPlace
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 
@@ -143,7 +142,7 @@ class ArtifactModifiableModelBridge(
       }
     }
 
-    val outputUrl = outputPath?.let { fileManager.fromUrl(VfsUtilCore.pathToUrl(it)) }
+    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(it)) }
     val artifactEntity = diff addEntity ArtifactEntity(uniqueName, artifactType.id, false, source) {
       this.outputUrl = outputUrl
       this.rootElement = rootElementEntity

@@ -110,7 +110,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     Objects.requireNonNull(this.myFilePath, "filePath is not specified");
     Objects.requireNonNull(this.myPathInJar, "pathInJar is not specified");
-    VirtualFileUrl fileUrl = fileUrlManager.fromUrl(VfsUtilCore.pathToUrl(this.myFilePath));
+    VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(this.myFilePath));
 
     ExtractedDirectoryPackagingElementEntity addedEntity = diff.addEntity(ExtractedDirectoryPackagingElementEntity.create(fileUrl, this.myPathInJar, source));
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);

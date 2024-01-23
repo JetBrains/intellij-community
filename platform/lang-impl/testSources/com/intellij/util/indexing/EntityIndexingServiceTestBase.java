@@ -40,7 +40,7 @@ public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCas
 
   @NotNull
   protected VirtualFileUrl getUrl(@NotNull VirtualFile file) {
-    return fileUrlManager.fromUrl(file.getUrl());
+    return fileUrlManager.getOrCreateFromUri(file.getUrl());
   }
 
   @NotNull

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.url
 
-import com.intellij.util.containers.TreeNodeProcessingResult
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,7 +18,7 @@ public interface VirtualFileUrlManager {
    * It must not be used for other purposes (e.g., to convert between different URL formats or to find [VirtualFile][com.intellij.openapi.vfs.VirtualFile],
    * because all created URLs are stored in the shared data structures until the project is closed.
    */
-  public fun fromUrl(url: String): VirtualFileUrl
+  public fun getOrCreateFromUri(uri: String): VirtualFileUrl
 
   /**
    * Returns an existing instance of [VirtualFileUrl] for the given URL or `null` if no instance was registered. 

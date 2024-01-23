@@ -784,7 +784,7 @@ class WorkspaceBuilderChangeLogTest {
   fun updateParentOfOneToOneChild() {
     val child = builder addEntity ChildSampleEntity("data", MySource)
     val newBuilder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
-    newBuilder addEntity SampleEntity(true, "", listOf(), emptyMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), MySource) {
+    newBuilder addEntity SampleEntity(true, "", listOf(), emptyMap(), VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"), MySource) {
       this.children = listOf(child)
     }
 

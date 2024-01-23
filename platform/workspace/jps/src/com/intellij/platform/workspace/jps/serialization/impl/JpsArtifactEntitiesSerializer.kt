@@ -5,7 +5,6 @@ import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -38,7 +37,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
   override fun createSerializer(fileUrl: String,
                                 entitySource: JpsProjectFileEntitySource.FileInDirectory,
                                 virtualFileManager: VirtualFileUrlManager): JpsArtifactEntitiesSerializer {
-    return JpsArtifactEntitiesSerializer(virtualFileManager.fromUrl(fileUrl), entitySource, false, virtualFileManager)
+    return JpsArtifactEntitiesSerializer(virtualFileManager.getOrCreateFromUri(fileUrl), entitySource, false, virtualFileManager)
   }
 
   override fun getDefaultFileName(entity: ArtifactEntity): String {

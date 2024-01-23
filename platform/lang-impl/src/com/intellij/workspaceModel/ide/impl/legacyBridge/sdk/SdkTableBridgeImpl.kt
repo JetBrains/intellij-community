@@ -62,12 +62,12 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
     val sdkEntitySource = SdkBridgeImpl.createEntitySourceForSdk()
     val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
-    val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.fromUrl(it) }
+    val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.getOrCreateFromUri(it) }
 
     val roots = mutableListOf<SdkRoot>()
     for (type in OrderRootType.getAllPersistentTypes()) {
       sdk.rootProvider.getUrls(type).forEach { url ->
-        roots.add(SdkRoot(virtualFileUrlManager.fromUrl(url), rootTypes[type.customName]!!))
+        roots.add(SdkRoot(virtualFileUrlManager.getOrCreateFromUri(url), rootTypes[type.customName]!!))
       }
     }
 

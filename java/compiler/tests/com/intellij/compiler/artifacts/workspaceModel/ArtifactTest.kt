@@ -41,7 +41,6 @@ import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import junit.framework.TestCase
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
@@ -143,7 +142,7 @@ class ArtifactTest : ArtifactsTestCase() {
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
         builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
-          filePath = VirtualFileUrlManager.getInstance(project).fromUrl(VfsUtilCore.pathToUrl(file2.systemIndependentPath))
+          filePath = VirtualFileUrlManager.getInstance(project).getOrCreateFromUri(VfsUtilCore.pathToUrl(file2.systemIndependentPath))
         }
       }
     }

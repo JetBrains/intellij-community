@@ -14,7 +14,7 @@ internal fun createScratchRootsEntityForProject(project: Project): ScratchRootsE
   val urlManager = VirtualFileUrlManager.getInstance(project)
   val urls = RootType.getAllRootTypes().filter { !it.isHidden }.map {
     scratchFileService.getRootPath(it)
-  }.sorted().map { urlManager.fromUrl(VfsUtilCore.pathToUrl(it)) }.toList()
+  }.sorted().map { urlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(it)) }.toList()
 
   return ScratchRootsEntity(urls, ScratchRootsEntitySource)
 }

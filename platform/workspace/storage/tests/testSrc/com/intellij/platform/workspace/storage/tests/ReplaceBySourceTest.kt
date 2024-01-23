@@ -1030,9 +1030,9 @@ class ReplaceBySourceTest {
   @RepeatedTest(10)
   fun `non persistent id root`() {
     val targetEntity = builder addEntity SampleEntity(false, "data", ArrayList(), HashMap(),
-                                                      VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), MySource)
+                                                      VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"), MySource)
     val replaceWithEntity = replacement addEntity SampleEntity(false, "data", ArrayList(), HashMap(),
-                                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), MySource)
+                                                               VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"), MySource)
 
     rbsMySources()
 

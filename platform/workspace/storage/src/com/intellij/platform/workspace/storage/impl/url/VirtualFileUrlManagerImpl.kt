@@ -19,9 +19,9 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val rootNode = FilePathNode(0, 0)
 
   @Synchronized
-  override fun fromUrl(url: String): VirtualFileUrl {
-    if (url.isEmpty()) return getEmptyUrl()
-    return add(url)
+  override fun getOrCreateFromUri(uri: String): VirtualFileUrl {
+    if (uri.isEmpty()) return getEmptyUrl()
+    return add(uri)
   }
 
   override fun findByUrl(url: String): VirtualFileUrl? {

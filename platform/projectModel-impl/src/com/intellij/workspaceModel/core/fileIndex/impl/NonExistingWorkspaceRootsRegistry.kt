@@ -73,7 +73,7 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
     for (event in events) {
       when (event) {
         is VFileDeleteEvent ->
-          calculateEntityChangesIfNeeded(virtualFileManager.fromUrl(event.file.url), event.file, entityChanges, entityStorage, true)
+          calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUri(event.file.url), event.file, entityChanges, entityStorage, true)
         is VFileCreateEvent -> {
           val parentUrl = event.parent.url
           val protocolEnd = parentUrl.indexOf(URLUtil.SCHEME_SEPARATOR)
@@ -83,23 +83,23 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
           else {
             VfsUtilCore.pathToUrl(event.path)
           }
-          val virtualFileUrl = virtualFileManager.fromUrl(url)
+          val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
           calculateEntityChangesIfNeeded(virtualFileUrl, null, entityChanges, entityStorage, false)
           if (url.startsWith(URLUtil.FILE_PROTOCOL) && (event.isDirectory || event.childName.endsWith(".jar"))) {
             //if a new directory or a new jar file is created, we may have roots pointing to files under it with jar protocol
             val suffix = if (event.isDirectory) "" else URLUtil.JAR_SEPARATOR
             val jarFileUrl = URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + URLUtil.urlToPath(url) + suffix
-            val jarVirtualFileUrl = virtualFileManager.fromUrl(jarFileUrl)
+            val jarVirtualFileUrl = virtualFileManager.getOrCreateFromUri(jarFileUrl)
             calculateEntityChangesIfNeeded(jarVirtualFileUrl, null, entityChanges, entityStorage, false)
           }
         }
-        is VFileCopyEvent -> calculateEntityChangesIfNeeded(virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(event.path)), null, entityChanges,
+        is VFileCopyEvent -> calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(event.path)), null, entityChanges,
                                                             entityStorage, false)
         is VFilePropertyChangeEvent, is VFileMoveEvent -> {
           val (oldUrl, newUrl) = getOldAndNewUrls(event)
           if (oldUrl != newUrl) {
-            calculateEntityChangesIfNeeded(virtualFileManager.fromUrl(oldUrl), event.file, entityChanges, entityStorage, true)
-            calculateEntityChangesIfNeeded(virtualFileManager.fromUrl(newUrl), null, entityChanges, entityStorage, false)
+            calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUri(oldUrl), event.file, entityChanges, entityStorage, true)
+            calculateEntityChangesIfNeeded(virtualFileManager.getOrCreateFromUri(newUrl), null, entityChanges, entityStorage, false)
           }
         }
       }

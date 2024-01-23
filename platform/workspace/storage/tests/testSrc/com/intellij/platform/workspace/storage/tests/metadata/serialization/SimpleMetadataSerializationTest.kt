@@ -140,7 +140,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
     builder addEntity com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity(
       someInt = 5,
       text = "cache version",
-      url = virtualFileManager.fromUrl("file:///tmp"),
+      url = virtualFileManager.getOrCreateFromUri("file:///tmp"),
       SampleEntitySource("test")
     )
 
