@@ -2,7 +2,6 @@
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ActionsCollector
@@ -10,8 +9,6 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanceEx
-import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
@@ -37,7 +34,6 @@ import com.intellij.ui.CommonActionsPanel
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -263,8 +259,10 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun performActionDumbAwareWithCallbacks(action: AnAction, e: AnActionEvent) {
-    performDumbAwareWithCallbacks(action, e) { doPerformActionOrShowPopup(action, e, null) }
+  fun performActionDumbAwareWithCallbacks(action: AnAction, event: AnActionEvent) {
+    (event.actionManager as ActionManagerEx).performWithActionCallbacks(action, event) {
+      doPerformActionOrShowPopup(action, event, null)
+    }
   }
 
   @ApiStatus.Internal
@@ -302,58 +300,14 @@ object ActionUtil {
     val event = AnActionEvent.createFromInputEvent(
       inputEvent, place, InputEventDummyAction.templatePresentation.clone(),
       DataManager.getInstance().getDataContext(Objects.requireNonNull(inputEvent.component)))
-    performDumbAwareWithCallbacks(InputEventDummyAction, event, runnable)
+    (event.actionManager as ActionManagerEx).performWithActionCallbacks(InputEventDummyAction, event, runnable)
   }
 
   @JvmStatic
   fun performDumbAwareWithCallbacks(action: AnAction,
                                     event: AnActionEvent,
                                     performRunnable: Runnable) {
-    val project = event.project
-    var indexError: IndexNotReadyException? = null
-    val manager = getInstanceEx()
-    manager.fireBeforeActionPerformed(action, event)
-    val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-    val actionId = StringUtil.notNullize(
-      event.actionManager.getId(action),
-      if (action === InputEventDummyAction) performRunnable.javaClass.name else action.javaClass.name)
-    if (component != null && !UIUtil.isShowing(component) &&
-        ActionPlaces.TOUCHBAR_GENERAL != event.place &&
-        java.lang.Boolean.TRUE != ClientProperty.get(component, ALLOW_ACTION_PERFORM_WHEN_HIDDEN)) {
-      LOG.warn("Action is not performed because target component is not showing: " +
-               "action=$actionId, component=${component.javaClass.name}")
-      manager.fireAfterActionPerformed(action, event, AnActionResult.IGNORED)
-      return
-    }
-    var result: AnActionResult? = null
-    try {
-      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
-        withActionThreadContext(actionId, event.place, event.inputEvent, component).use {
-          performRunnable.run()
-          result = AnActionResult.PERFORMED
-        }
-      }
-    }
-    catch (ex: IndexNotReadyException) {
-      indexError = ex
-      result = AnActionResult.failed(ex)
-    }
-    catch (ex: RuntimeException) {
-      result = AnActionResult.failed(ex)
-      throw ex
-    }
-    catch (ex: Error) {
-      result = AnActionResult.failed(ex)
-      throw ex
-    }
-    finally {
-      if (result == null) result = AnActionResult.failed(Throwable())
-      manager.fireAfterActionPerformed(action, event, result!!)
-    }
-    if (indexError != null) {
-      LOG.info(indexError)
-      showDumbModeWarning(project, action, event)
-    }
+    (event.actionManager as ActionManagerEx).performWithActionCallbacks(action,  event, performRunnable)
   }
 
   @JvmStatic
@@ -611,20 +565,7 @@ object ActionUtil {
   @ApiStatus.Internal
   @JvmStatic
   fun initActionContextForComponent(component: JComponent) {
-    ClientProperty.put(component, ACTION_CONTEXT_ELEMENT_KEY, getActionThreadContext())
+    ActionContextElement.reset(component, getActionThreadContext())
   }
-}
-
-private val ACTION_CONTEXT_ELEMENT_KEY = Key.create<ActionContextElement>("ACTION_CONTEXT_ELEMENT_KEY")
-
-private fun withActionThreadContext(actionId: String,
-                                    place: String,
-                                    event: InputEvent?,
-                                    component: Component?): AccessToken {
-  val parent = UIUtil.uiParents(component, false)
-    .filterMap { ClientProperty.get(it, ACTION_CONTEXT_ELEMENT_KEY) }
-    .first()
-  return installThreadContext(currentThreadContext().plus(
-    ActionContextElement(actionId, place, event?.id ?: -1, parent)), true)
 }
 

@@ -27,6 +27,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.showDumbModeWarning
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -41,6 +42,7 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.ProjectType
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtilRt
@@ -48,15 +50,20 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.with
 import com.intellij.util.containers.without
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.use
 import com.intellij.util.xml.dom.XmlElement
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -80,6 +87,8 @@ import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -1120,6 +1129,59 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         .mapNotNull {
           getAction(id = it, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
         }
+    }
+  }
+
+  override fun performWithActionCallbacks(action: AnAction,
+                                          event: AnActionEvent,
+                                          runnable: Runnable) {
+    val project = event.project
+    fireBeforeActionPerformed(action, event)
+    val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+    val actionId = getId(action) ?: if (action is EmptyAction)
+      runnable.javaClass.name else action.javaClass.name
+    if (component != null && !UIUtil.isShowing(component) &&
+        event.place != ActionPlaces.TOUCHBAR_GENERAL &&
+        ClientProperty.get(component, ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN) != true) {
+      LOG.warn("Action is not performed because target component is not showing: " +
+               "action=$actionId, component=${component.javaClass.name}")
+      fireAfterActionPerformed(action, event, AnActionResult.IGNORED)
+      return
+    }
+    val cs = ((project ?: ApplicationManager.getApplication()) as ComponentManagerImpl)
+      .pluginCoroutineScope(action.javaClass.classLoader)
+    val coroutineName = CoroutineName("${action.javaClass.name}#actionPerformed@${event.place}")
+    // save stack frames using explicit continuation trick & inline blockingContext
+    lateinit var continuation: CancellableContinuation<Unit>
+    cs.launch(Dispatchers.Unconfined + coroutineName, CoroutineStart.UNDISPATCHED) {
+      suspendCancellableCoroutine { continuation = it }
+    }
+    var result = try {
+      val coroutineContext = continuation.context +
+                             ModalityState.current().asContextElement() +
+                             ClientId.coroutineContext() +
+                             ActionContextElement.create(actionId, event.place, event.inputEvent, component) +
+                             coroutineName
+      kotlin.Pair({ installThreadContext(coroutineContext.minusKey(ContinuationInterceptor), true) },
+                  { SlowOperations.startSection(SlowOperations.ACTION_PERFORM) }).use { _, _ ->
+        runnable.run()
+      }
+      AnActionResult.PERFORMED
+    }
+    catch (ex: Throwable) {
+      AnActionResult.failed(ex)
+    }
+    finally {
+      continuation.resume(Unit)
+    }
+    fireAfterActionPerformed(action, event, result)
+    val failure = if (result.isPerformed) null else result.failureCause
+    when (failure) {
+      is IndexNotReadyException -> {
+        LOG.info(failure)
+        showDumbModeWarning(project, action, event)
+      }
+      is RuntimeException, is Error -> throw failure
     }
   }
 

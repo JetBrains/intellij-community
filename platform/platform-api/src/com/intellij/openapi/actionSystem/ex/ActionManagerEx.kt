@@ -80,6 +80,10 @@ abstract class ActionManagerEx : ActionManager() {
     }
   }
 
+  abstract fun performWithActionCallbacks(action: AnAction,
+                                          event: AnActionEvent,
+                                          runnable: Runnable)
+
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar
 
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean, customizable: Boolean): ActionToolbar
