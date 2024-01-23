@@ -27,7 +27,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.util.coroutines.flow.throttle
@@ -46,7 +46,6 @@ import kotlin.coroutines.coroutineContext
 
 @Internal
 class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
-
   data class ProgressStartedEvent(
     val title: @ProgressTitle String,
     val cancellation: TaskCancellation,
@@ -173,7 +172,9 @@ private class JobProviderWithOwnerContext(val modalJob: Job, val owner: ModalTas
   override fun getJob(): Job = modalJob
 }
 
-val tracer = getInstance().getTracer(ProgressManagerScope)
+private val progressManagerTracer by lazy {
+  TelemetryManager.getInstance().getTracer(ProgressManagerScope)
+}
 
 private fun CoroutineScope.showIndicator(
   project: Project,
@@ -183,7 +184,7 @@ private fun CoroutineScope.showIndicator(
 ): Job {
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
-    tracer.spanBuilder("Progress: ${taskInfo.title}").startSpan().use {
+    progressManagerTracer.spanBuilder("Progress: ${taskInfo.title}").startSpan().use {
       val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
       withContext(Dispatchers.EDT) {
         val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
