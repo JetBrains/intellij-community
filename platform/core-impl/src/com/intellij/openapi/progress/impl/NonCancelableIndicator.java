@@ -7,15 +7,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-class NonCancelableIndicator implements StandardProgressIndicator {
-  static final NonCancelableIndicator INSTANCE = new NonCancelableIndicator() {
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-  };
+final class NonCancelableIndicator implements StandardProgressIndicator {
 
-  NonCancelableIndicator() {
+  static final NonCancelableIndicator INSTANCE = new NonCancelableIndicator();
+
+  private NonCancelableIndicator() {
+  }
+
+  @Override
+  public int hashCode() {
+    return 0;
   }
 
   @Override
