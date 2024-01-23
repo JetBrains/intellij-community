@@ -47,7 +47,7 @@ import static com.intellij.openapi.progress.impl.ProgressManagerScopeKt.Progress
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
-  private static final IJTracer myProgressManagerTracer = TelemetryManager.getInstance().getTracer(ProgressManagerScope);
+  private static final IJTracer progressManagerTracer = TelemetryManager.getInstance().getTracer(ProgressManagerScope);
 
   static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
@@ -212,10 +212,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         catch (Throwable e) {
           throw new RuntimeException(e);
         }
-        TraceKt.useWithScopeBlocking(startProcessSpan(progress), (Span __) -> {
+        Span span = startProcessSpan(progress);
+        if (span == null) {
           process.run();
-          return null;
-        });
+        }
+        else {
+          TraceKt.useWithScopeBlocking(span, (Span __) -> {
+            process.run();
+            return null;
+          });
+        }
       }
       finally {
         if (progress != null && progress.isRunning()) {
@@ -228,11 +234,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }, progress);
   }
 
-  private static Span startProcessSpan(@Nullable ProgressIndicator progress) {
-    if (!(progress instanceof TitledIndicator)) return Span.getInvalid();
+  private static @Nullable Span startProcessSpan(@Nullable ProgressIndicator progress) {
+    if (!(progress instanceof TitledIndicator)) {
+      return null;
+    }
+
     String progressText = ((TitledIndicator)progress).getTitle();
-    return myProgressManagerTracer.spanBuilder("Progress: " + progressText, TracerLevel.DEFAULT)
-      .startSpan();
+    return progressManagerTracer.spanBuilder("Progress: " + progressText, TracerLevel.DEFAULT).startSpan();
   }
 
   private static void assertNoOtherThreadUnder(@NotNull ProgressIndicator progress) {

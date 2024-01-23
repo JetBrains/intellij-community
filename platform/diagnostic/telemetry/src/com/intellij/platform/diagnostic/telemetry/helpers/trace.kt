@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.helpers
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -27,7 +27,11 @@ import kotlin.coroutines.EmptyCoroutineContext
  * See [span concept](https://opentelemetry.io/docs/concepts/signals/traces/#spans) for more details on span nesting.
  */
 inline fun <T> SpanBuilder.useWithScopeBlocking(operation: (Span) -> T): T {
-  return startSpan().useWithScopeBlocking(operation)
+  return startSpan().use { span ->
+    span.makeCurrent().use {
+      operation(span)
+    }
+  }
 }
 
 /**
