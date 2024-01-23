@@ -361,6 +361,8 @@
         </jar>
         <copy file="${community.out}/dist.all/plugins/java/lib/stripped.jar" tofile="${community.out}/dist.all/lib/java-impl.jar"/>
         <move file="${community.out}/dist.all/plugins/java/lib/stripped.jar" tofile="${community.out}/dist.all/plugins/java/lib/java-impl.jar"/>
+
+        <copy file="${community.out}/dist.all/plugins/java/lib/java-frontback.jar" tofile="${community.out}/dist.all/lib/java-frontback.jar"/>
     </target>
 
     <target name="build" depends="pull,prepare,compile"
