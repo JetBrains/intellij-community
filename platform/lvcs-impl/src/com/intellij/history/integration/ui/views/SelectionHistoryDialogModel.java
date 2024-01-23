@@ -23,7 +23,6 @@ import com.intellij.history.integration.revertion.SelectionReverter;
 import com.intellij.history.integration.ui.models.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
