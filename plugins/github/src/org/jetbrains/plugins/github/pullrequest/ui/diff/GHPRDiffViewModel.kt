@@ -32,6 +32,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
@@ -58,6 +59,7 @@ internal class GHPRDiffViewModelImpl(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   reviewVmHelper: GHPRReviewViewModelHelper,
+  private val threadsVms: GHPRThreadsViewModels,
 ) : GHPRDiffViewModel {
   private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Diff View Model"))
   private val reviewDataProvider = dataProvider.reviewData
@@ -134,7 +136,7 @@ internal class GHPRDiffViewModelImpl(
 
   private fun CoroutineScope.createChangeVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory)
     : UpdateableGHPRDiffChangeViewModel =
-    UpdateableGHPRDiffChangeViewModel(project, this, dataContext, dataProvider, change, diffData, discussionsViewOption)
+    UpdateableGHPRDiffChangeViewModel(project, this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption)
 }
 
 private fun GHPRChangesDataProvider.fetchedChangesFlow(): Flow<Deferred<GitBranchComparisonResult>> =

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
@@ -45,8 +46,9 @@ internal class GHPRViewModelContainer(
   val infoVm: GHPRInfoViewModel by lazyInfoVm
 
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
+  private val threadsVms = GHPRThreadsViewModels(project, cs, dataContext, dataProvider)
   val diffVm: GHPRDiffViewModel by lazy {
-    GHPRDiffViewModelImpl(project, cs, dataContext, dataProvider, reviewVmHelper).apply {
+    GHPRDiffViewModelImpl(project, cs, dataContext, dataProvider, reviewVmHelper, threadsVms).apply {
       setup()
     }
   }

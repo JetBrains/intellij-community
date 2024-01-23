@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 
 interface GHPRDiffChangeViewModel {
   val commentableRanges: List<Range>
@@ -47,6 +48,7 @@ internal class UpdateableGHPRDiffChangeViewModel(
   private val dataProvider: GHPRDataProvider,
   private val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
+  threadsVms: GHPRThreadsViewModels,
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>
 ) : GHPRDiffChangeViewModel {
   private val cs = parentCs.childScope(classAsCoroutineName())
@@ -55,28 +57,31 @@ internal class UpdateableGHPRDiffChangeViewModel(
   override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = dataProvider.reviewData.canComment()
 
-  private val mappedThreads: StateFlow<Collection<UpdateableGHPRReviewThreadDiffViewModel.MappedThreadData>> =
+  private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewThreadDiffViewModel.MappingData>> =
     dataProvider.reviewData.createThreadsRequestsFlow()
       .computationStateIn(cs)
       .transformConsecutiveSuccesses(false) {
         combine(this, diffDataState, discussionsViewOption) { threads, diffData, viewOption ->
-          threads.map { threadData ->
+          threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
             val isVisible = when (viewOption) {
               DiscussionsViewOption.ALL -> true
               DiscussionsViewOption.UNRESOLVED_ONLY -> !threadData.isResolved
               DiscussionsViewOption.DONT_SHOW -> false
             }
             val location = mapThread(diffData, threadData)
-            UpdateableGHPRReviewThreadDiffViewModel.MappedThreadData(threadData, isVisible, location)
+            MappedGHPRReviewThreadDiffViewModel.MappingData(isVisible, location)
           }
         }
-      }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyList())
+      }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
 
   override val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>> =
-    mappedThreads.mapDataToModel({ it.data.id }, { createThread(it) }, { update(it) }).stateInNow(cs, emptyList())
+    threadsVms.compactThreads.mapModelsToViewModels { sharedVm ->
+      MappedGHPRReviewThreadDiffViewModel(this, sharedVm, mappedThreads.mapNotNull { it[sharedVm.id] })
+    }.stateInNow(cs, emptyList())
+
   override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> =
     mappedThreads.map {
-      it.asSequence().filter { it.isVisible && it.location != null }.mapNotNull { it.location }.toSet()
+      it.values.mapNotNullTo(mutableSetOf()) { (isVisible, location) -> location?.takeIf { isVisible } }
     }.stateInNow(cs, emptySet())
 
   private val _newComments =
@@ -129,9 +134,6 @@ internal class UpdateableGHPRDiffChangeViewModel(
   fun updateDiffData(diffData: GitTextFilePatchWithHistory) {
     diffDataState.value = diffData
   }
-
-  private fun CoroutineScope.createThread(data: UpdateableGHPRReviewThreadDiffViewModel.MappedThreadData): UpdateableGHPRReviewThreadDiffViewModel =
-    UpdateableGHPRReviewThreadDiffViewModel(project, this, dataContext, dataProvider, data)
 }
 
 private fun mapThread(diffData: GitTextFilePatchWithHistory, threadData: GHPullRequestReviewThread): DiffLineLocation? {
