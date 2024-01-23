@@ -321,10 +321,6 @@ public class ChangesViewManager implements ChangesViewEx,
     return myToolWindowPanel.isAllowExcludeFromCommit();
   }
 
-  public static boolean isEditorPreview(@NotNull Project project) {
-    return EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable();
-  }
-
   public void closeEditorPreview(boolean onlyIfEmpty) {
     if (myToolWindowPanel == null) return;
     myToolWindowPanel.closeEditorPreview(onlyIfEmpty);
@@ -574,7 +570,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private void setDiffPreview() {
       if (myDisposed) return;
 
-      boolean isEditorPreview = isEditorPreview(myProject);
+      boolean isEditorPreview = true;
       boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
 
       //noinspection DoubleNegation

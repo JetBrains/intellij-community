@@ -40,7 +40,6 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.VcsLogActionIds
-import com.intellij.vcs.log.util.VcsLogUiUtil
 import com.intellij.vcs.log.util.VcsLogUtil
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.Nls
@@ -317,7 +316,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
   private fun setEditorDiffPreview() {
     val diffPreviewController = editorDiffPreviewController
-    val isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject)
+    val isWithEditorDiffPreview = true
     if (isWithEditorDiffPreview && diffPreviewController == null) {
       editorDiffPreviewController = createDiffPreviewController()
     }

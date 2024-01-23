@@ -157,7 +157,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   private void setEditorDiffPreview() {
     FileHistoryEditorDiffPreview preview = myEditorDiffPreview;
 
-    boolean isEditorPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
+    boolean isEditorPreview = true;
     if (isEditorPreview && preview == null) {
       preview = new FileHistoryEditorDiffPreview(myProject, this);
       myEditorDiffPreview = preview;
