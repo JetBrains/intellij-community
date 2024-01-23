@@ -99,12 +99,13 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
     }
 
     private fun isJavaIdentifierStart(cp: Int): Boolean {
-      return cp >= 'a'.code && cp <= 'z'.code || cp >= 'A'.code && cp <= 'Z'.code || Character.isJavaIdentifierStart(cp)
+      return cp >= 'a'.code && cp <= 'z'.code || cp >= 'A'.code && cp <= 'Z'.code ||
+             Character.isJavaIdentifierStart(cp)
     }
 
     private fun isJavaIdentifierPart(cp: Int): Boolean {
-      return cp >= '0'.code && cp <= '9'.code || cp >= 'a'.code && cp <= 'z'.code || cp >= 'A'.code && cp <= 'Z'.code || Character.isJavaIdentifierPart(
-        cp)
+      return cp >= '0'.code && cp <= '9'.code || cp >= 'a'.code && cp <= 'z'.code || cp >= 'A'.code && cp <= 'Z'.code ||
+             Character.isJavaIdentifierPart(cp)
     }
 
     private fun addProbableClass(line: String,
