@@ -27,8 +27,10 @@
                  description="Enable new terminal UI"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
-    <registryKey key="terminal.new.ui.powershell" defaultValue="true"
-                 description="Enable new terminal for PowerShell"/>
+    <registryKey key="terminal.new.ui.powershell.win11" defaultValue="true"
+                 description="Enable new terminal for PowerShell on Windows 11"/>
+    <registryKey key="terminal.new.ui.powershell.win10" defaultValue="false"
+                 description="Enable new terminal for PowerShell on Windows 10"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
