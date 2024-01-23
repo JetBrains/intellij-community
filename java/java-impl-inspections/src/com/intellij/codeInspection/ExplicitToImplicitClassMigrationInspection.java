@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -109,6 +110,10 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           return;
         }
 
+        if (TestFrameworks.getInstance().isTestClass(aClass)) {
+          return;
+        }
+
         PackageScope scope = new PackageScope(aPackage, false, false);
         if (isOnTheFly) {
           final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
@@ -129,7 +134,8 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         }
 
         holder.registerProblem(aClass, new TextRange(0, classIdentifier.getTextRangeInParent().getEndOffset()),
-                               JavaBundle.message("inspection.explicit.to.implicit.class.migration.name"), new ReplaceWithImplicitClassFix());
+                               JavaBundle.message("inspection.explicit.to.implicit.class.migration.name"),
+                               new ReplaceWithImplicitClassFix());
       }
 
       private static boolean onlyObjectExtends(PsiClassType[] types) {
