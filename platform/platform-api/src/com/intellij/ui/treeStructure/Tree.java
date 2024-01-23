@@ -474,7 +474,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (expandImpl != null && model != null && TREE_MODEL_PROPERTY.equals(propertyName)) {
       Object treeRoot = model.getRoot();
       if (treeRoot != null && !model.isLeaf(treeRoot)) {
-        expandImpl.markPathExpanded(new TreePath(treeRoot));
+        expandImpl.markPathExpanded(new CachingTreePath(treeRoot));
       }
     }
     super.firePropertyChange(propertyName, oldValue, newValue);
@@ -512,7 +512,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (rootObject == null) {
       return null;
     }
-    return new TreePath(rootObject);
+    return new CachingTreePath(rootObject);
   }
 
   @Override
