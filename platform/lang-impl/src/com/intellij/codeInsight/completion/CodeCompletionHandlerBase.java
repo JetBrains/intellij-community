@@ -365,7 +365,8 @@ public class CodeCompletionHandlerBase {
       return null;
     }
 
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionContributorListener.Companion.getTOPIC()).beforeCompletionContributorThreadStarted(indicator, initContext);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionContributorListener.TOPIC)
+      .beforeCompletionContributorThreadStarted(indicator, initContext);
     return indicator.getCompletionThreading()
       .startThread(indicator, Context.current().wrap(() -> CompletionThreadingKt.tryReadOrCancel(indicator, Context.current().wrap(() -> {
         OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
