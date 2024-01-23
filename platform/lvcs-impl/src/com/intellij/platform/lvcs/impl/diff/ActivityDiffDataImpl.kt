@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.diff
 
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
+import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.containers.JBIterable
 
@@ -15,31 +17,15 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
                                                isOldContentUsed: Boolean): ActivityDiffData {
   val rootEntry = selection.data.getRootEntry(gateway)
   val entryPath = getEntryPath(gateway, scope)
-  val differences = if (scope is ActivityScope.SingleFile || scope is ActivityScope.Selection) {
-    val leftEntry = findEntry(rootEntry, selection.leftRevision, entryPath, isOldContentUsed)
-    val rightEntry = findEntry(rootEntry, selection.rightRevision, entryPath, isOldContentUsed)
-    listOf(Difference(leftEntry, rightEntry, selection.rightRevision is RevisionId.Current))
-  }
-  else {
-    getDiff(rootEntry, selection, entryPath, isOldContentUsed)
-  }
+  val differences = getDiff(rootEntry, selection, entryPath, isOldContentUsed)
   val differenceObjects = mapToDiffObjects(gateway, scope, selection, isOldContentUsed, differences)
   return ActivityDiffDataImpl(differenceObjects)
 }
 
-private fun LocalHistoryFacade.mapToDiffObjects(gateway: IdeaGateway,
-                                                scope: ActivityScope,
-                                                selection: ChangeSetSelection,
-                                                isOldContentUsed: Boolean,
-                                                differences: List<Difference>): Iterable<DifferenceObject> {
+private fun mapToDiffObjects(gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection, isOldContentUsed: Boolean,
+                             differences: List<Difference>): Iterable<DifferenceObject> {
   val fileDifferences = JBIterable.from(differences).filter { it.isFile }
   return when (scope) {
-    is ActivityScope.Selection -> {
-      val calculator = selection.data.getSelectionCalculator(this, gateway, scope, isOldContentUsed)
-      fileDifferences.map {
-        SelectionDifferenceObject(gateway, scope, selection, it, calculator, isOldContentUsed)
-      }
-    }
     is ActivityScope.File -> {
       fileDifferences.map { DifferenceObject(gateway, scope, selection, it, isOldContentUsed) }
     }
@@ -51,4 +37,21 @@ private fun LocalHistoryFacade.mapToDiffObjects(gateway: IdeaGateway,
       }.filterNotNull()
     }
   }
+}
+
+internal fun LocalHistoryFacade.createSingleFileDiffRequestProducer(project: Project,
+                                                                    gateway: IdeaGateway,
+                                                                    scope: ActivityScope,
+                                                                    selection: ChangeSetSelection,
+                                                                    isOldContentUsed: Boolean): DiffRequestProducer {
+  val loadDifference = {
+    val rootEntry = selection.data.getRootEntry(gateway)
+    val entryPath = getEntryPath(gateway, scope)
+    getSingleFileDiff(rootEntry, selection, entryPath, isOldContentUsed)
+  }
+  if (scope is ActivityScope.Selection) {
+    val calculator = selection.data.getSelectionCalculator(this, gateway, scope, isOldContentUsed)
+    return SelectionDiffRequestProducer(project, gateway, scope, selection, loadDifference, calculator, isOldContentUsed)
+  }
+  return DifferenceDiffRequestProducer.WithLazyDiff(project, gateway, scope, selection, loadDifference, isOldContentUsed)
 }

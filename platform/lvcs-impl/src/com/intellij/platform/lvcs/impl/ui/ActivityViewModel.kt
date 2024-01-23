@@ -54,19 +54,21 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
           }
         }
     }
-    coroutineScope.launch {
-      selectionFlow.collectLatest { selection ->
-        thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope")
-        val diffData = selection?.let {
-          withContext(Dispatchers.Default) {
-            LocalHistoryCounter.logLoadDiff(project, activityScope) {
-              activityProvider.loadDiffData(activityScope, selection)
+    if (!isSingleDiffSupported) {
+      coroutineScope.launch {
+        selectionFlow.collectLatest { selection ->
+          thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope")
+          val diffData = selection?.let {
+            withContext(Dispatchers.Default) {
+              LocalHistoryCounter.logLoadDiff(project, activityScope) {
+                activityProvider.loadDiffData(activityScope, selection)
+              }
             }
           }
-        }
-        diffDataFlow.value = selection to diffData
-        withContext(Dispatchers.EDT) {
-          eventDispatcher.multicaster.onDiffDataLoaded(diffData)
+          diffDataFlow.value = selection to diffData
+          withContext(Dispatchers.EDT) {
+            eventDispatcher.multicaster.onDiffDataLoaded(diffData)
+          }
         }
       }
     }
@@ -104,6 +106,9 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
     }, LocalHistoryBundle.message("activity.diff.loading"), true, project).second
   }
 
+  internal val selection get() = selectionFlow.value
+
+  internal val isSingleDiffSupported get() = !activityScope.hasMultipleFiles
   internal val isScopeFilterSupported get() = activityProvider.isScopeFilterSupported(activityScope)
   internal val isActivityFilterSupported get() = activityProvider.isActivityFilterSupported(activityScope)
 
@@ -121,6 +126,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
   @RequiresEdt
   fun setSelection(selection: ActivitySelection?) {
     selectionFlow.value = selection
+    eventDispatcher.multicaster.onSelectionChanged(selection)
   }
 
   fun setVisible(isVisible: Boolean) {
@@ -135,6 +141,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
 interface ActivityModelListener : EventListener {
   fun onItemsLoadingStarted() = Unit
   fun onItemsLoadingStopped(data: ActivityData) = Unit
+  fun onSelectionChanged(selection: ActivitySelection?) = Unit
   fun onDiffDataLoaded(diffData: ActivityDiffData?) = Unit
   fun onFilteringStarted() = Unit
   fun onFilteringStopped(result: Set<ActivityItem>?) = Unit

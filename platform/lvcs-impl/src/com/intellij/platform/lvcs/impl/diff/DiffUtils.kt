@@ -22,6 +22,15 @@ internal fun LocalHistoryFacade.findEntry(rootEntry: RootEntry, revisionId: Revi
   }
 }
 
+internal fun LocalHistoryFacade.getSingleFileDiff(rootEntry: RootEntry,
+                                                  selection: ChangeSetSelection,
+                                                  entryPath: String,
+                                                  isOldContentUsed: Boolean): Difference {
+  val leftEntry = findEntry(rootEntry, selection.leftRevision, entryPath, isOldContentUsed)
+  val rightEntry = findEntry(rootEntry, selection.rightRevision, entryPath, isOldContentUsed)
+  return Difference(leftEntry, rightEntry, selection.rightRevision is RevisionId.Current)
+}
+
 internal fun LocalHistoryFacade.getDiff(rootEntry: RootEntry,
                                         selection: ChangeSetSelection,
                                         entryPath: String,

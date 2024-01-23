@@ -13,12 +13,12 @@ import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import com.intellij.platform.lvcs.impl.filePath
 import java.util.*
 
-internal open class DifferenceObject(protected val gateway: IdeaGateway,
-                                     protected open val scope: ActivityScope,
-                                     protected val selection: ChangeSetSelection,
-                                     protected val difference: Difference,
-                                     private val targetFilePath: FilePath,
-                                     protected val isOldContentUsed: Boolean) : ActivityDiffObject {
+internal class DifferenceObject(private val gateway: IdeaGateway,
+                                private val scope: ActivityScope,
+                                private val selection: ChangeSetSelection,
+                                private val difference: Difference,
+                                private val targetFilePath: FilePath,
+                                private val isOldContentUsed: Boolean) : ActivityDiffObject {
 
   constructor(gateway: IdeaGateway,
               scope: ActivityScope.File,
@@ -33,7 +33,7 @@ internal open class DifferenceObject(protected val gateway: IdeaGateway,
   }
 
   override fun createProducer(project: Project?): DiffRequestProducer {
-    return DifferenceDiffRequestProducer(project, gateway, scope, selection, difference, isOldContentUsed)
+    return DifferenceDiffRequestProducer.WithPreLoadedDiff(project, gateway, scope, selection, difference, isOldContentUsed)
   }
 
   override fun equals(other: Any?): Boolean {

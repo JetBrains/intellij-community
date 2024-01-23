@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
 import com.intellij.history.integration.IdeaGateway
@@ -25,6 +26,7 @@ import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -64,13 +66,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   private val activityList = ActivityList { model.activityProvider.getPresentation(it) }.apply {
     updateEmptyText(true)
   }
-  private val editorDiffPreview = object : CombinedActivityDiffPreview(project, activityList, activityScope, this@ActivityView) {
-    override fun loadDiffDataSynchronously() = model.loadDiffDataSynchronously()
-
-    override fun returnFocusToSourceComponent() {
-      IdeFocusManager.getInstance(project).requestFocus(activityList, true)
-    }
-  }
+  private val editorDiffPreview = createDiffPreview()
 
   init {
     PopupHandler.installPopupMenu(activityList, "ActivityView.Popup", "ActivityView.Popup")
@@ -128,9 +124,6 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         activityList.updateEmptyText(false)
         progressStripe.stopLoading()
       }
-      override fun onDiffDataLoaded(diffData: ActivityDiffData?) {
-        editorDiffPreview.setDiffData(diffData)
-      }
       override fun onFilteringStarted() {
         filterProgress?.startLoading(false)
         activityList.updateEmptyText(true)
@@ -151,6 +144,36 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   }
 
   val preferredFocusedComponent: JComponent get() = activityList
+
+  private fun createDiffPreview(): DiffPreview {
+    if (model.isSingleDiffSupported) {
+      return object : SingleFileActivityDiffPreview(project, activityScope, this@ActivityView) {
+        override val selection: ActivitySelection? get() = model.selection
+
+        override fun onSelectionChange(disposable: Disposable, runnable: () -> Unit) {
+          model.addListener(object : ActivityModelListener {
+            override fun onSelectionChanged(selection: ActivitySelection?) = runnable()
+          }, disposable)
+        }
+
+        override fun getDiffRequestProducer(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer? {
+          return model.activityProvider.loadSingleDiff(scope, selection)
+        }
+      }
+    }
+    val combinedDiffPreview = object : CombinedActivityDiffPreview(project, activityList, activityScope, this@ActivityView) {
+      override fun loadDiffDataSynchronously(): ActivityDiffData? = model.loadDiffDataSynchronously()
+      override fun returnFocusToSourceComponent() {
+        IdeFocusManager.getInstance(project).requestFocus(activityList, true)
+      }
+    }
+    model.addListener(object : ActivityModelListener {
+      override fun onDiffDataLoaded(diffData: ActivityDiffData?) {
+        combinedDiffPreview.setDiffData(diffData)
+      }
+    }, this)
+    return combinedDiffPreview
+  }
 
   private fun createSearchField(): SearchTextArea {
     val textArea = JBTextArea()
@@ -264,18 +287,28 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     private fun ActivityView.openDiffWhenLoaded() {
       val disposable = Disposer.newDisposable()
       Disposer.register(this, disposable)
-      model.addListener(object : ActivityModelListener {
-        override fun onItemsLoadingStopped(data: ActivityData) {
-          if (data.items.isEmpty()) Disposer.dispose(disposable)
-        }
-
-        override fun onDiffDataLoaded(diffData: ActivityDiffData?) {
-          if (diffData != null) {
-            showDiff()
-            Disposer.dispose(disposable)
+      if (model.isSingleDiffSupported) {
+        model.addListener(object : ActivityModelListener {
+          override fun onItemsLoadingStopped(data: ActivityData) {
+            if (data.items.isEmpty()) Disposer.dispose(disposable)
+            else showDiff()
           }
-        }
-      }, disposable)
+        }, disposable)
+      }
+      else {
+        model.addListener(object : ActivityModelListener {
+          override fun onItemsLoadingStopped(data: ActivityData) {
+            if (data.items.isEmpty()) Disposer.dispose(disposable)
+          }
+
+          override fun onDiffDataLoaded(diffData: ActivityDiffData?) {
+            if (diffData != null) {
+              showDiff()
+              Disposer.dispose(disposable)
+            }
+          }
+        }, disposable)
+      }
     }
 
     @JvmStatic

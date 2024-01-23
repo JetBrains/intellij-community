@@ -22,10 +22,10 @@ internal class SelectionDiffRequestProducer(project: Project?,
                                             gateway: IdeaGateway,
                                             override val scope: ActivityScope.Selection,
                                             selection: ChangeSetSelection,
-                                            difference: Difference,
+                                            loadDifference: () -> Difference,
                                             private val selectionCalculator: SelectionCalculator,
                                             isOldContentUsed: Boolean)
-  : DifferenceDiffRequestProducer(project, gateway, scope, selection, difference, isOldContentUsed) {
+  : DifferenceDiffRequestProducer.WithLazyDiff(project, gateway, scope, selection, loadDifference, isOldContentUsed) {
 
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
     val leftContent = createContent(difference.left, leftItem.revisionId, indicator)

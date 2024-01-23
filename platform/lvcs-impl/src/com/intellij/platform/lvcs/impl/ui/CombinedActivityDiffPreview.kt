@@ -24,6 +24,7 @@ import com.intellij.platform.lvcs.impl.ActivityDiffObject
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.filePath
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
+import com.intellij.platform.lvcs.impl.ui.SingleFileActivityDiffPreview.Companion.getDiffTitleFor
 import javax.swing.JComponent
 
 internal abstract class CombinedActivityDiffPreview(project: Project,
@@ -49,10 +50,7 @@ internal abstract class CombinedActivityDiffPreview(project: Project,
   override fun getCombinedDiffTabTitle(): String {
     val combinedDiffViewer = previewModel?.processor?.context?.getUserData(COMBINED_DIFF_VIEWER_KEY)
     val filePath = (combinedDiffViewer?.getCurrentBlockId() as? CombinedPathBlockId)?.path
-                   ?: previewModel?.selected?.filePath
-    if (filePath != null) return LocalHistoryBundle.message("activity.diff.tab.title.file", filePath.name)
-    if (scope == ActivityScope.Recent) return LocalHistoryBundle.message("activity.diff.tab.title.recent")
-    return LocalHistoryBundle.message("activity.diff.tab.title")
+    return getDiffTitleFor(filePath, scope)
   }
 
   fun setDiffData(diffData: ActivityDiffData?, forceUpdate: Boolean = false) {

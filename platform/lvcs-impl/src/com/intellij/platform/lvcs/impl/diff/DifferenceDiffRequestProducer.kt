@@ -20,20 +20,17 @@ import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
 
-internal open class DifferenceDiffRequestProducer(protected val project: Project?,
-                                                  protected val gateway: IdeaGateway,
-                                                  protected open val scope: ActivityScope,
-                                                  selection: ChangeSetSelection,
-                                                  protected val difference: Difference,
-                                                  private val isOldContentUsed: Boolean) : DiffRequestProducer {
+internal abstract class DifferenceDiffRequestProducer(protected val project: Project?,
+                                                      protected val gateway: IdeaGateway,
+                                                      protected open val scope: ActivityScope,
+                                                      selection: ChangeSetSelection,
+                                                      private val isOldContentUsed: Boolean) : DiffRequestProducer {
+  protected abstract val difference: Difference
+
   protected val leftItem = selection.leftItem
   protected val rightItem = selection.rightItem
 
-  override fun getName(): String {
-    val entry = difference.left ?: difference.right
-    if (entry == null) return scope.presentableName
-    return FileUtil.toSystemDependentName(entry.path)
-  }
+  override fun getName(): String = scope.presentableName
 
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
     val leftContent = createContent(difference.left, leftItem.revisionId is RevisionId.Current)
@@ -75,4 +72,20 @@ internal open class DifferenceDiffRequestProducer(protected val project: Project
   }
 
   override fun hashCode(): Int = Objects.hash(scope, leftItem, rightItem, isOldContentUsed)
+
+  internal class WithPreLoadedDiff(project: Project?, gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection,
+                                   override val difference: Difference, isOldContentUsed: Boolean)
+    : DifferenceDiffRequestProducer(project, gateway, scope, selection, isOldContentUsed) {
+    override fun getName(): String {
+      val entry = difference.left ?: difference.right
+      if (entry == null) return scope.presentableName
+      return FileUtil.toSystemDependentName(entry.path)
+    }
+  }
+
+  internal open class WithLazyDiff(project: Project?, gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection,
+                                   loadDifference: () -> Difference, isOldContentUsed: Boolean)
+    : DifferenceDiffRequestProducer(project, gateway, scope, selection, isOldContentUsed) {
+    override val difference by lazy(LazyThreadSafetyMode.PUBLICATION, loadDifference)
+  }
 }

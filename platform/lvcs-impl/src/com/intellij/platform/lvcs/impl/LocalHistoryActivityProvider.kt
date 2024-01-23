@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.history.ActivityPresentationProvider
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.changes.ChangeSet
@@ -13,6 +14,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lvcs.impl.diff.createDiffData
+import com.intellij.platform.lvcs.impl.diff.createSingleFileDiffRequestProducer
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -85,13 +87,13 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return facade.createDiffData(gateway, scope, changeSetSelection, USE_OLD_CONTENT)
   }
 
-  override fun isScopeFilterSupported(scope: ActivityScope): Boolean {
-    return scope is ActivityScope.Directory
+  override fun loadSingleDiff(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer? {
+    val changeSetSelection = selection.toChangeSetSelection() ?: return null
+    return facade.createSingleFileDiffRequestProducer(project, gateway, scope, changeSetSelection, USE_OLD_CONTENT)
   }
 
-  override fun isActivityFilterSupported(scope: ActivityScope): Boolean {
-    return scope is ActivityScope.SingleFile || scope is ActivityScope.Selection
-  }
+  override fun isScopeFilterSupported(scope: ActivityScope): Boolean = scope is ActivityScope.Directory
+  override fun isActivityFilterSupported(scope: ActivityScope): Boolean = !scope.hasMultipleFiles
 
   override fun getPresentation(item: ActivityItem): ActivityPresentation? {
     if (item !is ChangeSetActivityItem) return null

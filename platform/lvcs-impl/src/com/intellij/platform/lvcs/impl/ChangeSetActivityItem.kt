@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.ActivityId
@@ -28,7 +28,7 @@ internal class ChangeActivityItem(changeSet: ChangeSet, scope: ActivityScope) : 
 
   private fun getName(changeSet: ChangeSet, scope: ActivityScope): @NlsContexts.Label String? {
     if (changeSet.name != null) return changeSet.name
-    if (scope is ActivityScope.SingleFile || scope is ActivityScope.Selection) return LocalHistoryBundle.message("activity.item.presentation")
+    if (!scope.hasMultipleFiles) return LocalHistoryBundle.message("activity.item.presentation")
     return changeSet.presentableNameFromPaths()
   }
 }
