@@ -24,8 +24,8 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return add(uri)
   }
 
-  override fun findByUrl(url: String): VirtualFileUrl? {
-    return findBySegments(splitNames(url)) 
+  override fun findByUri(uri: String): VirtualFileUrl? {
+    return findBySegments(splitNames(uri))
   }
 
   @Synchronized

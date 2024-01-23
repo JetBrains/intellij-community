@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.url
 
-import org.jetbrains.annotations.ApiStatus
-
 /**
  * Storage for URLs (in the Virtual File System format) of files that are referenced from workspace model entities. 
  * Use `VirtualFileUrlManager.getInstance(project)` extension function to get instance of this interface inside IDE.
@@ -23,7 +21,7 @@ public interface VirtualFileUrlManager {
   /**
    * Returns an existing instance of [VirtualFileUrl] for the given URL or `null` if no instance was registered. 
    */
-  public fun findByUrl(url: String): VirtualFileUrl?
+  public fun findByUri(uri: String): VirtualFileUrl?
 
   // This companion object is needed to attach extension methods in the platform:
   //   VirtualFileUrlManager.getInstance(project) and VirtualFileUrlManager.getGlobalInstance()
