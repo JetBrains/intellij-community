@@ -292,7 +292,9 @@ open class CodeVisionHost(val project: Project) {
   }
 
   private fun getAnchorForProvider(provider: CodeVisionProvider<*>): CodeVisionAnchorKind {
-    return lifeSettingModel.codeVisionGroupToPosition[provider.groupId].nullIfDefault() ?: lifeSettingModel.defaultPosition.value
+    return lifeSettingModel.codeVisionGroupToPosition[provider.groupId].nullIfDefault()
+           ?: provider.defaultAnchor.nullIfDefault()
+           ?: lifeSettingModel.defaultPosition.value
   }
 
   private fun getPriorityForId(id: String): Int {
