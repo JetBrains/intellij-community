@@ -25,9 +25,6 @@ public interface VirtualFileUrlManager {
    */
   public fun findByUrl(url: String): VirtualFileUrl?
 
-  @ApiStatus.Internal
-  public fun fromUrlSegments(urls: List<String>): VirtualFileUrl
-
   // This companion object is needed to attach extension methods in the platform:
   //   VirtualFileUrlManager.getInstance(project) and VirtualFileUrlManager.getGlobalInstance()
   public companion object
