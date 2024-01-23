@@ -66,7 +66,7 @@ public final class FileSystemUtil {
     return new Nio2MediatorImpl();
   }
 
-  private static Mediator ensureSane(@NotNull Mediator mediator) throws Exception {
+  private static Mediator ensureSane(Mediator mediator) throws Exception {
     String quickTestPath = SystemInfo.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;

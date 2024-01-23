@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -92,9 +92,7 @@ final class DirectoryLock {
     if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
       var baseDir = SystemInfoRt.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
       myRedirectedPortFile = baseDir.resolve(".ij_redirected_port_" + myPid + "_" + COUNT.incrementAndGet());
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("redirectedPortFile=" + myRedirectedPortFile);
-      }
+      if (LOG.isDebugEnabled()) LOG.debug("redirectedPortFile=" + myRedirectedPortFile);
     }
     else {
       myRedirectedPortFile = null;
@@ -103,7 +101,7 @@ final class DirectoryLock {
     myProcessor = processor;
   }
 
-  private static boolean areUdsSupported(@NotNull Path file) {
+  private static boolean areUdsSupported(Path file) {
     var fs = file.getFileSystem();
     if (fs.getClass().getModule() != Object.class.getModule()) {
       if (!System.getProperty("java.vm.vendor", "").contains("JetBrains") ||
