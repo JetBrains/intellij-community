@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.url
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.storage.impl.IntIdGenerator
 import com.intellij.platform.workspace.storage.impl.VirtualFileNameStore
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.TreeNodeProcessingResult
+import com.intellij.util.io.URLUtil
 import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -32,6 +34,11 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   internal fun fromUriSegments(uriSegments: List<String>): VirtualFileUrl {
     if (uriSegments.isEmpty()) return getEmptyUrl()
     return addSegments(null, uriSegments)
+  }
+
+  override fun fromPath(path: String): VirtualFileUrl {
+    val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(path)
+    return getOrCreateFromUri(url)
   }
 
   @Synchronized
