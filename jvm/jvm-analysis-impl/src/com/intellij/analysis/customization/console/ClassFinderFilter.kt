@@ -71,18 +71,18 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
       var start = -1
       var pointCount = 0
       for (i in line.indices) {
-        val c = line[i]
-        if (start == -1 && StringUtil.isJavaIdentifierStart(c)) {
+        val c = line.codePointAt(i)
+        if (start == -1 && isJavaIdentifierStart(c)) {
           start = i
           continue
         }
-        if (start != -1 && c == '.') {
+        if (start != -1 && c == '.'.code) {
           pointCount++
           continue
         }
         if (start != -1 &&
-            ((line[i - 1] == '.' && StringUtil.isJavaIdentifierStart(c)) ||
-             (line[i - 1] != '.' && StringUtil.isJavaIdentifierPart(c)))) {
+            ((line[i - 1] == '.' && isJavaIdentifierStart(c)) ||
+             (line[i - 1] != '.' && isJavaIdentifierPart(c)))) {
           if (i == line.lastIndex && pointCount >= 2) {
             addProbableClass(line, start, i + 1, cache, result)
           }
@@ -96,6 +96,15 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
         start = -1
       }
       return result
+    }
+
+    private fun isJavaIdentifierStart(cp: Int): Boolean {
+      return cp >= 'a'.code && cp <= 'z'.code || cp >= 'A'.code && cp <= 'Z'.code || Character.isJavaIdentifierStart(cp)
+    }
+
+    private fun isJavaIdentifierPart(cp: Int): Boolean {
+      return cp >= '0'.code && cp <= '9'.code || cp >= 'a'.code && cp <= 'z'.code || cp >= 'A'.code && cp <= 'Z'.code || Character.isJavaIdentifierPart(
+        cp)
     }
 
     private fun addProbableClass(line: String,
