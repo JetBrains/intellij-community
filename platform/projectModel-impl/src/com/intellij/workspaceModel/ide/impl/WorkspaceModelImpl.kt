@@ -62,7 +62,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    * This flow will become obsolete, as we'll migrate to reactive listeners. However, [updatesFlow] will remain here
    *   as a building block of the new listeners.
    */
-  override val changesEventFlow: Flow<VersionedStorageChange> = updatesFlow.asSharedFlow()
+  val changesEventFlow: Flow<VersionedStorageChange> = updatesFlow.asSharedFlow()
 
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current

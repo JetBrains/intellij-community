@@ -9,7 +9,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -43,18 +42,6 @@ public interface WorkspaceModel {
    * The returned value won't be affected by future changes in [WorkspaceModel], so it can be safely used without any locks from any thread.
    */
   public val currentSnapshot: ImmutableEntityStorage
-
-  /**
-   * Flow of changes from workspace model. It has to be used for asynchronous event handling. To start receiving
-   * emitted events, you need to call one of the terminal operations on it.
-   *
-   * This can be used as a direct migration from [WorkspaceModelChangeListener] to the non-blocking and non-write-action
-   *   approach. This flow will eventually become obsolete as we'll present more handy listeners for the workspace model.
-   *
-   * See the documentation of [WorkspaceModel.subscribe] for details about changes collecting.
-   */
-  @get:ApiStatus.Experimental
-  public val changesEventFlow: Flow<VersionedStorageChange>
 
   /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.

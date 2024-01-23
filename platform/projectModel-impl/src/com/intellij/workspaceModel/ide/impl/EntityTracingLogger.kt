@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.diagnostic.logger
@@ -32,14 +32,16 @@ class EntityTracingLogger {
   fun subscribe(project: Project, cs: CoroutineScope) {
     if (entityToTrace != null) {
       cs.launch {
-        WorkspaceModel.getInstance(project).changesEventFlow.collect{ event ->
-          event.getAllChanges().forEach {
-            when (it) {
-              is EntityChange.Added -> printInfo("added", it.entity)
-              is EntityChange.Removed -> printInfo("removed", it.entity)
-              is EntityChange.Replaced -> {
-                printInfo("replaced from", it.oldEntity)
-                printInfo("replaced to", it.newEntity)
+        WorkspaceModel.getInstance(project).subscribe { _, changes ->
+          changes.collect { event ->
+            event.getAllChanges().forEach {
+              when (it) {
+                is EntityChange.Added -> printInfo("added", it.entity)
+                is EntityChange.Removed -> printInfo("removed", it.entity)
+                is EntityChange.Replaced -> {
+                  printInfo("replaced from", it.oldEntity)
+                  printInfo("replaced to", it.newEntity)
+                }
               }
             }
           }

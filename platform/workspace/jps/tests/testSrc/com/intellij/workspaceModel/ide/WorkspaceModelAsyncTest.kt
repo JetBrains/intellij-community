@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +16,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -59,7 +60,7 @@ class WorkspaceModelAsyncTest {
     //   listening, but in this case the test will fail by timeout and the test should be refactored at all.
     val listenerIsReady = Channel<Unit>(0)
 
-    val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
+    val workspaceModel = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
     val job = cs.launch {
       assertEquals(false, application.isWriteAccessAllowed)
       listenerIsReady.send(Unit)
@@ -84,7 +85,7 @@ class WorkspaceModelAsyncTest {
     val application = ApplicationManager.getApplication()
     assertEquals(false, application.isWriteAccessAllowed)
 
-    val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
+    val workspaceModel = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
     val job = cs.launch {
       assertEquals(false, application.isWriteAccessAllowed)
       val entityChange = workspaceModel.changesEventFlow.first().getAllChanges().single()
@@ -157,7 +158,7 @@ class WorkspaceModelAsyncTest {
     val application = ApplicationManager.getApplication()
     assertEquals(false, application.isWriteAccessAllowed)
 
-    val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
+    val workspaceModel = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
     val job = cs.launch {
       assertEquals(false, application.isWriteAccessAllowed)
       workspaceModel.changesEventFlow.take(3).collect { storageChange ->
