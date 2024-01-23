@@ -292,19 +292,19 @@ internal class RemoveForExpressionLoopParameterTypeProcessing :
     }
 }
 
-//internal class RemoveRedundantModalityModifierProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
-//    override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean {
-//        if (element.hasModifier(KtTokens.FINAL_KEYWORD)) {
-//            return !element.hasModifier(KtTokens.OVERRIDE_KEYWORD)
-//        }
-//        val modalityModifierType = element.modalityModifierType() ?: return false
-//        return modalityModifierType == element.implicitModality()
-//    }
-//
-//    override fun apply(element: KtDeclaration) {
-//        element.removeModifier(element.modalityModifierType() ?: return)
-//    }
-//}
+internal class RemoveRedundantModalityModifierProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
+    override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean {
+        if (element.hasModifier(KtTokens.FINAL_KEYWORD)) {
+            return !element.hasModifier(KtTokens.OVERRIDE_KEYWORD)
+        }
+        val modalityModifierType = element.modalityModifierType() ?: return false
+        return modalityModifierType == element.implicitModality()
+    }
+
+    override fun apply(element: KtDeclaration) {
+        element.removeModifier(element.modalityModifierType() ?: return)
+    }
+}
 
 internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
     private val inspection = RedundantVisibilityModifierInspection()

@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
-import org.jetbrains.kotlin.nj2k.tree.Modality.ABSTRACT
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Modality.OPEN
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
