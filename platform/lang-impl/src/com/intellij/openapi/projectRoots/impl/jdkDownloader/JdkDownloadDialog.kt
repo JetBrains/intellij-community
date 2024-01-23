@@ -9,6 +9,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.*
@@ -216,6 +217,7 @@ internal class JdkDownloadDialog(
   val parentComponent: Component?,
   val sdkType: SdkTypeId,
   private val mergedModel: JdkDownloaderMergedModel,
+  okActionText: @NlsContexts.Button String = ProjectBundle.message("dialog.button.download.jdk"),
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
   private val panel: JComponent
   private val versionComboBox : ComboBox<JdkVersionItem>
@@ -282,7 +284,7 @@ internal class JdkDownloadDialog(
       row(ProjectBundle.message("dialog.row.jdk.location")) { cell(installDirComponent) }
     }
 
-    myOKAction.putValue(Action.NAME, ProjectBundle.message("dialog.button.download.jdk"))
+    myOKAction.putValue(Action.NAME, okActionText)
 
     setModel(mergedModel.projectWSLDistribution != null)
     init()

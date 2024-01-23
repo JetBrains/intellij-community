@@ -75,7 +75,7 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     val dataContext = DataManager.getInstance().getDataContext(parentComponent)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     if (project?.isDisposed == true) return null
-    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, dataContext, project) ?: return null
+    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, dataContext, project, ProjectBundle.message("dialog.button.select.jdk")) ?: return null
     return JdkDownloadTask(jdkItem, JdkInstallRequestInfo(jdkItem, jdkHome), project)
   }
 
@@ -83,9 +83,9 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
                           parentComponent: JComponent,
                           dataContext: DataContext,
                           project: Project?,
-  ): Pair<JdkItem, Path>? {
+                          okActionText: @NlsContexts.Button String = ProjectBundle.message("dialog.button.download.jdk")): Pair<JdkItem, Path>? {
     val extension = dataContext.getData(JDK_DOWNLOADER_EXT)
-    return selectJdkAndPath(project, sdkTypeId, parentComponent, extension)
+    return selectJdkAndPath(project, sdkTypeId, parentComponent, extension, okActionText)
   }
 
   private fun selectJdkAndPath(
@@ -93,6 +93,7 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     sdkTypeId: SdkTypeId,
     parentComponent: JComponent,
     extension: JdkDownloaderDialogHostExtension?,
+    okActionText: @NlsContexts.Button String,
   ): Pair<JdkItem, Path>? {
     val items = try {
       val extension = extension ?: object : JdkDownloaderDialogHostExtension {}
@@ -131,7 +132,7 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
       return null
     }
 
-    return JdkDownloadDialog(project, parentComponent, sdkTypeId, items).selectJdkAndPath()
+    return JdkDownloadDialog(project, parentComponent, sdkTypeId, items, okActionText).selectJdkAndPath()
   }
 
   fun prepareDownloadTask(
