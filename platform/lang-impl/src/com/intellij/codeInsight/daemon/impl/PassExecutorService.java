@@ -81,7 +81,7 @@ final class PassExecutorService implements Disposable {
 
   @Override
   public void dispose() {
-    cancelAll(true);
+    cancelAll(true, "PassExecutorService.dispose");
     // some workers could, although idle, still retain some thread references for some time causing leak hunter to frown
     // call it from BGT to avoid "calling daemon from EDT" assertion
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -96,11 +96,11 @@ final class PassExecutorService implements Disposable {
     isDisposed = true;
   }
 
-  void cancelAll(boolean waitForTermination) {
+  void cancelAll(boolean waitForTermination, @NotNull String reason) {
     for (Map.Entry<ScheduledPass, Job<Void>> entry : mySubmittedPasses.entrySet()) {
       Job<Void> job = entry.getValue();
       ScheduledPass pass = entry.getKey();
-      pass.myUpdateProgress.cancel();
+      pass.myUpdateProgress.cancel(reason);
       job.cancel();
     }
     try {
@@ -375,9 +375,7 @@ final class PassExecutorService implements Disposable {
     public void run() {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
         try {
-          ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> {
-            doRun();
-          });
+          ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> doRun());
         }
         catch (ApplicationUtil.CannotRunReadActionException e) {
           myUpdateProgress.cancel();

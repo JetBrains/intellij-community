@@ -373,7 +373,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
     myFileStatusMap.markAllFilesDirty("prepare to run main passes");
     stopProcess(false, "disable background daemon");
-    myPassExecutorService.cancelAll(true);
+    myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.runMainPasses");
 
     List<HighlightInfo> result;
     try {
@@ -456,7 +456,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     myUpdateRunnableFuture.cancel(false);
 
     // previous passes can be canceled but still in flight. wait for them to avoid interference
-    myPassExecutorService.cancelAll(false);
+    myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
 
     FileStatusMap fileStatusMap = getFileStatusMap();
     boolean old = fileStatusMap.allowDirt(canChangeDocument);
@@ -608,7 +608,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @TestOnly
   public void waitForTermination() {
-    myPassExecutorService.cancelAll(true);
+    myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
   }
 
   @Override
@@ -806,7 +806,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       if (!updateProgress.isCanceled()) {
         PassExecutorService.log(updateProgress, null, "Cancel", reason, toRestartAlarm);
         updateProgress.cancel(reason);
-        myPassExecutorService.cancelAll(false);
+        myPassExecutorService.cancelAll(false, reason);
       }
     }
     daemonCancelEventCount.incrementAndGet();
@@ -1073,7 +1073,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
         submitted |= psiFile != null && dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
         if (PassExecutorService.LOG.isDebugEnabled()) {
-          PassExecutorService.log(null, null, "submitting psiFile:", psiFile+"; submitted=", submitted);
+          PassExecutorService.log(null, null, "submitting psiFile:", psiFile+" ("+virtualFile+"); submitted=", submitted);
         }
       }
       if (!submitted) {
