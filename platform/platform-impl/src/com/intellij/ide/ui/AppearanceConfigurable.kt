@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.application.options.colors.ColorAndFontOptions
+import com.intellij.application.options.colors.SchemesPanel
+import com.intellij.application.options.colors.SchemesPanelFactory
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.DataManager
@@ -179,6 +182,27 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           theme.enabledIf(autodetectSupportedPredicate.not().or(syncCheckBox.selected.not()))
           cell(lafManager.settingsToolbar)
             .visibleIf(syncCheckBox.selected.and(autodetectSupportedPredicate))
+        }
+      }
+
+      indent {
+        val colorAndFontsOptions = ColorAndFontOptions().apply {
+          setSchemesPanelFactory(object : SchemesPanelFactory {
+            override fun createSchemesPanel(options: ColorAndFontOptions): SchemesPanel {
+              return EditorSchemesPanel(options)
+            }
+          })
+        }
+        val editorSchemeCombo = colorAndFontsOptions.createComponent(true)
+
+        row {
+          cell(editorSchemeCombo).onIsModified {
+            colorAndFontsOptions.isModified
+          }.onApply {
+            colorAndFontsOptions.apply()
+          }.onReset {
+            colorAndFontsOptions.reset()
+          }
         }
       }
 

@@ -46,10 +46,7 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,6 +73,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private boolean mySomeSchemesDeleted = false;
   private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;
 
+  private SchemesPanelFactory mySchemesPanelFactory;
   private SchemesPanel myRootSchemesPanel;
 
   private boolean myInitResetCompleted = false;
@@ -210,6 +208,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Override
   public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
     return List.of(ColorSettingsPage.EP_NAME, ColorAndFontPanelFactory.EP_NAME, ColorAndFontDescriptorsProvider.EP_NAME);
+  }
+
+  @ApiStatus.Internal
+  public void setSchemesPanelFactory(SchemesPanelFactory schemesPanelFactory) {
+    mySchemesPanelFactory = schemesPanelFactory;
   }
 
   public static boolean isReadOnly(final @NotNull EditorColorsScheme scheme) {
@@ -366,18 +369,28 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   @Override
   public JComponent createComponent() {
-    JPanel container = new JPanel();
-    container.setLayout(new BorderLayout());
-    container.setBorder(JBUI.Borders.empty(11, 16, 0, 16));
+    return createComponent(false);
+  }
 
+  @ApiStatus.Internal
+  public JComponent createComponent(boolean comboBoxOnly) {
     if (myRootSchemesPanel == null) {
       ensureSchemesPanel();
     }
 
-    container.add(BorderLayout.NORTH, myRootSchemesPanel);
-    container.add(BorderLayout.CENTER, createChildSectionLinkList());
+    if (comboBoxOnly) {
+      return myRootSchemesPanel;
+    }
+    else {
+      JPanel container = new JPanel();
+      container.setLayout(new BorderLayout());
+      container.setBorder(JBUI.Borders.empty(11, 16, 0, 16));
 
-    return container;
+      container.add(BorderLayout.NORTH, myRootSchemesPanel);
+      container.add(BorderLayout.CENTER, createChildSectionLinkList());
+
+      return container;
+    }
   }
 
   private JComponent createChildSectionLinkList() {
@@ -715,7 +728,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private void ensureSchemesPanel() {
     if (myRootSchemesPanel == null) {
-      myRootSchemesPanel = new SchemesPanel(this, 0);
+      if (mySchemesPanelFactory == null) {
+        myRootSchemesPanel = new SchemesPanel(this, 0);
+      }
+      else {
+        myRootSchemesPanel = mySchemesPanelFactory.createSchemesPanel(this);
+      }
 
       myRootSchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract(){
         @Override

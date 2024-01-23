@@ -12,11 +12,12 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
+public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
@@ -25,7 +26,8 @@ public final class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> i
     this(options, DEFAULT_VGAP);
   }
 
-  SchemesPanel(@NotNull ColorAndFontOptions options, int vGap) {
+  @ApiStatus.Internal
+  public SchemesPanel(@NotNull ColorAndFontOptions options, int vGap) {
     super(vGap);
     myOptions = options;
   }
@@ -74,30 +76,39 @@ public final class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> i
 
   @Override
   protected @NotNull AbstractSchemeActions<EditorColorsScheme> createSchemeActions() {
-    return new ColorSchemeActions(this) {
-        @Override
-        protected @NotNull ColorAndFontOptions getOptions() {
-          return myOptions;
-        }
+    SchemesPanel panel = this;
+    return new ColorSchemeActions(panel) {
+      @Override
+      protected @NotNull ColorAndFontOptions getOptions() {
+        return myOptions;
+      }
 
-        @Override
-        protected void onSchemeChanged(@Nullable EditorColorsScheme scheme) {
-          if (scheme != null) {
-            myOptions.selectScheme(scheme.getName());
-            if (areSchemesLoaded()) {
-              myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
-            }
-          }
-        }
+      @Override
+      protected void onSchemeChanged(@Nullable EditorColorsScheme scheme) {
+        onSchemeChangedFromAction(scheme);
+      }
 
-        @Override
-        protected void renameScheme(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
-          if (myOptions.saveSchemeAs(scheme, newName)) {
-            myOptions.removeScheme(scheme);
-            myOptions.selectScheme(newName);
-          }
-        }
-      };
+      @Override
+      protected void renameScheme(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
+        renameSchemeFromAction(scheme, newName);
+      }
+    };
+  }
+
+  protected void onSchemeChangedFromAction(@Nullable EditorColorsScheme scheme) {
+    if (scheme != null) {
+      myOptions.selectScheme(scheme.getName());
+      if (areSchemesLoaded()) {
+        myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
+      }
+    }
+  }
+
+  protected void renameSchemeFromAction(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
+    if (myOptions.saveSchemeAs(scheme, newName)) {
+      myOptions.removeScheme(scheme);
+      myOptions.selectScheme(newName);
+    }
   }
 
   @Override

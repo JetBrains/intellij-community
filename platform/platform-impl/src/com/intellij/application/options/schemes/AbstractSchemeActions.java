@@ -68,7 +68,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     return exporterNames;
   }
 
-  public final @NotNull Collection<AnAction> getActions() {
+  public @NotNull Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
     if (mySchemesPanel.supportsProjectSchemes()) {
       actions.add(new CopyToProjectAction());
@@ -80,6 +80,15 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     addAdditionalActions(actions);
     actions.add(new ResetAction());
     actions.add(new DeleteAction());
+
+    actions.addAll(getExportImportActions(true));
+
+    return actions;
+  }
+
+  protected List<AnAction> getExportImportActions(boolean withSeparator) {
+    List<AnAction> actions = new ArrayList<>();
+
     @NotNull Collection<String> schemeImportersNames = getSchemeImportersNames();
     @NotNull Collection<String> schemeExporterNames = getSchemeExporterNames();
     if (!schemeExporterNames.isEmpty()) {
@@ -87,12 +96,17 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
                                            schemeExporterNames,
                                            ExportAction::new));
     }
-    actions.add(new Separator());
+
+    if (withSeparator) {
+      actions.add(new Separator());
+    }
+
     if (!schemeImportersNames.isEmpty()) {
       actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.import", mySchemesPanel.getSchemeTypeName()),
                                            schemeImportersNames,
                                            ImportAction::new));
     }
+
     return actions;
   }
   
@@ -275,7 +289,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
   }
 
-  private static @NotNull AnAction createImportExportAction(@NotNull @NlsActions.ActionText String groupName,
+  protected static @NotNull AnAction createImportExportAction(@NotNull @NlsActions.ActionText String groupName,
                                                             @NotNull Collection<@NlsActions.ActionText String> actionNames,
                                                             @NotNull BiFunction<? super String, ? super @NlsActions.ActionText String, ? extends AnAction> createActionByName) {
     if (actionNames.size() == 1) {
