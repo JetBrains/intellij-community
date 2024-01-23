@@ -10,6 +10,7 @@ import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper
 import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledCodeBlock
 import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledInlineCode
 import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledInlineCodeFragment
+import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledLinkFragment
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
@@ -139,10 +140,10 @@ object KDocRenderer {
                     pathSegment.isEmpty() || pathSegment.first().isLowerCase() -> DefaultLanguageHighlighterColors.IDENTIFIER
                     else -> KotlinHighlightingColors.CLASS
                 }
-                appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), segmentAttributes, pathSegment)
-                appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), KotlinHighlightingColors.DOT, ".")
+                appendStyledLinkFragment(pathSegment, segmentAttributes, )
+                appendStyledLinkFragment(".", KotlinHighlightingColors.DOT)
             }
-            appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), lastSegmentAttributes, elementName)
+            appendStyledLinkFragment(elementName, lastSegmentAttributes)
         }
     }
 
@@ -287,7 +288,7 @@ object KDocRenderer {
 
                 append("<p><code>")
                 when (val link = it.getChildrenOfType<KDocLink>().firstOrNull()) {
-                    null -> appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), titleAttributes, subjectName)
+                    null -> appendStyledLinkFragment(subjectName, titleAttributes)
                     else -> appendHyperlink(link)
                 }
 
@@ -568,15 +569,6 @@ object KDocRenderer {
     private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributesKey: TextAttributesKey, value: String?): StringBuilder {
         if (doHighlighting) {
             HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, DocumentationSettings.getHighlightingSaturation(true))
-        } else {
-            append(value)
-        }
-        return this
-    }
-
-    private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributes: TextAttributes, value: String?): StringBuilder {
-        if (doHighlighting) {
-            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes, value, DocumentationSettings.getHighlightingSaturation(true))
         } else {
             append(value)
         }

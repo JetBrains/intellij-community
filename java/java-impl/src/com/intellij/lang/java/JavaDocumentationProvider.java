@@ -18,13 +18,9 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationSettings;
-import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.lang.documentation.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -65,6 +61,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledSignatureFragment;
 import static com.intellij.util.ObjectUtils.notNull;
 
 /**
@@ -80,20 +77,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   public static final String HTML_EXTENSION = ".html";
   public static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
-
-  protected static @NotNull StringBuilder appendStyledSpan(
-    @NotNull StringBuilder buffer,
-    @NotNull TextAttributes attributes,
-    @Nullable String value
-  ) {
-    if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributes, value, DocumentationSettings.getHighlightingSaturation(false));
-    }
-    else {
-      buffer.append(value);
-    }
-    return buffer;
-  }
 
   private static void appendStyledSpan(
     @NotNull StringBuilder buffer,
@@ -244,12 +227,12 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                aClass.isEnum() ? PsiKeyword.ENUM :
                                aClass.isRecord() ? PsiKeyword.RECORD :
                                PsiKeyword.CLASS;
-    appendStyledSpan(buffer, highlightingManager.getKeywordAttributes(), classString).append(" ");
+    appendStyledSignatureFragment(buffer, classString, highlightingManager.getKeywordAttributes()).append(" ");
 
-    appendStyledSpan(
+    appendStyledSignatureFragment(
       buffer,
-      highlightingManager.getClassDeclarationAttributes(aClass),
-      JavaDocUtil.getShortestClassName(aClass, aClass));
+      JavaDocUtil.getShortestClassName(aClass, aClass), highlightingManager.getClassDeclarationAttributes(aClass)
+    );
 
     generateTypeParameters(aClass, buffer, highlightingManager);
 
@@ -271,7 +254,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   ) {
     if (refs.length > 0) {
       newLine(buffer);
-      appendStyledSpan(buffer, highlightingManager.getKeywordAttributes(), "implements "); // <- Groovy keyword
+      appendStyledSignatureFragment(buffer, "implements ", highlightingManager.getKeywordAttributes()); // <- Groovy keyword
       writeTypeRefs(aClass, buffer, refs, highlightingManager);
     }
   }
@@ -283,9 +266,9 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     JavaDocHighlightingManager highlightingManager
   ) {
     if (refs.length > 0 || !aClass.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      appendStyledSpan(buffer, highlightingManager.getKeywordAttributes(), " extends "); // <- Groovy keyword
+      appendStyledSignatureFragment(buffer, " extends ", highlightingManager.getKeywordAttributes()); // <- Groovy keyword
       if (refs.length == 0) {
-        appendStyledSpan(buffer, highlightingManager.getClassNameAttributes(), "Object");
+        appendStyledSignatureFragment(buffer, "Object", highlightingManager.getClassNameAttributes());
       }
       else {
         writeTypeRefs(aClass, buffer, refs, highlightingManager);
@@ -307,7 +290,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         .generateType(buffer, refs[i], aClass, false, true);
 
       if (i < refs.length - 1) {
-        appendStyledSpan(buffer, highlightingManager.getCommaAttributes(), ", ");
+        appendStyledSignatureFragment(buffer, ", ", highlightingManager.getCommaAttributes());
       }
     }
   }
@@ -320,33 +303,33 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (typeParameterOwner.hasTypeParameters()) {
       PsiTypeParameter[] params = typeParameterOwner.getTypeParameters();
 
-      appendStyledSpan(buffer, highlightingManager.getOperationSignAttributes(), "&lt;");
+      appendStyledSignatureFragment(buffer, "&lt;", highlightingManager.getOperationSignAttributes());
 
       for (int i = 0; i < params.length; i++) {
         PsiTypeParameter p = params[i];
 
-        appendStyledSpan(buffer, highlightingManager.getTypeParameterNameAttributes(), p.getName());
+        appendStyledSignatureFragment(buffer, p.getName(), highlightingManager.getTypeParameterNameAttributes());
         PsiClassType[] refs = p.getExtendsList().getReferencedTypes();
 
         if (refs.length > 0) {
-          appendStyledSpan(buffer, highlightingManager.getKeywordAttributes(), " extends "); // <- Groovy keyword
+          appendStyledSignatureFragment(buffer, " extends ", highlightingManager.getKeywordAttributes()); // <- Groovy keyword
 
           for (int j = 0; j < refs.length; j++) {
             JavaDocInfoGeneratorFactory.create(typeParameterOwner.getProject(), null)
               .generateType(buffer, refs[j], typeParameterOwner, false, true);
 
             if (j < refs.length - 1) {
-              appendStyledSpan(buffer, highlightingManager.getOperationSignAttributes(), " & ");
+              appendStyledSignatureFragment(buffer, " & ", highlightingManager.getOperationSignAttributes());
             }
           }
         }
 
         if (i < params.length - 1) {
-          appendStyledSpan(buffer, highlightingManager.getCommaAttributes(), ", ");
+          appendStyledSignatureFragment(buffer, ", ", highlightingManager.getCommaAttributes());
         }
       }
 
-      appendStyledSpan(buffer, highlightingManager.getOperationSignAttributes(), "&gt;");
+      appendStyledSignatureFragment(buffer, "&gt;", highlightingManager.getOperationSignAttributes());
     }
   }
 
@@ -363,10 +346,9 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         generateOrderEntryAndPackageInfo(buffer, parentClass);
       }
 
-      appendStyledSpan(
+      appendStyledSignatureFragment(
         buffer,
-        highlightingManager.getClassDeclarationAttributes(parentClass),
-        JavaDocUtil.getShortestClassName(parentClass, method)
+        JavaDocUtil.getShortestClassName(parentClass, method), highlightingManager.getClassDeclarationAttributes(parentClass)
       );
       newLine(buffer);
     }
@@ -384,39 +366,40 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       buffer.append(" ");
     }
 
-    appendStyledSpan(buffer, highlightingManager.getMethodDeclarationAttributes(method), method.getName());
+    appendStyledSignatureFragment(buffer, method.getName(), highlightingManager.getMethodDeclarationAttributes(method));
 
-    appendStyledSpan(buffer, highlightingManager.getParenthesesAttributes(), "(");
+    appendStyledSignatureFragment(buffer, "(", highlightingManager.getParenthesesAttributes());
     PsiParameter[] params = method.getParameterList().getParameters();
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
       docInfoGenerator.generateType(buffer, substitutor.substitute(param.getType()), method, false, true);
       buffer.append(" ");
-      appendStyledSpan(buffer, highlightingManager.getParameterAttributes(), param.getName());
+      appendStyledSignatureFragment(buffer, param.getName(), highlightingManager.getParameterAttributes());
       if (i < params.length - 1) {
-        appendStyledSpan(buffer, highlightingManager.getCommaAttributes(), ", ");
+        appendStyledSignatureFragment(buffer, ", ", highlightingManager.getCommaAttributes());
       }
     }
 
-    appendStyledSpan(buffer, highlightingManager.getParenthesesAttributes(), ")");
+    appendStyledSignatureFragment(buffer, ")", highlightingManager.getParenthesesAttributes());
 
     PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
     if (refs.length > 0) {
       newLine(buffer);
-      appendStyledSpan(buffer, highlightingManager.getKeywordAttributes(), " throws ");
+      appendStyledSignatureFragment(buffer, " throws ", highlightingManager.getKeywordAttributes());
       for (int i = 0; i < refs.length; i++) {
         PsiClass throwsClass = refs[i].resolve();
 
         if (throwsClass != null) {
-          appendStyledSpan(buffer, highlightingManager.getClassDeclarationAttributes(throwsClass),
-                           JavaDocUtil.getShortestClassName(throwsClass, method));
+          appendStyledSignatureFragment(buffer, JavaDocUtil.getShortestClassName(throwsClass, method),
+                                                                       highlightingManager.getClassDeclarationAttributes(throwsClass)
+          );
         }
         else {
           buffer.append(refs[i].getPresentableText());
         }
 
         if (i < refs.length - 1) {
-          appendStyledSpan(buffer, highlightingManager.getCommaAttributes(), ", ");
+          appendStyledSignatureFragment(buffer, ", ", highlightingManager.getCommaAttributes());
         }
       }
     }
@@ -429,10 +412,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     PsiClass parentClass = field.getContainingClass();
 
     if (parentClass != null && !(parentClass instanceof PsiAnonymousClass)) {
-      appendStyledSpan(
+      appendStyledSignatureFragment(
         buffer,
-        JavaDocHighlightingManagerImpl.getInstance().getClassDeclarationAttributes(parentClass),
-        JavaDocUtil.getShortestClassName(parentClass, field)
+        JavaDocUtil.getShortestClassName(parentClass, field),
+        JavaDocHighlightingManagerImpl.getInstance().getClassDeclarationAttributes(parentClass)
       );
       newLine(buffer);
     }
@@ -444,7 +427,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     docInfoGenerator.generateType(buffer, substitutor.substitute(field.getType()), field, false, true);
     buffer.append(" ");
-    appendStyledSpan(buffer, JavaDocHighlightingManagerImpl.getInstance().getFieldDeclarationAttributes(field), field.getName());
+    appendStyledSignatureFragment(buffer, field.getName(),
+                                                                 JavaDocHighlightingManagerImpl.getInstance().getFieldDeclarationAttributes(field));
 
     generateInitializer(buffer, field);
 
@@ -462,7 +446,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     buffer.append(" ");
 
-    appendStyledSpan(buffer, JavaDocHighlightingManagerImpl.getInstance().getLocalVariableAttributes(), variable.getName());
+    appendStyledSignatureFragment(buffer, variable.getName(), JavaDocHighlightingManagerImpl.getInstance().getLocalVariableAttributes());
     generateInitializer(buffer, variable);
 
     return buffer.toString();
@@ -475,9 +459,9 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
-    appendStyledSpan(sb, JavaDocHighlightingManagerImpl.getInstance().getKeywordAttributes(), PsiKeyword.MODULE);
+    appendStyledSignatureFragment(sb, PsiKeyword.MODULE, JavaDocHighlightingManagerImpl.getInstance().getKeywordAttributes());
     sb.append(' ');
-    appendStyledSpan(sb, JavaDocHighlightingManagerImpl.getInstance().getClassNameAttributes(), module.getName());
+    appendStyledSignatureFragment(sb, module.getName(), JavaDocHighlightingManagerImpl.getInstance().getClassNameAttributes());
 
     return sb.toString();
   }
@@ -1002,7 +986,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     int options = (replaceConstructorWithInit ? 0 : PsiFormatUtilBase.SHOW_NAME) | PsiFormatUtilBase.SHOW_PARAMETERS;
     int parameterOptions = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE;
-    
+
     if (languageLevel.isAtLeast(LanguageLevel.JDK_15)) {
       parameterOptions |= PsiFormatUtilBase.SHOW_RAW_TYPE;
     }

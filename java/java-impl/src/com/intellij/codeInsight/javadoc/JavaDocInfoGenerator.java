@@ -13,7 +13,6 @@ import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
-import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
@@ -735,7 +734,7 @@ public class JavaDocInfoGenerator {
         if (!packageName.isEmpty()) {
           PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
           StringBuilder packageFqnBuilder = new StringBuilder();
-          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+          if (myDoSemanticHighlightingOfLinks) {
             appendStyledSpan(packageFqnBuilder, highlightingManager.getClassNameAttributes(), packageName);
           }
           else {
@@ -754,7 +753,7 @@ public class JavaDocInfoGenerator {
         String qName = parentClass.getQualifiedName();
         if (qName != null) {
           StringBuilder classFqnBuilder = new StringBuilder();
-          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+          if (myDoSemanticHighlightingOfLinks) {
             appendStyledSpan(classFqnBuilder, highlightingManager.getClassNameAttributes(), qName);
           }
           else {
