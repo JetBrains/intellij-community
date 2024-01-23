@@ -66,7 +66,7 @@ final class ContentComboLabel extends ContentLabel {
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       if (findHoveredIcon() != null) return;
 
-      if (UIUtil.isActionClick(e)) {
+      if (UIUtil.isActionClick(e) && isToDrawCombo()) {
         ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
       }
     }
