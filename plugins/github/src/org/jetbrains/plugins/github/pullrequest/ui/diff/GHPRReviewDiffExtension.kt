@@ -26,8 +26,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
-import org.jetbrains.plugins.github.pullrequest.ui.editor.*
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRNewCommentEditorInlayRenderer
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewThreadEditorInlayRenderer
 import kotlin.math.max
 import kotlin.math.min
 
@@ -144,7 +148,7 @@ private class DiffEditorModel(
   }
 
   private inner class MappedThread(vm: GHPRReviewThreadDiffViewModel)
-    : GHPREditorMappedComponentModel.Thread<GHPRReviewThreadEditorViewModel>(vm) {
+    : GHPREditorMappedComponentModel.Thread<GHPRCompactReviewThreadViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
     override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
   }

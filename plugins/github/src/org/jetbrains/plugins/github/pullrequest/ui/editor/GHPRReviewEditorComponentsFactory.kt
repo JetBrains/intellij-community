@@ -26,15 +26,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel.CommentItem
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewThreadEditorViewModel.CommentItem
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
 internal object GHPRReviewEditorComponentsFactory {
-  fun createThreadIn(cs: CoroutineScope, vm: GHPRReviewThreadEditorViewModel): JComponent {
+  fun createThreadIn(cs: CoroutineScope, vm: GHPRCompactReviewThreadViewModel): JComponent {
     val commentsPanel = ComponentListPanelFactory.createVertical(cs, vm.comments) { item ->
       val itemCs = this
       when (item) {
@@ -71,7 +72,7 @@ internal object GHPRReviewEditorComponentsFactory {
     }
   }
 
-  private fun CoroutineScope.createReplyActionsPanel(vm: GHPRReviewThreadEditorViewModel): JComponent {
+  private fun CoroutineScope.createReplyActionsPanel(vm: GHPRCompactReviewThreadViewModel): JComponent {
     val cs = this
     val replyLink = ActionLink(CollaborationToolsBundle.message("review.comments.reply.action")) {
       vm.startWritingReply()

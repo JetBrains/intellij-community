@@ -23,13 +23,13 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRNewThreadCommentV
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel.CommentItem
 import org.jetbrains.plugins.github.pullrequest.ui.comment.UpdateableGHPRReviewThreadCommentViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewThreadEditorViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewThreadEditorViewModel.CommentItem
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import kotlin.coroutines.cancellation.CancellationException
 
-interface GHPRReviewThreadDiffViewModel : GHPRReviewThreadEditorViewModel {
+interface GHPRReviewThreadDiffViewModel : GHPRCompactReviewThreadViewModel {
   val isVisible: StateFlow<Boolean>
   val location: StateFlow<DiffLineLocation?>
 }

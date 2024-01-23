@@ -4,9 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.collaboration.util.Hideable
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 
 sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel {
-  abstract class Thread<VM : GHPRReviewThreadEditorViewModel>(val vm: VM)
+  abstract class Thread<VM : GHPRCompactReviewThreadViewModel>(val vm: VM)
     : GHPREditorMappedComponentModel, Hideable {
     final override val key: Any = vm.id
     final override val hiddenState = MutableStateFlow(false)

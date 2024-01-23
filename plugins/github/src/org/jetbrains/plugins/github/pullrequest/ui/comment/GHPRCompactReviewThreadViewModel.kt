@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.pullrequest.ui.editor
+package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRNewThreadCommentViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadViewModel
 
-interface GHPRReviewThreadEditorViewModel : GHPRReviewThreadViewModel,
-                                            CodeReviewResolvableItemViewModel {
+/**
+ * A viewmodel for a compact foldable review thread view
+ */
+interface GHPRCompactReviewThreadViewModel : GHPRReviewThreadViewModel,
+                                             CodeReviewResolvableItemViewModel {
   override val isBusy: StateFlow<Boolean>
 
   val comments: StateFlow<List<CommentItem>>

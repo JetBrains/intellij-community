@@ -4,9 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 
 @ApiStatus.Internal
-class GHPRReviewThreadEditorInlayRenderer internal constructor(cs: CoroutineScope, vm: GHPRReviewThreadEditorViewModel)
+class GHPRReviewThreadEditorInlayRenderer internal constructor(cs: CoroutineScope, vm: GHPRCompactReviewThreadViewModel)
   : CodeReviewComponentInlayRenderer(
   GHPRReviewEditorComponentsFactory.createThreadIn(cs, vm)
 )
