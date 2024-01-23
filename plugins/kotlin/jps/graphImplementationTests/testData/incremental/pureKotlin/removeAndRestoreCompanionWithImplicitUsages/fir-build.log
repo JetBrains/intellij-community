@@ -1,7 +1,5 @@
 ================ Step #1 =================
 
-After chunkBuildStarted. Marked as dirty by Kotlin:
-  src/A.kt
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
   out/production/module/foo/A$Companion.class
@@ -10,14 +8,7 @@ End of files
 Compiling files:
   src/A.kt
 End of files
-After build round. Marked as dirty by Kotlin:
-  src/getACompanion.kt
-  src/getACompanionShort.kt
-  src/useACompanionImplicitly.kt
-  src/useACompanionShortImplicitly.kt
-  src/useAbarWithImplicitReceiver.kt
-  src/useAfooWithImplicitReceiver.kt
-Exit code: ADDITIONAL_PASS_REQUIRED
+Exit code: OK
 ------------------------------------------
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
