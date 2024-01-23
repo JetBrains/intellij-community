@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
+public final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPass.class);
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
@@ -90,7 +90,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-    boolean isWholeFileToolsPass = getId() == Pass.WHOLE_FILE_LOCAL_INSPECTIONS;
     HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(myFile.getProject());
     HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile());
     try {
@@ -149,11 +148,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         myInfos = fileInfos;
       }
       Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-      highlightInfoUpdater.recycleHighlightsForObsoleteTools(myFile, pairs, invalidElementsRecycler, isWholeFileToolsPass, myProfileWrapper);
+      highlightInfoUpdater.recycleHighlightsForObsoleteTools(myFile, pairs, invalidElementsRecycler);
       highlightInfoUpdater.removeWarningsInsideErrors(myHighlightingSession);  // must be the last
-      UpdateHighlightersUtil.incinerateObsoleteHighlighters(invalidElementsRecycler, myHighlightingSession);
     }
     finally {
+      // incinerate range highlighters for invalid PSI elements even in the case of PCE, or otherwise these dangling range highlighters will stay onscreen forever
+      UpdateHighlightersUtil.incinerateObsoleteHighlighters(invalidElementsRecycler, myHighlightingSession);
       invalidElementsRecycler.releaseHighlighters();
     }
   }

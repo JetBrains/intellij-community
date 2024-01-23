@@ -516,9 +516,9 @@ public final class JobLauncherImpl extends JobLauncher {
         }
         finally {
           if (!result[0]) {
-            futureResult.set(false);
             // in case of exception, we need to cancel all tasks as quick as possible, so if there is a task blocked in ".take()" we could unblock it by offering tombstone
             addToQueue.dropEverythingAndPanic();
+            futureResult.set(false);
           }
         }
       }

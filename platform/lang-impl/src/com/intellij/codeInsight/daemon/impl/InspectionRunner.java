@@ -101,24 +101,44 @@ class InspectionRunner {
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myPsiFile, myRestrictRange, myPriorityRange,
                                            file -> shouldInspect(file), new CommonProcessors.CollectProcessor<>(allDivided));
-    List<PsiElement> inside = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
-    // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
-    long finalPriorityRange = finalPriorityRange(myPriorityRange, allDivided);
-    List<PsiElement> outside = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.outside(), d.parents())));
+    List<PsiElement> restrictedInside = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
+    List<PsiElement> restrictedOutside = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.outside(), d.parents())));
     List<InspectionContext> injectedContexts = Collections.synchronizedList(new ArrayList<>());
+    Project project = myPsiFile.getProject();
+
+    boolean hasWholeFileTools = ContainerUtil.exists(toolWrappers, tool->tool.runForWholeFile());
+    Set<String> dialectIdsInRestricted = InspectionEngine.calcElementDialectIds(restrictedInside, restrictedOutside);
+    Set<String> dialectIdsInWhole;
+    List<PsiElement> wholeInside;
+    List<PsiElement> wholeOutside;
+    if (hasWholeFileTools) {
+      List<Divider.DividedElements> all = new ArrayList<>();
+      Divider.divideInsideAndOutsideAllRoots(myPsiFile, myPsiFile.getTextRange(), myPriorityRange,
+                                             file -> shouldInspect(file), new CommonProcessors.CollectProcessor<>(all));
+      wholeInside = ContainerUtil.concat(ContainerUtil.map(all, d -> d.inside()));
+      wholeOutside = ContainerUtil.concat(ContainerUtil.map(all, d -> ContainerUtil.concat(d.outside(), d.parents())));
+      dialectIdsInWhole = InspectionEngine.calcElementDialectIds(wholeInside, wholeOutside);
+    }
+    else {
+      wholeInside = List.of();
+      wholeOutside = List.of();
+      dialectIdsInWhole = Set.of();
+    }
 
     List<LocalInspectionToolWrapper> applicableByLanguage =
-      InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside));
+      InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, dialectIdsInRestricted, dialectIdsInWhole);
 
     List<InspectionContext> init = new ArrayList<>(applicableByLanguage.size());
     List<InspectionContext> redundantContexts = new ArrayList<>();
-    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(myPsiFile.getProject());
+    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(project);
+    // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
+    TextRange finalPriorityRange = finalPriorityRange(myPriorityRange, allDivided);
     if (LOG.isTraceEnabled()) {
       LOG.trace("inspect: "+myPsiFile+"; host="+InjectedLanguageManager.getInstance(myPsiFile.getProject()).injectedToHost(myPsiFile, myPsiFile.getTextRange())+";" +
-                                    "\n"+" inside:"+inside.size()+ ": "+inside+
-                                    "\n"+"; outside:"+outside.size()+": "+outside);
+                                    "\n"+" inside:"+restrictedInside.size()+ ": "+restrictedInside+
+                                    "\n"+"; outside:"+restrictedOutside.size()+": "+restrictedOutside);
     }
-    InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRangeScalarUtil.create(finalPriorityRange), minimumSeverity, myIsOnTheFly, session -> {
+    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, session -> {
       for (LocalInspectionToolWrapper toolWrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(toolWrapper)) {
           LocalInspectionTool tool = toolWrapper.getTool();
@@ -134,8 +154,8 @@ class InspectionRunner {
           tool.inspectionStarted(session, myIsOnTheFly);
 
           List<Class<?>> acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
-          List<? extends PsiElement> sortedInside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, inside);
-          List<? extends PsiElement> sortedOutside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, outside);
+          List<? extends PsiElement> sortedInside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
+          List<? extends PsiElement> sortedOutside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside);
           InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, sortedOutside, true, acceptingPsiTypes, myPsiFile);
           init.add(context);
           if (LOG.isTraceEnabled()) {
@@ -159,7 +179,7 @@ class InspectionRunner {
         });
         return true;
       };
-      if (!((JobLauncherImpl)JobLauncher.getInstance()).procInOrderAsync(new SensitiveProgressWrapper(myProgress), initSize, contextProcessor, (JobLauncherImpl.QueueController<? super InspectionContext> addToQueue) -> {
+      if (!((JobLauncherImpl)JobLauncher.getInstance()).procInOrderAsync(new SensitiveProgressWrapper(myProgress), initSize, contextProcessor, addToQueue -> {
         // have to do all this even for empty elements, to perform correct cleanup/inspectionFinished
         if (init.isEmpty()) {
           addToQueue.finish();
@@ -171,13 +191,13 @@ class InspectionRunner {
         }
 
         if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
-          inspectInjectedPsi(session, toolWrappers, injectedContexts, applyIncrementallyCallback,
+          // we don't run whole-file tools on injected fragments
+          List<LocalInspectionToolWrapper> localTools = ContainerUtil.filter(toolWrappers, t -> !t.runForWholeFile());
+          inspectInjectedPsi(session, localTools, injectedContexts, applyIncrementallyCallback,
                              contextFinishedCallback, enabledToolsPredicate, addToInjectedQueue ->
-              getInjectedWithHosts(ContainerUtil.concat(inside, outside), addToInjectedQueue));
+              getInjectedWithHosts(ContainerUtil.concat(restrictedInside, restrictedOutside), addToInjectedQueue));
         }
-
         reportIdsOfInspectionsReportedAnyProblemToFUS(init);
-
       })) {
         throw new ProcessCanceledException();
       }
@@ -236,13 +256,14 @@ class InspectionRunner {
     InspectionUsageFUSStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
   }
 
-  private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
+  @NotNull
+  private static TextRange finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
     long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange();
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
       finalPriorityRange = TextRangeScalarUtil.union(finalPriorityRange, dividedElements.priorityRange());
     }
-    return finalPriorityRange;
+    return TextRangeScalarUtil.create(finalPriorityRange);
   }
 
   private static @NotNull <T> Map<PsiFile, T> createInjectedFileMap() {
@@ -314,7 +335,7 @@ class InspectionRunner {
     for (LocalInspectionToolWrapper tool : toolWrappers) {
       if (tool.runForWholeFile()) {
         // no redundants for whole file tools pass
-        return;
+        continue;
       }
       if (tool.isUnfair() || !tool.isApplicable(fileLanguage) || myInspectionProfileWrapper.getInspectionTool(tool.getShortName(), myPsiFile) instanceof GlobalInspectionToolWrapper) {
         continue;
