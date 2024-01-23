@@ -133,8 +133,10 @@ public abstract class HistoryDialogModel {
     LinkedList<RevisionItem> result = new LinkedList<>();
 
     for (Revision each : ContainerUtil.iterateBackward(revs)) {
-      if (each.isLabel() && !result.isEmpty()) {
-        result.getFirst().labels.addFirst(each);
+      if (each.isLabel()) {
+        if (!result.isEmpty()) {
+          result.getFirst().labels.addFirst(each);
+        }
       }
       else {
         result.addFirst(new RevisionItem(each));
