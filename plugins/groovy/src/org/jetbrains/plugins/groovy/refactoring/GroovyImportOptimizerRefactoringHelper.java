@@ -30,8 +30,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImpo
  * @author Maxim.Medvedev
  */
 public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
-  @Override
-  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages) {
+  private static Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages) {
     Set<GroovyFile> files = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
@@ -44,12 +43,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
   }
 
   @Override
-  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull PsiElement primaryElement) {
-    return prepareOperation(usages, List.of(primaryElement));
-  }
-
-  @Override
-  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages, List<@NotNull PsiElement> elements) {
+  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<@NotNull PsiElement> elements) {
     Set<GroovyFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), GroovyFile.class));
     return ContainerUtil.union(movedFiles, prepareOperation(usages));
   }

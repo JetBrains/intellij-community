@@ -17,27 +17,12 @@ public interface RefactoringHelper<T> {
   ExtensionPointName<RefactoringHelper> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.helper");
 
   /**
-   * Is invoked in ReadAction under modal progress before refactoring is performed
-   * 
-   * @return result of cleanup preparation so after refactoring is actually performed, {@link #performOperation(Project, Object)} could be executed
+   * Is called before the refactoring is executed when the refactoring provides {@link BaseRefactoringProcessor#getBeforeData()}.
+   * It prepares the data that will be passed into {@link #performOperation} later.
+   * @param usages the usages found of the elements the refactoring will be called on
+   * @param elements the elements the refactoring will be called on
    */
-  T prepareOperation(UsageInfo @NotNull [] usages);
-
-  /**
-   * Is used when refactoring provides {@link BaseRefactoringProcessor#getBeforeData()} with psiElement, 
-   * otherwise {@link #prepareOperation(UsageInfo[])} is used instead
-   */
-  default T prepareOperation(UsageInfo @NotNull [] usages, @NotNull PsiElement primaryElement) {
-    return prepareOperation(usages);
-  }
-
-  /**
-   * Is used when refactoring provides {@link BaseRefactoringProcessor#getBeforeData()} with all elements,
-   * otherwise {@link #prepareOperation(UsageInfo[])} is used instead
-   */
-  default T prepareOperation(UsageInfo @NotNull [] usages, List<@NotNull PsiElement> elements) {
-    return prepareOperation(usages);
-  }
+  T prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<@NotNull PsiElement> elements);
 
   /**
    * Is invoked in EDT, without WriteAction after refactoring is performed
