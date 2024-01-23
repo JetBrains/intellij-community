@@ -1,29 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
+import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.ColorUtil
-import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Color
 
 object QuickDocCodeHighlightingHelper {
 
-  const val CODE_BLOCK_PREFIX = "<div class='styled-code'><pre style=\"padding: 0px; margin: 0px\">"
-  const val CODE_BLOCK_SUFFIX = "</pre></div>"
+  const val CODE_BLOCK_PREFIX = StyleSheetRulesProviderForCodeHighlighting.CODE_BLOCK_PREFIX
+  const val CODE_BLOCK_SUFFIX = StyleSheetRulesProviderForCodeHighlighting.CODE_BLOCK_SUFFIX
 
-  const val INLINE_CODE_PREFIX = "<code>"
-  const val INLINE_CODE_SUFFIX = "</code>"
+  const val INLINE_CODE_PREFIX = StyleSheetRulesProviderForCodeHighlighting.INLINE_CODE_PREFIX
+  const val INLINE_CODE_SUFFIX = StyleSheetRulesProviderForCodeHighlighting.INLINE_CODE_SUFFIX
 
   @JvmStatic
   fun getStyledCodeBlock(code: @NlsSafe CharSequence, language: Language?, project: Project? = null): @NlsSafe String =
@@ -132,53 +130,18 @@ object QuickDocCodeHighlightingHelper {
         .firstOrNull()
 
   @JvmStatic
-  fun getDefaultDocCodeStyles(colorScheme: EditorColorsScheme, backgroundColor: Color): List<String> {
-    val result = mutableListOf<String>()
-
-    // TODO: When removing `getMonospaceFontSizeCorrection` copy it's code here
-    @Suppress("DEPRECATION", "removal")
-    val definitionCodeFontSizePercent = DocumentationSettings.getMonospaceFontSizeCorrection(false)
-
-    @Suppress("DEPRECATION", "removal")
-    val contentCodeFontSizePercent = DocumentationSettings.getMonospaceFontSizeCorrection(true)
-
-    result.addAllIfNotNull(
-      "tt, code, pre, .pre { font-family:\"$EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER\"; font-size:$contentCodeFontSizePercent%; }",
-      "pre {white-space: pre-wrap}",  // supported by JetBrains Runtime
-      ".definition code, .definition pre, .definition-only code, .definition-only pre { font-size: $definitionCodeFontSizePercent% }",
-    )
-
-    if (!DocumentationSettings.isCodeBackgroundEnabled())
-      return result
-
-    val codeBg = ColorUtil.toHtmlColor(backgroundColor.let {
-      val luminance = ColorUtil.getLuminance(it).toFloat()
-      val change = if (luminance < 0.028f)
-      // In case of a very dark theme, make background lighter
-        1.55f - luminance * 10f
-      else if (luminance < 0.15)
-      // In any other case make background darker
-        0.85f
-      else
-        0.96f
-      ColorUtil.hackBrightness(it, 1, change)
-    })
-    val codeFg = ColorUtil.toHtmlColor(colorScheme.defaultForeground)
-
-    val codeColorStyle = "{ background-color: $codeBg; color: $codeFg; }"
-
-    if (DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING) {
-      result.add(".content code, .content-separated code, .content-only div:not(.bottom) code, .sections code $codeColorStyle")
-      result.add(
-        ".content code, .content-separated code, .content-only div:not(.bottom) code, .sections code { padding: 1px 4px; margin: 1px 0px; caption-side: 10px; }")
-    }
-    if (DocumentationSettings.isHighlightingOfCodeBlocksEnabled()) {
-      result.add("div.styled-code $codeColorStyle")
-      result.add("div.styled-code {  margin: 5px 0px 5px 10px; padding: 6px; }")
-      result.add("div.styled-code pre { padding: 0px; margin: 0px }")
-    }
-    return result
-  }
+  fun getDefaultDocCodeStyles(
+    colorScheme: EditorColorsScheme,
+    editorPaneBackgroundColor: Color,
+  ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
+    colorScheme, editorPaneBackgroundColor,
+    listOf(".content", ".content-separated", ".content-only div:not(.bottom)", ".sections"),
+    listOf(".definition code", ".definition pre", ".definition-only code", ".definition-only"),
+    DocumentationSettings.isCodeBackgroundEnabled()
+    && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
+    DocumentationSettings.isCodeBackgroundEnabled()
+    && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
+  )
 
   private fun StringBuilder.appendHighlightedCode(doHighlighting: Boolean, code: CharSequence, language: Language?, project: Project?,
                                                   isForRenderedDoc: Boolean): StringBuilder {
