@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
@@ -6,19 +6,23 @@ import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.util.SmartList
 
 // Technically, it is not possible to proxy write operations because a collection can be mutated via iterator.
-// So, even if Kotlin could create a delegate for us, to track mutations via an iterator we have to re-implement collection/map.
+// So, even if Kotlin could create a delegate for us to track mutations via an iterator, we have to re-implement collection/map.
 
 /**
- * `AbstractCollectionBinding` modifies collection directly, so we cannot use `null` as a default value and have to return an empty list.
+ * `AbstractCollectionBinding` modifies a collection directly, so we cannot use `null` as a default value and have to return an empty list.
  */
-open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected val value: C, private val defaultValue: String?) : StoredPropertyBase<C>() {
+open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(
+  protected val value: C,
+  private val defaultValue: String?,
+) : StoredPropertyBase<C>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.ARRAY
 
-  override fun isEqualToDefault(): Boolean = if (defaultValue == null) value.isEmpty() else value.size == 1 && value.firstOrNull() == defaultValue
+  override fun isEqualToDefault(): Boolean {
+    return if (defaultValue == null) value.isEmpty() else value.size == 1 && value.firstOrNull() == defaultValue
+  }
 
   override fun getValue(thisRef: BaseState): C = value
 
@@ -38,7 +42,9 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
     return true
   }
 
-  override fun equals(other: Any?) = this === other || (other is CollectionStoredProperty<*, *> && value == other.value && defaultValue == other.defaultValue)
+  override fun equals(other: Any?): Boolean {
+    return this === other || (other is CollectionStoredProperty<*, *> && value == other.value && defaultValue == other.defaultValue)
+  }
 
   override fun hashCode() = value.hashCode()
 
@@ -71,6 +77,7 @@ internal class ListStoredProperty<T : Any> : CollectionStoredProperty<T, ModCoun
     return modCount
   }
 }
-class ModCountableList<T> : SmartList<T>() {
+
+internal class ModCountableList<T> : ArrayList<T>() {
   fun modCount(): Int = modCount
 }
