@@ -7,16 +7,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
- * Register an implementation of this interface as a handler for [WorkspaceModelTopics.CHANGED] to synchronously process changes in the 
- * workspace model.
- * 
- * For the asynchronous handling of changes from the workspace model collect them via [WorkspaceModel.subscribe]
- *
- * See the documentation of [WorkspaceModel.subscribe] for details about changes collecting.
+ * Obsolete listener for the workspace model. Use [WorkspaceModel.subscribe]
  */
+@ApiStatus.Obsolete
 public interface WorkspaceModelChangeListener : EventListener {
   /**
    * This method is invoked under Write Action before changes are applied.
@@ -46,16 +43,15 @@ public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
   public fun changed(event: VersionedStorageChange)
 }
 
-/**
- * Topics to subscribe to Workspace changes.
- *
- * For the asynchronous approach please consider to collect changes from [WorkspaceModel.subscribe]
- */
 @Service(Service.Level.PROJECT)
 public class WorkspaceModelTopics : Disposable {
   public companion object {
+    /**
+     * Obsolete topic for the workspace model. Use [WorkspaceModel.subscribe]
+     */
     @Topic.ProjectLevel
     @JvmField
+    @ApiStatus.Obsolete
     public val CHANGED: Topic<WorkspaceModelChangeListener> = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
     /**
