@@ -18,7 +18,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlDynamicPlugin -->
     <ideStartupWizard implementation="com.intellij.ide.startup.importSettings.IdeStartupWizardImpl"/>
-    <applicationInitializedListener implementation="com.intellij.ide.startup.importSettings.jb.JbAfterRestartSettingsApplier"/>
 
     <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
                         serviceImplementation="com.intellij.ide.startup.importSettings.data.SettingsServiceImpl"/>
@@ -32,4 +31,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.startup.importSettings.fus.KnownPluginValidationRule"/>
   </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.ide.startup.importSettings.jb.JbAfterRestartSettingsApplier" topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
+  </applicationListeners>
 </idea-plugin>
