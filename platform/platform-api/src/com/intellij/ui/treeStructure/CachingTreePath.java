@@ -22,6 +22,14 @@ public final class CachingTreePath extends TreePath {
     myPathCount = parent == null ? 1 : parent.getPathCount() + 1;
   }
 
+  public CachingTreePath(Object @NotNull [] path) {
+    this(path, path.length);
+  }
+
+  private CachingTreePath(Object @NotNull [] path, int length) {
+    this(length == 1 ? null : new CachingTreePath(path, length - 1), path[length - 1]);
+  }
+
   @Override
   public TreePath pathByAddingChild(@NotNull Object child) {
     return new CachingTreePath(this, child);
