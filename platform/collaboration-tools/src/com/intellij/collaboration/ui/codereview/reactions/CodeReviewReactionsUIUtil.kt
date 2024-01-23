@@ -2,11 +2,8 @@
 package com.intellij.collaboration.ui.codereview.reactions
 
 object CodeReviewReactionsUIUtil {
-  const val BUTTON_HEIGHT: Int = 24
-  const val BUTTON_WIDTH: Int = 40
-  const val BUTTON_PADDING: Int = 3
-  const val BUTTON_ROUNDNESS: Int = 12
-  const val BUTTON_BORDER_ROUNDNESS: Int = 14
+  const val BUTTON_HEIGHT: Int = 22
+  const val BUTTON_ROUNDNESS: Int = 24
 
   const val HORIZONTAL_GAP: Int = 8
 

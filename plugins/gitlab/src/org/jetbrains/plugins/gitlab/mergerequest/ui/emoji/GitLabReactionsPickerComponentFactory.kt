@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.emoji
 
 import com.intellij.collaboration.ui.TransparentScrollPane
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
@@ -18,7 +17,6 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.SwingConstants
 
 internal object GitLabReactionsPickerComponentFactory {
   fun create(reactions: List<GitLabReaction>, onClick: (GitLabReaction) -> Unit): JComponent {
@@ -61,10 +59,6 @@ internal object GitLabReactionsPickerComponentFactory {
   }
 
   private fun createReactionLabel(reaction: GitLabReaction, onClick: (GitLabReaction) -> Unit): JComponent {
-    val label = JLabel(reaction.emoji, SwingConstants.CENTER).apply {
-      border = JBUI.Borders.empty(6)
-      isOpaque = false
-    }
     val layout = SizeRestrictedSingleComponentLayout().apply {
       val dimension = DimensionRestrictions.ScalingConstant(
         CodeReviewReactionsUIUtil.Picker.EMOJI_WIDTH,
@@ -73,18 +67,12 @@ internal object GitLabReactionsPickerComponentFactory {
       prefSize = dimension
       maxSize = dimension
     }
-    return RoundedPanel(layout).apply {
-      addHoverAndPressStateListener(
-        comp = this,
-        hoveredStateCallback = { component, isHovered ->
-          component.background = if (isHovered) CodeReviewColorUtil.Reaction.backgroundHovered else null
-        },
-        pressedStateCallback = { component, isPressed ->
-          if (!isPressed) return@addHoverAndPressStateListener
-          onClick(reaction)
-        }
-      )
-      add(label)
+    return ReactionLabel(layout, onClick = { onClick(reaction) }) {
+      text = reaction.emoji + VARIATION_SELECTOR
+    }.apply {
+      addHoverAndPressStateListener(this, hoveredStateCallback = { component, isHovered ->
+        component.background = if (isHovered) CodeReviewColorUtil.Reaction.backgroundHovered else null
+      })
     }
   }
 }
