@@ -124,9 +124,9 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
   }
 }
 
-createPython("py36_django_latest", "3.6",
+createPython("py312_django_latest", "3.12",
              listOf("django", "behave-django", "behave", "pytest", "untangle"),
-             listOf("python3.6", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
+             listOf("python3.12", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
 
 if (isUnix && !isMacOs) {
   createPython("py37",
@@ -169,4 +169,5 @@ createPython("py27", "2.7",
              + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
              listOf("python2.7", "nose", "pytest", "behave", "packaging", "tox", "twisted", "django-nose", "untangle", "messages"))
 
+// set CONDA_PATH to conda binary location to be able to run tests
 createPython("conda", "Miniconda3-py310_23.3.1-0", type = PythonType.CONDA)
