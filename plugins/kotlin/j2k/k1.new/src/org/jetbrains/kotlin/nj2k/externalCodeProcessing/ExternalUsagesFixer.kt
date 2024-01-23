@@ -19,7 +19,9 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
     private val conversions = mutableListOf<JKExternalConversion>()
 
     fun fix() {
-        usages.forEach { it.fix() }
+        for (usage in usages) {
+            usage.fix()
+        }
         conversions.sort()
         conversions.forEach(JKExternalConversion::apply)
     }
@@ -32,76 +34,79 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
     }
 
     private fun JKFieldDataFromJava.fix(javaUsages: List<PsiElement>, kotlinUsages: List<KtElement>) {
-        run {
-            val ktProperty = kotlinElement ?: return@run
-            when {
-                javaUsages.isNotEmpty() && ktProperty.canBeAnnotatedWithJvmField() ->
-                    ktProperty.addAnnotationIfThereAreNoJvmOnes(JVM_FIELD_ANNOTATION_FQ_NAME)
-
-                javaUsages.isNotEmpty() && isStatic && !ktProperty.hasModifier(CONST_KEYWORD) ->
-                    ktProperty.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
-            }
-        }
-
         if (wasRenamed) {
-            javaUsages.forEach { usage ->
+            for (usage in javaUsages) {
                 conversions += PropertyRenamedJavaExternalUsageConversion(name, usage)
             }
 
-            kotlinUsages.forEach { usage ->
+            for (usage in kotlinUsages) {
                 conversions += PropertyRenamedKotlinExternalUsageConversion(name, usage)
             }
+        }
+
+        if (javaUsages.isEmpty()) return
+        val ktProperty = kotlinElement ?: return
+
+        when {
+            ktProperty.canBeAnnotatedWithJvmField() ->
+                ktProperty.addAnnotationIfThereAreNoJvmOnes(JVM_FIELD_ANNOTATION_FQ_NAME)
+
+            isStatic && !ktProperty.hasModifier(CONST_KEYWORD) ->
+                ktProperty.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
         }
     }
 
     private fun JKMethodData.fix(javaUsages: List<PsiElement>, kotlinUsages: List<KtElement>) {
         val member = usedAsAccessorOfProperty ?: this
-        val element = member.kotlinElement
+        val element = member.kotlinElement ?: return
 
-        when {
-            javaUsages.isNotEmpty() && element.canBeAnnotatedWithJvmField() ->
-                element?.addAnnotationIfThereAreNoJvmOnes(JVM_FIELD_ANNOTATION_FQ_NAME)
+        if (javaUsages.isNotEmpty()) {
+            when {
+                element.canBeAnnotatedWithJvmField() ->
+                    element.addAnnotationIfThereAreNoJvmOnes(JVM_FIELD_ANNOTATION_FQ_NAME)
 
-            javaUsages.isNotEmpty() && isStatic && !element.isConstProperty() ->
-                element?.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
+                isStatic && !element.isConstProperty() ->
+                    element.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
+            }
         }
 
-        if (element.isSimpleProperty()) {
-            val accessorKind = if (javaElement.name.startsWith("set")) SETTER else GETTER
-            if (element?.hasJvmFieldAnnotation() == true) {
-                javaUsages.forEach { usage ->
-                    conversions += AccessorToPropertyJavaExternalConversion(member.name, accessorKind, usage)
-                }
-            }
+        if (!element.isSimpleProperty()) return
 
-            kotlinUsages.forEach { usage ->
-                conversions += AccessorToPropertyKotlinExternalConversion(member.name, accessorKind, usage)
+        val accessorKind = if (javaElement.name.startsWith("set")) SETTER else GETTER
+
+        for (usage in kotlinUsages) {
+            conversions += AccessorToPropertyKotlinExternalConversion(member.name, accessorKind, usage)
+        }
+
+        if (element.hasJvmFieldAnnotation()) {
+            for (usage in javaUsages) {
+                conversions += AccessorToPropertyJavaExternalConversion(member.name, accessorKind, usage)
             }
         }
     }
 
-    private fun KtNamedDeclaration?.isConstProperty(): Boolean =
+    private fun KtNamedDeclaration.isConstProperty(): Boolean =
         this is KtProperty && hasModifier(CONST_KEYWORD)
 
-    private fun KtNamedDeclaration?.canBeAnnotatedWithJvmField(): Boolean {
-        if (this == null) return false
+    private fun KtNamedDeclaration.canBeAnnotatedWithJvmField(): Boolean {
         if (hasModifier(OVERRIDE_KEYWORD) || hasModifier(OPEN_KEYWORD) || hasModifier(CONST_KEYWORD)) return false
         return isSimpleProperty()
     }
 
-    private fun KtNamedDeclaration?.isSimpleProperty(): Boolean =
-        this?.isConstructorDeclaredProperty() == true ||
+    private fun KtNamedDeclaration.isSimpleProperty(): Boolean =
+        isConstructorDeclaredProperty() ||
                 (this is KtProperty && getter == null && setter == null)
 
     private fun KtNamedDeclaration.addAnnotationIfThereAreNoJvmOnes(fqName: FqName) {
         // we don't want to resolve here and as we are working with fqNames, just by-text comparing is OK
-        if (annotationEntries.any { entry ->
-                USED_JVM_ANNOTATIONS.any { jvmAnnotation ->
-                    entry.typeReference?.textMatches(jvmAnnotation.asString()) == true
-                }
+        val hasJvmAnnotations = annotationEntries.any { entry ->
+            USED_JVM_ANNOTATIONS.any { jvmAnnotation ->
+                entry.typeReference?.textMatches(jvmAnnotation.asString()) == true
             }
-        ) return
-        addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@${fqName.asString()}"))
+        }
+        if (!hasJvmAnnotations) {
+            addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry("@${fqName.asString()}"))
+        }
     }
 
     internal data class JKMemberInfoWithUsages(
@@ -111,7 +116,7 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
     )
 
     companion object {
-        private val JVM_STATIC_FQ_NAME = FqName("kotlin.jvm.JvmStatic")
-        val USED_JVM_ANNOTATIONS = listOf(JVM_STATIC_FQ_NAME, JVM_FIELD_ANNOTATION_FQ_NAME)
+        private val JVM_STATIC_FQ_NAME: FqName = FqName("kotlin.jvm.JvmStatic")
+        val USED_JVM_ANNOTATIONS: List<FqName> = listOf(JVM_STATIC_FQ_NAME, JVM_FIELD_ANNOTATION_FQ_NAME)
     }
 }
