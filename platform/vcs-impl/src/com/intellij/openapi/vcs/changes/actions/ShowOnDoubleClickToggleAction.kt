@@ -8,58 +8,35 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isCommitToolWindowShown
 
-private object ShowOnDoubleClickToggleAction {
+sealed class ShowOnDoubleClickToggleAction(private val isEditorPreview: Boolean) : DumbAwareToggleAction() {
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
+    if (isCommitToolwindowShown) {
+      return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK == isEditorPreview
+    }
+    else {
+      return VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK == isEditorPreview
+    }
+  }
 
-  sealed class CommitView(private val isEditorPreview: Boolean) : DumbAwareToggleAction() {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    // Make the action behave as "Option" in "ShowOnDoubleClick" group.
+    val newState = if (ActionPlaces.isPopupPlace(e.place) || state) isEditorPreview else !isEditorPreview
 
-    override fun isSelected(e: AnActionEvent): Boolean =
-      VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK == isEditorPreview
-
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      // Make the action behave as "Option" in "ShowOnDoubleClick" group.
-      val newState = if (ActionPlaces.isPopupPlace(e.place) || state) isEditorPreview else !isEditorPreview
+    val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
+    if (isCommitToolwindowShown) {
       VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK = newState
     }
-
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-
-      val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
-      e.presentation.isEnabledAndVisible = isCommitToolwindowShown
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
-
-    class EditorPreview : CommitView(true)
-    class Source : CommitView(false)
-  }
-
-  sealed class LocalChangesView(private val isEditorPreview: Boolean) : DumbAwareToggleAction() {
-
-    override fun isSelected(e: AnActionEvent): Boolean =
-      VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK == isEditorPreview
-
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      // Make the action behave as "Option" in "ShowOnDoubleClick" group.
-      val newState = if (ActionPlaces.isPopupPlace(e.place) || state) isEditorPreview else !isEditorPreview
+    else {
       VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK = newState
     }
-
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-
-      val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
-      e.presentation.isEnabledAndVisible = !isCommitToolwindowShown
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
-
-    class EditorPreview : LocalChangesView(true)
-    class Source : LocalChangesView(false)
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  class EditorPreview : ShowOnDoubleClickToggleAction(true)
+  class Source : ShowOnDoubleClickToggleAction(false)
 }
 
