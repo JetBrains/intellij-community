@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapNullableScoped
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.selectedChange
 import com.intellij.collaboration.util.withLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
@@ -21,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -39,7 +41,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUt
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
@@ -63,17 +64,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
 
   val actualChangesState: StateFlow<ChangesState> = _actualChangesState.asStateFlow()
 
-  /**
-   * Contains the state of filePath to shared file vm mapping
-   * Will only store paths which belong to the review
-   * VMs are stored as flows to allow for on-demand creation
-   */
-  private val filesVmsState: Flow<Map<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>>> by lazy {
-    changesRequest.tryEmit(Unit)
-    actualChangesState.mapScoped {
-      (it as? ChangesState.Loaded)?.changes?.let { createFilesVms(it) } ?: emptyMap()
-    }.shareIn(cs, SharingStarted.Eagerly, 1)
-  }
+  private val filesVms: MutableMap<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>> = mutableMapOf()
 
   val localRepositorySyncStatus: StateFlow<GitBranchSyncStatus?> = run {
     val repository = projectMapping.remote.repository
@@ -124,36 +115,6 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     }
   }
 
-  //TODO: do not recreate all VMs on changes change
-  private fun CoroutineScope.createFilesVms(parsedChanges: GitBranchComparisonResult)
-    : Map<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>> {
-    val vmsCs = this
-    val changes = parsedChanges.changes
-    val result = mutableMapOf<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>>()
-    for (change in changes) {
-      val file = change.filePathAfter ?: continue
-      val changeSelection = ChangesSelection.Precise(changes, change)
-      val diffData = parsedChanges.patchesByChange[change]!!
-
-      val vmFlow = channelFlow<GitLabMergeRequestEditorReviewFileViewModel> {
-        val vm = GitLabMergeRequestEditorReviewFileViewModelImpl(this, project, mergeRequest, change, diffData, discussions,
-                                                                 discussionsViewOption, avatarIconsProvider)
-        launchNow {
-          vm.showDiffRequests.collect {
-            val selection = if (it != null) changeSelection.withLocation(DiffLineLocation(Side.RIGHT, it)) else changeSelection
-            diffBridge.setChanges(selection)
-            withContext(Dispatchers.Main) {
-              projectVm.filesController.openDiff(mergeRequestIid, true)
-            }
-          }
-        }
-        send(vm)
-      }.shareIn(vmsCs, SharingStarted.WhileSubscribed(0, 0), 1)
-      result[file] = vmFlow
-    }
-    return result
-  }
-
   /**
    * Show merge request details in a standard view
    */
@@ -194,8 +155,42 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
       return flowOf(null)
     }
     val filePath = VcsContextFactory.getInstance().createFilePathOn(virtualFile)
-    return filesVmsState.flatMapLatest { it[filePath] ?: flowOf(null) }
+    changesRequest.tryEmit(Unit)
+    //TODO: do not recreate VMs on changes change
+    return filesVms.getOrPut(filePath) {
+      actualChangesState.mapNotNull {
+        (it as? ChangesState.Loaded)?.changes
+      }.distinctUntilChangedBy {
+        it.baseSha + it.headSha + it.mergeBaseSha
+      }.transform { parsedChanges ->
+        val change = parsedChanges.changes.find { it.filePathAfter == filePath }
+        if (change == null) {
+          emit(null)
+          return@transform
+        }
+        val changeSelection = ChangesSelection.Precise(parsedChanges.changes, change)
+        val diffData = parsedChanges.patchesByChange[change]!!
+        emit(changeSelection to diffData)
+      }.mapNullableScoped { (change, diffData) ->
+        createChangeVm(change, diffData)
+      }
+    }
   }
+
+  private fun CoroutineScope.createChangeVm(change: ChangesSelection.Precise, diffData: GitTextFilePatchWithHistory) =
+    GitLabMergeRequestEditorReviewFileViewModelImpl(this, project, mergeRequest, change.selectedChange!!, diffData,
+                                                    discussions,
+                                                    discussionsViewOption, avatarIconsProvider).also { vm ->
+      launchNow {
+        vm.showDiffRequests.collect {
+          val selection = if (it != null) change.withLocation(DiffLineLocation(Side.RIGHT, it)) else change
+          diffBridge.setChanges(selection)
+          withContext(Dispatchers.Main) {
+            projectVm.filesController.openDiff(mergeRequestIid, true)
+          }
+        }
+      }
+    }
 
   sealed interface ChangesState {
     data object NotLoaded : ChangesState
