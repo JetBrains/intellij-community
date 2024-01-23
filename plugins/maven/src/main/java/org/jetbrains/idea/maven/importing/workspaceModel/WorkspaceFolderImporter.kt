@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetection
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -49,9 +50,9 @@ internal class WorkspaceFolderImporter(
 
     for (root in ContentRootCollector.collect(allFolders)) {
       val excludes = root.excludeFolders
-        .map { exclude -> virtualFileUrlManager.fromPath(exclude.path) }
+        .map { exclude -> virtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(exclude.path)) }
         .map { builder addEntity ExcludeUrlEntity(it, module.entitySource) }
-      val contentRootEntity = builder addEntity ContentRootEntity(virtualFileUrlManager.fromPath(root.path),
+      val contentRootEntity = builder addEntity ContentRootEntity(virtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(root.path)),
                                                                   emptyList(), module.entitySource) {
         this.excludedUrls = excludes
         this.module = module
@@ -106,7 +107,7 @@ internal class WorkspaceFolderImporter(
       else -> error("${folder.type} doesn't  match to maven root item")
     }
 
-    val sourceRootEntity = builder addEntity SourceRootEntity(virtualFileUrlManager.fromPath(folder.path), rootType,
+    val sourceRootEntity = builder addEntity SourceRootEntity(virtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(folder.path)), rootType,
                                                               contentRootEntity.entitySource) {
       this.contentRoot = contentRootEntity
     }

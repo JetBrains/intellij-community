@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEn
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingExternalMapping;
@@ -109,7 +110,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     Objects.requireNonNull(this.myFilePath, "filePath is not specified");
     Objects.requireNonNull(this.myPathInJar, "pathInJar is not specified");
-    VirtualFileUrl fileUrl = fileUrlManager.fromPath(this.myFilePath);
+    VirtualFileUrl fileUrl = fileUrlManager.fromUrl(VfsUtilCore.pathToUrl(this.myFilePath));
 
     ExtractedDirectoryPackagingElementEntity addedEntity = diff.addEntity(ExtractedDirectoryPackagingElementEntity.create(fileUrl, this.myPathInJar, source));
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);

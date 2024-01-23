@@ -34,14 +34,6 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return addSegments(null, urls)
   }
 
-  override fun fromPath(path: String): VirtualFileUrl {
-    return fromUrl("file://${toSystemIndependentName(path)}")
-  }
-
-  private fun toSystemIndependentName(fileName: String): String {
-    return fileName.replace('\\', '/')
-  }
-
   @Synchronized
   internal fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl? {
     vfu as VirtualFileUrlImpl

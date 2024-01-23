@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
@@ -74,7 +75,7 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
         builder.modifyEntity(FileOrDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
           VirtualFileUrlManager manager = VirtualFileUrls.getVirtualFileUrlManager(myProject);
           if (filePath != null) {
-            VirtualFileUrl fileUrl = manager.fromPath(filePath);
+            VirtualFileUrl fileUrl = manager.fromUrl(VfsUtilCore.pathToUrl(filePath));
             ent.setFilePath(fileUrl);
           }
           else {

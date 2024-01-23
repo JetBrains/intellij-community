@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.elements.PackagingElement;
@@ -147,7 +148,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     Objects.requireNonNull(filePath, "filePath is not specified");
     FileCopyPackagingElementEntity addedEntity;
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
-    VirtualFileUrl fileUrl = fileUrlManager.fromPath(filePath);
+    VirtualFileUrl fileUrl = fileUrlManager.fromUrl(VfsUtilCore.pathToUrl(filePath));
     if (renamedOutputFileName != null) {
       addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source, entityBuilder -> {
         entityBuilder.setRenamedOutputFileName(renamedOutputFileName);

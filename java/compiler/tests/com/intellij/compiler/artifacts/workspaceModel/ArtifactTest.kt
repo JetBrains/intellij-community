@@ -17,6 +17,7 @@ import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.elements.CompositePackagingElement
@@ -142,7 +143,7 @@ class ArtifactTest : ArtifactsTestCase() {
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
         builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
-          filePath = VirtualFileUrlManager.getInstance(project).fromPath(file2.systemIndependentPath)
+          filePath = VirtualFileUrlManager.getInstance(project).fromUrl(VfsUtilCore.pathToUrl(file2.systemIndependentPath))
         }
       }
     }

@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.impl.url
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.Path
@@ -64,6 +66,11 @@ public open class VirtualFileUrlImpl(public val id: Int, internal val manager: V
  * Do not use io version in production code as FSD filesystems are incompatible with java.io
  */
 @TestOnly
-public fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(absolutePath)
+public fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = absolutePath.toVirtualFileUrl(virtualFileManager)
 
-public fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(toAbsolutePath().toString())
+public fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = toAbsolutePath().toString().toVirtualFileUrl(virtualFileManager)
+
+public fun String.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl {
+  val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(this)
+  return virtualFileManager.fromUrl(url)
+}

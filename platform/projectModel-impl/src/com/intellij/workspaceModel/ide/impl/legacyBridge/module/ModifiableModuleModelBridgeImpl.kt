@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsMetrics
@@ -89,9 +90,11 @@ internal class ModifiableModuleModelBridgeImpl(
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
 
+    val parentPath = PathUtil.getParentPath(canonicalPath)
+    val baseModuleDir = VirtualFileUrlManager.getInstance(project).fromUrl(VfsUtilCore.pathToUrl(parentPath))
     val entitySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(
       project = project,
-      baseModuleDir = VirtualFileUrlManager.getInstance(project).fromPath(PathUtil.getParentPath(canonicalPath)),
+      baseModuleDir = baseModuleDir,
       externalSource = null,
     )
 

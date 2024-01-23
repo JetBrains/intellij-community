@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -179,10 +180,10 @@ class VirtualFileUrlManagerTest {
 
   @Test
   fun `check from path`() {
-    assertEquals("file://", virtualFileManager.fromPath("").url)
+    assertEquals("file://", virtualFileManager.fromUrl(VfsUtilCore.pathToUrl("")).url)
 
     fun assertUrlFromPath(path: String) {
-      assertEquals(VfsUtil.pathToUrl(path), virtualFileManager.fromPath(path).url)
+      assertEquals(VfsUtil.pathToUrl(path), virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path)).url)
     }
 
     assertUrlFromPath("/main/a.jar")

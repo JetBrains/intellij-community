@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus
  * Storage for URLs (in the Virtual File System format) of files that are referenced from workspace model entities. 
  * Use `VirtualFileUrlManager.getInstance(project)` extension function to get instance of this interface inside IDE.
  *
- * [fromUrl] path should be preferred over [fromPath], because the former support files not only from the local file system. 
  * In order to obtain a [VirtualFileUrl] instance for a [VirtualFile][com.intellij.openapi.vfs.VirtualFile], use 
  * `virtualFile.toVirtualFileUrl(virtualFileUrlManager)` extension function.
  */
@@ -29,13 +28,6 @@ public interface VirtualFileUrlManager {
 
   @ApiStatus.Internal
   public fun fromUrlSegments(urls: List<String>): VirtualFileUrl
-
-  /**
-   * Returns an existing or creates a new instance of [VirtualFileUrl] instance for the given path to a file in the local filesystems. 
-   * It's better to use [fromUrl] wherever possible, because it works for files in other filesystems as well, e.g. inside JAR files and for
-   * remove filesystems.
-   */
-  public fun fromPath(path: String): VirtualFileUrl
 
   // This companion object is needed to attach extension methods in the platform:
   //   VirtualFileUrlManager.getInstance(project) and VirtualFileUrlManager.getGlobalInstance()

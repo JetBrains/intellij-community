@@ -6,6 +6,7 @@ import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
@@ -193,7 +194,7 @@ class ImlCreationPropertyTest {
 
       val path = configLocation.baseDirectoryUrl.toPath().resolve(contentRootPath).createDirectories()
 
-      storage addEntity ContentRootEntity(virtualFileManager.fromPath(path.toString()), emptyList(), moduleEntity.entitySource) {
+      storage addEntity ContentRootEntity(virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path.toString())), emptyList(), moduleEntity.entitySource) {
         this.module = moduleEntity
       }
     }

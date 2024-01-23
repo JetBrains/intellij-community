@@ -4,6 +4,7 @@ package com.intellij.ide.scratch.workspace
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.getInstance
 
@@ -13,7 +14,7 @@ internal fun createScratchRootsEntityForProject(project: Project): ScratchRootsE
   val urlManager = VirtualFileUrlManager.getInstance(project)
   val urls = RootType.getAllRootTypes().filter { !it.isHidden }.map {
     scratchFileService.getRootPath(it)
-  }.sorted().map { urlManager.fromPath(it) }.toList()
+  }.sorted().map { urlManager.fromUrl(VfsUtilCore.pathToUrl(it)) }.toList()
 
   return ScratchRootsEntity(urls, ScratchRootsEntitySource)
 }

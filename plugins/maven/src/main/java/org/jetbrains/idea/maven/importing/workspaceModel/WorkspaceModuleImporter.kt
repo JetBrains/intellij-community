@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
@@ -265,10 +266,10 @@ internal class WorkspaceModuleImporter(
 
     if (!inheritCompilerOutput) {
       if (moduleType.containsMain) {
-        compilerOutputUrl = virtualFileUrlManager.fromPath(importFolderHolder.outputPath)
+        compilerOutputUrl = virtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(importFolderHolder.outputPath))
       }
       if (moduleType.containsTest) {
-        compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
+        compilerOutputUrlForTests = virtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(importFolderHolder.testOutputPath))
       }
     }
 

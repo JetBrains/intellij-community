@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -263,7 +264,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val module = ModuleEntity("data", emptyList(), MySource)
     storageBuilder.addEntity(module)
     repeat(1_000) {
-      storageBuilder.addEntity(ContentRootEntity(manager.fromPath("$newFolder/url${it}"), emptyList(), MySource) {
+      storageBuilder.addEntity(ContentRootEntity(manager.fromUrl(VfsUtilCore.pathToUrl("$newFolder/url${it}")), emptyList(), MySource) {
         this.module = module
       })
     }
@@ -272,7 +273,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val replaceModule = ModuleEntity("data", emptyList(), MySource)
     replaceStorage.addEntity(replaceModule)
     repeat(1_000) {
-      replaceStorage.addEntity(ContentRootEntity(manager.fromPath("$newFolder/url${it}"), emptyList(), MySource) {
+      replaceStorage.addEntity(ContentRootEntity(manager.fromUrl(VfsUtilCore.pathToUrl("$newFolder/url${it}")), emptyList(), MySource) {
         this.module = replaceModule
       })
     }
@@ -312,7 +313,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           EntitiesOrphanage.getInstance(projectModel.project).update {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
-                contentRoots = listOf(ContentRootEntity(manager.fromPath("$newFolder/data$counter"), emptyList(), MySource))
+                contentRoots = listOf(ContentRootEntity(manager.fromUrl(VfsUtilCore.pathToUrl("$newFolder/data$counter")), emptyList(), MySource))
               }
             }
           }
@@ -339,7 +340,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @Test
   fun `10_000 orphan source roots to modules`(testInfo: TestInfo) {
-    val newFolder = tempFolder.newRandomDirectory()
+    val newFolder = VfsUtilCore.pathToUrl(tempFolder.newRandomDirectory().toString())
     val manager = VirtualFileUrlManager.getInstance(projectModel.project)
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {
@@ -349,13 +350,13 @@ class WorkspaceModelBenchmarksPerformanceTest {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = listOf(
-                  ContentRootEntity(manager.fromPath("$newFolder/data$counter"), emptyList(), OrphanageWorkerEntitySource) {
+                  ContentRootEntity(manager.fromUrl("$newFolder/data$counter"), emptyList(), OrphanageWorkerEntitySource) {
                     this.sourceRoots = listOf(
-                      SourceRootEntity(manager.fromPath("$newFolder/one$counter"), "", MySource),
-                      SourceRootEntity(manager.fromPath("$newFolder/two$counter"), "", MySource),
-                      SourceRootEntity(manager.fromPath("$newFolder/three$counter"), "", MySource),
-                      SourceRootEntity(manager.fromPath("$newFolder/four$counter"), "", MySource),
-                      SourceRootEntity(manager.fromPath("$newFolder/five$counter"), "", MySource),
+                      SourceRootEntity(manager.fromUrl("$newFolder/one$counter"), "", MySource),
+                      SourceRootEntity(manager.fromUrl("$newFolder/two$counter"), "", MySource),
+                      SourceRootEntity(manager.fromUrl("$newFolder/three$counter"), "", MySource),
+                      SourceRootEntity(manager.fromUrl("$newFolder/four$counter"), "", MySource),
+                      SourceRootEntity(manager.fromUrl("$newFolder/five$counter"), "", MySource),
                     )
                   })
               }
@@ -365,7 +366,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), MySource) {
-                contentRoots = listOf(ContentRootEntity(manager.fromPath("$newFolder/data$counter"), emptyList(), MySource))
+                contentRoots = listOf(ContentRootEntity(manager.fromUrl("$newFolder/data$counter"), emptyList(), MySource))
               }
             }
           }
@@ -396,9 +397,9 @@ class WorkspaceModelBenchmarksPerformanceTest {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = List(10) { contentCounter ->
-                  ContentRootEntity(manager.fromPath("$newFolder/data$contentCounter$counter"), emptyList(), OrphanageWorkerEntitySource) {
+                  ContentRootEntity(manager.fromUrl(VfsUtilCore.pathToUrl("$newFolder/data$contentCounter$counter")), emptyList(), OrphanageWorkerEntitySource) {
                     sourceRoots = List(10) { sourceCounter ->
-                      SourceRootEntity(manager.fromPath("$newFolder/one$sourceCounter$contentCounter$counter"), "", MySource)
+                      SourceRootEntity(manager.fromUrl(VfsUtilCore.pathToUrl("$newFolder/one$sourceCounter$contentCounter$counter")), "", MySource)
                     }
                   }
                 }
@@ -410,7 +411,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), MySource) {
                 contentRoots = List(10) { contentCounter ->
-                  ContentRootEntity(manager.fromPath("$newFolder/data$contentCounter$counter"), emptyList(), OrphanageWorkerEntitySource)
+                  ContentRootEntity(manager.fromUrl(VfsUtilCore.pathToUrl("$newFolder/data$contentCounter$counter")), emptyList(), OrphanageWorkerEntitySource)
                 }
               }
             }

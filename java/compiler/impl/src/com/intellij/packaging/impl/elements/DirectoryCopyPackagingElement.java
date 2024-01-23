@@ -3,6 +3,7 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.DirectoryCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -42,7 +43,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
 
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     Objects.requireNonNull(myFilePath, "filePath is not specified");
-    VirtualFileUrl fileUrl = fileUrlManager.fromPath(myFilePath);
+    VirtualFileUrl fileUrl = fileUrlManager.fromUrl(VfsUtilCore.pathToUrl(myFilePath));
     DirectoryCopyPackagingElementEntity addedEntity = diff.addEntity(DirectoryCopyPackagingElementEntity.create(fileUrl, source));
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
     return addedEntity;

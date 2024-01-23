@@ -207,7 +207,7 @@ internal fun getStorageRoot(imlFileUrl: VirtualFileUrl, customDir: String?, virt
   val moduleRoot = imlFileUrl.parent!!
   if (customDir == null) return moduleRoot
   if (OSAgnosticPathUtil.isAbsolute(customDir)) {
-    return virtualFileManager.fromPath(customDir)
+    return virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(customDir))
   }
   return moduleRoot.append(customDir)
 }

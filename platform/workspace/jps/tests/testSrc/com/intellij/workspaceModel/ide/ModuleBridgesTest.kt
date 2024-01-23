@@ -258,7 +258,7 @@ class ModuleBridgesTest {
         moduleManager.disposeModule(module)
       }
 
-      val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
+      val moduleDirUrl = virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
@@ -289,7 +289,7 @@ class ModuleBridgesTest {
       moduleManager.disposeModule(module)
     }
 
-    val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
+    val moduleDirUrl = virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
     val projectModel = WorkspaceModel.getInstance(project)
 
     project.messageBus.connect(disposableRule.disposable).subscribe(WorkspaceModelTopics.CHANGED,
@@ -377,7 +377,7 @@ class ModuleBridgesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val dir = File(project.basePath, "dir")
-      val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
+      val moduleDirUrl = virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
       val projectModel = WorkspaceModel.getInstance(project)
 
       val projectLocation = getJpsProjectConfigLocation(project)!!

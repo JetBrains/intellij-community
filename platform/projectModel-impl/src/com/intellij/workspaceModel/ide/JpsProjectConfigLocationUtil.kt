@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -16,13 +17,15 @@ fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
     project.basePath?.let {
       val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
       val ideaFolder = project.stateStore.directoryStorePath!!.toVirtualFileUrl(virtualFileUrlManager)
-      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.fromPath(it), ideaFolder)
+      val baseUrl = VfsUtilCore.pathToUrl(it)
+      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.fromUrl(baseUrl), ideaFolder)
     }
   }
   else {
     project.projectFilePath?.let {
       val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-      val iprFile = virtualFileUrlManager.fromPath(it)
+      val projectFileUrl = VfsUtilCore.pathToUrl(it)
+      val iprFile = virtualFileUrlManager.fromUrl(projectFileUrl)
       JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
     }
   }

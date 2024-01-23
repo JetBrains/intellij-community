@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
@@ -174,7 +175,7 @@ open class ArtifactBridge(
   }
 
   override fun setOutputPath(outputPath: String?) {
-    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromPath(it) }
+    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromUrl(VfsUtilCore.pathToUrl(it)) }
     val entity = diff.get(artifactId)
     diff.modifyEntity(entity) {
       this.outputUrl = outputUrl

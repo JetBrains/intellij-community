@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
@@ -63,7 +64,7 @@ internal class ImporterModifiableArtifact(private val project: Project,
   }
 
   override fun setOutputPath(outputPath: String?) {
-    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromPath(it) }
+    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromUrl(VfsUtilCore.pathToUrl(it)) }
     this.outputUrl = outputUrl!!
   }
 
@@ -133,7 +134,7 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
 
     val outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, project)
     val fileManager = VirtualFileUrlManager.getInstance(project)
-    val outputUrl = outputPath?.let { fileManager.fromPath(it) }
+    val outputUrl = outputPath?.let { fileManager.fromUrl(VfsUtilCore.pathToUrl(it)) }
 
     val artifact = ImporterModifiableArtifact(project, uniqueName, artifactType, outputUrl!!, rootElement, externalSource)
 
