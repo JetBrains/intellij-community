@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -31,21 +31,23 @@ public final class ApplicationUtil {
   }
 
   /**
-   * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
+   * Allows interrupting a process which does not perform checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
   public static <T> T runWithCheckCanceled(final @NotNull Callable<? extends T> callable, final @NotNull ProgressIndicator indicator) throws Exception {
-    final Ref<T> result = Ref.create();
-    final Ref<Throwable> error = Ref.create();
+    final Ref<T> result = new Ref<>();
+    final Ref<Throwable> error = new Ref<>();
 
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      try {
-        result.set(callable.call());
-      }
-      catch (Throwable t) {
-        error.set(t);
-      }
-    }, indicator));
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        try {
+          result.set(callable.call());
+        }
+        catch (Throwable t) {
+          error.set(t);
+        }
+      }, indicator);
+    });
 
     try {
       runWithCheckCanceled(future, indicator);
