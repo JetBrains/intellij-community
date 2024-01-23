@@ -1,0 +1,1 @@
+ty<the_ref>pe my_type[T: str] = list[T]
