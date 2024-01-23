@@ -32,11 +32,16 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
     if (isIgnoredSubclass(psiClass)) return emptyArray()
     val identifier = aClass.uastAnchor.sourcePsiElement ?: return emptyArray()
     val message = JvmAnalysisBundle.message("jvm.inspections.serializable.class.without.serialversionuid.problem.descriptor")
-    return arrayOf(manager.createProblemDescriptor(identifier, message, isOnTheFly, if (isOnTheFly) arrayOf(createFix(psiClass)) else null,
-      ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+    return arrayOf(manager.createProblemDescriptor(
+      identifier,
+      message,
+      isOnTheFly,
+      if (isOnTheFly) createFix(psiClass).toTypedArray() else null,
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    ))
   }
 
-  private fun createFix(psiClass: PsiClass): LocalQuickFix {
+  private fun createFix(psiClass: PsiClass): List<LocalQuickFix> {
     val serialUid = SerialVersionUIDBuilder.computeDefaultSUID(psiClass)
 
     val project = psiClass.project
@@ -45,7 +50,7 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
     }
     else emptyList()
 
-    val action = createAddFieldActions(psiClass, fieldRequest(
+    val actions = createAddFieldActions(psiClass, fieldRequest(
       fieldName = HardcodedMethodConstants.SERIAL_VERSION_UID,
       annotations = annotations,
       modifiers = listOf(JvmModifier.PRIVATE, JvmModifier.STATIC),
@@ -53,7 +58,7 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
       targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
       initializer = JvmValue.createLongValue(serialUid),
       isConstant = true
-    )).first()
-    return IntentionWrapper.wrapToQuickFix(action, psiClass.containingFile)
+    ))
+    return IntentionWrapper.wrapToQuickFixes(actions, psiClass.containingFile)
   }
 }
