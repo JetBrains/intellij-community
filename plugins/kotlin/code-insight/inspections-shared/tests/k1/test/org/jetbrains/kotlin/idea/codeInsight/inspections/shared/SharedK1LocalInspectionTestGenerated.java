@@ -68,6 +68,296 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody")
+    public abstract static class ControlFlowWithEmptyBody extends AbstractSharedK1LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/also")
+        public static class Also extends AbstractSharedK1LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("anonymousFunction.kt")
+            public void testAnonymousFunction() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/anonymousFunction.kt");
+            }
+
+            @TestMetadata("anonymousFunctionHasStatement.kt")
+            public void testAnonymousFunctionHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/anonymousFunctionHasStatement.kt");
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/block.kt");
+            }
+
+            @TestMetadata("block2.kt")
+            public void testBlock2() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/block2.kt");
+            }
+
+            @TestMetadata("blockHasComment.kt")
+            public void testBlockHasComment() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/blockHasComment.kt");
+            }
+
+            @TestMetadata("blockHasStatement.kt")
+            public void testBlockHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/blockHasStatement.kt");
+            }
+
+            @TestMetadata("blockHasStatement2.kt")
+            public void testBlockHasStatement2() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/blockHasStatement2.kt");
+            }
+
+            @TestMetadata("functionReference.kt")
+            public void testFunctionReference() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/functionReference.kt");
+            }
+
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/also/implicitReceiver.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/doWhile")
+        public static class DoWhile extends AbstractSharedK1LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/doWhile/block.kt");
+            }
+
+            @TestMetadata("blockHasComment.kt")
+            public void testBlockHasComment() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/doWhile/blockHasComment.kt");
+            }
+
+            @TestMetadata("blockHasStatement.kt")
+            public void testBlockHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/doWhile/blockHasStatement.kt");
+            }
+
+            @TestMetadata("single.kt")
+            public void testSingle() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/doWhile/single.kt");
+            }
+
+            @TestMetadata("singleHasStatement.kt")
+            public void testSingleHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/doWhile/singleHasStatement.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/for")
+        public static class For extends AbstractSharedK1LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/for/block.kt");
+            }
+
+            @TestMetadata("blockHasComment.kt")
+            public void testBlockHasComment() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/for/blockHasComment.kt");
+            }
+
+            @TestMetadata("blockHasStatement.kt")
+            public void testBlockHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/for/blockHasStatement.kt");
+            }
+
+            @TestMetadata("single.kt")
+            public void testSingle() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/for/single.kt");
+            }
+
+            @TestMetadata("singleHasStatement.kt")
+            public void testSingleHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/for/singleHasStatement.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/if")
+        public static class If extends AbstractSharedK1LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/block.kt");
+            }
+
+            @TestMetadata("blockHasBothComments.kt")
+            public void testBlockHasBothComments() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/blockHasBothComments.kt");
+            }
+
+            @TestMetadata("blockHasComment.kt")
+            public void testBlockHasComment() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/blockHasComment.kt");
+            }
+
+            @TestMetadata("blockHasCommentWithElse.kt")
+            public void testBlockHasCommentWithElse() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/blockHasCommentWithElse.kt");
+            }
+
+            @TestMetadata("blockHasElse.kt")
+            public void testBlockHasElse() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/blockHasElse.kt");
+            }
+
+            @TestMetadata("blockHasStatement.kt")
+            public void testBlockHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/blockHasStatement.kt");
+            }
+
+            @TestMetadata("elseIf.kt")
+            public void testElseIf() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/elseIf.kt");
+            }
+
+            @TestMetadata("single.kt")
+            public void testSingle() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/single.kt");
+            }
+
+            @TestMetadata("singleHasStatement.kt")
+            public void testSingleHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/if/singleHasStatement.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse")
+        public static class IfElse extends AbstractSharedK1LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/block.kt");
+            }
+
+            @TestMetadata("blockHasBothComments.kt")
+            public void testBlockHasBothComments() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/blockHasBothComments.kt");
+            }
+
+            @TestMetadata("blockHasComment.kt")
+            public void testBlockHasComment() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/blockHasComment.kt");
+            }
+
+            @TestMetadata("blockHasCommentWithIf.kt")
+            public void testBlockHasCommentWithIf() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/blockHasCommentWithIf.kt");
+            }
+
+            @TestMetadata("blockHasStatement.kt")
+            public void testBlockHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/blockHasStatement.kt");
+            }
+
+            @TestMetadata("single.kt")
+            public void testSingle() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/single.kt");
+            }
+
+            @TestMetadata("singleHasStatement.kt")
+            public void testSingleHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/singleHasStatement.kt");
+            }
+
+            @TestMetadata("usedAsExpression.kt")
+            public void testUsedAsExpression() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/usedAsExpression.kt");
+            }
+
+            @TestMetadata("usedAsExpression2.kt")
+            public void testUsedAsExpression2() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/usedAsExpression2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/when")
+        public static class When extends AbstractSharedK1LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/when/block.kt");
+            }
+
+            @TestMetadata("block2.kt")
+            public void testBlock2() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/when/block2.kt");
+            }
+
+            @TestMetadata("blockHasComment.kt")
+            public void testBlockHasComment() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/when/blockHasComment.kt");
+            }
+
+            @TestMetadata("blockHasStatement.kt")
+            public void testBlockHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/when/blockHasStatement.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody/while")
+        public static class While extends AbstractSharedK1LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("block.kt")
+            public void testBlock() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/while/block.kt");
+            }
+
+            @TestMetadata("blockHasComment.kt")
+            public void testBlockHasComment() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/while/blockHasComment.kt");
+            }
+
+            @TestMetadata("blockHasStatement.kt")
+            public void testBlockHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/while/blockHasStatement.kt");
+            }
+
+            @TestMetadata("single.kt")
+            public void testSingle() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/while/single.kt");
+            }
+
+            @TestMetadata("singleHasStatement.kt")
+            public void testSingleHasStatement() throws Exception {
+                runTest("../testData/inspectionsLocal/controlFlowWithEmptyBody/while/singleHasStatement.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/delegationToVarProperty")
     public static class DelegationToVarProperty extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

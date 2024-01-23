@@ -307,5 +307,13 @@
                      language="kotlin"
                      key="print.should.be.replaced.with.logging" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ControlFlowWithEmptyBodyInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.control.flow.with.empty.body.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
