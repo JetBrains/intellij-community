@@ -178,6 +178,10 @@ public final class ChangeSet {
     return accessChanges(() -> myChanges.size() == 1 && getFirstChange() instanceof PutLabelChange);
   }
 
+  public boolean isSystemLabelOnly() {
+    return accessChanges(() -> myChanges.size() == 1 && getFirstChange() instanceof PutSystemLabelChange);
+  }
+
   public Change getFirstChange() {
     return accessChanges(() -> myChanges.get(0));
   }

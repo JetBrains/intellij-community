@@ -34,10 +34,14 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     if (scope is ActivityScope.File) {
       val path = gateway.getPathOrUrl(scope.file)
       gateway.registerUnsavedDocuments(facade)
-      facade.collectChanges(projectId, path, scopeFilter) { changeSet -> result.add(changeSet.toActivityItem(scope)) }
+      facade.collectChanges(projectId, path, scopeFilter) { changeSet ->
+        if (changeSet.isSystemLabelOnly) return@collectChanges
+        result.add(changeSet.toActivityItem(scope))
+      }
     }
     else {
       for (changeSet in facade.changes) {
+        if (changeSet.isSystemLabelOnly) continue
         if (changeSet.isLabelOnly && !changeSet.changes.any { it.affectsProject(projectId) }) continue
         result.add(changeSet.toActivityItem(scope))
       }
@@ -122,7 +126,8 @@ private fun LocalHistoryFacade.onChangeSetFinished(project: Project, gateway: Id
   }
 }
 
-val ACTIVITY_PRESENTATION_PROVIDER_EP = ExtensionPointName.create<ActivityPresentationProvider>("com.intellij.history.activityPresentationProvider")
+val ACTIVITY_PRESENTATION_PROVIDER_EP = ExtensionPointName.create<ActivityPresentationProvider>(
+  "com.intellij.history.activityPresentationProvider")
 
 private val USER_LABEL_COLOR = JBColor(Color(230, 230, 250), Color(89, 96, 74))
 private fun intToColor(color: Int) = color.takeIf { it != -1 }?.let { Color(it) } ?: USER_LABEL_COLOR
