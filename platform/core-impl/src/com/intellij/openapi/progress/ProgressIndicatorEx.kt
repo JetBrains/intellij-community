@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProgressIndicatorForCollections")
 package com.intellij.openapi.progress
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
 import org.jetbrains.annotations.ApiStatus
 
+@Deprecated("Don't use this. Migrate to ProgressReporter")
 @JvmSynthetic
 inline fun <Y> ProgressIndicator.withPushPop(action: () -> Y): Y {
   val wasIndeterminate = isIndeterminate
@@ -20,6 +21,7 @@ inline fun <Y> ProgressIndicator.withPushPop(action: () -> Y): Y {
   }
 }
 
+@Deprecated("Use `com.intellij.platform.util.progress.forEachWithProgress`")
 @JvmSynthetic
 inline fun <Y> Collection<Y>.forEachWithProgress(indicator: ProgressIndicator,
                                                  action: (Y, ProgressIndicator) -> Unit) {
@@ -46,6 +48,7 @@ inline fun <Y> Collection<Y>.forEachWithProgress(indicator: ProgressIndicator,
   }
 }
 
+@Deprecated("Use `com.intellij.platform.util.progress.mapWithProgress`")
 @JvmSynthetic
 inline fun <Y, R> Collection<Y>.mapWithProgress(indicator: ProgressIndicator,
                                                 action: (Y, ProgressIndicator) -> R): List<R> {
@@ -102,6 +105,7 @@ internal fun ProgressIndicator.scaleFraction(
  * the parent [parentProgress] into [childProgress] while running the
  * [action]. It may pass either of the progresses to the action
  */
+@Deprecated("Migrate to `reportProgress`/`reportSequentialProgress`")
 inline fun <Y> runUnderNestedProgressAndRelayMessages(parentProgress: ProgressIndicator,
                                                       childProgress: ProgressIndicator,
                                                       crossinline action: (ProgressIndicator) -> Y): Y {
@@ -134,6 +138,7 @@ inline fun <Y> runUnderNestedProgressAndRelayMessages(parentProgress: ProgressIn
 /**
  * A best effort way to bind a cancellation of one progress with the other.
  */
+@Deprecated("Use coroutines")
 inline fun <Y> runUnderBoundCancellation(cancelOf: ProgressIndicator,
                                          cancels: ProgressIndicator,
                                          crossinline action: () -> Y) : Y {
@@ -159,7 +164,8 @@ inline fun <Y> runUnderBoundCancellation(cancelOf: ProgressIndicator,
  * Runs an action on [parentProgress] with the state delegate attached for the
  * time [action] runs.
  */
-inline fun <Y> runWithStateDelegate(parentProgress: AbstractProgressIndicatorExBase,
+@PublishedApi
+internal inline fun <Y> runWithStateDelegate(parentProgress: AbstractProgressIndicatorExBase,
                                     delegate: AbstractProgressIndicatorExBase,
                                     action: () -> Y): Y {
   parentProgress.addStateDelegate(delegate)
