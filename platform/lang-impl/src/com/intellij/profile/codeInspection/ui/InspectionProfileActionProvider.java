@@ -50,11 +50,11 @@ public abstract class InspectionProfileActionProvider {
    */
   public void deleteInspection(InspectionProfileEntry entry, String shortName) {}
 
-  public record ActionToRegister(@NotNull AnAction action, @NotNull String actionId) {}
+  public record ProfilePanelAction(@NotNull AnAction action, @NotNull String actionId) {}
 
   /**
-   * @return list of actions registered in the inspection profile configurable UI.<br>
+   * @return list of actions to be stored in the inspection profile configurable UI.<br>
    * Such actions can be called from inspection descriptions with {@code <a href="action:id"></a>}.
    */
-  public List<ActionToRegister> getActionsToRegister(SingleInspectionProfilePanel panel) { return List.of(); }
+  public List<ProfilePanelAction> getProfilePanelActions(SingleInspectionProfilePanel panel) { return List.of(); }
 }

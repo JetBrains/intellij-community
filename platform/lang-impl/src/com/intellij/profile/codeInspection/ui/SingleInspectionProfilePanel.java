@@ -1150,7 +1150,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
           else if (url.getScheme().equals("action") && panel != null) {
             final var action = InspectionProfileActionProvider.EP_NAME.getExtensionList().stream()
-              .flatMap(provider -> provider.getActionsToRegister(panel).stream())
+              .flatMap(provider -> provider.getProfilePanelActions(panel).stream())
               .filter(a -> a.actionId().equals(url.getAuthority()))
               .findFirst();
             if (action.isPresent()) {

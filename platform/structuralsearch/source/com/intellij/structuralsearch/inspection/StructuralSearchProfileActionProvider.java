@@ -56,8 +56,8 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   }
 
   @Override
-  public List<ActionToRegister> getActionsToRegister(SingleInspectionProfilePanel panel) {
-    return List.of(new ActionToRegister(getActionGroup(panel), "ssr.profile.action.provider.add.group"));
+  public List<ProfilePanelAction> getProfilePanelActions(SingleInspectionProfilePanel panel) {
+    return List.of(new ProfilePanelAction(getActionGroup(panel), "ssr.profile.action.provider.add.group"));
   }
 
   @NotNull
