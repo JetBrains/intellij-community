@@ -114,7 +114,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      projectWizardJdkComboBox(context, sdkProperty, sdkDownloadTaskProperty, StdModuleTypes.JAVA.id)
+      projectWizardJdkComboBox(context, sdkProperty, sdkDownloadTaskProperty, StdModuleTypes.JAVA.id, context.projectJdk)
     }.bottomGap(BottomGap.SMALL)
   }
 
