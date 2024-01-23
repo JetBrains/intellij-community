@@ -8,10 +8,16 @@ import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
@@ -20,6 +26,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
 import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
 
@@ -45,42 +52,57 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Any?
     val stamp = editor.getModificationStamp()
     if (stamp != null && cached?.modificationStamp == stamp) return CodeVisionState.Ready(cached.codeVisionEntries)
 
-    return runReadAction {
-      val file = editor.virtualFile.findPsiFile(project) ?: return@runReadAction CodeVisionState.READY_EMPTY
+    try {
+      return ProgressManager.getInstance().runProcess(
+        Computable { runBlockingCancellable { readAction { recomputeLenses(editor, project, stamp, cacheService) } } },
+        EmptyProgressIndicator()
+      )
+    } catch (e: ProcessCanceledException) {
+      return CodeVisionState.NotReady
+    }
+  }
 
-      if (file.project.isDefault) return@runReadAction CodeVisionState.READY_EMPTY
-      if (!acceptsFile(file)) return@runReadAction CodeVisionState.READY_EMPTY
+  @RequiresReadLock
+  private fun recomputeLenses(editor: Editor,
+                              project: Project,
+                              stamp: Long?,
+                              cacheService: DaemonBoundCodeVisionCacheService): CodeVisionState {
+    val file = editor.virtualFile?.findPsiFile(project) ?: return CodeVisionState.READY_EMPTY
 
-      if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest()) return@runReadAction CodeVisionState.READY_EMPTY
+    if (file.project.isDefault) return CodeVisionState.READY_EMPTY
+    if (!acceptsFile(file)) return CodeVisionState.READY_EMPTY
 
-      val virtualFile = file.viewProvider.virtualFile
-      if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return@runReadAction CodeVisionState.READY_EMPTY
+    if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest()) return CodeVisionState.READY_EMPTY
 
-      val renamedElementToSkip = file.getUserData(REFACTORING_DATA_KEY)?.let { when (it) {
+    val virtualFile = file.viewProvider.virtualFile
+    if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return CodeVisionState.READY_EMPTY
+
+    val renamedElementToSkip = file.getUserData(REFACTORING_DATA_KEY)?.let {
+      when (it) {
         is SuggestedRenameData -> it.declaration
         else -> null
-      }}
-
-      val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
-      val traverser = SyntaxTraverser.psiTraverser(file)
-      for (element in traverser) {
-        if (!acceptsElement(element)) continue
-        if (element == renamedElementToSkip) continue
-        if (!InlayHintsUtils.isFirstInLine(element)) continue
-        val hint = getHint(element, file)
-        if (hint == null) continue
-        val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-        lenses.add(range to ClickableTextCodeVisionEntry(hint, id, { event, sourceEditor ->
-          handleClick(sourceEditor, element, event)
-          logClickToFUS(element, hint)
-        }))
       }
-
-      stamp?.let {
-        cacheService.storeVisionDataForEditor(editor, id, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(lenses, it))
-      }
-      return@runReadAction CodeVisionState.Ready(lenses)
     }
+
+    val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
+    val traverser = SyntaxTraverser.psiTraverser(file)
+    for (element in traverser) {
+      if (!acceptsElement(element)) continue
+      if (element == renamedElementToSkip) continue
+      if (!InlayHintsUtils.isFirstInLine(element)) continue
+      val hint = getHint(element, file)
+      if (hint == null) continue
+      val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+      lenses.add(range to ClickableTextCodeVisionEntry(hint, id, { event, sourceEditor ->
+        handleClick(sourceEditor, element, event)
+        logClickToFUS(element, hint)
+      }))
+    }
+
+    stamp?.let {
+      cacheService.storeVisionDataForEditor(editor, id, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(lenses, it))
+    }
+    return CodeVisionState.Ready(lenses)
   }
 
   open fun logClickToFUS(element: PsiElement, hint: @Nls String) {}
