@@ -81,10 +81,8 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun uploadToS3() {
-    if (remoteCache.shouldBeSyncedToS3) {
-      spanBuilder("aws s3 sync").useWithScopeBlocking {
-        awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", "$s3Folder", "s3://intellij-jps-cache", returnStdOut = false)
-      }
+    spanBuilder("aws s3 sync").useWithScopeBlocking {
+      awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", "$s3Folder", "s3://intellij-jps-cache", returnStdOut = false)
     }
   }
 
@@ -98,9 +96,7 @@ internal class PortableCompilationCacheUploader(
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
-    if (remoteCache.shouldBeSyncedToS3) {
-      moveFile(zipFile, s3Folder.resolve(cachePath))
-    }
+    moveFile(zipFile, s3Folder.resolve(cachePath))
   }
 
   private fun uploadMetadata() {
@@ -108,9 +104,7 @@ internal class PortableCompilationCacheUploader(
     spanBuilder("upload metadata").setAttribute("path", metadataPath).useWithScopeBlocking {
       val sourceStateFile = sourcesStateProcessor.sourceStateFile
       uploader.upload(metadataPath, sourceStateFile)
-      if (remoteCache.shouldBeSyncedToS3) {
         moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
-      }
     }
   }
 
@@ -134,9 +128,7 @@ internal class PortableCompilationCacheUploader(
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
         }
-        if (remoteCache.shouldBeSyncedToS3) {
-          moveFile(zipFile, s3Folder.resolve(sourcePath))
-        }
+        moveFile(zipFile, s3Folder.resolve(sourcePath))
       }
     }
   }
