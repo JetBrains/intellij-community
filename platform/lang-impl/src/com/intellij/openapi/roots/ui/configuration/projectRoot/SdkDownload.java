@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -40,8 +41,9 @@ public interface SdkDownload {
   }
 
   /**
-   * Shows the custom SDK download UI based on selected SDK in parent component. The implementation should do the
-   * {@param callback} with an information on the new SDK via {@link SdkDownloadTask} instance.
+   * Shows the custom SDK download UI based on the selected SDK in the parent component.
+   * The implementation should do the {@param callback} with an information on the new SDK
+   * via {@link SdkDownloadTask} instance.
    *
    * @param sdkTypeId          the same {@param sdkTypeId} as was used in the {@link #supportsDownload(SdkTypeId)}
    * @param sdkModel           the list of SDKs currently displayed in the configuration dialog.
@@ -57,4 +59,25 @@ public interface SdkDownload {
                       @NotNull JComponent parentComponent,
                       @Nullable Sdk selectedSdk,
                       @NotNull Consumer<? super SdkDownloadTask> sdkCreatedCallback);
+
+  /**
+   * Shows the custom SDK download UI based on the selected SDK in the parent component.
+   * Contrary to {@link #showDownloadUI(SdkTypeId, SdkModel, JComponent, Sdk, Consumer)} there should not be
+   * side effects related to the SDK selection.
+   *
+   * @param sdkTypeId          the same {@param sdkTypeId} as was used in the {@link #supportsDownload(SdkTypeId)}
+   * @param sdkModel           the list of SDKs currently displayed in the configuration dialog.
+   * @param parentComponent    the parent component for showing the dialog.
+   * @param selectedSdk        current selected sdk in parentComponent
+   *
+   * @return The selected {@link SdkDownloadTask}
+   */
+  default SdkDownloadTask pickSdk(@NotNull SdkTypeId sdkTypeId,
+                          @NotNull SdkModel sdkModel,
+                          @NotNull JComponent parentComponent,
+                          @Nullable Sdk selectedSdk) {
+    AtomicReference<SdkDownloadTask> task = new AtomicReference<>();
+    showDownloadUI(sdkTypeId, sdkModel, parentComponent, selectedSdk, t -> { task.set(t); });
+    return task.get();
+  }
 }

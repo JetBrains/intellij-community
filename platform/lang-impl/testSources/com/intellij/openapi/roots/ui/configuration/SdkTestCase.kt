@@ -170,6 +170,11 @@ abstract class SdkTestCase : LightPlatformTestCase() {
         override fun getPlannedHomeDir() = sdk.homePath!!
       })
     }
+
+    override fun pickSdk(sdkTypeId: SdkTypeId,
+                         sdkModel: SdkModel,
+                         parentComponent: JComponent,
+                         selectedSdk: Sdk?): SdkDownloadTask? = null
   }
 
   object TestSdkGenerator {

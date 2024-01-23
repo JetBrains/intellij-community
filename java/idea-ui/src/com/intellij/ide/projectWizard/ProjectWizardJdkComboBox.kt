@@ -339,12 +339,11 @@ private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
 private fun addDownloadItem(extension: SdkDownload, combo: ComboBox<ProjectWizardJdkIntent>) {
   val config = ProjectStructureConfigurable.getInstance(DefaultProjectFactory.getInstance().defaultProject)
   combo.popup?.hide()
-  extension.showDownloadUI(JavaSdk.getInstance(), config.projectJdksModel, combo, null) { task: SdkDownloadTask ->
-    val index = (0..combo.itemCount).firstOrNull {
-      val item = combo.getItemAt(it)
-      item !is NoJdk && item !is DownloadJdk
-    } ?: 0
-    combo.insertItemAt(DownloadJdk(task), index)
-    combo.selectedIndex = index
-  }
+  val task = extension.pickSdk(JavaSdk.getInstance(), config.projectJdksModel, combo, null)
+  val index = (0..combo.itemCount).firstOrNull {
+    val item = combo.getItemAt(it)
+    item !is NoJdk && item !is DownloadJdk
+  } ?: 0
+  combo.insertItemAt(DownloadJdk(task), index)
+  combo.selectedIndex = index
 }
