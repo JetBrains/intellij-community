@@ -96,23 +96,27 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
 
   suspend fun getGAVIndexForRepository(repo: MavenRepositoryInfo): MavenGAVIndex? {
     if (repo.kind == RepositoryKind.REMOTE) return null
-    return cs.async(Dispatchers.IO) {
-      val dir = getDirForMavenIndex(repo)
-      mutex.withLock {
-        inMemoryIndices[dir.toString()]?.let { return@async it }
-        return@async MavenLocalGavIndexImpl(repo)
-          .also { inMemoryIndices[dir.toString()] = it }
-          .also {
-            //IDEA-342984
-            val skipUpdate = ApplicationManager.getApplication().isUnitTestMode
-                             && Registry.`is`("maven.skip.gav.update.in.unit.test.mode")
-            if (!skipUpdate) {
-              scheduleUpdateIndexContent(listOf(it), false)
-            }
+    val dir = getDirForMavenIndex(repo)
+    val result = mutex.withLock {
+      inMemoryIndices[dir.toString()]?.let { return@withLock Pair(false, it) }
+      MavenLocalGavIndexImpl(repo)
+        .also { inMemoryIndices[dir.toString()] = it }
+        .let { return@withLock Pair(true, it) }
+    }
+    if (result.first)
+      result.second.also { gavIndex ->
+        //IDEA-342984
+        val skipUpdate = ApplicationManager.getApplication().isUnitTestMode
+                         && Registry.`is`("maven.skip.gav.update.in.unit.test.mode")
+        if (!skipUpdate) {
+          (gavIndex as? MavenUpdatableIndex)?.let {
+            scheduleUpdateIndexContent(listOf(gavIndex), false)
           }
+        }
       }
-    }.await()
+    return result.second
   }
+
 
   @TestOnly
   fun setTestIndicesDir(myTestIndicesDir: Path?) {
@@ -315,13 +319,13 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     }
 
     inMemoryUpdate.forEach { idx ->
-      cs.launch(Dispatchers.IO) {
+      cs.async(Dispatchers.IO) {
+        MavenLog.LOG.info("Starting update maven index for ${idx.repository}")
         val indicator = MavenProgressIndicator(null, null)
         try {
           (idx as MavenUpdatableIndex).update(indicator, explicit)
         }
         catch (ignore: MavenProcessCanceledException) {
-
         }
         finally {
           gavUpdatingIndixes.remove(idx)
@@ -332,7 +336,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     luceneUpdate.forEach { idx ->
       luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(idx.repository.url, null, null,
                                                                         MavenIndexUpdateState.State.INDEXING)
-      cs.launch {
+      cs.async {
         try {
           val indicator = MavenProgressIndicator(null, null)
           idx.update(indicator, explicit)

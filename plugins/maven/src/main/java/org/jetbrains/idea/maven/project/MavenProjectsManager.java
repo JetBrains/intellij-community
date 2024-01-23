@@ -257,10 +257,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     fireActivated();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       listenForExternalChanges();
-      MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(()->{
-        MavenIndicesManager.getInstance(myProject).scheduleUpdateLocalGavContent(false);
-        return null;
-      });
+      MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList();
     }
   }
 
