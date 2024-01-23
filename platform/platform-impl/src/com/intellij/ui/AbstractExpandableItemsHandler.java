@@ -41,23 +41,23 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private final JComponent myTipComponent = new JComponent() {
     @Override
     protected void paintComponent(Graphics g) {
-      Graphics2D g2d = (Graphics2D)g.create();
-      try {
-        if (myClip != null) {
-          g2d.clip(myClip);
-        }
-        if (myImage != null) {
-          UIUtil.drawImage(g2d, myImage, 0, 0, null);
-        }
-        else if (myKey != null) {
+      if (myImage != null) {
+        UIUtil.drawImage(g, myImage, 0, 0, null);
+      }
+      else if (myKey != null) {
           ToolTipDetails details = calcToolTipDetails(myKey);
           if (details != null) {
-            details.painter.accept(g2d);
-          }
+            Graphics2D g2d = (Graphics2D)g.create();
+            try {
+              if (details.clip != null) {
+                g2d.clip(details.clip);
+              }
+              details.painter.accept(g2d);
+            }
+            finally {
+                g2d.dispose();
+            }
         }
-      }
-      finally {
-        g2d.dispose();
       }
     }
   };
@@ -67,7 +67,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
-  private Shape myClip;
   private int borderArc = 0;
 
   public static void setRelativeBounds(@NotNull Component parent, @NotNull Rectangle bounds,
@@ -283,21 +282,36 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     else {
       myKeyItemBounds = details.keyItemBounds;
       Rectangle bounds = details.bounds;
+      Shape clip = details.clip;
       myTipComponent.setPreferredSize(bounds.getSize());
       // We cannot use buffered rendering in rem-dev case, cause backend might not have the required fonts to render text
       if (!AppMode.isRemoteDevHost()) {
-        // We use an 'opaque' image type (RGB, not ARGB) here to support subpixel-antialiased text
-        myImage = UIUtil.createImage(myComponent, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = myImage.createGraphics();
-        details.painter.accept(g);
-        g.dispose();
+        myImage = createPopupContent(bounds, details.painter, clip);
       }
-      myClip = details.clip;
-      myPopup.setTransparent(myClip != null);
+      myPopup.setTransparent(clip != null);
       myPopup.setBounds(bounds);
       myPopup.onAncestorFocusLost(() -> onFocusLost());
       myPopup.setVisible(noIntersections(bounds));
       repaintKeyItem();
+    }
+  }
+
+  private BufferedImage createPopupContent(Rectangle bounds, Consumer<Graphics2D> painter, Shape clip) {
+    // We paint to an 'opaque' image type (RGB, not ARGB) initially to support subpixel-antialiased text
+    BufferedImage img = UIUtil.createImage(myComponent, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g = img.createGraphics();
+    painter.accept(g);
+    g.dispose();
+    if (clip == null) {
+      return img;
+    }
+    else {
+      BufferedImage clippedImg = UIUtil.createImage(myComponent, bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g2 = clippedImg.createGraphics();
+      g2.clip(clip);
+      UIUtil.drawImage(g2, img, 0, 0, null);
+      g2.dispose();
+      return clippedImg;
     }
   }
 
