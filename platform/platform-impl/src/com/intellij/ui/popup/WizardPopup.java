@@ -2,8 +2,9 @@
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
@@ -111,8 +112,24 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       }
     };
 
+    initActionShortcutDelegates(aStep, popupComponent);
 
+  }
 
+  private void initActionShortcutDelegates(@NotNull PopupStep<?> step, @NotNull JComponent component) {
+    var itemsSource = step.getMnemonicNavigationFilter();
+    if (itemsSource == null) {
+      return;
+    }
+    for (Object item : itemsSource.getValues()) {
+      if (item instanceof ShortcutProvider itemShortcut) {
+        var shortcut = itemShortcut.getShortcut();
+        if (shortcut != null) {
+          var action = new ActionShortcutDelegate(item, shortcut);
+          action.registerCustomShortcutSet(component, this);
+        }
+      }
+    }
   }
 
   protected @NotNull JComponent createPopupComponent(JComponent content) {
@@ -503,6 +520,34 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       super.setOk(ok);
     } else {
       getParent().setOk(ok);
+    }
+  }
+
+  private class ActionShortcutDelegate extends DumbAwareAction {
+
+    private final Object myItem;
+
+    ActionShortcutDelegate(@NotNull Object item, @NotNull ShortcutSet shortcut) {
+      myItem = item;
+      setShortcutSet(shortcut);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      onSelectByMnemonic(myItem);
+    }
+
+    @SuppressWarnings("HardCodedStringLiteral") // used only for debugging here
+    @Override
+    public String toString() {
+      return "ActionShortcutDelegate{" +
+             "myItem=" + myItem +
+             "} " + super.toString();
     }
   }
 }
