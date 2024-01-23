@@ -35,7 +35,7 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
       val keymap = Keymap(wk.id, wk.name, shortcuts)
       val pane = KeymapPane(keymap).apply {
         pane.addMouseListener(object : MouseAdapter() {
-          override fun mouseClicked(e: MouseEvent?) {
+          override fun mousePressed(e: MouseEvent?) {
             activePane(this@apply)
           }
         })
@@ -68,10 +68,8 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
     activeKeymap = pages[0]
     activePane(activeKeymap)
 
-    val backAction = controller.goBackAction?.let {
-      controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
-        it.invoke()
-      }
+    val backAction = controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
+      controller.goToThemePage()
     }
 
     val continueAction = controller.createDefaultButton(ImportSettingsBundle.message("wizard.button.continue")) {
@@ -79,12 +77,11 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
       controller.goToPluginPage()
     }
 
-    val buttons: List<JButton> = backAction?.let {
+    val buttons: List<JButton> =
       if (SystemInfo.isMac) {
         listOf(backAction, continueAction)
       }
       else listOf(continueAction, backAction)
-    } ?: listOf(continueAction)
 
     contentPage = WizardPagePane(centralPane, buttons)
   }

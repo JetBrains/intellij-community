@@ -76,12 +76,7 @@ class WizardPluginsPage(val controller: WizardController) : OnboardingPage {
       border = JBUI.Borders.empty(10, 0)
     }
     addToCenter(
-      object : JPanel(){
-        override fun getPreferredSize(): Dimension {
-          val preferredSize = super.getPreferredSize()
-          return Dimension(preferredSize.width, 0)
-        }
-      }.apply {
+      JPanel().apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         preferredSize = Dimension(preferredSize.width, 0)
 

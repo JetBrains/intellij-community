@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.openapi.components.service
 import com.intellij.util.SystemProperties
 import com.jetbrains.rd.util.reactive.*
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import javax.swing.Icon
 
 interface WizardProvider {
@@ -32,16 +34,32 @@ interface WizardService {
 }
 
 interface ThemeService {
-  val themeList: List<WizardTheme>
-  fun getEditorImageById(themeId: String, isDark: Boolean): Icon?
+  enum class Theme(val themeName: @Nls String, val isDark: Boolean) {
+    Dark(ImportSettingsBundle.message("theme.page.dark"), true),
+    Light(ImportSettingsBundle.message("theme.page.light"),false)
+  }
+  companion object {
+    private val themes = listOf(Theme.Dark, Theme.Light)
+  }
 
-  fun chosen(themeId: String, isDark: Boolean)
+  val themeList: List<Theme>
+    get() = themes
+
+  var currentTheme: Theme
+
+  val schemesList: List<WizardScheme>
+
+  fun finish(schemeId: String, theme: Theme)
+
+  fun updateScheme(schemeId: String)
 }
 
-interface WizardTheme {
-  val id: String
-  val name: @Nls String
-}
+data class WizardScheme (
+  val id: String,
+  val name: @Nls String,
+  val icon: Icon,
+  val backgroundColor: Color
+  )
 
 interface PluginService {
   val plugins: List<WizardPlugin>

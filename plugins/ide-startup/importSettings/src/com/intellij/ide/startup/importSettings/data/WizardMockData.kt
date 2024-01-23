@@ -2,6 +2,11 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.LafManager
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.JBColor
+import com.intellij.util.ui.StartupUiUtil
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.coroutines.launch
@@ -29,17 +34,44 @@ class WizardServiceTest : WizardService {
 }
 
 class ThemeServiceImpl : ThemeService {
-  override val themeList: List<WizardTheme>
-    get() = emptyList()
 
-  override fun getEditorImageById(themeId: String, isDark: Boolean): Icon? {
-    return null
+  private var vs: @NlsSafe String = "Visual Studio"
+  private var rider: @NlsSafe String = "Rider"
+  private var IDEA: @NlsSafe String = "IDEA"
+
+  private val map = mapOf(
+    rider to WizardScheme(rider, rider, IconLoader.getIcon("wizardPreviews/rider.png", this.javaClass), JBColor(0xFFFFFF, 0x262626)),
+    vs to WizardScheme(vs, vs, IconLoader.getIcon("wizardPreviews/vs.png", this.javaClass), JBColor(0xFFFFFF, 0x1E1E1E)),
+    IDEA to WizardScheme(IDEA, IDEA, IconLoader.getIcon("wizardPreviews/ij.png", this.javaClass), JBColor(0xFFFFFF, 0x2B2B2B))
+  )
+
+  override var currentTheme: ThemeService.Theme
+    get() = if(StartupUiUtil.isDarkTheme) ThemeService.Theme.Dark else ThemeService.Theme.Light
+
+    set(value) {
+      println("currentTheme: ${value.name}")
+      val lm = LafManager.getInstance()
+
+      val laf = if(value.isDark)
+        lm.defaultDarkLaf else LafManager.getInstance().defaultLightLaf
+
+      laf?.let {
+        lm.apply {
+          currentUIThemeLookAndFeel = it
+          updateUI()
+          repaintUI()
+        }
+      }
+    }
+
+  override val schemesList: List<WizardScheme> = map.values.toList()
+
+  override fun finish(schemeId: String, theme: ThemeService.Theme) {
   }
 
-  override fun chosen(themeId: String, isDark: Boolean) {
+  override fun updateScheme(schemeId: String) {
 
   }
-
 }
 
 class PluginServiceImpl : PluginService {

@@ -15,11 +15,12 @@ import javax.swing.JLabel
 
 class KeymapPane(val keymap: Keymap) {
   companion object {
-    val SELECTED_BORDER_COLOR = JBColor(0xEBECF0, 0x3574F0)
+    val SELECTED_BORDER_COLOR = JBColor(0x3574F0, 0x3574F0)
     val BORDER_COLOR = JBColor(0xD3D5DB, 0x43454A)
+
   }
 
-  val namelist = mutableListOf<JLabel>()
+  private val names = mutableListOf<JLabel>()
 
   var active: Boolean = false
     set(value) {
@@ -31,7 +32,7 @@ class KeymapPane(val keymap: Keymap) {
 
 
   private fun update() {
-    namelist.forEach { it.isVisible = active }
+    names.forEach { it.isVisible = active }
     pane.border = RoundedLineBorder(if (active) SELECTED_BORDER_COLOR else BORDER_COLOR)
     pane.background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
   }
@@ -47,7 +48,7 @@ class KeymapPane(val keymap: Keymap) {
     panel {
       keymap.shortcut.forEach {
         row {
-          namelist.add(label(it.name).component)
+          names.add(label(it.name).component)
           label(it.value)
         }.layout(RowLayout.PARENT_GRID)
       }

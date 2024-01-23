@@ -83,7 +83,7 @@ class OnboardingController private constructor(){
     val wizardController = WizardController.createController(dialog, service, goBackAction)
     cancelImportCallback = cancelCallback
 
-    wizardController.goToKeymapPage()
+    wizardController.goToThemePage()
 
     if(!dialog.isShowing) {
       dialog.initialize()
