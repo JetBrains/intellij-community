@@ -115,7 +115,7 @@ class Foo {
 new Foo().<caret>foo()
 ''', '''\
 <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Foo"><code><span style="color:#000000;">Foo</span></code></a></div><div class='definition'><pre><a href="psi_element://java.lang.String"><code><span style="color:#000000;">String</span></code></a>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-       May return <code style='font-size:100%;'><span style=""><span style="color:#000043;font-weight:bold;">null</span></span></code>
+       May return <code><span style="color:#000043;font-weight:bold;">null</span></code>
      </div><table class='sections'></table>\
 '''
   }
@@ -170,7 +170,7 @@ new Gr<caret>oovyDocTest<Integer>()""", """\
 def foo() {}
 fo<caret>o()
 """, "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://_\"><code><span style=\"color:#000000;\">_</span></code></a></div><div class='definition'><pre><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#000000;\">Object</span></code></a>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n" +
-     "   <code style='font-size:100%;'><span style=\"\"><span style=\"\">aaa</span><span style=\"\">&#32;bbb</span><span style=\"\">&#32;ccc</span></span></code>\n" +
+     "   <code><span style=\"\">aaa</span><span style=\"\">&#32;bbb</span><span style=\"\">&#32;ccc</span></code>\n" +
      " </div><table class='sections'></table>"
   }
 
