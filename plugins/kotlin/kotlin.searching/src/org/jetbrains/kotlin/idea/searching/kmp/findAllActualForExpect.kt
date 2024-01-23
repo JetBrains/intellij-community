@@ -37,7 +37,7 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
         return targetDeclarations.asSequence().mapNotNull { targetDeclaration ->
             when (declaration) {
                 is KtClassOrObject -> targetDeclaration
-                is KtPrimaryConstructor -> {
+                is KtConstructor<*> -> {
                     if (targetDeclaration is KtClass) {
                         val primaryConstructor = targetDeclaration.primaryConstructor
                         if (primaryConstructor?.matchesWithActual(declaration) == true) {
