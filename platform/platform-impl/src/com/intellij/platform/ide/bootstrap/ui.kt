@@ -231,7 +231,7 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
   launch {
     initAwtToolkitJob.join()
 
-    if (!SystemInfoRt.isWindows && !SystemInfoRt.isMac) {
+    if (StartupUiUtil.isXToolkit()) {
       launch(CoroutineName("frame class updating")) {
         try {
           val toolkit = Toolkit.getDefaultToolkit()
@@ -245,6 +245,8 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
         catch (ignore: Throwable) {
         }
       }
+    } else if (StartupUiUtil.isWaylandToolkit()) {
+      System.setProperty("awt.app.id", AppUIUtil.getFrameClass())
     }
 
     // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
