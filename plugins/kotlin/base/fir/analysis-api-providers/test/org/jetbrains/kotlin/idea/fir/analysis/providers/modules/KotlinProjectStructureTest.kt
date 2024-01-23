@@ -430,7 +430,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val dummyVirtualFile = dummyRoot.findChild("dummy.kts")!!
         val dummyFile = PsiManager.getInstance(project).findFile(dummyVirtualFile)!!
 
-        // It is KtNotUnderContentRootModule and not KtScriptModule due to a lack of virtual file
         assertKtModuleType<KtScriptModule>(dummyFile)
 
         createModule(
@@ -442,7 +441,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             },
         )
 
-        assertKtModuleType<KtSourceModule>("myScript.kts")
+        assertKtModuleType<KtScriptModule>("myScript.kts")
     }
 
     fun `test element to library mapping consistency with contextual library module`() {
