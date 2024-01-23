@@ -61,6 +61,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -83,6 +84,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.*;
+import static com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.*;
 
 
 public class JavaDocInfoGenerator {
@@ -1796,12 +1798,16 @@ public class JavaDocInfoGenerator {
         }
       }
       else {
-        final String text;
+        String text;
         if (element instanceof PsiWhiteSpace) {
           text = getWhitespacesBeforeLFWhenLeadingAsterisk(element);
         }
         else {
           text = element.getText();
+        }
+        if (element.getPrevSibling() instanceof PsiInlineDocTag tag && isCodeBlock(tag)) {
+          // Remove following <pre> fragment and whitespaces
+          text = StringUtil.trimStart(StringUtil.trimLeading(text), "</pre>");
         }
         appendPlainText(buffer, text);
       }
@@ -2117,8 +2123,13 @@ public class JavaDocInfoGenerator {
     ASTNode prevNode = tag.getNode().getTreePrev();
     while (prevNode != null) {
       String text = prevNode.getText();
-      if (prevNode.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && StringUtil.endsWithIgnoreCase(StringUtil.trim(text), "<pre>")) {
-        return true;
+      if (prevNode.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+        if (StringUtil.endsWithIgnoreCase(StringUtil.trim(text), "<pre>")) {
+          return true;
+        }
+        if (StringUtil.startsWithIgnoreCase(StringUtil.trim(text), "</pre>")) {
+          return false;
+        }
       }
       prevNode = prevNode.getTreePrev();
     }
@@ -2131,20 +2142,19 @@ public class JavaDocInfoGenerator {
     if (isCodeBlock) {
       // remove excess whitespaces between tags e.g. in `<pre>  {@code`
       int lastNonWhite = buffer.length() - 1;
-      while (buffer.charAt(lastNonWhite) == ' ') lastNonWhite--;
+      while (Character.isWhitespace(buffer.charAt(lastNonWhite))) lastNonWhite--;
       buffer.setLength(lastNonWhite + 1);
+      // Remove preceding <pre> fragment
+      StringUtil.trimEnd(buffer, "<pre>");
     }
 
     final int offset = isCodeBlock ? getCodeTagOffset(tag) : 0;
 
-    buffer.append("<code style='font-size:");
-    buffer.append(DocumentationSettings.getMonospaceFontSizeCorrection(isRendered()));
-    buffer.append("%;'>");
+    buffer.append(isCodeBlock ? CODE_BLOCK_PREFIX : INLINE_CODE_PREFIX);
     int pos = buffer.length();
 
     StringBuilder codeSnippetBuilder = new StringBuilder();
-    generateLiteralValue(codeSnippetBuilder, tag,
-                         !isCodeBlock && getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.NO_HIGHLIGHTING);
+    generateLiteralValue(codeSnippetBuilder, tag, false);
     String codeSnippet = codeSnippetBuilder.toString();
     if (isCodeBlock) {
       codeSnippet = StringsKt.trimIndent(codeSnippet);
@@ -2157,15 +2167,8 @@ public class JavaDocInfoGenerator {
       appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(true, codeSnippetBuilder, tag.getProject(), tag.getLanguage(), codeSnippet);
       codeSnippet = codeSnippetBuilder.toString();
     }
-
-    if (isCodeBlock && doHighlightCodeBlocks()
-        || !isCodeBlock && getInlineCodeHighlightingMode() != InlineCodeHighlightingMode.NO_HIGHLIGHTING) {
-      // highlights plain code as HighlighterColors.TEXT
-      codeSnippetBuilder.setLength(0);
-      TextAttributes codeAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT).clone();
-      codeAttributes.setBackgroundColor(null);
-      appendStyledSpan(true, codeSnippetBuilder, codeAttributes, codeSnippet);
-      codeSnippet = codeSnippetBuilder.toString();
+    else {
+      codeSnippet = XmlStringUtil.escapeString(codeSnippet);
     }
 
     if (isCodeBlock) {
@@ -2180,7 +2183,7 @@ public class JavaDocInfoGenerator {
     }
 
     buffer.append(codeSnippet);
-    buffer.append("</code>");
+    buffer.append(isCodeBlock ? CODE_BLOCK_SUFFIX : INLINE_CODE_SUFFIX);
     if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
   }
 

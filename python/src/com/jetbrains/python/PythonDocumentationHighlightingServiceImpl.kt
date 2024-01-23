@@ -2,6 +2,7 @@
 package com.jetbrains.python
 
 import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.project.Project
@@ -10,9 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PythonDocumentationHighlightingServiceImpl : PythonDocumentationHighlightingService() {
   override fun highlightedCodeSnippet(project: Project, codeSnippet: String): String {
-    return HtmlSyntaxInfoUtil.getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-      project, PythonLanguage.INSTANCE, codeSnippet, DocumentationSettings.getHighlightingSaturation(false)
-    )
+    return QuickDocCodeHighlightingHelper.getStyledInlineCodeFragment(codeSnippet, PythonLanguage.INSTANCE, project)
   }
 
   override fun styledSpan(textAttributeKey: TextAttributesKey, text: String): String {
