@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.configurationStore.BatchUpdateListener
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -201,8 +202,7 @@ open class ProjectRootManagerComponent(project: Project,
       postCollect(newDisposable, oldDisposable, watchRoots)
     }
     else {
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      (project as ComponentManagerEx).getCoroutineScope().launch {
         val job = launch(start = CoroutineStart.LAZY) {
           val watchRoots = readAction { collectWatchRoots(newDisposable) }
           postCollect(newDisposable, oldDisposable, watchRoots)

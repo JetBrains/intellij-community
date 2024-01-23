@@ -15,6 +15,7 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -134,8 +135,7 @@ object CommandLineProcessor {
       else {
         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
       }
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch(Dispatchers.EDT) {
+      (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
         navigatable.navigate(true)
       }
     }
@@ -155,8 +155,7 @@ object CommandLineProcessor {
 
   @ApiStatus.Internal
   fun scheduleProcessProtocolCommand(rawUri: @NlsSafe String) {
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
       processProtocolCommand(rawUri)
     }
   }

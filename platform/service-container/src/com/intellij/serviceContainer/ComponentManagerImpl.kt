@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.serviceContainer
@@ -232,8 +232,8 @@ abstract class ComponentManagerImpl(
   @JvmField
   internal var componentContainerIsReadonly: String? = null
 
-  @Suppress("MemberVisibilityCanBePrivate")
-  fun getCoroutineScope(): CoroutineScope {
+  @Suppress("UsagesOfObsoleteApi")
+  override fun getCoroutineScope(): CoroutineScope {
     if (parent?.parent == null) {
       return scopeHolder.containerScope
     }
@@ -1227,7 +1227,7 @@ abstract class ComponentManagerImpl(
   }
 
   fun processAllImplementationClasses(processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit) {
-    processAllHolders { keyClass, componentClass, plugin ->
+    processAllHolders { _, componentClass, plugin ->
       processor(componentClass, plugin)
     }
   }

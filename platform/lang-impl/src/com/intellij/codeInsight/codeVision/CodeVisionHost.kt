@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupDefaultSettingModel
@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
@@ -358,7 +359,7 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.cancelAllUpdates()
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
-          project.coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(editor.contentComponent).asContextElement()) {
+          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + ModalityState.stateForComponent(editor.contentComponent).asContextElement()) {
             blockingContext {
               recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
             }

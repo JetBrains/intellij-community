@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.CustomFileDropHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorDropHandler
@@ -38,8 +39,8 @@ open class FileDropHandler(private val myEditor: Editor?) : EditorDropHandler {
     if (!dropResult) return
 
     val editorWindow = editorWindowCandidate ?: findEditorWindow(project)
-    project.coroutineScope.launch {
-      openFiles(project, fileList, editorWindow)
+    (project as ComponentManagerEx).getCoroutineScope().launch {
+      openFiles(project = project, fileList = fileList, editorWindow = editorWindow)
     }
   }
 

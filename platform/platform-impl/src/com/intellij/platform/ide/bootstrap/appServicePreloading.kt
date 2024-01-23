@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PerformanceWatcher
@@ -180,7 +180,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
       app.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                           activityPrefix = "",
                           syncScope = this,
-                          asyncScope = app.coroutineScope.childScope(supervisor = false))
+                          asyncScope = app.getCoroutineScope().childScope(supervisor = false))
     }
   }
 

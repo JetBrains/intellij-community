@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.Pass
@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -120,8 +121,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       initialEntireFileHighlightingActivity!!.end()
       initialEntireFileHighlightingActivity = null
       StartUpMeasurer.addInstantEvent("editor highlighting completed")
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      (project as ComponentManagerEx).getCoroutineScope().launch {
         StartUpPerformanceService.getInstance().editorRestoringTillHighlighted()
       }
     }

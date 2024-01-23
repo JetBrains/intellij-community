@@ -1,27 +1,16 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.AbstractCommand
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.launch
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
+import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 
-class WaitForInitialRefreshCommand(text: String, line: Int) : AbstractCommand(text, line) {
+class WaitForInitialRefreshCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: String = CMD_PREFIX + "waitForInitialRefresh"
   }
 
-  @Suppress("UsagesOfObsoleteApi")
-  override fun _execute(context: PlaybackContext): Promise<Any> {
-    val promise = AsyncPromise<Any>()
-    @Suppress("DEPRECATION")
-    context.project.coroutineScope.launch(CoroutineName("waiting for initial VFS refresh")) {
-      context.project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
-      promise.setResult(null)
-    }
-    return promise
+  override suspend fun doExecute(context: PlaybackContext) {
+    context.project.serviceAsync<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
   }
 }

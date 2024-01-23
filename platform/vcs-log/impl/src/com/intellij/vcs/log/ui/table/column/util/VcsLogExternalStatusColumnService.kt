@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -64,7 +65,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
                                                                      dataProvider: VcsCommitsDataLoader<T>) {
       // Dispatchers.EDT is not immediate -
       // later invocation is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
-      val scope = ApplicationManager.getApplication().coroutineScope.childScope(Dispatchers.EDT)
+      val scope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().childScope(Dispatchers.EDT)
       Disposer.register(dataProvider) {
         scope.cancel()
       }

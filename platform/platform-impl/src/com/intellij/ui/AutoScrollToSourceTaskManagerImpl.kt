@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.codeWithMe.ClientId
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.await
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,9 +28,8 @@ internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager
     val asyncDataContext = createAsyncDataContext(dataContext)
     val project = dataContext.getData(PlatformDataKeys.PROJECT)
 
-    // task must be cancelled if the project is closed
-    @Suppress("DEPRECATION")
-    (project?.coroutineScope ?: service<CoreUiCoroutineScopeHolder>().coroutineScope)
+    // the task must be canceled if the project is closed
+    ((project as? ComponentManagerEx)?.getCoroutineScope() ?: service<CoreUiCoroutineScopeHolder>().coroutineScope)
       .launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
       PlatformDataKeys.TOOL_WINDOW.getData(asyncDataContext)
         ?.getReady(handler)

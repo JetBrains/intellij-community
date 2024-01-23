@@ -1,5 +1,7 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
@@ -16,7 +18,7 @@ fun navigateAndHint(project: Project,
                     parameters: ShowUsagesParameters,
                     actionHandler: ShowUsagesActionHandler,
                     onReady: Runnable) {
-  project.coroutineScope.launch(Dispatchers.Main) {
+  (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Main) {
     NavigationService.getInstance(project).navigate(usage, NavigationOptions.defaultOptions().requestFocus(true))
     val newEditor = getEditorFor(usage) ?: return@launch
     ShowUsagesAction.hint(false, hint, parameters.withEditor(newEditor), actionHandler)

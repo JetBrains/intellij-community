@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.openapi.application.ApplicationManager
@@ -6,11 +6,13 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.JBColor
 import com.intellij.ui.UIBundle
 import com.intellij.util.ThreeState
@@ -58,7 +60,7 @@ private class WriteThreadWidget : CustomStatusBarWidget {
 
   init {
     val app = ApplicationManager.getApplication() as ApplicationImpl
-    app.coroutineScope.launch {
+    app.getCoroutineScope().launch {
       while (true) {
         delay(1.milliseconds)
 
@@ -73,8 +75,7 @@ private class WriteThreadWidget : CustomStatusBarWidget {
   override fun getComponent(): JComponent {
     if (component == null) {
       component = MyComponent()
-      @Suppress("DEPRECATION")
-      ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         while (true) {
           delay(500.milliseconds)
 

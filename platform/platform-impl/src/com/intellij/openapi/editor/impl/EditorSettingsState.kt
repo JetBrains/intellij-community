@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.lang.Language
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
@@ -44,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference
  * 3) to define properties and their updating logic and to interact with them conveniently
  * 4) to allow subscribing to properties changes events
  *
- * The base speсificity of almost all the properties represented here is that each property can be in 2 states:
+ * The base specificity of almost all the properties represented here is that each property can be in two states:
  * 1) default
  * 2) overridden
  *
@@ -59,7 +60,7 @@ import java.util.concurrent.atomic.AtomicReference
  * and if one of these sources fires a change event and this event potentially can change
  * the result of the "fixed calculation logic", then the corresponding property is recalculated.
  *
- * Keep in mind that there are several exceptions to this rule (i.e. where [CustomOutValueModifier] is used)
+ * Keep in mind that there are several exceptions to this rule (i.e., where [CustomOutValueModifier] is used)
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -177,7 +178,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
     this.language?.let {
       EditorSettingsExternalizable.getInstance().areStickyLinesShownFor(it.id)
     }
-    // Return true to avoid late appearance of the sticky panel.
+    // Return true to avoid the late appearance of the sticky panel.
     // Even if the actual value for the language is false,
     // the panel won't be shown because breadcrumbs' provider respects the settings
     ?: true
@@ -307,8 +308,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
     }
 
     if (calcLangReadActionRef.get() == null) {
-      @Suppress("DEPRECATION")
-      val readJob = (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope)
+      val readJob = ((project ?: ApplicationManager.getApplication()) as ComponentManagerEx).getCoroutineScope()
         .launch(start = CoroutineStart.LAZY, context = ClientId.coroutineContext()) {
           val result = readAction {
             languageSupplier?.invoke()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.project.impl
@@ -107,7 +107,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   // used by Rider
   @Internal
   @JvmField
-  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope(supervisor = false)
+  val asyncPreloadServiceScope: CoroutineScope = getCoroutineScope().childScope(supervisor = false)
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
@@ -198,7 +198,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
     messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(name)
     StartupManager.getInstance(this).runAfterOpened {
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      getCoroutineScope().launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         val frame = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(WindowManager::class.java)?.getFrame(this@ProjectImpl)
                     ?: return@launch
         val title = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(FrameTitleBuilder::class.java)?.getProjectTitle(this@ProjectImpl)

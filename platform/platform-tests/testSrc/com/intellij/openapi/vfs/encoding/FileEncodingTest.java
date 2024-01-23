@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -1191,7 +1192,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
   public void testEncodingWidgetMustBeAvailableForReadonlyFiles() {
     Project project = getProject();
-    EncodingPanel panel = new EncodingPanel(project, project.getCoroutineScope()) {
+    EncodingPanel panel = new EncodingPanel(project, ((ComponentManagerEx)project).getCoroutineScope()) {
       @Override
       protected VirtualFile getSelectedFile() {
         LightVirtualFile file = new LightVirtualFile("x.txt", "xxx");

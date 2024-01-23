@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "RAW_RUN_BLOCKING")
 
 package com.intellij.testFramework.common
@@ -188,14 +188,14 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
   coroutineScope {
     withTimeout(Duration.ofSeconds(40).toMillis()) {
       preloadCriticalServices(app = app,
-                              asyncScope = app.coroutineScope,
+                              asyncScope = app.getCoroutineScope(),
                               appRegistered = CompletableDeferred(value = null),
                               initLafJob = CompletableDeferred(value = null),
                               initAwtToolkitAndEventQueueJob = null)
     }
 
     @Suppress("TestOnlyProblems")
-    callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
+    callAppInitialized(getAppInitializedListeners(app), app.getCoroutineScope())
 
     LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }

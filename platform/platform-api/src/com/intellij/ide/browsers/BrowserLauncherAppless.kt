@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.execution.ExecutionException
@@ -10,6 +10,7 @@ import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -32,11 +33,13 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     private val LOG = logger<BrowserLauncherAppless>()
 
     @JvmStatic
-    fun canUseSystemDefaultBrowserPolicy(): Boolean =
-      isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isMac || SystemInfo.isWindows || SystemInfo.hasXdgOpen()
+    fun canUseSystemDefaultBrowserPolicy(): Boolean {
+      return isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isMac || SystemInfo.isWindows || SystemInfo.hasXdgOpen()
+    }
 
-    private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
-      Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
+    private fun isDesktopActionSupported(action: Desktop.Action): Boolean {
+      return Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
+    }
   }
 
   override fun open(url: String) {
@@ -254,7 +257,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       else -> null
     }
 
-  @Suppress("DEPRECATION")
-  private fun getScope(project: Project?): CoroutineScope =
-    (project?.coroutineScope ?: ApplicationManager.getApplication()?.coroutineScope ?: MainScope()) + Dispatchers.IO
+  private fun getScope(project: Project?): CoroutineScope {
+    return (((project ?: ApplicationManager.getApplication()) as? ComponentManagerEx)?.getCoroutineScope() ?: MainScope()) + Dispatchers.IO
+  }
 }

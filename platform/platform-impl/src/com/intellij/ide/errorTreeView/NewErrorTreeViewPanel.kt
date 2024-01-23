@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView
 
 import com.intellij.icons.AllIcons
@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -58,7 +59,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 open class NewErrorTreeViewPanel @JvmOverloads constructor(
-  @JvmField protected var myProject: Project,
+  @JvmField protected var project: Project,
   private val helpId: String?,
   @Suppress("UNUSED_PARAMETER") createExitAction: Boolean = true,
   createToolbar: Boolean = true,
@@ -90,7 +91,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
 
   @Volatile
   private var isDisposed = false
-  private val configuration = ErrorTreeViewConfiguration.getInstance(myProject)
+  private val configuration = ErrorTreeViewConfiguration.getInstance(project)
 
   private var leftToolbar: ActionToolbar? = null
 
@@ -124,7 +125,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     val isProcessStopped: Boolean
   }
 
-  private val scope = myProject.coroutineScope.childScope()
+  private val scope = (project as ComponentManagerEx).getCoroutineScope().childScope()
 
   init {
     layout = BorderLayout()
@@ -137,7 +138,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     }
     messagePanel = JPanel(BorderLayout())
     @Suppress("LeakingThis")
-    this.errorViewStructure = errorViewStructure ?: createErrorViewStructure(project = myProject, canHideWarnings = canHideWarnings())
+    this.errorViewStructure = errorViewStructure ?: createErrorViewStructure(project = project, canHideWarnings = canHideWarnings())
     @Suppress("LeakingThis")
     structureModel = StructureTreeModel(this.errorViewStructure, this)
     @Suppress("LeakingThis")
@@ -263,7 +264,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     if (firstError != null) {
       selectElement(firstError) {
         if (shouldShowFirstErrorInEditor()) {
-          ApplicationManager.getApplication().invokeLater(::navigateToSource, myProject.disposed)
+          ApplicationManager.getApplication().invokeLater(::navigateToSource, project.disposed)
         }
       }
     }
@@ -473,7 +474,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     get() = processController!!.isProcessStopped
 
   open fun close() {
-    val messageView = MessageView.getInstance(myProject)
+    val messageView = MessageView.getInstance(project)
     messageView.contentManager.getContent(this)?.let {
       messageView.contentManager.removeContent(it, true)
       Disposer.dispose(this)

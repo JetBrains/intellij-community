@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -310,8 +311,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       computeIndentOptions(project, file).associateWithDocument(document)
     }
     else {
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      (project as ComponentManagerEx).getCoroutineScope().launch {
         val result = readAction {
           computeIndentOptions(project, file)
         }
@@ -691,8 +691,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       }
 
       if (currentReadActionRef.get() == null) {
-        @Suppress("DEPRECATION")
-        val readJob = (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope)
+        val readJob = ((project ?: ApplicationManager.getApplication()) as ComponentManagerEx).getCoroutineScope()
           .launch(start = CoroutineStart.LAZY) {
             val result = readAction {
               computeValue(project)

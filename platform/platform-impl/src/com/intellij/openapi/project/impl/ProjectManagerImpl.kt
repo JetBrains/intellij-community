@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.project.impl
@@ -32,6 +32,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -684,9 +685,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         result?.let { project ->
           try {
             try {
-              @Suppress("DEPRECATION")
               // cancel async preloading of services as soon as possible
-              project.coroutineScope.coroutineContext.job.cancelAndJoin()
+              (project as ComponentManagerEx).getCoroutineScope().coroutineContext.job.cancelAndJoin()
             }
             catch (secondException: Throwable) {
               e.addSuppressed(secondException)
@@ -739,8 +739,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = result!!
     if (!app.isUnitTestMode) {
       val openTimestamp = System.currentTimeMillis()
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      (project as ComponentManagerEx).getCoroutineScope().launch {
         (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
         dispatchEarlyNotifications()
       }
@@ -1235,7 +1234,7 @@ private suspend fun initProject(file: Path,
   catch (initThrowable: Throwable) {
     try {
       withContext(NonCancellable) {
-        project.coroutineScope.coroutineContext.job.cancelAndJoin()
+        project.getCoroutineScope().coroutineContext.job.cancelAndJoin()
         writeAction {
           Disposer.dispose(project)
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit
 
 import com.apple.eawt.event.FullScreenEvent
@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
@@ -71,8 +72,7 @@ internal class LightEditFrameWrapper(
     val editorManager = LightEditService.getInstance().editorManager
     val statusBar = statusBar!!
 
-    @Suppress("DEPRECATION")
-    val coroutineScope = project.coroutineScope
+    val coroutineScope = (project as ComponentManagerEx).getCoroutineScope()
     statusBar.addWidgetToLeft(LightEditModeNotificationWidget())
 
     val dataContext = object : WidgetPresentationDataContext {
@@ -136,9 +136,8 @@ internal class LightEditFrameWrapper(
       throw IllegalStateException("Tool windows are unavailable in LightEdit")
     }
 
-    @Suppress("DEPRECATION")
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = project.coroutineScope) {
+      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }
@@ -223,8 +222,7 @@ private suspend fun allocateLightEditFrame(project: Project,
   uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
   installAppMenuIfNeeded(uiFrame)
 
-  @Suppress("DEPRECATION")
-  project.coroutineScope.launch {
+  (project as ComponentManagerEx).getCoroutineScope().launch {
     ProjectManagerImpl.dispatchEarlyNotifications()
   }
   return frame

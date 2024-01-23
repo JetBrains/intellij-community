@@ -16,6 +16,7 @@ import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticSer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -90,9 +91,8 @@ private object ProjectLoadedService {
 
 private fun runOnProjectInit(project: Project) {
   if (System.getProperty("ide.performance.screenshot") != null) {
-    @Suppress("DEPRECATION")
     (ProjectLoadedService.registerScreenshotTaking(
-      System.getProperty("ide.performance.screenshot"), project.coroutineScope))
+      System.getProperty("ide.performance.screenshot"), (project as ComponentManagerEx).getCoroutineScope()))
     LOG.info("Option ide.performance.screenshot is initialized, screenshots will be captured")
   }
 
