@@ -65,15 +65,14 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
-            val isInterface = (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE)
             val isInsideInterface =
-                (modifiersListOwner is JKMethod || modifiersListOwner is JKField) && modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE
+                (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE) || (modifiersListOwner is JKMethod && modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE)
             val hasOverrideModifier = modifiersListOwner
                 .safeAs<JKOtherModifiersOwner>()
                 ?.hasOtherModifier(OVERRIDE) == true
 
             fun Modifier.isRedundant(): Boolean = when {
-                (this == OPEN || this == ABSTRACT) && (isInterface || isInsideInterface) -> true
+                this == OPEN && isInsideInterface -> true
                 (this == FINAL || this == PUBLIC) && !hasOverrideModifier -> true
                 else -> false
             }
@@ -576,8 +575,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             ktConvertedFromForLoopSyntheticWhileStatement: JKKtConvertedFromForLoopSyntheticWhileStatement
         ) {
             printer.renderList(
-                ktConvertedFromForLoopSyntheticWhileStatement.variableDeclarations, ::ensureLineBreak
-            ) {
+                ktConvertedFromForLoopSyntheticWhileStatement.variableDeclarations, ::ensureLineBreak) {
                 it.accept(this)
             }
             ensureLineBreak()
