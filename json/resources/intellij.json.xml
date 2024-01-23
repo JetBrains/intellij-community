@@ -24,7 +24,7 @@
     <fileType name="JSON" extensions="har;json;jsonc"
               implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"
               language="JSON"/>
-    <fileType name="JSON5" extensions="json5" fileNames="devcontainer.json"
+    <fileType name="JSON5" extensions="json5" fileNames="devcontainer.json;.devcontainer.json"
               implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE"
               language="JSON5"/>
     <fileType name="JSON-lines" extensions="jsonl;jsonlines;ldjson;ndjson"
