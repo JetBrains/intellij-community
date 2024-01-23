@@ -55,6 +55,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRenderer;
 import com.intellij.xdebugger.memory.ui.InstancesTree;
 import com.intellij.xdebugger.memory.ui.InstancesViewBase;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -425,11 +426,14 @@ class InstancesView extends InstancesViewBase {
   }
 
   private boolean isMemoryViewSuitable(@Nullable XExpression expression) {
-    return MemoryAgent.isAgentEnabled(myDebugProcess)
-           && Registry.is("debugger.memory.agent.use.in.memory.view")
-           && getInstancesProvider() instanceof InstanceProviderEx instanceProviderEx
-           && instanceProviderEx.returnAllInstancesOfAClass()
-           && (expression == null || FilteringTask.isEmptyFilter(expression));
+    if (!(MemoryAgent.isAgentEnabled(myDebugProcess)
+          && Registry.is("debugger.memory.agent.use.in.memory.view")
+          && getInstancesProvider() instanceof InstanceProviderEx instanceProviderEx)) {
+      return false;
+    }
+    boolean returnAll = instanceProviderEx.returnAllInstancesOfAClass();
+    return returnAll && (expression == null || FilteringTask.isEmptyFilter(expression))
+      || instanceProviderEx.estimateInstancesCount() <= MAX_TREE_NODE_COUNT;
   }
 
   private boolean selectRepresentation(@Nullable XExpression expression) {
@@ -478,10 +482,7 @@ class InstancesView extends InstancesViewBase {
       final int limit = DebuggerUtils.isAndroidVM(myDebugProcess.getVirtualMachineProxy().getVirtualMachine())
                         ? AndroidUtil.ANDROID_INSTANCES_LIMIT
                         : DEFAULT_INSTANCES_LIMIT;
-      List<JavaReferenceInfo> instances = ContainerUtil.map(
-        getInstancesProvider().getInstances(limit + 1),
-        referenceInfo -> ((JavaReferenceInfo)referenceInfo)
-      );
+      List<JavaReferenceInfo> instances = getInstances(limit);
 
       if (instances.size() > limit) {
         myWarningMessageConsumer.accept(XDebuggerBundle.message("memory.view.instances.warning.not.all.loaded", limit));
@@ -490,6 +491,13 @@ class InstancesView extends InstancesViewBase {
 
       return instances;
     }
+  }
+
+  private @NotNull List<JavaReferenceInfo> getInstances(int limit) {
+    return ContainerUtil.map(
+      getInstancesProvider().getInstances(limit),
+      referenceInfo -> ((JavaReferenceInfo)referenceInfo)
+    );
   }
 
 
@@ -505,9 +513,16 @@ class InstancesView extends InstancesViewBase {
 
     @Override
     public List<JavaReferenceInfo> fetchInstances(@NotNull EvaluationContextImpl evaluationContext) {
-      return MemoryAgentUtil.calculateSizes(
-        evaluationContext, myClassType, MAX_TREE_NODE_COUNT, getProgress().getProgressIndicator()
-      );
+      InstanceProviderEx provider = (InstanceProviderEx)getInstancesProvider();
+      if (provider.returnAllInstancesOfAClass()) {
+        return MemoryAgentUtil.calculateSizes(evaluationContext, myClassType, MAX_TREE_NODE_COUNT,
+                                              getProgress().getProgressIndicator());
+      }
+      else {
+        List<JavaReferenceInfo> instances = getInstances(MAX_TREE_NODE_COUNT);
+        List<ObjectReference> references = ContainerUtil.map(instances, JavaReferenceInfo::getObjectReference);
+        return MemoryAgentUtil.calculateSizesByObjects(evaluationContext, references, getProgress().getProgressIndicator());
+      }
     }
   }
 }

@@ -17,6 +17,10 @@ public class SizedReferenceInfo extends JavaReferenceInfo {
     myShallowSize = shallowSize;
   }
 
+  public long getRetainedSize() {
+    return myRetainedSize;
+  }
+
   @Override
   public ValueDescriptorImpl createDescriptor(@NotNull Project project) {
     return new SizedValueDescriptor(project, getObjectReference(), myShallowSize, myRetainedSize);
