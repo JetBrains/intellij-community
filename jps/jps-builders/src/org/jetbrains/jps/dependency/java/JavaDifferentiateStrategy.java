@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.util.Pair;
@@ -424,9 +424,11 @@ public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
         }
         if (toRecompile.contains(AnnotationChangesTracker.Recompile.USAGES)) {
           affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
-          if (changedMethod.isAbstract()) {
-            for (Pair<JvmClass, JvmMethod> impl : future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules)) {
-              affectMemberUsages(context, impl.first.getReferenceID(), impl.getSecond(), Collections.emptyList());
+          if (changedMethod.isAbstract() || toRecompile.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
+            for (Pair<JvmClass, JvmMethod> pair : recurse(Pair.create(changedClass, changedMethod), p -> future.getOverridingMethods(p.first, p.second, p.second::isSameByJavaRules), false)) {
+              JvmNodeReferenceID clsId = pair.first.getReferenceID();
+              JvmMethod meth = pair.getSecond();
+              affectMemberUsages(context, clsId, meth, future.collectSubclassesWithoutMethod(clsId, meth));
             }
           }
         }
