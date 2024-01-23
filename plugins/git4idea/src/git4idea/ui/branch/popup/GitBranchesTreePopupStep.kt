@@ -137,8 +137,13 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
   override fun hasSubstep(selectedValue: Any?): Boolean {
     val userValue = selectedValue ?: return false
-    return (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled && userValue.action is ActionGroup) ||
-           treeModel.isSelectable(selectedValue)
+
+    return if (userValue is PopupFactoryImpl.ActionItem) {
+      userValue.isEnabled && userValue.action is ActionGroup
+    }
+    else {
+      treeModel.isSelectable(selectedValue)
+    }
   }
 
   fun isSelectable(node: Any?): Boolean {
