@@ -1782,10 +1782,10 @@ private class PreInitActionRuntimeRegistrar(
     return getAction(id = actionId, canReturnStub = false, actionRegistrar = actionRegistrar)
   }
 
-  override fun addToGroup(group: AnAction, action: AnAction, last: Constraints) {
+  override fun addToGroup(group: AnAction, action: AnAction, constraints: Constraints) {
     addToGroup(group = group,
                action = action,
-               constraints = last,
+               constraints = constraints,
                module = null,
                state = actionRegistrar.state,
                secondary = false)
@@ -1803,10 +1803,6 @@ private class PreInitActionRuntimeRegistrar(
   override fun getBaseAction(overridingAction: OverridingAction): AnAction? {
     val id = getId(overridingAction as AnAction) ?: return null
     return actionRegistrar.state.baseActions.get(id)
-  }
-
-  override fun isGroup(actionId: String): Boolean {
-    return getAction(id = actionId, canReturnStub = true, actionRegistrar) is ActionGroup
   }
 
   override fun registerAction(actionId: String, action: AnAction) {
@@ -1850,10 +1846,10 @@ private class PostInitActionRuntimeRegistrar(private val actionPostInitRegistrar
     return getAction(id = actionId, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
   }
 
-  override fun addToGroup(group: AnAction, action: AnAction, last: Constraints) {
+  override fun addToGroup(group: AnAction, action: AnAction, constraints: Constraints) {
     addToGroup(group = group as DefaultActionGroup,
                action = action,
-               constraints = last,
+               constraints = constraints,
                module = null,
                state = actionPostInitRegistrar.state,
                secondary = false)
@@ -1870,9 +1866,6 @@ private class PostInitActionRuntimeRegistrar(private val actionPostInitRegistrar
 
   override fun getBaseAction(overridingAction: OverridingAction): AnAction? = actionPostInitRegistrar.getBaseAction(overridingAction)
 
-  override fun isGroup(actionId: String): Boolean {
-    return getAction(id = actionId, canReturnStub = true, actionPostInitRegistrar) is ActionGroup
-  }
 }
 
 private fun getActionBinding(actionId: String, boundShortcuts: Map<String, String>): String? {

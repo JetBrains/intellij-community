@@ -40,7 +40,7 @@ abstract class ActionManagerEx : ActionManager() {
       var result = try {
         KeyStroke.getKeyStroke(s)
       }
-      catch (ignore: Exception) {
+      catch (_: Exception) {
         null
       }
 
@@ -49,7 +49,7 @@ abstract class ActionManagerEx : ActionManager() {
           val s1 = s.substring(0, s.length - 1) + s[s.length - 1].uppercaseChar()
           result = KeyStroke.getKeyStroke(s1)
         }
-        catch (ignored: Exception) {
+        catch (_: Exception) {
         }
       }
       return result
@@ -101,13 +101,17 @@ abstract class ActionManagerEx : ActionManager() {
   @Internal
   abstract fun fireAfterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult)
 
-  @Deprecated("use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead")
-  fun fireBeforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+  @Deprecated("use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead",
+              ReplaceWith("fireBeforeActionPerformed(action, event)"),
+              DeprecationLevel.ERROR)
+  fun fireBeforeActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
     fireBeforeActionPerformed(action, event)
   }
 
-  @Deprecated("use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead")
-  fun fireAfterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+  @Deprecated("use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead",
+              ReplaceWith("fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)"),
+              DeprecationLevel.ERROR)
+  fun fireAfterActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
     fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)
   }
 
@@ -173,7 +177,7 @@ interface ActionRuntimeRegistrar {
 
   fun getUnstubbedAction(actionId: String): AnAction?
 
-  fun addToGroup(group: AnAction, action: AnAction, last: Constraints)
+  fun addToGroup(group: AnAction, action: AnAction, constraints: Constraints)
 
   fun replaceAction(actionId: String, newAction: AnAction)
 
@@ -181,5 +185,4 @@ interface ActionRuntimeRegistrar {
 
   fun getBaseAction(overridingAction: OverridingAction): AnAction?
 
-  fun isGroup(actionId: String): Boolean
 }
