@@ -6,11 +6,11 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -118,16 +118,9 @@ public final class ConvertInterfaceToClassIntention extends PsiBasedModCommandAc
 
   private static void changeInterfaceToClass(PsiClass anInterface) {
     final PsiIdentifier nameIdentifier = anInterface.getNameIdentifier();
-    assert nameIdentifier != null;
-    final PsiElement whiteSpace = nameIdentifier.getPrevSibling();
-    assert whiteSpace != null;
-    final PsiElement interfaceToken = whiteSpace.getPrevSibling();
-    assert interfaceToken != null;
-    final PsiKeyword interfaceKeyword = (PsiKeyword)interfaceToken.getOriginalElement();
-    final Project project = anInterface.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiKeyword classKeyword = factory.createKeyword("class");
+    final PsiKeyword interfaceKeyword = PsiTreeUtil.getPrevSiblingOfType(nameIdentifier, PsiKeyword.class);
+    assert interfaceKeyword != null;
+    final PsiKeyword classKeyword = JavaPsiFacade.getInstance(anInterface.getProject()).getElementFactory().createKeyword("class");
     interfaceKeyword.replace(classKeyword);
 
     final PsiModifierList classModifierList = anInterface.getModifierList();
@@ -141,8 +134,7 @@ public final class ConvertInterfaceToClassIntention extends PsiBasedModCommandAc
       classModifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
 
-    final PsiMethod[] methods = anInterface.getMethods();
-    for (final PsiMethod method : methods) {
+    for (final PsiMethod method : anInterface.getMethods()) {
       PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true);
       if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
         PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
@@ -152,8 +144,7 @@ public final class ConvertInterfaceToClassIntention extends PsiBasedModCommandAc
       }
     }
 
-    final PsiField[] fields = anInterface.getFields();
-    for (final PsiField field : fields) {
+    for (final PsiField field : anInterface.getFields()) {
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList != null) {
         modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
@@ -162,8 +153,7 @@ public final class ConvertInterfaceToClassIntention extends PsiBasedModCommandAc
       }
     }
 
-    final PsiClass[] innerClasses = anInterface.getInnerClasses();
-    for (PsiClass innerClass : innerClasses) {
+    for (PsiClass innerClass : anInterface.getInnerClasses()) {
       final PsiModifierList modifierList = innerClass.getModifierList();
       if (modifierList != null) {
         modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
