@@ -16,8 +16,10 @@ import java.nio.file.Path
 fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isProjectPathTrusted(path)
 
 @ApiStatus.Internal
-@State(name = "Trusted.Paths.Settings", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
-@Service(Service.Level.APP)
+@State(name = "Trusted.Paths.Settings",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
 class TrustedPathsSettings : TrustedProjectsStateStorage<TrustedPathsSettings.State>(State()) {
 
   companion object {

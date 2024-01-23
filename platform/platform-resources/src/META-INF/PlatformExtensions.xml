@@ -1738,6 +1738,7 @@
     <applicationService serviceImplementation="com.intellij.credentialStore.PasswordSafeSettings" />
     <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserManager" />
     <applicationService serviceImplementation="com.intellij.ide.impl.TrustedPaths" />
+    <applicationService serviceImplementation="com.intellij.ide.impl.TrustedPathsSettings" />
     <applicationService serviceImplementation="com.intellij.openapi.file.exclude.OverrideFileTypeManager" />
     <applicationService serviceImplementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences" />
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.KeymapFlagsStorage" />

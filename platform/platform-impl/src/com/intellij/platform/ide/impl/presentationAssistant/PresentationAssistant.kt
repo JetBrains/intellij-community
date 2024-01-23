@@ -6,10 +6,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
@@ -154,7 +151,10 @@ internal fun PresentationAssistantState.alternativeKeymapKind(): KeymapKind? {
   return alternativeKeymapName.takeIf { showAlternativeKeymap }?.let { KeymapKind.from(it) }
 }
 
-@State(name = "PresentationAssistantIJ", storages = [Storage("presentation-assistant-ij.xml")])
+@State(name = "PresentationAssistantIJ",
+       category = SettingsCategory.UI,
+       exportable = true,
+       storages = [Storage("presentation-assistant-ij.xml", roamingType = RoamingType.DISABLED)])
 class PresentationAssistant(private val coroutineScope: CoroutineScope) : PersistentStateComponent<PresentationAssistantState> {
   internal val configuration = PresentationAssistantState()
   private var warningAboutMacKeymapWasShown = false
