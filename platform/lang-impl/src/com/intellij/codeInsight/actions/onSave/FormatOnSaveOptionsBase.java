@@ -4,6 +4,7 @@ package com.intellij.codeInsight.actions.onSave;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -152,7 +153,16 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
    * Most of the callers should first check {@link #isRunOnSaveEnabled()}.
    */
   public boolean isFileTypeSelected(@NotNull FileType fileType) {
-    return myState.myAllFileTypesSelected || myState.mySelectedFileTypes.contains(fileType.getName());
+    if (myState.myAllFileTypesSelected) {
+      return true;
+    }
+    if (fileType instanceof LanguageFileType lft && lft.isSecondary()) {
+      LanguageFileType associatedFileType = lft.getLanguage().getAssociatedFileType();
+      if (associatedFileType != null) {
+        return myState.mySelectedFileTypes.contains(associatedFileType.getName());
+      }
+    }
+    return myState.mySelectedFileTypes.contains(fileType.getName());
   }
 
   Set<String> getSelectedFileTypes() {

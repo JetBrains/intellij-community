@@ -63,10 +63,13 @@ final class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSa
     // add all file types that can be handled by the IDE internal formatter (== have FormattingModelBuilder)
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (FileType fileType : fileTypeManager.getRegisteredFileTypes()) {
-      if (fileType instanceof LanguageFileType &&
-          !fileTypeManager.getAssociations(fileType).isEmpty() &&
-          LanguageFormatting.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null) {
-        result.add(fileType);
+      if (fileType instanceof LanguageFileType lft &&
+          !fileTypeManager.getAssociations(lft).isEmpty() &&
+          LanguageFormatting.INSTANCE.forLanguage(lft.getLanguage()) != null) {
+        LanguageFileType associatedFileType = lft.getLanguage().getAssociatedFileType();
+        result.add(lft.isSecondary() && associatedFileType != null
+                   ? associatedFileType
+                   : lft);
       }
     }
 
