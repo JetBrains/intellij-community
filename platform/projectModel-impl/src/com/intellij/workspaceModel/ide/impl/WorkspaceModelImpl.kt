@@ -26,11 +26,10 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -46,9 +45,18 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
 
-  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
+  // replay = 1 is needed to send the very first state when the subscription fo the flow happens.
+  //   otherwise, the flow won't be emitted till the first update. Since we don't update the workspace model really often,
+  //   this may cause some unwanted delays for subscribers.
+  // This is used in the [subscribe] method, where we send the first version of the storage
+  //   right after the subscription.
+  // However, this means that this flow will keep two storages in the flow: the old and the new. This should be okay
+  //   since the storage is an effective structure, however, if this causes memory problems, we can switch to
+  //   replay = 0. In this case, no extra storage will be saved, but the event will be emitted after the first
+  //   update of the WorkspaceModel, what is probably also okay.
+  private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
-  private val updatesFlow = MutableSharedFlow<VersionedStorageChange>()
+  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
 
   /**
    * This flow will become obsolete, as we'll migrate to reactive listeners. However, [updatesFlow] will remain here
@@ -268,6 +276,47 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       else if (frame.methodName == onChangedMethodName && frame.className == WorkspaceModelImpl::class.qualifiedName) {
         // It's fine to update the project method in "after update" listeners
         return@addMeasuredTimeMillis
+      }
+    }
+  }
+
+  override suspend fun <R> subscribe(
+    subscriber: suspend CoroutineScope.(initial: ImmutableEntityStorage, changes: SharedFlow<VersionedStorageChange>) -> R
+  ): R {
+    // We make a separate scope to bind the lifetime of the coroutine that redirects changes from one flow to another
+    //   and the coroutines that will be created in the [subscriber] function.
+    return coroutineScope scope@ {
+
+      // trick from fleet: use channel in place of deferred, cause the latter one would hold the veryFirstSnapshot for the lifetime of the entire subscription
+      val veryFirstSnapshot = Channel<ImmutableEntityStorage>(1)
+
+      // We use BufferOverflow.SUSPEND as I see no reason not to suspend in case in some consumer is slow.
+      // Fleet uses DROP_OLDEST. In case of a slow consumer, on buffer overflow the oldest value is dropped.
+      //   Fleet tracks the version of the storage, and in case some value is dropped, there is a gap
+      //   in versions, and Fleet will cancel such subscription. As I understand, this is done so the slow subscribers
+      //   won't slow down the super speed of the fleet storage.
+      // At the moment, we don't have such problems with one consumer slowing down the updates, but if we have them,
+      //   we can use the fleet tactic.
+      //
+      // Mutable shared flow is used because it's hot and it will get all emits of the changesEventFlow
+      //   even if the consumer didn't start to listen to the flow yet.
+      val sharedFlow = MutableSharedFlow<VersionedStorageChange>(
+        replay = 0,
+        extraBufferCapacity = 1000, // Size of the flow
+        onBufferOverflow = BufferOverflow.SUSPEND,
+      )
+
+      val job = launch(start = CoroutineStart.UNDISPATCHED, context = Dispatchers.Unconfined) {
+        this@WorkspaceModelImpl.changesEventFlow.fold(true) { veryFirstUpdate, event ->
+          if (veryFirstUpdate) veryFirstSnapshot.send(event.storageAfter) else sharedFlow.emit(event)
+          false
+        }
+      }
+
+      try {
+        this.subscriber(veryFirstSnapshot.receive(), sharedFlow.asSharedFlow())
+      } finally {
+        job.cancelAndJoin()
       }
     }
   }
