@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -45,8 +46,7 @@ public final class SearchEverywhereHeader {
 
   private final @Nullable Project myProject;
   private final @NotNull JComponent header;
-  @Nullable
-  private SENewUIHeaderView newUIHeaderView;
+  private @Nullable SENewUIHeaderView newUIHeaderView;
   private final @NotNull ActionToolbar myToolbar;
   private boolean myEverywhereAutoSet = true;
 
@@ -76,8 +76,7 @@ public final class SearchEverywhereHeader {
     scopeChangedCallback.run();
   }
 
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return header;
   }
 
@@ -112,8 +111,7 @@ public final class SearchEverywhereHeader {
     return toolbar;
   }
 
-  @NotNull
-  private JComponent createHeader() {
+  private @NotNull JComponent createHeader() {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     contributorsPanel.setOpaque(false);
     for (SETab tab : myTabs) {
@@ -144,8 +142,7 @@ public final class SearchEverywhereHeader {
     return result;
   }
 
-  @NotNull
-  private JComponent createNewUITabs() {
+  private @NotNull JComponent createNewUITabs() {
     newUIHeaderView = new SENewUIHeaderView(myTabs, myShortcutSupplier, myToolbar.getComponent());
     newUIHeaderView.tabbedPane.addChangeListener(new ChangeListener() {
       @Override
@@ -164,37 +161,45 @@ public final class SearchEverywhereHeader {
     return newUIHeaderView.panel;
   }
 
-  private List<SETab> createTabs(List<? extends SearchEverywhereContributor<?>> contributors) {
-    List<SETab> res = new ArrayList<>();
+  private List<SETab> createTabs(List<SearchEverywhereContributor<?>> contributors) {
+    List<SETab> result = new ArrayList<>();
 
     contributors = contributors.stream()
       .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
       .collect(Collectors.toList());
 
-    final Runnable onChanged = () -> {
+    Runnable onChanged = () -> {
       myToolbar.updateActionsImmediately();
       myScopeChangedCallback.run();
     };
 
     if (contributors.size() > 1) {
-      SETab allTab = createAllTab(contributors, onChanged);
-      res.add(allTab);
+      result.add(createAllTab(contributors, onChanged));
     }
 
-    TabsCustomizationStrategy.getInstance()
-      .getSeparateTabContributors(contributors)
-      .forEach(contributor -> {
-        SETab tab = createTab(contributor, onChanged);
-        res.add(tab);
-      });
+    List<SearchEverywhereContributor<?>> separateTabContributors;
+    try {
+      separateTabContributors = TabsCustomizationStrategy.getInstance().getSeparateTabContributors(contributors);
+    }
+    catch (Exception e) {
+      Logger.getInstance(SearchEverywhereHeader.class).error(e);
+      separateTabContributors = contributors.stream().filter(it -> it.isShownInSeparateTab()).toList();
+    }
 
-    return res;
+    for (SearchEverywhereContributor<?> contributor : separateTabContributors) {
+      try {
+        result.add(createTab(contributor, onChanged));
+      }
+      catch (Exception e) {
+        Logger.getInstance(SearchEverywhereHeader.class).error(e);
+      }
+    }
+
+    return result;
   }
 
   private static PersistentSearchEverywhereContributorFilter<String> createContributorsFilter(List<? extends SearchEverywhereContributor<?>> contributors) {
-    Map<String, @Nls String> namesMap =
-      ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(), c.getFullGroupName()));
-
+    Map<String, @Nls String> namesMap = ContainerUtil.map2Map(contributors, c -> new Pair<>(c.getSearchProviderId(), c.getFullGroupName()));
     return new PersistentSearchEverywhereContributorFilter<>(
       ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
       SearchEverywhereConfiguration.getInstance(),
@@ -205,8 +210,7 @@ public final class SearchEverywhereHeader {
     return myTabs;
   }
 
-  @NotNull
-  public SETab getSelectedTab() {
+  public @NotNull SETab getSelectedTab() {
     return mySelectedTab;
   }
 
@@ -285,11 +289,10 @@ public final class SearchEverywhereHeader {
                      contributor.getActions(onChanged), null);
   }
 
-  @NotNull
-  private SETab createAllTab(List<? extends SearchEverywhereContributor<?>> contributors, @NotNull Runnable onChanged) {
+  private @NotNull SETab createAllTab(List<? extends SearchEverywhereContributor<?>> contributors, @NotNull Runnable onChanged) {
     String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
     PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
-    List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
+    List<AnAction> actions = List.of(new CheckBoxSearchEverywhereToggleAction(actionText) {
       final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
 
       @Override
@@ -332,7 +335,7 @@ public final class SearchEverywhereHeader {
       this.name = name;
       myContributorsFilter = filter;
 
-      assert contributors.size() > 0 : "Contributors list cannot be empty";
+      assert !contributors.isEmpty() : "Contributors list cannot be empty";
       this.id = id;
       this.contributors = new ArrayList<>(contributors);
       this.actions = actions;
@@ -366,8 +369,7 @@ public final class SearchEverywhereHeader {
       return contributors.size() == 1;
     }
 
-    @NotNull
-    public List<SearchEverywhereContributor<?>> getContributors() {
+    public @NotNull List<SearchEverywhereContributor<?>> getContributors() {
       if (myContributorsFilter == null) return contributors;
 
       return ContainerUtil.filter(contributors, contributor -> myContributorsFilter.isSelected(contributor.getSearchProviderId()));
