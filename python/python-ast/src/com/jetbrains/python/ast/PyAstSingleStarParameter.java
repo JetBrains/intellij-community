@@ -42,6 +42,11 @@ public interface PyAstSingleStarParameter extends PyAstParameter {
   }
 
   @Override
+  default boolean isSelf() {
+    return false;
+  }
+
+  @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
     pyVisitor.visitPySingleStarParameter(this);
   }

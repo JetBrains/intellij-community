@@ -1492,8 +1492,7 @@ public final class PyUtil {
    */
   @Contract("null -> false")
   public static boolean isNewMethod(@Nullable PsiElement element) {
-    final PyFunction function = as(element, PyFunction.class);
-    return function != null && PyNames.NEW.equals(function.getName()) && function.getContainingClass() != null;
+    return PyUtilCore.isNewMethod(element);
   }
 
   /**

@@ -25,6 +25,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.impl.ParamHelperCore;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,8 +131,30 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
   }
 
   @Override
+  default boolean isSelf() {
+    if (isPositionalContainer() || isKeywordContainer()) {
+      return false;
+    }
+    PyAstFunction function = getStubOrPsiParentOfType(PyAstFunction.class);
+    if (function == null) {
+      return false;
+    }
+    final PyAstClass cls = function.getContainingClass();
+    final PyAstParameter[] parameters = function.getParameterList().getParameters();
+    if (cls != null && parameters.length > 0 && parameters[0] == this) {
+      if (PyUtilCore.isNewMethod(function)) {
+        return true;
+      }
+      final PyAstFunction.Modifier modifier = function.getModifier();
+      if (modifier != PyAstFunction.Modifier.STATICMETHOD) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
     pyVisitor.visitPyNamedParameter(this);
   }
 }
-

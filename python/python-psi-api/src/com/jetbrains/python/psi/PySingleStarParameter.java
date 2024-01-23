@@ -28,9 +28,4 @@ public interface PySingleStarParameter extends PyAstSingleStarParameter, PyParam
   default PyExpression getDefaultValue() {
     return (PyExpression)PyAstSingleStarParameter.super.getDefaultValue();
   }
-
-  @Override
-  default boolean isSelf() {
-    return false;
-  }
 }

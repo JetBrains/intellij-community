@@ -27,10 +27,4 @@ public interface PyParameter extends PyAstParameter, PyElement {
   @Override
   @Nullable
   PyExpression getDefaultValue();
-
-  /**
-   * @return true if the parameter is the 'self' parameter of an instance attribute function or a function
-   * annotated with @classmethod
-   */
-  boolean isSelf();
 }

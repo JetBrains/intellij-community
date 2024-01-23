@@ -95,6 +95,18 @@ public final class PyUtilCore {
   }
 
   /**
+   * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __new__}.
+   * @see PyUtil#isInitMethod(PsiElement)
+   * @see PyUtil#isInitOrNewMethod(PsiElement)
+   * @see PyUtil#turnConstructorIntoClass(PyFunction)
+   */
+  @Contract("null -> false")
+  public static boolean isNewMethod(@Nullable PsiElement element) {
+    final PyAstFunction function = ObjectUtils.tryCast(element, PyAstFunction.class);
+    return function != null && PyNames.NEW.equals(function.getName()) && function.getContainingClass() != null;
+  }
+
+  /**
    * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __init__} or {@code __new__}.
    * @see PyUtil#isInitMethod(PsiElement)
    * @see PyUtil#isNewMethod(PsiElement)

@@ -30,4 +30,10 @@ public interface PyAstParameter extends PyAstElement {
 
   @Nullable
   String getDefaultValueText();
+
+  /**
+   * @return true if the parameter is the 'self' parameter of an instance attribute function or a function
+   * annotated with @classmethod
+   */
+  boolean isSelf();
 }

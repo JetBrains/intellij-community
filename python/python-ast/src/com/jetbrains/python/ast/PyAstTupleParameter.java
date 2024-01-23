@@ -61,6 +61,11 @@ public interface PyAstTupleParameter extends PyAstParameter {
     return ParamHelperCore.getDefaultValueText(getDefaultValue());
   }
 
+  @Override
+  default boolean isSelf() {
+    return false;
+  }
+
   /**
    * @return the nested parameters within this tuple parameter.
    */

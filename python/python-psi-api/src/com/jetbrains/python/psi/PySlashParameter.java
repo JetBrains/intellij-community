@@ -29,9 +29,4 @@ public interface PySlashParameter extends PyAstSlashParameter, PyParameter, Stub
   default PyExpression getDefaultValue() {
     return (PyExpression)PyAstSlashParameter.super.getDefaultValue();
   }
-
-  @Override
-  default boolean isSelf() {
-    return false;
-  }
 }

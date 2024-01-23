@@ -44,11 +44,6 @@ public interface PyTupleParameter extends PyAstTupleParameter, PyParameter, Stub
     return (PyExpression)PyAstTupleParameter.super.getDefaultValue();
   }
 
-  @Override
-  default boolean isSelf() {
-    return false;
-  }
-
   /**
    * @return the nested parameters within this tuple parameter.
    */
