@@ -189,6 +189,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       content.setDisposer(activityView)
 
       ActivityToolWindow.showTab(project, content)
+      ActivityToolWindow.onContentVisibilityChanged(project, content, activityView) { isVisible ->
+        activityView.model.setVisible(isVisible)
+      }
     }
 
     @JvmStatic

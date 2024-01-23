@@ -5,13 +5,18 @@ import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 
 object ActivityToolWindow {
   private const val TOOLWINDOW_ID: String = "Activity" // NON-NLS
@@ -47,5 +52,30 @@ object ActivityToolWindow {
     ))
     ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
     return toolWindow
+  }
+
+  internal fun onContentVisibilityChanged(project: Project, content: Content, disposable: Disposable, onVisibilityChanged: (Boolean) -> Unit) {
+    val activityToolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOLWINDOW_ID) ?: return
+    val isVisiblePredicate = { activityToolWindow.isVisible && activityToolWindow.contentManagerIfCreated?.selectedContent == content }
+
+    val contentManagerListener = object : ContentManagerListener {
+      override fun selectionChanged(event: ContentManagerEvent) {
+        onVisibilityChanged(isVisiblePredicate())
+      }
+    }
+    activityToolWindow.addContentManagerListener(contentManagerListener)
+    Disposer.register(disposable, Disposable {
+      activityToolWindow.contentManagerIfCreated?.removeContentManagerListener(contentManagerListener)
+    })
+
+    project.messageBus.connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager,
+                                toolWindow: ToolWindow,
+                                changeType: ToolWindowManagerListener.ToolWindowManagerEventType) {
+        if (toolWindow == activityToolWindow) onVisibilityChanged(isVisiblePredicate())
+      }
+    })
+
+    onVisibilityChanged(isVisiblePredicate())
   }
 }

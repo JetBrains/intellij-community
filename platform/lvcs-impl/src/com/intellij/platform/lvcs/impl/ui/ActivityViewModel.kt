@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.*
 import java.util.*
 
 @OptIn(FlowPreview::class)
@@ -26,19 +23,25 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
   private val scopeFilterFlow = MutableStateFlow<String?>(null)
   private val activityFilterFlow = MutableStateFlow<String?>(null)
 
+  private val isVisibleFlow = MutableStateFlow(true)
+
   init {
     coroutineScope.launch {
-      combine(activityProvider.activityItemsChanged.debounce(500), scopeFilterFlow) { _, filter -> filter }.collect { filter ->
-        withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
-        val activityItems = withContext(Dispatchers.Default) {
-          activityProvider.loadActivityList(activityScope, filter)
+      combine(activityProvider.activityItemsChanged.debounce(500), scopeFilterFlow,
+              isVisibleFlow) { _, filter, isVisible -> filter to isVisible }
+        .filter { (_, isVisible) -> isVisible }
+        .map { it.first }
+        .collect { filter ->
+          withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
+          val activityItems = withContext(Dispatchers.Default) {
+            activityProvider.loadActivityList(activityScope, filter)
+          }
+          withContext(Dispatchers.EDT) {
+            val activityData = ActivityData(activityItems)
+            activityItemsFlow.value = activityData
+            eventDispatcher.multicaster.onItemsLoadingStopped(activityData)
+          }
         }
-        withContext(Dispatchers.EDT) {
-          val activityData = ActivityData(activityItems)
-          activityItemsFlow.value = activityData
-          eventDispatcher.multicaster.onItemsLoadingStopped(activityData)
-        }
-      }
     }
     coroutineScope.launch {
       selectionFlow.collectLatest { selection ->
@@ -76,6 +79,10 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
 
   fun setSelection(selection: ActivitySelection?) {
     selectionFlow.value = selection
+  }
+
+  fun setVisible(isVisible: Boolean) {
+    isVisibleFlow.value = isVisible
   }
 
   fun addListener(listener: ActivityModelListener, disposable: Disposable) {
