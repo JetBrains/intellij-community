@@ -112,7 +112,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       printHelpAndExit();
     }
 
-    if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
+    if (isProfileConfigInvalid()) {
       reportError("Profile to inspect with is not defined");
       printHelpAndExit();
     }
@@ -145,6 +145,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public void header() { }
+
+  protected boolean isProfileConfigInvalid() {
+    return myProfileName == null && myProfilePath == null && myStubProfile == null;
+  }
 
   public void execute() throws Exception {
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -736,7 +740,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return InspectionProjectProfileManager.getInstance(project);
   }
 
-  public @NotNull InspectionProfileLoader<? extends InspectionProfileImpl> getInspectionProfileLoader(@NotNull Project project) {
+  private @NotNull InspectionProfileLoader<? extends InspectionProfileImpl> getInspectionProfileLoader(@NotNull Project project) {
     return new InspectionProfileLoaderBase<>(project) {
       @Override
       public @Nullable InspectionProfileImpl loadProfileByName(@NotNull String profileName) {
