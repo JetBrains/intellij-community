@@ -34,7 +34,7 @@ public class FilteringTask implements Runnable {
   public FilteringTask(@NotNull String className, @NotNull DebugProcessImpl debugProcess,
                        @NotNull XExpression expression, @NotNull ValuesList values,
                        @NotNull FilteringTaskCallback callback) {
-    myChecker = StringUtil.isEmptyOrSpaces(expression.getExpression())
+    myChecker = isEmptyFilter(expression)
                 ? ConditionChecker.ALL_MATCHED_CHECKER
                 : new ConditionCheckerImpl(debugProcess, expression, className);
     myValues = values;
@@ -74,6 +74,10 @@ public class FilteringTask implements Runnable {
                                : FilteringResult.LIMIT_REACHED;
 
     myCallback.completed(reason);
+  }
+
+  public static boolean isEmptyFilter(@NotNull XExpression expression) {
+    return StringUtil.isEmptyOrSpaces(expression.getExpression());
   }
 
   public interface ValuesList {

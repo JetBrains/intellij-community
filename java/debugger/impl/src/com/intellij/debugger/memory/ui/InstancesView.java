@@ -16,6 +16,7 @@ import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.debugger.memory.filtering.FilteringTask;
 import com.intellij.debugger.memory.filtering.FilteringTaskCallback;
+import com.intellij.debugger.memory.filtering.InstanceProviderEx;
 import com.intellij.debugger.memory.utils.AndroidUtil;
 import com.intellij.debugger.memory.utils.ErrorsValueGroup;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
@@ -24,6 +25,7 @@ import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -35,6 +37,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTreeTable;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +47,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
@@ -85,10 +89,11 @@ class InstancesView extends InstancesViewBase {
 
   private final Object myFilteringTaskLock = new Object();
 
+  private final XDebugSession myDebugSession;
   private final DebugProcessImpl myDebugProcess;
   private final String myClassName;
 
-  private final InstancesViewRepresentation myRepresentation;
+  private InstancesViewRepresentation myRepresentation;
 
   private volatile FilteringTask myFilteringTask;
   private volatile Future<?> myFilteringTaskFuture;
@@ -99,15 +104,10 @@ class InstancesView extends InstancesViewBase {
     super(new BorderLayout(0, JBUIScale.scale(BORDER_LAYOUT_DEFAULT_GAP)), session, instancesProvider);
     myClassType = classType;
     myClassName = classType.name();
+    myDebugSession = session;
     myDebugProcess = (DebugProcessImpl)(DebuggerManager.getInstance(session.getProject()).getDebugProcess(session.getDebugProcess().getProcessHandler()));
     myNodeManager = new MyNodeManager(session.getProject());
     myWarningMessageConsumer = warningMessageConsumer;
-
-    if (MemoryAgent.isAgentEnabled(myDebugProcess) && Registry.is("debugger.memory.agent.use.in.memory.view")) {
-      myRepresentation = new TreeTableRepresentation();
-    } else {
-      myRepresentation = new TreeRepresentation();
-    }
 
     final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
 
@@ -133,6 +133,7 @@ class InstancesView extends InstancesViewBase {
 
     getProgress().addStopActionListener(this::cancelFilteringTask);
 
+    selectRepresentation(null);
     myInstancesTree = new InstancesTree(session.getProject(), editorsProvider, getValueMarkers(session), this::updateInstances);
 
     getFilterButton().addActionListener(e -> {
@@ -146,7 +147,7 @@ class InstancesView extends InstancesViewBase {
     });
 
     add(filteringPane, BorderLayout.NORTH);
-    myRepresentation.customizeView(this, session, myClassName);
+    updateRepresentation();
 
     final JComponent focusedComponent = myFilterConditionEditor.getEditorComponent();
     UiNotifyConnector.doWhenFirstShown(focusedComponent, () ->
@@ -188,16 +189,17 @@ class InstancesView extends InstancesViewBase {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         final EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
+        final XExpression expression = ReadAction.compute(() -> myFilterConditionEditor.getExpression());
+        if (selectRepresentation(expression)) {
+          updateRepresentation();
+        }
         List<JavaReferenceInfo> instances = myRepresentation.fetchInstances(evaluationContext);
 
         synchronized (myFilteringTaskLock) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            myFilteringTask =
-              new FilteringTask(myClassName, myDebugProcess, myFilterConditionEditor.getExpression(), new MyValuesList(instances),
-                                new MyFilteringCallback(evaluationContext));
+          myFilteringTask = new FilteringTask(myClassName, myDebugProcess, expression, new MyValuesList(instances),
+                                              new MyFilteringCallback(evaluationContext));
 
-            myFilteringTaskFuture = ApplicationManager.getApplication().executeOnPooledThread(myFilteringTask);
-          });
+          myFilteringTaskFuture = ApplicationManager.getApplication().executeOnPooledThread(myFilteringTask);
         }
       }
     });
@@ -422,23 +424,53 @@ class InstancesView extends InstancesViewBase {
     List<JavaReferenceInfo> fetchInstances(@NotNull EvaluationContextImpl evaluationContext);
   }
 
+  private boolean isMemoryViewSuitable(@Nullable XExpression expression) {
+    return MemoryAgent.isAgentEnabled(myDebugProcess)
+           && Registry.is("debugger.memory.agent.use.in.memory.view")
+           && getInstancesProvider() instanceof InstanceProviderEx instanceProviderEx
+           && instanceProviderEx.returnAllInstancesOfAClass()
+           && (expression == null || FilteringTask.isEmptyFilter(expression));
+  }
+
+  private boolean selectRepresentation(@Nullable XExpression expression) {
+    boolean useMemoryView = isMemoryViewSuitable(expression);
+    if (myRepresentation == null
+        || useMemoryView != myRepresentation instanceof TreeTableRepresentation) {
+      myRepresentation = useMemoryView ? new TreeTableRepresentation() : new TreeRepresentation();
+      return true;
+    }
+    return false;
+  }
+
+  private void updateRepresentation() {
+    myRepresentation.customizeView(this, myDebugSession, myClassName);
+  }
+
+  private void customizeView(@NotNull InstancesView view, @NotNull XDebugSession session, String className, JComponent tree) {
+    final StackFrameList list = new StackFrameList(myDebugProcess);
+    list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
+        list.navigateToSelectedValue(true);
+        return true;
+      }
+    }.installOn(list);
+
+    final InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(
+      session, tree, myInstancesTree, list, className
+    );
+    Component component = ((BorderLayout)view.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+    if (component != null) {
+      view.remove(component);
+    }
+    view.add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
+  }
+
   private final class TreeRepresentation implements InstancesViewRepresentation {
     @Override
     public void customizeView(@NotNull InstancesView view, @NotNull XDebugSession session, String className) {
-      final StackFrameList list = new StackFrameList(myDebugProcess);
-      list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
-      new DoubleClickListener() {
-        @Override
-        protected boolean onDoubleClick(@NotNull MouseEvent event) {
-          list.navigateToSelectedValue(true);
-          return true;
-        }
-      }.installOn(list);
-
-      final InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(
-        session, myInstancesTree, list, className
-      );
-      view.add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
+      InstancesView.this.customizeView(view, session, className, new JBScrollPane(myInstancesTree));
     }
 
     @Override
@@ -468,7 +500,7 @@ class InstancesView extends InstancesViewBase {
       JBTreeTable treeTable = new JBTreeTable(treeTableModel, myInstancesTree);
       treeTable.setDefaultRenderer(Long.class, treeTableModel.createTableCellRenderer());
       treeTable.getTree().setCellRenderer(new XDebuggerTreeRenderer(myInstancesTree.getProject()));
-      view.add(treeTable, BorderLayout.CENTER);
+      InstancesView.this.customizeView(view, session, className, treeTable);
     }
 
     @Override

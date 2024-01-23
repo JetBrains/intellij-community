@@ -40,9 +40,11 @@ class InstancesWithStackFrameView {
   private final JBSplitter mySplitter = new JBSplitter(false, DEFAULT_SPLITTER_PROPORTION);
   private boolean myIsHided = false;
 
-  InstancesWithStackFrameView(@NotNull XDebugSession debugSession, @NotNull InstancesTree tree,
+  InstancesWithStackFrameView(@NotNull XDebugSession debugSession,
+                              @NotNull JComponent component,
+                              @NotNull InstancesTree tree,
                               @NotNull StackFrameList list, @NotNull String className) {
-    mySplitter.setFirstComponent(new JBScrollPane(tree));
+    mySplitter.setFirstComponent(component);
 
     final Project project = debugSession.getProject();
     list.setEmptyText(JavaDebuggerBundle.message("status.text.select.instance.to.see.stack.frame"));
