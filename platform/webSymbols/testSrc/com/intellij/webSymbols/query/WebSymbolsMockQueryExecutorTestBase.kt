@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.query
 
+import com.intellij.lang.documentation.ClientDocumentationSettings
+import com.intellij.lang.documentation.LocalDocumentationSettings
 import com.intellij.mock.MockApplication
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
@@ -26,6 +28,7 @@ abstract class WebSymbolsMockQueryExecutorTestBase : UsefulTestCase() {
     super.setUp()
     val application = MockApplication.setUp(testRootDisposable)
     application.registerService(WebSymbolsQueryExecutorFactory::class.java, WebSymbolsMockQueryExecutorFactory())
+    application.registerService(ClientDocumentationSettings::class.java, LocalDocumentationSettings())
     application.extensionArea.registerExtensionPoint(
       "com.intellij.webSymbols.webTypes.filter",
       "com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP",
