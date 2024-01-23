@@ -4,6 +4,7 @@ package com.intellij.platform.lvcs.impl.ui
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.EventDispatcher
@@ -32,6 +33,7 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
         .filter { (_, isVisible) -> isVisible }
         .map { it.first }
         .collect { filter ->
+          thisLogger<ActivityViewModel>().debug("Loading activity items for $activityScope and filter $filter")
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
           val activityItems = withContext(Dispatchers.Default) {
             activityProvider.loadActivityList(activityScope, filter)
@@ -45,6 +47,7 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
     }
     coroutineScope.launch {
       selectionFlow.collectLatest { selection ->
+        thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope")
         val diffData = selection?.let { withContext(Dispatchers.Default) { activityProvider.loadDiffData(activityScope, selection) } }
         withContext(Dispatchers.EDT) {
           eventDispatcher.multicaster.onDiffDataLoaded(diffData)
@@ -55,6 +58,7 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
     if (activityProvider.isActivityFilterSupported(activityScope)) {
       coroutineScope.launch {
         combine(activityFilterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }.collect { (filter, data) ->
+          thisLogger<ActivityViewModel>().debug("Filtering activity items for $activityScope by $filter")
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStarted() }
           val result = activityProvider.filterActivityList(activityScope, data, filter)
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(result) }
