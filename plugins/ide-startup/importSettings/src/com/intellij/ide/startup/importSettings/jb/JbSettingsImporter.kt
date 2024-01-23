@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -38,6 +39,7 @@ class JbSettingsImporter(private val configDirPath: Path,
 ) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
   private val defaultNewUIValue = true
+  private val additionalSchemeDirs = mapOf(FileTemplatesScheme.TEMPLATES_DIR to SettingsCategory.CODE)
 
   // these are options that need to be reloaded after restart
   // for instance, LaFManager, because the actual theme might be provided by a plugin.
@@ -124,11 +126,15 @@ class JbSettingsImporter(private val configDirPath: Path,
 
       // load code style scheme manager
       CodeStyleSchemes.getInstance()
-
       val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
       schemeManagerFactory.process {
         if ((configDirPath / it.fileSpec).isDirectory()) {
           allFiles.addAll(filesFromFolder(configDirPath / it.fileSpec, it.fileSpec))
+        }
+      }
+      for (entry in additionalSchemeDirs) {
+        if ((configDirPath / entry.key).isDirectory()) {
+          allFiles.addAll(filesFromFolder(configDirPath / entry.key, entry.key))
         }
       }
 
@@ -228,6 +234,9 @@ class JbSettingsImporter(private val configDirPath: Path,
         else {
           retval.add("$prefix/${entry.name}")
         }
+      } else {
+        val folderFiles = filesFromFolder(entry, "$prefix/${entry.name}")
+        retval.addAll(folderFiles)
       }
     }
     return retval
@@ -279,9 +288,14 @@ class JbSettingsImporter(private val configDirPath: Path,
         schemeCategories.add(it.fileSpec)
       }
     }
+    for (entry in additionalSchemeDirs) {
+      if (categories.contains(entry.value)) {
+        schemeCategories.add(entry.key)
+      }
+    }
     for (file in allFiles) {
       val split = file.split('/')
-      if (split.size != 2)
+      if (split.size < 2)
         continue
 
       if (schemeCategories.contains(split[0])) {
