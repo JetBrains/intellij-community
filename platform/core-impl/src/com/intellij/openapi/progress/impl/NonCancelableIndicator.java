@@ -1,14 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-class NonCancelableIndicator implements NonCancelableSection, StandardProgressIndicator {
+class NonCancelableIndicator implements StandardProgressIndicator {
   static final NonCancelableIndicator INSTANCE = new NonCancelableIndicator() {
     @Override
     public int hashCode() {
@@ -17,14 +16,6 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
   };
 
   NonCancelableIndicator() {
-  }
-
-  @Override
-  public void done() {
-    ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (currentIndicator != this) {
-      throw new AssertionError("Trying do .done() NonCancelableSection, which is already done");
-    }
   }
 
   @Override
