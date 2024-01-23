@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -50,7 +50,9 @@ public final class FileSystemUtil {
   private static final Mediator ourMediator = computeMediator();
 
   static @NotNull Mediator computeMediator() {
-    if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
+    boolean forceNio = Boolean.getBoolean(FORCE_USE_NIO2_KEY) ||
+                       "com.intellij.platform.core.nio.fs".equals(FileSystems.getDefault().provider().getClass().getPackage().getName());
+    if (!forceNio) {
       try {
         if ((SystemInfo.isLinux || SystemInfo.isMac) && CpuArch.isIntel64() && JnaLoader.isLoaded()) {
           return ensureSane(new JnaUnixMediatorImpl());
