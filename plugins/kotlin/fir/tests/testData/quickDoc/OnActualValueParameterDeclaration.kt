@@ -8,4 +8,4 @@ expect fun foo(param: String)
 actual fun foo(pa<caret>ram: String) {}
 
 // IGNORE_K2
-//INFO: <div class='definition'><pre>param: String</pre></div><div class='content'><p style='margin-top:0;padding-top:0;'>doc for expected <code style='font-size:96%;'><span style=""><span style="">param</span></span></code> of function <code style='font-size:96%;'><span style=""><span style="">foo</span></span></code></p></div><table class='sections'></table>
+//INFO: <div class='definition'><pre>param: String</pre></div><div class='content'><p style='margin-top:0;padding-top:0;'>doc for expected <code><span style=""><span style="">param</span></span></code> of function <code><span style=""><span style="">foo</span></span></code></p></div><table class='sections'></table>
