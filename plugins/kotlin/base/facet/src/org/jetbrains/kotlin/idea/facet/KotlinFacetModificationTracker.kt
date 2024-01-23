@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.facet
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 
+@Service(Service.Level.PROJECT)
 class KotlinFacetModificationTracker(project: Project) :
     SimpleModificationTracker(), WorkspaceModelChangeListener, Disposable {
 

@@ -15,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -40,7 +41,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub) {
-    this(stub, PyElementTypes.NAMED_PARAMETER);
+    this(stub, PyStubElementTypes.NAMED_PARAMETER);
   }
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub, IStubElementType nodeType) {
@@ -146,6 +147,12 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Nullable
   public PyType getArgumentType(@NotNull TypeEvalContext context) {
     return PyCallableParameterImpl.psi(this).getArgumentType(context);
+  }
+
+  @Override
+  @Nullable
+  public PyAnnotation getAnnotation() {
+    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
   }
 
   @Nullable

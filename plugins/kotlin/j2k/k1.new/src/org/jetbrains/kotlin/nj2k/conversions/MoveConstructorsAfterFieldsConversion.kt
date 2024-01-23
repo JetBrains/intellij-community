@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUniverseFieldSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
-class MoveConstructorsAfterFieldsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class MoveConstructorsAfterFieldsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClassBody) return recurse(element)
         if (element.declarations.none { it is JKInitDeclaration }) return recurse(element)

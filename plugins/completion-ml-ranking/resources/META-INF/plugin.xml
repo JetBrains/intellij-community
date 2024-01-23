@@ -71,13 +71,10 @@
     <applicationService serviceInterface="com.intellij.completion.ml.personalization.UserFactorsManager"
                         serviceImplementation="com.intellij.completion.ml.personalization.impl.UserFactorsManagerImpl"/>
 
-    <projectService serviceImplementation="com.intellij.completion.ml.personalization.impl.ProjectUserFactorStorage"/>
-
     <applicationService serviceInterface="com.intellij.completion.ml.experiment.ExperimentStatus"
                         serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"
                         preload="true"/>
 
-    <projectService serviceImplementation="com.intellij.completion.ml.ngram.NGramModelRunnerManager"/>
     <projectService serviceImplementation="com.intellij.completion.ml.common.CurrentProjectInfo"/>
 
     <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.features.MLCompletionWeigher" order="last"/>

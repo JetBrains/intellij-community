@@ -16,12 +16,13 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * This action handles the generation of a {@code toString()} method that dumps the fields
  * of the class.
  */
-public class GenerateToStringAction extends BaseGenerateAction {
+public class GenerateToStringAction extends BaseGenerateAction implements DumbAware {
 
     public GenerateToStringAction() {
         super(new GenerateToStringActionHandlerImpl());

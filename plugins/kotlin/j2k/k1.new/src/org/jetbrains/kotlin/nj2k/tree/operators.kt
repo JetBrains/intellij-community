@@ -8,12 +8,12 @@ import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.types.JKType
 
-interface JKOperator {
+internal interface JKOperator {
     val token: JKOperatorToken
     val returnType: JKType
 }
 
-interface JKOperatorToken {
+internal interface JKOperatorToken {
     val text: String
 
     @Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
@@ -115,25 +115,25 @@ interface JKOperatorToken {
     }
 }
 
-class JKKtWordOperatorToken(override val text: String) : JKKtOperatorToken
+internal class JKKtWordOperatorToken(override val text: String) : JKKtOperatorToken
 
-class JKKtOperatorImpl(override val token: JKOperatorToken, override val returnType: JKType) : JKOperator
+internal class JKKtOperatorImpl(override val token: JKOperatorToken, override val returnType: JKType) : JKOperator
 
-interface JKKtOperatorToken : JKOperatorToken
+internal interface JKKtOperatorToken : JKOperatorToken
 
-class JKJavaOperatorToken(private val psiToken: IElementType) : JKOperatorToken {
+internal class JKJavaOperatorToken(private val psiToken: IElementType) : JKOperatorToken {
     override val text: String
         get() = error("Java token '$psiToken' should not be printed, it should be replaced with the corresponding Kotlin one")
 }
 
-class JKKtSingleValueOperatorToken(val psiToken: KtSingleValueToken) : JKKtOperatorToken {
+internal class JKKtSingleValueOperatorToken(val psiToken: KtSingleValueToken) : JKKtOperatorToken {
     override val text: String = psiToken.value
 }
 
-object JKKtSpreadOperatorToken : JKKtOperatorToken {
+internal object JKKtSpreadOperatorToken : JKKtOperatorToken {
     override val text: String = "*"
 }
 
-class JKKtSpreadOperator(override val returnType: JKType) : JKOperator {
+internal class JKKtSpreadOperator(override val returnType: JKType) : JKOperator {
     override val token: JKOperatorToken = JKKtSpreadOperatorToken
 }

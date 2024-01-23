@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
@@ -35,6 +36,7 @@ import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.logging.LogLevel;
@@ -74,7 +76,6 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
-import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea;
 
 public class GradleExecutionHelper {
 
@@ -857,8 +858,9 @@ public class GradleExecutionHelper {
     var jvmArguments = buildEnvironment.getJava().getJvmArguments();
     LOG.debug("Gradle java home: " + javaHome);
     LOG.debug("Gradle jvm arguments: " + jvmArguments);
-    if (isJavaHomeUnsupportedByIdea(javaHome.getPath())) {
-      throw new UnsupportedGradleJvmByIdeaException(gradleVersion);
+    var javaVersion = ExternalSystemJdkUtil.getJavaVersion(javaHome.getPath());
+    if (javaVersion == null || !GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)) {
+      throw new UnsupportedGradleJvmByIdeaException(gradleVersion, javaVersion);
     }
   }
 
@@ -880,14 +882,23 @@ public class GradleExecutionHelper {
   public static class UnsupportedGradleJvmByIdeaException extends RuntimeException {
 
     private final @NotNull GradleVersion myGradleVersion;
+    private final @Nullable JavaVersion myJavaVersion;
 
-    public UnsupportedGradleJvmByIdeaException(@NotNull GradleVersion gradleVersion) {
+    public UnsupportedGradleJvmByIdeaException(
+      @NotNull GradleVersion gradleVersion,
+      @Nullable JavaVersion javaVersion
+    ) {
       super("Unsupported Gradle JVM version");
       myGradleVersion = gradleVersion;
+      myJavaVersion = javaVersion;
     }
 
     public @NotNull GradleVersion getGradleVersion() {
       return myGradleVersion;
+    }
+
+    public @Nullable JavaVersion getJavaVersion() {
+      return myJavaVersion;
     }
   }
 

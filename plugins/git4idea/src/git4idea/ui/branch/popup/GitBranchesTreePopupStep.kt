@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
@@ -74,10 +74,13 @@ class GitBranchesTreePopupStep(internal val project: Project,
       !filterActive && repositories.size > 1
       && !userWantsSyncControl(project) && selectedRepository != null -> {
         GitBranchesTreeSelectedRepoModel(project, selectedRepository, repositories, topLevelItems)
+          .apply(GitBranchesTreeSelectedRepoModel::init)
       }
-      filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
+      filterActive && repositories.size > 1 -> {
+        GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems).apply(GitBranchesTreeMultiRepoFilteringModel::init)
+      }
       !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositories, topLevelItems)
-      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems)
+      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems).apply(GitBranchesTreeSingleRepoModel::init)
     }
   }
 
@@ -134,21 +137,24 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
   override fun hasSubstep(selectedValue: Any?): Boolean {
     val userValue = selectedValue ?: return false
-    return (userValue is GitRepository && treeModel !is GitBranchesTreeMultiRepoFilteringModel) ||
-           userValue is GitBranch ||
-           userValue is GitBranchesTreeModel.BranchUnderRepository ||
-           (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled && userValue.action is ActionGroup)
+
+    return if (userValue is PopupFactoryImpl.ActionItem) {
+      userValue.isEnabled && userValue.action is ActionGroup
+    }
+    else {
+      treeModel.isSelectable(selectedValue)
+    }
   }
 
   fun isSelectable(node: Any?): Boolean {
-    val userValue = node ?: return false
-    return (userValue is GitRepository && treeModel !is GitBranchesTreeMultiRepoFilteringModel) ||
-           userValue is GitBranch ||
-           userValue is GitBranchesTreeModel.BranchUnderRepository ||
-           (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled)
+    return treeModel.isSelectable(node)
   }
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
+    if (selectedValue is GitBranchesTreeModel.TopLevelRepository) {
+      return GitBranchesTreePopupStep(project, selectedValue.repository, listOf(selectedValue.repository), false)
+    }
+
     if (selectedValue is GitRepository) {
       return GitBranchesTreePopupStep(project, selectedValue, listOf(selectedValue), false)
     }

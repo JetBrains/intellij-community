@@ -189,6 +189,7 @@ internal open class GitDefaultMergeDialogCustomizer(
   private data class CherryPickDetails(@NlsSafe val shortHash: String, @NlsSafe val authorName: String, @NlsSafe val commitMessage: String)
 }
 
+@NlsContexts.Label
 internal fun getDescriptionForRebase(@NlsSafe rebasingBranch: String?, @NlsSafe baseBranch: String?, baseHash: Hash?): String =
   when {
     baseBranch != null -> html(

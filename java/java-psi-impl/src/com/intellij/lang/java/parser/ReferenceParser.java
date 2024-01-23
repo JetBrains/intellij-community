@@ -57,43 +57,4 @@ public class ReferenceParser extends BasicReferenceParser {
   public ReferenceParser(@NotNull JavaParser javaParser) {
     super(javaParser);
   }
-
-  @Override
-  public @Nullable PsiBuilder.Marker parseType(PsiBuilder builder, int flags) {
-    return super.parseType(builder, flags);
-  }
-
-  @Override
-  public @Nullable PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder,
-                                                            boolean eatLastDot,
-                                                            boolean parameterList,
-                                                            boolean isNew,
-                                                            boolean diamonds) {
-    return super.parseJavaCodeReference(builder, eatLastDot, parameterList, isNew, diamonds);
-  }
-
-  @Override
-  public boolean parseImportCodeReference(PsiBuilder builder, boolean isStatic) {
-    return super.parseImportCodeReference(builder, isStatic);
-  }
-
-  @Override
-  public boolean parseReferenceParameterList(PsiBuilder builder, boolean wildcard, boolean diamonds) {
-    return super.parseReferenceParameterList(builder, wildcard, diamonds);
-  }
-
-  @Override
-  public @NotNull PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
-    return super.parseTypeParameters(builder);
-  }
-
-  @Override
-  public @Nullable PsiBuilder.Marker parseTypeParameter(PsiBuilder builder) {
-    return super.parseTypeParameter(builder);
-  }
-
-  @Override
-  public boolean parseReferenceList(PsiBuilder builder, IElementType start, @Nullable IElementType type, IElementType delimiter) {
-    return super.parseReferenceList(builder, start, type, delimiter);
-  }
 }

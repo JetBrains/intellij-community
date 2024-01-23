@@ -64,10 +64,8 @@ public interface PyAstFromImportStatement extends PyAstImportStatementBase,
   /**
    * @return the star in "from ... import *"
    */
-  default @Nullable PyAstStarImportElement getStarImportElement() {
-    //noinspection unchecked
-    return this.<PyAstStarImportElement>getStubOrPsiChild(PyElementTypes.STAR_IMPORT_ELEMENT);
-  }
+  @Nullable
+  PyAstStarImportElement getStarImportElement();
 
   /**
    * @return number of dots in relative "from" clause, or 0 in absolute import.

@@ -26,6 +26,8 @@ public open class VirtualFileUrlImpl(public val id: Int, internal val manager: V
 
   override fun getFileName(): String = url.substringAfterLast('/')
 
+  override fun getParent(): VirtualFileUrl? = manager.getParentVirtualUrl(this)
+
   override fun getPresentableUrl(): String {
     val calculatedUrl = this.url
     if (calculatedUrl.startsWith("file://")) {

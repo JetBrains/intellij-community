@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.trace.ReadTraceHash
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 
 internal class ReadTraceIndex<T> private constructor(
   objToTrace: HashMap<T, LongOpenHashSet>,
@@ -14,7 +13,7 @@ internal class ReadTraceIndex<T> private constructor(
 
   constructor() : this(HashMap<T, LongOpenHashSet>(), Long2ObjectOpenHashMap<MutableSet<T>>())
 
-  private val objToTrace: MutableMap<T, LongOpenHashSet> = objToTrace.mapValuesTo(Object2ObjectOpenHashMap()) { LongOpenHashSet(it.value) }
+  private val objToTrace: MutableMap<T, LongOpenHashSet> = objToTrace.mapValuesTo(HashMap()) { LongOpenHashSet(it.value) }
   private val traceToObj: Long2ObjectOpenHashMap<MutableSet<T>> = Long2ObjectOpenHashMap(traceToObj.mapValues { HashSet(it.value) })
 
   fun pull(another: ReadTraceIndex<T>) {
@@ -52,7 +51,8 @@ internal class ReadTraceIndex<T> private constructor(
       if (existingTraces == null || trace !in existingTraces) {
         val objs = traceToObj.get(trace)
         if (objs == null) {
-          traceToObj[trace] = mutableSetOf(obj)
+          // DO NOT change to `[trace] =` syntax because it will cause LONG boxing
+          traceToObj.put(trace, mutableSetOf(obj))
         }
         else {
           objs.add(obj)

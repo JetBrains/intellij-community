@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -9,8 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -148,8 +147,8 @@ internal class MavenShadeFacetPostTaskConfigurator : MavenAfterImportConfigurato
 
     runBlockingMaybeCancellable {
       withBackgroundProgress(project, MavenProjectBundle.message("maven.generating.uber.jars", text), true) {
-        withRawProgressReporter {
-          embedder.executeGoal(requests, "package", rawProgressReporter!!, mavenEventHandler)
+        reportRawProgress { reporter ->
+          embedder.executeGoal(requests, "package", reporter, mavenEventHandler)
         }
       }
     }

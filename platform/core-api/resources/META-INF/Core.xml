@@ -59,6 +59,5 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"
                         serviceImplementation="com.intellij.util.messages.impl.MessageBusFactoryImpl"/>
-    <applicationService serviceImplementation="com.intellij.util.LocaleSensitiveApplicationCacheService"/>
   </extensions>
 </idea-plugin>

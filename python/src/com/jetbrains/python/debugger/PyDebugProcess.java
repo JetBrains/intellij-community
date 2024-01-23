@@ -1254,18 +1254,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void startNotified(@NotNull ProcessEvent event) {
-    ProcessListener.super.startNotified(event);
-  }
-
-  @Override
   public void processTerminated(@NotNull ProcessEvent event) {
     myDebugger.close();
-  }
-
-  @Override
-  public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-    ProcessListener.super.onTextAvailable(event, outputType);
   }
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {

@@ -10,6 +10,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
@@ -32,7 +33,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
   }
 
   public PyDecoratorImpl(PyDecoratorStub stub) {
-    super(stub, PyElementTypes.DECORATOR_CALL);
+    super(stub, PyStubElementTypes.DECORATOR_CALL);
   }
 
   @Override

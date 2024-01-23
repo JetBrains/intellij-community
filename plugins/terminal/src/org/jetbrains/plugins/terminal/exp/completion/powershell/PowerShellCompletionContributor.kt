@@ -24,10 +24,12 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
     val shellCommandExecutor = parameters.editor.getUserData(ShellCommandExecutor.KEY)
-    if (session == null
-        || shellCommandExecutor == null
-        || session.shellIntegration.shellType != ShellType.POWERSHELL
-        || parameters.completionType != CompletionType.BASIC) {
+    if (session == null || shellCommandExecutor == null || parameters.completionType != CompletionType.BASIC) {
+      return
+    }
+    // stop even if we can't suggest something to not execute contributors from the ShellScript plugin
+    result.stopHere()
+    if (session.shellIntegration.shellType != ShellType.POWERSHELL) {
       return
     }
 
@@ -75,8 +77,13 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
   }
 
   private fun CompletionItemInfo.toLookupElement(): LookupElement {
+    var text = presentableText ?: lookupString
+    // Add file separator to directories to make it consistent with command spec completion and other shells
+    if (type == CompletionResultType.PROVIDER_CONTAINER && !text.endsWith(File.separatorChar)) {
+      text += File.separatorChar
+    }
     return LookupElementBuilder.create(lookupString)
-      .withPresentableText(presentableText ?: lookupString)
+      .withPresentableText(text)
       .withIcon(getIconForItem(this))
       .replacementStringAware(this) // first insert the correct completion string
       .surroundingQuotesAware(this) // then correct the quotes

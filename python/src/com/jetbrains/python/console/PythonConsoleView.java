@@ -776,11 +776,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     return null;
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
   public interface OnClearCallback {
     void onClear();
   }

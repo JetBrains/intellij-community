@@ -194,11 +194,6 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return LocalQuickFix.super.getFileModifierForPreview(target);
-    }
-
-    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiParameter variable = (PsiParameter)descriptor.getPsiElement().getParent();
       if (variable == null || !variable.isValid()) return; //weird. should not get here when field becomes invalid

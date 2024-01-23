@@ -2,7 +2,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersStartupActivity"/>
   </extensions>
 

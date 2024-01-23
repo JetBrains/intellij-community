@@ -99,12 +99,6 @@ interface KotlinSearchUsagesSupport {
         fun KtClass.isInheritable(): Boolean =
             getInstance(project).isInheritable(this)
 
-        fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
-            getInstance(project).expectedDeclarationIfAny(this)
-
-        fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration> =
-            getInstance(project).actualsForExpected(this, module)
-
         fun PsiElement.canBeResolvedWithFrontEnd(): Boolean =
             getInstance(project).canBeResolvedWithFrontEnd(this)
 
@@ -116,8 +110,6 @@ interface KotlinSearchUsagesSupport {
     }
 
     fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
-
-    fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
@@ -157,8 +149,6 @@ interface KotlinSearchUsagesSupport {
     fun isOverridable(declaration: KtDeclaration): Boolean
 
     fun isInheritable(ktClass: KtClass): Boolean
-
-    fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
 
     fun canBeResolvedWithFrontEnd(element: PsiElement): Boolean
 

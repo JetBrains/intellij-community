@@ -110,6 +110,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 }
 
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
+@Service
 @State(name = "ProjectManager", storages = [(Storage(FILE_SPEC))])
 internal class DefaultProjectExportableAndSaveTrigger {
   suspend fun save(forceSavingAllSettings: Boolean): SaveResult {

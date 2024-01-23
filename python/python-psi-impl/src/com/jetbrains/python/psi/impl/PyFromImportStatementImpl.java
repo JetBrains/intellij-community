@@ -14,6 +14,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -36,7 +37,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public PyFromImportStatementImpl(PyFromImportStatementStub stub) {
-    this(stub, PyElementTypes.FROM_IMPORT_STATEMENT);
+    this(stub, PyStubElementTypes.FROM_IMPORT_STATEMENT);
   }
 
   public PyFromImportStatementImpl(PyFromImportStatementStub stub, IStubElementType nodeType) {
@@ -182,6 +183,11 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
     }
     super.deleteChildInternal(child);
+  }
+
+  @Override
+  public @Nullable PyStarImportElement getStarImportElement() {
+    return getStubOrPsiChild(PyStubElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @Override

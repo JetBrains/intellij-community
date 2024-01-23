@@ -3,11 +3,9 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.buildtool.MavenEventHandler
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenImportListener
+import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
 class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
@@ -73,21 +71,12 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
 
     val resolvedProjects = mutableListOf<MavenProject>()
 
-    val resolverMock: MavenProjectResolver = object : MavenProjectResolver {
-      override suspend fun resolve(
-        mavenProjects: Collection<MavenProject>,
-        tree: MavenProjectsTree,
-        generalSettings: MavenGeneralSettings,
-        embeddersManager: MavenEmbeddersManager,
-        progressReporter: RawProgressReporter,
-        eventHandler: MavenEventHandler
-      ): MavenProjectResolver.MavenProjectResolutionResult {
-        resolvedProjects.addAll(mavenProjects)
-        return MavenProjectResolver.MavenProjectResolutionResult(emptyMap())
-      }
-    }
-
-    project.replaceService(MavenProjectResolver::class.java, resolverMock, testRootDisposable)
+    project.messageBus.connect(testRootDisposable)
+      .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+        override fun projectResolutionStarted(mavenProjects: MutableCollection<MavenProject>) {
+          resolvedProjects.addAll(mavenProjects)
+        }
+      })
 
     importProjectAsync()
 

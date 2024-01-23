@@ -92,19 +92,12 @@
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
 
-    <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectResolver"
-                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectResolverImpl"/>
-
-    <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
-
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.internal.ReadStatisticsCollector"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
                         serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>
@@ -386,6 +379,9 @@
     <registryKey key="maven.legacy.import.available" defaultValue="false"
                  description="Set to true to enable legacy Maven import. If the value is false, only 'fast' Maven import is available. Legacy import will be removed completely in one of the upcoming releases"/>
 
+    <registryKey key="maven.incremental.sync.in.ui" defaultValue="false"
+                 description="Show Maven incremental sync option in UI"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
@@ -598,6 +594,10 @@
 
 
   <actions>
+    <action id="Maven.SyncIncrementally" class="org.jetbrains.idea.maven.project.actions.IncrementalSyncAction"
+            icon="AllIcons.Actions.Refresh">
+    </action>
+
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
             icon="AllIcons.Actions.Refresh">
     </action>
@@ -776,6 +776,7 @@
     </group>
 
     <group id="Maven.NavigatorActionsToolbar">
+      <reference id="Maven.SyncIncrementally"/>
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
 

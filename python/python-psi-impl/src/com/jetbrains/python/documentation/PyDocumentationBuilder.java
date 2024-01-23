@@ -17,6 +17,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.*;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -84,6 +86,12 @@ public class PyDocumentationBuilder {
     }
     else if (elementDefinition instanceof PyNamedParameter) {
       buildFromParameter((PyNamedParameter)elementDefinition);
+    }
+    else if (elementDefinition instanceof PyTypeParameter typeParameter) {
+      buildFromTypeParameter(typeParameter);
+    }
+    else if (elementDefinition instanceof PyTypeAliasStatement typeAliasStatement) {
+      buildFromTypeAliasStatement(typeAliasStatement);
     }
 
     final ASTNode node = elementDefinition.getNode();
@@ -228,6 +236,44 @@ public class PyDocumentationBuilder {
       }
     }
     myBody.append(PythonDocumentationProvider.describeParameter(parameter, myContext));
+  }
+
+  private void buildFromTypeParameter(@NotNull PyTypeParameter typeParameter) {
+    ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(typeParameter);
+    HtmlChunk link = null;
+    String typeParamName = typeParameter.getName();
+    if (scopeOwner instanceof PyFunction pyFunction) {
+      link = getLinkToFunction(pyFunction, true);
+    }
+    else if (scopeOwner instanceof PyClass pyClass) {
+      link = getLinkToClass(pyClass, true);
+    }
+    else if (scopeOwner instanceof PyTypeAliasStatement typeAliasStatement) {
+      link = getLinkToTypeAliasStatement(typeAliasStatement);
+    }
+    if (link != null && typeParamName != null) {
+      myBody.appendRaw(PyPsiBundle.message("QDOC.type.parameter.name.of.link", HtmlChunk.text(typeParamName).bold(), link)).br();
+      myBody.append(PythonDocumentationProvider.describeTypeParameter(typeParameter, true, myContext));
+    }
+  }
+
+  private void buildFromTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement) {
+    ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(typeAliasStatement);
+    HtmlChunk link = null;
+    String typeParamName = typeAliasStatement.getName();
+    if (scopeOwner instanceof PyFunction pyFunction) {
+      link = getLinkToFunction(pyFunction, true);
+    }
+    else if (scopeOwner instanceof PyClass pyClass) {
+      link = getLinkToClass(pyClass, true);
+    }
+    else if (scopeOwner instanceof PyFile pyFile) {
+      link = getLinkToModule(pyFile);
+    }
+    if (link != null && typeParamName != null) {
+      myBody.appendRaw(PyPsiBundle.message("QDOC.type.alias.statement.name.of.link", HtmlChunk.text(typeParamName).bold(), link)).br();
+      myBody.append(PythonDocumentationProvider.describeTypeAlias(typeAliasStatement, myContext));
+    }
   }
 
   private @NotNull HtmlChunk runFormatterService(@NotNull @Nls String description) {
@@ -740,6 +786,16 @@ public class PyDocumentationBuilder {
       return PyDocumentationLink.toFunction(linkText, function);
     }
     return HtmlChunk.raw(linkText);
+  }
+
+  @Nullable
+  private static HtmlChunk getLinkToTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement) {
+    final String linkText = typeAliasStatement.getQualifiedName();
+    final PsiFile file = typeAliasStatement.getContainingFile();
+    if (linkText == null || typeAliasStatement.getName() == null || file == null) {
+      return null;
+    }
+    return PyDocumentationLink.toTypeAliasStatement(linkText, typeAliasStatement);
   }
 
   @Nullable

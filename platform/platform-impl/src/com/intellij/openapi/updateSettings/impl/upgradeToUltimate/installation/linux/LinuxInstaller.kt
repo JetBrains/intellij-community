@@ -39,7 +39,7 @@ internal class LinuxInstaller(scope: CoroutineScope, project: Project) : Ultimat
     val installed = installationResult.appPath
     val shellPath = installed.resolve("bin").resolve("idea.sh")
 
-    val command = GeneralCommandLine("sh", "-c", "${shellPath.pathString} &")
+    val command = GeneralCommandLine("sh", "-c", "${shellPath.pathString} ${project.basePath} &")
     
     return runCommand(command)
   }

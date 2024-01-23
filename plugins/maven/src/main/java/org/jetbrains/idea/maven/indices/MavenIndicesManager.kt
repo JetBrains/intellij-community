@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.indices
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
@@ -13,19 +13,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.indices.MavenSearchIndex.IndexListener
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.model.RepositoryKind
+import org.jetbrains.idea.maven.project.MavenImportListener
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
-import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -48,6 +46,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   private val myGavIndices = CopyOnWriteArrayList<MavenGAVIndex>()
 
   private val myDownloadListener = MavenIndexServerDownloadListener(this)
+  private val updateMutex = Mutex()
   private val localMavenGavIndex: MavenGAVIndex?
     get() {
       return myGavIndices.firstOrNull { it.repository.kind == RepositoryKind.LOCAL }
@@ -80,21 +79,19 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     get() = true
 
   private fun initListeners() {
-    ApplicationManager.getApplication().messageBus.connect(this)
-      .subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, myDownloadListener)
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+    busConnection.subscribe(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC, myDownloadListener)
 
-    ApplicationManager.getApplication().messageBus.connect(this)
-      .subscribe(MavenSearchIndex.INDEX_IS_BROKEN, MavenSearchIndexListener(this))
+    busConnection.subscribe(MavenSearchIndex.INDEX_IS_BROKEN, MavenSearchIndexListener(this))
 
     MavenRepositoryProvider.EP_NAME.addChangeListener({ scheduleUpdateIndicesList() }, this)
-    val projectsManager = MavenProjectsManager.getInstance(myProject)
 
-    projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
-      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
-                                   nativeMavenProject: NativeMavenProjectHolder?) {
+    myProject.messageBus.connect(this).subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+      override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
         scheduleUpdateIndicesList()
       }
-    }, this)
+
+    })
   }
 
   fun scheduleUpdateIndicesList() {
@@ -119,8 +116,17 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
 
   suspend fun updateIndexList() {
     try {
+      MavenLog.LOG.info("Updating index list for project $myProject")
+      updateMutex.lock()
+      val existing = myGavIndices.firstOrNull()
+      val repository = MavenIndexUtils.getLocalRepository(myProject)
+      if (existing != null && existing.repository == repository) {
+        MavenLog.LOG.info("updating index list for ${myProject} - ${repository} remains the same, nothing to update")
+        return
+      }
       myGavIndices.clear()
-      MavenIndexUtils.getLocalRepository(myProject)?.let {
+      repository?.let {
+        MavenLog.LOG.info("updating index list for ${myProject} - will add repository $it, before was ${existing?.repository}")
         myGavIndices.add(MavenSystemIndicesManager.getInstance().getGAVIndexForRepository(it))
       }
     }
@@ -128,7 +134,9 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
       MavenLog.LOG.error(e)
     }
     finally {
+      updateMutex.unlock()
       MavenSystemIndicesManager.getInstance().gc()
+
     }
   }
 
@@ -179,7 +187,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
   }
 
   fun scheduleUpdateLocalGavContent(explicit: Boolean) {
-    val localIndex = localMavenGavIndex;
+    val localIndex = localMavenGavIndex
     if (localIndex is MavenUpdatableIndex) {
       MavenSystemIndicesManager.getInstance().scheduleUpdateIndexContent(listOf(localIndex), explicit)
     }

@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import java.util.concurrent.ConcurrentHashMap
 
+@Service
 private class AppTopHitCache : TopHitCache()
 
 sealed class TopHitCache : Disposable {

@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.generators.JdkDownloadService
+import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -25,11 +26,9 @@ import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
@@ -74,10 +73,13 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         ParentStep : NewProjectWizardBaseData {
 
   final override val sdkProperty = propertyGraph.property<Sdk?>(null)
+  final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
   final override val gradleDslProperty = propertyGraph.property(GradleDsl.KOTLIN)
     .bindEnumStorage("NewProjectWizard.gradleDslState")
 
+
   final override var sdk by sdkProperty
+  final override var sdkDownloadTask by sdkDownloadTaskProperty
   final override var gradleDsl by gradleDslProperty
 
   private val distributionTypeProperty = propertyGraph.lazyProperty { suggestDistributionType() }
@@ -112,13 +114,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
-      sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
-        .columns(COLUMNS_MEDIUM)
-        .validationOnInput { validateJavaSdk(withDialog = false) }
-        .validationOnApply { validateJavaSdk(withDialog = true) }
-        .whenItemSelectedFromUi { logSdkChanged(sdk) }
-        .onApply { logSdkFinished(sdk) }
+      projectWizardJdkComboBox(context, sdkProperty, sdkDownloadTaskProperty, StdModuleTypes.JAVA.id)
     }.bottomGap(BottomGap.SMALL)
   }
 
@@ -434,6 +430,14 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return suggestGradleHome(context.project) ?: ""
   }
 
+  private fun startJdkDownloadIfNeeded(module: Module) {
+    val sdkDownloadTask = sdkDownloadTask
+    if (sdkDownloadTask is JdkDownloadTask) {
+      // Download the SDK on project creation
+      module.project.service<JdkDownloadService>().downloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
+    }
+  }
+
   protected fun linkGradleProject(
     project: Project,
     builder: AbstractGradleModuleBuilder = GradleJavaModuleBuilder(),
@@ -467,7 +471,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       it.configureBuildScript()
     }
 
-    return setupProjectFromBuilder(project, builder)
+    return setupProjectFromBuilder(project, builder)?.also {
+      startJdkDownloadIfNeeded(it)
+    }
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

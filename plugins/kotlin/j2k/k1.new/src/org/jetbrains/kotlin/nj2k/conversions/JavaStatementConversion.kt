@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.nj2k.useExpression
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKStatement) return recurse(element)
         return recurse(

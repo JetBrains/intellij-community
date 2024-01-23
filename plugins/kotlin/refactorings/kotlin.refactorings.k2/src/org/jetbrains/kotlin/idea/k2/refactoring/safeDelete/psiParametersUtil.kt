@@ -24,11 +24,8 @@ internal fun getParametersToSearch(element: KtParameter): List<PsiElement> {
 
 private fun checkParametersInMethodHierarchy(parameter: KtParameter): Collection<PsiElement>? {
     val method = parameter.ownerFunction ?: return null
-    val parametersToDelete = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(ThrowableComputable<Collection<PsiElement>?, RuntimeException> {
-            runReadAction { collectParameterHierarchy( parameter) }
-        }, JavaRefactoringBundle.message("progress.title.collect.hierarchy", parameter.name), true, parameter.project)
-    if (parametersToDelete == null || parametersToDelete.size <= 1 || isUnitTestMode()) return parametersToDelete
+    val parametersToDelete = collectParameterHierarchy( parameter)
+    if (parametersToDelete.size <= 1 || isUnitTestMode()) return parametersToDelete
 
     val message = JavaRefactoringBundle.message(
         "0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters",

@@ -36,7 +36,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
             templateName?.let { myFixture.type(".$it") }
 
             val fileText = file.text
-            val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $TEMPLATE:")
+            val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, TEMPLATE_DIRECTIVE)
 
             if (template != null) {
                 myFixture.type(template.replace("\\t", "\t"))
@@ -75,6 +75,6 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
 
     companion object {
         const val ALLOW_MULTIPLE_EXPRESSIONS = "ALLOW_MULTIPLE_EXPRESSIONS"
-        const val TEMPLATE = "TEMPLATE"
+        const val TEMPLATE_DIRECTIVE = "TEMPLATE:"
     }
 }

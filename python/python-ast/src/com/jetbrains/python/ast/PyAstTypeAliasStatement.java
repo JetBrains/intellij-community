@@ -5,6 +5,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
@@ -27,10 +29,7 @@ public interface PyAstTypeAliasStatement extends PyAstStatement, PsiNameIdentifi
 
   @Override
   @Nullable
-  default PyAstTypeParameterList getTypeParameterList() {
-    //noinspection unchecked
-    return this.<PyAstTypeParameterList>getStubOrPsiChild(PyElementTypes.TYPE_PARAMETER_LIST);
-  }
+  PyAstTypeParameterList getTypeParameterList();
 
   @Nullable
   default PyAstExpression getTypeExpression() {

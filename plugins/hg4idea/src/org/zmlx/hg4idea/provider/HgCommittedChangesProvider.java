@@ -128,7 +128,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
       }
       for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
         changes
-          .add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.RENAMED));
+          .add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.FileStatuses.RENAMED));
       }
 
       result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getBranchName(), revision.getCommitMessage(),
@@ -238,7 +238,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
       changes.add(createChange(root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
     }
     for (Map.Entry<String, String> copiedFile : localRevision.getMovedFiles().entrySet()) {
-      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.RENAMED));
+      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.FileStatuses.RENAMED));
     }
 
     return new HgCommittedChangeList(myVcs, vcsRevisionNumber, localRevision.getBranchName(), localRevision.getCommitMessage(),

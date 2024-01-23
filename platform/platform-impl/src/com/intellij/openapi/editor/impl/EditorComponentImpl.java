@@ -391,11 +391,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     setupEditorSwingCaretUpdatesCourierIfRequired();
   }
 
-  @Override
-  public void removeCaretListener(javax.swing.event.CaretListener listener) {
-    super.removeCaretListener(listener);
-  }
-
 
   /**
    * How it works:<br>

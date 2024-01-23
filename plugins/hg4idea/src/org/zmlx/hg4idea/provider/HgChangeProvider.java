@@ -41,19 +41,19 @@ public final class HgChangeProvider implements ChangeProvider {
   private final Project myProject;
   private final VcsKey myVcsKey;
 
-  private static final PluginId OUR_PLUGIN_ID;
+  public static final class FileStatuses {
+    private static final PluginId OUR_PLUGIN_ID;
 
-  static {
-    PluginDescriptor plugin = PluginManager.getPluginByClass(HgChangeProvider.class);
-    OUR_PLUGIN_ID = plugin == null ? null : plugin.getPluginId();
-  }
+    static {
+      PluginDescriptor plugin = PluginManager.getPluginByClass(HgChangeProvider.class);
+      OUR_PLUGIN_ID = plugin == null ? null : plugin.getPluginId();
+    }
 
-  public static final FileStatus COPIED
-    = FileStatusFactory.getInstance().createFileStatus("COPIED", HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
-  public static final FileStatus RENAMED
-    = FileStatusFactory.getInstance().createFileStatus("RENAMED", HgBundle.messagePointer("hg4idea.file.status.renamed"), OUR_PLUGIN_ID);
+    public static final FileStatus COPIED
+      = FileStatusFactory.getInstance().createFileStatus("COPIED", HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
+    public static final FileStatus RENAMED
+      = FileStatusFactory.getInstance().createFileStatus("RENAMED", HgBundle.messagePointer("hg4idea.file.status.renamed"), OUR_PLUGIN_ID);
 
-  private static class Holder {
     private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
       new EnumMap<>(HgFileStatusEnum.class);
 
@@ -143,7 +143,7 @@ public final class HgChangeProvider implements ChangeProvider {
         continue;
       }
 
-      HgChangeProcessor processor = Holder.PROCESSORS.get(status);
+      HgChangeProcessor processor = FileStatuses.PROCESSORS.get(status);
       if (processor != null) {
         processor.process(myProject, myVcsKey, builder,
           workingRevision, parentRevision, beforeFile, afterFile);
@@ -253,7 +253,7 @@ public final class HgChangeProvider implements ChangeProvider {
           processChange(
             HgContentRevision.create(project, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, currentNumber),
-            RENAMED,
+            FileStatuses.RENAMED,
             builder,
             vcsKey
           );

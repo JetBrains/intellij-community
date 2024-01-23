@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 private const val ENUM_VALUES_METHOD_NAME = "values"
 private const val ENUM_ENTRIES_PROPERTY_NAME = "entries"
 
-class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression && element !is JKCallExpression) return recurse(element)
         if (!languageVersionSettings.supportsFeature(EnumEntries)) return recurse(element)

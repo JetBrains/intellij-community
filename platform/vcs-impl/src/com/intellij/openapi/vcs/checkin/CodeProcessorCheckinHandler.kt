@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
@@ -10,8 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.withProgressText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -31,13 +30,11 @@ abstract class CodeProcessorCheckinHandler(
     val affectedFiles = commitInfo.committedVirtualFiles
 
     withContext(Dispatchers.Default) {
-      progressStep(endFraction = 1.0, getProgressMessage()) {
+      withProgressText(getProgressMessage()) {
         // TODO suspending code processor
         val processor = readAction { createCodeProcessor(affectedFiles) }
-        withRawProgressReporter {
-          coroutineToIndicator {
-            processor.processFilesUnderProgress(ProgressManager.getGlobalProgressIndicator())
-          }
+        coroutineToIndicator {
+          processor.processFilesUnderProgress(ProgressManager.getGlobalProgressIndicator())
         }
       }
     }

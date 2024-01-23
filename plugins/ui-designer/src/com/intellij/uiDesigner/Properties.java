@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMUtil;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+@Service
 public final class Properties {
   private static final Logger LOG = Logger.getInstance(Properties.class);
 

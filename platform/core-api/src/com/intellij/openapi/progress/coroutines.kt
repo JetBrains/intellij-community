@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
@@ -81,9 +81,8 @@ suspend fun checkCancelled() {
  *
  * ### Progress reporting
  *
- * - If invoked under indicator, installs [RawProgressReporter], which methods delegate to the indicator, into the [action] context.
- * - If the thread context contains [ProgressReporter], installs it into the [action] context as is.
- * - If the thread context contains [RawProgressReporter], installs it into the [action] context as is.
+ * - If there is a fresh [currentProgressStep] in the thread context, this function propagates it as it into [action] context.
+ * - If invoked under indicator, no reporting from [action] is visible in the indicator.
  *
  * ### Examples
  *
@@ -338,9 +337,9 @@ private fun <T> blockingContextInner(currentContext: CoroutineContext, action: (
  *
  * ### Progress reporting
  *
- * - If [ProgressReporter] is found in the coroutine context, throws an error.
- * Please wrap the call into [withRawProgressReporter] to switch context [ProgressReporter] to [RawProgressReporter].
- * - If [RawProgressReporter] is found in the coroutine context, updates of the installed indicator are sent into the reporter.
+ * If there is a fresh [currentProgressStep] in the coroutine context, this function [switches it to raw][reportRawProgress].
+ * If the step is not fresh, then no reporting from this function is visible to the caller.
+ * Please consult [currentProgressStep] for more info about fresh steps.
  *
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
@@ -370,29 +369,9 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  *
  * ### Progress reporting
  *
- * - If [ProgressReporter] is found in the thread context, throws an error.
- * Please wrap the appropriate call into [withRawProgressReporter] to switch context [ProgressReporter] to [RawProgressReporter].
- * For example:
- * ```
- * launch {
- *   // inside a coroutine
- *   withBackgroundProgress(...) { // installs ProgressReporter into coroutine context
- *     ...
- *     readAction { // installs coroutine context as thread context
- *       ...
- *       // at this point the thread context has ProgressReporter, the following will throw
- *       blockingContextToIndicator {
- *         someOldCodeWhichReliesOntoExistenceOfIndicator()
- *       }
- *       ...
- *     }
- *     ...
- *   }
- * }
- * ```
- * In the example, either `readAction` call or the whole action, which was passed into [withBackgroundProgress][com.intellij.openapi.progress.withBackgroundProgress],
- * should be wrapped into [withRawProgressReporter].
- * - If [RawProgressReporter] is found in the coroutine context, updates of the installed indicator are sent into the reporter.
+ * If there is a fresh [currentProgressStep] in the coroutine context, this function [switches it to raw][reportRawProgress].
+ * If the step is not fresh, then no reporting from this function is visible to the caller.
+ * Please consult [currentProgressStep] for more info about fresh steps.
  */
 @Internal
 @RequiresBlockingContext
@@ -410,28 +389,17 @@ fun <T> blockingContextToIndicator(action: () -> T): T {
 private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
   val job = ctx.job
   job.ensureActive()
-  val indicator = ctx.createIndicator()
-  return jobToIndicator(job, indicator, action)
-}
-
-private fun CoroutineContext.createIndicator(): ProgressIndicator {
-  val contextModality = contextModality()
-                        ?: ModalityState.nonModal()
-  if (progressReporter != null) {
-    LOG.error(IllegalStateException(
-      "Current context has `ProgressReporter`. " +
-      "Please switch to `RawProgressReporter` before switching to indicator. " +
-      "See 'Progress reporting' in `coroutineToIndicator` and/or `blockingContextToIndicator`.\n" +
-      "Current context: $this"
-    ))
-    return EmptyProgressIndicator(contextModality)
-  }
-  val reporter = rawProgressReporter
-  return if (reporter == null) {
-    EmptyProgressIndicator(contextModality)
+  val contextModality = ctx.contextModality() ?: ModalityState.nonModal()
+  val handle = ctx.internalCreateRawHandleFromContextStepIfExistsAndFresh()
+  return if (handle != null) {
+    handle.use {
+      val indicator = RawProgressReporterIndicator(handle.reporter, contextModality)
+      jobToIndicator(job, indicator, action)
+    }
   }
   else {
-    RawProgressReporterIndicator(reporter, contextModality)
+    val indicator = EmptyProgressIndicator(contextModality)
+    jobToIndicator(job, indicator, action)
   }
 }
 

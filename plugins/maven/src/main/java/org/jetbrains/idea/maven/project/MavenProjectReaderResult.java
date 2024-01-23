@@ -32,6 +32,8 @@ import static java.util.Collections.emptyList;
 public class MavenProjectReaderResult {
   @NotNull
   public final MavenModel mavenModel;
+  @Nullable
+  public final String pomChecksum;
   public final Map<String, String> nativeModelMap;
   public final MavenExplicitProfiles activatedProfiles;
   @Nullable public final NativeMavenProjectHolder nativeMavenProject;
@@ -45,10 +47,11 @@ public class MavenProjectReaderResult {
                                   @Nullable NativeMavenProjectHolder nativeMavenProject,
                                   Collection<MavenProjectProblem> readingProblems,
                                   Set<MavenId> unresolvedArtifactIds) {
-    this(mavenModel, nativeModelMap, activatedProfiles, nativeMavenProject, readingProblems, unresolvedArtifactIds, emptyList());
+    this(mavenModel, null, nativeModelMap, activatedProfiles, nativeMavenProject, readingProblems, unresolvedArtifactIds, emptyList());
   }
 
   public MavenProjectReaderResult(@NotNull MavenModel mavenModel,
+                                  @Nullable String pomChecksum,
                                   Map<String, String> nativeModelMap,
                                   MavenExplicitProfiles activatedProfiles,
                                   @Nullable NativeMavenProjectHolder nativeMavenProject,
@@ -56,6 +59,7 @@ public class MavenProjectReaderResult {
                                   Set<MavenId> unresolvedArtifactIds,
                                   @NotNull Collection<MavenProjectProblem> unresolvedProblems) {
     this.mavenModel = mavenModel;
+    this.pomChecksum = pomChecksum;
     this.nativeModelMap = nativeModelMap;
     this.activatedProfiles = activatedProfiles;
     this.nativeMavenProject = nativeMavenProject;

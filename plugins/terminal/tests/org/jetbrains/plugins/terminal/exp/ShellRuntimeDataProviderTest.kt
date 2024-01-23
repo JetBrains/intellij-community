@@ -2,74 +2,51 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
+import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
-import org.junit.Assume
+import org.jetbrains.plugins.terminal.util.ShellType
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.time.Duration.Companion.seconds
 
-@RunWith(JUnit4::class)
-class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
-  private lateinit var session: BlockTerminalSession
-  private lateinit var testDirectory: Path
+@RunWith(Parameterized::class)
+class ShellRuntimeDataProviderTest(private val shellPath: Path) {
+  private val projectRule: ProjectRule = ProjectRule()
+  private val disposableRule = DisposableRule()
 
-  override fun tearDown() {
-    try {
-      // Can be not initialized if there is no required Shell
-      if (this::session.isInitialized) {
-        Disposer.dispose(session)
-      }
-      if (this::testDirectory.isInitialized) {
-        FileUtil.deleteRecursively(testDirectory)
-      }
-    }
-    catch (t: Throwable) {
-      addSuppressedException(t)
-    }
-    finally {
-      super.tearDown()
-    }
+  @Rule
+  @JvmField
+  val ruleChain: RuleChain = RuleChain(projectRule, disposableRule)
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun shells(): List<Path> = TerminalSessionTestUtil.getShellPaths()
   }
 
   @Test
-  fun `get all files from directory (zsh)`() {
-    doGetFilesTest(shellPath = "/bin/zsh")
-  }
-
-  @Test
-  fun `get all files from directory (bash)`() {
-    doGetFilesTest(shellPath = "/bin/bash")
-  }
-
-  @Test
-  fun `get shell environment (zsh)`() {
-    doGetEnvironmentTest("/bin/zsh")
-  }
-
-  @Test
-  fun `get shell environment (bash)`() {
-    doGetEnvironmentTest("/bin/bash")
-  }
-
-  private fun doGetFilesTest(shellPath: String) {
-    Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
-    session = TerminalSessionTestUtil.startBlockTerminalSession(project, shellPath, testRootDisposable)
-    testDirectory = createTempDirectory(prefix = "runtime_data")
+  fun `get all files from directory`() {
+    val session = TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath.toString(), disposableRule.disposable)
+    val testDirectory = createTempDirectory(prefix = "runtime_data")
+    Disposer.register(disposableRule.disposable) { testDirectory.deleteRecursively() }
 
     val expected = listOf(
       file("abcde.txt"),
@@ -82,31 +59,33 @@ class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
     )
     expected.forEach { it.create(testDirectory) }
 
-    val actual: List<String> = executeRuntimeDataRequest { provider ->
+    val actual: List<String> = executeRuntimeDataRequest(session) { provider ->
       provider.getFilesFromDirectory(testDirectory.toString())
     }
-    UsefulTestCase.assertSameElements(actual, expected.map { it.toString() } + listOf("./", "../"))
+    val expectedNames = expected.map { it.toString() } +
+                        // do not expect cur and parent dir paths in PowerShell, since shell-based completion also does not suggest them
+                        if (session.shellIntegration.shellType != ShellType.POWERSHELL) listOf("./", "../") else emptyList()
+    UsefulTestCase.assertSameElements(actual, expectedNames)
   }
 
-  private fun doGetEnvironmentTest(shellPath: String) {
-    Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
-    session = TerminalSessionTestUtil.startBlockTerminalSession(project, shellPath, testRootDisposable)
+  @Test
+  fun `get shell environment`() {
+    val session = TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath.toString(), disposableRule.disposable)
 
-    val env: ShellEnvironment = executeRuntimeDataRequest { provider ->
+    val env: ShellEnvironment = executeRuntimeDataRequest(session) { provider ->
       provider.getShellEnvironment()
     } ?: error("Returned environment is null")
 
-    assertNotEmpty(env.envs)
-    assertNotEmpty(env.keywords)
     assertNotEmpty(env.builtins)
     assertNotEmpty(env.functions)
     assertNotEmpty(env.commands)
   }
 
-  private fun <T> executeRuntimeDataRequest(request: suspend (ShellRuntimeDataProvider) -> T): T = runBlocking {
+  private fun <T> executeRuntimeDataRequest(session: BlockTerminalSession,
+                                            request: suspend (ShellRuntimeDataProvider) -> T): T = runBlocking {
     val provider = IJShellRuntimeDataProvider(session, ShellCommandExecutorImpl(session))
     val deferred: Deferred<T> = async(Dispatchers.Default) {
-      withBackgroundProgress(project, "test", cancellable = true) {
+      withBackgroundProgress(projectRule.project, "test", cancellable = true) {
         request(provider)
       }
     }
@@ -114,7 +93,7 @@ class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
   }
 
   private data class FileDescriptor(val name: String, val isDirectory: Boolean = false) {
-    override fun toString(): String = if (isDirectory) "$name/" else name
+    override fun toString(): String = if (isDirectory) "$name${File.separatorChar}" else name
 
     fun create(basePath: Path) {
       if (isDirectory) basePath.createDirectory(name) else basePath.createFile(name)

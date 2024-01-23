@@ -13,8 +13,10 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinLanguage
 
+@ApiStatus.Internal
 interface ReferenceSearcher {
     fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference>
     fun hasInheritors(`class`: PsiClass): Boolean
@@ -22,6 +24,7 @@ interface ReferenceSearcher {
     fun findUsagesForExternalCodeProcessing(element: PsiElement, searchJava: Boolean, searchKotlin: Boolean): Collection<PsiReference>
 }
 
+@ApiStatus.Internal
 object IdeaReferenceSearcher : ReferenceSearcher {
     override fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference> =
         ReferencesSearch.search(element, LocalSearchScope(scope)).findAll()

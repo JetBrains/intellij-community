@@ -4,7 +4,6 @@
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
                 secondary="false"
                 canCloseContents="true"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalToolWindowManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
 
     <projectConfigurable groupId="tools" groupWeight="130"
@@ -15,9 +14,7 @@
     <fileEditorProvider id="terminal-session-editor" implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector"/>
 
@@ -27,7 +24,7 @@
                  description="Enable new terminal UI"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
-    <registryKey key="terminal.new.ui.powershell" defaultValue="false"
+    <registryKey key="terminal.new.ui.powershell" defaultValue="true"
                  description="Enable new terminal for PowerShell"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
@@ -59,11 +56,11 @@
     <completion.contributor language="any"
                             id="terminalCommandSpec"
                             implementationClass="org.jetbrains.plugins.terminal.exp.completion.TerminalCommandSpecCompletionContributor"
-                            order="first, before shShebang, before liveTemplates, after ml_context"/>
+                            order="first, before terminalPowerShell, after ml_context"/>
     <completion.contributor language="any"
                             id="terminalPowerShell"
                             implementationClass="org.jetbrains.plugins.terminal.exp.completion.powershell.PowerShellCompletionContributor"
-                            order="first, before terminalCommandSpec"/>
+                            order="first, before shShebang, before liveTemplates, after ml_context"/>
     <weigher key="completion"
              id="terminalCommandSpec"
              order="before stats"

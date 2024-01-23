@@ -3,6 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -25,6 +26,7 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * @author Dmitry Avdeev
  */
+@Service(Service.Level.PROJECT)
 public final class TestStateStorage implements Disposable {
 
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");

@@ -11,6 +11,7 @@ import com.intellij.java.JavaBundle
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandQuickFix
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -54,9 +55,10 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor {
     val project = holder.project
-    if (!(JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.SLF4J_LOGGER) ||
-          JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.LOG4J_LOGGER) ||
-          JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.IDEA_LOGGER))) {
+    val fileModule = ModuleUtilCore.findModuleForFile(holder.file.virtualFile, project)
+    if (!(JavaLibraryUtil.hasLibraryClass(fileModule, LoggingUtil.SLF4J_LOGGER) ||
+          JavaLibraryUtil.hasLibraryClass(fileModule, LoggingUtil.LOG4J_LOGGER) ||
+          JavaLibraryUtil.hasLibraryClass(fileModule, LoggingUtil.IDEA_LOGGER))) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 

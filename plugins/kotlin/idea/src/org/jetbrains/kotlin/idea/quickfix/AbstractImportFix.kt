@@ -117,7 +117,17 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
 
     protected abstract val importNames: Collection<Name>
     protected abstract fun getCallTypeAndReceiver(): CallTypeAndReceiver<*, *>?
-    protected open fun getReceiverTypeFromDiagnostic(): KotlinType? = null
+
+    protected open fun calculateReceiverTypeFromDiagnostic(diagnostic: Collection<Diagnostic>): KotlinType? = null
+
+    protected fun getReceiverTypeFromDiagnostic(): KotlinType? {
+        // it is forbidden to keep `diagnostic` as class property as it leads to leakage of IdeaResolverForProject
+        // when quick fix is about to apply we have to (re)calculate diagnostics
+        val expression = expressionToAnalyze
+        val bindingContext = expression?.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS) ?: return null
+        val diagnostics = bindingContext.diagnostics.forElement(expression)
+        return calculateReceiverTypeFromDiagnostic(diagnostics)
+    }
 
     override fun showHint(editor: Editor): Boolean {
         val element = element?.takeIf(PsiElement::isValid) ?: return false
@@ -617,18 +627,21 @@ internal class ImportConstructorReferenceFix(expression: KtSimpleNameExpression)
 }
 
 internal class InvokeImportFix(
-    expression: KtExpression, val diagnostic: Diagnostic
+    expression: KtExpression
 ) : OrdinaryImportFixBase<KtExpression>(expression, MyFactory) {
+
     override val importNames = listOf(OperatorNameConventions.INVOKE)
 
     override fun getCallTypeAndReceiver() = element?.let { CallTypeAndReceiver.OPERATOR(it) }
 
-    override fun getReceiverTypeFromDiagnostic(): KotlinType = Errors.FUNCTION_EXPECTED.cast(diagnostic).b
+    override fun calculateReceiverTypeFromDiagnostic(diagnostics: Collection<Diagnostic>): KotlinType? =
+        diagnostics.firstOrNull { it.factory == Errors.FUNCTION_EXPECTED }
+            ?.let { Errors.FUNCTION_EXPECTED.cast(it).b }
 
     companion object MyFactory : FactoryWithUnresolvedReferenceQuickFix() {
         override fun createImportAction(diagnostic: Diagnostic) =
             diagnostic.psiElement.safeAs<KtExpression>()?.let {
-                InvokeImportFix(it, diagnostic)
+                InvokeImportFix(it)
             }
     }
 }
@@ -678,7 +691,6 @@ internal class DelegateAccessorsImportFix(
     element: KtExpression,
     override val importNames: Collection<Name>,
     private val solveSeveralProblems: Boolean,
-    private val diagnostic: Diagnostic,
 ) : OrdinaryImportFixBase<KtExpression>(element, MyFactory) {
 
     override fun getCallTypeAndReceiver() = CallTypeAndReceiver.DELEGATE(element)
@@ -695,8 +707,11 @@ internal class DelegateAccessorsImportFix(
         return super.createAction(editor, element, suggestions)
     }
 
-    override fun getReceiverTypeFromDiagnostic(): KotlinType? =
-        if (diagnostic.factory === Errors.DELEGATE_SPECIAL_FUNCTION_MISSING) Errors.DELEGATE_SPECIAL_FUNCTION_MISSING.cast(diagnostic).b else null
+    override fun calculateReceiverTypeFromDiagnostic(diagnostics: Collection<Diagnostic>): KotlinType? =
+        diagnostics.firstOrNull { it.factory === Errors.DELEGATE_SPECIAL_FUNCTION_MISSING }
+            ?.let {
+                Errors.DELEGATE_SPECIAL_FUNCTION_MISSING.cast(it).b
+            }
 
     companion object MyFactory : FactoryWithUnresolvedReferenceQuickFix() {
         private fun importNames(diagnostics: Collection<Diagnostic>): Collection<Name> {
@@ -718,7 +733,7 @@ internal class DelegateAccessorsImportFix(
             val expression = diagnostic.psiElement as? KtExpression ?: return null
             val importNames = importNames(listOf(diagnostic))
 
-            return DelegateAccessorsImportFix(expression, importNames, false, diagnostic)
+            return DelegateAccessorsImportFix(expression, importNames, false)
         }
 
         override fun createImportActionsForAllProblems(sameTypeDiagnostics: Collection<Diagnostic>): List<DelegateAccessorsImportFix> {
@@ -726,7 +741,7 @@ internal class DelegateAccessorsImportFix(
             val element = diagnostic.psiElement
             val expression = element as? KtExpression ?: return emptyList()
             val names = importNames(sameTypeDiagnostics)
-            return listOf(DelegateAccessorsImportFix(expression, names, true, diagnostic))
+            return listOf(DelegateAccessorsImportFix(expression, names, true))
         }
     }
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -40,7 +40,7 @@ internal fun importProject(project: Project) {
       mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
     }
     else {
-      mavenManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+      mavenManager.updateAllMavenProjects(MavenSyncSpec.full("ImportMavenProjectUtil"))
     }
   }
 }

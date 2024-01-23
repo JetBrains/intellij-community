@@ -7,17 +7,9 @@ End of files
 Compiling files:
   src/B.kt
 End of files
-After build round. Marked as dirty by Kotlin:
-  src/A.kt
-  src/companionExtension.kt
-  src/companionReferenceExplicit.kt
-  src/companionReferenceImplicit.kt
-  src/importedMember.kt
-Exit code: ADDITIONAL_PASS_REQUIRED
+Exit code: OK
 ------------------------------------------
 Cleaning output files:
-  out/production/module/A$AA.class
-  out/production/module/A.class
   out/production/module/CompanionExtensionKt.class
   out/production/module/CompanionReferenceExplicitKt.class
   out/production/module/CompanionReferenceImplicitKt.class
@@ -25,7 +17,6 @@ Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
 End of files
 Compiling files:
-  src/A.kt
   src/companionExtension.kt
   src/companionReferenceExplicit.kt
   src/companionReferenceImplicit.kt
@@ -45,7 +36,6 @@ Cleaning output files:
   out/production/module/B.class
 End of files
 Compiling files:
-  src/A.kt
   src/B.kt
   src/companionExtension.kt
   src/companionReferenceExplicit.kt

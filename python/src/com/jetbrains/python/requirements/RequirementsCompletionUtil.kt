@@ -25,7 +25,7 @@ fun completePackageNames(project: Project, result: CompletionResultSet) {
   }.forEach { result.addElement(it) }
 }
 
-fun completeVersions(name: String, project: Project, result: CompletionResultSet) {
+fun completeVersions(name: String, project: Project, result: CompletionResultSet, addQuotes: Boolean) {
   val repositoryManager = PythonPackageManager.forSdk(project, project.pythonSdk ?: return).repositoryManager
   val packageSpecification = repositoryManager.createSpecification(name, null, null) ?: return
   val versions = ApplicationUtil.runWithCheckCanceled({
@@ -35,8 +35,7 @@ fun completeVersions(name: String, project: Project, result: CompletionResultSet
                                                       }, EmptyProgressIndicator.notNullize(ProgressManager.getInstance().progressIndicator))
 
   versions.mapIndexed { index, version ->
-    PrioritizedLookupElement.withPriority(LookupElementBuilder.create("\"$version\""), (versions.size - index).toDouble())
-  }.forEach {
-    result.addElement(it)
+    PrioritizedLookupElement.withPriority(LookupElementBuilder.create(if (addQuotes) "\"$version\"" else version), (versions.size - index).toDouble())
   }
+    .forEach { result.addElement(it) }
 }

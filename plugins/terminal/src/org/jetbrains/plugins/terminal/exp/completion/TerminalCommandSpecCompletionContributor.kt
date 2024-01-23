@@ -7,13 +7,16 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.CommandSpecCompletion
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.getNextSuggestionsString
+import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.terminal.completion.BaseSuggestion
+import java.io.File
 
 internal class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -22,35 +25,57 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     if (session == null || runtimeDataProvider == null || parameters.completionType != CompletionType.BASIC) {
       return
     }
-    // stop even if we can't suggest something to not execute contributors from the ShellScript plugin
-    result.stopHere()
-
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
     val context = TerminalCompletionContext(session, runtimeDataProvider, shellSupport, parameters)
 
-    val prefix = result.prefixMatcher.prefix.substringAfterLast('/') // take last part if it is a file path
+    val prefix = result.prefixMatcher.prefix.substringAfterLast(File.separatorChar) // take last part if it is a file path
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
-    val tokens = shellSupport.getCommandTokens(parameters.position) ?: return
+    val document = parameters.editor.document
+    val caretOffset = parameters.editor.caretModel.offset
+    val command = document.getText(TextRange.create(0, caretOffset))
+    val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
+    val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
+      tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
+    }
+    else tokens
     val suggestions = runBlockingCancellable {
-      computeSuggestions(tokens, context)
+      computeSuggestions(allTokens, context)
     }
 
     val elements = suggestions.flatMap { it.toLookupElements() }
     resultSet.addAllElements(elements)
+
+    if (elements.isNotEmpty()) {
+      resultSet.stopHere()
+    }
   }
 
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<BaseSuggestion> {
-    val aliases = context.runtimeDataProvider.getShellEnvironment()?.aliases ?: return emptyList()
+    val aliases = context.runtimeDataProvider.getShellEnvironment()?.aliases ?: emptyMap()
     val expandedTokens = expandAliases(tokens, aliases, context)
+    if (expandedTokens.isEmpty()) {
+      return emptyList()
+    }
 
     val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), context.runtimeDataProvider)
-    val items = completion.computeCompletionItems(expandedTokens)?.takeIf { it.isNotEmpty() }
-    return when {
-      items != null -> items
-      // suggest file names if there is nothing to suggest and completion is invoked manually
-      !context.parameters.isAutoPopup -> completion.computeFileItems(expandedTokens) ?: emptyList()
-      else -> emptyList()
+    val command = expandedTokens.first()
+    val arguments = expandedTokens.subList(1, expandedTokens.size)
+    if (arguments.isEmpty()) {
+      return completion.computeCommandsAndFiles(command)
+    }
+    else {
+      val commandVariants = if (command.endsWith(".exe")) listOf(command.removeSuffix(".exe"), command) else listOf(command)
+      val items = commandVariants.firstNotNullOfOrNull { completion.computeCompletionItems(it, arguments) } ?: emptyList()
+      return when {
+        items.isNotEmpty() -> items
+        // Suggest file names if there is nothing to suggest, and completion is invoked manually.
+        // But not for PowerShell, here it would be better to fall back to shell-based completion
+        !context.parameters.isAutoPopup && context.session.shellIntegration.shellType != ShellType.POWERSHELL -> {
+          completion.computeFileItems(expandedTokens.last())
+        }
+        else -> emptyList()
+      }
     }
   }
 
@@ -89,8 +114,8 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       // It is needed, for example, to place the './' item in the first place when '.' is typed.
       // It is a hack, because generally this logic should be solved by overriding LookupArranger#isPrefixItem.
       // But there is no API to substitute our own implementation of LookupArranger.
-      val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith('/')) {
-        escapedInsertValue.removeSuffix("/") to true
+      val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith(File.separatorChar)) {
+        escapedInsertValue.removeSuffix(File.separator) to true
       }
       else escapedInsertValue to false
       val element = LookupElementBuilder.create(this, lookupString)
@@ -106,8 +131,9 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
                                 private val appendPathSeparator: Boolean) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
       if (appendPathSeparator) {
-        context.document.insertString(context.tailOffset, "/")
-        context.editor.caretModel.moveToOffset(context.tailOffset + 1)
+        val tailOffset = context.tailOffset
+        context.document.insertString(tailOffset, File.separator)
+        context.editor.caretModel.moveToOffset(tailOffset + 1)
       }
       val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
       if (cursorOffset != null && cursorOffset != -1) {

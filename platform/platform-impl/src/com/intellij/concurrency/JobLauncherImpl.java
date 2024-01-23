@@ -27,6 +27,7 @@ import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public final class JobLauncherImpl extends JobLauncher {
@@ -380,15 +381,17 @@ public final class JobLauncherImpl extends JobLauncher {
    * Schedule all elements from the {@code things} for processing by {@code thingProcessor} concurrently in the system's ForkJoinPool and the current thread.
    * Processing happens in the queue-head to the queue-tail order, but in parallel maintaining {@link JobSchedulerImpl#getJobPoolParallelism} parallelism,
    * so the elements in the queue-head have higher priority than the tail.
-   * Stop when {@code tombStone} element is occurred.
+   * Stop when {@code tombStone} element is taken from the queue.
    * If was unable to process some element (an exception occurred during {@code thingProcessor.process()} call), add it back to the {@code failedToProcess} queue.
-   * @return future which completes when the entire queue is processed
+   * @return future-like-object which {@link BooleanSupplier#getAsBoolean()} method tries to help the execution and completes when the entire queue is processed
    */
+  @Override
   @ApiStatus.Internal
-  public <T> ForkJoinTask<Boolean> processQueueAsync(@NotNull BlockingQueue<@NotNull T> things,
-                                                     @NotNull ProgressIndicator progress,
-                                                     @NotNull T tombStone,
-                                                     @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+  @NotNull
+  public <T> BooleanSupplier processQueueAsync(@NotNull BlockingQueue<@NotNull T> things,
+                                               @NotNull ProgressIndicator progress,
+                                               @NotNull T tombStone,
+                                               @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
     progress.checkCanceled(); // do not start up expensive threads if there's no need to
     int size = things.size();
     boolean isQueueBounded = things.contains(tombStone);
@@ -450,8 +453,8 @@ public final class JobLauncherImpl extends JobLauncher {
                 if (element == null) element = things.take();
 
                 if (element == tombStone) {
-                  things.put(tombStone); // return just popped tombStone to the 'things' queue for everybody else to see it
-                  // since the queue is drained up to the tombStone, there surely should be a place for one element, so "put" will not block
+                  things.offer(tombStone); // return just popped tombStone to the 'things' queue for everybody else to see it
+                  // since the queue is drained up to the tombStone, there surely should be a place for one element
                   result[0] = true;
                   break;
                 }
@@ -484,6 +487,7 @@ public final class JobLauncherImpl extends JobLauncher {
         finally {
           if (!result[0]) {
             futureResult.set(false);
+            things.offer(tombStone); // in case of exception, we need to cancel all tasks as quick as possible, so if there is a task blocked in ".take()" we could unblock it by offering tombstone
           }
         }
       }
@@ -494,13 +498,13 @@ public final class JobLauncherImpl extends JobLauncher {
       }
     }
     completer.setPendingCount(n-1);
-    List<ForkJoinTask<Boolean>> tasks = new ArrayList<>(n-1);
     for (int i = 1; i < n; i++) {
-      tasks.add(ForkJoinPool.commonPool().submit(new MyProcessQueueTask(i, i < firstElements.size() ? firstElements.get(i) : null)));
+      ForkJoinPool.commonPool().submit(new MyProcessQueueTask(i, i < firstElements.size() ? firstElements.get(i) : null));
     }
     firstTask.set(new MyProcessQueueTask(0, ContainerUtil.getFirstItem(firstElements)));
 
-    return completer;
+    // do not call future.get() to avoid overcompensation
+    return () -> completer.invoke();
   }
 }
 

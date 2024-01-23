@@ -455,8 +455,6 @@
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
     <library.type implementation="org.jetbrains.plugins.groovy.config.GroovyDownloadableLibraryType"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
-
     <spellchecker.support language="Groovy"
                           implementationClass="org.jetbrains.plugins.groovy.codeInspection.spellchecker.GroovySpellcheckingStrategy"/>
     <lang.inspectionSuppressor language="Groovy"
@@ -759,8 +757,6 @@
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyClassFinder"/>
     <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
 
-    <projectService
-        serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleManager"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleManagerImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade"
@@ -1381,14 +1377,13 @@
     <action id="DumpGroovyControlFlowAction"
             class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
             internal="true">
-      <add-to-group group-id="Internal"/>
+      <add-to-group group-id="Internal.Dump"/>
     </action>
 
     <action id="ExcludeFromStubGeneration"
             class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction">
       <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
-
 
     <group id="GroovyGenerateGroup1">
       <!--suppress PluginXmlCapitalization -->

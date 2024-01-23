@@ -20,9 +20,7 @@ import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.bootstrap.logEssentialInfoAboutIde
-import com.intellij.platform.util.progress.asContextElement
-import com.intellij.platform.util.progress.impl.ProgressState
-import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.application
 import com.intellij.util.lazyPub
 import kotlinx.coroutines.*
@@ -79,22 +77,22 @@ suspend fun <Y> withLoggingProgresses(action: suspend CoroutineScope.(ProgressIn
 
 private fun trimProgressTextAndNullize(s: String?) = s?.trim()?.trimEnd('.', '\u2026', ' ')?.takeIf { it.isNotBlank() }
 
-internal fun progressStateText(state: ProgressState): StructuredMessage? {
-  val text = trimProgressTextAndNullize(state.text)
-  val text2 = trimProgressTextAndNullize(state.details)
+internal fun progressStateText(fraction: Double?, text: String?, details: String?): StructuredMessage? {
+  val text = trimProgressTextAndNullize(text)
+  val text2 = trimProgressTextAndNullize(details)
   if (text.isNullOrBlank() && text2.isNullOrBlank()) {
     return null
   }
 
   val shortText = text ?: ""
   val verboseText = shortText + (text2?.let { " ($it)" } ?: "")
-  if (shortText.isBlank() || state.fraction < 0.0) {
+  if (shortText.isBlank() || fraction == null) {
     return StructuredMessage(shortText, verboseText)
   }
 
-  val v = (100.0 * state.fraction).toInt()
+  val v = (100.0 * fraction).toInt()
   val total = 18
-  val completed = (total * state.fraction).toInt().coerceAtLeast(0)
+  val completed = (total * fraction).toInt().coerceAtLeast(0)
   val d = ".".repeat(completed).padEnd(total, ' ')
   val verboseReport = verboseText.take(100).padEnd(105) + "$d $v%"
   val shortReport = shortText.take(100).padEnd(105) + "$d $v%"
@@ -125,7 +123,11 @@ private class ChannelingProgressIndicator(private val prefix: String) : Progress
 
   private fun offerState() {
     val messages = ApplicationManager.getApplication().service<WarmupLoggingService>().messages
-    val progressState = progressStateText(dumpProgressState()) ?: return
+    val progressState = progressStateText(
+      fraction = if (isIndeterminate) null else fraction,
+      text = text,
+      details = text2,
+    ) ?: return
     val actualPrefix = if (prefix.isEmpty()) "" else "[$prefix]: "
     messages.tryEmit(progressState.copy(
       contractedMessage = actualPrefix + progressState.contractedMessage,
@@ -134,25 +136,21 @@ private class ChannelingProgressIndicator(private val prefix: String) : Progress
   }
 }
 
-private fun ProgressIndicator.dumpProgressState(): ProgressState =
-  ProgressState(text = text, details = text2, fraction = if (isIndeterminate) -1.0 else fraction)
-
 /**
  * Installs a progress reporter that sends the information about progress to the stdout instead of UI.
  */
 suspend fun <T> withLoggingProgressReporter(action: suspend CoroutineScope.() -> T): T = coroutineScope {
-  TextDetailsProgressReporter(this).use { reporter ->
-    val job = launch {
-      reporter.progressState.collect { progressState ->
-        progressStateText(progressState)?.let { WarmupLogger.logStructured(it) }
-      }
+  val pipe = createProgressPipe()
+  val job = launch {
+    pipe.progressUpdates().collect { progressState ->
+      progressStateText(progressState.fraction, progressState.text, progressState.details)?.let { WarmupLogger.logStructured(it) }
     }
-    try {
-      withContext(reporter.asContextElement(), action)
-    }
-    finally {
-      job.cancel()
-    }
+  }
+  try {
+    pipe.collectProgressUpdates(action)
+  }
+  finally {
+    job.cancel()
   }
 }
 

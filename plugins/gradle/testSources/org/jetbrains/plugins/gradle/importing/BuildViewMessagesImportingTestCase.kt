@@ -29,7 +29,7 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
 
   protected fun SimpleTreeAssertion.Node<Nothing?>.assertNodeWithDeprecatedGradleWarning() {
     if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) {
-      assertNode("Gradle ${currentGradleVersion.version} support can be dropped in the next release")
+      assertNode("Deprecated Gradle Version")
     }
   }
 

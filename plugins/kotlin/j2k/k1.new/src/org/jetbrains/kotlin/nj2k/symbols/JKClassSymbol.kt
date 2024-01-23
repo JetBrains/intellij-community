@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 
-sealed class JKClassSymbol : JKSymbol
+internal sealed class JKClassSymbol : JKSymbol
 
-class JKUniverseClassSymbol(override val typeFactory: JKTypeFactory) : JKClassSymbol(), JKUniverseSymbol<JKClass> {
+internal class JKUniverseClassSymbol(override val typeFactory: JKTypeFactory) : JKClassSymbol(), JKUniverseSymbol<JKClass> {
     override lateinit var target: JKClass
     override val name: String
         get() = if (target.classKind == JKClass.ClassKind.COMPANION) {
@@ -21,22 +21,22 @@ class JKUniverseClassSymbol(override val typeFactory: JKTypeFactory) : JKClassSy
         }
 }
 
-class JKMultiverseClassSymbol(
+internal class JKMultiverseClassSymbol(
     override val target: PsiClass,
     override val typeFactory: JKTypeFactory
 ) : JKClassSymbol(), JKMultiverseSymbol<PsiClass>
 
-class JKMultiverseKtClassSymbol(
+internal class JKMultiverseKtClassSymbol(
     override val target: KtClassOrObject,
     override val typeFactory: JKTypeFactory
 ) : JKClassSymbol(), JKMultiverseKtSymbol<KtClassOrObject>
 
-class JKTypeAliasKtClassSymbol(
+internal class JKTypeAliasKtClassSymbol(
     override val target: KtTypeAlias,
     override val typeFactory: JKTypeFactory
 ) : JKClassSymbol(), JKMultiverseKtSymbol<KtTypeAlias>
 
-class JKUnresolvedClassSymbol(
+internal class JKUnresolvedClassSymbol(
     override val target: String,
     override val typeFactory: JKTypeFactory
 ) : JKClassSymbol(), JKUnresolvedSymbol

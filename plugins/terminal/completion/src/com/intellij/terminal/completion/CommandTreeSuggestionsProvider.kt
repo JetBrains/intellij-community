@@ -4,6 +4,7 @@ package com.intellij.terminal.completion
 import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFilePath
 import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFolder
 import org.jetbrains.terminal.completion.*
+import java.io.File
 
 internal class CommandTreeSuggestionsProvider(
   private val commandSpecManager: CommandSpecManager,
@@ -67,7 +68,7 @@ internal class CommandTreeSuggestionsProvider(
     val suggestions = mutableListOf<BaseSuggestion>()
 
     // suggest subcommands and options only if the provided value is not a file path
-    if (!nextNodeText.contains('/')) {
+    if (!nextNodeText.contains(File.separatorChar)) {
       val spec = node.spec
       if (node.children.isEmpty()) {
         suggestions.addAll(spec.subcommands)
@@ -153,22 +154,24 @@ internal class CommandTreeSuggestionsProvider(
       val fileSuggestions = getFileSuggestions(arg, nextNodeText, onlyDirectories = suggestFolders && !suggestAllFiles)
       suggestions.addAll(fileSuggestions)
     }
-    if (!suggestAllFiles && !suggestFolders || !nextNodeText.contains('/')) {
+    if (!suggestAllFiles && !suggestFolders || !nextNodeText.contains(File.separatorChar)) {
       suggestions.addAll(arg.suggestions.map { ShellArgumentSuggestion(it, arg) })
     }
     return suggestions
   }
 
   suspend fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
-    val basePath = if (nextNodeText.contains('/')) {
-      nextNodeText.substringBeforeLast('/') + "/"
+    val separator = File.separatorChar
+    val nodeText = nextNodeText.removePrefix("\"").removeSuffix("'")
+    val basePath = if (nodeText.contains(separator)) {
+      nodeText.substringBeforeLast(separator) + separator
     }
     else "."
     val files = runtimeDataProvider.getFilesFromDirectory(basePath)
     return files.asSequence()
-      .filter { !onlyDirectories || it.endsWith('/') }
+      .filter { !onlyDirectories || it.endsWith(separator) }
       // do not suggest './' and '../' directories if the user already typed some path
-      .filter { basePath == "." || (it != "./" && it != "../") }
+      .filter { basePath == "." || (it != ".$separator" && it != "..$separator") }
       .map { ShellArgumentSuggestion(ShellSuggestion(names = listOf(it)), arg) }
       // add an empty choice to be able to handle the case when the folder is chosen
       .let { if (basePath != ".") it.plus(ShellArgumentSuggestion(ShellSuggestion(names = listOf("")), arg)) else it }

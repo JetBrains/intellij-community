@@ -177,6 +177,13 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
+    val parent = createModulePom("parent",
+                                 """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           """.trimIndent())
+
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -191,13 +198,6 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <relativePath>${'$'}{parentPath}</relativePath>
                        </parent>
                        """.trimIndent())
-
-    val parent = createModulePom("parent",
-                                 """
-                                           <groupId>test</groupId>
-                                           <artifactId>parent</artifactId>
-                                           <version>1</version>
-                                           """.trimIndent())
 
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, findPsiFile(parent))

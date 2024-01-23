@@ -67,14 +67,6 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     myBuilder.showUi(show);
   }
 
-  /**
-   * see {@linkplain AbstractImportFromExternalSystemControl#setCurrentProject(Project)}
-   */
-  @Override
-  public void setCurrentProject(@Nullable Project project) {
-    super.setCurrentProject(project);
-  }
-
   @Override
   public void disposeUIResources() {
     super.disposeUIResources();

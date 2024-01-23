@@ -12,25 +12,20 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
   @Test
   fun testSyncMessages() {
     importProject("")
-    val expectedExecutionTree = when {
-      isGradleOlderThan("1.0") ->
-        "-\n" +
-        " -failed\n" +
-        "  Gradle isn't supported by IntelliJ IDEA"
-      !GradleJvmSupportMatrix.isGradleSupportedByIdea(currentGradleVersion) ->
-        "-\n" +
-        " -failed\n" +
-        "  Gradle ${currentGradleVersion.version} isn't supported by IntelliJ IDEA"
-      GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion) ->
-        "-\n" +
-        " -finished\n" +
-        "  Gradle ${currentGradleVersion.version} support can be dropped in the next release"
-      else ->
-        "-\n" +
-        " finished"
+    assertSyncViewTree {
+      when {
+        !GradleJvmSupportMatrix.isGradleSupportedByIdea(currentGradleVersion) ->
+          assertNode("failed") {
+            assertNode("Unsupported Gradle Version")
+          }
+        GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion) ->
+          assertNode("finished") {
+            assertNode("Deprecated Gradle Version")
+          }
+        else ->
+          assertNode("finished")
+      }
     }
-
-    assertSyncViewTreeEquals(expectedExecutionTree)
   }
 
   override fun assumeTestJavaRuntime(javaRuntimeVersion: JavaVersion) {

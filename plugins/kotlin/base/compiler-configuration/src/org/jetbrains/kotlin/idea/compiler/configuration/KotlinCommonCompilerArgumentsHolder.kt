@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.cli.common.arguments.setApiVersionToLanguageVersionI
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_COMMON_COMPILER_ARGUMENTS_SECTION
 
+@Service(Service.Level.PROJECT)
 @State(name = KOTLIN_COMMON_COMPILER_ARGUMENTS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinCommonCompilerArgumentsHolder(project: Project) : BaseKotlinCompilerSettings<CommonCompilerArguments>(project) {
     override fun getState(): Element {

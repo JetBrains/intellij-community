@@ -213,15 +213,6 @@ public class EditMigrationDialog extends DialogWrapper {
       public Class<String> getColumnClass(int c) {
         return String.class;
       }
-
-      @Override
-      public boolean isCellEditable(int row, int col) {
-        return false;
-      }
-
-      @Override
-      public void setValueAt(Object aValue, int row, int column) {
-      }
     };
 
     // Create the table

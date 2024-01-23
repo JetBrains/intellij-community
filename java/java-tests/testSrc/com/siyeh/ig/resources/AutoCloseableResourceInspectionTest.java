@@ -30,13 +30,6 @@ import org.jetbrains.annotations.NotNull;
 public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTestCase {
 
 
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-  }
-
   public void testCorrectClose() {
     // No highlighting because str was closed and we have ignoreResourcesWithClose option set
     //noinspection EmptyTryBlock

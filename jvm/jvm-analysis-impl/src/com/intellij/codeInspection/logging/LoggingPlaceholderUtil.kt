@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.psi.PsiVariable
+import com.intellij.psi.SyntheticElement
 import com.siyeh.ig.callMatcher.CallMapper
 import com.siyeh.ig.callMatcher.CallMatcher
 import com.siyeh.ig.psiutils.TypeUtils
@@ -80,7 +81,7 @@ private val LOG4J_HOLDER = object : LoggerTypeSearcher {
       val target: UVariable = resolvedToUElement as? UVariable ?: return null
       val sourcePsi = target.sourcePsi as? PsiVariable
       // for lombok or other annotation generators. LOG4J_OLD_STYLE is the most common decision for that
-      if (sourcePsi != null && !sourcePsi.isPhysical) {
+      if (sourcePsi is SyntheticElement) {
         return PlaceholderLoggerType.LOG4J_OLD_STYLE
       }
       if (!target.isFinal) {

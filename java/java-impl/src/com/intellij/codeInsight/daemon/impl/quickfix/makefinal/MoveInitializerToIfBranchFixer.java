@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix.makefinal;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -117,9 +117,7 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
   }
 
   private static @NotNull List<PsiExpressionStatement> initializers(@NotNull PsiLocalVariable var) {
-    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-    if (block == null) return List.of();
-    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(var, block);
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(var);
     List<PsiExpressionStatement> initializers = new ArrayList<>();
     for (PsiReferenceExpression reference : references) {
       if (!PsiUtil.isAccessedForWriting(reference)) continue;

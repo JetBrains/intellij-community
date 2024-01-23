@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.caches.trackers
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -26,6 +27,7 @@ val KOTLIN_CONSOLE_KEY = Key.create<Boolean>("kotlin.console")
 /**
  * Tested in [OutOfBlockModificationTestGenerated]
  */
+@Service(Service.Level.PROJECT)
 class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable {
     private val modificationTrackerImpl: PsiModificationTracker =
         PsiModificationTracker.getInstance(project)

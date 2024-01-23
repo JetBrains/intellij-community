@@ -11,7 +11,7 @@ import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.grave.CodeVisionGrave
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory
+import com.intellij.codeInsight.hints.codeVision.clearModificationStamp
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -168,7 +168,7 @@ open class CodeVisionHost(val project: Project) {
             override fun providerAvailabilityChanged(id: String, isEnabled: Boolean) {
               PsiManager.getInstance(project).dropPsiCaches()
               for (editor in EditorFactory.getInstance().allEditors) {
-                CodeVisionPassFactory.clearModificationStamp(editor)
+                editor.clearModificationStamp()
               }
               DaemonCodeAnalyzer.getInstance(project).restart()
               invalidateProviderSignal.fire(LensInvalidateSignal(null))

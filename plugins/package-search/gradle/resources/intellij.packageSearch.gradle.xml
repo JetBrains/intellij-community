@@ -48,9 +48,6 @@
         <search.optionContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.GradleSearchableOptionContributor"/>
 
-        <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration"/>
-
         <packagesearch.resolvedDependenciesProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleResolvedDependenciesProvider"/>
 

@@ -16,11 +16,6 @@ public final class BrowseTypeHierarchyAction extends BrowseHierarchyActionBase {
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     if (!ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {

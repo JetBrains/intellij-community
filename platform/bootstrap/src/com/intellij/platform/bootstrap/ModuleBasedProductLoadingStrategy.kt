@@ -4,10 +4,7 @@ package com.intellij.platform.bootstrap
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.runtime.repository.ProductMode
-import com.intellij.platform.runtime.repository.RuntimeModuleGroup
-import com.intellij.platform.runtime.repository.RuntimeModuleId
-import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.platform.runtime.repository.*
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipFilePool
@@ -86,7 +83,7 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
       return null
     }
 
-    val allResourceRoots = includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }.toList()
+    val allResourceRoots = includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       loadDescriptorFromDir(
         file = mainResourceRoot,
@@ -103,7 +100,7 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
       loadDescriptorFromJar(
         file = mainResourceRoot,
         fileName = PluginManagerCore.PLUGIN_XML,
-        pathResolver = ModuleBasedPluginXmlPathResolver(allResourceRoots, includedModules),
+        pathResolver = ModuleBasedPluginXmlPathResolver(allResourceRoots.toList(), includedModules),
         parentContext = context,
         isBundled = true,
         isEssential = false,
@@ -112,8 +109,27 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
         pool = zipFilePool
       )
     }
-    descriptor?.jarFiles = allResourceRoots
+    val requiredLibraries = collectRequiredLibraryModules(pluginModuleGroup)
+    if (requiredLibraries.isNotEmpty()) {
+      thisLogger().debug("Additional library modules will be added to classpath of $pluginModuleGroup: $requiredLibraries")
+      requiredLibraries.flatMapTo(allResourceRoots) { it.resourceRootPaths }
+    }
+    descriptor?.jarFiles = allResourceRoots.toList()
     return descriptor
+  }
+
+  private fun collectRequiredLibraryModules(pluginModuleGroup: RuntimeModuleGroup): Set<RuntimeModuleDescriptor> {
+    /* Since libraries used by a plugin aren't mentioned in <content> tag in plugin.xml, we need to add them to the classpath automatically.
+       This function returns all library modules from dependencies of plugin modules which aren't present in the main module group;
+       Todo: support cases when a library is already included in a plugin on which the current plugin depends.
+     */
+    val includedInPlatform = productModules.mainModuleGroup.includedModules.mapTo(HashSet()) { it.moduleDescriptor }
+
+    return pluginModuleGroup.includedModules.flatMapTo(LinkedHashSet()) { includedModule ->
+      includedModule.moduleDescriptor.dependencies.filter { dependency ->
+        dependency.moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) && dependency !in includedInPlatform
+      }
+    }
   }
 
   override val shouldLoadDescriptorsFromCoreClassPath: Boolean

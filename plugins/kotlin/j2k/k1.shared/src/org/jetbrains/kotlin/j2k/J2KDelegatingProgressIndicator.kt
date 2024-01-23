@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.StandardProgressIndicator
 import com.intellij.openapi.progress.WrappedProgressIndicator
+import org.jetbrains.annotations.ApiStatus
 
 // Copied from com.intellij.ide.util.DelegatingProgressIndicator
+@ApiStatus.Internal
 open class J2KDelegatingProgressIndicator(indicator: ProgressIndicator) : WrappedProgressIndicator, StandardProgressIndicator {
     protected val delegate: ProgressIndicator = indicator
 

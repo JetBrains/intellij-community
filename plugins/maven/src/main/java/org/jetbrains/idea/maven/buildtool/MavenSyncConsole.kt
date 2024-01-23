@@ -64,7 +64,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
   @Synchronized
-  fun startImport(spec: MavenImportSpec) {
+  fun startImport(explicit: Boolean) {
     if (started) {
       return
     }
@@ -92,9 +92,9 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!,
                                             System.currentTimeMillis())
       .withRestartAction(restartAction)
-    descriptor.isActivateToolWindowWhenFailed = spec.isExplicitImport
+    descriptor.isActivateToolWindowWhenFailed = explicit
     descriptor.isActivateToolWindowWhenAdded = false
-    descriptor.isNavigateToError = if (spec.isExplicitImport) ThreeState.YES else ThreeState.UNSURE
+    descriptor.isNavigateToError = if (explicit) ThreeState.YES else ThreeState.UNSURE
 
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name)))
     debugLog("maven sync: started importing $myProject")
@@ -191,7 +191,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   @Synchronized
   fun startWrapperResolving() {
     if (!started || finished) {
-      startImport(MavenImportSpec.EXPLICIT_IMPORT)
+      startImport(true)
     }
     startTask(mySyncId, SyncBundle.message("maven.sync.wrapper"))
   }
@@ -279,7 +279,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
     }
     else {
-      this.startImport(MavenImportSpec.EXPLICIT_IMPORT)
+      this.startImport(true)
       this.addException(e)
       this.finishImport()
     }

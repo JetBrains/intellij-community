@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.generation.*;
@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.PlatformEditorBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -810,7 +811,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private final class SortEmAction extends ToggleAction {
+  private final class SortEmAction extends ToggleAction implements DumbAware {
     SortEmAction() {
       super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
     }
@@ -837,10 +838,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   protected ShowContainersAction getShowContainersAction() {
     return new ShowContainersAction(IdeBundle.messagePointer("action.show.classes"),
-                                    IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class));
+                                    IconManager.getInstance().getPlatformIcon(PlatformIcons.Class));
   }
 
-  protected final class ShowContainersAction extends ToggleAction {
+  protected final class ShowContainersAction extends ToggleAction implements DumbAware {
 
     public ShowContainersAction(@NotNull Supplier<@NlsActions.ActionText String> text, final Icon icon) {
       super(text, icon);
@@ -868,7 +869,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private final class ExpandAllAction extends AnAction {
+  private final class ExpandAllAction extends AnAction implements DumbAware {
     ExpandAllAction() {
       super(IdeBundle.messagePointer("action.expand.all"), AllIcons.Actions.Expandall);
     }
@@ -879,7 +880,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private final class CollapseAllAction extends AnAction {
+  private final class CollapseAllAction extends AnAction implements DumbAware {
     CollapseAllAction() {
       super(IdeBundle.messagePointer("action.collapse.all"), AllIcons.Actions.Collapseall);
     }

@@ -4,15 +4,12 @@ package com.intellij.cce.evaluation
 import com.intellij.cce.core.Language
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
-import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -27,9 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.plugins.gradle.GradleManager
+import org.jetbrains.plugins.gradle.GradleWarmupConfigurator
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
@@ -135,9 +133,7 @@ private fun forceUseProjectJdkForImporter(project: Project) {
         provider.linkedProjectsSettings
       }.filterIsInstance<GradleProjectSettings>()
 
-      if (allGradleSettings.size != 1) {
-        println("Found ${allGradleSettings.size} Gradle project settings linked to the project.")
-      }
+      println("Found ${allGradleSettings.size} Gradle project settings linked to the project.")
 
       for (settings in allGradleSettings) {
         settings.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK
@@ -180,18 +176,17 @@ enum class JvmBuildSystem {
     runBlockingCancellable {
       when (jvmBuildSystem) {
         Gradle -> project.basePath?.let { path ->
-          val projectAware = ExternalSystemUnlinkedProjectAware.EP_NAME.extensions.filter { it.systemId == GradleConstants.SYSTEM_ID }.first()
-          Registry.get("external.system.auto.import.disabled").setValue(false) // force refresh
-          //three steps - firstly, import, then try again to use jdk and then one more refresh
-          if (!projectAware.isLinkedProject(project, path) && ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings().isEmpty()) {
-            println("link gradle project")
-            projectAware.linkAndLoadProject(project, path)
+          val file = File(path)
+          println("gradle scheduleProjectRefresh")
+          GradleWarmupConfigurator().prepareEnvironment(file.toPath())
+          GradleWarmupConfigurator().runWarmup(project)
+
+          println("Waiting all invoked later gradle activities...")
+          repeat(10) {
+            ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
           }
-          println("force update jdk again")
-          forceUseProjectJdkForImporter(project)
-          println("refresh gradle project")
-          ExternalSystemUtil.refreshProject(path, ImportSpecBuilder(project, GradleConstants.SYSTEM_ID))
         }
+
 
         Maven -> project.guessProjectDir()?.let { dir ->
           Logger.getInstance("#org.jetbrains.idea.maven").setLevel(LogLevel.ALL)

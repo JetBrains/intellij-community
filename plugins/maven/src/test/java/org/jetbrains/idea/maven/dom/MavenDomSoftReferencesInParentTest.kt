@@ -91,7 +91,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                        <testSourceDirectory><error>foo2</error></testSourceDirectory>
                        <scriptSourceDirectory><error>foo3</error></scriptSourceDirectory>
                        </build>
-                       """.trimIndent()), false)
+                       """.trimIndent()), true)
 
     checkHighlighting()
   }

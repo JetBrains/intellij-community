@@ -161,11 +161,12 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
     resolveFoldersAndImport()
     assertSources("project", "src")
-    importProjectAsync("""
+    createProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
+    updateAllProjects()
     assertSources("project", "src/main/java")
     assertDefaultResources("project")
   }

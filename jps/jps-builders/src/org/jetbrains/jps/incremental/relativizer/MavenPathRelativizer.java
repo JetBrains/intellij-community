@@ -5,7 +5,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 
 @VisibleForTesting
-public final class MavenPathRelativizer extends SubPathRelativizer {
+public final class MavenPathRelativizer extends CommonPathRelativizer {
   private static final String IDENTIFIER = "$MAVEN_REPOSITORY$";
 
   public MavenPathRelativizer() {

@@ -1,6 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <checkinHandlerFactory implementation="com.intellij.execution.testframework.sm.vcs.RunTestsCheckinHandlerFactory" id="tests"/>
-    <projectService serviceImplementation="com.intellij.execution.testframework.sm.vcs.TestsVcsConfiguration"/>
   </extensions>
 </idea-plugin>

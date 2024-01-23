@@ -43,7 +43,7 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         System.setProperty("jps.use.dependency.graph", "true");
 
         // Disabe Kotlin JPS IC
-        //System.setProperty("kotlin.jps.dumb.mode", "true");
+        System.setProperty("kotlin.jps.dumb.mode", "true");
     }
 
     @TestMetadata("pureKotlin")

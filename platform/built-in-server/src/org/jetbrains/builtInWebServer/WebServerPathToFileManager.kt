@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -28,6 +29,7 @@ private const val cacheSize: Long = 4096 * 4
 /**
  * Implement [WebServerRootsProvider] to add your provider
  */
+@Service(Service.Level.PROJECT)
 class WebServerPathToFileManager(private val project: Project) {
   internal val pathToInfoCache = Caffeine.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()
   // time to expire should be greater than pathToFileCache

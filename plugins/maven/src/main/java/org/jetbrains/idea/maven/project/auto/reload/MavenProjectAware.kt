@@ -14,7 +14,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSyncListener
@@ -42,7 +42,8 @@ class MavenProjectAware(
     }
     if (context.hasUndefinedModifications) {
       manager.findAllAvailablePomFilesIfNotMavenized()
-      manager.scheduleUpdateAllMavenProjects(MavenImportSpec(true, context.isExplicitReload))
+      val spec = MavenSyncSpec.full("MavenProjectAware.reloadProject, undefined modifications", context.isExplicitReload)
+      manager.scheduleUpdateAllMavenProjects(spec)
     }
     else {
       val settingsFilesContext = context.settingsFilesContext
@@ -60,12 +61,14 @@ class MavenProjectAware(
       val deleted = settingsFilesContext.deleted
 
       if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
-        manager.scheduleUpdateMavenProjects(MavenImportSpec(true, context.isExplicitReload), filesToUpdate, filesToDelete)
+        val spec = MavenSyncSpec.full("MavenProjectAware.reloadProject, sync selected", context.isExplicitReload)
+        manager.scheduleUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
       else {
         // IDEA-276087 if changed not project files(.mvn) then run full import
         manager.findAllAvailablePomFilesIfNotMavenized()
-        manager.scheduleUpdateAllMavenProjects(MavenImportSpec(false, context.isExplicitReload))
+        val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, sync all", context.isExplicitReload)
+        manager.scheduleUpdateAllMavenProjects(spec)
       }
     }
   }

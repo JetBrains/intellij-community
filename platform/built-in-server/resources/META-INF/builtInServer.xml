@@ -22,8 +22,6 @@
     <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>
     <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider" order="last"/>
 
-    <projectService serviceImplementation="org.jetbrains.builtInWebServer.WebServerPathToFileManager"/>
-
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>

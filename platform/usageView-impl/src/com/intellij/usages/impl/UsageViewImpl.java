@@ -997,11 +997,33 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
     sortGroupingActions(list);
-    ActionUtil.moveActionTo(list, UsageViewBundle.message("action.group.by.module"),
-                            UsageViewBundle.message("action.flatten.modules"), true);
+    moveActionTo(list, UsageViewBundle.message("action.group.by.module"),
+                 UsageViewBundle.message("action.flatten.modules"), true);
     return list.toArray(AnAction.EMPTY_ARRAY);
   }
 
+  protected static void moveActionTo(@NotNull List<AnAction> list,
+                                     @NotNull String actionText,
+                                     @NotNull String targetActionText,
+                                     boolean before) {
+    if (Objects.equals(actionText, targetActionText)) {
+      return;
+    }
+
+    int actionIndex = -1;
+    int targetIndex = -1;
+    for (int i = 0; i < list.size(); i++) {
+      AnAction action = list.get(i);
+      if (actionIndex == -1 && Objects.equals(actionText, action.getTemplateText())) actionIndex = i;
+      if (targetIndex == -1 && Objects.equals(targetActionText, action.getTemplateText())) targetIndex = i;
+      if (actionIndex != -1 && targetIndex != -1) {
+        if (actionIndex < targetIndex) targetIndex--;
+        AnAction anAction = list.remove(actionIndex);
+        list.add(before ? targetIndex : targetIndex + 1, anAction);
+        return;
+      }
+    }
+  }
 
   /**
    * create*Action() methods can be used in createActions() method in subclasses to create a toolbar

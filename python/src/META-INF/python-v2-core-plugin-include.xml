@@ -1,0 +1,27 @@
+<idea-plugin>
+  <!--This is not a module, but a part of `plugin.xml` to be included-->
+
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <!-- Declare that we support python -->
+  <module value="com.intellij.modules.python"/>
+
+  <!--These modules are used both in Python Community and Prof-->
+  <content>
+    <module name="intellij.commandInterface"/> <!-- used by Django in Prof, by some plugins in community -->
+    <module name="intellij.python.community.impl"/> <!-- The whole open-source part of Python support -->
+    <module name="intellij.python.community.impl/poetry"/>
+    <module name="intellij.python.community.plugin.impl"/><!--Python for any IDE except PyCharm -->
+    <module name="intellij.python.community.plugin.java"/><!-- Python for Java IDE -->
+    <module name="intellij.python.copyright"/>
+    <module name="intellij.python.featuresTrainer"/>
+    <module name="intellij.python.grazie"/>
+    <module name="intellij.python.langInjection"/>
+    <module name="intellij.python.markdown"/>
+    <module name="intellij.python.reStructuredText"/>
+    <module name="intellij.python.terminal"/>
+  </content>
+</idea-plugin>

@@ -45,7 +45,7 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
     val splitter = GitLogOutputSplitter(handler, parser) { record ->
       result.add(GitFileHistory.createGitFileRevision(project, root, record, filePath))
     }
-    Git.getInstance().runCommandWithoutCollectingOutput(handler)
+    Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
     splitter.reportErrors()
     return result
   }

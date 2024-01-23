@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems", "ReplaceGetOrSet", "HardCodedStringLiteral")
 
 package com.intellij.ide.plugins
@@ -22,7 +22,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
@@ -101,35 +101,42 @@ fun performAction() {
 private fun createAllServicesAndExtensions2(): List<Throwable> {
   val errors = mutableListOf<Throwable>()
   runWithModalProgressBlocking(ModalTaskOwner.guess(), "Creating all services and extensions") {
-    val taskExecutor: (task: () -> Unit) -> Unit = { task ->
-      try {
-        task()
+    reportSequentialProgress { reporter ->
+      val taskExecutor: (task: () -> Unit) -> Unit = { task ->
+        try {
+          task()
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          errors.add(e)
+        }
       }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        errors.add(e)
-      }
-    }
 
-    // check first
-    blockingContext {
-      checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
-    }
-
-    val application = ApplicationManager.getApplication() as ComponentManagerImpl
-    checkContainer2(application, "app", taskExecutor)
-
-    val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
-    if (project != null) {
-      checkContainer2(project, "project", taskExecutor)
-      val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
-      if (module != null) {
-        checkContainer2(module, "module", taskExecutor)
+      // check first
+      blockingContext {
+        checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
       }
-    }
-    indeterminateStep("Checking light services...") {
+
+      val application = ApplicationManager.getApplication() as ComponentManagerImpl
+      reporter.indeterminateStep {
+        checkContainer2(application, "app", taskExecutor)
+      }
+
+      val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
+      if (project != null) {
+        reporter.indeterminateStep {
+          checkContainer2(project, "project", taskExecutor)
+        }
+        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+        if (module != null) {
+          reporter.indeterminateStep {
+            checkContainer2(module, "module", taskExecutor)
+          }
+        }
+      }
+      reporter.indeterminateStep("Checking light services...")
       blockingContext {
         checkLightServices(application, project, errors)
       }
@@ -174,11 +181,11 @@ private suspend fun checkContainer2(
   container: ComponentManagerImpl,
   levelDescription: String?,
   taskExecutor: (task: () -> Unit) -> Unit,
-) {
-  indeterminateStep("Checking ${levelDescription} services...") {
+) = reportSequentialProgress { reporter ->
+  reporter.indeterminateStep("Checking ${levelDescription} services...") {
     createAllServices2(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
   }
-  indeterminateStep("Checking ${levelDescription} extensions...") {
+  reporter.indeterminateStep("Checking ${levelDescription} extensions...") {
     blockingContext {
       checkExtensions(container, taskExecutor)
     }

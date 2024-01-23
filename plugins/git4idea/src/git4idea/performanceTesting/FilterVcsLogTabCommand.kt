@@ -27,7 +27,7 @@ import kotlin.io.path.exists
 /**
  * This command will filter vcs log tab data by set of filters on the root directory
  * %filterVcsLogTab -name <user_name> -path<slash/divided/path>
- * Example - '%filterVcsLogTab -name Alexander Kass -path srs/SomeImpl.java'
+ * Example - '%filterVcsLogTab -name "Alexander Kass -path 'srs/SomeImpl.java'"
  */
 class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
@@ -58,13 +58,14 @@ class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCorout
   }
 
   private fun generateVcsFilter(projectFile: VirtualFile?, rawParams: String, vcsLogData: VcsLogData): VcsLogFilterCollection {
-    val regex = "-(\\w+)\\s+([\\S]+)".toRegex()
+    val regex = "-(\\w+)\\s'([a-zA-Z0-9\\s/\\\\]+)'".toRegex()
 
     val matches = regex.findAll(rawParams)
     val result = mutableListOf<VcsLogDetailsFilter>()
 
     for (match in matches) {
-      val (key, value) = match.destructured
+      var (key, value) = match.destructured
+      value = value.replace("'", "")
 
       when (key) {
         "name" -> result.add(VcsLogFilterObject.fromUserNames(listOf(value), vcsLogData))

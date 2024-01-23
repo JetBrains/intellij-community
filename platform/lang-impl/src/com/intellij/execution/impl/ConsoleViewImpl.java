@@ -240,11 +240,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return OccurenceNavigator.super.getActionUpdateThread();
-  }
-
   private void updatePredefinedFiltersLater() {
     updatePredefinedFiltersLater(null);
   }

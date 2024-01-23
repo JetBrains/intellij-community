@@ -77,30 +77,15 @@
 
     <fileEditorProvider id="ui-designer" implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider" fileType="GUI_DESIGNER_FORM"/>
 
-    <applicationService serviceImplementation="com.intellij.uiDesigner.Properties"/>
-
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MarginProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HGapProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VGapProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.IndentProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"/>
 
     <moduleService serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
 
-    <projectService serviceImplementation="com.intellij.uiDesigner.LoaderFactory"/>
-
-    <projectService serviceImplementation="com.intellij.uiDesigner.GuiDesignerConfiguration"/>
     <annotator language="JAVA" implementationClass="com.intellij.uiDesigner.binding.FormClassAnnotator"/>
 
     <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
@@ -128,8 +113,6 @@
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.uiDesigner.binding.GeneratedCodeFoldingBuilder"/>
     <gotoRelatedProvider implementation="com.intellij.uiDesigner.binding.FormRelatedFilesProvider"/>
-
-    <projectService serviceImplementation="com.intellij.uiDesigner.palette.Palette"/>
 
     <projectService serviceImplementation="com.intellij.uiDesigner.clientProperties.ClientPropertiesManager"/>
 

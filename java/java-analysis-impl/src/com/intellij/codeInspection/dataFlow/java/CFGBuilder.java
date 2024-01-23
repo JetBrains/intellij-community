@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.Nullability;
@@ -828,8 +828,7 @@ public class CFGBuilder {
         PsiLambdaExpression localLambda =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(localFn.getInitializer()), PsiLambdaExpression.class);
         if (myAnalyzer.wasAdded(localLambda)) {
-          PsiElement scope = PsiUtil.getVariableCodeBlock(localFn, null);
-          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(localFn, scope);
+          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(localFn);
           if (ContainerUtil.getOnlyItem(refs) == stripped) {
             myAnalyzer.removeLambda(localLambda);
             return tryInlineLambda(argCount, localLambda, resultNullability, pushArgs);

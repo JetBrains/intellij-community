@@ -121,8 +121,10 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     }
   }
 
-  abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(private val originalStates: StateMap,
-                                                                             protected val storage: T) : SaveSessionProducerBase() {
+  abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(
+    private val originalStates: StateMap,
+    protected val storage: T
+  ) : SaveSessionProducerBase() {
     private var copiedStates: MutableMap<String, Any>? = null
 
     private var newLiveStates: MutableMap<String, Element>? = HashMap()
@@ -150,12 +152,14 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       }
 
       // during beforeElementSaved() elements can be modified and so, even if our save() never returns empty list, at this point, elements can be an empty list
-      return SaveExecutor(elements, writer, stateMap)
+      return XmlSaveSession(elements, writer, stateMap)
     }
 
-    private inner class SaveExecutor(private val elements: MutableList<Element>?,
-                                     private val writer: DataWriter?,
-                                     private val stateMap: StateMap) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
+    private inner class XmlSaveSession(
+      private val elements: MutableList<Element>?,
+      private val writer: DataWriter?,
+      private val stateMap: StateMap
+    ) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
       override fun saveBlocking() {
         var isSavedLocally = false
         val provider = storage.provider

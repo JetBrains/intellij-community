@@ -1,4 +1,5 @@
 {
   "mainFile": "JS/src/test/test.kt",
-  "elementClass": "org.jetbrains.kotlin.psi.KtClass"
+  "elementClass": "org.jetbrains.kotlin.psi.KtClass",
+  "enabledInK2": "false"
 }

@@ -101,7 +101,7 @@ class GitFileHistory internal constructor(private val project: Project,
       val revision = createGitFileRevision(project, root, record, startPath)
       consumer(revision)
     }
-    Git.getInstance().runCommandWithoutCollectingOutput(handler)
+    Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
     splitter.reportErrors()
     return lastCommits
   }

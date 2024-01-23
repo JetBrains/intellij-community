@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -83,8 +84,19 @@ public final class WSLUtil {
     return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
 
+  private static boolean ourIsSystemCompatible = SystemInfo.isWin10OrNewer;
+
   public static boolean isSystemCompatible() {
-    return SystemInfo.isWin10OrNewer;
+    return ourIsSystemCompatible;
+  }
+
+  /**
+   * On the first side, functions like [parseWindowsUncPath] are not supposed to return a Windows path on Unix. Otherwise, API users
+   * can make false assumptions. On the other hand, such limitation hinders creation of OS-agnostic unit tests for this code.
+   */
+  @TestOnly
+  public static void setSystemCompatible(boolean value) {
+    ourIsSystemCompatible = value;
   }
 
   /**

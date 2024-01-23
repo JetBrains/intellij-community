@@ -7,10 +7,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
 
 import java.util.List;
@@ -30,21 +32,26 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull T item) {
-    final PsiElement currentElement = context.getFile().findElementAt(context.getStartOffset());
-    assert currentElement != null : "no element at " + context.getStartOffset();
+    // keyValue is created by handler, there is no need in inserting completion char
+    context.setAddCompletionChar(false);
 
-    YAMLKeyValue parent = PsiTreeUtil.getParentOfType(currentElement, YAMLKeyValue.class);
-    final YAMLDocument holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
-    assert holdingDocument != null;
-
-    YAMLValue oldValue = (holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
-                         deleteLookupTextAndRetrieveOldValue(context, currentElement) :
+    YamlOffsetContext offsetContext = new YamlOffsetContext(context.getFile(), context.getStartOffset());
+    @SuppressWarnings("DataFlowIssue")
+    YAMLValue oldValue = (offsetContext.holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
+                         deleteLookupTextAndRetrieveOldValue(context, offsetContext.currentElement) :
                          null; // Inheritors must handle lookup text removal since otherwise holdingDocument may become invalid.
     if (oldValue instanceof YAMLSequence) {
       trimSequenceItemIndents((YAMLSequence)oldValue);
     }
 
-    final YAMLKeyValue created = createNewEntry(holdingDocument, item, parent != null && parent.isValid() ? parent : null);
+    if (oldValue == null && !offsetContext.holdingDocument.isValid()) {
+      offsetContext = new YamlOffsetContext(context.getFile(), context.getStartOffset());
+    }
+    @SuppressWarnings("DataFlowIssue") final YAMLKeyValue created = createNewEntry(offsetContext.holdingDocument, item,
+                                                                                   offsetContext.parent != null &&
+                                                                                   offsetContext.parent.isValid()
+                                                                                   ? offsetContext.parent
+                                                                                   : null);
 
     YAMLValue createdValue = created.getValue();
     if (createdValue != null) {
@@ -69,7 +76,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
       context.getEditor().getCaretModel().moveToOffset(valueItem.getTextOffset() + 1);
     }
     if (!isCharAtCaret(context.getEditor(), ' ')) {
-      EditorModificationUtil.insertStringAtCaret(context.getEditor(), " ");
+      EditorModificationUtilEx.insertStringAtCaret(context.getEditor(), " ");
     }
     else {
       context.getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, true);
@@ -86,7 +93,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
     final YAMLKeyValue keyValue = PsiTreeUtil.getParentOfType(elementAtCaret, YAMLKeyValue.class);
     assert keyValue != null;
-    assert keyValue.getParentMapping() != null;
+    assert keyValue.getParentMapping() != null || keyValue.getParent() instanceof YAMLCompoundValue;
 
     Document document = context.getDocument();
     String text = document.getText(TextRange.create(context.getStartOffset(), context.getTailOffset()));
@@ -112,11 +119,17 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
                                              YAMLBundle.message("YamlKeyCompletionInsertHandler.remove.key"),
                                              null,
                                              () -> {
-                                               YAMLMapping parentMapping = keyValue.getParentMapping();
-                                               boolean delete = parentMapping.getNode().getChildren(null).length == 1;
-                                               parentMapping.deleteKeyValue(keyValue);
+                                               PsiElement parent = keyValue.getParent();
+                                               boolean delete = parent.getNode().getChildren(null).length == 1;
+                                               if (parent instanceof YAMLMapping parentMapping) {
+                                                 parentMapping.deleteKeyValue(keyValue);
+                                               }
+                                               else {
+                                                 YAMLUtil.deleteSurroundingWhitespace(keyValue);
+                                                 keyValue.delete();
+                                               }
                                                if (delete) {
-                                                 parentMapping.delete();
+                                                 parent.delete();
                                                }
                                              });
     return oldValue;
@@ -130,7 +143,9 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
       final char c = sequence.charAt(offset);
       if (c != ' ' && c != '\t') {
         if (c == '\n') {
-          offset--;
+          if (!hasDocumentSeparatorBefore(offset, sequence)) {
+            offset--;
+          }
         }
         else {
           offset = context.getStartOffset() - 1;
@@ -142,6 +157,12 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
     document.deleteString(offset + 1, context.getTailOffset());
     context.commitDocument();
+  }
+
+  private static boolean hasDocumentSeparatorBefore(int offset, CharSequence sequence) {
+    if (offset < 3) return false;
+    if (!sequence.subSequence(offset - 3, offset).equals("---")) return false;
+    return offset == 3 || sequence.charAt(offset - 4) == '\n';
   }
 
   public static boolean isCharAtCaret(Editor editor, char ch) {
@@ -161,6 +182,21 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
           element.replace(newIndent);
         }
       }
+    }
+  }
+
+  private static class YamlOffsetContext {
+    final PsiElement currentElement;
+    final YAMLKeyValue parent;
+    final YAMLDocument holdingDocument;
+
+    YamlOffsetContext(@NotNull PsiFile psiFile, int offset) {
+      currentElement = psiFile.findElementAt(offset);
+      assert currentElement != null : "no element at " + offset;
+
+      parent = PsiTreeUtil.getParentOfType(currentElement, YAMLKeyValue.class);
+      holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
+      assert holdingDocument != null;
     }
   }
 }

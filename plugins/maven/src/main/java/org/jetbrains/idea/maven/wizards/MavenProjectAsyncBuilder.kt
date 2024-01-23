@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.application.ApplicationManager
@@ -24,8 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -108,19 +107,17 @@ class MavenProjectAsyncBuilder {
     if (projectsNavigator != null) projectsNavigator.groupModules = true
 
     val files: List<VirtualFile?> = withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), true) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          val indicator = ProgressManager.getGlobalProgressIndicator()
-          if (importProjectFile != null) {
-            return@coroutineToIndicator listOf(importProjectFile)
-          }
-          val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
-            FileUtil.toSystemIndependentName(rootDirectory.toString()))
-          if (virtualFile == null) {
-            return@coroutineToIndicator emptyList()
-          }
-          return@coroutineToIndicator FileFinder.findPomFiles(virtualFile.children, LookForNestedToggleAction.isSelected(), indicator)
+      coroutineToIndicator {
+        val indicator = ProgressManager.getGlobalProgressIndicator()
+        if (importProjectFile != null) {
+          return@coroutineToIndicator listOf(importProjectFile)
         }
+        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+          FileUtil.toSystemIndependentName(rootDirectory.toString()))
+        if (virtualFile == null) {
+          return@coroutineToIndicator emptyList()
+        }
+        return@coroutineToIndicator FileFinder.findPomFiles(virtualFile.children, LookForNestedToggleAction.isSelected(), indicator)
       }
     }
 
@@ -130,8 +127,8 @@ class MavenProjectAsyncBuilder {
     generalSettings.updateFromMavenConfig(files)
 
     withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), false) {
-      withRawProgressReporter {
-        tree.updateAll(false, generalSettings, rawProgressReporter!!)
+      reportRawProgress { reporter ->
+        tree.updateAll(false, generalSettings, reporter)
       }
     }
 

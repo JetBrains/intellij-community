@@ -202,13 +202,8 @@ internal fun setupKeyEventDispatcher(editor: EditorEx,
 
   editor.addFocusListener(object : FocusChangeListener {
     override fun focusGained(editor: Editor) {
-      if (settings.overrideIdeShortcuts()) {
-        val actionsToSkip = TerminalEventDispatcher.getActionsToSkip()
-        eventDispatcher.register(actionsToSkip)
-      }
-      else {
-        eventDispatcher.unregister()
-      }
+      val actionsToSkip = TerminalEventDispatcher.getActionsToSkip()
+      eventDispatcher.register(actionsToSkip)
     }
 
     override fun focusLost(editor: Editor) {

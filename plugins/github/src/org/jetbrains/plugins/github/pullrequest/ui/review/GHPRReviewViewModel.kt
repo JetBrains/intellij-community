@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
-import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.collaboration.async.computationStateIn
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
@@ -10,12 +10,11 @@ import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.createPendingReviewRequestsFlow
 
 interface GHPRReviewViewModel {
   /**
@@ -41,7 +40,7 @@ interface GHPRReviewViewModel {
 }
 
 internal class DelegatingGHPRReviewViewModel(private val helper: GHPRReviewViewModelHelper) : GHPRReviewViewModel {
-  override val pendingReview: StateFlow<ComputedResult<GHPullRequestPendingReview?>> = helper.pendingReviewState.asStateFlow()
+  override val pendingReview: StateFlow<ComputedResult<GHPullRequestPendingReview?>> = helper.pendingReviewState
   override var submitReviewInputHandler: (suspend (GHPRSubmitReviewViewModel) -> Unit)? = null
 
   override fun submitReview() {
@@ -55,7 +54,8 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val d
   private val cs = parentCs.childScope()
   private val reviewData = dataProvider.reviewData
 
-  val pendingReviewState = MutableStateFlow<ComputedResult<GHPullRequestPendingReview?>>(ComputedResult.loading())
+  val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
+    reviewData.createPendingReviewRequestsFlow().computationStateIn(cs)
 
   fun submitReview(handler: (suspend (GHPRSubmitReviewViewModel) -> Unit)) {
     val pendingReviewResult = pendingReviewState.value.result ?: return
@@ -76,17 +76,6 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val d
   }
 
   init {
-    reviewData.addPendingReviewListener(cs.nestedDisposable()) {
-      pendingReviewState.value = ComputedResult.loading()
-      reviewData.loadPendingReview().handle { res, err ->
-        if (err != null) {
-          pendingReviewState.value = ComputedResult.failure(err.cause ?: err)
-        }
-        else {
-          pendingReviewState.value = ComputedResult.success(res)
-        }
-      }
-    }
     reviewData.resetPendingReview()
   }
 

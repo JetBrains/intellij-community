@@ -153,6 +153,7 @@ class JdkDownloadTask(val jdkItem: JdkItem, val request: JdkInstallRequest, val 
   override fun getSuggestedSdkName() = request.item.suggestedSdkName
   override fun getPlannedHomeDir() = request.javaHome.toString()
   override fun getPlannedVersion() = request.item.versionString
+  override fun getProductName(): String = request.item.fullPresentationWithVendorText
   override fun doDownload(indicator: ProgressIndicator) {
     JdkInstaller.getInstance().installJdk(request, indicator, project)
   }

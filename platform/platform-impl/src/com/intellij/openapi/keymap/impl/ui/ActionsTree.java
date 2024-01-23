@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -52,8 +51,6 @@ import java.util.List;
 import java.util.*;
 
 public final class ActionsTree {
-  private static final Logger LOG = Logger.getInstance(ActionsTree.class);
-
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private final SimpleTextAttributes GRAY_LINK = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.gray);
 
@@ -69,8 +66,6 @@ public final class ActionsTree {
   private Condition<? super AnAction> myBaseFilter;
 
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
-
-  private final Set<String> myBrokenActions = new HashSet<>();
 
   public ActionsTree() {
     myRoot = new DefaultMutableTreeNode(ROOT);
@@ -145,12 +140,12 @@ public final class ActionsTree {
         TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         DefaultMutableTreeNode node = path == null ? null : (DefaultMutableTreeNode)path.getLastPathComponent();
         Object userObject = node == null ? null : node.getUserObject();
-        if (!(userObject instanceof String)) {
+        if (!(userObject instanceof String actionId)) {
           return null;
         }
 
-        AnAction action = ActionManager.getInstance().getActionOrStub((String)userObject);
-        return action == null ? null : action.getTemplatePresentation().getDescription();
+        Presentation presentation = ActionsTreeUtil.getTemplatePresentation(actionId, null);
+        return presentation == null ? null : presentation.getDescription();
       }
     });
 
@@ -227,11 +222,10 @@ public final class ActionsTree {
 
     ActionManager actionManager = ActionManager.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
-    Condition<? super AnAction>
-      condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
+    Condition<? super AnAction> condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
     Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true, condFilter);
 
-    if ((filter != null && !filter.isEmpty() || shortcut != null) && mainGroup.initIds().isEmpty()) {
+    if ((StringUtil.isNotEmpty(filter) || shortcut != null) && mainGroup.initIds().isEmpty()) {
       condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, false));
       mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, false, condFilter);
     }
@@ -545,7 +539,7 @@ public final class ActionsTree {
       else if (userObject instanceof String) {
         actionId = (String)userObject;
         boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : ActionManagerEx.getInstanceEx().getActionBinding(actionId);
-        Presentation presentation = getTemplatePresentation(actionId, null);
+        Presentation presentation = ActionsTreeUtil.getTemplatePresentation(actionId, null);
         if (presentation == null) {
           text = actionId;
         }
@@ -613,7 +607,7 @@ public final class ActionsTree {
           append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
           append(" ");
 
-          Presentation boundPresentation = getTemplatePresentation(boundId, actionId);
+          Presentation boundPresentation = ActionsTreeUtil.getTemplatePresentation(boundId, actionId);
           String boundText = StringUtil.notNullize(boundPresentation == null ? null : boundPresentation.getText(), boundId);
           append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
         }
@@ -645,31 +639,6 @@ public final class ActionsTree {
         result.add(new PropertyBean("Action ID", userObject, true));
       }
       return result;
-    }
-
-    private @Nullable Presentation getTemplatePresentation(@NotNull @NlsSafe String actionId,
-                                                           @Nullable String boundSourceId) {
-      AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
-      Presentation presentation = action == null ? null : action.getTemplatePresentation();
-      String text = presentation == null ? null : presentation.getText();
-      if (StringUtil.isEmpty(text)) { // fill dynamic presentation gaps
-        if (myBrokenActions.add(actionId)) {
-          AnAction action2 = action instanceof ActionStubBase ? ActionManager.getInstance().getAction(actionId) : null;
-          Presentation presentation2 = action2 == null ? null : action2.getTemplatePresentation();
-          String text2 = presentation2 == null ? null : presentation2.getText();
-          if (StringUtil.isEmpty(text2)) {
-            LOG.warn("No text in '" + actionId + "' template presentation" +
-                     (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
-                     ". Showing its action-id instead");
-          }
-          else {
-            LOG.info("No text in '" + actionId + "' stub template presentation" +
-                     (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
-                     ". Creating its instance");
-          }
-        }
-      }
-      return presentation;
     }
 
     private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {

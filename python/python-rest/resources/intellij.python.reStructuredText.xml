@@ -2,19 +2,24 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.python"/>
+    <module name="intellij.python.community.impl"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <fileType name="ReST" language="ReST" extensions="rst" implementationClass="com.intellij.python.reStructuredText.RestFileType" fieldName="INSTANCE"/>
+    <fileType name="ReST" language="ReST" extensions="rst" implementationClass="com.intellij.python.reStructuredText.RestFileType"
+              fieldName="INSTANCE"/>
     <lang.syntaxHighlighterFactory language="ReST"
                                    implementationClass="com.intellij.python.reStructuredText.RestHighlighterFactory"/>
     <lang.parserDefinition language="ReST" implementationClass="com.intellij.python.reStructuredText.parsing.RestParserDefinition"/>
     <colorSettingsPage implementation="com.intellij.python.reStructuredText.RestColorsPage"/>
 
-    <completion.contributor language="ReST" implementationClass="com.intellij.python.reStructuredText.completion.DirectiveCompletionContributor"/>
-    <completion.contributor language="ReST" implementationClass="com.intellij.python.reStructuredText.completion.OptionCompletionContributor"/>
-    <completion.contributor language="ReST" implementationClass="com.intellij.python.reStructuredText.completion.ReferenceCompletionContributor"/>
+    <completion.contributor language="ReST"
+                            implementationClass="com.intellij.python.reStructuredText.completion.DirectiveCompletionContributor"/>
+    <completion.contributor language="ReST"
+                            implementationClass="com.intellij.python.reStructuredText.completion.OptionCompletionContributor"/>
+    <completion.contributor language="ReST"
+                            implementationClass="com.intellij.python.reStructuredText.completion.ReferenceCompletionContributor"/>
     <gotoDeclarationHandler implementation="com.intellij.python.reStructuredText.RestGotoProvider" order="FIRST"/>
     <lang.psiStructureViewFactory language="ReST"
                                   implementationClass="com.intellij.python.reStructuredText.structureView.RestStructureViewFactory"/>
@@ -51,7 +56,8 @@
     <lang.substitutor language="TEXT" implementationClass="com.intellij.python.reStructuredText.RestLanguageSubstitutor"/>
 
     <languageInjector implementation="com.intellij.python.reStructuredText.PyRestDocstringLanguageInjector"/>
-    <completion.contributor language="ReST" implementationClass="com.intellij.python.reStructuredText.completion.SphinxDirectiveCompletionContributor"/>
+    <completion.contributor language="ReST"
+                            implementationClass="com.intellij.python.reStructuredText.completion.SphinxDirectiveCompletionContributor"/>
   </extensions>
 
   <actions resource-bundle="messages.RestBundle">

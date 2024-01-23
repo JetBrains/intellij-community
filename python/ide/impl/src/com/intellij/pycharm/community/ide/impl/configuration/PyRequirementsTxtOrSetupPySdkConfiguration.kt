@@ -36,6 +36,7 @@ import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvFromFilePanel
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
+import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import java.awt.BorderLayout
 import java.awt.Insets
@@ -161,7 +162,9 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
   }
 
   private fun getCommandForPipInstall(requirementsTxtOrSetupPy: VirtualFile): List<String> {
-    return if (FileTypeRegistry.getInstance().isFileOfType(requirementsTxtOrSetupPy, PlainTextFileType.INSTANCE)) {
+    val fileTypeRegistry = FileTypeRegistry.getInstance()
+    return if (fileTypeRegistry.isFileOfType(requirementsTxtOrSetupPy, PlainTextFileType.INSTANCE)
+               || fileTypeRegistry.isFileOfType(requirementsTxtOrSetupPy, RequirementsFileType.INSTANCE)) {
       listOf("-r", getAbsPath(requirementsTxtOrSetupPy))
     }
     else {

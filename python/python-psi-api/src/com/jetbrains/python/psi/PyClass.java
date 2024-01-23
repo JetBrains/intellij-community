@@ -354,18 +354,6 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
 
   @Override
   @Nullable
-  default PyTypeParameterList getTypeParameterList() {
-    return (PyTypeParameterList)PyAstClass.super.getTypeParameterList();
-  }
-
-  @Override
-  @Nullable
-  default PyDecoratorList getDecoratorList() {
-    return (PyDecoratorList)PyAstClass.super.getDecoratorList();
-  }
-
-  @Override
-  @Nullable
   default PyStringLiteralExpression getDocStringExpression() {
     return (PyStringLiteralExpression)PyAstClass.super.getDocStringExpression();
   }

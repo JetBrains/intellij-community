@@ -138,7 +138,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </dependency>
                        </dependencies>
                        """.trimIndent())
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     assertModules("project")
     assertModuleLibDeps("project") // dependency was not added due to reported pom model problem.
@@ -238,7 +238,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
     assertModuleLibDeps("project", "Maven: group:lib:1")
   }
 
@@ -1074,7 +1074,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </dependency>
                        </dependencies>
                        """.trimIndent())
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     assertModules("project")
     assertModuleLibDep("project",
@@ -1100,7 +1100,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   </dependency>
 </dependencies>
 """)
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     assertModules("project")
     assertModuleLibDep("project",
@@ -1372,7 +1372,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     assertModules("project", mn("project", "m"))
     assertModuleLibDeps(mn("project", "m"))
@@ -1472,7 +1472,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0")
   }
@@ -1705,7 +1705,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          <module>m2</module>
                        </modules>
                        """.trimIndent())
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     //    assertProjectLibraries("Maven: xxx:yyy:1");
     assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://" + root + "/m1/foo.jar!/")
@@ -1737,7 +1737,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     waitForImportWithinTimeout {
       repositoryPath = File(dir, "__repo").path
-      Unit
     }
     projectsManager.embeddersManager.reset() // to recognize repository change
 
@@ -1773,7 +1772,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     waitForImportWithinTimeout {
       repositoryPath = File(dir, "__repo").path
-      Unit
     }
     projectsManager.embeddersManager.reset() // to recognize repository change
 
@@ -1835,7 +1833,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
           </dependency>
         </dependencies>
         """.trimIndent())
-      doImportProjects(listOf(projectPom), false)
+      doImportProjectsAsync(listOf(projectPom), false)
 
       assertModuleLibDep("project", "Maven: xxx:yyy:1", listOf(path), emptyList(), emptyList())
 
@@ -1867,7 +1865,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
         </dependency>
       </dependencies>
       """.trimIndent())
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://$projectPath/foo/bar.jar!/"),
@@ -1890,7 +1888,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://$projectPath/foo/xxx.jar!/"),
@@ -2054,11 +2052,12 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       assertModuleLibDeps("project", "lib")
     }
 
-    importProjectAsync("""
+    createProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
+    updateAllProjects()
 
     assertProjectLibraries("lib")
 
@@ -2495,7 +2494,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </dependency>
                        </dependencies>
                        """.trimIndent())
-    doImportProjects(listOf(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     WriteAction.runAndWait<RuntimeException> {
       val rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel()

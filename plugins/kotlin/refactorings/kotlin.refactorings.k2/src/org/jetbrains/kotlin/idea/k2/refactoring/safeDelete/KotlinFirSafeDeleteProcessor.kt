@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementDescriptionUtil
@@ -28,12 +29,14 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinK2RefactoringsBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.canDeleteElement
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -65,6 +68,8 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
 
         if (element is KtDeclaration) {
             val additionalElementsToDeleteArray = additionalElementsToDelete.toTypedArray()
+            //group declarations into expected to receive conflicts once per expected/actuals group
+            val expected = ExpectActualUtils.liftToExpected(element) ?: element
             ReferencesSearch.search(element).forEach(Processor {
                 val e = it.element
                 if (!isInside(e) && !isInside(e, additionalElementsToDeleteArray)) {
@@ -73,7 +78,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                         return@Processor true
                     }
                     val importDirective = e.getNonStrictParentOfType<KtImportDirective>()
-                    result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, element, importDirective != null))
+                    result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, expected, importDirective != null))
                 }
                 return@Processor true
             })
@@ -221,17 +226,25 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
       module: Module?,
       allElementsToDelete: Collection<PsiElement>
     ): Collection<PsiElement> {
-        when (element) {
-            is KtParameter -> {
-                return getParametersToSearch(element)
+        return ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
+            val mapToExpected: (PsiElement) -> List<PsiElement> = { e ->
+                (e as? KtDeclaration)?.let { ExpectActualUtils.withExpectedActuals(it) } ?: listOf(e)
             }
+            when (element) {
+                is KtParameter -> {
+                    val parametersToSearch = getParametersToSearch(element)
+                    parametersToSearch.flatMap(mapToExpected)
+                }
 
-            is KtNamedFunction, is KtProperty -> {
-                if (isUnitTestMode()) return Collections.singletonList(element)
-                return checkSuperMethods(element as KtDeclaration, allElementsToDelete, RefactoringBundle.message("to.refactor"))
+                is KtNamedFunction, is KtProperty -> {
+                    if (isUnitTestMode()) mapToExpected(element)
+                    else checkSuperMethods(element as KtDeclaration, allElementsToDelete, RefactoringBundle.message("to.refactor")).flatMap(
+                        mapToExpected
+                    )
+                }
+
+                else -> mapToExpected(element)
             }
-
-            else -> return arrayListOf(element)
         }
     }
 

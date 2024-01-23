@@ -7,11 +7,10 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.findPsiFile
@@ -25,12 +24,12 @@ import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.refactoring.suggested.performSuggestedRefactoring
 import org.jetbrains.annotations.Nls
 
-class RenameCodeVisionProvider : CodeVisionProvider<PsiFile?> {
+class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
     internal const val ID: String = "Rename refactoring"
   }
 
-  override fun precomputeOnUiThread(editor: Editor) = editor.project?.let { editor.virtualFile?.findPsiFile(it) }
+  override fun precomputeOnUiThread(editor: Editor) {}
 
   class RenameCodeVisionEntry(
     val project: Project,
@@ -51,25 +50,26 @@ class RenameCodeVisionProvider : CodeVisionProvider<PsiFile?> {
     }
   }
 
-  override fun computeCodeVision(editor: Editor, uiData: PsiFile?): CodeVisionState {
+  override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
 
-    val refactoring = uiData?.getUserData(REFACTORING_DATA_KEY) ?: editor.getUserData(REFACTORING_DATA_KEY)
-    if (refactoring != null) {
-      if (refactoring is SuggestedRenameData) {
-        return runBlockingCancellable {
-          readAction {
-            val text = RefactoringBundle.message("rename.code.vision.text")
-            val tooltip = RefactoringBundle.message("rename.code.vision.tooltip", refactoring.oldName, refactoring.declaration.name)
-            CodeVisionState.Ready(listOf(
-              refactoring.declaration.textRange to RenameCodeVisionEntry(project, text, tooltip, id)
-            ))
-          }
+    return runReadAction {
+      val file = editor.virtualFile?.findPsiFile(project) ?: return@runReadAction CodeVisionState.READY_EMPTY
+      val refactoring = file.getUserData(REFACTORING_DATA_KEY) ?: editor.getUserData(REFACTORING_DATA_KEY)
+
+      if (refactoring != null) {
+        if (refactoring is SuggestedRenameData) {
+          if (refactoring.oldName == refactoring.declaration.name) return@runReadAction CodeVisionState.READY_EMPTY
+          val text = RefactoringBundle.message("rename.code.vision.text")
+          val tooltip = RefactoringBundle.message("rename.code.vision.tooltip", refactoring.oldName, refactoring.declaration.name)
+          return@runReadAction CodeVisionState.Ready(listOf(
+            refactoring.declaration.textRange to RenameCodeVisionEntry(project, text, tooltip, id)
+          ))
         }
       }
-    }
 
-    return CodeVisionState.READY_EMPTY
+      return@runReadAction CodeVisionState.READY_EMPTY
+    }
   }
 
   override fun preparePreview(editor: Editor, file: PsiFile) {
@@ -81,7 +81,7 @@ class RenameCodeVisionProvider : CodeVisionProvider<PsiFile?> {
       }
     }
     file.accept(visitor)
-    visitor.renamedElement?.let { editor.putUserData(REFACTORING_DATA_KEY, SuggestedRenameData(it, "foo")) }
+    visitor.renamedElement?.let { file.putUserData(REFACTORING_DATA_KEY, SuggestedRenameData(it, "foo")) }
   }
 
   override val name: String

@@ -75,11 +75,5 @@ public interface PyNamedParameter extends PyAstNamedParameter, PyParameter, PsiN
   default PyTupleParameter getAsTuple() {
     return (PyTupleParameter)PyAstNamedParameter.super.getAsTuple();
   }
-
-  @Override
-  @Nullable
-  default PyAnnotation getAnnotation() {
-    return (PyAnnotation)PyAstNamedParameter.super.getAnnotation();
-  }
 }
 

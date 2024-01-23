@@ -16,16 +16,49 @@ internal data class CellUpdateInfo(
   val chainId: QueryId,
   val cellId: CellId,
   val updateType: UpdateType,
-)
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as CellUpdateInfo
+
+    if (chainId != other.chainId) return false
+    if (cellId != other.cellId) return false
+    if (updateType != other.updateType) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = chainId.hashCode()
+    result = 31 * result + cellId.hashCode()
+    result = 31 * result + updateType.hashCode()
+    return result
+  }
+}
 
 internal sealed interface UpdateType {
   data object DIFF : UpdateType
-  data class RECALCULATE(val match: Match) : UpdateType
+  data class RECALCULATE(val match: Match) : UpdateType {
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as RECALCULATE
+
+      return match == other.match
+    }
+
+    override fun hashCode(): Int {
+      return match.hashCode()
+    }
+  }
 }
 
 internal class PropagationResult<T>(
   val newCell: Cell<T>,
-  val tokenSet: TokenSet,
+  val matchSet: MatchSet,
   val subscriptions: List<Pair<ReadTraceHashSet, UpdateType>>,
 )
 
@@ -104,7 +137,7 @@ internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
       val cells = queryIdToChain[updateRequest.chainId] ?: error("Unindexed cell")
       val (newChain, tracesAndModifiedCells) = cells.changeInput(newSnapshot, updateRequest, changes, updateRequest.cellId)
       tracesAndModifiedCells.forEach { (traces, updateRequest) ->
-        cellIndex.set(ReadTraceHashSet(traces), updateRequest)
+        cellIndex.set(traces, updateRequest)
       }
       this.queryIdToChain[newChain.id] = newChain
     }

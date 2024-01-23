@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -25,7 +26,8 @@ import org.jetbrains.kotlin.nj2k.types.typeFqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
-class NewExternalCodeProcessing(
+@ApiStatus.Internal
+class NewExternalCodeProcessing internal constructor(
     private val referenceSearcher: ReferenceSearcher,
     private val inConversionContext: (PsiElement) -> Boolean
 ) : ExternalCodeProcessing {
@@ -50,7 +52,7 @@ class NewExternalCodeProcessing(
         members[key] = data
     }
 
-    fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
+    internal fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
 
     fun getMember(element: KtNamedDeclaration): JKMemberData? {
         val key = element.buildKey()

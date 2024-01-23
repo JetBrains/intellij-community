@@ -5,12 +5,9 @@ import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -144,7 +141,12 @@ public abstract class GitImplBase implements Git {
         throw e;
       }
       catch (Exception e) {
-        return handlePreValidationException(handler.project(), e);
+        Project project = handler.project();
+        if (project != null) {
+          GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
+        }
+        return GitCommandResult.startError(GitBundle.message("git.executable.validation.error.start.title") + ": \n" +
+                                           GitExecutableProblemsNotifier.getPrettyErrorMessage(e));
       }
     }
 
@@ -348,23 +350,6 @@ public abstract class GitImplBase implements Git {
     abstract void outputLineReceived(@NotNull String line);
 
     abstract void errorLineReceived(@NotNull String line);
-  }
-
-  private static @NotNull GitCommandResult handlePreValidationException(@Nullable Project project, @NotNull Exception e) {
-    // Show notification if it's a project non-modal task and cancel the task
-    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (project != null
-        && progressIndicator != null
-        && !progressIndicator.getModalityState().dominates(ModalityState.nonModal())) {
-      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
-      throw new ProcessCanceledException(e);
-    }
-    else {
-      return GitCommandResult.startError(
-        GitBundle.message("git.executable.validation.error.start.title") + ": \n" +
-        GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
-      );
-    }
   }
 
   private static void writeOutputToConsole(@NotNull GitLineHandler handler) {

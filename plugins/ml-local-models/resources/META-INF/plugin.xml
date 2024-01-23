@@ -25,7 +25,6 @@
     <registryKey key="ml.local.models.show.notification" defaultValue="false"
                  description="Show notification with suggestion to train local ML models"/>
 
-    <projectService serviceImplementation="com.intellij.ml.local.models.LocalModelsManager"/>
   </extensions>
 
   <depends optional="true" config-file="intellij.ml.models.local.java.xml">com.intellij.modules.java</depends>

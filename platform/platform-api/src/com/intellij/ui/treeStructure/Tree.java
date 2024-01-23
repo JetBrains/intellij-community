@@ -13,6 +13,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.paint.RectanglePainter2D;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
@@ -29,6 +30,7 @@ import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.im.InputMethodRequests;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
@@ -810,5 +812,15 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setTransferHandler(TransferHandler handler) {
     SmoothAutoScroller.installDropTargetAsNecessary(this);
     super.setTransferHandler(handler);
+  }
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this, true);
+    if (supply == null) {
+      return null;
+    } else {
+      return supply.getInputMethodRequests();
+    }
   }
 }

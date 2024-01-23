@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.getWarningIcon
@@ -23,7 +24,7 @@ private val MERGE_STATUSES = setOf(MERGE, MERGED_WITH_BOTH_CONFLICTS, MERGED_WIT
 private class UnresolvedMergeCheckHandler(
   private val panel: CheckinProjectPanel,
   private val commitContext: CommitContext
-) : CheckinHandler(), CommitCheck {
+) : CheckinHandler(), CommitCheck, DumbAware {
 
   override fun isEnabled(): Boolean = true
 

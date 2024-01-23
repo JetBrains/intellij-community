@@ -4,6 +4,7 @@ package com.jetbrains.python.requirements
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.jetbrains.python.requirements.psi.SimpleName
 
 class RequirementsPackageNameCompletionContributor : CompletionContributor() {
 
@@ -12,7 +13,7 @@ class RequirementsPackageNameCompletionContributor : CompletionContributor() {
     val parent = position.parent
     val project = position.project
 
-    if (parent is com.jetbrains.python.requirements.psi.SimpleName) {
+    if (parent is SimpleName) {
       completePackageNames(project, result)
     }
   }

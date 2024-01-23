@@ -20,11 +20,6 @@ public final class JavaFullClassNameIndex extends CharSequenceHashStubIndexExten
   }
 
   @Override
-  public int getVersion() {
-    return super.getVersion();
-  }
-
-  @Override
   public @NotNull StubIndexKey<CharSequence, PsiClass> getKey() {
     return JavaStubIndexKeys.CLASS_FQN;
   }

@@ -1,9 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
-import com.intellij.collaboration.ui.codereview.editor.EditorMapped
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapModelsToViewModels
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
+import com.intellij.collaboration.util.Hideable
+import com.intellij.collaboration.util.getOrNull
+import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -17,8 +25,10 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 import com.intellij.openapi.vcs.ex.LstRange
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 
 /**
@@ -28,7 +38,10 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   cs: CoroutineScope,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   document: Document
-) : LineStatusMarkerRangesSource<LstRange>, Disposable {
+) : LineStatusMarkerRangesSource<LstRange>,
+    CodeReviewEditorInlaysModel<GitLabMergeRequestEditorMappedComponentModel>,
+    CodeReviewEditorGutterControlsModel,
+    Disposable {
 
   private val reviewHeadDocument = LineStatusTrackerBase.createVcsDocument(document)
   private val documentTracker = DocumentTracker(reviewHeadDocument, document).also {
@@ -38,21 +51,22 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO> = fileVm.avatarIconsProvider
 
-  private val postReviewRanges = MutableStateFlow<List<Range>>(emptyList())
+  private val postReviewRanges = MutableStateFlow<List<Range>?>(null)
 
   private val _shiftedReviewRanges = MutableStateFlow<List<LstRange>>(emptyList())
   val shiftedReviewRanges: StateFlow<List<LstRange>> get() = _shiftedReviewRanges
 
-  private val _nonCommentableRanges = MutableStateFlow<List<LineRange>>(emptyList())
-  val nonCommentableRanges: StateFlow<List<LineRange>> get() = _nonCommentableRanges
-
-  private fun updateRanges() {
-    if (!trackerInitialized) return
-    postReviewRanges.value = documentTracker.blocks.map { it.range }
-    _shiftedReviewRanges.value = ExcludingApproximateChangedRangesShifter
-      .shift(fileVm.changedRanges, postReviewRanges.value).map(Range::asLst)
-    _nonCommentableRanges.value = postReviewRanges.value.map(Range::getAfterLines)
-  }
+  override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
+    combine(postReviewRanges, fileVm.canComment, fileVm.linesWithDiscussions) { postReviewRanges, canComment, linesWithDiscussions ->
+      if (postReviewRanges != null) {
+        val nonCommentableRanges = postReviewRanges.map(Range::getAfterLines)
+        val shiftedLinesWithDiscussions = linesWithDiscussions.mapTo(mutableSetOf()) {
+          transferLineToAfter(postReviewRanges, it)
+        }
+        GutterState(shiftedLinesWithDiscussions, canComment, nonCommentableRanges)
+      }
+      else null
+    }.stateInNow(cs, null)
 
   private fun setReviewHeadContent(content: CharSequence) {
     documentTracker.doFrozen(Side.LEFT) {
@@ -69,29 +83,38 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     trackerInitialized = true
   }
 
+  private fun updateTrackerRanges() {
+    if (trackerInitialized) {
+      val trackerRanges = documentTracker.blocks.map { it.range }
+      postReviewRanges.value = trackerRanges
+      _shiftedReviewRanges.value = ExcludingApproximateChangedRangesShifter.shift(fileVm.changedRanges, trackerRanges).map(Range::asLst)
+    }
+  }
+
   init {
-    cs.launch {
-      val originalContent = fileVm.getOriginalContent()
-      setReviewHeadContent(originalContent)
-      updateRanges()
+    cs.launchNow {
+      fileVm.originalContent.collectLatest { result ->
+        result?.getOrNull()?.also {
+          setReviewHeadContent(it)
+          updateTrackerRanges()
+        }
+      }
     }
 
     documentTracker.addHandler(object : DocumentTracker.Handler {
       override fun afterBulkRangeChange(isDirty: Boolean) {
-        updateRanges()
+        updateTrackerRanges()
       }
     })
   }
 
-  val newDiscussions: Flow<List<ShiftedNewDiscussion>> = fileVm.newDiscussions.map {
-    it.map(::ShiftedNewDiscussion)
-  }
-  val draftDiscussions: Flow<List<ShiftedDraftNote>> = fileVm.draftNotes.map {
-    it.map(::ShiftedDraftNote)
-  }
-  val discussions: Flow<List<ShiftedDiscussion>> = fileVm.discussions.map {
-    it.map(::ShiftedDiscussion)
-  }
+  override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(
+    fileVm.discussions.mapModelsToViewModels { ShiftedDiscussion(it) },
+    fileVm.draftNotes.mapModelsToViewModels { ShiftedDraftNote(it) },
+    fileVm.newDiscussions.mapModelsToViewModels { ShiftedNewDiscussion(it) }
+  ) { discussions, drafts, new ->
+    discussions + drafts + new
+  }.stateInNow(cs, emptyList())
 
   override fun isValid(): Boolean = true
 
@@ -102,9 +125,14 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     it.line1 == range.line1 && it.line2 == range.line2
   }
 
-  fun requestNewDiscussion(lineIdx: Int, focus: Boolean) {
-    val originalLine = transferLineFromAfter(postReviewRanges.value, lineIdx)?.takeIf { it >= 0 } ?: return
-    fileVm.requestNewDiscussion(originalLine, focus)
+  override fun requestNewComment(lineIdx: Int) {
+    val ranges = postReviewRanges.value ?: return
+    val originalLine = transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
+    fileVm.requestNewDiscussion(originalLine, true)
+  }
+
+  override fun toggleComments(lineIdx: Int) {
+    inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
 
   fun cancelNewDiscussion(originalLine: Int) {
@@ -116,29 +144,37 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 
   fun showDiff(lineIdx: Int?) {
-    val originalLine = lineIdx?.let { transferLineFromAfter(postReviewRanges.value, it, true) }?.takeIf { it >= 0 }
+    val ranges = postReviewRanges.value ?: return
+    val originalLine = lineIdx?.let { transferLineFromAfter(ranges, it, true) }?.takeIf { it >= 0 }
     fileVm.showDiff(originalLine)
   }
 
-  inner class ShiftedDiscussion(val vm: GitLabMergeRequestEditorDiscussionViewModel) : EditorMapped {
-    override val isVisible: Flow<Boolean> = vm.isVisible
-    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
-      line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
+  private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =
+    combineState(postReviewRanges) { line, ranges ->
+      if (ranges != null && line != null) {
+        transferLineToAfter(ranges, line).takeIf { it >= 0 }
+      }
+      else null
     }
+
+  private inner class ShiftedDiscussion(vm: GitLabMergeRequestEditorDiscussionViewModel)
+    : GitLabMergeRequestEditorMappedComponentModel.Discussion<GitLabMergeRequestEditorDiscussionViewModel>(vm) {
+    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
+    override val line: StateFlow<Int?> = vm.line.shiftLine()
   }
 
-  inner class ShiftedDraftNote(val vm: GitLabMergeRequestEditorDraftNoteViewModel) : EditorMapped {
-    override val isVisible: Flow<Boolean> = vm.isVisible
-    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
-      line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
-    }
+  private inner class ShiftedDraftNote(vm: GitLabMergeRequestEditorDraftNoteViewModel)
+    : GitLabMergeRequestEditorMappedComponentModel.DraftNote<GitLabMergeRequestEditorDraftNoteViewModel>(vm) {
+    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
+    override val line: StateFlow<Int?> = vm.line.shiftLine()
   }
 
-  inner class ShiftedNewDiscussion(val vm: GitLabMergeRequestEditorNewDiscussionViewModel) : EditorMapped {
-    override val isVisible: Flow<Boolean> = flowOf(true)
-    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
-      line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
-    }
+  private inner class ShiftedNewDiscussion(vm: GitLabMergeRequestEditorNewDiscussionViewModel)
+    : GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestEditorNewDiscussionViewModel>(vm) {
+    override val key: Any = "NEW_${vm.originalLine}"
+    override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
+    override val line: StateFlow<Int?> = vm.line.shiftLine()
+    override fun cancel() = cancelNewDiscussion(vm.originalLine)
   }
 
   override fun dispose() = Unit
@@ -146,6 +182,15 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   companion object {
     val KEY: Key<GitLabMergeRequestEditorReviewUIModel> = Key.create("GitLab.MergeRequest.Editor.Review.UIModel")
   }
+}
+
+private data class GutterState(
+  override val linesWithComments: Set<Int>,
+  val canComment: Boolean,
+  val nonCommentableRanges: List<LineRange>
+) : CodeReviewEditorGutterControlsModel.ControlsState {
+  override fun isLineCommentable(lineIdx: Int): Boolean =
+    canComment && nonCommentableRanges.none { lineIdx in it.start until it.end }
 }
 
 private fun transferLineToAfter(ranges: List<Range>, line: Int): Int {

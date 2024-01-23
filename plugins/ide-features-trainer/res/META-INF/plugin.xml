@@ -70,7 +70,6 @@
     <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
 
     <applicationService serviceImplementation="training.lang.LangManager"/>
-    <applicationService serviceImplementation="training.ui.UISettings"/>
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"

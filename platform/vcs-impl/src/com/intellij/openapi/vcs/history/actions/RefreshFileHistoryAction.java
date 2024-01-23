@@ -34,9 +34,4 @@ public class RefreshFileHistoryAction extends RefreshAction implements DumbAware
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(!refresher.isInRefresh());
   }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
 }

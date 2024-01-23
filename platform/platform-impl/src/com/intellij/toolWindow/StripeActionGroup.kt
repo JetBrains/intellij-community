@@ -14,8 +14,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_CENTER
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -158,9 +158,11 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     private fun getChildren(e: AnActionEvent?): List<AnAction> {
       val project = e?.project ?: return emptyList()
       val children = ToolWindowsGroup.getToolWindowActions(project, false).map { ac ->
-        object : AnActionWrapper(ac), InlineActionsHolder {
-          private val inlineActions = listOf(TogglePinAction(ac.toolWindowId))
-          override fun getInlineActions(): List<AnAction> = inlineActions
+        object : AnActionWrapper(ac) {
+          override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+          override fun update(e: AnActionEvent) {
+            e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(TogglePinAction(ac.toolWindowId)))
+          }
         }
       }
       return children

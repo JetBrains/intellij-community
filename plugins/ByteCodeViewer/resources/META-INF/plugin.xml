@@ -17,9 +17,7 @@ To view the bytecode, select a class file and open <b>View | Show Bytecode</b>.]
     <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher" dynamic="true"/>
   </extensionPoints>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
-  </extensions>
+  <extensions defaultExtensionNs="com.intellij"/>
 
   <actions>
     <group id="ByeCodeViewerGroup">

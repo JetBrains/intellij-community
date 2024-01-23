@@ -18,11 +18,12 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyStarImportElement;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 
 public class PyStarImportElementStubImpl extends StubBase<PyStarImportElement> implements PyStarImportElementStub {
   protected PyStarImportElementStubImpl(final StubElement parent) {
-    super(parent, PyElementTypes.STAR_IMPORT_ELEMENT);
+    super(parent, PyStubElementTypes.STAR_IMPORT_ELEMENT);
   }
 }

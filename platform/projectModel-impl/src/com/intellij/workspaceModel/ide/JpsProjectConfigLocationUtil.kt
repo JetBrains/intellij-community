@@ -23,7 +23,7 @@ fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
     project.projectFilePath?.let {
       val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
       val iprFile = virtualFileUrlManager.fromPath(it)
-      JpsProjectConfigLocation.FileBased(iprFile, virtualFileUrlManager.getParentVirtualUrl(iprFile)!!)
+      JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
     }
   }
 }

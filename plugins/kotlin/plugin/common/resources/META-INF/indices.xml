@@ -61,8 +61,6 @@
             serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.ShortNamesCacheService"/>
-
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>

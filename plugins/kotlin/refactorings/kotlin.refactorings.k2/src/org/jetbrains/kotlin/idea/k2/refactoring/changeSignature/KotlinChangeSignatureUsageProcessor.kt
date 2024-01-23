@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.LambdaUtil
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -39,6 +41,8 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
+
+private val primaryElementsKey = Key.create<List<KtNamedDeclaration>>("expectActual")
 
 class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     override fun findUsages(changeInfo: ChangeInfo): Array<UsageInfo> {
@@ -82,16 +86,24 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
-        //todo collect expected/actual declarations
+        val primaryElements = mutableListOf<KtNamedDeclaration>()
+        changeInfo.putUserData(
+            primaryElementsKey,
+            primaryElements
+        )
+        ExpectActualUtils.withExpectedActuals(ktCallableDeclaration).forEach { ktCallableDeclaration ->
+            if (ktCallableDeclaration is KtNamedDeclaration) {
+                primaryElements.add(ktCallableDeclaration)
+                findUsages(ktCallableDeclaration, changeInfo, result)
+            }
 
-        findUsages(ktCallableDeclaration, changeInfo, result)
+            if (ktCallableDeclaration is KtCallableDeclaration) {
+                KotlinChangeSignatureUsageSearcher.findInternalUsages(ktCallableDeclaration, changeInfo, result)
+            }
 
-        if (ktCallableDeclaration is KtCallableDeclaration) {
-            KotlinChangeSignatureUsageSearcher.findInternalUsages(ktCallableDeclaration, changeInfo, result)
-        }
-
-        if (ktCallableDeclaration is KtPrimaryConstructor) {
-            findConstructorPropertyUsages(ktCallableDeclaration, changeInfo, result)
+            if (ktCallableDeclaration is KtPrimaryConstructor) {
+                findConstructorPropertyUsages(ktCallableDeclaration, changeInfo, result)
+            }
         }
 
         if (ktCallableDeclaration is KtClass && ktCallableDeclaration.isEnum()) {
@@ -247,7 +259,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         if (changeInfo !is KotlinChangeInfo) return false
         val element = changeInfo.method
 
-        updatePrimaryMethod(element, changeInfo)
+        val namedDeclarations = changeInfo.getUserData(primaryElementsKey) ?: listOf(element)
+        for (declaration in namedDeclarations) {
+            updatePrimaryMethod(declaration, changeInfo)
+        }
         return true
     }
 

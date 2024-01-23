@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool
 
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.editor.DiffRequestProcessorEditor
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.ErrorDiffRequest
@@ -47,7 +46,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
     val document = FileDocumentManager.getInstance().getDocument(file)!!
 
     if (CombinedDiffRegistry.isEnabled()) {
-      val model = CombinedDiffModelImpl(project, null)
+      val model = CombinedDiffModelImpl(project)
       model.setBlocks(buildCombinedDiffModel(document))
 
       val factory = project.service<CombinedDiffComponentFactoryProvider>().create(model)
@@ -80,7 +79,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
   }
 }
 
-private fun buildCombinedDiffModel(document: Document): Map<CombinedBlockId, DiffRequestProducer> {
+private fun buildCombinedDiffModel(document: Document): List<CombinedBlockProducer> {
   val producers = createDiffRequestProducers(document)
   val diffModel = prepareCombinedDiffModelRequestsFromProducers(producers)
   return diffModel

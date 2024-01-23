@@ -3,7 +3,6 @@ package com.intellij.collaboration.file.codereview
 
 import com.intellij.diff.editor.DiffFileType
 import com.intellij.diff.editor.DiffVirtualFile
-import com.intellij.diff.tools.combined.CombinedDiffModelBuilder
 import com.intellij.diff.tools.combined.CombinedDiffVirtualFile
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.fileTypes.FileType
@@ -43,7 +42,6 @@ abstract class CodeReviewDiffVirtualFile(name: String)
 @ApiStatus.Experimental
 abstract class CodeReviewCombinedDiffVirtualFile(sourceId: String, name: String)
   : CombinedDiffVirtualFile(sourceId, name),
-    CombinedDiffModelBuilder,
     VirtualFilePathWrapper {
 
   init {

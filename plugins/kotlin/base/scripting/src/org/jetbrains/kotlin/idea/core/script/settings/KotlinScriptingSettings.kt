@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings.Ko
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@Service(Service.Level.PROJECT)
 @State(
     name = "KotlinScriptingSettings",
     storages = [

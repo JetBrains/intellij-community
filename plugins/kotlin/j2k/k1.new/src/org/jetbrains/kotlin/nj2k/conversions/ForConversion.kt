@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.extractRadix
 import kotlin.math.abs
 
-class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     private val forToWhile = ForToWhileConverter(context, symbolProvider)
     private val forToForeach = ForToForeachConverter(context, symbolProvider, typeFactory)
 

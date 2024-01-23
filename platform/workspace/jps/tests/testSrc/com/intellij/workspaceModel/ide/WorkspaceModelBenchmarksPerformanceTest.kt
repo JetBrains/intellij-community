@@ -55,6 +55,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.system.measureTimeMillis
+import kotlin.time.Duration
 import kotlin.time.measureTime
 
 
@@ -1023,6 +1024,102 @@ class WorkspaceModelBenchmarksPerformanceTest {
   }
 
   @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun `find rate when cache is better on adding entities`(preInitializeEntities: Boolean) {
+    // This test finds a percentage of changes when the cache calculation remains faster than full recalculation of data
+    TracedSnapshotCache.LOG_QUEUE_MAX_SIZE = 2_000_000
+    listOf(1000, 10_000, 100_000, 500_000).forEach { size ->
+      val builder = MutableEntityStorage.create()
+      repeat(size) {
+        builder addEntity NamedEntity("Name$it", MySource)
+      }
+      val baseSnapshot = builder.toSnapshot()
+
+      val q = entities<NamedEntity>().map { it.myName }
+
+      baseSnapshot.cached(q)
+
+      val perentages = ArrayList<Int>()
+      val timesCalc = ArrayList<Duration>()
+      val timesCache = ArrayList<Duration>()
+      (1..100).forEach { percent ->
+        val intBuilder = baseSnapshot.toBuilder()
+        repeat((size / 100) * percent) { entitiesBatch ->
+          intBuilder addEntity NamedEntity("MyEnt$entitiesBatch", MySource)
+        }
+        val newSnapshot = intBuilder.toSnapshot()
+
+        if (preInitializeEntities) {
+          newSnapshot.entities<NamedEntity>().map { it.myName }.toList()
+        }
+        val timeCalc = measureTime { newSnapshot.entities<NamedEntity>().map { it.myName }.toList() }
+        val timeCached = measureTime {
+          newSnapshot.cached(q)
+        }
+        timesCalc += timeCalc
+        timesCache += timeCached
+        if (timeCached < timeCalc) {
+          perentages.add(percent)
+        }
+      }
+      val averageCache = timesCache.map { it.inWholeMilliseconds }.average()
+      val averageCalc = timesCalc.map { it.inWholeMilliseconds }.average()
+      val maxPerc = perentages.sortedDescending().take(5)
+      if (preInitializeEntities) {
+        println("Pre initialize entities. Size: $size, average cache: $averageCache ms, average calc: $averageCalc ms, maxPerc: $maxPerc")
+      }
+      else {
+        println("Do not initialize entities. Size: $size, average cache: $averageCache ms, average calc: $averageCalc ms, maxPerc: $maxPerc")
+      }
+    }
+  }
+
+  @Test
+  fun `find rate when cache is better on modifying entities`() {
+    // This test finds a percentage of changes when the cache calculation remains faster than full recalculation of data
+    TracedSnapshotCache.LOG_QUEUE_MAX_SIZE = 2_000_000
+    listOf(1000, 10_000, 100_000, 500_000).forEach { size ->
+      val builder = MutableEntityStorage.create()
+      repeat(size) {
+        builder addEntity NamedEntity("Name$it", MySource)
+      }
+      val baseSnapshot = builder.toSnapshot()
+
+      val q = entities<NamedEntity>().map { it.myName }
+
+      baseSnapshot.cached(q)
+
+      val perentages = ArrayList<Int>()
+      val timesCalc = ArrayList<Duration>()
+      val timesCache = ArrayList<Duration>()
+      (1..100).forEach { percent ->
+        val intBuilder = baseSnapshot.toBuilder()
+        repeat((size / 100) * percent) { entitiesBatch ->
+          val entity = intBuilder.resolve(NameId("Name$entitiesBatch"))!!
+          intBuilder.modifyEntity(entity) {
+            this.myName = "Another$entitiesBatch"
+          }
+        }
+        val newSnapshot = intBuilder.toSnapshot()
+
+        val timeCalc = measureTime { newSnapshot.entities<NamedEntity>().map { it.myName }.toList() }
+        val timeCached = measureTime {
+          newSnapshot.cached(q)
+        }
+        timesCalc += timeCalc
+        timesCache += timeCached
+        if (timeCached < timeCalc) {
+          perentages.add(percent)
+        }
+      }
+      val averageCache = timesCache.map { it.inWholeMilliseconds }.average()
+      val averageCalc = timesCalc.map { it.inWholeMilliseconds }.average()
+      val maxPerc = perentages.sortedDescending().take(5)
+      println("Size: $size, average cache: $averageCache, average calc: $averageCalc, maxPerc: $maxPerc")
+    }
+  }
+
+  @ParameterizedTest
   @ValueSource(ints = [10, 1_000, 100_000, 10_000_000])
   fun `get for kotlin persistent map`(size: Int) {
     val requestSize = 10_000_000
@@ -1088,7 +1185,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   private fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
     if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
       val iprFile = file.toVirtualFileUrl(virtualFileManager)
-      return JpsProjectConfigLocation.FileBased(iprFile, virtualFileManager.getParentVirtualUrl(iprFile)!!)
+      return JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
     }
     else {
       val projectDir = file.toVirtualFileUrl(virtualFileManager)

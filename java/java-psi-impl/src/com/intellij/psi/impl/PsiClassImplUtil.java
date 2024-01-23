@@ -239,10 +239,11 @@ public final class PsiClassImplUtil {
   public static Icon getClassIcon(int flags, @NotNull PsiClass aClass, @Nullable Icon symbolIcon) {
     Icon base = LastComputedIconCache.get(aClass, flags);
     if (base == null) {
-      if (symbolIcon == null) {
-        symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+      Icon baseSymbolIcon = symbolIcon;
+      if (baseSymbolIcon == null) {
+        baseSymbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
       }
-      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, symbolIcon, 0);
+      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, baseSymbolIcon, 0);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 

@@ -5,8 +5,10 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtFile
 
+@ApiStatus.Internal
 class AfterConversionPass(val project: Project, private val postProcessor: PostProcessor) {
     @JvmOverloads
     fun run(

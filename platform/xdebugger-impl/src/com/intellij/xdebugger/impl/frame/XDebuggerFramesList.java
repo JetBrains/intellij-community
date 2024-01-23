@@ -168,11 +168,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     return null;
   }
 
-  @Override
-  public void clear() {
-    super.clear();
-  }
-
   public boolean selectFrame(@NotNull XStackFrame toSelect) {
     //noinspection unchecked
     if (!Objects.equals(getSelectedValue(), toSelect) && getModel().contains(toSelect)) {

@@ -2,13 +2,14 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 public class ConditionCoveredByFurtherConditionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testConditionCoveredByFurtherCondition() {
-    doTest();
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(()->doTest());
   }
   public void testMultiCatch() {
     doTest();

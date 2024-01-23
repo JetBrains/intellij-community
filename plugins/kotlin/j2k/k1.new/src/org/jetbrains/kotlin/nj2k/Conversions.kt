@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 
-interface Conversion {
+internal interface Conversion {
     val context: NewJ2kConverterContext
 
     val symbolProvider: JKSymbolProvider
@@ -20,7 +20,7 @@ interface Conversion {
     fun runConversion(treeRoots: Sequence<JKTreeElement>, context: NewJ2kConverterContext): Boolean
 }
 
-interface SequentialBaseConversion : Conversion {
+internal interface SequentialBaseConversion : Conversion {
     fun runConversion(treeRoot: JKTreeElement, context: NewJ2kConverterContext): Boolean
 
     override fun runConversion(treeRoots: Sequence<JKTreeElement>, context: NewJ2kConverterContext): Boolean {
@@ -28,7 +28,7 @@ interface SequentialBaseConversion : Conversion {
     }
 }
 
-abstract class MatchBasedConversion(override val context: NewJ2kConverterContext) : SequentialBaseConversion {
+internal abstract class MatchBasedConversion(override val context: NewJ2kConverterContext) : SequentialBaseConversion {
     fun <R : JKTreeElement, T> applyRecursive(element: R, data: T, func: (JKTreeElement, T) -> JKTreeElement): R =
         org.jetbrains.kotlin.nj2k.tree.applyRecursive(element, data, ::onElementChanged, func)
 
@@ -63,7 +63,7 @@ abstract class MatchBasedConversion(override val context: NewJ2kConverterContext
     abstract fun onElementChanged(new: JKTreeElement, old: JKTreeElement)
 }
 
-abstract class RecursiveApplicableConversionBase(context: NewJ2kConverterContext) : MatchBasedConversion(context) {
+internal abstract class RecursiveApplicableConversionBase(context: NewJ2kConverterContext) : MatchBasedConversion(context) {
     override fun onElementChanged(new: JKTreeElement, old: JKTreeElement) {
         somethingChanged = true
     }
@@ -81,16 +81,16 @@ abstract class RecursiveApplicableConversionBase(context: NewJ2kConverterContext
     fun <T : JKTreeElement> recurse(element: T): T = applyRecursive(element, ::applyToElement)
 }
 
-val RecursiveApplicableConversionBase.languageVersionSettings: LanguageVersionSettings
+internal val RecursiveApplicableConversionBase.languageVersionSettings: LanguageVersionSettings
     get() {
         val converter = context.converter
         return converter.targetModule?.languageVersionSettings ?: converter.project.languageVersionSettings
     }
 
-val RecursiveApplicableConversionBase.moduleApiVersion: ApiVersion
+internal val RecursiveApplicableConversionBase.moduleApiVersion: ApiVersion
     get() = languageVersionSettings.apiVersion
 
-abstract class RecursiveApplicableConversionWithState<S>(
+internal abstract class RecursiveApplicableConversionWithState<S>(
     context: NewJ2kConverterContext,
     private val initialState: S
 ) : MatchBasedConversion(context) {

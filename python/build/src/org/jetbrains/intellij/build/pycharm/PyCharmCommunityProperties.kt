@@ -44,6 +44,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
       PluginLayout.plugin(listOf(
         "intellij.pycharm.community.customization",
         "intellij.pycharm.community.ide.impl",
+        "intellij.pycharm.community.ide.impl.promotion",
         "intellij.jupyter.viewOnly",
         "intellij.jupyter.core"
       )

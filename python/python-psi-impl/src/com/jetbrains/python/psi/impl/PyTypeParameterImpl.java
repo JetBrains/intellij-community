@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTypeParameterStub;
@@ -21,7 +22,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   public PyTypeParameterImpl(PyTypeParameterStub stub) {
-    this(stub, PyElementTypes.TYPE_PARAMETER);
+    this(stub, PyStubElementTypes.TYPE_PARAMETER);
   }
 
   public PyTypeParameterImpl(PyTypeParameterStub stub, IStubElementType nodeType) {

@@ -56,11 +56,11 @@ __jetbrains_intellij_get_directory_files() {
 __jetbrains_intellij_get_environment() {
   __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
   builtin local request_id="$1"
-  builtin local env_vars="$(builtin compgen -A export)"
-  builtin local keyword_names="$(builtin compgen -A keyword)"
-  builtin local builtin_names="$(builtin compgen -A builtin)"
-  builtin local function_names="$(builtin compgen -A function)"
-  builtin local command_names="$(builtin compgen -A command)"
+  builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin compgen -A export)")"
+  builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A keyword)")"
+  builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A builtin)")"
+  builtin local function_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A function)")"
+  builtin local command_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A command)")"
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
 
   builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\",  \"aliases\": \"$aliases_mapping\"}"

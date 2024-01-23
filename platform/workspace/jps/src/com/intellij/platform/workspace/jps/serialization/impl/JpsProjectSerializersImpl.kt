@@ -66,7 +66,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         }
       }
       for ((moduleFile, moduleGroup, isOriginallyExternal) in moduleFiles) {
-        val directoryUrl = virtualFileManager.getParentVirtualUrl(moduleFile)!!
+        val directoryUrl = moduleFile.parent!!
         val internalSource =
           bindExistingSource(context.fileInDirectorySourceNames, ModuleEntity::class.java, moduleFile.fileName, directoryUrl)
           ?: createFileInDirectorySource(directoryUrl, moduleFile.fileName)
@@ -174,7 +174,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
             moduleSerializerToExternalSourceBool.remove(it)
           }
           val newFileSerializersForFactory = newFileUrls.filter { it.first !in oldFileUrls }.map {
-            serializerFactory.createSerializer(createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(it.first)!!,
+            serializerFactory.createSerializer(createFileInDirectorySource(it.first.parent!!,
                                                                            it.first.fileName), it.first, it.second)
           }
           newFileSerializersForFactory.associateWithTo(moduleSerializerToExternalSourceBool) { serializerFactory.isExternalStorage }

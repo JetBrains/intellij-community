@@ -50,11 +50,6 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     final Module module = e.getData(PlatformCoreDataKeys.MODULE);
     e.getPresentation().setEnabled(module != null && !PyPackageUtil.hasSetupPy(module));

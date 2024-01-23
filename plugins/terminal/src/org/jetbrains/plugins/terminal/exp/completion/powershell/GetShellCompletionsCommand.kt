@@ -18,7 +18,7 @@ import org.jetbrains.plugins.terminal.util.ShellType
 
 internal class GetShellCompletionsCommand(command: String, caretPosition: Int) : DataProviderCommand<CompletionResult?> {
   override val functionName: String = "__JetBrainsIntellijGetCompletions"
-  override val parameters: List<String> = listOf(escapePowerShellCommand(command), caretPosition.toString())
+  override val parameters: List<String> = listOf(command, caretPosition.toString())
   override val defaultResult: CompletionResult? = null
 
   override fun isAvailable(session: BlockTerminalSession): Boolean {
@@ -42,28 +42,6 @@ internal class GetShellCompletionsCommand(command: String, caretPosition: Int) :
 
   companion object {
     private val LOG: Logger = logger<GetShellCompletionsCommand>()
-
-    private val charsToEscape: Map<Char, String> = mapOf(
-      '`' to "``",
-      '\"' to "`\"",
-      '\u0000' to "`0",
-      '\u0007' to "`a",
-      '\u0008' to "`b",
-      '\u000c' to "`f",
-      '\n' to "`n",
-      '\r' to "`r",
-      '\t' to "`t",
-      '\u000B' to "'v",
-      '$' to "`$"
-    )
-
-    private fun escapePowerShellCommand(command: String): String {
-      return buildString(command.length) {
-        for (ch in command) {
-          append(charsToEscape[ch] ?: ch)
-        }
-      }
-    }
   }
 }
 

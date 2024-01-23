@@ -6,11 +6,13 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
+@ApiStatus.Internal
 interface JKMemberData {
     var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>?
     var isStatic: Boolean
@@ -29,15 +31,17 @@ interface JKMemberData {
         get() = kotlinElement?.isPrivate() != true && (searchInJavaFiles || searchInKotlinFiles)
 }
 
-interface JKMemberDataCameFromJava<J : PsiMember> : JKMemberData {
+internal interface JKMemberDataCameFromJava<J : PsiMember> : JKMemberData {
     val javaElement: J
 
     override val fqName
         get() = javaElement.kotlinFqName
 }
 
+@ApiStatus.Internal
 interface JKFieldData : JKMemberData
 
+@ApiStatus.Internal
 data class JKFakeFieldData(
     override var isStatic: Boolean,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
@@ -50,7 +54,7 @@ data class JKFakeFieldData(
         get() = false
 }
 
-data class JKFieldDataFromJava(
+internal data class JKFieldDataFromJava(
     override val javaElement: PsiField,
     override var isStatic: Boolean = false,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
@@ -63,11 +67,12 @@ data class JKFieldDataFromJava(
         get() = javaElement.name != name
 }
 
-interface JKMethodData : JKMemberDataCameFromJava<PsiMethod> {
+internal interface JKMethodData : JKMemberDataCameFromJava<PsiMethod> {
     var usedAsAccessorOfProperty: JKFieldData?
 }
 
-data class JKPhysicalMethodData(
+@ApiStatus.Internal
+data class JKPhysicalMethodData internal constructor(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
@@ -76,7 +81,7 @@ data class JKPhysicalMethodData(
     override var name: String = javaElement.name
 }
 
-data class JKLightMethodData(
+internal data class JKLightMethodData(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,

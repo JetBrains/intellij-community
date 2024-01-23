@@ -118,14 +118,15 @@ public final class FileBasedIndexScanUtil {
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
-        if (idFilter != null && !idFilter.containsFileId(id)) return true;
         ids.add(id);
         return true;
       });
       PersistentFS fs = PersistentFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
-        VirtualFile file = fs.findFileById(iterator.nextInt());
+        int id = iterator.nextInt();
+        if (idFilter != null && !idFilter.containsFileId(id)) continue;
+        VirtualFile file = fs.findFileById(id);
         if (file == null || !scope.contains(file)) continue;
         if (!processor.process(file, null)) return false;
         if (ensureValueProcessedOnce) break;

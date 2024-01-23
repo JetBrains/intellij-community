@@ -9,16 +9,4 @@ public final class PrattExpressionParser extends BasicPrattExpressionParser {
   public PrattExpressionParser(@NotNull JavaParser parser) {
     super(parser);
   }
-
-  @Nullable
-  @Override
-  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
-    return super.parse(builder);
-  }
-
-  @Nullable
-  @Override
-  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder, int mode) {
-    return super.parse(builder, mode);
-  }
 }

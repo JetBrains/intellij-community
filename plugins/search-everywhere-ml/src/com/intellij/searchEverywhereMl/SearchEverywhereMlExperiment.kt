@@ -1,17 +1,25 @@
 package com.intellij.searchEverywhereMl
 
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
+import com.intellij.util.MathUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
+/**
+ * Handles the machine learning experiments in Search Everywhere.
+ * Determines enabled functionality for every user participating in an experiment.
+ * Please update the [VERSION] number if you need to reshuffle experiment groups.
+ * This might be helpful to avoid the impact of the previous experiments on the current experiments.
+ */
 class SearchEverywhereMlExperiment {
   companion object {
+    const val VERSION = 1
     const val NUMBER_OF_GROUPS = 4
   }
 
@@ -22,12 +30,13 @@ class SearchEverywhereMlExperiment {
     SearchEverywhereTabWithMlRanking.ACTION.tabId,
     SearchEverywhereTabWithMlRanking.FILES.tabId,
     SearchEverywhereTabWithMlRanking.CLASSES.tabId,
-    SymbolSearchEverywhereContributor::class.java.simpleName,
+    SearchEverywhereTabWithMlRanking.SYMBOLS.tabId,
     SearchEverywhereTabWithMlRanking.ALL.tabId
   )
 
   private val tabExperiments = hashMapOf(
     SearchEverywhereTabWithMlRanking.ACTION to Experiment(
+      1 to ExperimentType.ENABLE_SEMANTIC_SEARCH,
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.ENABLE_TYPOS,
     ),
@@ -53,19 +62,21 @@ class SearchEverywhereMlExperiment {
 
   val experimentGroup: Int
     get() = if (isExperimentalMode) {
-      val experimentGroup = EventLogConfiguration.getInstance().bucket % NUMBER_OF_GROUPS
       val registryExperimentGroup = Registry.intValue("search.everywhere.ml.experiment.group", -1, -1, NUMBER_OF_GROUPS - 1)
-      if (registryExperimentGroup >= 0) registryExperimentGroup else experimentGroup
+      if (registryExperimentGroup >= 0) registryExperimentGroup else computedGroup
     }
-    else {
-      -1
-    }
+    else -1
+
+  private val computedGroup: Int by lazy {
+    val mlseLogConfiguration = EventLogConfiguration.getInstance().getOrCreate(MLSE_RECORDER_ID)
+    // experiment groups get updated on the VERSION property change:
+    MathUtil.nonNegativeAbs((mlseLogConfiguration.deviceId + VERSION).hashCode()) % NUMBER_OF_GROUPS
+  }
 
   fun isLoggingEnabledForTab(tabId: String) = tabsWithEnabledLogging.contains(tabId)
 
   private fun isDisableExperiments(tab: SearchEverywhereTabWithMlRanking): Boolean {
-    val key = "search.everywhere.force.disable.experiment.${tab.name.lowercase()}.ml"
-    return Registry.`is`(key)
+    return Registry.`is`("search.everywhere.force.disable.experiment.${tab.name.lowercase()}.ml")
   }
 
   fun getExperimentForTab(tab: SearchEverywhereTabWithMlRanking): ExperimentType {
@@ -90,7 +101,8 @@ class SearchEverywhereMlExperiment {
   internal fun getTabExperiments(): Map<SearchEverywhereTabWithMlRanking, Experiment> = tabExperiments
 
   enum class ExperimentType {
-    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES, ENABLE_TYPOS, NO_RECENT_FILES_PRIORITIZATION
+    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES, ENABLE_TYPOS,
+    NO_RECENT_FILES_PRIORITIZATION, ENABLE_SEMANTIC_SEARCH
   }
 
   @VisibleForTesting

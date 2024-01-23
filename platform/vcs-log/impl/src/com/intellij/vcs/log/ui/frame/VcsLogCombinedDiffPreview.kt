@@ -19,7 +19,7 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
   }
 
   override fun getCombinedDiffTabTitle(): String {
-    val filePath = model.selected?.filePath
+    val filePath = model?.selected?.filePath
     return if (filePath == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
     else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", filePath.name)
   }

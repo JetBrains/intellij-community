@@ -336,16 +336,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
     return myComponent;
   }
 
-  /**
-   * Supports {@link Properties}.
-   *
-   * @throws IllegalArgumentException if the value has wrong type or format
-   */
-  @Override
-  public void setProperty(@NotNull String name, @Nullable Object value) {
-    super.setProperty(name, value);
-  }
-
   @Override
   public void dispose() {
     super.dispose(() -> {

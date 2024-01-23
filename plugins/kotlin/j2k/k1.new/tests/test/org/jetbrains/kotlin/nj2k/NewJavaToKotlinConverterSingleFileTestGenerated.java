@@ -695,6 +695,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/binaryExpression/multiLine2.java");
         }
 
+        @TestMetadata("multiLineComments.java")
+        public void testMultiLineComments() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/multiLineComments.java");
+        }
+
         @TestMetadata("multiplePlusMinus.java")
         public void testMultiplePlusMinus() throws Exception {
             runTest("testData/newJ2k/binaryExpression/multiplePlusMinus.java");

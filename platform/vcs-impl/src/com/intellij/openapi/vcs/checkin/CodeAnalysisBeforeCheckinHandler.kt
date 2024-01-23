@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -43,9 +43,8 @@ import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler.Compani
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
@@ -111,13 +110,13 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    val codeSmells: List<CodeSmellInfo> = progressStep(endFraction = 1.0, message("progress.text.analyzing.code")) {
+    val codeSmells: List<CodeSmellInfo> = withProgressText(message("progress.text.analyzing.code")) {
       withContext(Dispatchers.Default) {
         val changesByFile = groupChangesByFile(changes)
-        withRawProgressReporter {
+        reportRawProgress { reporter ->
           // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
           val progressIndicatorEx = ProgressSinkIndicatorEx(
-            rawProgressReporter,
+            reporter,
             coroutineContext.contextModality() ?: ModalityState.nonModal()
           )
           jobToIndicator(coroutineContext.job, progressIndicatorEx) {

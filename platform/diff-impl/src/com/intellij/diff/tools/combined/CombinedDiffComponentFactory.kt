@@ -21,7 +21,7 @@ interface CombinedDiffComponentFactoryProvider {
   fun create(model: CombinedDiffModel): CombinedDiffComponentFactory
 }
 
-abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
+open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   internal val ourDisposable = Disposer.newCheckedDisposable()
 
@@ -40,6 +40,8 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     mainUi = createMainUI()
 
     combinedViewer = createCombinedViewer(true)
+
+    model.cleanBlocks()
   }
 
   internal fun getPreferredFocusedComponent() = mainUi.getPreferredFocusedComponent()
@@ -55,7 +57,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
   private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer? {
     val context = model.context
-    val blocks = model.requests.keys.toList()
+    val blocks = model.requests.toList()
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
     if (blocks.isEmpty()) return null
 
@@ -67,7 +69,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
   }
 
-  protected abstract fun createGoToChangeAction(): AnAction?
+  protected open fun createGoToChangeAction(): AnAction? = null
 
   private inner class ModelListener : CombinedDiffModelListener {
     override fun onModelReset() {
@@ -126,10 +128,10 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       val orderedDiffTools = getOrderedDiffTools(diffSettings, diffTools, mainUi.isUnified())
 
       val diffTool = orderedDiffTools
-        .filter { it.canShow(context, request) }
-        .toList()
-        .let(DiffUtil::filterSuppressedTools)
-        .firstOrNull() ?: ErrorDiffTool.INSTANCE
+                       .filter { it.canShow(context, request) }
+                       .toList()
+                       .let(DiffUtil::filterSuppressedTools)
+                       .firstOrNull() ?: ErrorDiffTool.INSTANCE
 
       val childViewer = diffTool
                           ?.let { findSubstitutor(it, context, request) }

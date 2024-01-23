@@ -29,6 +29,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -54,7 +55,7 @@ import java.util.regex.Pattern;
  * {@link LineMarkerProvider} that marks ignore entry lines with {@link PlatformIcons#FOLDER_ICON} if they point to the directory in file
  * system.
  */
-public final class IgnoreDirectoryMarkerProvider extends LineMarkerProviderDescriptor {
+public final class IgnoreDirectoryMarkerProvider extends LineMarkerProviderDescriptor implements DumbAware {
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {

@@ -97,9 +97,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                             "<version>2</version>")
 
     createProjectSubFile("../anotherProject/.mvn/jvm.config", "-Dsomething=blablabla")
-    runBlockingMaybeCancellable {
-      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
-    }
+    MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
     assertModules("project1", "m1", "project2", "m2")
 
     assertEquals(2, MavenServerManager.getInstance().allConnectors.size)
@@ -141,9 +139,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     val value = Registry.`is`("maven.server.per.idea.project")
     try {
       Registry.get("maven.server.per.idea.project").setValue(true)
-      runBlockingMaybeCancellable {
-        MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
-      }
+      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
       assertModules("project1", "m1", "project2", "m2")
 
       assertEquals(1, MavenServerManager.getInstance().allConnectors.size)

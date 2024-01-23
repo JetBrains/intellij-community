@@ -61,11 +61,6 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
     Toggleable.setSelected(event.getPresentation(), selected);
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
   private static boolean hasLineBreakpoint(@NotNull AnActionEvent e) {
     final Project proj = e.getProject();
     if (proj == null)

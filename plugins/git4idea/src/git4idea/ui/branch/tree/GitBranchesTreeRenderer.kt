@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
@@ -36,6 +36,7 @@ import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchesClippedNamesCache
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.canHighlight
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -101,6 +102,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     return when (treeNode) {
       is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
       is GitRepository -> GitBranchUtil.getDisplayableBranchText(treeNode)
+      is GitBranchesTreeModel.TopLevelRepository -> GitBranchUtil.getDisplayableBranchText(treeNode.repository)
       is GitLocalBranch -> {
         treeNode.getCommonTrackedBranch(affectedRepositories)?.name
       }
@@ -129,6 +131,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     return when (value) {
       is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
       is GitRepository -> RepositoryChangesBrowserNode.getRepositoryIcon(value, colorManager)
+      is GitBranchesTreeModel.TopLevelRepository -> RepositoryChangesBrowserNode.getRepositoryIcon(value.repository, colorManager)
       else -> null
     }
   }
@@ -287,7 +290,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       }
     }
 
-    if (value != null && userObject !is PopupFactoryImpl.ActionItem) {
+    if (value != null && canHighlight(project, tree, userObject)) {
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 
@@ -341,6 +344,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
         is BranchUnderRepository -> getText(value.branch, model, repositories)
         is GitBranch -> if (model.isPrefixGrouping) value.name.split('/').last() else value.name
         is PopupFactoryImpl.ActionItem -> value.text
+        is GitBranchesTreeModel.PresentableNode -> value.presentableText
         else -> null
       }
     }

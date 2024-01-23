@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.projectConfiguration
 
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 
+@Service(Service.Level.PROJECT)
 @State(name = "SuppressABINotification")
 class KotlinNotConfiguredSuppressedModulesState : PersistentStateComponent<KotlinNotConfiguredSuppressedModulesState> {
     private var isSuppressed = false

@@ -4,7 +4,10 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.name
+import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil
@@ -104,7 +107,7 @@ object CommentInputActionsComponentFactory {
   }
 
   class Config(
-    val primaryAction: StateFlow<Action>,
+    val primaryAction: StateFlow<Action?>,
     val secondaryActions: StateFlow<List<Action>> = MutableStateFlow(listOf()),
     val additionalActions: StateFlow<List<Action>> = MutableStateFlow(listOf()),
     val cancelAction: StateFlow<Action?> = MutableStateFlow(null),

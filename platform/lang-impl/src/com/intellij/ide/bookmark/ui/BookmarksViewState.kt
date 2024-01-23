@@ -22,6 +22,7 @@ class BookmarksViewState : BaseState() {
   var showPreview: Boolean by property(false)
 }
 
+@Service(Service.Level.PROJECT)
 @State(name = "BookmarksViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 internal class BookmarksViewStateComponent : SimplePersistentStateComponent<BookmarksViewState>(BookmarksViewState()) {
   override fun noStateLoaded() {

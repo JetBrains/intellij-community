@@ -145,6 +145,7 @@ public final class EqualsWithItselfInspection extends BaseInspection {
     if (count == 1) {
       final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
       final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) return false;
       final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
       if (ONE_ARGUMENT_COMPARISON.test(expression)) {
         return isItself(qualifier, argument);

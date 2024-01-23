@@ -37,16 +37,6 @@ public interface VirtualFileUrlManager {
    */
   public fun fromPath(path: String): VirtualFileUrl
 
-  public fun getSubtreeVirtualUrlsById(vfu: VirtualFileUrl): List<VirtualFileUrl>
-
-  /**
-   * Processes children of [url] and their children recursively using [processor]. [url] itself isn't processed.
-   * @return `true` if processing finished normally, or `false` if [processor] returned [STOP][TreeNodeProcessingResult.STOP].
-   */
-  public fun processChildrenRecursively(url: VirtualFileUrl, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean
-
-  public fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl?
-
   // This companion object is needed to attach extension methods in the platform:
   //   VirtualFileUrlManager.getInstance(project) and VirtualFileUrlManager.getGlobalInstance()
   public companion object

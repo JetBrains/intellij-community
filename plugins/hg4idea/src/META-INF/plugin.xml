@@ -39,9 +39,6 @@
 
     <applicationService serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
     <applicationService serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
-    <applicationService serviceImplementation="org.zmlx.hg4idea.HgExecutableManager"/>
-    <projectService serviceImplementation="org.zmlx.hg4idea.branch.HgBranchManager"/>
-    <projectService serviceImplementation="org.zmlx.hg4idea.repo.HgRepositoryManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings"/>
     <ignoredFileContentProvider implementation="org.zmlx.hg4idea.ignore.HgIgnoredFileContentProvider"/>

@@ -13,7 +13,7 @@
       key="wsl.use.remote.agent.for.launch.processes"
       os="windows"
       restartRequired="false"
-      defaultValue="false"/><!-- IMPORTANT:
+      defaultValue="true"/><!-- IMPORTANT:
         When the default value is changed, usages of the key should be inspected too. The default value still may be hardcoded
         somewhere else. Hardcoded values were introduced to prevent failures of some unit tests. They must not affect production. -->
   </extensions>

@@ -1,35 +1,81 @@
+*:com.intellij.platform.util.progress.ConcurrentProgressReporter
+- indeterminateStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:indeterminateStep$default(com.intellij.platform.util.progress.ConcurrentProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- bs:indeterminateStep$suspendImpl(com.intellij.platform.util.progress.ConcurrentProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- itemStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:itemStep$default(com.intellij.platform.util.progress.ConcurrentProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- bs:itemStep$suspendImpl(com.intellij.platform.util.progress.ConcurrentProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- a:sizedStep(I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:sizedStep$default(com.intellij.platform.util.progress.ConcurrentProgressReporter,I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *f:com.intellij.platform.util.progress.ContextKt
-- sf:getProgressReporter(kotlin.coroutines.CoroutineContext):com.intellij.platform.util.progress.ProgressReporter
-- sf:getProgressReporter(kotlinx.coroutines.CoroutineScope):com.intellij.platform.util.progress.ProgressReporter
+- sf:getProgressReporter(kotlin.coroutines.CoroutineContext):com.intellij.platform.util.progress.ProgressReporter0
+- sf:getProgressReporter(kotlinx.coroutines.CoroutineScope):com.intellij.platform.util.progress.ProgressReporter0
 - sf:getRawProgressReporter(kotlin.coroutines.CoroutineContext):com.intellij.platform.util.progress.RawProgressReporter
-- sf:getRawProgressReporter(kotlinx.coroutines.CoroutineScope):com.intellij.platform.util.progress.RawProgressReporter
-*:com.intellij.platform.util.progress.ProgressReporter
-- java.lang.AutoCloseable
-- a:close():V
-- a:durationStep(D,java.lang.String):com.intellij.platform.util.progress.ProgressReporter
+- sf:internalCurrentStepAsRaw(kotlin.coroutines.Continuation):java.lang.Object
+- sf:internalCurrentStepAsSequential(I,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.util.progress.ProgressPipe
+- a:collectProgressUpdates(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- a:progressUpdates():kotlinx.coroutines.flow.Flow
+*f:com.intellij.platform.util.progress.ProgressPipeKt
+- sf:createProgressPipe(kotlinx.coroutines.CoroutineScope):com.intellij.platform.util.progress.ProgressPipe
+*:com.intellij.platform.util.progress.ProgressReporter0
 - a:rawReporter():com.intellij.platform.util.progress.RawProgressReporter
-- a:step(D,java.lang.String):com.intellij.platform.util.progress.ProgressReporter
+- a:step(D,java.lang.String):com.intellij.platform.util.progress.ProgressReporter0
+*:com.intellij.platform.util.progress.ProgressState
+- a:getDetails():java.lang.String
+- a:getFraction():java.lang.Double
+- a:getText():java.lang.String
 *:com.intellij.platform.util.progress.RawProgressReporter
 - details(java.lang.String):V
 - fraction(java.lang.Double):V
 - text(java.lang.String):V
+*:com.intellij.platform.util.progress.SequentialProgressReporter
+- indeterminateStep(java.lang.String):V
+- indeterminateStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:indeterminateStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,I,java.lang.Object):V
+- bs:indeterminateStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- bs:indeterminateStep$suspendImpl(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- itemStep(java.lang.String):V
+- itemStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:itemStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,I,java.lang.Object):V
+- bs:itemStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- bs:itemStep$suspendImpl(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- a:nextStep(I,java.lang.String):V
+- a:nextStep(I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:nextStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,I,java.lang.String,I,java.lang.Object):V
+- bs:nextStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- a:sizedStep(I,java.lang.String):V
+- a:sizedStep(I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:sizedStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,I,java.lang.String,I,java.lang.Object):V
+- bs:sizedStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+*:com.intellij.platform.util.progress.SequentialProgressReporterHandle
+- java.lang.AutoCloseable
+- a:close():V
+- a:getReporter():com.intellij.platform.util.progress.SequentialProgressReporter
 *f:com.intellij.platform.util.progress.StepsKt
 - sf:durationStep(D,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:durationStep$default(D,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:filterWithProgress(java.util.Collection,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:filterWithProgress$default(java.util.Collection,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:forEachWithProgress(java.util.Collection,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:forEachWithProgress(java.util.Collection,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:forEachWithProgress$default(java.util.Collection,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:ignoreProgressReportingIn(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:indeterminateStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:indeterminateStep$default(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:itemDuration(I):D
 - sf:itemDuration(java.util.Collection):D
+- sf:mapWithProgress(java.util.Collection,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:mapWithProgress(java.util.Collection,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:mapWithProgress$default(java.util.Collection,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:progressStep(D,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:progressStep$default(D,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- sf:transformWithProgress(java.util.Collection,Z,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
-- bs:transformWithProgress$default(java.util.Collection,Z,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:reportProgress(I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:reportProgress$default(I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:reportProgressScope(I,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+- bs:reportProgressScope$default(I,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:reportRawProgress(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:reportSequentialProgress(I,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- bs:reportSequentialProgress$default(I,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:withProgressText(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withRawProgressReporter(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.platform.util.progress.TransformCollector
-- a:out(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object

@@ -20,6 +20,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.server.security.ChecksumUtil;
 
 import java.io.*;
 import java.text.DateFormat;
@@ -37,6 +38,24 @@ public final class Maven40EffectivePomDumper {
    * The Settings XSD URL
    */
   private static final String SETTINGS_XSD_URL = "http://maven.apache.org/xsd/settings-1.0.0.xsd";
+
+  public static @Nullable String checksum(@Nullable MavenProject project) {
+    if (null == project) return null;
+
+    Model pom = project.getModel();
+    cleanModel(pom);
+
+    StringWriter sWriter = new StringWriter();
+    MavenXpp3Writer pomWriter = new MavenXpp3Writer();
+    try {
+      pomWriter.write(sWriter, pom);
+    }
+    catch (IOException e) {
+      return null;
+    }
+
+    return ChecksumUtil.checksum(sWriter.toString());
+  }
 
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin
   @Nullable

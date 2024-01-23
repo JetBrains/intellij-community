@@ -125,11 +125,8 @@
     <projectService serviceImplementation="org.jetbrains.idea.svn.SvnConfiguration"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.SvnFileUrlMapping"
                     serviceImplementation="org.jetbrains.idea.svn.SvnFileUrlMappingImpl"/>
-    <projectService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCache"/>
-    <projectService serviceImplementation="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"
                         serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 

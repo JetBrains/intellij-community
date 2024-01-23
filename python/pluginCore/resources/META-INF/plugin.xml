@@ -1,6 +1,7 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
-  <!-- Components and extensions declared in this file work ONLY in Python plugin, not in standalone PyCharm.
-       Anything related to Python/Java integration must go in this file. -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/"
+             package="PythonCore">
+  <!--Python community support for Pycharm, DS and IC. Package is fake, plugin doesn't contain any classes directly-->
+
 
   <id>PythonCore</id>
   <name>Python Community Edition</name>
@@ -16,25 +17,17 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
   <vendor url="https://www.jetbrains.com/pycharm/">JetBrains</vendor>
 
-  <depends>com.intellij.modules.python-core-capable</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.python-core-capable"/>
+  </dependencies>
 
-  <xi:include href="/META-INF/python-core-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/python-core-community.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
-  <depends optional="true" config-file="python-community-plugin-java.xml">com.intellij.java</depends>
-  <depends optional="true" config-file="python-community-plugin-minor.xml">com.intellij.modules.clion</depends>
-  <depends optional="true" config-file="python-plugin-rider.xml">com.intellij.modules.rider</depends>
-  <depends optional="true" config-file="python-plugin-datagrip.xml">com.intellij.modules.datagrip</depends>
-  <depends optional="true" config-file="python-plugin-goland.xml">com.intellij.modules.go</depends>
-  <depends optional="true" config-file="python-plugin-rustrover.xml">com.intellij.modules.rustrover</depends>
+  <!-- Python bundled modules for content -->
+  <xi:include href="/META-INF/python-v2-core-plugin-include.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <content>
-    <module name="intellij.python.terminal"/>
-    <module name="intellij.python.featuresTrainer"/>
-    <module name="intellij.python.markdown"/>
-    <module name="intellij.python.grazie"/>
-    <module name="intellij.python.langInjection"/>
-    <module name="intellij.python.copyright"/>
-    <module name="intellij.python.reStructuredText"/>
+    <!--Mini-IDes support community python only-->
+    <module name="intellij.python.community.plugin.minor"/> <!-- Python for Mini-IDEs-->
+    <module name="intellij.python.community.plugin.minor.rider"/> <!-- Python special support for Rider -->
+    <module name="intellij.python.community.impl.community_only"/> <!-- Community-specific code-->
   </content>
 
 </idea-plugin>

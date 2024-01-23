@@ -99,7 +99,6 @@
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
-    <projectService serviceImplementation="com.intellij.ide.bookmark.actions.NextBookmarkService"/>
     <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager"
                     serviceImplementation="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
     <bookmarkProvider implementation="com.intellij.ide.favoritesTreeView.AbstractUrlBookmarkProvider" order="first"/>
@@ -109,7 +108,6 @@
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.GroupListProvider"/>
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
-    <projectService serviceImplementation="com.intellij.ide.bookmark.BookmarksListProviderService"/>
     <advancedSetting id="show.line.bookmarks.in.popup" default="true"
                      bundle="messages.BookmarkBundle" groupKey="group.advanced.settings.bookmarks"/>
 

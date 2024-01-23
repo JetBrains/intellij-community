@@ -332,8 +332,8 @@ internal class ActionUpdater @JvmOverloads constructor(
     val children = getGroupChildren(group)
     // parallel update execution can break some existing caching
     // the preferred way to do caching now is `updateSession.sharedData`
-    val result = withContext(if (group is ActionUpdateThreadAware.Recursive) ForcedActionUpdateThreadElement(group.getActionUpdateThread())
-                             else EmptyCoroutineContext) {
+    val updateContext = ForcedActionUpdateThreadElement.forGroup(group)
+    val expandResult = withContext(updateContext) {
       children
         .map {
           async {
@@ -343,15 +343,21 @@ internal class ActionUpdater @JvmOverloads constructor(
         .awaitAll()
         .flatten()
     }
-    val actions = postProcessGroupChildren(group, result)
-    for (action in actions) {
-      if (action is InlineActionsHolder) {
-        for (inlineAction in action.getInlineActions()) {
-          updateAction(inlineAction)
+    val result = postProcessGroupChildren(group, expandResult)
+    result
+      .mapNotNull {
+        updatedPresentations[it]?.getClientProperty(ActionUtil.INLINE_ACTIONS)
+        ?: (it as? InlineActionsHolder)?.inlineActions
+      }
+      .flatten()
+      .map {
+        async(updateContext) {
+          updateAction(it)
         }
       }
-    }
-    actions
+      .toList()
+      .awaitAll()
+    result
   }
 
   private suspend fun postProcessGroupChildren(group: ActionGroup, result: List<AnAction>): List<AnAction> {
@@ -671,13 +677,18 @@ internal class ActionUpdater @JvmOverloads constructor(
       return updater.updateAction(action) ?: updater.initialBgtPresentation(action)
     }
 
+    override suspend fun childrenSuspend(actionGroup: ActionGroup): List<AnAction> {
+      return updater.getGroupChildren(actionGroup)
+    }
+
     override suspend fun expandSuspend(group: ActionGroup): List<AnAction> {
       return updater.expandActionGroup(group, group is CompactActionGroup)
     }
 
-    override suspend fun <T: Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T {
-      return updater.getSessionDataDeferred(Pair(key.toString(), key), supplier).await()
-    }
+    override fun <T: Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T =
+      updater.computeSessionDataOrThrow(Pair(key.toString(), key)) {
+        supplier()
+      }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun visitCaches(visitor: (AnAction, String, Any) -> Unit) {
@@ -818,7 +829,11 @@ private class AwaitSharedData(val job: Job, message: String) : RuntimeException(
 
 private class ForcedActionUpdateThreadElement(val updateThread: ActionUpdateThread)
   : AbstractCoroutineContextElement(ForcedActionUpdateThreadElement) {
-  companion object : CoroutineContext.Key<ForcedActionUpdateThreadElement>
+  companion object : CoroutineContext.Key<ForcedActionUpdateThreadElement> {
+    fun forGroup(group: ActionGroup) =
+      if (group is ActionUpdateThreadAware.Recursive) ForcedActionUpdateThreadElement(group.getActionUpdateThread())
+      else EmptyCoroutineContext
+  }
 }
 
 class SkipOperation(operation: String) : RuntimeException(operation) {

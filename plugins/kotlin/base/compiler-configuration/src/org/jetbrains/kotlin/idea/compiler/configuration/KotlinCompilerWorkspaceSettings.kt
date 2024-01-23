@@ -6,6 +6,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
 
+@Service(Service.Level.PROJECT)
 @State(name = "KotlinCompilerWorkspaceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class KotlinCompilerWorkspaceSettings : PersistentStateComponent<KotlinCompilerWorkspaceSettings> {
     /**

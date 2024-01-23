@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +45,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 @State(name = "Palette2",defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
 public final class Palette implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(Palette.class);

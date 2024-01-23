@@ -2,6 +2,7 @@
 package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Service(Service.Level.PROJECT)
 @State(name = "ProjectDictionaryState", storages = @Storage(value = "dictionaries", stateSplitter = ProjectDictionarySplitter.class))
 public final class ProjectDictionaryState implements PersistentStateComponent<ProjectDictionaryState> {
   @Property(surroundWithTag = false)

@@ -106,6 +106,13 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 26,
+      "description": "Full Line - FIM",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -118,7 +125,7 @@
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [15, 16, 22, 24],
+      "includeGroups": [15, 26, 22, 24],
       "shouldLogElementFeatures": true
     },
     {
@@ -142,7 +149,7 @@
     {
       "id": "javascript",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 13, 22, 23, 25 ],
+      "includeGroups": [ 13, 22, 23, 24 ],
       "shouldLogElementFeatures": true
     },
     {
@@ -196,7 +203,7 @@
     {
       "id": "css",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 13, 22, 23, 25 ],
+      "includeGroups": [ 13, 22, 23, 24 ],
       "shouldLogElementFeatures": true
     }
   ]

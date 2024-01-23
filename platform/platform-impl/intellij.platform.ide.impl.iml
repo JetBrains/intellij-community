@@ -157,5 +157,6 @@
     <orderEntry type="module" module-name="intellij.platform.settings" />
     <orderEntry type="module" module-name="intellij.platform.settings.local" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
 </module>

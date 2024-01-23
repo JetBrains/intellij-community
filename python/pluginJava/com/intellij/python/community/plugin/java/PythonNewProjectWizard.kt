@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.java
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.NewProjectWizardConstants
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
 import com.jetbrains.python.newProject.NewPythonProjectStep
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 
 /**
  * A wizard for creating new pure-Python projects in IntelliJ.
@@ -16,7 +16,7 @@ internal class PythonNewProjectWizard : LanguageGeneratorNewProjectWizard {
 
   override val name = NewProjectWizardConstants.Language.PYTHON
 
-  override val icon = PythonPsiApiIcons.Python
+  override val icon = AllIcons.Language.Python
 
   override val ordinal = 600
 

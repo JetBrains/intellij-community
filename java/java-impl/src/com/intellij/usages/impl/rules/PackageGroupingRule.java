@@ -92,11 +92,6 @@ public final class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }

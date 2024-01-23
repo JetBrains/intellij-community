@@ -541,6 +541,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
+  protected @Nullable Icon getBaseIcon() {
+    return PsiClassImplUtil.getClassIcon(0, this);
+  }
+
+  @Override
   public boolean isEquivalentTo(PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
   }

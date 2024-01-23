@@ -520,11 +520,6 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
         setSelected(e, isSelected(e) && enabled && visible);
         super.update(e);
       }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return super.getActionUpdateThread();
-      }
     };
     myToggleRegularExpression = new LargeFileToggleAction(this, EditorBundle.message("large.file.editor.regex.action.mnemonic.text")) {
       @Override
@@ -533,10 +528,6 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
         if (state && myToggleWholeWordsAction != null) {
           myToggleWholeWordsAction.setSelected(false);
         }
-      }
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return super.getActionUpdateThread();
       }
     };
     myStatusTextAction = new LargeFileStatusTextAction(this);
@@ -570,14 +561,6 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
       @Override
       public void searchFieldDocumentChanged() {
         onSearchParametersChanged();
-      }
-
-      @Override
-      public void replaceFieldDocumentChanged() {
-      }
-
-      @Override
-      public void multilineStateChanged() {
       }
     });
   }

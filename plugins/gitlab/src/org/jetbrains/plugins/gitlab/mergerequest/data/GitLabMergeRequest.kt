@@ -345,6 +345,8 @@ internal class LoadedGitLabMergeRequest(
   override val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>> = discussionsContainer.discussions
   override val systemNotes: Flow<Result<Collection<GitLabNote>>> = discussionsContainer.systemNotes
   override val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>> = discussionsContainer.draftNotes
+  override val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> = discussionsContainer.nonEmptyDiscussionsData
+  override val draftNotesData: SharedFlow<Result<List<GitLabMergeRequestDraftNoteRestDTO>>> = discussionsContainer.draftNotesData
 
   override val canAddNotes: Boolean = discussionsContainer.canAddNotes
   override val canAddDraftNotes: Boolean = discussionsContainer.canAddDraftNotes

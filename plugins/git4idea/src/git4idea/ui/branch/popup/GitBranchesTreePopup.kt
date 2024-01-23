@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
@@ -12,9 +12,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
+import com.intellij.openapi.concurrency.waitForPromise
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -55,22 +55,22 @@ import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.popup.compose.createComposeBranchesPopup
 import git4idea.ui.branch.tree.GitBranchesTreeModel
-import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
-import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
+import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer.Companion.getText
 import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirstLeaf
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLastLeaf
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectNextLeaf
-import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrevLeaf
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirst
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLast
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectNext
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrev
 import git4idea.ui.branch.tree.recentCheckoutBranches
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
+import org.jetbrains.annotations.TestOnly
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.*
@@ -84,6 +84,7 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 import kotlin.math.min
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 
 class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, parent: JBPopup? = null, parentValue: Any? = null)
   : WizardPopup(project, parent, step),
@@ -108,7 +109,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   init {
     setParentValue(parentValue)
-    minimumSize = if (isNewUI) JBDimension(350, 300) else JBDimension(300, 200)
+    minimumSize = if (isNewUI) JBDimension(360, 300) else JBDimension(300, 200)
     dimensionServiceKey = if (isChild()) null else DIMENSION_SERVICE_KEY
     userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     installGeneralShortcutActions()
@@ -135,7 +136,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   override fun setHeaderComponent(c: JComponent?) {
     mySpeedSearchPatternField.textEditor.apply {
-      emptyText.text = ApplicationBundle.message("editorsearch.search.hint")
+      updateEmptyText()
       FragmentedSettingsUtil.setupPlaceholderVisibility(mySpeedSearchPatternField.textEditor)
     }
 
@@ -144,7 +145,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       return
     }
 
-    val searchBorder =  mySpeedSearchPatternField.border
+    val searchBorder = mySpeedSearchPatternField.border
     mySpeedSearchPatternField.border = null
 
     val toolbar = createToolbar().component.apply {
@@ -158,6 +159,19 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
 
     super.setHeaderComponent(panel)
+  }
+
+  private fun updateEmptyText() {
+    val isActionFilterSelected = GitBranchesTreePopupFilterByAction.isSelected(project)
+    val isRepositoryFilterSelected = GitBranchesTreePopupFilterByRepository.isSelected(project)
+    val separatorKind = if (isActionFilterSelected && isRepositoryFilterSelected) 2 else 1
+    val byActions =
+      if (isActionFilterSelected) GitBundle.message("git.branches.popup.search.field.actions.empty.text", separatorKind) else ""
+    val byRepository =
+      if (isRepositoryFilterSelected) GitBundle.message("git.branches.popup.search.field.repositories.empty.text", separatorKind) else ""
+
+    mySpeedSearchPatternField.textEditor.emptyText.text =
+      GitBundle.message("git.branches.popup.search.field.empty.text", byActions, byRepository)
   }
 
   private fun warnThatBranchesDivergedIfNeeded() {
@@ -198,14 +212,21 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     treeStep.updateTreeModelIfNeeded(tree, pattern)
     treeStep.setSearchPattern(pattern)
     val haveBranches = traverseNodesAndExpand()
+    selectPreferred()
     if (haveBranches) {
-      selectPreferred()
       expandPreviouslyExpandedBranches()
     }
     val model = tree.model
     super.updateSpeedSearchColors(model.getChildCount(model.root) == 0)
     if (!pattern.isNullOrBlank()) {
-      tree.emptyText.text = GitBundle.message("git.branches.popup.tree.no.branches", pattern)
+      val filtersActive =
+        GitBranchesTreePopupFilterByAction.isSelected(project) || GitBranchesTreePopupFilterByRepository.isSelected(project)
+      tree.emptyText.text = if (filtersActive) {
+        GitBundle.message("git.branches.popup.tree.no.nodes", pattern)
+      }
+      else {
+        GitBundle.message("git.branches.popup.tree.no.branches", pattern)
+      }
     }
   }
 
@@ -451,7 +472,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
     overrideBuiltInAction(TreeActions.Right.ID) {
       val path = selectionPath
-      if (path != null && (path.lastPathComponent is GitRepository || model.getChildCount(path.lastPathComponent) == 0)) {
+      if (path != null && (path.lastPathComponent is GitRepository
+                           || path.lastPathComponent is TopLevelRepository
+                           || model.getChildCount(path.lastPathComponent) == 0)) {
         handleSelect(false, null)
         true
       }
@@ -459,22 +482,22 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
 
     overrideBuiltInAction(TreeActions.Down.ID) {
-      if (speedSearch.isHoldingFilter) selectNextLeaf()
+      if (speedSearch.isHoldingFilter) selectNext(project)
       else false
     }
 
     overrideBuiltInAction(TreeActions.Up.ID) {
-      if (speedSearch.isHoldingFilter) selectPrevLeaf()
+      if (speedSearch.isHoldingFilter) selectPrev(project)
       else false
     }
 
     overrideBuiltInAction(TreeActions.Home.ID) {
-      if (speedSearch.isHoldingFilter) selectFirstLeaf()
+      if (speedSearch.isHoldingFilter) selectFirst(project)
       else false
     }
 
     overrideBuiltInAction(TreeActions.End.ID) {
-      if (speedSearch.isHoldingFilter) selectLastLeaf()
+      if (speedSearch.isHoldingFilter) selectLast(project)
       else false
     }
   }
@@ -700,6 +723,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   fun refresh() {
     applySearchPattern()
+    updateEmptyText()
   }
 
   private inner class BranchesTree(model: TreeModel) : Tree(model) {
@@ -770,4 +794,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         Disposer.register(parent) { it.cancel() }
       }
   }
+
+  @TestOnly
+  fun waitTreeExpand(timeout: Duration) {
+    TreeUtil.promiseExpandAll(tree).waitForPromise(timeout)
+  }
+
 }

@@ -4,9 +4,9 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.collaboration.file.codereview.CodeReviewCombinedDiffVirtualFile
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.diff.chains.DiffRequestChain
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.tools.combined.CombinedBlockId
+import com.intellij.diff.tools.combined.CombinedBlockProducer
+import com.intellij.diff.tools.combined.CombinedDiffModel
 import com.intellij.diff.tools.combined.CombinedDiffModelImpl
 import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.project.Project
@@ -52,19 +52,19 @@ internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManage
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createModel(id: String): CombinedDiffModelImpl {
+  override fun createModel(): CombinedDiffModel {
     val model = CombinedDiffModelImpl(project)
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel
     diffModel.addAndInvokeRequestChainListener(model.ourDisposable) {
       model.cleanBlocks()
       diffModel.requestChain?.let<DiffRequestChain, Unit> {
-        val requests = linkedMapOf<CombinedBlockId, DiffRequestProducer>()
+        val requests = mutableListOf<CombinedBlockProducer>()
         for (request in it.requests) {
           if (request !is ChangeDiffRequestProducer) return@addAndInvokeRequestChainListener
           val change = request.change
-          val id = CombinedPathBlockId((change.afterRevision?.file ?: change.beforeRevision?.file)!!, change.fileStatus, null)
-          requests[id] = request
+          val blockId = CombinedPathBlockId((change.afterRevision?.file ?: change.beforeRevision?.file)!!, change.fileStatus, null)
+          requests += CombinedBlockProducer(blockId, request)
         }
         model.setBlocks(requests)
       }

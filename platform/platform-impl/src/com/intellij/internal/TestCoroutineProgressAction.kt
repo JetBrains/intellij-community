@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -9,6 +9,9 @@ import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentati
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.ide.progress.*
+import com.intellij.platform.util.coroutines.forEachConcurrent
+import com.intellij.platform.util.coroutines.mapConcurrent
+import com.intellij.platform.util.coroutines.transformConcurrent
 import com.intellij.platform.util.progress.*
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
@@ -147,70 +150,110 @@ internal class TestCoroutineProgressAction : AnAction() {
     }
   }
 
-  private suspend fun doStuff() {
-    indeterminateStep("Indeterminate stage") {
+  private suspend fun doStuff(): Unit = reportSequentialProgress { reporter ->
+    reporter.indeterminateStep("Indeterminate stage") {
       randomDelay()
     }
-    progressStep(endFraction = 0.25, "Sequential stage") {
+    reporter.nextStep(endFraction = 25, "Sequential stage") {
       stage(parallel = false)
     }
-    progressStep(endFraction = 0.5) {
+    reporter.nextStep(endFraction = 50) {
       stage(parallel = false)
     }
-    progressStep(endFraction = 0.75, "Parallel stage") {
+    reporter.nextStep(endFraction = 75, "Parallel stage") {
       stage(parallel = true)
     }
-    progressStep(endFraction = 1.0) {
+    reporter.nextStep(endFraction = 100) {
       stage(parallel = true)
     }
   }
 
-  private suspend fun stage(parallel: Boolean) {
-    indeterminateStep("Prepare parallel $parallel") {
-      randomDelay()
-    }
+  private suspend fun stage(parallel: Boolean) = reportSequentialProgress { reporter ->
+    reporter.indeterminateStep("Prepare parallel $parallel")
+    randomDelay()
     val items = (1..if (parallel) 100 else 5).toList()
-    val transformed = progressStep(endFraction = 0.1) {
-      items.transformWithProgress(parallel) { item ->
-        progressStep(endFraction = 1.0, text = "Transforming $item") {
-          if (Math.random() < 0.5) {
-            out(item)
+    val transformed = reporter.nextStep(endFraction = 10) {
+      transformExample(parallel, items)
+    }
+    val mapped = reporter.nextStep(endFraction = 30) {
+      mapExample(parallel, transformed)
+    }
+    reporter.nextStep(endFraction = 100) {
+      forEachExample(parallel, mapped)
+    }
+  }
+
+  private suspend fun transformExample(parallel: Boolean, items: List<Int>): Collection<Int> {
+    return if (parallel) {
+      reportProgress(items.size) { reporter ->
+        items.transformConcurrent { item ->
+          reporter.itemStep("Transforming $item") {
+            if (Math.random() < 0.5) {
+              out(item)
+            }
           }
         }
       }
     }
-    val filtered = progressStep(endFraction = 0.2) {
-      transformed.filterWithProgress(parallel) { item ->
-        progressStep(endFraction = 1.0, text = "Filtering $item") {
-          randomDelay()
-          item % 2 == 0
+    else {
+      buildList {
+        items.forEachWithProgress { item ->
+          withProgressText("Transforming $item") {
+            if (Math.random() < 0.5) {
+              add(item)
+            }
+          }
         }
       }
     }
-    val mapped = progressStep(endFraction = 0.3) {
-      filtered.mapWithProgress(parallel) { item ->
-        progressStep(endFraction = 1.0, text = "Mapping $item") {
+  }
+
+  private suspend fun mapExample(parallel: Boolean, filtered: Collection<Int>): Collection<Int> {
+    return if (parallel) {
+      reportProgress(filtered.size) { reporter ->
+        filtered.mapConcurrent { item ->
+          reporter.itemStep("Mapping $item") {
+            randomDelay()
+            item * 2
+          }
+        }
+      }
+    }
+    else {
+      filtered.mapWithProgress { item ->
+        withProgressText(text = "Mapping $item") {
           randomDelay()
           item * 2
         }
       }
     }
-    progressStep(endFraction = 1.0) {
-      mapped.forEachWithProgress(parallel) { item ->
+  }
+
+  private suspend fun forEachExample(parallel: Boolean, mapped: Collection<Int>) {
+    if (parallel) {
+      reportProgress(mapped.size) { reporter ->
+        mapped.forEachConcurrent { item ->
+          reporter.itemStep {
+            handleItem(item)
+          }
+        }
+      }
+    }
+    else {
+      mapped.forEachWithProgress { item ->
         handleItem(item)
       }
     }
   }
 
-  private suspend fun handleItem(item: Int) {
-    indeterminateStep("Prepare $item") {
-      randomDelay()
-    }
-    progressStep(endFraction = 1.0, "Processing $item") {
-      progressStep(endFraction = 0.5, "Processing $item step 1") {
+  private suspend fun handleItem(item: Int): Unit = reportSequentialProgress { reporter ->
+    reporter.indeterminateStep("Prepare $item")
+    randomDelay()
+    reporter.nextStep(endFraction = 100, "Processing $item") {
+      reportSequentialProgress { innerReporter ->
+        innerReporter.nextStep(endFraction = 50, "Processing $item step 1")
         randomDelay()
-      }
-      progressStep(endFraction = 1.0, "Processing $item step 2") {
+        innerReporter.nextStep(endFraction = 100, "Processing $item step 2")
         randomDelay()
       }
     }

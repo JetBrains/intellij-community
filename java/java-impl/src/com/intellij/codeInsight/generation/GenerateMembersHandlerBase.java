@@ -18,7 +18,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
@@ -117,7 +117,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     int finalOffset = offset;
     List<? extends GenerationInfo> newMembers = WriteAction.compute(
-      () -> DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
+      () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
         () -> GenerateMembersUtil.insertMembersAtOffset(aClass, finalOffset, generateMemberPrototypes(aClass, members))));
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));

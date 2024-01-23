@@ -2,16 +2,14 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
-
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KProperty0
 
-
-inline fun <reified T : JKElement> JKElement.parentOfType(): T? {
+internal inline fun <reified T : JKElement> JKElement.parentOfType(): T? {
     return generateSequence(parent) { it.parent }.filterIsInstance<T>().firstOrNull()
 }
 
-fun JKElement.parents(): Sequence<JKElement> {
+internal fun JKElement.parents(): Sequence<JKElement> {
     return generateSequence(parent) { it.parent }
 }
 
@@ -24,17 +22,16 @@ private fun <T : JKElement> KProperty0<Any>.detach(element: T) {
     element.detach(boundReceiver)
 }
 
-
-fun <T : JKElement> KProperty0<T>.detached(): T =
+internal fun <T : JKElement> KProperty0<T>.detached(): T =
     get().also { detach(it) }
 
-fun <T : JKElement> KProperty0<List<T>>.detached(): List<T> =
+internal fun <T : JKElement> KProperty0<List<T>>.detached(): List<T> =
     get().also { list -> list.forEach { detach(it) } }
 
-fun <T : JKElement> T.detached(from: JKElement): T =
+internal fun <T : JKElement> T.detached(from: JKElement): T =
     also { it.detach(from) }
 
-fun <R : JKTreeElement, T> applyRecursive(
+internal fun <R : JKTreeElement, T> applyRecursive(
     element: R,
     data: T,
     onElementChanged: (JKTreeElement, JKTreeElement) -> Unit,
@@ -85,16 +82,15 @@ fun <R : JKTreeElement, T> applyRecursive(
     return element
 }
 
-fun <R : JKTreeElement> applyRecursive(
+internal fun <R : JKTreeElement> applyRecursive(
     element: R,
     func: (JKTreeElement) -> JKTreeElement
 ): R = applyRecursive(element, null, { _, _ -> }) { it, _ -> func(it) }
 
-
-inline fun <reified T : JKTreeElement> T.copyTree(): T =
+internal inline fun <reified T : JKTreeElement> T.copyTree(): T =
     copy().withFormattingFrom(this) as T
 
-inline fun <reified T : JKTreeElement> T.copyTreeAndDetach(): T =
+internal inline fun <reified T : JKTreeElement> T.copyTreeAndDetach(): T =
     copyTree().also {
         if (it.parent != null) it.detach(it.parent!!)
     }

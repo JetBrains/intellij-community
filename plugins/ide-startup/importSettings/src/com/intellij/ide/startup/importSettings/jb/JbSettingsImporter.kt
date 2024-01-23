@@ -4,7 +4,6 @@ package com.intellij.ide.startup.importSettings.jb
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.*
@@ -23,9 +22,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.copy
 import com.intellij.util.io.systemIndependentPath
-import io.github.classgraph.AnnotationInfo
-import io.github.classgraph.ClassGraph
-import io.github.classgraph.ScanResult
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -48,12 +44,11 @@ class JbSettingsImporter(private val configDirPath: Path,
   // Same applies to the Keymap manager.
   // So far, it doesn't look like there's a viable way to detect those, so we just hardcode them.
   suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>, pluginIds: Set<String>) {
-    if (!categories.contains(SettingsCategory.KEYMAP) && !categories.contains(SettingsCategory.UI)) {
-      return
-    }
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
+    val (components, files) = findComponentsAndFiles()
     withExternalStreamProvider(storageManager) {
-      loadPluginComponents(pluginIds)
+      val availableComponents = loadNotLoadedComponents(components, pluginIds)
+      componentStore.reloadComponents(files, emptyList(), availableComponents)
       if (categories.contains(SettingsCategory.KEYMAP)) {
         // ensure component is loaded
         KeymapManager.getInstance()
@@ -69,13 +64,27 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
   }
 
-  suspend fun loadPluginComponents(downloadedPluginIds: Set<String>) {
-    val pluginSet = PluginManagerCore.getPluginSet()
-    for (mainDescriptor in pluginSet.enabledPlugins) {
-      if (!downloadedPluginIds.contains(mainDescriptor.pluginId.idString))
-        continue
-      loadAndInitPluginServices(mainDescriptor, null, { true }, { _, _ ->})
+  private fun findComponentsAndFiles() : Pair<Set<String>, Set<String>> {
+    val optionsPath = configDirPath / PathManager.OPTIONS_DIRECTORY
+    val allFiles = mutableSetOf<String>()
+    val components = mutableSetOf<String>()
+    for (optionsEntry in optionsPath.listDirectoryEntries()) {
+      if (optionsEntry.name.lowercase().endsWith(".xml")) {
+        allFiles.add(optionsEntry.name)
+        val element = JDOMUtil.load(optionsEntry)
+        val children = element.getChildren("component")
+        allFiles.add(optionsEntry.name)
+        for (componentElement in children) {
+          val componentName = componentElement.getAttributeValue("name")
+          components.add(componentName)
+        }
+      }
+      else if (optionsEntry.isDirectory() && optionsEntry.name.lowercase() == getPerOsSettingsStorageFolderName()) {
+        // i.e. mac/keymap.xml
+        allFiles.addAll(filesFromFolder(optionsEntry, optionsEntry.name))
+      }
     }
+    return Pair(components, allFiles)
   }
 
   /**
@@ -90,42 +99,28 @@ class JbSettingsImporter(private val configDirPath: Path,
     // import all, except schema managers
     try {
       val allFiles = mutableSetOf<String>()
-      val loadedComponentNames = componentStore.getComponentNames()
       val notLoadedComponents = arrayListOf<String>()
       val unknownStorage = arrayListOf<String>()
-      val optionsPath = configDirPath / PathManager.OPTIONS_DIRECTORY
       val storageManager = componentStore.storageManager as StateStorageManagerImpl
       val cachedFileStorages = storageManager.getCachedFileStorages()
         .mapNotNull { (it as? FileBasedStorage)?.file?.name }
+      val (components, files) = findComponentsAndFiles()
+      notLoadedComponents.addAll(components)
+      notLoadedComponents.removeAll(componentStore.getComponentNames())
+      allFiles.addAll(files)
+      unknownStorage.addAll(files)
+      unknownStorage.removeAll(cachedFileStorages.toSet())
 
-      for (optionsEntry in optionsPath.listDirectoryEntries()) {
-        if (optionsEntry.name.lowercase().endsWith(".xml")) {
-          allFiles.add(optionsEntry.name)
-          val element = JDOMUtil.load(optionsEntry)
-          val children = element.getChildren("component")
-          if (!cachedFileStorages.contains(optionsEntry.name)) {
-            unknownStorage.add(optionsEntry.name)
-          }
-          for (componentElement in children) {
-            val componentName = componentElement.getAttributeValue("name")
-            LOG.info("Found $componentName in ${optionsEntry.name}")
-            if (!loadedComponentNames.contains(componentName)) {
-              notLoadedComponents.add(componentName)
-            }
-          }
-        }
-        else if (optionsEntry.isDirectory() && optionsEntry.name.lowercase() == getPerOsSettingsStorageFolderName()) {
-          // i.e. mac/keymap.xml
-          allFiles.addAll(filesFromFolder(optionsEntry, optionsEntry.name))
-        }
-      }
 
       //TODO: remove later, now keep for logging purposes
-      LOG.info("Loaded components:\n${loadedComponentNames.joinToString()}")
       LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
       LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
+      val loadNotLoadedComponents = loadNotLoadedComponents(notLoadedComponents, null)
+      notLoadedComponents.removeAll(loadNotLoadedComponents)
 
-      loadNotLoadedComponents(notLoadedComponents)
+      for (component in notLoadedComponents) {
+        LOG.info("Component $component was not found and loaded. Its settings will not be migrated")
+      }
 
       // load code style scheme manager
       CodeStyleSchemes.getInstance()
@@ -177,99 +172,33 @@ class JbSettingsImporter(private val configDirPath: Path,
     saveSettings(ApplicationManager.getApplication(), true)
   }
 
-  private suspend fun loadNotLoadedComponents(componentsToLoad: Collection<String>) {
+  private fun loadNotLoadedComponents(componentsToLoad: Collection<String>, pluginIds: Set<String>?): Set<String> {
     val start = System.currentTimeMillis()
     val notLoadedComponents = arrayListOf<String>()
     notLoadedComponents.addAll(componentsToLoad)
     val foundComponents = hashMapOf<String, Class<*>>()
-    val pluginSet = PluginManagerCore.getPluginSet()
-    val packages = mutableSetOf<String>()
-    val implementations = hashSetOf<Class<*>>()
     val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
-    componentManagerImpl.processAllImplementationClasses{clazz, pluginDescriptor ->
-      implementations.add(clazz)
-    }
-    for (descriptor in pluginSet.enabledPlugins + pluginSet.getEnabledModules()) {
-      // we don't check classloader for sub descriptors because url set is the same
-      if (packages.find { descriptor.pluginId.idString.startsWith(it) } == null) {
-        if (packages.add(descriptor.pluginId.idString))
-          loadAndInitPluginServices(descriptor, implementations, { notLoadedComponents.remove(it) }, {
-            name, clazz -> foundComponents[name] = clazz
-          })
-      }
-    }
+    componentManagerImpl.processAllHolders { key, clazz, pluginDescriptor ->
+      if (pluginDescriptor != null && pluginIds != null && !pluginIds.contains(pluginDescriptor.pluginId.idString))
+        return@processAllHolders
 
-    for (component in notLoadedComponents) {
-      LOG.info("Component $component was not found and loaded. Its settings will not be migrated")
-    }
-    for (e in foundComponents) {
-      if (ApplicationManager.getApplication().getServiceIfCreated(e.value) == null) {
-        LOG.warn("Can't find service for ${e.key} : ${e.value}")
-      }
-    }
-    LOG.info("Loaded notFoundComponents in ${System.currentTimeMillis() - start} ms")
-  }
-
-  private suspend fun loadAndInitPluginServices(
-    descriptor: IdeaPluginDescriptor,
-    implementations: Set<Class<*>>?,
-    loadPredicate: (String) -> Boolean,
-    loadCallback: (String, Class<*>) -> Unit) {
-    val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
-    val pluginClassLoader = descriptor.pluginClassLoader ?: return
-    val start = System.currentTimeMillis()
-    scanClassLoader(pluginClassLoader).use { scanResult ->
-      LOG.info("Loaded classes for ${descriptor.pluginId} in ${System.currentTimeMillis() - start}ms")
-      for (classInfo in scanResult.getClassesWithAnnotation(State::class.java.name)) {
-        val stateAnnotation = classInfo.getAnnotationInfo(State::class.java.name) ?: continue
-        val parameterValues = stateAnnotation.getParameterValues(false)
-        val nameValue = parameterValues.find { it.name == "name" } ?: continue
-        val storages = parameterValues.find { it.name == "storages" } ?: continue
-        if (loadPredicate(nameValue.value.toString())) {
-          val clazz = classInfo.loadClass()
-          val appLevelLightService = isAppLevelLightService(clazz)
-          try {
-            loadCallback.invoke(nameValue.value.toString(), clazz)
-            if (appLevelLightService){
-              componentManagerImpl.getServiceAsync(clazz)
-            } else if (implementations == null || implementations.contains(clazz)) {
-              if (ApplicationManager.getApplication().getService(clazz) == null){
-                if (ApplicationManager.getApplication().getService(clazz.superclass) == null){
-                  LOG.info("Can't find service for ${clazz.name}")
-                } else {
-                  loadCallback.invoke(nameValue.value.toString(), clazz.superclass)
-                }
-              }
-            }
-            val storage = (storages.value as Array<*>).find {
-              val info = it as AnnotationInfo
-              val deprecated = info.getParameterValues(false).find { pv -> pv.name == "deprecated" }
-              deprecated == null || !(deprecated.value as Boolean)
-            } as? AnnotationInfo ?: continue
-            val file = storage.parameterValues.find { it.name == "value" }?.value
-            LOG.info("Loaded unloaded component ${nameValue.value} from $file")
-          }
-          catch (th: Throwable) {
-            LOG.warn("Cannot init  ${if (appLevelLightService) "Light service" else "App Service" } ${nameValue} from ${classInfo.name}: ${th.message}")
-          }
+      val stateAnnotation = getStateOrNull(clazz) ?: return@processAllHolders
+      val componentName = stateAnnotation.name
+      if (componentsToLoad.contains(componentName)) {
+        val service: Any? = componentManagerImpl.getServiceByClassName(key)
+        if (service != null) {
+          notLoadedComponents.remove(componentName)
+          foundComponents[componentName] = clazz
+        }
+        else {
+          LOG.warn("Service $key is not found")
         }
       }
     }
-  }
 
-  private fun isAppLevelLightService(clazz: Class<*>): Boolean {
-    val serviceAnnotation = clazz.annotations.find { it.annotationClass == Service::class } as? Service ?: return false
-    return serviceAnnotation.value.find { it == Service.Level.APP } != null
+    LOG.info("Loaded notFoundComponents in ${System.currentTimeMillis() - start} ms")
+    return foundComponents.keys
   }
-
-  private fun scanClassLoader(classLoader: ClassLoader): ScanResult {
-    return ClassGraph()
-      .enableAnnotationInfo()
-      .ignoreParentClassLoaders()
-      .overrideClassLoaders(classLoader)
-      .scan()
-  }
-
 
   internal fun isNewUIValueChanged(): Boolean {
     val earlyAccessRegistryPath = configDirPath / EarlyAccessRegistryManager.fileName
@@ -311,10 +240,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     val retval = hashMapOf<String, String>()
     val osFolderName = getPerOsSettingsStorageFolderName()
     componentManager.processAllImplementationClasses { aClass, _ ->
-      if (!PersistentStateComponent::class.java.isAssignableFrom(aClass))
-        return@processAllImplementationClasses
-
-      val state = aClass.getAnnotation(State::class.java) ?: return@processAllImplementationClasses
+      val state = getStateOrNull(aClass) ?: return@processAllImplementationClasses
       if (!categories.contains(state.category))
         return@processAllImplementationClasses
 
@@ -331,6 +257,17 @@ class JbSettingsImporter(private val configDirPath: Path,
       }
     }
     return retval
+  }
+
+  private fun getStateOrNull(aClass: Class<*>): State? {
+    var clazz = aClass
+    while (PersistentStateComponent::class.java.isAssignableFrom(clazz)) {
+      val state = clazz.getAnnotation(State::class.java)
+      if (state != null)
+        return state
+      clazz = clazz.superclass
+    }
+    return null
   }
 
   private fun filterSchemes(allFiles: Set<String>, categories: Set<SettingsCategory>): Set<String> {

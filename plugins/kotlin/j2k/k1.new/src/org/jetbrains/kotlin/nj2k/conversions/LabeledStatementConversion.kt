@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
-class LabeledStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class LabeledStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKExpressionStatement) return recurse(element)
         val labeledStatement = element.expression as? JKLabeledExpression ?: return recurse(element)

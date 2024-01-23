@@ -206,6 +206,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     actionGroup.add(createToggleAction(EDITOR, IdeBundle.message("toggle.editor.and.tools")));
     actionGroup.add(createToggleAction(FRAME, IdeBundle.message("toggle.empty.frame")));
     myToolbar = ActionManager.getInstance().createActionToolbar(getTitle(), actionGroup, true);
+    myToolbar.setTargetComponent(myToolbar.getComponent());
     JComponent toolbarComponent = myToolbar.getComponent();
     toolbarComponent.setBorder(JBUI.Borders.empty());
     myTargetPanel.add(toolbarComponent);

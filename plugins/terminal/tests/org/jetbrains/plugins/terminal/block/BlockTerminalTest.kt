@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.completion.ShellEnvironment
@@ -29,7 +28,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -46,16 +44,7 @@ class BlockTerminalTest(private val shellPath: Path) {
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
-    fun shells(): List<Path> = listOf(
-      "/bin/zsh",
-      "/bin/bash",
-      "/usr/local/bin/fish",
-      "powershell.exe",
-      "pwsh.exe",
-    ).mapNotNull {
-      val path = Path.of(it)
-      if (Files.isRegularFile(path)) path else PathEnvironmentVariableUtil.findInPath(it)?.toPath()
-    }
+    fun shells(): List<Path> = TerminalSessionTestUtil.getShellPaths()
   }
 
   @Rule
@@ -98,7 +87,7 @@ class BlockTerminalTest(private val shellPath: Path) {
   fun `concurrent command and generator execution`() {
     val session = startBlockTerminalSession()
     // ShellType.FISH doesn't support generators yet
-    Assume.assumeTrue(setOf(ShellType.ZSH, ShellType.BASH).contains(session.shellIntegration.shellType))
+    Assume.assumeTrue(setOf(ShellType.ZSH, ShellType.BASH, ShellType.POWERSHELL).contains(session.shellIntegration.shellType))
     runBlocking {
       for (stepId in 1..100) {
         val startTime = TimeSource.Monotonic.markNow()
@@ -111,7 +100,7 @@ class BlockTerminalTest(private val shellPath: Path) {
         delay((1..50).random().milliseconds) // wait a little to start generator
         session.sendCommandlineToExecuteWithoutAddingToHistory("echo foo")
         val env: ShellEnvironment? = withTimeout(20.seconds) { envListDeferred.await() }
-        Assert.assertTrue(env != null && env.envs.isNotEmpty())
+        Assert.assertTrue(env != null && env.commands.isNotEmpty())
         assertCommandResult(0, "foo\n", outputFuture)
         println("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
       }

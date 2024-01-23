@@ -577,8 +577,8 @@ public class ExpectedHighlightingData {
                                     @NotNull HighlightInfo info,
                                     @NotNull String messageType) {
     String fileName = psiFile == null ? "" : psiFile.getName() + ": ";
-    int startOffset = info.startOffset;
-    int endOffset = info.endOffset;
+    int startOffset = info.getActualStartOffset();
+    int endOffset = info.getActualEndOffset();
     String s = text.substring(startOffset, endOffset);
     String desc = info.getDescription();
 

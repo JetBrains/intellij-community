@@ -201,4 +201,11 @@ interface VcsTelemetrySpan {
       override fun getName() = "changes-view-refresh-edt"
     }
   }
+
+  enum class GitBranchesPopup : VcsTelemetrySpan {
+    BuildingTree {
+      override fun getName() = "git-branches-popup-building-tree"
+    }
+  }
+
 }

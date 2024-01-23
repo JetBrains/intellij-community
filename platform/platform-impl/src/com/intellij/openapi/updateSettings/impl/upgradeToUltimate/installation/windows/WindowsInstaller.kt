@@ -12,6 +12,7 @@ import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.w
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstallationType.ZIP
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties
+import com.intellij.util.applyIf
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.delete
 import com.sun.jna.platform.win32.KnownFolders
@@ -66,8 +67,7 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
     val installationPath = provideInstallationPath(downloadResult.buildVersion) ?: return null
     try {
       Decompressor.Zip(path).extract(installationPath)
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
       deleteInBackground(installationPath)
       throw e
     }
@@ -78,7 +78,13 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
   override fun startUltimate(installationResult: InstallationResult): Boolean {
     val appPath = installationResult.appPath
     val exePath = appPath.resolve("bin").resolve("idea64.exe").pathString
-    val command = GeneralCommandLine("cmd", "/c", "start").withParameters("", exePath)
+
+    val basePath = project.basePath
+    val parameters = mutableListOf("", exePath).applyIf(basePath != null) {
+      add(basePath!!)
+      this
+    }
+    val command = GeneralCommandLine("cmd", "/c", "start").withParameters(parameters)
 
     return runCommand(command)
   }
@@ -86,8 +92,7 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
   override fun getUltimateInstallationDirectory(): Path? {
     return try {
       Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_UserProgramFiles)?.toNioPathOrNull()
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
       val localAppData = Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_LocalAppData).toNioPathOrNull()
                          ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve("AppData/Local")
       localAppData?.resolve("Programs")

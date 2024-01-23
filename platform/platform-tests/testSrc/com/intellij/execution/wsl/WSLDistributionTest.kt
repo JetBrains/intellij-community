@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ClassName")
 
 package com.intellij.execution.wsl
@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.*
+import java.io.File
 import java.nio.file.FileSystems
 import java.util.stream.Stream
 import kotlin.reflect.full.memberProperties
@@ -54,6 +55,12 @@ class WSLDistributionTest {
   ) {
     WSLDistribution.testOverriddenWslExe(FileSystems.getDefault().getPath(wslExe), disposable)
     testOverrideWslToolRoot(toolsRoot, disposable)
+
+    val oldWslPathIsSystemCompatible = WSLUtil.isSystemCompatible()
+    Disposer.register(disposable) {
+      WSLUtil.setSystemCompatible(oldWslPathIsSystemCompatible)
+    }
+    WSLUtil.setSystemCompatible(true)
   }
 
   @Test
@@ -79,7 +86,7 @@ class WSLDistributionTest {
         myExecuteCommandInLoginShell = true
         myExecuteCommandInShell = true
         myInitShellCommands = []
-        myLaunchWithWslExe = true
+        myLaunchWithWslExe = false
         myPassEnvVarsUsingInterop = false
         myRemoteWorkingDirectory = null
         mySleepTimeoutSec = 0.0
@@ -356,6 +363,21 @@ class WSLDistributionTest {
           environment.entries should beEmpty()
         }
       }
+    }
+  }
+
+  @Nested
+  inner class `GeneralCommandLine and IJent` {
+    @Test
+    fun `workingDirectory is preserved`() {
+      val options = WSLCommandLineOptions()
+
+      val sourceCmd = GeneralCommandLine("true")
+        .withWorkDirectory("""\\wsl.localhost\$WSL_ID\foo\bar""")
+
+      val cmd = WslTestStrategy.Ijent.patch(sourceCmd, options)
+
+      cmd.workDirectory should be(File("/foo/bar"))
     }
   }
 

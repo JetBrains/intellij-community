@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.notification.NotificationAction
@@ -21,10 +21,8 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.mapWithProgress
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -75,38 +73,38 @@ class PostCommitChecksHandler(val project: Project) {
   private suspend fun runPostCommitChecks(commitInfo: StaticCommitInfo,
                                           commitChecks: List<CommitCheck>) {
     withBackgroundProgress(project, VcsBundle.message("post.commit.checks.progress.text")) {
-      val postCommitInfo = progressStep(0.2, VcsBundle.message("post.commit.checks.progress.step.collecting.commits.text")) {
-        prepareCommitsToCheck(commitInfo)
-      }
-
-      progressStep(1.0) {
-        val problems = runCommitChecks(commitChecks, postCommitInfo)
-        if (problems.isEmpty()) {
-          LOG.debug("Post-commit checks succeeded")
-          pendingCommits.clear()
-          postCommitCheckErrorNotifications.clear()
-          lastCommitProblems = null
+      reportSequentialProgress { reporter ->
+        val postCommitInfo = reporter.nextStep(20, VcsBundle.message("post.commit.checks.progress.step.collecting.commits.text")) {
+          prepareCommitsToCheck(commitInfo)
         }
-        else {
-          postCommitCheckErrorNotifications.clear()
-          reportPostCommitChecksFailure(problems)
-          lastCommitProblems = problems
+
+        reporter.nextStep(100) {
+          val problems = runCommitChecks(commitChecks, postCommitInfo)
+          if (problems.isEmpty()) {
+            LOG.debug("Post-commit checks succeeded")
+            pendingCommits.clear()
+            postCommitCheckErrorNotifications.clear()
+            lastCommitProblems = null
+          }
+          else {
+            postCommitCheckErrorNotifications.clear()
+            reportPostCommitChecksFailure(problems)
+            lastCommitProblems = problems
+          }
         }
       }
     }
   }
 
-  private suspend fun prepareCommitsToCheck(commitInfo: StaticCommitInfo): PostCommitInfo {
+  private suspend fun prepareCommitsToCheck(commitInfo: StaticCommitInfo): PostCommitInfo = reportSequentialProgress { reporter ->
     val lastCommitInfos = pendingCommits.toList()
     pendingCommits += commitInfo
 
     if (lastCommitInfos.isNotEmpty()) {
       val mergedCommitInfo = withContext(Dispatchers.IO) {
-        indeterminateStep {
-          withRawProgressReporter {
-            coroutineToIndicator {
-              mergeCommitInfos(lastCommitInfos, commitInfo)
-            }
+        reporter.indeterminateStep {
+          coroutineToIndicator {
+            mergeCommitInfos(lastCommitInfos, commitInfo)
           }
         }
       }
@@ -118,11 +116,9 @@ class PostCommitChecksHandler(val project: Project) {
     }
 
     return withContext(Dispatchers.IO) {
-      indeterminateStep {
-        withRawProgressReporter {
-          coroutineToIndicator {
-            createPostCommitInfo(commitInfo)
-          }
+      reporter.indeterminateStep {
+        coroutineToIndicator {
+          createPostCommitInfo(commitInfo)
         }
       }
     }

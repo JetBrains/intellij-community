@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -37,12 +38,11 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
@@ -413,16 +413,28 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.setIgnoredFilesPatterns(patterns)
   }
 
-  protected open fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
-    doImportProjects(files, failOnReadingError, emptyList<String>(), *profiles)
-  }
-
-
-  protected fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean,
-                                 disabledProfiles: List<String>, vararg profiles: String) {
+  private fun doImportProjects(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
-    projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(profiles.toList(), disabledProfiles))
+    projectsManager.projectsTree.resetManagedFilesAndProfiles(files, MavenExplicitProfiles(profiles.toList(), emptyList()))
+    runBlockingMaybeCancellable { updateAllProjects() }
+    if (failOnReadingError) {
+      for (each in projectsManager.getProjectsTree().projects) {
+        assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
+      }
+    }
+  }
+
+  protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
+    return doImportProjectsAsync(files, failOnReadingError, emptyList(), *profiles)
+  }
+
+  protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean,
+                                              disabledProfiles: List<String>, vararg profiles: String) {
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
+    initProjectsManager(false)
+    projectsManager.projectsTree.resetManagedFilesAndProfiles(files, MavenExplicitProfiles(profiles.toList(), disabledProfiles))
+    updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
@@ -459,20 +471,16 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @RequiresBackgroundThread
-  // TODO: suspend
-  protected fun scheduleProjectImportAndWait() {
+  protected suspend fun scheduleProjectImportAndWait() {
     assertAutoReloadIsInitialized()
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
-    runBlocking {
-      waitForImportWithinTimeout {
-        withContext(Dispatchers.EDT) {
-          myProjectTracker!!.scheduleProjectRefresh()
-        }
+    waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        myProjectTracker!!.scheduleProjectRefresh()
       }
     }
-    MavenUtil.invokeAndWait(project) {}
 
     // otherwise project settings was modified while importing
     assertNoPendingProjectForReload()
@@ -494,7 +502,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun updateAllProjects() {
-    projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+    projectsManager.updateAllMavenProjects(MavenSyncSpec.full("MavenImportingTestCase"))
   }
 
   protected suspend fun downloadArtifacts() {

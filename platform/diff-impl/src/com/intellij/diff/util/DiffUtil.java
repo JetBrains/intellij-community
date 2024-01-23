@@ -58,6 +58,8 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -118,6 +120,8 @@ import java.util.List;
 import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
+
+import static com.intellij.diff.editor.DiffEditorTabFilesManagerKt.DIFF_OPENED_IN_NEW_WINDOW;
 
 import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -1575,6 +1579,27 @@ public final class DiffUtil {
     window.setVisible(false);
     window.dispose();
     return true;
+  }
+
+  /**
+   * MacOS hack. Try to minimize the window while we are navigating to sources from the window diff in full screen mode.
+   */
+  public static void minimizeDiffIfOpenedInWindow(@NotNull Component diffComponent) {
+    if (!SystemInfo.isMac) return;
+    EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, diffComponent);
+    if (holder == null) return;
+
+    List<EditorComposite> composites = holder.getEditorWindow().getAllComposites();
+    if (composites.size() == 1) {
+      if (DIFF_OPENED_IN_NEW_WINDOW.get(composites.get(0).getFile(), false)) {
+        Window window = UIUtil.getWindow(diffComponent);
+        if (window != null && !canBeHiddenBehind(window)) {
+          if (window instanceof Frame) {
+            ((Frame)window).setState(Frame.ICONIFIED);
+          }
+        }
+      }
+    }
   }
 
   private static boolean canBeHiddenBehind(@NotNull Window window) {

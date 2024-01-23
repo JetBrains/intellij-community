@@ -20,12 +20,12 @@ internal class CellChain(
   fun snapshotInput(snapshot: ImmutableEntityStorage): Pair<CellChain, List<Pair<ReadTraceHashSet, CellUpdateInfo>>> {
     val traces = ArrayList<Pair<ReadTraceHashSet, CellUpdateInfo>>()
     val newChain = cells.mutate {
-      var tokens = TokenSet()
+      var tokens = MatchSet()
       it.indices.forEach { index ->
         val cell = it[index]
         if (index == 0) {
           val cellAndTokens = cell.snapshotInput(snapshot)
-          tokens = cellAndTokens.tokenSet
+          tokens = cellAndTokens.matchSet
           it[index] = cellAndTokens.newCell
           cellAndTokens.subscriptions.forEach { update ->
             val trace = update.second
@@ -34,7 +34,7 @@ internal class CellChain(
         }
         else {
           val cellAndTokens = cell.input(tokens, snapshot)
-          tokens = cellAndTokens.tokenSet
+          tokens = cellAndTokens.matchSet
           it[index] = cellAndTokens.newCell
           cellAndTokens.subscriptions.forEach { update ->
             val trace = update.second
@@ -54,12 +54,12 @@ internal class CellChain(
     var myTokens = when (changeRequest.updateType) {
       is UpdateType.DIFF -> changes.makeTokensForDiff()
       is UpdateType.RECALCULATE -> {
-        val tokens = TokenSet()
+        val tokens = MatchSet()
         val match = changeRequest.updateType.match
 
-        tokens.add(Token(Operation.REMOVED, match))
+        tokens.removedMatch(match)
         if (match.isValid(newSnapshot)) {
-          tokens.add(Token(Operation.ADDED, match))
+          tokens.addedMatch(match)
         }
         tokens
       }
@@ -69,7 +69,7 @@ internal class CellChain(
       (startingIndex..cellList.lastIndex).forEach { index ->
         val cell = cellList[index]
         val cellAndTokens = cell.input(myTokens, newSnapshot)
-        myTokens = cellAndTokens.tokenSet
+        myTokens = cellAndTokens.matchSet
         cellList[index] = cellAndTokens.newCell
         cellAndTokens.subscriptions.forEach { update ->
           val trace = update.second

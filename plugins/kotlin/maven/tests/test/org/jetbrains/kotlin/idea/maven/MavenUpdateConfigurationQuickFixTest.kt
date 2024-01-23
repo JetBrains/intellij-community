@@ -6,7 +6,6 @@ import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,7 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenImportListener
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.runAll
 import org.junit.Assert
@@ -44,9 +42,6 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
 
                 override fun artifactDownloadingFinished() {
                     artifactDownloadingFinished.incrementAndGet()
-                }
-
-                override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
                 }
             })
     }

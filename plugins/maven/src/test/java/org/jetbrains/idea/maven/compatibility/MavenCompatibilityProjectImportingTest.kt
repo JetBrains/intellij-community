@@ -82,7 +82,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                          </extensions>
                        </build>
                        """.trimIndent())
-    doImportProjects(java.util.List.of(projectPom), false)
+    doImportProjectsAsync(listOf(projectPom), false)
 
     val projects = projectsTree.projects
     assertEquals(1, projects.size)

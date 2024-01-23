@@ -54,7 +54,45 @@ public final class ActionsTreeUtil {
 
   private static final @NonNls String EDITOR_PREFIX = "Editor";
 
+  private static final Set<String> ourBrokenActions = new HashSet<>();
+
+
   private ActionsTreeUtil() {
+  }
+
+  public static @Nullable Presentation getTemplatePresentation(@NotNull @NlsSafe String actionId,
+                                                               @Nullable String boundSourceId) {
+    AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
+    Presentation presentation = action == null ? null : action.getTemplatePresentation();
+    String text = presentation == null ? null : presentation.getText();
+    if (StringUtil.isEmpty(text)) { // fill dynamic presentation gaps
+      if (ourBrokenActions.add(actionId)) {
+        AnAction action2 = action instanceof ActionStubBase ? ActionManager.getInstance().getAction(actionId) : null;
+        Presentation presentation2 = action2 == null ? null : action2.getTemplatePresentation();
+        String text2 = presentation2 == null ? null : presentation2.getText();
+        if (StringUtil.isEmpty(text2)) {
+          LOG.warn("No text in '" + actionId + "' template presentation" +
+                   (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
+                   ". Showing its action-id instead");
+        }
+        else {
+          LOG.info("No text in '" + actionId + "' stub template presentation" +
+                   (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
+                   ". Creating its instance");
+        }
+      }
+    }
+    return presentation;
+  }
+
+  public static @NotNull Presentation getTemplatePresentation(@NotNull AnAction action) {
+    Presentation presentation = action.getTemplatePresentation();
+    if (action instanceof ActionStubBase stub && StringUtil.isEmpty(presentation.getText())) {
+      return Objects.requireNonNullElse(getTemplatePresentation(stub.getId(), null), presentation);
+    }
+    else {
+      return action.getTemplatePresentation();
+    }
   }
 
   public static @NotNull Map<String, String> createPluginActionsMap() {
@@ -186,12 +224,12 @@ public final class ActionsTreeUtil {
 
   public static Group createGroup(ActionGroup actionGroup, boolean forceAsPopup, Condition<? super AnAction> filtered) {
     String groupName = getName(actionGroup);
-    return createGroup(actionGroup, groupName, actionGroup.getTemplatePresentation().getIconSupplier(), forceAsPopup, filtered, true);
+    return createGroup(actionGroup, groupName, getTemplatePresentation(actionGroup).getIconSupplier(), forceAsPopup, filtered, true);
   }
 
   public static @NlsActions.ActionText String getName(@NotNull AnAction action) {
-    String name = action.getTemplatePresentation().getText();
-    if (name != null && !name.isEmpty()) {
+    String name = getTemplatePresentation(action).getText();
+    if (StringUtil.isNotEmpty(name)) {
       return name;
     }
 
@@ -237,7 +275,7 @@ public final class ActionsTreeUtil {
       }
       if (action instanceof ActionGroup childGroup) {
         Group subGroup = createGroup(childGroup, getName(action), null, forceAsPopup, filtered, normalizeSeparators);
-        if (forceAsPopup || childGroup.isPopup() || !Strings.isEmpty(childGroup.getTemplatePresentation().getText())) {
+        if (forceAsPopup || childGroup.isPopup() || !Strings.isEmpty(getTemplatePresentation(childGroup).getText())) {
           if (subGroup.getSize() > 0 || filtered == null || filtered.test(childGroup)) {
             group.addGroup(subGroup);
           }
@@ -272,7 +310,7 @@ public final class ActionsTreeUtil {
 
     ActionManager actionManager = ActionManager.getInstance();
     String groupId = actionManager.getId(actionGroup);
-    Group group = new Group(groupName, groupId, actionGroup.getTemplatePresentation().getIcon());
+    Group group = new Group(groupName, groupId, getTemplatePresentation(actionGroup).getIcon());
     List<AnAction> children = new ArrayList<>(Arrays.asList(getActions(actionGroup, actionManager)));
 
     for (ActionUrl actionUrl : actionUrls) {
@@ -293,8 +331,8 @@ public final class ActionsTreeUtil {
           }
           else if (actionUrl.getActionType() == ActionUrl.DELETED && children.size() > actionUrl.getAbsolutePosition()) {
             AnAction anAction = children.get(actionUrl.getAbsolutePosition());
-            String actionText = anAction.getTemplatePresentation().getText();
-            String componentActionText = componentAction.getTemplatePresentation().getText();
+            String actionText = getTemplatePresentation(anAction).getText();
+            String componentActionText = getTemplatePresentation(componentAction).getText();
             if (actionText == null && componentActionText != null && !componentActionText.isEmpty() ||
                 actionText != null && !actionText.equals(componentActionText)) {
               continue;
@@ -497,13 +535,10 @@ public final class ActionsTreeUtil {
             StringUtil.containsIgnoreCase(id, "Toolbar"));
   }
 
-  public static String getTextToCompare(String id) {
-    AnAction action = ActionManager.getInstance().getActionOrStub(id);
-    if (action == null) {
-      return id;
-    }
-    String text = action.getTemplatePresentation().getText();
-    return text != null ? text : id;
+  public static String getTextToCompare(@NotNull String id) {
+    Presentation presentation = getTemplatePresentation(id, null);
+    String text = presentation == null ? null : presentation.getText();
+    return text == null ? id : text;
   }
 
   private static void filterOtherActionsGroup(Set<String> actions) {
@@ -608,8 +643,9 @@ public final class ActionsTreeUtil {
     return action -> {
       if (action == null) return false;
 
-      if (condition.test(action.getTemplatePresentation().getText())) return true;
-      if (condition.test(action.getTemplatePresentation().getDescription())) return true;
+      Presentation presentation = getTemplatePresentation(action);
+      if (condition.test(presentation.getText())) return true;
+      if (condition.test(presentation.getDescription())) return true;
 
       for (Supplier<String> synonym : action.getSynonyms()) {
         if (condition.test(synonym.get())) return true;
@@ -669,14 +705,15 @@ public final class ActionsTreeUtil {
                                Condition<? super AnAction> filtered, boolean forceNonPopup, boolean skipUnnamedGroups) {
     if (action instanceof ActionGroup) {
       if (forceNonPopup || skipUnnamedGroups) {
-        String text = action.getTemplatePresentation().getText();
+        Presentation presentation = getTemplatePresentation(action);
+        String text = presentation.getText();
         boolean skip = forceNonPopup || StringUtil.isEmpty(text);
         KeymapGroup tgtGroup;
         if (skip) {
           tgtGroup = group;
         }
         else {
-          tgtGroup = new Group(text, actionManager.getId(action), action.getTemplatePresentation().getIcon());
+          tgtGroup = new Group(text, actionManager.getId(action), presentation.getIcon());
           group.addGroup(tgtGroup);
         }
         AnAction[] actions = getActions((ActionGroup)action, actionManager);

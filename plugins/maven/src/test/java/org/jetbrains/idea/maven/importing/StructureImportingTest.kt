@@ -944,7 +944,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjects(listOf(projectPom), false, "profile-test")
+    doImportProjectsAsync(listOf(projectPom), false, "profile-test")
   }
 
   @Test
@@ -1034,7 +1034,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
 
     val disabledProfiles = listOf("one")
-    doImportProjects(listOf(projectPom), true, disabledProfiles)
+    doImportProjectsAsync(listOf(projectPom), true, disabledProfiles)
     assertModules("project-two")
   }
 }

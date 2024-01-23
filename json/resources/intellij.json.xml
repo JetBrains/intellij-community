@@ -116,7 +116,6 @@
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
-    <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration"/>
     <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema"
                          bundle="messages.JsonBundle"
                          key="configurable.JsonSchemaMappingsConfigurable.display.name"

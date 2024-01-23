@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
-object ConversionsRunner {
+internal object ConversionsRunner {
     private fun createConversions(context: NewJ2kConverterContext) = listOf(
         ParenthesizeBitwiseOperationConversion(context),
         ParenthesizeMultilineBinaryExpressionConversion(context),

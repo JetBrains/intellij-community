@@ -621,6 +621,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     return EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically
   }
 
+  override fun isStickyLinesShown(): Boolean {
+    return state.myIsStickyLinesShown && state.myIsStickyLinesShownForLanguage
+  }
+
+  override fun getStickyLinesLimit(): Int {
+    return state.myStickyLinesLimit
+  }
+
   @ApiStatus.Internal
   @ApiStatus.Experimental
   fun getState(): EditorSettingsState {

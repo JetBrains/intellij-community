@@ -57,6 +57,9 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, WARN_CRLF)
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutDetachedHead() }, WARN_DETACHED)
 
+    addBoolIfDiffers(set, settings, defaultSettings, { it.filterByActionInPopup() }, FILTER_BY_ACTION_IN_POPUP)
+    addBoolIfDiffers(set, settings, defaultSettings, { it.filterByRepositoryInPopup() }, FILTER_BY_REPOSITORY_IN_POPUP)
+
     val appSettings = GitVcsApplicationSettings.getInstance()
     val defaultAppSettings = GitVcsApplicationSettings()
 
@@ -160,7 +163,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     }
   }
 
-  private val GROUP = EventLogGroup("git.configuration", 15)
+  private val GROUP = EventLogGroup("git.configuration", 16)
 
   private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
   private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -217,6 +220,9 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private val MAX_LOCAL_BRANCHES = EventFields.RoundedInt("max_local_branches")
   private val SHOW_RECENT_BRANCHES = GROUP.registerVarargEvent("showRecentBranches", EventFields.Enabled, MAX_LOCAL_BRANCHES)
+
+  private val FILTER_BY_ACTION_IN_POPUP = GROUP.registerVarargEvent("filterByActionInPopup", EventFields.Enabled)
+  private val FILTER_BY_REPOSITORY_IN_POPUP = GROUP.registerVarargEvent("filterByRepositoryInPopup", EventFields.Enabled)
 
   private fun getRemoteServerType(remote: GitRemote): String {
     val hosts = remote.urls.map(URLUtil::parseHostFromSshUrl).distinct()

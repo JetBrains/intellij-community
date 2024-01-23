@@ -48,16 +48,18 @@ internal class CodeVisionPassFactory : TextEditorHighlightingPassFactory, TextEd
 
     return CodeVisionPass(file, editor)
   }
+}
 
-  companion object {
-    fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
-      editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file))
-    }
+fun Editor.putCurrentModificationStamp(file: PsiFile) {
+  putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file))
+}
 
-    fun clearModificationStamp(editor: Editor) {
-      editor.putUserData(PSI_MODIFICATION_STAMP, null)
-    }
-  }
+fun Editor.clearModificationStamp() {
+  putUserData(PSI_MODIFICATION_STAMP, null)
+}
+
+fun Editor.getModificationStamp(): Long? {
+  return getUserData(PSI_MODIFICATION_STAMP)
 }
 
 private fun getCurrentModificationStamp(file: PsiFile): Long {

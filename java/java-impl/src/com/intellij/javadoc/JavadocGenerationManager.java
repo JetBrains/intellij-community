@@ -8,10 +8,12 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+@Service(Service.Level.PROJECT)
 @State(name = "JavadocGenerationManager")
 public final class JavadocGenerationManager implements PersistentStateComponent<JavadocConfiguration> {
   private JavadocConfiguration myConfiguration = new JavadocConfiguration();

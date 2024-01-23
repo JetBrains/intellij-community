@@ -79,6 +79,7 @@ class ActionUpdaterTest {
     val customizedText = "Customized!"
     val presentationFactory = PresentationFactory()
     val popupGroup: ActionGroup = object : DefaultActionGroup(newCanBePerformedGroup(true, true)) {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
       override fun update(e: AnActionEvent) {
         e.presentation.text = customizedText
       }
@@ -369,6 +370,7 @@ class ActionUpdaterTest {
 
   private fun newCanBePerformedGroup(visible: Boolean, enabled: Boolean): DefaultActionGroup =
     object : DefaultActionGroup() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
       override fun update(e: AnActionEvent) {
         e.presentation.isVisible = visible
         e.presentation.isEnabled = enabled

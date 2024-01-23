@@ -41,10 +41,5 @@ public class DependencyTraverser implements Iterable<ExternalDependency> {
       queue.addAll(dependency.getDependencies());
       return dependency;
     }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("remove");
-    }
   }
 }

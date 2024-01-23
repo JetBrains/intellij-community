@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" exported="" name="slf4j-api" level="project" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
   </component>
 </module>

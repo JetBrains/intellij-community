@@ -39,7 +39,8 @@ internal fun buildSettingsModel(): SettingsModel {
   return SettingsModel(descriptors)
 }
 
-internal class SettingsModel(val descriptors: List<ComponentDescriptor>) {
+
+internal class SettingsModel(val components: List<ComponentDescriptor>) {
 
   fun toJson(): String {
     val builder = GsonBuilder()
@@ -112,7 +113,7 @@ internal class SettingsModel(val descriptors: List<ComponentDescriptor>) {
 
     })
     val gson = builder.create()
-    return gson.toJson(descriptors)
+    return gson.toJson(this)
   }
 
   private fun findStorage(state: State): Storage? {

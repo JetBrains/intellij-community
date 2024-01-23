@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.query
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -43,7 +43,9 @@ public fun <T, K> CollectionQuery<T>.map(mapping: (T) -> K): CollectionQuery<K> 
   // The map function can be represented using the flatMap.
   // This is probably less efficient, but it will reduce the amount of code to implement for now.
   // The question of performance can be reviewed later.
-  return this.flatMap { item, _ -> setOf(mapping(item)) }
+  return CollectionQuery.MapTo(this.queryId, this) { data, _ ->
+    mapping(data)
+  }
 }
 
 public inline fun <reified T, K> CollectionQuery<T>.mapWithSnapshot(noinline mapping: (T, ImmutableEntityStorage) -> K): CollectionQuery<K> {

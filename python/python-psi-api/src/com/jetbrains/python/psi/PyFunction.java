@@ -55,12 +55,6 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
   }
 
   @Override
-  @NotNull
-  default PyParameterList getParameterList() {
-    return (PyParameterList)PyAstFunction.super.getParameterList();
-  }
-
-  @Override
   @Nullable
   default PyFunction asMethod() {
     return (PyFunction)PyAstFunction.super.asMethod();
@@ -70,24 +64,6 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
   @Nullable
   default PyStringLiteralExpression getDocStringExpression() {
     return (PyStringLiteralExpression)PyAstFunction.super.getDocStringExpression();
-  }
-
-  @Override
-  @Nullable
-  default PyTypeParameterList getTypeParameterList() {
-    return (PyTypeParameterList)PyAstFunction.super.getTypeParameterList();
-  }
-
-  @Override
-  @Nullable
-  default PyDecoratorList getDecoratorList() {
-    return (PyDecoratorList)PyAstFunction.super.getDecoratorList();
-  }
-
-  @Override
-  @Nullable
-  default PyAnnotation getAnnotation() {
-    return (PyAnnotation)PyAstFunction.super.getAnnotation();
   }
 
   @Override

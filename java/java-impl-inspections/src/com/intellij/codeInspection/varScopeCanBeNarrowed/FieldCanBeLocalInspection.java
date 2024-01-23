@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -494,8 +494,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
       if (newVariable != null) {
         final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(newVariable.getInitializer());
         if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
-          List<PsiReferenceExpression>
-            references = VariableAccessUtils.getVariableReferences(newVariable, PsiUtil.getVariableCodeBlock(newVariable, null));
+          List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(newVariable);
           for (PsiJavaCodeReferenceElement reference : references) {
             CommonJavaInlineUtil.getInstance().inlineVariable(newVariable, initializer, reference, null);
           }

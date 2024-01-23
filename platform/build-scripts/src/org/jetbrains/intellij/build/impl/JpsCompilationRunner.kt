@@ -23,7 +23,6 @@ import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil
 import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
-import org.jetbrains.jps.incremental.storage.ProjectStamps
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement
@@ -60,7 +59,6 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
 
       // Required for JPS Portable Caches
       setSystemPropertyIfUndefined(JavaBackwardReferenceIndexWriter.PROP_KEY, "true")
-      setSystemPropertyIfUndefined(ProjectStamps.PORTABLE_CACHES_PROPERTY, "true")
     }
   }
 

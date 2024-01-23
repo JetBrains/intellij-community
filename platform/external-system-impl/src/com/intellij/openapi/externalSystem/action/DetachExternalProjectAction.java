@@ -44,11 +44,6 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
-
-  @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     return e.getData(ExternalSystemDataKeys.SELECTED_PROJECT_NODE) != null;

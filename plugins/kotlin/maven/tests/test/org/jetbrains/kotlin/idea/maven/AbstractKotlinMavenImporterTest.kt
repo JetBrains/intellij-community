@@ -27,7 +27,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenImportListener
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -97,9 +96,6 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
                 override fun artifactDownloadingFinished() {
                     artifactDownloadingFinished.incrementAndGet()
-                }
-
-                override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
                 }
             })
     }

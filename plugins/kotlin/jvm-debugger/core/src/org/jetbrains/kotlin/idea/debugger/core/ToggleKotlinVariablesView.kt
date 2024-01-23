@@ -6,11 +6,13 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 
+@Service
 class ToggleKotlinVariablesState {
     companion object {
         private const val KOTLIN_VARIABLE_VIEW = "debugger.kotlin.variable.view"

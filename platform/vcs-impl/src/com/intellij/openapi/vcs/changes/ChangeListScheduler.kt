@@ -2,10 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -16,9 +13,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-
-private val LOG: Logger
-  get() = logger<ChangeListManagerImpl>()
 
 internal class ChangeListScheduler(private val coroutineScope: CoroutineScope) {
   // @TestOnly
@@ -31,22 +25,18 @@ internal class ChangeListScheduler(private val coroutineScope: CoroutineScope) {
   fun schedule(command: Runnable, delay: Long, unit: TimeUnit) {
     val future = coroutineScope.launch(limitedDispatcher) {
       delay(unit.toMillis(delay))
-      runCatching {
-        coroutineToIndicator {
-          command.run()
-        }
-      }.getOrLogException(LOG)
+      blockingContext {
+        command.run()
+      }
     }
     addFuture(future)
   }
 
   fun submit(command: Runnable) {
     val future = coroutineScope.launch(limitedDispatcher) {
-      runCatching {
-        coroutineToIndicator {
-          command.run()
-        }
-      }.getOrLogException(LOG)
+      blockingContext {
+        command.run()
+      }
     }
     addFuture(future)
   }

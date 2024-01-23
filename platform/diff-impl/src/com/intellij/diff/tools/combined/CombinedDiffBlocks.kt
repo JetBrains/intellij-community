@@ -2,6 +2,7 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -29,6 +30,11 @@ import java.awt.Dimension
 import java.awt.FlowLayout
 import javax.swing.Icon
 import javax.swing.JComponent
+
+class CombinedBlockProducer(
+  val id: CombinedBlockId,
+  val producer: DiffRequestProducer
+)
 
 interface CombinedBlockId
 
@@ -156,10 +162,10 @@ internal class CombinedSimpleDiffBlock(project: Project,
 
   override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
 
-  override val stickyHeader: JComponent  = CombinedDiffRoundedPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC, true)
-  .apply {
-    add(CombinedSimpleDiffHeader(project, id, false), BorderLayout.CENTER)
-  }
+  override val stickyHeader: JComponent = CombinedDiffRoundedPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC, true)
+    .apply {
+      add(CombinedSimpleDiffHeader(project, id, false), BorderLayout.CENTER)
+    }
 
   override val body: Wrapper = Wrapper(initialContent)
 

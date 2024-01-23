@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType
 import java.math.BigInteger
 import java.util.*
 
-class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKLiteralExpression) return recurse(element)
         return try {

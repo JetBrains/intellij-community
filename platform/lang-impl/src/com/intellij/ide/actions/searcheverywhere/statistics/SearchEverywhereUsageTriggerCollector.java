@@ -42,7 +42,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                             "third.party", "Vcs.Git");
   public static final StringEventField CURRENT_TAB_FIELD = EventFields.String("currentTabId", ourTabs);
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 10);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 11);
 
   public static final EventId2<String, AnActionEvent> DIALOG_OPEN = GROUP.registerEvent("dialogOpen",
                                                                                         CONTRIBUTOR_ID_FIELD,
@@ -73,9 +73,12 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final LongEventField TIME_TO_FIRST_RESULT_LAST_QUERY = EventFields.Long("timeToFirstResultLastQuery");
   public static final StringEventField LAST_TAB_ID = EventFields.String("lastTabId", ourTabs);
   public static final LongEventField DURATION_MS = EventFields.Long("durationMs");
+  public static final IntEventField ML_EXPERIMENT_VERSION = EventFields.Int("mlExperimentVersion");
+  public static final IntEventField ML_EXPERIMENT_GROUP = EventFields.Int("mlExperimentGroup");
   public static final VarargEventId SESSION_FINISHED = GROUP.registerVarargEvent(
     "sessionFinished", TYPED_NAVIGATION_KEYS, TYPED_SYMBOL_KEYS,
-    TIME_TO_FIRST_RESULT, FIRST_TAB_ID, TIME_TO_FIRST_RESULT_LAST_QUERY, LAST_TAB_ID, DURATION_MS
+    TIME_TO_FIRST_RESULT, FIRST_TAB_ID, TIME_TO_FIRST_RESULT_LAST_QUERY, LAST_TAB_ID, DURATION_MS,
+    ML_EXPERIMENT_GROUP, ML_EXPERIMENT_VERSION
   );
 
   @Override

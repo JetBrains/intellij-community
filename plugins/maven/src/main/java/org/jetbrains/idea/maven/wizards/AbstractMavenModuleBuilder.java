@@ -141,11 +141,6 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   }
 
   @Override
-  public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
-    return super.commitModule(project, model);
-  }
-
-  @Override
   public @NonNls String getBuilderId() {
     return getClass().getName();
   }

@@ -82,6 +82,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_FOLDING_ENDINGS_SHOWN = false; //is not used in old UI
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
+    public boolean SHOW_STICKY_LINES = false;
+    public int STICKY_LINES_LIMIT = 5;
     public boolean ENABLE_RENDERED_DOC = false;
     public boolean SHOW_INTENTION_PREVIEW = true;
     public boolean USE_EDITOR_FONT_IN_INLAYS = false;
@@ -128,8 +130,15 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     private final Map<String, Boolean> mapLanguageBreadcrumbs = new HashMap<>();
 
+    private final Map<String, Boolean> mapLanguageStickyLines = new HashMap<>();
+
     public Map<String, Boolean> getLanguageBreadcrumbsMap() {
       return mapLanguageBreadcrumbs;
+    }
+
+    @SuppressWarnings("unused")
+    public Map<String, Boolean> getLanguageStickyLines() {
+      return mapLanguageStickyLines;
     }
 
     public OptionSet() {
@@ -147,6 +156,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       if (this.mapLanguageBreadcrumbs != map) {
         this.mapLanguageBreadcrumbs.clear();
         this.mapLanguageBreadcrumbs.putAll(map);
+      }
+    }
+
+    @SuppressWarnings("unused")
+    public void setLanguageStickyLines(Map<String, Boolean> map) {
+      if (this.mapLanguageStickyLines != map) {
+        this.mapLanguageStickyLines.clear();
+        this.mapLanguageStickyLines.putAll(map);
       }
     }
   }
@@ -420,6 +437,47 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       myPropertyChangeSupport.firePropertyChange(PROP_BREADCRUMBS_PER_LANGUAGE, visible, (Boolean)value);
     }
     return newValue;
+  }
+
+  public boolean isStickyLinesShown() {
+    return myOptions.SHOW_STICKY_LINES;
+  }
+
+  public boolean setStickyLinesShown(boolean value) {
+    boolean old = myOptions.SHOW_STICKY_LINES;
+    if (old == value) return false;
+    myOptions.SHOW_STICKY_LINES = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_STICKY_LINES, old, value);
+    return true;
+  }
+
+  public boolean isStickyLinesShownFor(String languageID) {
+    Boolean visible = myOptions.mapLanguageStickyLines.get(languageID);
+    if (visible == null) {
+      // enabled for all languages by default
+      return true;
+    }
+    return visible;
+  }
+
+  public boolean setStickyLinesShownFor(String languageID, boolean value) {
+    Boolean visible = myOptions.mapLanguageStickyLines.put(languageID, value);
+    boolean newValue = (visible == null || visible) != value;
+    if (newValue) {
+      myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_STICKY_LINES_PER_LANGUAGE, visible, (Boolean)value);
+    }
+    return newValue;
+  }
+
+  public int getStickyLineLimit() {
+    return myOptions.STICKY_LINES_LIMIT;
+  }
+
+  public void setStickyLineLimit(int limit) {
+    int old = myOptions.STICKY_LINES_LIMIT;
+    if (old == limit) return;
+    myOptions.STICKY_LINES_LIMIT = limit;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_STICKY_LINES_LIMIT, old, limit);
   }
 
   public boolean isDocCommentRenderingEnabled() {
@@ -1046,6 +1104,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_IS_FOLDING_ENDINGS_SHOWN = "isFoldingEndingsShown";
     public static final @NonNls String PROP_SHOW_BREADCRUMBS_ABOVE = "showBreadcrumbsAbove";
     public static final @NonNls String PROP_SHOW_BREADCRUMBS = "showBreadcrumbs";
+    public static final @NonNls String PROP_SHOW_STICKY_LINES = "showStickyLines";
+    public static final @NonNls String PROP_SHOW_STICKY_LINES_PER_LANGUAGE = "showStickyLinesPerLanguage";
+    public static final @NonNls String PROP_STICKY_LINES_LIMIT = "stickyLinesLimit";
     // inconsistent name for backward compatibility because such constants are inlined at compilation stage
     public static final @NonNls String PROP_ENABLE_RENDERED_DOC = "DocCommentRendering";
     public static final @NonNls String PROP_SHOW_INTENTION_PREVIEW = "showIntentionPreview";

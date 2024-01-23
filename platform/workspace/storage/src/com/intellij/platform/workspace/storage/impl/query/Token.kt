@@ -9,13 +9,6 @@ import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import java.util.*
 
-/**
- * Token is propagated in caches when entity storage changes.
- * The token contains the change itself. It's either entity id [MatchWithEntityId] or data [MatchWithData].
- * [operation] defines if this is adding information or removal.
- */
-internal data class Token(val operation: Operation, val match: Match)
-
 internal sealed interface Match {
   /**
    * Check if this match still actual. For case of [MatchWithEntityId] it checks if EntityId still presented in the snapshot
@@ -86,18 +79,18 @@ public enum class Operation {
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal fun Token.getData(snapshot: ImmutableEntityStorage): Any? {
-  return when (this.match) {
-    is MatchWithEntityId -> (snapshot as ImmutableEntityStorageImpl).entityDataByIdOrDie(this.match.entityId).createEntity(snapshot)
-    is MatchWithData -> this.match.data
+internal fun Match.getData(snapshot: ImmutableEntityStorage): Any? {
+  return when (this) {
+    is MatchWithEntityId -> (snapshot as ImmutableEntityStorageImpl).entityDataByIdOrDie(this.entityId).createEntity(snapshot)
+    is MatchWithData -> this.data
   }
 }
 
-internal fun Any?.toToken(operation: Operation, basedOn: Match?): Token {
+internal fun Any?.toMatch(basedOn: Match?): Match {
   return if (this is WorkspaceEntityBase) {
-    Token(operation, MatchWithEntityId(this.id, basedOn))
+    MatchWithEntityId(this.id, basedOn)
   }
   else {
-    Token(operation, MatchWithData(this, basedOn))
+    MatchWithData(this, basedOn)
   }
 }

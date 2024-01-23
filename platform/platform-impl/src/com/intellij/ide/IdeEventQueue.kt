@@ -686,7 +686,8 @@ class IdeEventQueue private constructor() : EventQueue() {
       val me = if (e is MouseEvent) e else null
       val ke = if (e is KeyEvent) e else null
       val consumed = ke == null || ke.isConsumed
-      if (me != null && (me.isPopupTrigger || e.id == MouseEvent.MOUSE_PRESSED) || ke != null && ke.keyCode == KeyEvent.VK_CONTEXT_MENU) {
+      if (me != null && (me.isPopupTrigger || e.id == MouseEvent.MOUSE_PRESSED) ||
+          ke != null /*&& ke.keyCode == KeyEvent.VK_CONTEXT_MENU*/) {
         popupTriggerTime = System.nanoTime()
       }
       val source = e.source

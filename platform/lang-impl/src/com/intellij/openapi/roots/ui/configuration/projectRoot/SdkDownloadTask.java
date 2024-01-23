@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Consumer;
@@ -25,6 +26,12 @@ public interface SdkDownloadTask {
    */
   @NotNull
   String getSuggestedSdkName();
+
+  /**
+   * @return proper distribution name if known.
+   */
+  @Nullable
+  default String getProductName() { return null; }
 
   /**
    * @return SDK is expected to have a system dependent home directory.

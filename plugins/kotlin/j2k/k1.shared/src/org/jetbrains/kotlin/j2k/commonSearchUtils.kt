@@ -5,9 +5,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun PsiVariable.hasWriteAccesses(searcher: ReferenceSearcher, scope: PsiElement?): Boolean =
     if (scope != null) searcher.findVariableUsages(this, scope).any { PsiUtil.isAccessedForWriting(it) } else false
 
+@ApiStatus.Internal
 fun ReferenceSearcher.findVariableUsages(variable: PsiVariable, scope: PsiElement): Collection<PsiReferenceExpression> =
     findLocalUsages(variable, scope).filterIsInstance<PsiReferenceExpression>()

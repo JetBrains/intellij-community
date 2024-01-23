@@ -21,6 +21,7 @@ import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -297,9 +298,8 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       PsiType type = dumbService.computeWithAlternativeResolveEnabled(
         () -> AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
       PsiParameter parm = factory.createParameter(parmName, type, aClass);
-      if (!DumbService.isDumb(project)) {
-        NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, parm);
-      }
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+        () -> NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, parm));
 
       if (constructor.isVarArgs()) {
         final PsiParameterList parameterList = constructor.getParameterList();

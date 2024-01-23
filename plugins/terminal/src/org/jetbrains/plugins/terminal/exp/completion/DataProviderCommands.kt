@@ -15,7 +15,7 @@ internal class GetFilesCommand(path: String) : DataProviderCommand<List<String>>
   override val defaultResult: List<String> = emptyList()
 
   override fun isAvailable(session: BlockTerminalSession): Boolean {
-    return session.isBashOrZsh()
+    return session.isBashZshPwsh()
   }
 
   override fun parseResult(result: String): List<String> {
@@ -29,7 +29,7 @@ internal class GetEnvironmentCommand(private val session: BlockTerminalSession) 
   override val defaultResult: ShellEnvironment? = null
 
   override fun isAvailable(session: BlockTerminalSession): Boolean {
-    return session.isBashOrZsh()
+    return session.isBashZshPwsh()
   }
 
   override fun parseResult(result: String): ShellEnvironment? {
@@ -41,11 +41,11 @@ internal class GetEnvironmentCommand(private val session: BlockTerminalSession) 
       return null
     }
     return ShellEnvironment(
-      envs = rawEnv.envs.split("\n"),
-      keywords = rawEnv.keywords.split("\n"),
-      builtins = rawEnv.builtins.split("\n"),
-      functions = rawEnv.functions.split("\n"),
-      commands = rawEnv.commands.split("\n"),
+      envs = rawEnv.envs.splitIfNotEmpty("\n"),
+      keywords = rawEnv.keywords.splitIfNotEmpty("\n"),
+      builtins = rawEnv.builtins.splitIfNotEmpty("\n"),
+      functions = rawEnv.functions.splitIfNotEmpty("\n"),
+      commands = rawEnv.commands.splitIfNotEmpty("\n"),
       aliases = parseAliases(rawEnv.aliases)
     )
   }
@@ -60,6 +60,10 @@ internal class GetEnvironmentCommand(private val session: BlockTerminalSession) 
       LOG.error("Failed to parse aliases: $text")
       emptyMap()
     }
+  }
+
+  private fun String.splitIfNotEmpty(delimiter: String): List<String> {
+    return if (isEmpty()) emptyList() else split(delimiter)
   }
 
   @Serializable
@@ -77,7 +81,8 @@ internal class GetEnvironmentCommand(private val session: BlockTerminalSession) 
   }
 }
 
-private fun BlockTerminalSession.isBashOrZsh(): Boolean {
+private fun BlockTerminalSession.isBashZshPwsh(): Boolean {
   return shellIntegration.shellType == ShellType.ZSH
          || shellIntegration.shellType == ShellType.BASH
+         || shellIntegration.shellType == ShellType.POWERSHELL
 }

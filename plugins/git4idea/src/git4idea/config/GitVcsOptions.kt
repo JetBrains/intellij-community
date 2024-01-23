@@ -50,6 +50,11 @@ class GitVcsOptions : BaseState() {
   @get:OptionTag("SHOW_RECENT_BRANCHES")
   var showRecentBranches by property(true)
 
+  @get:OptionTag("FILTER_BY_ACTION_IN_POPUP")
+  var filterByActionInPopup by property(true)
+  @get:OptionTag("FILTER_BY_REPOSITORY_IN_POPUP")
+  var filterByRepositoryInPopup by property(true)
+
   @get:OptionTag("WARN_ABOUT_CRLF")
   var warnAboutCrlf by property(true)
   @get:OptionTag("WARN_ABOUT_DETACHED_HEAD")

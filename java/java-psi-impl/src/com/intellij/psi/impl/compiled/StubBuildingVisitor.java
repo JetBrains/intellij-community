@@ -280,7 +280,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
-    if (isSet(access, Opcodes.ACC_SYNTHETIC)) return;
+    if (isSet(access, Opcodes.ACC_SYNTHETIC) && !name.startsWith(outerName + "$Trait$")) return;
     String jvmClassName = innerName;
 
     boolean isAnonymousInner = innerName == null;
@@ -300,6 +300,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         outerName = name.substring(0, $index);
         jvmClassName = name.substring($index + 1);
       }
+    } else if (name.startsWith(outerName+"$")) {
+      jvmClassName = name.substring(outerName.length() + 1);
     }
 
     if (myParent instanceof PsiFileStub && myInternalName.equals(name)) {

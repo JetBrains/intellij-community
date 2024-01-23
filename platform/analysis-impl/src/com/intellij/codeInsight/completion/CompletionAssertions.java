@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -33,7 +33,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 final class CompletionAssertions {
-
   static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
     Document document = editor.getDocument();
     int docLength = document.getTextLength();
@@ -167,7 +166,7 @@ final class CompletionAssertions {
            ", physical=" + file.isPhysical();
   }
 
-  static class WatchingInsertionContext extends InsertionContext implements Disposable {
+  static final class WatchingInsertionContext extends InsertionContext implements Disposable {
     private RangeMarkerEx tailWatcher;
     Throwable invalidateTrace;
     DocumentEvent killer;

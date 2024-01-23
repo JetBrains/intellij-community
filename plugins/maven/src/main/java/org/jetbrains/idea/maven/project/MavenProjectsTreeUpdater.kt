@@ -92,7 +92,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     return readAction {
       val pomTimestamp = getFileTimestamp(mavenProject.file)
       val parent = tree.findParent(mavenProject)
-      val parentLastReadStamp = parent?.lastReadStamp ?: -1
+      val parentTimestamp = getFileTimestamp(parent?.file)
       val profilesXmlFile = mavenProject.profilesXmlFile
       val profilesTimestamp = getFileTimestamp(profilesXmlFile)
       val jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH)
@@ -104,7 +104,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
 
       val profilesHashCode = explicitProfiles.hashCode()
       MavenProjectTimestamp(pomTimestamp,
-                            parentLastReadStamp,
+                            parentTimestamp,
                             profilesTimestamp,
                             userSettingsTimestamp,
                             globalSettingsTimestamp,

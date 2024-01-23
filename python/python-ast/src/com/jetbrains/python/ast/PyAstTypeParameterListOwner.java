@@ -13,7 +13,5 @@ import org.jetbrains.annotations.Nullable;
 public interface PyAstTypeParameterListOwner extends PsiElement {
 
   @Nullable
-  default PyAstTypeParameterList getTypeParameterList() {
-    return null;
-  }
+  PyAstTypeParameterList getTypeParameterList();
 }

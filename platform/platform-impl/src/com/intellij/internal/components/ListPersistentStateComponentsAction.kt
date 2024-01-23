@@ -86,16 +86,16 @@ internal class ListPersistentStateComponentsAction : AnAction() {
 
       private val model = buildSettingsModel()
 
-      override fun getRowCount(): Int = model.descriptors.size
+      override fun getRowCount(): Int = model.components.size
 
       override fun getColumnCount(): Int = 4
 
       override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
         return when (columnIndex) {
-          0 -> model.descriptors[rowIndex].name
-          1 -> model.descriptors[rowIndex].aClass.name
-          2 -> model.descriptors[rowIndex].getRoamingTypeString()
-          3 -> model.descriptors[rowIndex].getCategoryString()
+          0 -> model.components[rowIndex].name
+          1 -> model.components[rowIndex].aClass.name
+          2 -> model.components[rowIndex].getRoamingTypeString()
+          3 -> model.components[rowIndex].getCategoryString()
           else -> ""
         }
       }

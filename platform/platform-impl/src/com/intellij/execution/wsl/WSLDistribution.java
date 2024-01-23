@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -236,7 +236,7 @@ public class WSLDistribution implements AbstractWslDistribution {
         ptyOptions = null;
       }
       commandLine.setProcessCreator((processBuilder) -> {
-        return WslIjentJavaUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
+        return WslIjentUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
       });
     }
     else {
@@ -515,7 +515,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   public @Nullable Map<String, String> getEnvironment() {
     if (WslIjentManager.getInstance().isIjentAvailable()) {
-      return WslIjentJavaUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
+      return WslIjentUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
     }
     try {
       ProcessOutput processOutput = WslExecution.executeInShellAndGetCommandOnlyStdout(
@@ -791,7 +791,7 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
     if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
-      Map<String, String> map = WslIjentJavaUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
+      Map<String, String> map = WslIjentUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
       return map.get(name);
     }
     WSLCommandLineOptions options = new WSLCommandLineOptions()

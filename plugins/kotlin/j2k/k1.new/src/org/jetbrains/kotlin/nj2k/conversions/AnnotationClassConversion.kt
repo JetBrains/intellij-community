@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.nj2k.types.isArrayType
 import org.jetbrains.kotlin.nj2k.types.replaceJavaClassWithKotlinClassType
 import org.jetbrains.kotlin.nj2k.types.updateNullabilityRecursively
 
-class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClass) return recurse(element)
         if (element.classKind != JKClass.ClassKind.ANNOTATION) return recurse(element)

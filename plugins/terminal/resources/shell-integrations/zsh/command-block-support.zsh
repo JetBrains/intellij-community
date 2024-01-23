@@ -41,11 +41,11 @@ __jetbrains_intellij_get_directory_files() {
 __jetbrains_intellij_get_environment() {
   __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
   builtin local request_id="$1"
-  builtin local env_vars="$(builtin print -l -- ${(ko)parameters[(R)*export*]})"
-  builtin local keyword_names="$(builtin print -l -- ${(ko)reswords})"
-  builtin local builtin_names="$(builtin print -l -- ${(ko)builtins})"
-  builtin local function_names="$(builtin print -l -- ${(ko)functions})"
-  builtin local command_names="$(builtin print -l -- ${(ko)commands})"
+  builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)parameters[(R)*export*]})")"
+  builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)reswords})")"
+  builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)builtins})")"
+  builtin local function_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)functions})")"
+  builtin local command_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)commands})")"
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
 
   builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\", \"aliases\": \"$aliases_mapping\"}"

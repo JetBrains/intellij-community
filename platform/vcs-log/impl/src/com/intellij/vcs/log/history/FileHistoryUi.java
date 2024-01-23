@@ -165,11 +165,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myUiProperties;
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-  }
-
   private class MyPropertiesChangeListener implements VcsLogUiProperties.PropertiesChangeListener {
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {

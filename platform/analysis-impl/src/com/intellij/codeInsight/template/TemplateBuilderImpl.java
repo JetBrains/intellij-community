@@ -318,18 +318,6 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   @Override
-  public void run() {
-    final Project project = myFile.getProject();
-    VirtualFile file = myFile.getVirtualFile();
-    assert file != null: "Virtual file is null for " + myFile;
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-
-    assert editor != null : "Editor is null";
-    run(editor, false);
-  }
-
-  @Override
   public void runNonInteractively(final boolean inline) {
     Template template = new TemplateImpl("", "");
     if (inline) {

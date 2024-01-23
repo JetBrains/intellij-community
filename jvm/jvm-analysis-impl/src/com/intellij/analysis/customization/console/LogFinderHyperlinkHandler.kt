@@ -19,7 +19,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
-import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.*
 
 internal class LogFinderHyperlinkHandler(private val probableClassName: ProbableClassName) : HyperlinkInfoFactory.HyperlinkHandler {
@@ -91,7 +90,7 @@ internal class LogFinderHyperlinkHandler(private val probableClassName: Probable
     return StringUtil.shortenTextWithEllipsis(container, 40, 10)
   }
 
-  @Nls
+  @NlsSafe
   private fun getText(element: PsiElement): String {
     val text = element.text
     val document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.containingFile) ?: return text

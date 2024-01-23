@@ -14,6 +14,7 @@ import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
  * and `kotlin.build:java:<version>`. Kotlin project may supplement the storage.xml with coordinates of all
  * libraries containing IntelliJ classes.
  */
+@Service(Service.Level.PROJECT)
 @State(name = "libraries-with-intellij-classes", storages = [Storage("libraries-with-intellij-classes.xml")])
 internal class LibrariesWithIntellijClassesSetting : SimplePersistentStateComponent<LibrariesWithIntellijClassesState>(createDefaultState()) {
   companion object {

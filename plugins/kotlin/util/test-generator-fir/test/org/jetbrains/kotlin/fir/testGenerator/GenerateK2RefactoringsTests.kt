@@ -6,7 +6,9 @@ import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTe
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
+import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     testGroup("refactorings/kotlin.refactorings.tests.k2", testDataPath = "../../idea/tests/testData") {
@@ -33,6 +35,11 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava",  testMethodName = "doValueParameterTestWithJava")
             model("refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaParameterTest")
         }
+
+        testClass<AbstractFirMultiModuleSafeDeleteTest> {
+            model("refactoring/safeDeleteMultiModule", pattern = TEST, flatten = true)
+        }
+
         testClass<AbstractK2BindToElementTest> {
             model("refactoring/bindToElement")
         }

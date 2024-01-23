@@ -50,7 +50,7 @@ class TerminalOutputView(
 
   init {
     editor = createEditor(settings)
-    controller = TerminalOutputController(editor, session, settings)
+    controller = TerminalOutputController(project, editor, session, settings)
     component = TerminalOutputPanel()
 
     controller.addDocumentListener(object : DocumentListener {

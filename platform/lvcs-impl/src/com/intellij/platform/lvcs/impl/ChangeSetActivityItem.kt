@@ -4,6 +4,7 @@ package com.intellij.platform.lvcs.impl
 import com.intellij.history.core.Paths
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.integration.LocalHistoryBundle
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 
 abstract class ChangeSetActivityItem(changeSet: ChangeSet) : ActivityItem {
@@ -20,16 +21,22 @@ abstract class ChangeSetActivityItem(changeSet: ChangeSet) : ActivityItem {
   override fun hashCode(): Int = id.hashCode()
 }
 
-internal class ChangeActivityItem(changeSet: ChangeSet) : ChangeSetActivityItem(changeSet) {
-  override val name = changeSet.name ?: changeSet.presentableNameFromPaths()
+internal class ChangeActivityItem(changeSet: ChangeSet, scope: ActivityScope) : ChangeSetActivityItem(changeSet) {
+  override val name = getName(changeSet, scope)
+
+  private fun getName(changeSet: ChangeSet, scope: ActivityScope): @NlsContexts.Label String? {
+    if (changeSet.name != null) return changeSet.name
+    if (scope is ActivityScope.SingleFile || scope is ActivityScope.Selection) return LocalHistoryBundle.message("activity.item.presentation")
+    return changeSet.presentableNameFromPaths()
+  }
 }
 
-private fun ChangeSet.presentableNameFromPaths(): String? {
+private fun ChangeSet.presentableNameFromPaths(): @NlsContexts.Label String? {
   val allPaths = affectedPaths
   if (allPaths.isEmpty()) return null
 
   val firstPathName = Paths.getNameOf(allPaths.first())
-  if (allPaths.size == 1) return firstPathName
+  if (allPaths.size == 1) return LocalHistoryBundle.message("activity.item.presentation.from.path", firstPathName)
   return LocalHistoryBundle.message("activity.item.presentation.from.paths", firstPathName, allPaths.size - 1)
 }
 
@@ -38,7 +45,7 @@ internal class LabelActivityItem(changeSet: ChangeSet) : ChangeSetActivityItem(c
   val color = changeSet.labelColor
 }
 
-fun ChangeSet.toActivityItem(): ActivityItem {
+fun ChangeSet.toActivityItem(scope: ActivityScope): ActivityItem {
   if (isLabelOnly) return LabelActivityItem(this)
-  return ChangeActivityItem(this)
+  return ChangeActivityItem(this, scope)
 }

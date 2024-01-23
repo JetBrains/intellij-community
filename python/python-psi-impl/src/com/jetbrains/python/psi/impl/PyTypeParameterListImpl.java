@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyTypeParameterList;
@@ -17,7 +18,7 @@ public class PyTypeParameterListImpl extends PyBaseElementImpl<PyTypeParameterLi
   }
 
   public PyTypeParameterListImpl(PyTypeParameterListStub stub) {
-    this(stub, PyElementTypes.PARAMETER_LIST);
+    this(stub, PyStubElementTypes.PARAMETER_LIST);
   }
 
   public PyTypeParameterListImpl(PyTypeParameterListStub stub, IStubElementType nodeType) {
@@ -33,6 +34,6 @@ public class PyTypeParameterListImpl extends PyBaseElementImpl<PyTypeParameterLi
   @Override
   @NotNull
   public List<PyTypeParameter> getTypeParameters() {
-    return List.of(getStubOrPsiChildren(PyElementTypes.TYPE_PARAMETER, new PyTypeParameter[0]));
+    return List.of(getStubOrPsiChildren(PyStubElementTypes.TYPE_PARAMETER, new PyTypeParameter[0]));
   }
 }

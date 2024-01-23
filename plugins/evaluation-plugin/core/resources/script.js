@@ -132,6 +132,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   addTriggerModelBlock(popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS:", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED:", "raw_filtered", popup, lookup)
+  addDiagnosticsBlock("ANALYZED SUGGESTIONS:", "analyzed_proposals", popup, lookup)
   addDiagnosticsBlock("ANALYZED FILTERED:", "analyzed_filtered", popup, lookup)
 }
 

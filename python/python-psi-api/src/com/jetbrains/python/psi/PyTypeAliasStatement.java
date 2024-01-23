@@ -27,10 +27,4 @@ public interface PyTypeAliasStatement extends PyAstTypeAliasStatement, PyStateme
    */
   @Nullable
   String getTypeExpressionText();
-
-  @Override
-  @Nullable
-  default PyTypeParameterList getTypeParameterList() {
-    return (PyTypeParameterList)PyAstTypeAliasStatement.super.getTypeParameterList();
-  }
 }

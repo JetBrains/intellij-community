@@ -16,15 +16,11 @@ import com.intellij.debugger.DebugException;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -39,6 +35,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -61,8 +58,8 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -148,14 +145,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     super.setUpProject();
     // treat listeners added there as not leaks
     EditorMouseHoverPopupManager.getInstance();
-  }
-
-  private static void typeInAlienEditor(@NotNull Editor alienEditor, char c) {
-    EditorActionManager.getInstance();
-    TypedAction action = TypedAction.getInstance();
-    DataContext dataContext = ((EditorEx)alienEditor).getDataContext();
-
-    action.actionPerformed(alienEditor, c, dataContext);
   }
 
   public void testWholeFileInspection() throws Exception {
@@ -545,6 +534,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
 
     AtomicReference<String> diagnosticText = new AtomicReference<>("1st run");
     AtomicInteger stallMs = new AtomicInteger();
+    // highlight fields, stall every other element
     LocalInspectionTool tool = new MyInspectionBase() {
       @NotNull
       @Override
@@ -553,7 +543,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
           @Override
           public void visitField(@NotNull PsiField field) {
             holder.registerProblem(field.getNameIdentifier(), diagnosticText.get());
-            super.visitField(field);
           }
 
           @Override
@@ -739,9 +728,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         // invoke later because we are checking this flag in EDT below, and
         // we do not want a race between contextFinishedCallback.accept(context); in inspection thread
         // and querying markup model in EDT
-        ApplicationManager.getApplication().invokeLater(() -> {
-          slowToolFinished.set(true);
-        });
+        ApplicationManager.getApplication().invokeLater(() -> slowToolFinished.set(true));
       }
       @NotNull
       @Override
@@ -828,7 +815,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
                           info -> !fastToolText.equals(info.getDescription()));
           if (found) {
             fail("Inspection must have removed its own obsolete highlights as soon as it's finished, but got:" +
-                 Arrays.toString(model.getAllHighlighters())+"; thread dump:\n"+ThreadDumper.dumpThreadsToString());
+                 StringUtil.join(model.getAllHighlighters(), Object::toString, "\n   ")+"; thread dump:\n"+ThreadDumper.dumpThreadsToString());
           }
         }
       }
@@ -887,5 +874,90 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     """);
 
     assertThrows(Exception.class, "MyPreciousException", () -> highlightErrors());
+  }
+
+  public void testInspectionMustRemoveItsObsoleteHighlightsImmediatelyAfterVisitingPSIElementTheSecondTimeAndFailingToGenerateTheSameWarningAgain() {
+    @Language("JAVA")
+    String text = """
+      class LQF {
+          // xxx
+          int f;<caret>
+      }""";
+    configureByText(JavaFileType.INSTANCE, text);
+    DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
+    SeverityRegistrar.getSeverityRegistrar(getProject()); //preload inspection profile
+
+    String fieldWarningText = "1st run";
+    AtomicBoolean fieldIdentifierVisited = new AtomicBoolean();
+    AtomicBoolean fieldHighlightsUpdated = new AtomicBoolean();
+    AtomicBoolean fieldToolMustWarn = new AtomicBoolean(true);
+    // highlight each field on visitField() if said so, stall on every other element
+    LocalInspectionTool fieldTool = new MyInspectionBase() {
+      @NotNull
+      @Override
+      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+        return new JavaElementVisitor() {
+          @Override
+          public void visitIdentifier(@NotNull PsiIdentifier identifier) {
+            if (identifier.getParent() instanceof PsiField) {
+              if (fieldToolMustWarn.get()) {
+                holder.registerProblem(identifier, fieldWarningText);
+              }
+              fieldIdentifierVisited.set(true);
+            }
+            super.visitIdentifier(identifier);
+          }
+
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            if (fieldIdentifierVisited.get()) {
+              // after visitIdentifier() has completed, before the next visit() method is called, the highlights must be updated
+              fieldHighlightsUpdated.set(true);
+            }
+          }
+        };
+      }
+    };
+
+    enableInspectionTools(fieldTool);
+
+    // inspections should produce their results
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertTrue(infos.toString(), ContainerUtil.exists(infos, i -> i.getDescription().equals(fieldWarningText)));
+    assertTrue(fieldIdentifierVisited.get());
+    assertTrue(fieldHighlightsUpdated.get());
+
+    fieldIdentifierVisited.set(false);
+    fieldHighlightsUpdated.set(false);
+    fieldToolMustWarn.set(false);
+    type("// another comment\nvoid anotherMethod(){}");
+    DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
+
+    long deadline = System.currentTimeMillis() + 10_000;
+    while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      if (System.currentTimeMillis() > deadline) {
+        fail("Too long waiting for daemon to start");
+      }
+    }
+    // now when the LIP restarted, we should observe the range highlighter for the inspection to disappear as soon as visitIdentifier() method is finished
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
+    while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
+      if (System.currentTimeMillis() > deadline) {
+        fail("Too long waiting for daemon to finish\n"+ThreadDumper.dumpThreadsToString());
+      }
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      if (fieldHighlightsUpdated.get()) {
+        boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),
+                        info -> !fieldWarningText.equals(info.getDescription()));
+        if (found) {
+          fail("Inspection must have its obsolete highlights removed as soon as its visitIdentifier() is finished, but got:" +
+               StringUtil.join(model.getAllHighlighters(), Object::toString, "\n   ") + "; thread dump:\n" + ThreadDumper.dumpThreadsToString());
+        }
+      }
+    }
+    assertTrue(fieldIdentifierVisited.get());
+    assertTrue(fieldHighlightsUpdated.get());
   }
 }

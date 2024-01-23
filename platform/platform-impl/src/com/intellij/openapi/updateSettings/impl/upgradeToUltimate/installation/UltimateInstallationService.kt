@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -36,9 +36,7 @@ import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.w
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.indeterminateStep
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.PlatformUtils.isIdeaCommunity
@@ -125,23 +123,31 @@ class UltimateInstallationService(
     return resp.statusCode() == 200
   }
 
-  private suspend fun tryToInstall(buildInfo: BuildInfo, pluginId: PluginId? = null, suggestedIde: SuggestedIde) {
+  private suspend fun tryToInstall(buildInfo: BuildInfo, pluginId: PluginId? = null, suggestedIde: SuggestedIde) = reportSequentialProgress { reporter ->
     if (installer == null) return
 
-    val downloadResult = runCatching { download(buildInfo, suggestedIde, pluginId) }.getOrNullLogged()
+    val downloadResult = runCatching {
+      reporter.nextStep(endFraction = 100, IdeBundle.message("plugins.advertiser.try.ultimate.download")) {
+        download(buildInfo, suggestedIde, pluginId)
+      }
+    }.getOrNullLogged()
     if (downloadResult == null) {
       showProcessErrorDialog("Download", pluginId, suggestedIde)
       return
     }
 
-    val installationResult = runCatching { installIde(downloadResult, pluginId) }.getOrNullLogged()
+    val installationResult = runCatching {
+      reporter.indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.install")) {
+        installIde(downloadResult, pluginId)
+      }
+    }.getOrNullLogged()
     if (installationResult == null) {
       showProcessErrorDialog("Install", pluginId, suggestedIde)
       return
     }
 
     val startResult = runCatching {
-      indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.opening", suggestedIde.name)) {
+      reporter.indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.opening", suggestedIde.name)) {
         installer!!.notifyAndOfferStart(installationResult, suggestedIde, pluginId)
       }
     }
@@ -153,12 +159,8 @@ class UltimateInstallationService(
 
   private suspend fun download(buildInfo: BuildInfo, suggestedIde: SuggestedIde, pluginId: PluginId?): DownloadResult? {
     val downloadActivity = FUSEventSource.EDITOR.logTryUltimateDownloadStarted(project, pluginId)
-    val result = progressStep(1.0, text = IdeBundle.message("plugins.advertiser.try.ultimate.download")) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          installer?.download(buildInfo, ProgressManager.getInstance().progressIndicator, suggestedIde)
-        }
-      }
+    val result = coroutineToIndicator {
+      installer?.download(buildInfo, ProgressManager.getInstance().progressIndicator, suggestedIde)
     }
     downloadActivity.finished()
     return result
@@ -174,11 +176,9 @@ class UltimateInstallationService(
     return getOrNull()
   }
 
-  private suspend fun installIde(downloadResult: DownloadResult, pluginId: PluginId?): InstallationResult? {
+  private fun installIde(downloadResult: DownloadResult, pluginId: PluginId?): InstallationResult? {
     val installActivity = FUSEventSource.EDITOR.logTryUltimateInstallationStarted(project, pluginId)
-    val installResult = indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.install")) {
-      installer?.install(downloadResult)
-    }
+    val installResult = installer?.install(downloadResult)
     installActivity.finished()
     return installResult
   }
@@ -223,7 +223,7 @@ class UltimateInstallationService(
 
 internal abstract class UltimateInstaller(
   private val scope: CoroutineScope,
-  private val project: Project,
+  protected val project: Project,
 ) {
   abstract val postfix: String
 

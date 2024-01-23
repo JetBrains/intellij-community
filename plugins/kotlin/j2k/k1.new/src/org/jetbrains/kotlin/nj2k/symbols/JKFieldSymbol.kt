@@ -14,18 +14,18 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
-sealed class JKFieldSymbol : JKSymbol {
+internal sealed class JKFieldSymbol : JKSymbol {
     abstract val fieldType: JKType?
 }
 
-class JKUniverseFieldSymbol(override val typeFactory: JKTypeFactory) : JKFieldSymbol(), JKUniverseSymbol<JKVariable> {
+internal class JKUniverseFieldSymbol(override val typeFactory: JKTypeFactory) : JKFieldSymbol(), JKUniverseSymbol<JKVariable> {
     override val fieldType: JKType
         get() = target.type.type
 
     override lateinit var target: JKVariable
 }
 
-class JKMultiverseFieldSymbol(
+internal class JKMultiverseFieldSymbol(
     override val target: PsiVariable,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKMultiverseSymbol<PsiVariable> {
@@ -33,7 +33,7 @@ class JKMultiverseFieldSymbol(
         get() = typeFactory.fromPsiType(target.type)
 }
 
-class JKMultiversePropertySymbol(
+internal class JKMultiversePropertySymbol(
     override val target: KtCallableDeclaration,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKMultiverseKtSymbol<KtCallableDeclaration> {
@@ -41,7 +41,7 @@ class JKMultiversePropertySymbol(
         get() = target.typeReference?.toJK(typeFactory)
 }
 
-class JKMultiverseKtEnumEntrySymbol(
+internal class JKMultiverseKtEnumEntrySymbol(
     override val target: KtEnumEntry,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKMultiverseKtSymbol<KtEnumEntry> {
@@ -54,7 +54,7 @@ class JKMultiverseKtEnumEntrySymbol(
         }
 }
 
-class JKUnresolvedField(
+internal class JKUnresolvedField(
     override val target: String,
     override val typeFactory: JKTypeFactory
 ) : JKFieldSymbol(), JKUnresolvedSymbol {

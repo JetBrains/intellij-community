@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -59,7 +60,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   public PyFunctionImpl(final PyFunctionStub stub) {
-    this(stub, PyElementTypes.FUNCTION_DECLARATION);
+    this(stub, PyStubElementTypes.FUNCTION_DECLARATION);
   }
 
   public PyFunctionImpl(PyFunctionStub stub, IStubElementType nodeType) {
@@ -712,6 +713,27 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
   }
+
+  @Override
+  public @NotNull PyParameterList getParameterList() {
+    return getRequiredStubOrPsiChild(PyStubElementTypes.PARAMETER_LIST);
+  }
+
+  @Override
+  public @Nullable PyTypeParameterList getTypeParameterList() {
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
+  }
+
+  @Override
+  public @Nullable PyDecoratorList getDecoratorList() {
+    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
+  }
+
+  @Override
+  public @Nullable PyAnnotation getAnnotation() {
+    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
+  }
+
 
   /**
    * @param self should be this

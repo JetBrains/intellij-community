@@ -1,21 +1,21 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.pycharm.community.customization.plugin" implementation-detail="true">
   <name>PyCharm Community Customization</name>
   <id>com.jetbrains.pycharm.community.customization</id>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
-  <depends>com.intellij.modules.pycharm.community</depends>
-  <depends>com.intellij.modules.python</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.pycharm.community"/>
+    <plugin id="com.intellij.modules.python"/>
+  </dependencies>
 
-  <xi:include href="/META-INF/pycharm-community-only-customization.xml"/>
-  <xi:include href="/META-INF/pycharm-community-and-pro-customization.xml"/>
-  <xi:include href="/META-INF/pycharm-community-promo.xml"/>
+  <xi:include href="/META-INF/pycharm-v2-customization-plugin-include.xml"/>
   <xi:include href="/META-INF/tips-pycharm-community.xml"/>
   <content>
-    <module name="intellij.jupyter.core"/>
-    <module name="intellij.jupyter.viewOnly"/>
+    <module name="intellij.jupyter.core"/> <!-- Lang for notebooks preview -->
+    <module name="intellij.jupyter.viewOnly"/> <!-- notebooks preview itself-->
+
+    <module name="intellij.pycharm.community.ide.impl.promotion"/> <!-- mostly promo of Pro -->
   </content>
-
-
 </idea-plugin>

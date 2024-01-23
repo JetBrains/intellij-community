@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class FunctionAsAnonymousObjectToLambdaConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class FunctionAsAnonymousObjectToLambdaConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKNewExpression) return recurse(element)
         if (element.isAnonymousClass

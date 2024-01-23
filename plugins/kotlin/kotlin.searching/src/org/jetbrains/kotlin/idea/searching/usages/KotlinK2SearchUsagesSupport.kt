@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
@@ -26,18 +25,17 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
+import org.jetbrains.kotlin.idea.search.ExpectActualSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
-import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -81,24 +79,6 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return super.getClassNameToSearch(namedElement)
     }
 
-    override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
-        if (declaration is KtParameter) {
-            val function = declaration.ownerFunction as? KtCallableDeclaration ?: return emptySet()
-            val index = function.valueParameters.indexOf(declaration)
-            return actualsForExpected(function, module).mapNotNull { (it as? KtCallableDeclaration)?.valueParameters?.getOrNull(index) }.toSet()
-        }
-        return declaration.findAllActualForExpect( runReadAction { module?.let { it.moduleTestsWithDependentsScope } ?: declaration.useScope } ).mapNotNull { it.element }.toSet()
-    }
-
-    override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {
-        if (declaration.isExpectDeclaration()) return declaration
-        if (!declaration.hasActualModifier()) return null
-        return analyze(declaration) {
-            val symbol: KtDeclarationSymbol = declaration.getSymbol()
-            (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration) }).firstOrNull()
-        }
-    }
-
     override fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean {
         return analyze(subDeclaration) {
             val subSymbol = subDeclaration.getSymbol() as? KtCallableSymbol ?: return false
@@ -108,7 +88,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         if (declaration.isExpectDeclaration() &&
-            reference.unwrappedTargets.any { target -> target is KtDeclaration && expectedDeclarationIfAny(target) == declaration }) {
+            reference.unwrappedTargets.any { target -> target is KtDeclaration && ExpectActualSupport.getInstance(declaration.project).expectedDeclarationIfAny(target) == declaration }) {
             return true
         }
 

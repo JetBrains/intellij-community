@@ -22,11 +22,6 @@ public class TryCatchAllTrap implements DfaControlTransferValue.Trap {
   }
 
   @Override
-  public int @NotNull [] getPossibleTargets() {
-    return DfaControlTransferValue.Trap.super.getPossibleTargets();
-  }
-
-  @Override
   public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                      @NotNull DataFlowInterpreter interpreter,
                                                      DfaControlTransferValue.@NotNull TransferTarget target,

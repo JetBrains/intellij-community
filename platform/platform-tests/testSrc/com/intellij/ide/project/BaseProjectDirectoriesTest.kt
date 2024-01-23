@@ -108,9 +108,7 @@ class BaseProjectDirectoriesTest {
   }
 
   private fun checkBaseDirectories(vararg files: VirtualFile) {
-    while (BaseProjectDirectories.getInstance(projectModel.project).isProcessing) {
-      Thread.sleep(10)
-    }
+    waitUntilChangesAreApplied(projectModel.project)
 
     assertEquals(files.toSet(), projectModel.project.getBaseDirectories())
   }
@@ -131,9 +129,7 @@ class BaseProjectDirectoriesTest {
     }
 
     fun checkDiff(removed: Set<VirtualFile>, added: Set<VirtualFile>) {
-      while (BaseProjectDirectories.getInstance(project).isProcessing) {
-        Thread.sleep(10)
-      }
+      waitUntilChangesAreApplied(project)
 
       assert(diffs.isNotEmpty()) { "No diff changes captured" }
       lastCheckDiffsCounter = diffs.size
@@ -146,5 +142,12 @@ class BaseProjectDirectoriesTest {
     fun assertNoEventsAfterLastChecking() {
       assert(diffs.size == lastCheckDiffsCounter) { "Diff event(s) was fired but was not expected" }
     }
+  }
+}
+
+private fun waitUntilChangesAreApplied(project: Project) {
+  Thread.sleep(30)
+  while (BaseProjectDirectories.getInstance(project).isProcessing) {
+    Thread.sleep(10)
   }
 }

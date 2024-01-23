@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -62,6 +63,6 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
   }
 
   protected IStubElementType getStubElementType() {
-    return PyElementTypes.IMPORT_ELEMENT;
+    return PyStubElementTypes.IMPORT_ELEMENT;
   }
 }

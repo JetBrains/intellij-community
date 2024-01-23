@@ -15,8 +15,7 @@ import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.flow.mapStateIn
-import com.intellij.platform.util.progress.rawProgressReporter
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.application
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -70,10 +69,10 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
         shouldShowProgress.first { it }
 
         withBackgroundProgress(project, progressTitle, cancellable = false) {
-          withRawProgressReporter {
+          reportRawProgress { reporter ->
             async(Dispatchers.EDT) {
               pauseReason.collect { paused ->
-                rawProgressReporter!!.text(
+                reporter.text(
                   if (paused != null) IdeBundle.message("dumb.service.indexing.paused.due.to", paused)
                   else progressTitle
                 )
@@ -81,7 +80,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
             }
             async(Dispatchers.EDT) {
               progressReporter.subTaskTexts.collect {
-                rawProgressReporter!!.details(it.firstOrNull())
+                reporter.details(it.firstOrNull())
               }
             }
             async(Dispatchers.EDT) {
@@ -89,10 +88,10 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
                 val subTasksCount = progressReporter.subTasksCount
                 if (subTasksCount > 0) {
                   val newValue = (it.toDouble() / subTasksCount).coerceIn(0.0, 1.0)
-                  rawProgressReporter!!.fraction(newValue)
+                  reporter.fraction(newValue)
                 }
                 else {
-                  rawProgressReporter!!.fraction(0.0)
+                  reporter.fraction(0.0)
                 }
               }
             }

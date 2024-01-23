@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 
 
-class NonCodeElementsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class NonCodeElementsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKClass -> {

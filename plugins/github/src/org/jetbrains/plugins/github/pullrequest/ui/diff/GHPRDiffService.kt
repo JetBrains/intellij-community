@@ -43,6 +43,7 @@ internal class GHPRDiffService(private val project: Project, parentCs: Coroutine
   }
 
   private fun createDiffContext(vm: GHPRDiffViewModel): List<KeyValuePair<*>> = buildList {
+    add(KeyValuePair(GHPRDiffViewModel.KEY, vm))
     add(KeyValuePair(DiffUserDataKeys.DATA_PROVIDER, GenericDataProvider().apply {
       putData(GHPRDiffViewModel.DATA_KEY, vm)
       putData(GHPRReviewViewModel.DATA_KEY, vm.reviewVm)

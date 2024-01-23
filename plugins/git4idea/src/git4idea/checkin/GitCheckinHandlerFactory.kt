@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -18,9 +19,8 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.progress.indeterminateStep
-import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.SequentialProgressReporter
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.vcs.log.VcsUser
 import git4idea.GitUserRegistry
 import git4idea.GitUtil
@@ -65,15 +65,19 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
   }
 
   override suspend fun runGitCheck(commitInfo: CommitInfo): CommitProblem? {
+    return reportSequentialProgress { reporter ->
+      runGitCheck(reporter, commitInfo)
+    }
+  }
+
+  private suspend fun runGitCheck(reporter: SequentialProgressReporter, commitInfo: CommitInfo): CommitProblem? {
     val git = Git.getInstance()
 
     val files = commitInfo.committedVirtualFiles // Deleted files aren't included. But for them, we don't care about CRLFs.
     val shouldWarn = withContext(Dispatchers.Default) {
-      progressStep(endFraction = 1.0, GitBundle.message("progress.checking.line.separator.issues")) {
-        withRawProgressReporter {
-          coroutineToIndicator {
-            GitCrlfProblemsDetector.detect(project, git, files).shouldWarn()
-          }
+      reporter.nextStep(endFraction = 100, GitBundle.message("progress.checking.line.separator.issues")) {
+        coroutineToIndicator {
+          GitCrlfProblemsDetector.detect(project, git, files).shouldWarn()
         }
       }
     }
@@ -95,7 +99,7 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
         .map { it.path }
         .firstOrNull()
       if (anyRoot != null) {
-        indeterminateStep(GitBundle.message("progress.setting.config.value")) {
+        reporter.indeterminateStep(GitBundle.message("progress.setting.config.value")) {
           setCoreAutoCrlfAttribute(project, anyRoot)
         }
       }
@@ -109,15 +113,13 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
 
   private suspend fun setCoreAutoCrlfAttribute(project: Project, anyRoot: VirtualFile) {
     withContext(Dispatchers.IO) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          try {
-            GitConfigUtil.setValue(project, anyRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global")
-          }
-          catch (e: VcsException) {
-            // it is not critical: the user just will get the dialog again next time
-            logger<GitCRLFCheckinHandler>().warn("Couldn't globally set core.autocrlf in $anyRoot", e)
-          }
+      coroutineToIndicator {
+        try {
+          GitConfigUtil.setValue(project, anyRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global")
+        }
+        catch (e: VcsException) {
+          // it is not critical: the user just will get the dialog again next time
+          logger<GitCRLFCheckinHandler>().warn("Couldn't globally set core.autocrlf in $anyRoot", e)
         }
       }
     }
@@ -138,6 +140,12 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
   override fun isEnabled(): Boolean = true
 
   override suspend fun runGitCheck(commitInfo: CommitInfo): CommitProblem? {
+    return reportSequentialProgress { reporter ->
+      runGitCheck(reporter, commitInfo)
+    }
+  }
+
+  private suspend fun runGitCheck(reporter: SequentialProgressReporter, commitInfo: CommitInfo): CommitProblem? {
     if (commitInfo.commitContext.commitAuthor != null) return null
 
     val vcs = GitVcs.getInstance(project)
@@ -160,7 +168,7 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
     val dialog = GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined)
     if (!dialog.showAndGet()) return GitUserNameCommitProblem(closeWindow = true)
 
-    val success = indeterminateStep(GitBundle.message("progress.setting.user.name.email")) {
+    val success = reporter.indeterminateStep(GitBundle.message("progress.setting.user.name.email")) {
       setUserNameUnderProgress(project, notDefined, dialog)
     }
     if (success) return null
@@ -173,18 +181,16 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
                                           roots: Collection<VirtualFile>,
                                           stopWhenFoundFirst: Boolean): MutableMap<VirtualFile, VcsUser> {
     return withContext(Dispatchers.Default) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          val defined = HashMap<VirtualFile, VcsUser>()
-          for (root in roots) {
-            val user = GitUserRegistry.getInstance(project).readUser(root) ?: continue
-            defined[root] = user
-            if (stopWhenFoundFirst) {
-              break
-            }
+      coroutineToIndicator {
+        val defined = HashMap<VirtualFile, VcsUser>()
+        for (root in roots) {
+          val user = GitUserRegistry.getInstance(project).readUser(root) ?: continue
+          defined[root] = user
+          if (stopWhenFoundFirst) {
+            break
           }
-          defined
         }
+        defined
       }
     }
   }
@@ -194,20 +200,18 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
                                                dialog: GitUserNameNotDefinedDialog): Boolean {
     try {
       withContext(Dispatchers.IO) {
-        withRawProgressReporter {
-          coroutineToIndicator {
-            if (dialog.isSetGlobalConfig) {
-              GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.userName, "--global")
-              GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_EMAIL, dialog.userEmail, "--global")
-            }
-            else {
-              for (root in notDefined) {
-                GitConfigUtil.setValue(project, root, GitConfigUtil.USER_NAME, dialog.userName)
-                GitConfigUtil.setValue(project, root, GitConfigUtil.USER_EMAIL, dialog.userEmail)
-              }
-            }
-
+        coroutineToIndicator {
+          if (dialog.isSetGlobalConfig) {
+            GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.userName, "--global")
+            GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_EMAIL, dialog.userEmail, "--global")
           }
+          else {
+            for (root in notDefined) {
+              GitConfigUtil.setValue(project, root, GitConfigUtil.USER_NAME, dialog.userName)
+              GitConfigUtil.setValue(project, root, GitConfigUtil.USER_EMAIL, dialog.userEmail)
+            }
+          }
+
         }
       }
       return true
@@ -363,7 +367,7 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
   private class DetachedRoot(val root: VirtualFile, val isDuringRebase: Boolean)
 }
 
-private abstract class GitCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck {
+private abstract class GitCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck, DumbAware {
   final override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     if (!commitInfo.isVcsCommit) return null
     return runGitCheck(commitInfo)

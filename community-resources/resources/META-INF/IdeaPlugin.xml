@@ -5,8 +5,8 @@
   <module value="com.intellij.modules.idea"/>
   <module value="com.intellij.modules.idea.community"/>
   <module value="com.intellij.modules.java-capable"/>
-  <module value="com.intellij.modules.python-core-capable"/>
-
+  <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
+  <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
   <content>
     <module name="intellij.notebooks.visualization"/>
     <module name="intellij.notebooks.ui"/>

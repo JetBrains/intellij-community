@@ -94,11 +94,18 @@ fun runRefactoringTest(
     config: JsonObject,
     rootDir: VirtualFile,
     project: Project,
-    action: AbstractMultifileRefactoringTest.RefactoringAction
+    action: AbstractMultifileRefactoringTest.RefactoringAction,
+    alternativeConflicts: String? = null
 ) {
     val mainFilePath = config.getNullableString("mainFile") ?: config.getAsJsonArray("filesToMove").first().asString
 
-    val conflictFile = File(File(path).parentFile, "conflicts.txt")
+    var conflictFile = File(File(path).parentFile, "conflicts.txt")
+    if (alternativeConflicts != null) {
+        val alternativeConflictsFile = File(File(path).parentFile, alternativeConflicts)
+        if (alternativeConflictsFile.exists()) {
+            conflictFile = alternativeConflictsFile
+        }
+    }
 
     val mainFile = rootDir.findFileByRelativePath(mainFilePath)!!
     val mainPsiFile = PsiManager.getInstance(project).findFile(mainFile)!!

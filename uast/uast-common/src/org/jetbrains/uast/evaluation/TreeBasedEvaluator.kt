@@ -126,20 +126,38 @@ class TreeBasedEvaluator(
       data: UEvaluationState
     ): UEvaluationInfo {
       storeState(node, data)
+
+      fun evaluateViaExtensionsIfUndetermined(resolvedElement: UVariable): UValue {
+        return data[resolvedElement].ifUndetermined {
+          node.evaluateViaExtensions { evaluateVariable(resolvedElement, data) }?.value ?: UUndeterminedValue
+        }
+      }
+
       return when (val resolvedElement = node.resolveToUElement()) {
         is UEnumConstant -> UEnumEntryValueConstant(resolvedElement, node)
-        is UField -> if (resolvedElement.hasModifierProperty(PsiModifier.FINAL)) {
-          data[resolvedElement].ifUndetermined {
-            val helper = JavaPsiFacade.getInstance(resolvedElement.project).constantEvaluationHelper
-            val evaluated = helper.computeConstantExpression(resolvedElement.initializer)
-            evaluated?.toConstant() ?: UUndeterminedValue
+        is UField -> {
+          if (resolvedElement.hasModifierProperty(PsiModifier.FINAL)) {
+            data[resolvedElement].ifUndetermined {
+              val helper = JavaPsiFacade.getInstance(resolvedElement.project).constantEvaluationHelper
+              val evaluated = helper.computeConstantExpression(resolvedElement.initializer)
+              evaluated?.toConstant() ?: UUndeterminedValue
+            }
+          }
+          else {
+            return super.visitSimpleNameReferenceExpression(node, data)
           }
         }
-        else {
-          return super.visitSimpleNameReferenceExpression(node, data)
+        is UParameter -> {
+          if (resolvedElement.sourcePsi == null && resolvedElement.uastParent is ULambdaExpression) {
+            // fake UParameter without sourcePsi from lambda, i.e., implicit lambda parameter `it`
+            return super.visitSimpleNameReferenceExpression(node, data)
+          }
+          else {
+            evaluateViaExtensionsIfUndetermined(resolvedElement)
+          }
         }
-        is UVariable -> data[resolvedElement].ifUndetermined {
-          node.evaluateViaExtensions { evaluateVariable(resolvedElement, data) }?.value ?: UUndeterminedValue
+        is UVariable -> {
+          evaluateViaExtensionsIfUndetermined(resolvedElement)
         }
         else -> return super.visitSimpleNameReferenceExpression(node, data)
       } to data storeResultFor node

@@ -103,13 +103,18 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
                                  endExclusive: Int,
                                  cache: ClassInfoCache,
                                  result: MutableList<ProbableClassName>) {
-      val fullClassName = line.substring(startInclusive, endExclusive).removeSuffix(".")
+      var actualEndExclusive = endExclusive
+      if (actualEndExclusive > 0 && line[actualEndExclusive - 1] == '.') {
+        actualEndExclusive--
+      }
+      val fullClassName = line.substring(startInclusive, actualEndExclusive)
       if (canBeShortenedFullyQualifiedClassName(fullClassName) && isJavaStyle(fullClassName)) {
         val packageName = StringUtil.getPackageName(fullClassName)
         val className = fullClassName.substring(packageName.length + 1)
         val resolvedClasses = cache.resolveClasses(className, packageName)
         if (resolvedClasses.classes.isNotEmpty()) {
-          val probableClassName = ProbableClassName(startInclusive + fullClassName.lastIndexOf(".") + 1, startInclusive + fullClassName.length,
+          val probableClassName = ProbableClassName(startInclusive + fullClassName.lastIndexOf(".") + 1,
+                                                    startInclusive + fullClassName.length,
                                                     line, className, packageName, resolvedClasses.classes.values.toList())
           result.add(probableClassName)
         }
@@ -117,20 +122,25 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
     }
 
     private fun isJavaStyle(shortenedClassName: String): Boolean {
-      val packageName = StringUtil.getPackageName(shortenedClassName)
-      val className = shortenedClassName.substring(packageName.length + 1)
-      return !className.contains("_") &&
-             !packageName.contains("_") &&
-             className.isNotEmpty() && packageName.isNotEmpty() &&
-             Character.isUpperCase(className[0]) &&
-             Character.isLowerCase(packageName[0])
+      if (shortenedClassName.isEmpty()) return false
+      val indexOfSeparator = shortenedClassName.lastIndexOf('.')
+      if (indexOfSeparator <= 0 || indexOfSeparator == shortenedClassName.lastIndex) return false
+      return !shortenedClassName.contains("_") &&
+             Character.isUpperCase(shortenedClassName[indexOfSeparator + 1]) &&
+             Character.isLowerCase(shortenedClassName[0])
     }
 
     private fun canBeShortenedFullyQualifiedClassName(fullClassName: String): Boolean {
-      val parts = fullClassName.split(".")
-      for (part in parts) {
-        if (part.isEmpty() || !StringUtil.isJavaIdentifier(part)) {
-          return false
+      var length = 0
+      for (c in fullClassName) {
+        if (c == '.') {
+          if (length == 0) {
+            return false
+          }
+          length = 0
+        }
+        else {
+          length++
         }
       }
       return true

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp.util
 
 import com.intellij.execution.Platform
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -18,13 +19,12 @@ import com.jediterm.terminal.RequestOrigin
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.exp.*
-import org.jetbrains.plugins.terminal.exp.ShellCommandOutputListener
-import org.jetbrains.plugins.terminal.exp.ShellCommandOutputScraper
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.jupiter.api.fail
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -183,6 +183,19 @@ object TerminalSessionTestUtil {
   }
 
   private fun toPosixShellCommandLine(command: List<String>): String = ParametersListUtil.join(command)
+
+  fun getShellPaths(): List<Path> {
+    return listOf(
+      "/bin/zsh",
+      "/bin/bash",
+      "/usr/local/bin/fish",
+      "powershell.exe",
+      "pwsh.exe",
+    ).mapNotNull {
+      val path = Path.of(it)
+      if (Files.isRegularFile(path)) path else PathEnvironmentVariableUtil.findInPath(it)?.toPath()
+    }
+  }
 }
 
 data class CommandResult(val exitCode: Int, val output: String)

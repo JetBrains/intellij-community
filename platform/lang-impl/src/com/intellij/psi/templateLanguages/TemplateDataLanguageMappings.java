@@ -5,6 +5,7 @@ import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePerFileMappings;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
+@Service(Service.Level.PROJECT)
 @State(name = "TemplateDataLanguageMappings", storages = @Storage("templateLanguages.xml"))
 public final class TemplateDataLanguageMappings extends LanguagePerFileMappings<Language> {
   private final FilePropertyPusher<Language> myPropertyPusher = new TemplateDataLanguagePusher();

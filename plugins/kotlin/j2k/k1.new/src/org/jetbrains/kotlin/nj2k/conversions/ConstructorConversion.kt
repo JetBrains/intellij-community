@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
-class ConstructorConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ConstructorConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKMethod) return recurse(element)
         val outerClass = element.parentOfType<JKClass>() ?: return recurse(element)

@@ -644,11 +644,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
-    super.visitPyComprehensionElement(node);
-  }
-
-  @Override
   public void visitPySlashParameter(@NotNull PySlashParameter node) {
     super.visitPySlashParameter(node);
 

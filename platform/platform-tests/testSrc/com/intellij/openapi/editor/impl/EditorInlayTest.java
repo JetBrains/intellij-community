@@ -460,12 +460,6 @@ public class EditorInlayTest extends AbstractEditorTest {
     getEditor().getInlayModel().addBlockElement(0, false, false, 0, new EditorCustomElementRenderer() {
       @Override
       public int calcWidthInPixels(@NotNull Inlay inlay) { return 123;}
-
-      @Override
-      public void paint(@NotNull Inlay inlay,
-                        @NotNull Graphics g,
-                        @NotNull Rectangle targetRegion,
-                        @NotNull TextAttributes textAttributes) {}
     });
     assertEquals(123, getEditor().getContentComponent().getPreferredSize().width);
   }

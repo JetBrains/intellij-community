@@ -24,14 +24,12 @@ import javax.swing.JComponent
 internal open class CombinedActivityDiffPreview(project: Project, targetComponent: JComponent, val scope: ActivityScope, parentDisposable: Disposable) :
   CombinedDiffPreview(project, targetComponent, true, parentDisposable) {
 
-  override val sourceId: String = targetComponent.id
-
   override fun createModel(): CombinedDiffPreviewModel {
     return CombinedActivityDiffPreviewModel(project, scope, parentDisposable)
   }
 
   override fun getCombinedDiffTabTitle(): String {
-    val filePath = model.selected?.filePath
+    val filePath = model?.selected?.filePath
     if (filePath != null) return LocalHistoryBundle.message("activity.diff.tab.title.file", filePath.name)
     if (scope == ActivityScope.Recent) return LocalHistoryBundle.message("activity.diff.tab.title.recent")
     return LocalHistoryBundle.message("activity.diff.tab.title")

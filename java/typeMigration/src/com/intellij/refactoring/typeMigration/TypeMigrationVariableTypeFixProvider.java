@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -61,8 +61,7 @@ public final class TypeMigrationVariableTypeFixProvider implements ChangeVariabl
 
   private static boolean typeMigrationMightBeUseful(@NotNull PsiVariable variable, @NotNull PsiType targetType) {
     if (!PsiUtil.isJvmLocalVariable(variable)) return true;
-    PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
-    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, block);
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable);
     if (refs.isEmpty()) return false;
     Project project = variable.getProject();
     TypeMigrationRules rules = new TypeMigrationRules(project);

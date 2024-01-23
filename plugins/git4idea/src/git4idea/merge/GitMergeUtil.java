@@ -21,10 +21,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.index.GitIndexUtil;
@@ -368,7 +365,8 @@ public final class GitMergeUtil {
         }
       }
     });
-    Git.getInstance().runCommandWithoutCollectingOutput(h);
+    GitCommandResult commandResult = Git.getInstance().runCommandWithoutCollectingOutput(h);
+    if (!commandResult.success()) return null;
 
     if (pathAmbiguous[0]) return null;
     return result[0];

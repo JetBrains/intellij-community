@@ -71,10 +71,6 @@ final class ChangeLAFAnimator {
         ((RootPaneContainer)window).getRootPane().paint(imageGraphics);
 
         JComponent imageLayer = new JComponent() {
-          @Override
-          public void updateUI() {
-            super.updateUI();
-          }
 
           @Override
           public void paint(Graphics g) {

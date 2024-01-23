@@ -35,7 +35,7 @@ interface SearchEverywhereMlService {
   /**
    * Indicates whether machine learning in Search Everywhere is enabled.
    * This method can return false if ML-ranking is disabled and no experiments are allowed
-   * (see [com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlExperiment.isAllowed])
+   * (see [com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.isAllowed])
    */
   fun isEnabled(): Boolean
 
@@ -65,4 +65,8 @@ interface SearchEverywhereMlService {
   fun wrapRenderer(renderer: ListCellRenderer<Any>, listModel: SearchListModel): ListCellRenderer<Any>
 
   fun buildListener(listModel: SearchListModel, resultsList: JBList<Any>, selectionTracker: SEListSelectionTracker): SearchListener?
+
+  fun getExperimentVersion(): Int
+
+  fun getExperimentGroup(): Int
 }

@@ -292,8 +292,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
         public int getColumnCount() { return columns.length; }
         @Override
         public Object getValueAt(int row, int col) { return col == 0 ? data[row][col] : Integer.valueOf(data[row][col]); }
-        @Override
-        public boolean isCellEditable(int row, int column) { return true; }
+
         @Override
         public void setValueAt(Object value, int row, int col) {
           if (col == 0 || col == 1) {

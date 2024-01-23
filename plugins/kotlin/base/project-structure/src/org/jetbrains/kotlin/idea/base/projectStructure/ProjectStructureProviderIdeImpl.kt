@@ -194,9 +194,7 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
     }
 
     return when (moduleInfo) {
-        is ModuleSourceInfo -> {
-            KtSourceModuleByModuleInfo(moduleInfo)
-        }
+        is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo)
         is LibraryInfo -> KtLibraryModuleByModuleInfo(moduleInfo)
         is SdkInfo -> SdkKtModuleByModuleInfo(moduleInfo)
         is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo)

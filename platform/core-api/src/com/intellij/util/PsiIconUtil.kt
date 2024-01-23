@@ -4,6 +4,7 @@ package com.intellij.util
 import com.intellij.ide.IconProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Iconable.IconFlags
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
@@ -17,8 +18,13 @@ object PsiIconUtil {
       if (provider == null || (isDumb && !isDumbAware(provider))) {
         continue
       }
-      provider.getIcon(element, flags)?.let {
-        return it
+      try {
+        provider.getIcon(element, flags)?.let {
+          return it
+        }
+      }
+      catch (_: IndexNotReadyException) {
+
       }
     }
     return null

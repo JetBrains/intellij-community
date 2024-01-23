@@ -54,16 +54,16 @@ import kotlin.math.roundToInt
 
 class CombinedDiffViewer(
   private val context: DiffContext,
-  keys: List<CombinedBlockId>,
+  keys: List<CombinedBlockProducer>,
   blockToSelect: CombinedBlockId?,
   blockListener: BlockListener,
-) : DiffViewer,
-    CombinedDiffNavigation,
+) : CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
-    DataProvider {
+    DataProvider,
+    Disposable {
   private val project = context.project!! // CombinedDiffContext expected
 
-  private val blockState = BlockState(keys, blockToSelect ?: keys.first())
+  private val blockState = BlockState(keys.map { it.id }, blockToSelect ?: keys.first().id)
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
   private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = hashMapOf()
@@ -193,11 +193,11 @@ class CombinedDiffViewer(
     return diffBlock
   }
 
-  override fun getComponent(): JComponent = contentPanel
+  val component get(): JComponent = contentPanel
 
-  override fun getPreferredFocusedComponent(): JComponent? = getCurrentDiffViewer()?.preferredFocusedComponent
+  val preferredFocusedComponent get(): JComponent? = getCurrentDiffViewer()?.preferredFocusedComponent
 
-  override fun init(): FrameDiffTool.ToolbarComponents {
+  fun init(): FrameDiffTool.ToolbarComponents {
     val components = FrameDiffTool.ToolbarComponents()
     components.toolbarActions = createToolbarActions()
     components.diffInfo = diffInfo

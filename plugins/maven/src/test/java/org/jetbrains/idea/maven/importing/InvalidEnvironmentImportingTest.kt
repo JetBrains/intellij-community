@@ -5,6 +5,7 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -105,6 +106,8 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>test</artifactId>" +
                      "<version>1.0</version>")
-    doImportProjects(listOf(projectPom), false)
+    runBlockingMaybeCancellable {
+      doImportProjectsAsync(listOf(projectPom), false)
+    }
   }
 }

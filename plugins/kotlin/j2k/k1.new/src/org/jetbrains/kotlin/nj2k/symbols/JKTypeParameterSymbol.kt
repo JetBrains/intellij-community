@@ -11,11 +11,11 @@ import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-sealed class JKTypeParameterSymbol : JKSymbol {
+internal sealed class JKTypeParameterSymbol : JKSymbol {
     abstract val index: Int
 }
 
-class JKMultiverseTypeParameterSymbol(
+internal class JKMultiverseTypeParameterSymbol(
     override val target: PsiTypeParameter,
     override val typeFactory: JKTypeFactory
 ) : JKTypeParameterSymbol(), JKMultiverseSymbol<PsiTypeParameter> {
@@ -23,7 +23,7 @@ class JKMultiverseTypeParameterSymbol(
         get() = target.index
 }
 
-class JKUniverseTypeParameterSymbol(
+internal class JKUniverseTypeParameterSymbol(
     override val typeFactory: JKTypeFactory
 ) : JKTypeParameterSymbol(), JKUniverseSymbol<JKTypeParameter> {
     override val index: Int
@@ -31,7 +31,7 @@ class JKUniverseTypeParameterSymbol(
     override lateinit var target: JKTypeParameter
 }
 
-class JKMultiverseKtTypeParameterSymbol(
+internal class JKMultiverseKtTypeParameterSymbol(
     override val target: KtTypeParameter,
     override val typeFactory: JKTypeFactory
 ) : JKTypeParameterSymbol(), JKMultiverseKtSymbol<KtTypeParameter> {

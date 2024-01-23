@@ -26,7 +26,8 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinMethodReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -125,7 +126,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
             val declaration = element.namedUnwrappedElement as? KtNamedDeclaration
             if (declaration != null) {
-                renameRefactoringSupport.liftToExpected(declaration)?.let { expectDeclaration ->
+                ExpectActualUtils.liftToExpected(declaration)?.let { expectDeclaration ->
                     allRenames[expectDeclaration] = safeNewName
                     expectDeclaration.actualsForExpected().forEach { allRenames[it] = safeNewName }
                 }

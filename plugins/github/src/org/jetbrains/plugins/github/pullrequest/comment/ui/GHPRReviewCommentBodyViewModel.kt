@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.combineState
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.reportSequentialProgress
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.infoStateIn
 import git4idea.repo.GitRepository
@@ -117,14 +118,14 @@ class GHPRReviewCommentBodyViewModel internal constructor(
 
       val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(body, thread.filePath, code)
       val content = htmlBody.removePrefix("<body>").removeSuffix("</body>")
-      val blocks = GHPRReviewCommentComponentFactory.collectCommentBlocks(content)
+      val blocks = GHPRReviewCommentBodyComponentFactory.collectCommentBlocks(content)
       var suggestionIdx = 0
       blocks.map {
         when (it.commentType) {
-          GHPRReviewCommentComponentFactory.CommentType.COMMENT -> {
+          GHPRReviewCommentBodyComponentFactory.CommentType.COMMENT -> {
             GHPRCommentBodyBlock.HTML(it.content)
           }
-          GHPRReviewCommentComponentFactory.CommentType.SUGGESTED_CHANGE -> {
+          GHPRReviewCommentBodyComponentFactory.CommentType.SUGGESTED_CHANGE -> {
             val suggestion = suggestions.getOrNull(suggestionIdx)
             if (suggestion == null) {
               LOG.warn("Missing suggestion by index $suggestionIdx\nBody:\n$body\n\nContent:\n${it.content}")
@@ -172,11 +173,11 @@ class GHPRReviewCommentBodyViewModel internal constructor(
     taskLauncher.launch(Dispatchers.Default) {
       try {
         withBackgroundProgress(project, GithubBundle.message("pull.request.timeline.comment.suggested.changes.progress.bar.commit")) {
-          val applyStatus = indeterminateStep(GithubBundle.message("pull.request.comment.suggested.changes.committing")) {
-            GHSuggestedChangeApplier.commitSuggestedChanges(project, repository, patch, commitMessage)
-          }
-          if (applyStatus == ApplyPatchStatus.SUCCESS && canResolvedThread.value) {
-            indeterminateStep(GithubBundle.message("pull.request.comment.suggested.changes.resolving")) {
+          reportSequentialProgress { reporter ->
+            reporter.indeterminateStep(GithubBundle.message("pull.request.comment.suggested.changes.committing"))
+            val applyStatus = GHSuggestedChangeApplier.commitSuggestedChanges(project, repository, patch, commitMessage)
+            if (applyStatus == ApplyPatchStatus.SUCCESS && canResolvedThread.value) {
+              reporter.indeterminateStep(GithubBundle.message("pull.request.comment.suggested.changes.resolving"))
               reviewData.resolveThread(EmptyProgressIndicator(), threadId).await()
             }
           }

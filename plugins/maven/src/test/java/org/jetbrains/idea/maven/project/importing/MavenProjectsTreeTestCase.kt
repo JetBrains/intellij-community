@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,10 +10,7 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.project.MavenProjectResolver.Companion.getInstance
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
 import java.util.*
@@ -90,7 +86,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
 
     override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                  nativeMavenProject: NativeMavenProjectHolder?) {
-      add("resolved", java.util.Set.of(projectWithChanges.first.mavenId.artifactId))
+      add("resolved", setOf(projectWithChanges.first.mavenId.artifactId))
     }
 
     override fun pluginsResolved(project: MavenProject) {
@@ -102,22 +98,19 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
     }
   }
 
-  @Throws(MavenProcessCanceledException::class)
-  protected fun resolve(project: Project,
+  protected suspend fun resolve(project: Project,
                         mavenProject: MavenProject,
                         generalSettings: MavenGeneralSettings,
-                        embeddersManager: MavenEmbeddersManager,
-                        process: MavenProgressIndicator) {
-    val resolver = getInstance(project)
+                        embeddersManager: MavenEmbeddersManager) {
+    val resolver = MavenProjectResolver(project)
     val progressReporter = object : RawProgressReporter {}
-    runBlockingMaybeCancellable {
-      resolver.resolve(listOf(mavenProject),
-                       tree,
-                       generalSettings,
-                       embeddersManager,
-                       progressReporter,
-                       MavenLogEventHandler)
-    }
+    resolver.resolve(true,
+                     listOf(mavenProject),
+                     tree,
+                     generalSettings,
+                     embeddersManager,
+                     progressReporter,
+                     MavenLogEventHandler)
   }
 
   companion object {

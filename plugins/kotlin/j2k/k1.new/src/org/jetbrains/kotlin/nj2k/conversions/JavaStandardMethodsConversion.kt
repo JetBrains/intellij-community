@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaVoidType
 import org.jetbrains.kotlin.nj2k.types.fqName
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
-class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKClass) {
             element.classBody.declarations.forEach {

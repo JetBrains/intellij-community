@@ -188,9 +188,11 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
       if (selected != null) {
         ExecutorRegistryImpl.ExecutorAction action = createAction(selected, executor);
         DefaultActionGroup group = new DefaultActionGroup();
-        RunConfigurationsComboBoxAction.addExecutorActions(group,
-                                                           exec -> createAction(selected, exec),
-                                                           exec -> exec != executor);
+        RunConfigurationsComboBoxAction.forAllExecutors(o -> {
+          if (o != executor) {
+            group.addAction(createAction(selected, o));
+          }
+        });
         button.setOptions(Arrays.asList(group.getChildren(null)));
         button.setToolTipText(UIUtil.removeMnemonic(executor.getStartActionText(selected.getName())) + " (" + KeymapUtil.getFirstKeyboardShortcutText(action) + ")");
       }

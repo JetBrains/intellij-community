@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.internal
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,6 +13,7 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+@Service
 class ReadStatisticsCollector {
   private fun shouldCollectMavenStatistics() = Registry.`is`("maven.collect.local.stat")
   private val map = ConcurrentHashMap<String, AtomicInteger>()

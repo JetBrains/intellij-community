@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.diagnostic.PluginException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,12 +18,14 @@ public interface ActionUpdateThreadAware {
     if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
       return ActionUpdateThread.BGT;
     }
-    //PluginException.reportDeprecatedDefault(getClass(), "getActionUpdateThread", "OLD_EDT is deprecated");
+    PluginException.reportDeprecatedUsage(
+      getClass(), "ActionUpdateThread.OLD_EDT",
+      "'" + getClass().getName() + "' must override `getActionUpdateThread` and chose EDT or BGT. See ActionUpdateThread javadoc.");
     return ActionUpdateThread.OLD_EDT;
   }
 
   /**
-   * Allows to specify forced action-update-thread for all actions in an action group recursively.
+   * Allows specifying forced action-update-thread for all actions in an action group recursively.
    */
   interface Recursive extends ActionUpdateThreadAware {
     @Override

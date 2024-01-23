@@ -182,6 +182,10 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     }
   }
 
+  override fun getExperimentVersion(): Int = SearchEverywhereMlExperiment.VERSION
+
+  override fun getExperimentGroup(): Int = SearchEverywhereMlExperiment().experimentGroup
+
   private fun mapElementsProvider(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>): () -> List<SearchEverywhereFoundElementInfoWithMl> {
     return { ->
       elementsProvider.invoke()

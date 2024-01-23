@@ -79,6 +79,8 @@ private val predefinedMergeRules = HashMap<String, (String, JetBrainsClientModul
   map.put("rd.jar") { it, _ -> it.startsWith("rd-") }
   // all grpc garbage into one jar
   map.put("grpc.jar") { it, _ -> it.startsWith("grpc-") }
+  // separate file to use in Gradle Daemon classpath
+  map.put("opentelemetry.jar") { it, _ -> it == "opentelemetry" || it.startsWith("opentelemetry-exporter-otlp") }
   map.put("bouncy-castle.jar") { it, _ -> it.startsWith("bouncy-castle-") }
   map.put(PRODUCT_JAR) { name, filter -> name.startsWith("License") && !filter.isProjectLibraryIncluded(name) }
   map.put(PRODUCT_CLIENT_JAR) { name, filter -> name.startsWith("License") && filter.isProjectLibraryIncluded(name) }

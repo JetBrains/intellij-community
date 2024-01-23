@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions
 
 import com.google.common.collect.HashMultiset
@@ -26,7 +26,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
@@ -107,7 +107,9 @@ private class StatisticsCollectorRunner(
   fun collectUsages(item: Item, useExtendedPresentation: Boolean) {
     coroutineScope.launch {
       withBackgroundProgress(project, "Collecting statistics") {
-        progressReporter?.rawReporter()?.text(item.usagesCollector.javaClass.simpleName)
+        reportRawProgress { reporter ->
+          reporter.text(item.usagesCollector.javaClass.simpleName)
+        }
 
         showCollectorUsages(item, useExtendedPresentation)
       }

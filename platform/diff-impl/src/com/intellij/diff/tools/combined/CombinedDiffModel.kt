@@ -2,7 +2,6 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.CheckedDisposable
@@ -14,7 +13,7 @@ interface CombinedDiffModel {
   val haveParentDisposable: Boolean
   val ourDisposable: CheckedDisposable
   val context: DiffContext
-  val requests: Map<CombinedBlockId, DiffRequestProducer>
+  val requests: List<CombinedBlockProducer>
 
   fun cleanBlocks()
   fun reload()
@@ -22,7 +21,7 @@ interface CombinedDiffModel {
   /**
    * Updates current model with the new requests
    */
-  fun setBlocks(requests: Map<CombinedBlockId, DiffRequestProducer>)
+  fun setBlocks(requests: List<CombinedBlockProducer>)
 
   fun getCurrentRequest(): DiffRequest?
 

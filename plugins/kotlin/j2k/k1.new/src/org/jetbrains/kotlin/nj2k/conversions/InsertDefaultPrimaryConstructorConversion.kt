@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
-class InsertDefaultPrimaryConstructorConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class InsertDefaultPrimaryConstructorConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClass) return recurse(element)
         if (element.classKind != JKClass.ClassKind.CLASS) return recurse(element)

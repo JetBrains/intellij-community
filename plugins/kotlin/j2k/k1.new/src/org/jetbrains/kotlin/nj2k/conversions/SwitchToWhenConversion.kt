@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.util.takeWhileInclusive
 
 
-class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKJavaSwitchBlock) return recurse(element)
         element.invalidate()

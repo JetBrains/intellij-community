@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
@@ -9,9 +9,8 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import kotlinx.coroutines.*
-import kotlin.coroutines.coroutineContext
 
 internal class AutoSyncManager(private val icsManager: IcsManager) {
   @Volatile
@@ -19,14 +18,14 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
   @Volatile var enabled = true
 
-  suspend fun waitAutoSync() {
+  suspend fun waitAutoSync() = reportRawProgress { reporter ->
     val autoFuture = autoSyncFuture ?: return
     if (autoFuture.isCompleted) {
       autoSyncFuture = null
     }
     else {
       LOG.info("Wait for auto sync future")
-      coroutineContext.rawProgressReporter?.text(IcsBundle.message("autosync.progress.text"))
+      reporter.text(IcsBundle.message("autosync.progress.text"))
       autoFuture.join()
     }
   }

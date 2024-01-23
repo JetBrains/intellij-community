@@ -517,11 +517,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  @Override
-  protected void addImpl(Component comp, Object constraints, int index) {
-    super.addImpl(comp, constraints, index);
-  }
-
   protected final @NotNull JComponent getCustomComponent(@NotNull AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);

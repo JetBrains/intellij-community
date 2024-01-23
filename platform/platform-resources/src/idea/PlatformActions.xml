@@ -1225,6 +1225,10 @@
         <synonym text="Exit Dumb Mode"/>
         <synonym text="Enter Dumb Mode"/>
       </action>
+      <action id="DumbModeTremble" class="com.intellij.internal.DumbModeTrembleAction">
+        <synonym text="Exit Tremble Dumb Mode"/>
+        <synonym text="Enter Tremble Dumb Mode"/>
+      </action>
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
       <action id="SkipWindowDeactivationEvents" class="com.intellij.internal.SkipWindowDeactivationEventsAction" internal="true">
         <synonym text="Disable ProcessCanceledException"/>
@@ -1580,6 +1584,11 @@
       <action id="EditorBreadcrumbsHideBoth" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$HideBoth"/>
       <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
       <add-to-group group-id="EditorGutterPopupMenu.Appearance" relative-to-action="EditorGutterToggleGlobalIndentLines" anchor="after"/>
+    </group>
+
+    <group id="EditorStickyLinesSettings" popup="true">
+      <action id="EditorStickyLinesHide" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesSettingsHideAction"/>
+      <add-to-group group-id="EditorGutterPopupMenu.Appearance" relative-to-action="EditorBreadcrumbsSettings" anchor="after"/>
     </group>
 
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>

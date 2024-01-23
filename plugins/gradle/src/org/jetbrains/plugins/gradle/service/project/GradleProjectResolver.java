@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.gradle.toolingExtension.impl.tooling.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.diagnostic.ExternalSystemSyncDiagnostic;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -33,7 +35,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
 import org.gradle.tooling.BuildActionFailureException;
@@ -61,8 +65,11 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.telemetry.GradleDaemonOpenTelemetryUtil;
+import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceExporter;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -128,7 +135,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading build script dependencies)
     // * Ability to open  an invalid projects (e.g. with errors in build scripts)
     if (isPreviewMode) {
-      return GradlePreviewCustomizer.Companion.getCustomizer(projectPath).resolvePreviewProjectInfo(projectPath, settings);
+      return GradlePreviewCustomizer.Companion.getCustomizer(projectPath, syncTaskId).resolvePreviewProjectInfo(projectPath, syncTaskId, settings);
     }
 
     DefaultProjectResolverContext resolverContext =
@@ -270,6 +277,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Span gradleCallSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleCall")
       .startSpan();
+    if (GradleDaemonOpenTelemetryUtil.isDaemonTracingEnabled()) {
+      GradleTracingContext gradleDaemonObservabilityContext = getActionTelemetryContext(gradleCallSpan);
+      projectImportAction.setTracingContext(gradleDaemonObservabilityContext);
+    }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       allModels = buildActionRunner.fetchModels(
         models -> {
@@ -308,6 +319,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
       gradleCallSpan.end();
     }
+
+    exportRecordedTraces(allModels);
 
     resolverCtx.checkCancelled();
     if (useCustomSerialization) {
@@ -954,5 +967,38 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     };
     chainWrapper.setNext(firstResolver);
     return chainWrapper;
+  }
+
+  private static @NotNull GradleTracingContext getActionTelemetryContext(@NotNull Span span) {
+    GradleTracingContext context = new GradleTracingContext();
+    GlobalOpenTelemetry.get()
+      .getPropagators()
+      .getTextMapPropagator()
+      .inject(Context.current().with(span), context, GradleTracingContext.SETTER);
+    return context;
+  }
+
+  private static void exportRecordedTraces(@NotNull ProjectImportAction.AllModels allModels) {
+    byte[] traces = allModels.getOpenTelemetryTrace();
+    if (traces.length == 0) {
+      return;
+    }
+    URI telemetryHost = getOpenTelemetryAddress();
+    if (telemetryHost == null) {
+      return;
+    }
+    ApplicationManager.getApplication()
+      .executeOnPooledThread(() -> GradleOpenTelemetryTraceExporter.export(telemetryHost, traces));
+  }
+
+  private static @Nullable URI getOpenTelemetryAddress() {
+    String property = System.getProperty("idea.diagnostic.opentelemetry.otlp");
+    if (property == null) {
+      return null;
+    }
+    if (property.endsWith("/")) {
+      return URI.create(property + "v1/traces");
+    }
+    return URI.create(property + "/v1/traces");
   }
 }

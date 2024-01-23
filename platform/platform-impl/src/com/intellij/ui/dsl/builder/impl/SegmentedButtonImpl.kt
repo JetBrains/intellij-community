@@ -231,7 +231,11 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, pare
     }
     else {
       segmentedButtonComponent.rebuild()
-      component = segmentedButtonComponent
+      if (component === segmentedButtonComponent) {
+        segmentedButtonComponent.revalidate()
+      } else {
+        component = segmentedButtonComponent
+      }
 
       if (segmentedButtonComponent.selectedItem != newSelectedItem) {
         segmentedButtonComponent.selectedItem = newSelectedItem

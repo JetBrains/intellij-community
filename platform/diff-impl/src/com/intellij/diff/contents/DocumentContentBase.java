@@ -98,11 +98,6 @@ public abstract class DocumentContentBase extends DiffContentBase implements Doc
       return myTargetFile.isValid();
     }
 
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
     @NotNull
     private static LineCol translatePosition(@NotNull Document fromDocument, @Nullable Document toDocument, @NotNull LineCol position) {
       try {

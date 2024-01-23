@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -29,26 +31,29 @@ private fun fromGTDProvidersInner(project: Project, editor: Editor, offset: Int)
   val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
   val adjustedOffset: Int = TargetElementUtil.adjustOffset(file, document, offset)
   val leafElement: PsiElement = file.findElementAt(adjustedOffset) ?: return null
-  for (handler in GotoDeclarationHandler.EP_NAME.extensionList) {
-    val fromProvider: Array<out PsiElement>? = try {
-      handler.getGotoDeclarationTargets(leafElement, offset, editor)
+
+  return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+    for (handler in GotoDeclarationHandler.EP_NAME.extensionList) {
+      val fromProvider: Array<out PsiElement>? = try {
+        handler.getGotoDeclarationTargets(leafElement, offset, editor)
+      }
+      catch (pce: ProcessCanceledException) {
+        throw pce
+      }
+      catch (inre: IndexNotReadyException) {
+        throw inre // clients should catch and either show dumb mode notification or ignore
+      }
+      catch (t: Throwable) {
+        LOG.error(t)
+        null
+      }
+      if (fromProvider.isNullOrEmpty()) {
+        continue
+      }
+      return@ThrowableComputable GTDProviderData(leafElement, fromProvider.toList(), handler)
     }
-    catch (pce: ProcessCanceledException) {
-      throw pce
-    }
-    catch (inre: IndexNotReadyException) {
-      throw inre // clients should catch and either show dumb mode notification or ignore
-    }
-    catch (t: Throwable) {
-      LOG.error(t)
-      null
-    }
-    if (fromProvider.isNullOrEmpty()) {
-      continue
-    }
-    return GTDProviderData(leafElement, fromProvider.toList(), handler)
-  }
-  return null
+    return@ThrowableComputable null
+  })
 }
 
 private class GTDProviderData(

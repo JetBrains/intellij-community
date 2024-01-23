@@ -62,7 +62,6 @@
     <extensionPoint name="optionController" interface="com.intellij.codeInspection.options.OptionControllerProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.completion.InternalCompletionSettings"/>
     <applicationService serviceInterface="com.intellij.lang.documentation.ClientDocumentationSettings"
                         serviceImplementation="com.intellij.lang.documentation.LocalDocumentationSettings"

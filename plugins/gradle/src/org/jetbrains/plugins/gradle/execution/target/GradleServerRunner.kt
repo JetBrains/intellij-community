@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
@@ -20,6 +20,8 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildEventConsumer
+import org.gradle.internal.remote.internal.ConnectCompletion
+import org.gradle.internal.remote.internal.ConnectException
 import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
@@ -185,7 +187,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
                       resultHandler: ResultHandler<Any?>,
                       buildEventConsumer: BuildEventConsumer) {
       val inetAddress = InetAddress.getByName(hostName.host)
-      val connectCompletion = TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostName.port))
+      val connectCompletion = connectRetrying(5000) { TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostName.port)) }
       val serializer = DaemonMessageSerializer.create(BuildActionSerializer.create())
       val connection = connectCompletion.create(Serializers.stateful(serializer))
       connection.dispatch(BuildEvent(targetBuildParameters))
@@ -219,6 +221,41 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       finally {
         connection.sendResultAck()
       }
+    }
+
+    /**
+     * Connects to a remote server with retrying mechanism.
+     *
+     * @param timeoutMillis The maximum timeout in milliseconds to wait for a successful connection.
+     * @param step The interval in milliseconds between retries. Default value is 100 milliseconds.
+     * @param action The function to execute for connecting to the remote server.
+     * @return The result of the connection.
+     * @throws ConnectException if unable to connect to the server within the specified timeout.
+     * @throws java.lang.RuntimeException if an unexpected failure occurs while connecting to the remote server.
+     */
+    private fun connectRetrying(timeoutMillis: Long, step: Long = 100, action: () -> ConnectCompletion): ConnectCompletion {
+      val start = System.currentTimeMillis()
+      var result: ConnectCompletion?
+      var lastException: Exception? = null
+      do {
+        result = try {
+          action()
+        }
+        catch (e: ConnectException) {
+          lastException = e
+          Thread.sleep(step)
+          null
+        }
+      } while (result == null && (System.currentTimeMillis() - start < timeoutMillis))
+
+      if (result == null) {
+        if (lastException != null) {
+          throw lastException
+        } else {
+          throw RuntimeException("Unexpected failure while connecting to remote server")
+        }
+      }
+      return result
     }
 
     private fun deserializeIfNeeded(value: Any?): Any? {

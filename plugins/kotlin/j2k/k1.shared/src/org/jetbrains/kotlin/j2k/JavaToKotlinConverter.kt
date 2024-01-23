@@ -5,7 +5,9 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class JavaToKotlinConverter {
     protected abstract fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor): Result
 
