@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.Flow
  * The client code can choose how it wants to use the step by invoking one of the functions of this interface.
  * Once chosen, subsequent invocations of functions of this interface have no effect on this step, and return no-op reporters.
  *
- * The start of the first determinate child step (e.g. [SequentialProgressReporter.sizedStep] or [ConcurrentProgressReporter.itemStep])
+ * The start of the first determinate child step (e.g. [SequentialProgressReporter.sizedStep] or [ProgressReporter.itemStep])
  * triggers the transition of the current step to the determinate state (internal fraction is 0.0).
  * The start of an indeterminate child step does not affect the fraction of the current step.
  *
@@ -149,7 +149,7 @@ internal sealed interface ProgressStep {
 
   suspend fun <X> withText(text: ProgressText, action: suspend CoroutineScope.() -> X): X
 
-  fun asConcurrent(size: Int): ConcurrentProgressReporterHandle?
+  fun asConcurrent(size: Int): ProgressReporterHandle?
 
   fun asSequential(size: Int): SequentialProgressReporterHandle?
 

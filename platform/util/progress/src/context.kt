@@ -23,7 +23,7 @@ import kotlin.coroutines.CoroutineContext
  * - If the context step is not fresh, no reporting from inside the function is visible to the caller,
  * as if there was no progress step in the context at all.
  * - It's up to the caller to provide a fresh step in the context by wrapping the call into [SequentialProgressReporter.sizedStep],
- * [SequentialProgressReporter.indeterminateStep], [ConcurrentProgressReporter.itemStep], etc.
+ * [SequentialProgressReporter.indeterminateStep], [ProgressReporter.itemStep], etc.
  * - If a function allows to mix reporting done by caller and reporting done by itself,
  * then such function can do this only by declaring a reporter parameter.
  * This is allowed when calling a private function, don't expose concrete reporter in your API.
@@ -48,9 +48,9 @@ internal suspend fun internalCurrentStepAsSequential(size: Int): SequentialProgr
          ?: EmptySequentialProgressReporterHandle
 }
 
-internal suspend fun internalCurrentStepAsConcurrent(size: Int): ConcurrentProgressReporterHandle {
+internal suspend fun internalCurrentStepAsConcurrent(size: Int): ProgressReporterHandle {
   return currentProgressStep().asConcurrent(size)
-         ?: EmptyConcurrentProgressReporterHandle
+         ?: EmptyProgressReporterHandle
 }
 
 @PublishedApi

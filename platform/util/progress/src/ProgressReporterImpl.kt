@@ -7,14 +7,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 
 /**
- * Implementation of user-facing [ConcurrentProgressReporter] and [ConcurrentProgressReporterHandle].
+ * Implementation of user-facing [ProgressReporter] and [ProgressReporterHandle].
  */
-internal class ConcurrentProgressReporterImpl(
+internal class ProgressReporterImpl(
   private val builder: ScalingStep,
-) : ConcurrentProgressReporter,
-    ConcurrentProgressReporterHandle {
+) : ProgressReporter,
+    ProgressReporterHandle {
 
-  override val reporter: ConcurrentProgressReporter get() = this
+  override val reporter: ProgressReporter get() = this
 
   override fun close(): Unit = builder.cancel()
 

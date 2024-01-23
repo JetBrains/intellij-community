@@ -14,7 +14,7 @@ internal data object EmptySequentialReporter : SequentialProgressReporter {
   override suspend fun <T> sizedStep(workSize: Int, text: ProgressText?, action: ScopedLambda<T>): T = coroutineScope(action)
 }
 
-internal data object EmptyConcurrentReporter : ConcurrentProgressReporter {
+internal data object EmptyProgressReporter : ProgressReporter {
   override suspend fun <T> sizedStep(workSize: Int, text: ProgressText?, action: ScopedLambda<T>): T = coroutineScope(action)
 }
 
@@ -25,8 +25,8 @@ internal data object EmptySequentialProgressReporterHandle : SequentialProgressR
   override fun close() {}
 }
 
-internal data object EmptyConcurrentProgressReporterHandle : ConcurrentProgressReporterHandle {
-  override val reporter: ConcurrentProgressReporter get() = EmptyConcurrentReporter
+internal data object EmptyProgressReporterHandle : ProgressReporterHandle {
+  override val reporter: ProgressReporter get() = EmptyProgressReporter
   override fun close() {}
 }
 

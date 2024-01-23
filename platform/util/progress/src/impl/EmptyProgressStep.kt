@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress.impl
 
-import com.intellij.platform.util.progress.ConcurrentProgressReporterHandle
+import com.intellij.platform.util.progress.ProgressReporterHandle
 import com.intellij.platform.util.progress.RawProgressReporterHandle
 import com.intellij.platform.util.progress.SequentialProgressReporterHandle
 import com.intellij.platform.util.progress.StepState
@@ -22,7 +22,7 @@ internal data object EmptyProgressStep : ProgressStep {
     return coroutineScope(action)
   }
 
-  override fun asConcurrent(size: Int): ConcurrentProgressReporterHandle? = null
+  override fun asConcurrent(size: Int): ProgressReporterHandle? = null
 
   override fun asSequential(size: Int): SequentialProgressReporterHandle? = null
 

@@ -44,7 +44,7 @@ import com.intellij.platform.util.progress.impl.ScopedLambda
  * }
  * ```
  */
-sealed interface ConcurrentProgressReporter {
+sealed interface ProgressReporter {
 
   /**
    * A shortcut for [sizedStep] with size = 0,

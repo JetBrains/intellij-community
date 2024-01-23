@@ -72,11 +72,11 @@ internal class ProgressStepImpl(
     return SequentialProgressReporterImpl(ScalingStep(parentScope, size, state, config))
   }
 
-  override fun asConcurrent(size: Int): ConcurrentProgressReporterHandle? {
+  override fun asConcurrent(size: Int): ProgressReporterHandle? {
     if (!validateSizeAndTakeOwnership(size)) {
       return null
     }
-    return ConcurrentProgressReporterImpl(ScalingStep(parentScope, size, state, config))
+    return ProgressReporterImpl(ScalingStep(parentScope, size, state, config))
   }
 
   override fun asRaw(): RawProgressReporterHandle? {

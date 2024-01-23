@@ -48,7 +48,7 @@ suspend inline fun <T> reportSequentialProgress(size: Int = 100, action: (report
  * or no-op reporter if this step is already not fresh
  * @see ProgressStep
  */
-suspend fun <T> reportProgress(size: Int = 100, action: suspend (reporter: ConcurrentProgressReporter) -> T): T {
+suspend fun <T> reportProgress(size: Int = 100, action: suspend (reporter: ProgressReporter) -> T): T {
   // TODO consider inline here
   return internalCurrentStepAsConcurrent(size).use { handle ->
     action(handle.reporter)
@@ -89,7 +89,7 @@ suspend fun <T> reportProgress(size: Int = 100, action: suspend (reporter: Concu
  * }
  * ```
  */
-suspend fun <T> reportProgressScope(size: Int = 100, action: suspend CoroutineScope.(reporter: ConcurrentProgressReporter) -> T): T {
+suspend fun <T> reportProgressScope(size: Int = 100, action: suspend CoroutineScope.(reporter: ProgressReporter) -> T): T {
   return reportProgress(size) {
     ignoreProgressReportingIn {
       action(it)
@@ -193,7 +193,7 @@ fun Collection<*>.itemDuration(): Double = this.size.itemDuration()
 @Deprecated("Pass `Collection.size` as argument to `reportProgress` or `reportSequentialProgress`")
 fun Int.itemDuration(): Double = 1.0 / this
 
-@Deprecated("Use `ConcurrentProgressReporter.sizedStep`")
+@Deprecated("Use `ProgressReporter.sizedStep`")
 suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, action: suspend CoroutineScope.() -> T): T {
   return coroutineScope(action)
 }
