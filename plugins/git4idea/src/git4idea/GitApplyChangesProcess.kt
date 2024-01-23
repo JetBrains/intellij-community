@@ -3,6 +3,8 @@ package git4idea
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
+import com.intellij.history.ActivityId
+import com.intellij.history.LocalHistory
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -11,6 +13,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
@@ -65,7 +68,9 @@ internal class GitApplyChangesProcess(private val project: Project,
                                       private val emptyCommitDetector: (GitCommandResult) -> Boolean,
                                       private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
                                       private val preserveCommitMetadata: Boolean,
-                                      private val cleanupBeforeCommit: (GitRepository, autoCommit: Boolean) -> Unit = { _, _ -> }) {
+                                      private val cleanupBeforeCommit: (GitRepository, autoCommit: Boolean) -> Unit = { _, _ -> },
+                                      private val activityName: @NlsContexts.Label String,
+                                      private val activityId: ActivityId) {
   private val repositoryManager = GitRepositoryManager.getInstance(project)
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
@@ -128,6 +133,7 @@ internal class GitApplyChangesProcess(private val project: Project,
       }
     }
 
+    val action = LocalHistory.getInstance().startAction(activityName, activityId)
     strategy.start()
     try {
       val startHash = GitUtil.getHead(repository)
@@ -191,6 +197,7 @@ internal class GitApplyChangesProcess(private val project: Project,
     }
     finally {
       strategy.finish()
+      action.finish()
     }
   }
 

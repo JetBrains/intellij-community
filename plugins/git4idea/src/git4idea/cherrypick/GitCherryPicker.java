@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import git4idea.GitActivity;
 import git4idea.GitApplyChangesProcess;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -72,7 +73,8 @@ public class GitCherryPicker extends VcsCherryPicker {
                                result -> isNothingToCommitMessage(result),
                                (repository, commit) -> createCommitMessage(repository, commit),
                                true,
-                               (repository, autoCommit) -> cancelCherryPick(repository, autoCommit)).execute();
+                               (repository, autoCommit) -> cancelCherryPick(repository, autoCommit),
+                               GitBundle.message("activity.name.cherry.pick"), GitActivity.CherryPick).execute();
   }
 
   private GitCommandResult cherryPickSingleCommit(

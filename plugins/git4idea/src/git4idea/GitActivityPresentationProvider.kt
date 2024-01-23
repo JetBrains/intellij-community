@@ -4,6 +4,7 @@ package git4idea
 import com.intellij.history.ActivityId
 import com.intellij.history.ActivityPresentationProvider
 import com.intellij.icons.AllIcons
+import icons.DvcsImplIcons
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -15,7 +16,8 @@ class GitActivityPresentationProvider : ActivityPresentationProvider {
       GitActivity.Merge.kind -> AllIcons.Vcs.Merge
       GitActivity.Stash.kind -> AllIcons.Vcs.Stash
       GitActivity.Unstash.kind -> AllIcons.Vcs.Unshelve
-      GitActivity.Reset.kind -> AllIcons.Actions.Rollback
+      GitActivity.Reset.kind, GitActivity.Revert.kind -> AllIcons.Actions.Rollback
+      GitActivity.CherryPick.kind -> DvcsImplIcons.CherryPick
       else -> null
     }
   }
@@ -44,6 +46,11 @@ object GitActivity {
   val Stash = createId("Stash")
 
   val Unstash = createId("Unstash")
+
+  @JvmField
+  val CherryPick = createId("CherryPick")
+
+  val Revert = createId("Revert")
 
   private fun createId(kind: @NonNls String) = ActivityId(GitActivityPresentationProvider.ID, kind)
 }
