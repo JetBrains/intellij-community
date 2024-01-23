@@ -34,7 +34,7 @@
     <remote-repository>
       <option name="id" value="kpm" />
       <option name="name" value="kpm" />
-      <option name="url" value="https://packages.jetbrains.team/maven/p/kpm/public" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="86ec9d3a-2b8e-4273-8498-49095616f989" />
