@@ -84,19 +84,23 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   init {
     val busConnection = project.messageBus.connect(listenersDisposable)
     busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+      LOG.debug("Recreating Vcs Log after roots changed")
       launchWithAnyModality { disposeLog(recreate = true) }
     })
     busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
     VcsLogData.getIndexingRegistryValue().addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
+        LOG.debug("Recreating Vcs Log after indexing registry value changed")
         launchWithAnyModality { disposeLog(recreate = true) }
       }
     }, listenersDisposable)
     project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
+      LOG.debug("Recreating Vcs Log after settings changed")
       launchWithAnyModality { disposeLog(recreate = true) }
     }, listenersDisposable)
     PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
+        LOG.debug("Recreating Vcs Log after durable enumerator registry value changed")
         launchWithAnyModality { logManager?.let { invalidateCaches(it) } }
       }
     }, listenersDisposable)
@@ -264,6 +268,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
 
     override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
       if (hasLogExtensions(pluginDescriptor)) {
+        LOG.debug { "Disposing Vcs Log after loading ${pluginDescriptor.pluginId}" }
         launchWithAnyModality { disposeLog(recreate = true) }
       }
     }
