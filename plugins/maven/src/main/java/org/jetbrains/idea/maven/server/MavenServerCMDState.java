@@ -16,6 +16,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -34,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.jul.JDK14LoggerFactory;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,13 +69,16 @@ public class MavenServerCMDState extends CommandLineState {
     myDebugPort = debugPort;
   }
 
+  // Profile the Maven server if the idea is launched under profiling
   private static String getProfilerVMString() {
     String profilerOptionPrefix = "-agentpath:";
     String profilerVMOption = VMOptions.readOption(profilerOptionPrefix, true);
-    Long currentTime = System.currentTimeMillis();
-    return profilerVMOption != null ? profilerOptionPrefix + profilerVMOption
-      .replace(".jfr", currentTime + "-maven.jfr")
-      .replace(".log", currentTime + "-maven.log") : null;
+    // Doesn't work for macOS with java 11. Pending update to https://github.com/async-profiler/async-profiler/releases/tag/v3.0
+    if (profilerVMOption == null || SystemInfo.isMac) return null;
+    String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("mm:ss"));
+    return profilerOptionPrefix + profilerVMOption
+      .replace(".jfr", "-" + currentTime + "-maven.jfr")
+      .replace(".log", "-" + currentTime + "-maven.log");
   }
 
   protected SimpleJavaParameters createJavaParameters() {
