@@ -92,6 +92,12 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     else if (element instanceof PyExpression) {
       return describeExpression((PyExpression)element, referenceElement, context);
     }
+    else if (element instanceof PyTypeParameter typeParameter) {
+      return PyPsiBundle.message("QDOC.type.parameter.name", describeTypeParameter(typeParameter, true,  context));
+    }
+    else if (element instanceof PyTypeAliasStatement typeAliasStatement) {
+      return describeTypeAlias(typeAliasStatement, context).toString();
+    }
     return null;
   }
 
@@ -132,6 +138,49 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     result.append(styledSpan(StringUtil.notNullize(parameter.getName()), paramNameTextAttribute(parameter.isSelf())));
     result.append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN));
     result.append(styledSpan(formatTypeWithLinks(context.getType(parameter), parameter, parameter, context), PyHighlighter.PY_ANNOTATION));
+    return result.toFragment();
+  }
+
+  @NotNull
+  static HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter, boolean showKind, @NotNull TypeEvalContext context) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append(styledSpan(StringUtil.notNullize(typeParameter.getName()), PyHighlighter.PY_TYPE_PARAMETER));
+    PyExpression boundExpression = typeParameter.getBoundExpression();
+    if (boundExpression != null && typeParameter.getBoundExpressionText() != null) {
+      result.append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN));
+      result.append(highlightExpressionText(typeParameter.getBoundExpressionText(), typeParameter.getBoundExpression()));
+    }
+    if (showKind) {
+      result
+        .append(", ")
+        .append(PyPsiBundle.message("QDOC.type.parameter.kind"))
+        .append(" ")
+        .append(styledSpan(formatTypeWithLinks(context.getType(typeParameter), typeParameter, typeParameter, context), PyHighlighter.PY_ANNOTATION));
+    }
+    return result.toFragment();
+  }
+
+
+  @NotNull
+  static HtmlChunk describeTypeAlias(@NotNull PyTypeAliasStatement typeAliasStatement, @NotNull TypeEvalContext context) {
+    HtmlBuilder result = new HtmlBuilder();
+    result.append(styledSpan("type ", PyHighlighter.PY_KEYWORD)); //NON-NLS
+    result.append(styledSpan(StringUtil.notNullize(typeAliasStatement.getName()), DefaultLanguageHighlighterColors.IDENTIFIER));
+    if (typeAliasStatement.getTypeParameterList() != null) {
+      List<PyTypeParameter> typeParameters = typeAliasStatement.getTypeParameterList().getTypeParameters();
+      result.append(styledSpan("[", PyHighlighter.PY_BRACKETS));
+      result.append(StreamEx
+                      .of(typeParameters)
+                      .map(typeParameter -> describeTypeParameter(typeParameter, false, context))
+                      .collect(HtmlChunk.toFragment(styledSpan(", ", PyHighlighter.PY_COMMA))));
+      result.append(styledSpan("]", PyHighlighter.PY_BRACKETS));
+    }
+    PyExpression typeExpression = typeAliasStatement.getTypeExpression();
+    if (typeExpression != null) {
+      result.append(styledSpan(" = ", PyHighlighter.PY_OPERATION_SIGN));
+      result.append(styledSpan(formatTypeWithLinks(context.getType(typeExpression),
+                                                   typeExpression, typeAliasStatement, context), PyHighlighter.PY_ANNOTATION));
+    }
     return result.toFragment();
   }
 
