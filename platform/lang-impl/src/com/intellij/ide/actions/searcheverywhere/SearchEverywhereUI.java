@@ -1041,7 +1041,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         if (psiFile == null) return new UsageInfo(psiElement);
 
         StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
-        if (structureViewBuilder == null) return null;
+        if (structureViewBuilder == null) return new UsageInfo(psiElement);
 
         StructureView structureView = structureViewBuilder.createStructureView(null, myProject);
         myUsagePreviewDisposableList.add(new Disposable() {
