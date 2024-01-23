@@ -54,8 +54,8 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
 
     return runReadAction {
-      val file = editor.virtualFile?.findPsiFile(project) ?: return@runReadAction CodeVisionState.READY_EMPTY
-      val refactoring = file.getUserData(REFACTORING_DATA_KEY) ?: editor.getUserData(REFACTORING_DATA_KEY)
+      val file = editor.virtualFile?.findPsiFile(project)
+      val refactoring = file?.getUserData(REFACTORING_DATA_KEY) ?: editor.getUserData(REFACTORING_DATA_KEY)
 
       if (refactoring != null) {
         if (refactoring is SuggestedRenameData) {
@@ -81,7 +81,7 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
       }
     }
     file.accept(visitor)
-    visitor.renamedElement?.let { file.putUserData(REFACTORING_DATA_KEY, SuggestedRenameData(it, "foo")) }
+    visitor.renamedElement?.let { editor.putUserData(REFACTORING_DATA_KEY, SuggestedRenameData(it, "foo")) }
   }
 
   override val name: String
