@@ -228,7 +228,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
     val doc = JavaDocumentationProvider().generateDoc(method, null)
 
-    val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'> Visit the \"<code style='font-size:100%;'><span style=\"\"><span style=\"\">/login</span></span></code>\" URL. </div><table class='sections'></table>"
+    val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'> Visit the \"<code><span style=\"\">/login</span></code>\" URL. </div><table class='sections'></table>"
     TestCase.assertEquals(expected, doc)
   }
 
