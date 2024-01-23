@@ -29,7 +29,7 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 
 public final class ChangeListStorageImpl implements ChangeListStorage {
-  private static final int VERSION = 6;
+  private static final int VERSION = 7;
   private static final @NonNls String STORAGE_FILE = "changes";
 
   private final Path myStorageDir;

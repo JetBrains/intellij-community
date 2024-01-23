@@ -36,6 +36,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class ChangeSet {
+  private static final int VERSION = 0;
   private final long myId;
   private @Nullable @NlsContexts.Label String myName;
   private final long myTimestamp;
@@ -50,6 +51,7 @@ public final class ChangeSet {
   }
 
   public ChangeSet(DataInput in) throws IOException {
+    DataInputOutputUtil.readINT(in);
     myId = DataInputOutputUtil.readLONG(in);
     myName = DataStreamUtil.readStringOrNull(in); //NON-NLS
     myTimestamp = DataInputOutputUtil.readTIME(in);
@@ -65,6 +67,7 @@ public final class ChangeSet {
 
   public void write(DataOutput out) throws IOException {
     LocalHistoryLog.LOG.assertTrue(isLocked, "Changeset should be locked");
+    DataInputOutputUtil.writeINT(out, VERSION);
     DataInputOutputUtil.writeLONG(out, myId);
     DataStreamUtil.writeStringOrNull(out, myName);
     DataInputOutputUtil.writeTIME(out, myTimestamp);
