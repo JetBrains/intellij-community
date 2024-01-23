@@ -633,8 +633,8 @@ fun <T : CommandChain> T.showFileHistory(): T = apply {
   addCommand("${CMD_PREFIX}showFileHistory")
 }
 
-fun <T : CommandChain> T.filterVcsLogTab(params:Map<String, String>): T = apply {
-  val cmdParams = params.map { "-${it.key} ${it.value}"}.joinToString(" ")
+fun <T : CommandChain> T.filterVcsLogTab(params: Map<String, String>): T = apply {
+  val cmdParams = params.map { "-${it.key} '${it.value}'" }.joinToString(" ")
   addCommand("${CMD_PREFIX}filterVcsLogTab $cmdParams")
 }
 
