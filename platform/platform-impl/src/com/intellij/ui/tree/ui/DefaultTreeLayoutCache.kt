@@ -3,7 +3,7 @@ package com.intellij.ui.tree.ui
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.tree.CachingTreePath
+import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
