@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
-import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +22,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -180,17 +178,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.getFilterConfigCrc(projectFileIndex);
   }
 
-
-  @Override
-  public void initializeComponent() {
-    TrackingUtil.trackActivity(myProject, MavenActivityKey.INSTANCE, () -> {
-      //noinspection deprecation
-      ProjectUtilKt.executeOnPooledThread(myProject, () -> {
-        tryInit();
-      });
-    });
-  }
-
   @TestOnly
   public void initForTests() {
     loadExistingTreeAndInit();
@@ -262,6 +249,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   protected void onProjectStartup() {
+    tryInit();
     if (isInitialized()) {
       doActivate();
       if (runImportOnStartup.get()) {
