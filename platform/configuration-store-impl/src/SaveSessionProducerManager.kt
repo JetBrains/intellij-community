@@ -9,12 +9,8 @@ import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-internal interface SaveExecutor {
-  suspend fun save(): SaveResult
-}
-
 @ApiStatus.Internal
-open class SaveSessionProducerManager : SaveExecutor {
+open class SaveSessionProducerManager {
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
   // actually, all storages for component store share the same value, but for flexibility and to simplify code, compute on the fly
@@ -43,7 +39,7 @@ open class SaveSessionProducerManager : SaveExecutor {
     }
   }
 
-  override suspend fun save(): SaveResult {
+  suspend fun save(): SaveResult {
     if (producers.isEmpty()) {
       return SaveResult.EMPTY
     }
