@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.codeInsight.codevision
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-internal object KotlinCodeVisionUsagesCollector : CounterUsagesCollector() {
+object KotlinCodeVisionUsagesCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    internal const val CLASS_LOCATION = "class"
-    internal const val INTERFACE_LOCATION = "interface"
-    internal const val FUNCTION_LOCATION = "function"
-    internal const val PROPERTY_LOCATION = "property"
+    const val CLASS_LOCATION = "class"
+    const val INTERFACE_LOCATION = "interface"
+    const val FUNCTION_LOCATION = "function"
+    const val PROPERTY_LOCATION = "property"
 
     private val GROUP = EventLogGroup("kotlin.code.vision", 2)
 
