@@ -92,6 +92,12 @@ public class GitCommandResult {
     return !myStartFailed && (Arrays.stream(ignoredErrorCodes).anyMatch(i -> i == myExitCode) || myExitCode == 0);
   }
 
+  /**
+   * NOTE: The returned lines will have line separators trimmed.
+   * This means that CRLF, LF and CR lines will not be distinguishable and "\r\r" will be reported as 3 empty lines.
+   *
+   * @see BufferingTextSplitter
+   */
   public @NotNull List<String> getOutput() {
     return Collections.unmodifiableList(myOutput);
   }
@@ -129,6 +135,12 @@ public class GitCommandResult {
     return Collections.singletonList(GitBundle.message("git.error.exit", myExitCode));
   }
 
+  /**
+   * NOTE: The returned string will have its line separators converted to "\n".
+   * This means that "\r\r" output from git will be reported as "\n\n" instead.
+   *
+   * @see BufferingTextSplitter
+   */
   public @NotNull @NlsSafe String getOutputAsJoinedString() {
     return StringUtil.join(myOutput, "\n");
   }

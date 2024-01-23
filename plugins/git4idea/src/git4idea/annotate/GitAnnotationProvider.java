@@ -229,6 +229,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                                @NotNull FilePath filePath,
                                                @Nullable VcsRevisionNumber revision,
                                                @NotNull VirtualFile file) throws VcsException {
+      // binary handler to preserve CR symbols intact
       GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.BLAME);
       h.setStdoutSuppressed(true);
       h.addParameters("--porcelain", "-l", "-t");
