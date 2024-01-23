@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,6 +35,8 @@ interface IndentFactory {
   Indent getSpaceIndent(final int spaces, boolean relativeToDirectParent);
   Indent getIndent(@NotNull Indent.Type type, boolean relativeToDirectParent, boolean enforceIndentToChildren);
   Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren);
+
+  @ApiStatus.Experimental
   Indent getIndentEnforcedToChildrenToBeRelativeToMe(@NotNull Indent.Type type, int spaces);
   Indent getSmartIndent(@NotNull Indent.Type type);
   Indent getSmartIndent(@NotNull Indent.Type type, boolean relativeToDirectParent);

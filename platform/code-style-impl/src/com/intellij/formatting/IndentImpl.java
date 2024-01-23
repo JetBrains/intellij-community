@@ -2,6 +2,7 @@
 
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,6 +65,7 @@ public class IndentImpl extends Indent {
     return myRelativeToDirectParent;
   }
 
+  @ApiStatus.Experimental
   public boolean isEnforceChildrenToBeRelativeToMe() {
     return myEnforceChildrenToBeRelativeToMe;
   }

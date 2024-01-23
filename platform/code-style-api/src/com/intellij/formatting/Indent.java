@@ -3,6 +3,7 @@ package com.intellij.formatting;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 
 /**
  * The indent setting for a formatting model block. Indicates how the block is indented
@@ -266,6 +267,7 @@ public abstract class Indent {
    * @param spaces  the number of spaces in the indent (if indent type is SPACES)
    * @return        newly created indent configured in accordance with the given arguments
    */
+  @Experimental
   public static Indent getIndentEnforcedToChildrenToBeRelativeToMe(@NotNull Type type, int spaces) {
     return Formatter.getInstance().getIndentEnforcedToChildrenToBeRelativeToMe(type, spaces);
   }
@@ -275,6 +277,7 @@ public abstract class Indent {
    * The same effect could be achieved if all children would use relativeToDirectParent.
    * @return        newly created indent configured in accordance with the given arguments
    */
+  @Experimental
   public static Indent getIndentEnforcedToChildrenToBeRelativeToMe() {
     return Formatter.getInstance().getIndentEnforcedToChildrenToBeRelativeToMe(Type.NONE, 0);
   }
@@ -297,11 +300,13 @@ public abstract class Indent {
     /**
      * Outdent with a size of normal indent
      */
+    @Experimental
     public static final Type OUTDENT_NORMAL = new Type("OUTDENT_NORMAL");
 
     /**
      * Outdent with a size specified in spaces. Used for outdenting aligned blocks, so gets substracted from spaces instead of indent spaces
      */
+    @Experimental
     public static final Type OUTDENT_SPACES = new Type("OUTDENT_SPACES");
 
     public String toString() {
