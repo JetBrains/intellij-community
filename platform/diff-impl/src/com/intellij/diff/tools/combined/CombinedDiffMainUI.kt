@@ -5,7 +5,6 @@ import com.intellij.CommonBundle
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffTool
-import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
@@ -41,7 +40,6 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
-import java.lang.Boolean.getBoolean
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -206,17 +204,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     DiffUtil.addActionBlock(rightToolbarGroup, viewerActions, false)
     val contextActions = context.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
     DiffUtil.addActionBlock(leftToolbarGroup, contextActions)
-
-    //if (SystemInfo.isMac) { // collect touchbar actions
-    //  touchbarActionGroup.removeAll()
-    //  touchbarActionGroup.addAll(CombinedPrevDifferenceAction(settings, context), CombinedNextDifferenceAction(settings, context),
-    //                             OpenInEditorAction(),
-    //                             Separator.getInstance(),
-    //                             CombinedPrevChangeAction(context), CombinedNextChangeAction(context))
-    //  if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null) {
-    //    touchbarActionGroup.addAll(viewerActions)
-    //  }
-    //}
   }
 
   private fun collectNavigationActions(): List<AnAction> {
@@ -373,9 +360,5 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     }
 
     override fun getProject() = context.project
-  }
-
-  companion object {
-    private val SHOW_VIEWER_ACTIONS_IN_TOUCHBAR = getBoolean("touchbar.diff.show.viewer.actions")
   }
 }
