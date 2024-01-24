@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.jb
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.fileTemplates.FileTemplatesScheme
+import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -338,15 +339,17 @@ class JbSettingsImporter(private val configDirPath: Path,
   }
 
   fun importRaw(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
-    val storageManager = componentStore.storageManager as StateStorageManagerImpl
-    val dummyProvider = DummyStreamProvider()
-    // we add dummy provider to prevent IDE from saving files on shutdown
-    // we also need to take care of EarlyAccessManager
-    storageManager.addStreamProvider(dummyProvider)
-    val importOptions = configImportOptions(progressIndicator, pluginIds)
-    System.setProperty(EarlyAccessRegistryManager.DISABLE_SAVE_PROPERTY, "true")
-    importOptions.isMergeVmOptions = true
-    ConfigImportHelper.doImport(configDirPath, PathManager.getConfigDir(), prevIdeHome, LOG, importOptions)
+    val externalVmOptionsFile = configDirPath.listDirectoryEntries("*.vmoptions").firstOrNull()
+    if (externalVmOptionsFile != null) {
+      val currentVMFile = PathManager.getConfigDir().resolve(VMOptions.getFileName())
+      if (currentVMFile.exists()) {
+        ConfigImportHelper.mergeVmOptions(externalVmOptionsFile, currentVMFile, LOG)
+      } else {
+        Files.copy(externalVmOptionsFile, currentVMFile)
+      }
+      ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), LOG)
+    }
+    CustomConfigMigrationOption.MigrateFromCustomPlace(configDirPath).writeConfigMarkerFile(PathManager.getConfigDir())
   }
 
   internal class DummyStreamProvider : StreamProvider {
