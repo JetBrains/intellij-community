@@ -4,10 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.stateInNow
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
-import com.intellij.collaboration.ui.codereview.editor.DocumentTrackerCodeReviewEditorGutterChangesModel
+import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.Hideable
 import com.intellij.collaboration.util.getOrNull
@@ -61,7 +58,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
       if (postReviewRanges != null) {
         val nonCommentableRanges = postReviewRanges.map(Range::getAfterLines)
         val shiftedLinesWithDiscussions = linesWithDiscussions.mapTo(mutableSetOf()) {
-          transferLineToAfter(postReviewRanges, it)
+          ReviewInEditorUtil.transferLineToAfter(postReviewRanges, it)
         }
         GutterState(shiftedLinesWithDiscussions, canComment, nonCommentableRanges)
       }
@@ -78,7 +75,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   override fun requestNewComment(lineIdx: Int) {
     val ranges = changesModel.postReviewRanges.value ?: return
-    val originalLine = transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
+    val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
     fileVm.requestNewDiscussion(originalLine, true)
   }
 
@@ -96,7 +93,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   override fun showDiff(lineIdx: Int?) {
     val ranges = changesModel.postReviewRanges.value ?: return
-    val originalLine = lineIdx?.let { transferLineFromAfter(ranges, it, true) }?.takeIf { it >= 0 }
+    val originalLine = lineIdx?.let { ReviewInEditorUtil.transferLineFromAfter(ranges, it, true) }?.takeIf { it >= 0 }
     fileVm.showDiff(originalLine)
   }
 
@@ -113,7 +110,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =
     combineState(changesModel.postReviewRanges) { line, ranges ->
       if (ranges != null && line != null) {
-        transferLineToAfter(ranges, line).takeIf { it >= 0 }
+        ReviewInEditorUtil.transferLineToAfter(ranges, line).takeIf { it >= 0 }
       }
       else null
     }
@@ -152,40 +149,6 @@ private data class GutterState(
 ) : CodeReviewEditorGutterControlsModel.ControlsState {
   override fun isLineCommentable(lineIdx: Int): Boolean =
     canComment && nonCommentableRanges.none { lineIdx in it.start until it.end }
-}
-
-private fun transferLineToAfter(ranges: List<Range>, line: Int): Int {
-  if (ranges.isEmpty()) return line
-  var result = line
-  for (range in ranges) {
-    if (line in range.start1 until range.end1) {
-      return (range.end2 - 1).coerceAtLeast(0)
-    }
-
-    if (range.end1 > line) return result
-
-    val length1 = range.end1 - range.start1
-    val length2 = range.end2 - range.start2
-    result += length2 - length1
-  }
-  return result
-}
-
-private fun transferLineFromAfter(ranges: List<Range>, line: Int, approximate: Boolean = false): Int? {
-  if (ranges.isEmpty()) return line
-  var result = line
-  for (range in ranges) {
-    if (line < range.start2) return result
-
-    if (line in range.start2 until range.end2) {
-      return if (approximate) range.end1 else null
-    }
-
-    val length1 = range.end1 - range.start1
-    val length2 = range.end2 - range.start2
-    result -= length2 - length1
-  }
-  return result
 }
 
 private fun Range.getAfterLines(): LineRange = LineRange(start2, end2)
