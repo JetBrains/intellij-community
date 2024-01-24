@@ -498,7 +498,6 @@ private fun schemaChanged() {
 private class MainToolbarLayoutStrategy(): ToolbarLayoutStrategy {
 
   private val delegate : ToolbarLayoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
-  private val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
 
   override fun calculateBounds(toolbar: ActionToolbar): MutableList<Rectangle> {
     val bounds = delegate.calculateBounds(toolbar)
@@ -515,6 +514,7 @@ private class MainToolbarLayoutStrategy(): ToolbarLayoutStrategy {
   override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
     val res = Dimension()
 
+    val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     toolbar.component.components.forEach {
       val size = it.preferredSize
       if (!ActionToolbarImpl.isSeparator(it)) {
@@ -533,6 +533,7 @@ private class MainToolbarLayoutStrategy(): ToolbarLayoutStrategy {
   override fun calcMinimumSize(toolbar: ActionToolbar): Dimension = delegate.calcMinimumSize(toolbar)
 
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
+    val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     if (!ActionToolbarImpl.isSeparator(cmp)) {
       currRect.width = max(currRect.width, minButtonSize.width)
     }
