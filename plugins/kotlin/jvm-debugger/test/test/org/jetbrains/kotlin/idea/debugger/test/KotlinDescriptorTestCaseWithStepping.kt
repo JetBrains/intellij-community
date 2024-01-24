@@ -29,10 +29,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.impl.XSourcePositionImpl
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider
@@ -44,8 +46,8 @@ import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
 import org.jetbrains.kotlin.idea.debugger.test.util.render
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
+import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
@@ -146,6 +148,18 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         dp.managerThread.schedule(stepOutCommand)
     }
 
+    private fun SuspendContextImpl.doRunToCursor(lineIndex: Int, fileName: String) {
+        val runToCursorCommand = runReadAction {
+            val allKotlinFiles = project.allKotlinFiles()
+            val ktFile = allKotlinFiles.singleOrNull { it.name == fileName } ?: error("No file with name $fileName")
+            val virtualFile = ktFile.virtualFile
+            val xSourcePosition = XSourcePositionImpl.create(virtualFile, lineIndex + 1) // need next line
+            commandProvider.getRunToCursorCommand(this, xSourcePosition, false) ?: dp.createRunToCursorCommand(this, xSourcePosition, false)
+        }
+
+        dp.managerThread.schedule(runToCursorCommand)
+    }
+
     override fun setUp() {
         super.setUp()
         atDebuggerTearDown { classPath.clear() }
@@ -168,6 +182,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
 
         when (instruction.kind) {
+            SteppingInstructionKind.RunToCursor -> doOnBreakpoint { doRunToCursor(instruction.lineIndex, instruction.fileName) }
             SteppingInstructionKind.StepInto -> loop(instruction.arg) { doStepInto(false, null) }
             SteppingInstructionKind.StepIntoIgnoreFilters -> loop(instruction.arg) { doStepInto(true, null) }
             SteppingInstructionKind.StepOut -> loop(instruction.arg) { doStepOut() }
