@@ -108,7 +108,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   init {
     setParentValue(parentValue)
-    minimumSize = if (isNewUI) JBDimension(360, 300) else JBDimension(300, 200)
+    minimumSize = if (isNewUI) JBDimension(375, 300) else JBDimension(300, 200)
     dimensionServiceKey = if (isChild()) null else DIMENSION_SERVICE_KEY
     userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     installGeneralShortcutActions()
