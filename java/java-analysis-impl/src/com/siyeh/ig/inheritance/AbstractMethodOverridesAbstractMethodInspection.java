@@ -29,7 +29,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -196,43 +195,31 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
   }
 
   public static boolean haveSameReturnTypes(PsiMethod method1, PsiMethod method2) {
-    final PsiSubstitutor substitutor = getSuperSubstitutor(method1, method2);
-    return areTypesEqualAndNotMoreSpecific(substitutor, method1.getReturnType(), method2.getReturnType());
+    return areTypesEqual(method1.getReturnType(), method2.getReturnType());
   }
 
   public static boolean haveSameParameterTypes(PsiMethod method1, PsiMethod method2){
-    final PsiSubstitutor substitutor = getSuperSubstitutor(method1, method2);
     PsiParameter[] parameters1 = method1.getParameterList().getParameters();
     PsiParameter[] parameters2 = method2.getParameterList().getParameters();
     for (int i = 0; i < parameters1.length; i++) {
-      if (!areTypesEqualAndNotMoreSpecific(substitutor, parameters1[i].getType(), parameters2[i].getType())) return false;
+      if (!areTypesEqual(parameters1[i].getType(), parameters2[i].getType())) return false;
     }
     return true;
   }
 
-  private static boolean areTypesEqualAndNotMoreSpecific(PsiSubstitutor substitutor, @Nullable PsiType type1, @Nullable PsiType type2) {
-    if (type1 == null) return false;
-    if (type1 instanceof PsiClassType classType1 && type2 instanceof PsiClassType classType2) {
-      if (substitutor == null) return false;
-      return type1.equals(substitutor.substitute(type2)) && !typeIsMoreSpecific(classType2, classType1);
+  private static boolean areTypesEqual(@Nullable PsiType type, @Nullable PsiType bound){
+    if (type == null || bound == null) return false;
+    PsiType typeErasure = TypeConversionUtil.erasure(type);
+    PsiType boundErasure = TypeConversionUtil.erasure(bound);
+    if(!typeErasure.equals(boundErasure)) return false;
+    if (!(type instanceof PsiClassType classType && bound instanceof PsiClassType boundClassType)) return true;
+    PsiType[] typeParameters = classType.getParameters();
+    PsiType[] boundParameters = boundClassType.getParameters();
+    if (typeParameters.length != boundParameters.length) return false;
+    for (int i = 0; i < typeParameters.length; i++) {
+      if (!areTypesEqual(typeParameters[i], boundParameters[i])) return false;
     }
-    else {
-      return type1.equals(type2);
-    }
-  }
-
-  private static boolean typeIsMoreSpecific(PsiClassType type, PsiClassType bound){
-    PsiType[] typeParameters = type.getParameters();
-    PsiType[] boundParameters = bound.getParameters();
-    if (typeParameters.length > 0) {
-      if (typeParameters.length != boundParameters.length) return false;
-      for (int i = 0; i < typeParameters.length; i++) {
-        if (typeParameters[i] instanceof PsiClassType typeParameter && boundParameters[i] instanceof PsiClassType boundParameter &&
-            typeIsMoreSpecific(typeParameter, boundParameter)) return true;
-      }
-    }
-    if (!(PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter)) return false;
-    return ContainerUtil.exists(bound.getSuperTypes(), boundType -> GenericsUtil.checkNotInBounds(type, boundType, false));
+    return true;
   }
 
   public static @Nullable PsiSubstitutor getSuperSubstitutor(PsiMethod method, PsiMethod superMethod) {
