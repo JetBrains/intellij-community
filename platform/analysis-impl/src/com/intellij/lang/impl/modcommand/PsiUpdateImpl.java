@@ -65,7 +65,7 @@ final class PsiUpdateImpl {
   }
 
   private static class FileTracker implements DocumentListener, Disposable {
-    private final @Nullable PsiLanguageInjectionHost myHostCopy;
+    private final @Nullable SmartPsiElementPointer<PsiLanguageInjectionHost> myHostCopy;
     private final @NotNull PsiFile myTargetFile;
     private final @NotNull Document myPositionDocument;
     private final @NotNull List<ModUpdateFileText.Fragment> myFragments = new ArrayList<>();
@@ -91,7 +91,8 @@ final class PsiUpdateImpl {
         FileTracker hostTracker = changedFiles.get(hostFile);
         PsiFile hostFileCopy = hostTracker != null ? hostTracker.myTargetFile : (PsiFile)hostFile.copy();
         myInjectedFileCopy = getInjectedFileCopy(host, hostFileCopy, origFile.getLanguage());
-        myHostCopy = injectionManager.getInjectionHost(myInjectedFileCopy);
+        PsiLanguageInjectionHost injectionHost = injectionManager.getInjectionHost(myInjectedFileCopy);
+        myHostCopy = injectionHost == null ? null : SmartPointerManager.createPointer(injectionHost);
         Disposable disposable = ApplicationManager.getApplication().getService(InjectionEditService.class)
           .synchronizeWithFragment(myInjectedFileCopy, myDocument);
         Disposer.register(this, disposable);
@@ -110,6 +111,10 @@ final class PsiUpdateImpl {
       myOrigFile = origFile;
       myManager = PsiDocumentManager.getInstance(myProject);
       PostprocessReformattingAspect.getInstance(myProject).forcePostprocessFormat(myCopyFile, this);
+    }
+
+    @Nullable PsiLanguageInjectionHost getHostCopy() {
+      return myHostCopy == null ? null : myHostCopy.getElement();
     }
 
     void unblock() {
@@ -417,7 +422,7 @@ final class PsiUpdateImpl {
     @Override
     public void moveCaretTo(int offset) {
       myPositionUpdated = true;
-      PsiLanguageInjectionHost host = myTracker.myHostCopy;
+      PsiLanguageInjectionHost host = myTracker.getHostCopy();
       if (host != null) {
         InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
         PsiFile file = findInjectedFile(instance, host);
@@ -505,7 +510,7 @@ final class PsiUpdateImpl {
     }
 
     private TextRange mapRange(@NotNull TextRange range) {
-      PsiLanguageInjectionHost host = myTracker.myHostCopy;
+      PsiLanguageInjectionHost host = myTracker.getHostCopy();
       if (host != null) {
         InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
         PsiFile file = findInjectedFile(instance, host);

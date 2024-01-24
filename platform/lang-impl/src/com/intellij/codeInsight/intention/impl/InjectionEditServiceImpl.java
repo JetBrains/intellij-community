@@ -25,7 +25,8 @@ public final class InjectionEditServiceImpl implements InjectionEditService {
     Place shreds = InjectedLanguageUtilBase.getShreds(injectedFile);
     Project project = injectedFile.getProject();
     PsiLanguageInjectionHost host = Objects.requireNonNull(InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile));
-    Editor editor = new ImaginaryEditor(project, host.getContainingFile().getViewProvider().getDocument());
+    Document origDocument = host.getContainingFile().getFileDocument();
+    Editor editor = new ImaginaryEditor(project, origDocument);
     InjectedFileChangesHandler handler = QuickEditHandler.getHandler(injectedFile, editor, shreds, copyDocument);
     copyDocument.addDocumentListener(new DocumentListener() {
       @Override
@@ -33,6 +34,7 @@ public final class InjectionEditServiceImpl implements InjectionEditService {
         handler.commitToOriginal(event);
       }
     });
+    QuickEditHandler.initGuardedBlocks(copyDocument, origDocument, shreds);
     return handler;
   }
 }
