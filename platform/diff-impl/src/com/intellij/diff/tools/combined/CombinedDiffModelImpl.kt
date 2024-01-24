@@ -66,8 +66,8 @@ class CombinedDiffModelImpl(val project: Project,
     modelListeners.multicaster.onModelReset()
   }
 
-  override fun getCurrentRequest(): DiffRequest? {
-    return context.getUserData(COMBINED_DIFF_VIEWER_KEY)?.getCurrentBlockId()?.let(loadedRequests::get)
+  override fun getLoadedRequest(blockId: CombinedBlockId): DiffRequest? {
+    return loadedRequests[blockId]
   }
 
   override fun getLoadedRequests(): List<DiffRequest> = loadedRequests.values.toList()

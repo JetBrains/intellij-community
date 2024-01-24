@@ -9,6 +9,7 @@ import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
+import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
@@ -314,7 +315,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
       if (data != null) return data
 
       return when {
-        DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> model.getCurrentRequest()
+        DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> getCurrentRequest()
         OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.`is`(dataId) -> Runnable {  DiffUtil.minimizeDiffIfOpenedInWindow(this)}
         CommonDataKeys.PROJECT.`is`(dataId) -> context.project
         PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> {
@@ -326,10 +327,15 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
           }
         }
         DiffDataKeys.DIFF_CONTEXT.`is`(dataId) -> context
-        else -> model.getCurrentRequest()?.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
+        else -> getCurrentRequest()?.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
                 ?: context.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
       }
     }
+  }
+
+  fun getCurrentRequest(): DiffRequest? {
+    val id = combinedViewer?.getCurrentBlockId() ?: return null
+    return model.getLoadedRequest(id)
   }
 
   private inner class ShowActionGroupPopupAction : DumbAwareAction() {
