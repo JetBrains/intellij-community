@@ -111,21 +111,7 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
         children.asSequence().map { child -> Pair(child, ext) }
       }
       .mapNotNull { (child, ext) ->
-        when (child) {
-          is Project -> ProjectNavBarItem(child)
-          is Module -> ModuleNavBarItem(child)
-          is PsiElement -> {
-            if (ext.normalizeChildren()) {
-              val adjusted = adjustWithAllExtensions(child)
-              adjusted?.let { PsiNavBarItem(it, ownerExtension = null) }
-            }
-            else {
-              PsiNavBarItem(child, ownerExtension = null)
-            }
-          }
-          is OrderEntry -> OrderEntryNavBarItem(child)
-          else -> DefaultNavBarItem(child)
-        }
+        compatibilityNavBarItem(child, ext)
       }
       .asIterable()
   }
@@ -187,6 +173,32 @@ internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, cla
     }
     else {
       throw IllegalStateException("$message, psi class: ${psi.javaClass.canonicalName}", t)
+    }
+  }
+}
+
+private fun compatibilityNavBarItem(o: Any, ext: NavBarModelExtension): NavBarItem? {
+  return when (o) {
+    is Project -> {
+      ProjectNavBarItem(o)
+    }
+    is Module -> {
+      ModuleNavBarItem(o)
+    }
+    is PsiElement -> {
+      if (ext.normalizeChildren()) {
+        val adjusted = adjustWithAllExtensions(o)
+        adjusted?.let { PsiNavBarItem(it, ownerExtension = null) }
+      }
+      else {
+        PsiNavBarItem(o, ownerExtension = null)
+      }
+    }
+    is OrderEntry -> {
+      OrderEntryNavBarItem(o)
+    }
+    else -> {
+      DefaultNavBarItem(o)
     }
   }
 }
