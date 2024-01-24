@@ -1080,20 +1080,18 @@ suspend fun runEdtLoop(mainJob: Job, expire: (() -> Boolean)?, contextComponent:
   val window: Window? = if (contextComponent == null) null else SwingUtilities.getWindowAncestor(contextComponent)
   ourExpandActionGroupImplEDTLoopLevel++
   try {
-    resetThreadContext().use {
-      ThreadingAssertions.assertEventDispatchThread()
-      while (true) {
-        // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
-        // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
-        // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
-        val event = queue.getNextEvent()
-        queue.dispatchEvent(event)
-        if (isCancellingExpandEvent(event, window, menuItem) || // TODO can we push back and unwind here?
-            expire?.invoke() == true) {
-          mainJob.cancel()
-        }
-        yield()
+    ThreadingAssertions.assertEventDispatchThread()
+    while (true) {
+      // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
+      // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
+      // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
+      val event = queue.getNextEvent()
+      queue.dispatchEvent(event)
+      if (isCancellingExpandEvent(event, window, menuItem) || // TODO can we push back and unwind here?
+          expire?.invoke() == true) {
+        mainJob.cancel()
       }
+      yield()
     }
   }
   finally {
