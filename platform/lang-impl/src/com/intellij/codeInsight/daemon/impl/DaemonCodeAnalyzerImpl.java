@@ -89,7 +89,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @State(name = "DaemonCodeAnalyzer", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements PersistentStateComponent<Element>, Disposable {
+public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
+  implements PersistentStateComponent<Element>, Disposable, DaemonCodeAnalysisStatus {
+
   private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerImpl.class);
 
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
@@ -732,6 +734,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   /**
    * Used in tests, don't remove VisibleForTesting
    */
+  @Override
   @ApiStatus.Internal
   @VisibleForTesting
   public boolean isAllAnalysisFinished(@NotNull PsiFile psiFile) {
@@ -767,6 +770,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return false;
   }
 
+  @Override
   @TestOnly
   public boolean isRunningOrPending() {
     ThreadingAssertions.assertEventDispatchThread();
