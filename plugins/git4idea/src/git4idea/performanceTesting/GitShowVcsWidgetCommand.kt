@@ -30,6 +30,6 @@ class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCorou
     }
   }
 
-  override fun getName(): String = GitCommitCommand.NAME
+  override fun getName(): String = NAME
 
 }
