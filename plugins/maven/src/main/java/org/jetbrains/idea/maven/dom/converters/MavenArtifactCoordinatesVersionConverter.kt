@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.idea.reposearch.DependencySearchService
 import java.util.regex.Pattern
 
@@ -72,7 +71,7 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
     val mavenProject = if (projectFile == null) null else projectsManager.findProject(projectFile)
     if (mavenProject != null) {
       for (artifact in mavenProject.findDependencies(id)) {
-        if (artifact.resolved()) {
+        if (artifact.isResolved) {
           return true
         }
       }

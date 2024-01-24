@@ -746,7 +746,7 @@ public class MavenProject {
       if (state.myUnresolvedDependenciesCache == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
-          boolean resolved = MavenArtifactUtilKt.resolved(each);
+          boolean resolved = each.isResolved();
           each.setFileUnresolved(!resolved);
           if (!resolved) result.add(each);
         }
@@ -780,7 +780,7 @@ public class MavenProject {
       if (state.myUnresolvedAnnotationProcessors == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myAnnotationProcessors) {
-          if (!MavenArtifactUtilKt.resolved(each)) result.add(each);
+          if (!each.isResolved()) result.add(each);
         }
         state.myUnresolvedAnnotationProcessors = result;
       }

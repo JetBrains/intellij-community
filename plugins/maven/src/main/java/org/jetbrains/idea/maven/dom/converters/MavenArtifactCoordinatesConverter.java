@@ -35,7 +35,6 @@ import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
@@ -307,7 +306,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       MavenProject mavenProject = file == null ? null : projectsManager.findProject(file);
       if (mavenProject != null) {
         MavenArtifact artifact = mavenProject.getDependencyArtifactIndex().findArtifacts(dependencyId);
-        if (artifact != null && MavenArtifactUtilKt.resolved(artifact)) {
+        if (artifact != null && artifact.isResolved()) {
           return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
         }
       }

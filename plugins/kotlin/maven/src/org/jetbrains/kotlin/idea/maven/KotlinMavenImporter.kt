@@ -30,7 +30,6 @@ import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -169,8 +168,8 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
 
     protected fun scheduleDownloadStdlibSources(mavenProject: MavenProject, module: Module) {
         // TODO: here we have to process all kotlin libraries but for now we only handle standard libraries
-        val artifacts = mavenProject.dependencyArtifactIndex.data[KOTLIN_PLUGIN_GROUP_ID]?.values?.flatMap { it.filter { it.resolved() } }
-            ?: emptyList()
+        val artifacts = mavenProject.dependencyArtifactIndex.data[KOTLIN_PLUGIN_GROUP_ID]?.values
+            ?.flatMap { it.filter { artifact -> artifact.isResolved } } ?: emptyList()
 
         val libraryNames = mutableSetOf<String?>()
         OrderEnumerator.orderEntries(module).forEachLibrary { library ->

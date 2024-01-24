@@ -40,7 +40,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.pathString
@@ -111,8 +110,8 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
       val hasUnresolvedArtifacts = mavenProject.hasUnresolvedArtifacts()
       if (hasUnresolvedArtifacts) {
-        val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.resolved() } +
-                                  mavenProject.externalAnnotationProcessors.filterNot { it.resolved() }
+        val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.isResolved } +
+                                  mavenProject.externalAnnotationProcessors.filterNot { it.isResolved }
         throw IllegalStateException("Maven project ${mavenProject} has unresolved artifacts: $unresolvedArtifacts")
       }
 
