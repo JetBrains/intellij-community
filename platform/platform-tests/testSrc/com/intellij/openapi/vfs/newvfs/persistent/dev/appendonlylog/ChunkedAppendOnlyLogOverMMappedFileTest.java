@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
-import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.appendonlylog.ChunkedAppendOnlyLog.LogChunk;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
@@ -399,7 +398,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
 
   private static class Chunk {
     private long chunkId;
-    private int[] itemsToAppend;
+    private final int[] itemsToAppend;
 
     private Chunk(long chunkId, int[] itemsToAppend) {
       this.chunkId = chunkId;

@@ -33,13 +33,13 @@ import static java.nio.ByteOrder.nativeOrder;
  * <p>
  * Chunk capacity is limited {@link #MAX_PAYLOAD_SIZE}
  * <p>
- * Durability relies on OS: written data is durable if OS not crash (i.e. not loosing mmapped file content).
+ * Durability relies on OS: written data is durable if OS not crash (i.e. not losing mmapped file content).
  */
 @ApiStatus.Internal
 public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendOnlyLog, Unmappable {
   //@formatter:off
-  private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("AppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
-  private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
+  private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("ChunkedAppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
+  private static final boolean ADD_LOG_CONTENT = getBooleanProperty("ChunkedAppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
   /** How wide region around questionable chunk to dump for debug diagnostics (see {@link #dumpContentAroundId(long, int)}) */
   private static final int DEBUG_DUMP_REGION_WIDTH = 128;
   //@formatter:on
