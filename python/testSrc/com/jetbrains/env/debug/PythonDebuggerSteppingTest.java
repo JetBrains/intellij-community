@@ -40,7 +40,9 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
       Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
       SdkModificator modificator = sdk.getSdkModificator();
-      ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(modificator::commitChanges);
+      });
       super.runTestOn(sdk.getHomePath(), sdk);
     }
 
