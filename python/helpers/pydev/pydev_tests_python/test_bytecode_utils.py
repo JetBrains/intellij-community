@@ -9,7 +9,7 @@ def inner_decorator_code():
         def outer(f):
             def inner(*args):
                 result = f(*args)
-                return exponent ** result
+                return result ** exponent
             return inner
         return outer
     return power.__code__.co_consts[1].co_consts[1]
