@@ -39,6 +39,8 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -47,15 +49,9 @@ import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.LogPropagator
-import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.IgnorableTestCase
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinBaseTest
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
-import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
 import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
@@ -64,7 +60,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.test.TargetBackend
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.junit.ComparisonFailure
 import java.io.File
 
@@ -243,7 +238,27 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
         ).apply { createAdditionalBreakpoints(wholeFileContents) }
 
         createLocalProcess(mainClassName)
+        configureRegistry(preferences)
         doMultiFileTest(testFiles, preferences)
+    }
+
+    private fun configureRegistry(preferences: DebuggerPreferences) {
+        val registrySettings = preferences[DebuggerPreferenceKeys.REGISTRY].associate { registrySetting ->
+            val parts = registrySetting.split("=")
+            require(parts.size == 2) { "Registry options should have form registry=value" }
+            parts[0] to parts[1]
+        }.filter {
+            Registry.get(it.key).asString() != it.value
+        }
+        val backup = registrySettings.keys.associateWith { Registry.get(it).asString() }
+        for (r in registrySettings) {
+            Registry.get(r.key).setValue(r.value)
+        }
+        atDebuggerTearDown {
+            for (r in backup) {
+                Registry.get(r.key).setValue(r.value)
+            }
+        }
     }
 
     private fun compileLibrariesAndTestSources(
