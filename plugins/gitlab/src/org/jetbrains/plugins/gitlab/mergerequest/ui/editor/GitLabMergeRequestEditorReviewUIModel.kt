@@ -87,9 +87,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     fileVm.cancelNewDiscussion(originalLine)
   }
 
-  override fun getOriginalContent(lines: LineRange): String? {
-    return fileVm.getOriginalContent(lines)
-  }
+  override fun getOriginalContent(lines: LineRange): String? = changesModel.getReviewHeadContent(lines)
 
   override fun showDiff(lineIdx: Int?) {
     val ranges = changesModel.postReviewRanges.value ?: return

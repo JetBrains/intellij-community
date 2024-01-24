@@ -9,10 +9,8 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
-import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.withoutContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -43,8 +41,6 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
   val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>>
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-
-  fun getOriginalContent(range: LineRange): String?
 
   fun requestNewDiscussion(line: Int, focus: Boolean)
   fun cancelNewDiscussion(line: Int)
@@ -100,32 +96,6 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
         GitLabMergeRequestEditorNewDiscussionViewModel(vm, line, discussionsViewOption)
       }
     }.stateInNow(cs, emptyList())
-
-  override fun getOriginalContent(range: LineRange): String? {
-    if (range.start == range.end) return ""
-    return diffData.patch.hunks.find {
-      it.startLineBefore <= range.start && it.endLineBefore >= range.end
-    }?.let { hunk ->
-      val builder = StringBuilder()
-      var lineCounter = hunk.startLineBefore
-      for (line in hunk.lines) {
-        if (line.type == PatchLine.Type.CONTEXT) {
-          lineCounter++
-        }
-        if (line.type == PatchLine.Type.REMOVE) {
-          if (lineCounter >= range.start) {
-            builder.append(line.text)
-            if (!line.isSuppressNewLine) {
-              builder.append("\n")
-            }
-          }
-          lineCounter++
-        }
-        if (lineCounter >= range.end) break
-      }
-      return builder.toString()
-    }
-  }
 
   override fun requestNewDiscussion(line: Int, focus: Boolean) {
     val position = GitLabMergeRequestNewDiscussionPosition.calcFor(diffData, DiffLineLocation(Side.RIGHT, line)).let {
