@@ -43,3 +43,12 @@ fun Driver.openEditor(project: Project? = null, file: VirtualFile): Array<FileEd
     service<FileEditorManager>(project ?: singleProject()).openFile(file, true, false)
   }
 }
+
+fun Driver.openFile(relativePath: String) {
+  val fileToOpen = findFile(relativePath = relativePath)
+  if (fileToOpen == null) {
+    throw IllegalArgumentException("Fail to find file $relativePath")
+  }
+  openEditor(file = fileToOpen)
+  waitForCodeAnalysis(file = fileToOpen)
+}
