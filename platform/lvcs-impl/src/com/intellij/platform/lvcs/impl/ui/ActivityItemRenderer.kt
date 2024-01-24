@@ -98,7 +98,7 @@ private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, 
   content.add(mainLabel, BorderLayout.CENTER)
 
   if (timestamp > 0) {
-    val timestampLabel = JBLabel(DateFormatUtil.formatPrettyDateTime(timestamp))
+    val timestampLabel = JBLabel(DateFormatUtil.formatDateTime(timestamp))
     timestampLabel.componentStyle = UIUtil.ComponentStyle.SMALL
     timestampLabel.foreground = if (isSelected) list.selectionForeground else JBColor.GRAY
     content.add(timestampLabel, BorderLayout.EAST)
