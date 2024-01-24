@@ -12,7 +12,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
@@ -89,7 +89,7 @@ public class PyEnvTaskRunner {
         /*
           Skipping test if {@link PyTestTask} reports it does not support this language level
          */
-        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+        final LanguageLevel languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk);
         if (testTask.isLanguageLevelSupported(languageLevel)) {
 
           if (myLoggingRule != null) {
