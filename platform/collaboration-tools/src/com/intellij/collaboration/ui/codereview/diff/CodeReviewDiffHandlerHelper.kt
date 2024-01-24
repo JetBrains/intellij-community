@@ -130,7 +130,7 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
   }
 }
 
-private val CONSTANT_BLOCK_ID = CombinedPathBlockId(LocalFilePath("", false), null)
+private val CONSTANT_BLOCK_ID = CombinedPathBlockId(LocalFilePath("/", false), null)
 
 private fun <T> DiffRequestProcessor.putData(keyValue: KeyValuePair<T>) {
   putContextUserData(keyValue.key, keyValue.value)
