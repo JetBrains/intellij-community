@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="json-schema-validator" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.networknt:json-schema-validator:1.0.72">
+    <properties include-transitive-deps="false" maven-id="com.networknt:json-schema-validator:1.2.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72.jar">
-          <sha256sum>260647c459cc7de269b2a8f576e5693e434df888fd4801e92365fe18b9992cbc</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.2.0/json-schema-validator-1.2.0.jar">
+          <sha256sum>04eb5abd9f189784639e602354c725a2aaa7251405b5daf0aed3cf0b41c96961</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.2.0/json-schema-validator-1.2.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.2.0/json-schema-validator-1.2.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
