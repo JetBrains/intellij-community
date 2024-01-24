@@ -1,15 +1,21 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitForSmartMode
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
   x("//div[@class='IdeFrameImpl']", IdeaFrameUI::class.java).action()
+}
+
+fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit) {
+  this.ui.ideFrame(action)
 }
 
 open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
