@@ -9,8 +9,10 @@ import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.INNER
 import org.jetbrains.kotlin.nj2k.tree.Modality.OPEN
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
+import org.jetbrains.kotlin.nj2k.tree.Visibility.INTERNAL
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.JKContextType
@@ -66,6 +68,10 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
             val isOpenByDefault = (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE) ||
                     (modifiersListOwner is JKMethod && modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE)
+            val redundantInternalClass = modifiersListOwner is JKClass && modifiersListOwner.isLocalClass()
+            val redundantInnerObject =
+                modifiersListOwner is JKClass && modifiersListOwner.isObjectOrCompanionObject && modifiersListOwner.parents()
+                    .none { it is JKClass && it.isObjectOrCompanionObject }
             val hasOverrideModifier = modifiersListOwner
                 .safeAs<JKOtherModifiersOwner>()
                 ?.hasOtherModifier(OVERRIDE) == true
@@ -73,6 +79,8 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             fun Modifier.isRedundant(): Boolean = when {
                 this == OPEN && isOpenByDefault -> true
                 (this == FINAL || this == PUBLIC) && !hasOverrideModifier -> true
+                this == INNER && redundantInnerObject -> true
+                this == INTERNAL && redundantInternalClass -> true
                 else -> false
             }
 
