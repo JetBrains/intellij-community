@@ -642,6 +642,10 @@ fun <T : CommandChain> T.showBranchWidget(): T = apply {
   addCommand("${CMD_PREFIX}gitShowBranchWidget")
 }
 
+fun <T : CommandChain> T.showFileAnnotations(): T = apply {
+  addCommand("${CMD_PREFIX}showFileAnnotation")
+}
+
 fun <T : CommandChain> T.chooseCompletionCommand(completionName: String): T = apply {
   addCommand("${CMD_PREFIX}chooseCompletionCommand ${completionName}")
 }
