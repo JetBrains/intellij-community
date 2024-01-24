@@ -37,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
@@ -307,6 +308,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildFinishWaiter.countDown();
       errorsCount += 1;
       gradleCallSpan.setAttribute("error.count", errorsCount);
+      gradleCallSpan.recordException(t);
+      gradleCallSpan.setStatus(StatusCode.ERROR);
       syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).setAttribute("error.count", errorsCount);
       throw t;
     }
@@ -342,6 +345,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     catch (Throwable t) {
       resolversErrorsCount += 1;
+      gradleProjectResolversSpan.recordException(t);
+      gradleProjectResolversSpan.setStatus(StatusCode.ERROR);
       throw t;
     }
     finally {

@@ -7,6 +7,7 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
@@ -74,6 +75,11 @@ public final class GradleOpenTelemetry {
     Span span = spanBuilder.startSpan();
     try (Scope ignore = span.makeCurrent()) {
       return fn.apply(span);
+    }
+    catch (Exception e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR);
+      throw e;
     }
     finally {
       span.end();
