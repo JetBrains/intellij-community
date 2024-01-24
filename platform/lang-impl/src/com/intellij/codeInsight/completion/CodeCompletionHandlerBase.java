@@ -55,7 +55,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
-import kotlin.Unit;
 import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -223,7 +222,7 @@ public class CodeCompletionHandlerBase {
                                            int time,
                                            boolean hasModifiers,
                                            @NotNull Caret caret) {
-    TraceKt.useWithScopeBlocking(
+    TraceKt.use(
       completionTracer.spanBuilder("invokeCompletion")
         .setAttribute("project", project.getName())
         .setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset()),
@@ -342,7 +341,6 @@ public class CodeCompletionHandlerBase {
     int timeout = calcSyncTimeOut(startingTime);
     if (indicator.blockingWaitForFinish(timeout)) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        //noinspection TestOnlyProblems
         checkForExceptions(future);
       }
       try {
@@ -361,10 +359,10 @@ public class CodeCompletionHandlerBase {
     indicator.showLookup();
   }
 
-  private @Nullable Deferred<Unit> startContributorThread(CompletionInitializationContextImpl initContext,
-                                                          CompletionProgressIndicator indicator,
-                                                          OffsetsInFile hostCopyOffsets,
-                                                          boolean hasModifiers) {
+  private @Nullable Deferred<?> startContributorThread(CompletionInitializationContextImpl initContext,
+                                                       CompletionProgressIndicator indicator,
+                                                       OffsetsInFile hostCopyOffsets,
+                                                       boolean hasModifiers) {
     if (!hostCopyOffsets.getFile().isValid()) {
       completionFinished(indicator, hasModifiers);
       return null;
@@ -517,29 +515,29 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  public static WatchingInsertionContext insertItemHonorBlockSelection(List<LookupElement> itemsAround,
-                                                                        LookupElement item,
-                                                                        char completionChar,
-                                                                        OffsetMap offsetMap,
-                                                                        OffsetsInFile hostOffset,
-                                                                        Editor editor,
-                                                                        Integer caretOffset,
-                                                                        StatisticsUpdate update) {
+  static WatchingInsertionContext insertItemHonorBlockSelection(List<LookupElement> itemsAround,
+                                                                LookupElement item,
+                                                                char completionChar,
+                                                                OffsetMap offsetMap,
+                                                                OffsetsInFile hostOffset,
+                                                                Editor editor,
+                                                                Integer caretOffset,
+                                                                StatisticsUpdate update) {
 
     final int idEndOffset = CompletionUtil.calcIdEndOffset(offsetMap, editor, caretOffset);
     final int idEndOffsetDelta = idEndOffset - caretOffset;
 
     WatchingInsertionContext context = doInsertItem(hostOffset,
-      item,
-      completionChar,
-      update,
-      editor,
-      Objects.requireNonNull(editor.getProject()),
-      caretOffset,
-      offsetMap,
-      itemsAround,
-      idEndOffset,
-      idEndOffsetDelta);
+                                                    item,
+                                                    completionChar,
+                                                    update,
+                                                    editor,
+                                                    Objects.requireNonNull(editor.getProject()),
+                                                    caretOffset,
+                                                    offsetMap,
+                                                    itemsAround,
+                                                    idEndOffset,
+                                                    idEndOffsetDelta);
 
     if (context.shouldAddCompletionChar()) {
       WriteAction.run(() -> addCompletionChar(context, item));

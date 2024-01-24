@@ -13,16 +13,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Computable.PredefinedValueComputable
 import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
 internal sealed interface CompletionThreading {
-  // Deferred<Unit> and not Job - client should get error
-  fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<Unit>?
+  // Deferred and not Job - client should get error
+  fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*>
 
   fun delegateWeighing(indicator: CompletionProgressIndicator): WeighingDelegate
 }
@@ -35,9 +33,10 @@ internal interface WeighingDelegate : com.intellij.util.Consumer<CompletionResul
 internal class SyncCompletion : CompletionThreadingBase() {
   private val batchList = ArrayList<CompletionResult>()
 
-  override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<Unit>? {
+  override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*> {
     ProgressManager.getInstance().runProcess(runnable, progressIndicator)
-    return null
+    // we must not return null - `null` has a special meaning
+    return CompletableDeferred(Unit)
   }
 
   override fun delegateWeighing(indicator: CompletionProgressIndicator): WeighingDelegate {
@@ -87,7 +86,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
 
   private val coroutineScope = ((project ?: ApplicationManagerEx.getApplicationEx()) as ComponentManagerEx).getCoroutineScope()
 
-  override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<Unit> {
+  override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*> {
     val startSemaphore = Semaphore()
     startSemaphore.down()
     val task = ClientId.decorateRunnable {
@@ -100,13 +99,9 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
           }
           catch (ignored: ProcessCanceledException) {
           }
-        },
-        progressIndicator,
-      )
+        }, progressIndicator)
     }
-    val future = coroutineScope.async {
-      task.run()
-    }
+    val future = coroutineScope.async(Dispatchers.IO) { task.run() }
     startSemaphore.waitFor()
     return future
   }
@@ -137,7 +132,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
         try {
           @Suppress("SSBasedInspection")
           runBlocking {
-            future.join()
+            future.await()
           }
         }
         catch (e: Exception) {
@@ -182,7 +177,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
 
 @Suppress("SSBasedInspection")
 @TestOnly
-internal fun checkForExceptions(future: Deferred<Unit>) {
+internal fun checkForExceptions(future: Deferred<*>) {
   runBlocking {
     future.await()
   }

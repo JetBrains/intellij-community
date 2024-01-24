@@ -145,7 +145,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<>();
   private final List<CompletionResult> delayedMiddleMatches = new ArrayList<>();
   private final int myStartCaret;
-  private final CompletionThreadingBase myThreading;
+  private final CompletionThreadingBase threading;
   private final Object myLock = ObjectUtils.sentinel("CompletionProgressIndicator");
 
   private final EmptyCompletionNotifier myEmptyCompletionNotifier;
@@ -168,7 +168,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     myHostOffsets = hostOffsets;
     this.lookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() || this.handler.isTestingCompletionQualityMode()
+    threading = ApplicationManager.getApplication().isWriteAccessAllowed() || this.handler.isTestingCompletionQualityMode()
                   ? new SyncCompletion()
                   : new AsyncCompletion(editor.getProject());
 
@@ -948,11 +948,11 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   void runContributors(CompletionInitializationContext initContext) {
     CompletionParameters parameters = Objects.requireNonNull(myParameters);
-    myThreading.startThread(ProgressWrapper.wrap(this), () -> {
+    threading.startThread(ProgressWrapper.wrap(this), () -> {
       CompletionThreadingKt.tryReadOrCancel(this, () -> scheduleAdvertising(parameters));
     });
 
-    WeighingDelegate weigher = myThreading.delegateWeighing(this);
+    WeighingDelegate weigher = threading.delegateWeighing(this);
     try {
       calculateItems(initContext, weigher, parameters);
     }
@@ -980,7 +980,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   @NotNull
   CompletionThreadingBase getCompletionThreading() {
-    return myThreading;
+    return threading;
   }
 
   @Override

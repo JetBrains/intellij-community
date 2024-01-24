@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.patterns.ElementPattern
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.Weigher
 import com.intellij.util.Consumer
 import com.intellij.util.ExceptionUtil
@@ -212,13 +212,13 @@ open class CompletionServiceImpl : BaseCompletionService() {
   override fun getVariantsFromContributor(params: CompletionParameters, contributor: CompletionContributor, result: CompletionResultSet) {
     completionTracer.spanBuilder(contributor.javaClass.simpleName)
       .setAttribute("avoid_null_value", true)
-      .useWithScopeBlocking {
+      .use {
         super.getVariantsFromContributor(params, contributor, result)
       }
   }
 
   override fun performCompletion(parameters: CompletionParameters, consumer: Consumer<in CompletionResult>) {
-    completionTracer.spanBuilder("performCompletion").useWithScopeBlocking { span ->
+    completionTracer.spanBuilder("performCompletion").use { span ->
       val countingConsumer = object : Consumer<CompletionResult> {
         @JvmField
         var count: Int = 0
