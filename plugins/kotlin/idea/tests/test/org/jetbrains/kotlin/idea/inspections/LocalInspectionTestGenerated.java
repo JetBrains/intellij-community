@@ -17800,6 +17800,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/assignment.kt");
                 }
 
+                @TestMetadata("block.kt")
+                public void testBlock() throws Exception {
+                    runTest("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/block.kt");
+                }
+
                 @TestMetadata("constructorWithEmptyBody.kt")
                 public void testConstructorWithEmptyBody() throws Exception {
                     runTest("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/constructorWithEmptyBody.kt");

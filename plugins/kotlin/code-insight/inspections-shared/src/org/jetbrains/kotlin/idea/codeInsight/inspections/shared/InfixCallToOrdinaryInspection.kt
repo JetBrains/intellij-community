@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.convertInfixCallToOrdinary
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -53,21 +54,4 @@ internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Si
     context(KtAnalysisSession)
     override fun prepareContext(element: KtBinaryExpression) {
     }
-}
-
-fun convertInfixCallToOrdinary(element: KtBinaryExpression): KtExpression {
-    val argument = KtPsiUtil.safeDeparenthesize(element.right!!)
-    val pattern = "$0.$1" + when (argument) {
-        is KtLambdaExpression -> " $2:'{}'"
-        else -> "($2)"
-    }
-
-    val replacement = KtPsiFactory(element.project).createExpressionByPattern(
-        pattern,
-        element.left!!,
-        element.operationReference,
-        argument
-    )
-
-    return element.replace(replacement) as KtExpression
 }

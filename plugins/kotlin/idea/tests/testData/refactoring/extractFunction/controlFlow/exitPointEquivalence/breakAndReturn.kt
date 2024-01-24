@@ -12,3 +12,5 @@ fun foo(a: Int) {
         return</selection>
     }
 }
+
+// IGNORE_K2

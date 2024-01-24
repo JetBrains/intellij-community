@@ -208,22 +208,6 @@ private fun FunctionDescriptor.allowsMoveOfLastParameterOutsideParentheses(
     return movableParametersOfCandidateCount == lambdaAndCallableReferencesInOriginalCallCount
 }
 
-fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
-    val rBrace = rBrace
-    val newLine = KtPsiFactory(project).createNewLine()
-    val anchor = if (rBrace == null) {
-        val lastChild = lastChild
-        lastChild as? PsiWhiteSpace ?: addAfter(newLine, lastChild)!!
-    } else {
-        rBrace.prevSibling!!
-    }
-    val addedElement = addAfter(element, anchor)!! as KtElement
-    if (addNewLine) {
-        addAfter(newLine, addedElement)
-    }
-    return addedElement
-}
-
 //TODO: git rid of this method
 fun PsiElement.deleteElementAndCleanParent() {
     val parent = parent

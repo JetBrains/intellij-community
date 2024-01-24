@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDirectory
@@ -12,13 +13,17 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -279,4 +284,41 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
             if (targetContainer is KtBlockExpression) Collections.singletonList(targetContainer) else Collections.emptyList()
         }
     }
+}
+
+fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
+    val rBrace = rBrace
+    val newLine = KtPsiFactory(project).createNewLine()
+    val anchor = if (rBrace == null) {
+        val lastChild = lastChild
+        lastChild as? PsiWhiteSpace ?: addAfter(newLine, lastChild)!!
+    } else {
+        rBrace.prevSibling!!
+    }
+    val addedElement = addAfter(element, anchor)!! as KtElement
+    if (addNewLine) {
+        addAfter(newLine, addedElement)
+    }
+    return addedElement
+}
+
+fun Project.checkConflictsInteractively(
+    conflicts: MultiMap<PsiElement, String>,
+    onShowConflicts: () -> Unit = {},
+    onAccept: () -> Unit
+) {
+    if (!conflicts.isEmpty) {
+        if (isUnitTestMode()) throw ConflictsInTestsException(conflicts.values())
+
+        val dialog = ConflictsDialog(this, conflicts) { onAccept() }
+        dialog.show()
+        if (!dialog.isOK) {
+            if (dialog.isShowConflicts) {
+                onShowConflicts()
+            }
+            return
+        }
+    }
+
+    onAccept()
 }

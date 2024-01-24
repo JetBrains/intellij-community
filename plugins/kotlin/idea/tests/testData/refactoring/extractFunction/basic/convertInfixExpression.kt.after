@@ -6,3 +6,5 @@ fun foo(x : String.(String) -> Unit) {
 }
 
 private fun function(x: String.(String) -> Unit) = x
+
+// IGNORE_K2

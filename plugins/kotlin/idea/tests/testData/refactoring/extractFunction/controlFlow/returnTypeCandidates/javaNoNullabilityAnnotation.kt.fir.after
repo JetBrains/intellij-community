@@ -1,0 +1,7 @@
+// SUGGESTED_NAMES: s, getS
+// SUGGESTED_RETURN_TYPES: kotlin.String?, kotlin.String
+fun test() {
+    val s = getS()
+}
+
+private fun getS(): String? = J.unknown()

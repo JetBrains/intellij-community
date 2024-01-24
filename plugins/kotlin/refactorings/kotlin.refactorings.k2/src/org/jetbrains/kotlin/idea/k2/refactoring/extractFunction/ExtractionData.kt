@@ -1,0 +1,84 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
+
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ResolveResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.encodeReferences
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.unmarkReferencesInside
+import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.*
+
+data class ExtractionData(
+    override val originalFile: KtFile,
+    override val originalRange: KotlinPsiRange,
+    override val targetSibling: PsiElement,
+    override val duplicateContainer: PsiElement? = null,
+    override val options: ExtractionOptions = ExtractionOptions.DEFAULT
+) : IExtractionData {
+
+    override val project: Project = originalFile.project
+    override val originalElements: List<PsiElement> = originalRange.elements
+    override val physicalElements = originalElements.map { it.substringContextOrThis }
+
+    override val substringInfo: ExtractableSubstringInfo?
+        get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo
+
+    override val insertBefore: Boolean = options.extractAsProperty
+            || targetSibling.getStrictParentOfType<KtDeclaration>()?.let {
+        it is KtDeclarationWithBody || it is KtAnonymousInitializer
+    } ?: false
+
+    override val expressions = originalElements.filterIsInstance<KtExpression>()
+
+    override val codeFragmentText: String by lazy {
+        val originalElements = originalElements
+        when (originalElements.size) {
+            0 -> ""
+            1 -> originalElements.first().text
+            else -> originalFile.text.substring(originalElements.first().startOffset, originalElements.last().endOffset)
+        }
+    }
+
+    override val commonParent: KtElement = PsiTreeUtil.findCommonParent(physicalElements) as KtElement
+
+    init {
+        analyze(commonParent) {
+            encodeReferences({ expr -> expr.getSmartCastInfo() != null }) { physicalRef ->
+                val resolve = physicalRef.mainReference.resolve()
+                val declaration =
+                    resolve as? KtNamedDeclaration ?: resolve as? PsiMember
+                    //if this resolves to the receiver, then retrieve corresponding class
+                    ?: ((resolve as? KtTypeReference)?.typeElement as? KtUserType)?.referenceExpression?.mainReference?.resolve()
+                declaration?.putCopyableUserData(targetKey, physicalRef)
+                declaration?.let { ResolveResult<PsiElement, KtSimpleNameExpression>(physicalRef, declaration, declaration, physicalRef) }
+            }
+        }
+    }
+
+    override fun dispose() {
+        expressions.forEach(::unmarkReferencesInside)
+        expressions.forEach { e ->
+            runReadAction {
+                if (!e.isValid) return@runReadAction
+                e.forEachDescendantOfType<KtSimpleNameExpression> { it.putCopyableUserData(targetKey, null) }
+            }
+        }
+    }
+}
+
+internal val targetKey: Key<KtSimpleNameExpression> = Key.create("RESOLVE_RESULT")

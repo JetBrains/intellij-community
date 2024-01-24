@@ -4,3 +4,5 @@
 fun foo(x : String.(String) -> Unit) {
     "A" <selection>x</selection> "B"
 }
+
+// IGNORE_K2

@@ -6,10 +6,11 @@ import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFq
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2PsiUnifierTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
+import org.jetbrains.kotlin.idea.k2.refactoring.introduceFunction.AbstractK2IntroduceFunctionTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2ChangePackageTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTest
-import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
+import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
@@ -17,14 +18,14 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     testGroup("refactorings/kotlin.refactorings.tests.k2", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2SafeDeleteTest> {
             model("refactoring/safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
-            //todo secondary constructor 
+            //todo secondary constructor
             //model("refactoring/safeDelete/deleteClass/kotlinClassWithJava", testMethodName = "doClassTestWithJava")
             model("refactoring/safeDelete/deleteClass/javaClassWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaClassTest")
             model("refactoring/safeDelete/deleteObject/kotlinObject", testMethodName = "doObjectTest")
             model("refactoring/safeDelete/deleteFunction/kotlinFunction", testMethodName = "doFunctionTest")
             model(
                 "refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava",
-                Patterns.forRegex("^(((?!secondary)(?!implement4).)+)\\.kt"),//todo secondary constructor, super method search from java override
+                Patterns.forRegex("^(((?!secondary)(?!implement4).)+)\\.kt"), //todo secondary constructor, super method search from java override
                 testMethodName = "doFunctionTestWithJava"
             )
             model("refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
@@ -63,6 +64,9 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/inline/namedFunction/returnAtEnd", pattern = Patterns.KT_WITHOUT_DOTS)
             model("refactoring/inline/anonymousFunction", pattern = Patterns.KT_WITHOUT_DOTS)
             model("refactoring/inline/lambdaExpression", pattern = Patterns.KT_WITHOUT_DOTS)
+        }
+        testClass<AbstractK2IntroduceFunctionTest> {
+            model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("inplace", "duplicates", "script"))
         }
     }
 

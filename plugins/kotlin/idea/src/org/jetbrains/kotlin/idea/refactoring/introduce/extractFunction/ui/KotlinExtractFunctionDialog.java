@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt.checkConflictsInteractively;
 import static org.jetbrains.kotlin.idea.util.NonblockingKt.nonBlocking;
 
 public class KotlinExtractFunctionDialog extends DialogWrapper {
@@ -81,7 +82,7 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
     }
 
     private boolean isVisibilitySectionAvailable() {
-        return ExtractableAnalysisUtilKt.isVisibilityApplicable(originalDescriptor.getDescriptor().getExtractionData());
+        return ExtractUtilKt.isVisibilityApplicable(originalDescriptor.getDescriptor().getExtractionData());
     }
 
     private String getFunctionName() {
@@ -109,7 +110,7 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
 
         setOKActionEnabled(checkNames());
         signaturePreviewField.setText(
-                ExtractorUtilKt.getSignaturePreview(getCurrentConfiguration(), IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS)
+                ExtractorUtilKt.getSignaturePreview(getCurrentConfiguration())
         );
     }
 
@@ -222,7 +223,7 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
                     MultiMap<PsiElement, String> conflicts = ((ExtractableCodeDescriptorWithConflicts) result).getConflicts();
                     conflicts.values().removeAll(originalDescriptor.getConflicts().values());
 
-                    KotlinRefactoringUtilKt.checkConflictsInteractively(
+                    checkConflictsInteractively(
                             project,
                             conflicts,
                             new Function0<>() {

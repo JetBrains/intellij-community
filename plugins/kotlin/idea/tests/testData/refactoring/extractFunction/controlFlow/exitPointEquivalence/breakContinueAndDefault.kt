@@ -13,3 +13,5 @@ fun foo(a: Int) {
         }
     }
 }
+
+// IGNORE_K2

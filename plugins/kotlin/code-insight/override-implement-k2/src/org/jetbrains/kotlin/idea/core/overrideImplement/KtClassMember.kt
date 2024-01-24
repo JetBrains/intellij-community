@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMultiplatformSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.idea.base.util.names.FqNames
+import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.types.Variance
 import javax.swing.Icon
 
@@ -249,8 +248,7 @@ private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): 
 
 context(KtAnalysisSession)
 private fun KtClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
-    val fqName = annotation.classId?.asSingleFqName()
-    fqName == OptInNames.REQUIRES_OPT_IN_FQ_NAME || fqName == FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME
+    isRequiresOptInFqName(annotation.classId?.asSingleFqName())
 }
 
 context(KtAnalysisSession)

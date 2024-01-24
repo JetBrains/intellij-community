@@ -4,3 +4,5 @@
 fun foo(x : String, y : String.() -> Unit) {
     x.<selection>y</selection>()
 }
+
+// IGNORE_K2

@@ -1010,6 +1010,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/noConflictWithInnerFunction.kt");
             }
 
+            @TestMetadata("noConflictWithInnerFunction1.kt")
+            public void testNoConflictWithInnerFunction1() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/noConflictWithInnerFunction1.kt");
+            }
+
             @TestMetadata("objectQualifier.kt")
             public void testObjectQualifier() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/objectQualifier.kt");
@@ -2010,6 +2015,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkers.kt");
             }
 
+            @TestMetadata("filterPropagatingMarkersWitArgs.kt")
+            public void testFilterPropagatingMarkersWitArgs() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkersWitArgs.kt");
+            }
+
             @TestMetadata("noExperimentalApi.kt")
             public void testNoExperimentalApi() throws Exception {
                 runTest("testData/refactoring/extractFunction/optIn/noExperimentalApi.kt");
@@ -2193,6 +2203,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public static class ExtractThis extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("bothReceivers.kt")
+                public void testBothReceivers() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/extractThis/bothReceivers.kt");
                 }
 
                 @TestMetadata("explicitLabeledThisInMember.kt")

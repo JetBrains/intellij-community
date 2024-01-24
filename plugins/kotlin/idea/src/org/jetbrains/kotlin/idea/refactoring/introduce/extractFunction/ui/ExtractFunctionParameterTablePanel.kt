@@ -30,7 +30,10 @@ open class ExtractFunctionParameterTablePanel : AbstractParameterTablePanel<Para
             name = if (isReceiver) KotlinBundle.message("text.receiver") else originalParameter.name
         }
 
-        override fun toParameter() = originalParameter.copy(name, type)
+        override fun toParameter() = object : Parameter by originalParameter {
+            override val name: String = this@ParameterInfo.name
+            override val parameterType: KotlinType = this@ParameterInfo.type
+        }
     }
 
     override fun createTableModel(): TableModelBase = MyTableModel()

@@ -4,9 +4,14 @@
             qualifiedName="org.jetbrains.kotlin.renameHandler"
             interface="com.intellij.refactoring.rename.RenameHandler"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.postInsertDeclarationCallback"
+            interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.PostInsertDeclarationCallback"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="extracted" description="Default name for extracted function" key="kotlin.extract.function.default.name"/>
     <refactoring.helper implementation="org.jetbrains.kotlin.idea.refactoring.helper.KotlinOptimizeImportsRefactoringHelper" order="last"/>
 
     <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>

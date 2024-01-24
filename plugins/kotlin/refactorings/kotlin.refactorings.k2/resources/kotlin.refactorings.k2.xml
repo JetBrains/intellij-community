@@ -1,4 +1,5 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring">
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
   <dependencies>
     <module name="kotlin.searching.k2"/>
   </dependencies>
@@ -35,4 +36,12 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureQuickFixesRegistrar"/>
   </extensions>
+
+  <actions>
+    <action id="ExtractFunction" class="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractK2FunctionAction"
+            use-shortcut-of="ExtractMethod">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+      <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first"/>
+    </action>
+  </actions>
 </idea-plugin>

@@ -2657,6 +2657,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                     runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/assignment.kt");
                 }
 
+                @TestMetadata("block.kt")
+                public void testBlock() throws Exception {
+                    runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/block.kt");
+                }
+
                 @TestMetadata("constructorWithEmptyBody.kt")
                 public void testConstructorWithEmptyBody() throws Exception {
                     runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/constructorWithEmptyBody.kt");

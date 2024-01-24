@@ -124,26 +124,6 @@ fun PsiElement.getUsageContext(): PsiElement {
 fun PsiElement.isInKotlinAwareSourceRoot(): Boolean =
     !isOutsideKotlinAwareSourceRoot(containingFile)
 
-fun Project.checkConflictsInteractively(
-    conflicts: MultiMap<PsiElement, String>,
-    onShowConflicts: () -> Unit = {},
-    onAccept: () -> Unit
-) {
-    if (!conflicts.isEmpty) {
-        if (isUnitTestMode()) throw ConflictsInTestsException(conflicts.values())
-
-        val dialog = ConflictsDialog(this, conflicts) { onAccept() }
-        dialog.show()
-        if (!dialog.isOK) {
-            if (dialog.isShowConflicts) {
-                onShowConflicts()
-            }
-            return
-        }
-    }
-
-    onAccept()
-}
 
 fun reportDeclarationConflict(
     conflicts: MultiMap<PsiElement, String>,

@@ -20,8 +20,11 @@ fun KtDeclarationWithBody.isConvertableToExpressionBody(): Boolean {
     // Check if either property accessor or named function
     if (this !is KtNamedFunction && this !is KtPropertyAccessor) return false
 
-    // Check if function has block with single non-empty KtReturnExpression
-    val returnedExpression = bodyBlockExpression?.statements?.singleOrNull() ?: return true
+    // Check if function has block with single non-empty KtReturnExpression or the block is empty
+    val statements = bodyBlockExpression?.statements ?: return true
+    if (statements.isEmpty()) return true
+
+    val returnedExpression = statements.singleOrNull() ?: return false
 
     // Check if the returnedExpression actually always returns (early return is possible)
     // TODO: take into consideration other cases (???)

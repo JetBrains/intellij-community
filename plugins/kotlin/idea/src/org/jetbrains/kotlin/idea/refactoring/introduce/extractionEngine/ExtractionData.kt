@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
@@ -28,55 +25,38 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoAfter
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
-import org.jetbrains.kotlin.resolve.calls.util.hasBothReceivers
 import org.jetbrains.kotlin.resolve.calls.tasks.isSynthesizedInvoke
+import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.hasBothReceivers
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 
-data class ResolveResult(
-    val originalRefExpr: KtSimpleNameExpression,
-    val declaration: PsiElement,
-    val descriptor: DeclarationDescriptor,
-    val resolvedCall: ResolvedCall<*>?
-)
-
-data class ResolvedReferenceInfo(
-    val refExpr: KtSimpleNameExpression,
-    val resolveResult: ResolveResult,
-    val smartCast: KotlinType?,
-    val possibleTypes: Set<KotlinType>,
-    val shouldSkipPrimaryReceiver: Boolean
-)
-
-internal var KtSimpleNameExpression.resolveResult: ResolveResult? by CopyablePsiUserDataProperty(Key.create("RESOLVE_RESULT"))
-
 data class ExtractionData(
-    val originalFile: KtFile,
-    val originalRange: KotlinPsiRange,
-    val targetSibling: PsiElement,
-    val duplicateContainer: PsiElement? = null,
-    val options: ExtractionOptions = ExtractionOptions.DEFAULT
-) : Disposable {
-    val project: Project = originalFile.project
-    val originalElements: List<PsiElement> = originalRange.elements
-    val physicalElements = originalElements.map { it.substringContextOrThis }
+    override val originalFile: KtFile,
+    override val originalRange: KotlinPsiRange,
+    override val targetSibling: PsiElement,
+    override val duplicateContainer: PsiElement? = null,
+    override val options: ExtractionOptions = ExtractionOptions.DEFAULT
+) : IExtractionData {
+    override val project: Project = originalFile.project
+    override val originalElements: List<PsiElement> = originalRange.elements
+    override val physicalElements = originalElements.map { it.substringContextOrThis }
 
-    val substringInfo: K1ExtractableSubstringInfo?
+    override val substringInfo: K1ExtractableSubstringInfo?
         get() = (originalElements.singleOrNull() as? KtExpression)?.extractableSubstringInfo as? K1ExtractableSubstringInfo
 
-    val insertBefore: Boolean = options.extractAsProperty
+    override val insertBefore: Boolean = options.extractAsProperty
             || targetSibling.getStrictParentOfType<KtDeclaration>()?.let {
         it is KtDeclarationWithBody || it is KtAnonymousInitializer
     } ?: false
 
-    val expressions = originalElements.filterIsInstance<KtExpression>()
+    override val expressions: List<KtExpression> = originalElements.filterIsInstance<KtExpression>()
 
-    val codeFragmentText: String by lazy {
+    override val codeFragmentText: String by lazy {
         val originalElements = originalElements
         when (originalElements.size) {
             0 -> ""
@@ -85,15 +65,22 @@ data class ExtractionData(
         }
     }
 
-    val commonParent = PsiTreeUtil.findCommonParent(physicalElements) as KtElement
+    override val commonParent: KtElement = PsiTreeUtil.findCommonParent(physicalElements) as KtElement
 
-    val bindingContext: BindingContext? by lazy { commonParent.analyze() }
+    val bindingContext: BindingContext by lazy { commonParent.analyze() }
 
     private val itFakeDeclaration by lazy { KtPsiFactory(project).createParameter("it: Any?") }
     private val synthesizedInvokeDeclaration by lazy { KtPsiFactory(project).createFunction("fun invoke() {}") }
 
     init {
-        markReferences()
+        encodeReferences<DeclarationDescriptor, ResolvedCall<*>>({ bindingContext[BindingContext.SMARTCAST, it] != null }) { physicalRef ->
+            val resolvedCall = physicalRef.getResolvedCall(bindingContext)
+            val descriptor =
+                bindingContext[BindingContext.REFERENCE_TARGET, physicalRef]
+            val declaration = descriptor?.let { getDeclaration(descriptor, bindingContext) }
+
+            declaration?.let { ResolveResult<DeclarationDescriptor, ResolvedCall<*>>(physicalRef, declaration, descriptor, resolvedCall) }
+        }
     }
 
     private fun isExtractableIt(descriptor: DeclarationDescriptor, context: BindingContext): Boolean {
@@ -116,44 +103,6 @@ data class ExtractionData(
         }
     }
 
-    private fun markReferences() {
-        val context = bindingContext ?: return
-        val visitor = object : KtTreeVisitorVoid() {
-            override fun visitQualifiedExpression(expression: KtQualifiedExpression) {
-                if (context[BindingContext.SMARTCAST, expression] != null) {
-                    expression.selectorExpression?.accept(this)
-                    return
-                }
-
-                super.visitQualifiedExpression(expression)
-            }
-
-            override fun visitSimpleNameExpression(ref: KtSimpleNameExpression) {
-                if (ref.parent is KtValueArgumentName) return
-
-                val physicalRef = substringInfo?.let {
-                    // If substring contains some references it must be extracted as a string template
-                    val physicalExpression = expressions.single() as KtStringTemplateExpression
-                    val extractedContentOffset = physicalExpression.getContentRange().startOffset + physicalExpression.startOffset
-                    val offsetInExtracted = ref.startOffset - extractedContentOffset
-                    val offsetInTemplate = it.relativeContentRange.startOffset + offsetInExtracted
-                    it.template.findElementAt(offsetInTemplate)!!.getStrictParentOfType<KtSimpleNameExpression>()
-                } ?: ref
-
-                val resolvedCall = physicalRef.getResolvedCall(context)
-                val descriptor = context[BindingContext.REFERENCE_TARGET, physicalRef] ?: return
-                val declaration = getDeclaration(descriptor, context) ?: return
-
-                val resolveResult = ResolveResult(physicalRef, declaration, descriptor, resolvedCall)
-                physicalRef.resolveResult = resolveResult
-                if (ref != physicalRef) {
-                    ref.resolveResult = resolveResult
-                }
-            }
-        }
-        expressions.forEach { it.accept(visitor) }
-    }
-
     private fun getPossibleTypes(expression: KtExpression, resolvedCall: ResolvedCall<*>?, context: BindingContext): Set<KotlinType> {
         val dataFlowValueFactory = expression.getResolutionFacade().dataFlowValueFactory
         val dataFlowInfo = context.getDataFlowInfoAfter(expression)
@@ -171,20 +120,19 @@ data class ExtractionData(
         return dataFlowInfo.getCollectedTypes(dataFlowValue, expression.languageVersionSettings)
     }
 
-    fun getBrokenReferencesInfo(body: KtBlockExpression): List<ResolvedReferenceInfo> {
-        val originalContext = bindingContext ?: return listOf()
+    fun getBrokenReferencesInfo(body: KtBlockExpression): List<ResolvedReferenceInfo<DeclarationDescriptor, ResolvedCall<*>, KotlinType>> {
+        val originalContext = bindingContext
 
         val newReferences = body.collectDescendantsOfType<KtSimpleNameExpression> { it.resolveResult != null }
 
         val context = body.analyze()
 
-        val referencesInfo = ArrayList<ResolvedReferenceInfo>()
+        val referencesInfo = ArrayList<ResolvedReferenceInfo<DeclarationDescriptor, ResolvedCall<*>, KotlinType>>()
         for (newRef in newReferences) {
-            val originalResolveResult = newRef.resolveResult ?: continue
+            val originalResolveResult = newRef.resolveResult as? ResolveResult<DeclarationDescriptor, ResolvedCall<*>> ?: continue
 
             val smartCast: KotlinType?
             val possibleTypes: Set<KotlinType>
-            val shouldSkipPrimaryReceiver: Boolean
 
             // Qualified property reference: a.b
             val qualifiedExpression = newRef.getQualifiedExpressionForSelector()
@@ -194,7 +142,7 @@ data class ExtractionData(
                 possibleTypes = getPossibleTypes(smartCastTarget, originalResolveResult.resolvedCall, originalContext)
                 val receiverDescriptor =
                     (originalResolveResult.resolvedCall?.dispatchReceiver as? ImplicitReceiver)?.declarationDescriptor
-                shouldSkipPrimaryReceiver = smartCast == null
+                val shouldSkipPrimaryReceiver = smartCast == null
                         && !DescriptorUtils.isCompanionObject(receiverDescriptor)
                         && qualifiedExpression.receiverExpression !is KtSuperExpression
                 if (shouldSkipPrimaryReceiver && originalResolveResult.resolvedCall?.hasBothReceivers() != true) continue
@@ -202,7 +150,6 @@ data class ExtractionData(
                 if (newRef.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) continue
                 smartCast = originalContext[BindingContext.SMARTCAST, originalResolveResult.originalRefExpr]?.defaultType
                 possibleTypes = getPossibleTypes(originalResolveResult.originalRefExpr, originalResolveResult.resolvedCall, originalContext)
-                shouldSkipPrimaryReceiver = false
             }
 
             val parent = newRef.parent
@@ -238,7 +185,6 @@ data class ExtractionData(
                             variableResolveResult,
                             smartCast,
                             possibleTypes,
-                            shouldSkipPrimaryReceiver
                         )
                     )
                     referencesInfo.add(
@@ -247,7 +193,6 @@ data class ExtractionData(
                             functionResolveResult,
                             smartCast,
                             possibleTypes,
-                            shouldSkipPrimaryReceiver
                         )
                     )
                 } else {
@@ -257,7 +202,6 @@ data class ExtractionData(
                             originalResolveResult,
                             smartCast,
                             possibleTypes,
-                            shouldSkipPrimaryReceiver
                         )
                     )
                 }
@@ -269,12 +213,5 @@ data class ExtractionData(
 
     override fun dispose() {
         expressions.forEach(::unmarkReferencesInside)
-    }
-}
-
-fun unmarkReferencesInside(root: PsiElement) {
-    runReadAction {
-        if (!root.isValid) return@runReadAction
-        root.forEachDescendantOfType<KtSimpleNameExpression> { it.resolveResult = null }
     }
 }

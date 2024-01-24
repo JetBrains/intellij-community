@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElements
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import kotlin.math.min
 
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
@@ -268,3 +269,19 @@ fun showErrorHint(project: Project, editor: Editor, @NlsContexts.DialogMessage m
 fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, @NlsContexts.DialogTitle title: String) {
     showErrorHint(project, editor, KotlinBundle.message(messageKey), title)
 }
+
+fun KtNamedDeclaration.getGeneratedBody(): KtExpression =
+    when (this) {
+        is KtNamedFunction -> bodyExpression
+        else -> {
+            val property = this as KtProperty
+
+            property.getter?.bodyExpression?.let { return it }
+            property.initializer?.let { return it }
+            // We assume lazy property here with delegate expression 'by Delegates.lazy { body }'
+            property.delegateExpression?.let {
+                val call = it.getCalleeExpressionIfAny()?.parent as? KtCallExpression
+                call?.lambdaArguments?.singleOrNull()?.getLambdaExpression()?.bodyExpression
+            }
+        }
+    } ?: throw AssertionError("Couldn't get block body for this declaration: ${getElementTextWithContext()}")
