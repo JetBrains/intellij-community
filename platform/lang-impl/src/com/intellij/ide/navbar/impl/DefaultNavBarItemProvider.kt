@@ -19,8 +19,6 @@ import com.intellij.psi.util.PsiUtilCore.ensureValid
 import com.intellij.psi.util.PsiUtilCore.getVirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import java.util.*
-
 
 /**
  * Delegates old implementations
@@ -36,7 +34,8 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
 
     try {
       ensureValid(item.data)
-    } catch (t: Throwable) {
+    }
+    catch (t: Throwable) {
       return null
     }
 
@@ -58,10 +57,11 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
     val parent = parentFromOldExtensions(item)
                  ?: return null
     val containingFile = parent.containingFile
-    if (containingFile != null && containingFile.virtualFile == null) return null
+    if (containingFile != null && containingFile.virtualFile == null) {
+      return null
+    }
 
     val adjustedParent = adjustedParent(parent, item.ownerExtension)
-
     if (adjustedParent != null) {
       return PsiNavBarItem(adjustedParent, item.ownerExtension)
     }
@@ -87,7 +87,8 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
     if (adjustedByOwner != null) {
       ensurePsiFromExtensionIsValid(adjustedByOwner, "Owner extension returned invalid psi after adjustment", ownerExtension.javaClass)
       return adjustedByOwner
-    } else {
+    }
+    else {
       return adjustWithAllExtensions(originalParent)
     }
   }
@@ -95,8 +96,9 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun iterateChildren(item: NavBarItem): Iterable<NavBarItem> {
-
-    if (item !is DefaultNavBarItem<*>) return Iterable { Collections.emptyIterator() }
+    if (item !is DefaultNavBarItem<*>) {
+      return emptyList()
+    }
 
     return NavBarModelExtension.EP_NAME
       .extensionList.asSequence()
