@@ -21,15 +21,6 @@ fun Driver.findFile(project: Project? = null, relativePath: String): VirtualFile
   }
 }
 
-fun Driver.openFile(relativePath: String) {
-  val fileToOpen = findFile(relativePath = relativePath)
-  if (fileToOpen == null) {
-    throw IllegalArgumentException("Fail to find file $relativePath")
-  }
-  openEditor(file = fileToOpen)
-  waitForCodeAnalysis(file = fileToOpen)
-}
-
 @Remote("com.intellij.openapi.projectRoots.Sdk")
 interface Sdk {
   fun getName(): String
