@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,7 +28,8 @@ public final class TextBlockBackwardMigrationInspection extends AbstractBaseJava
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
-        if (!expression.isTextBlock()|| PsiLiteralUtil.getTextBlockText(expression) == null) {
+        if (!expression.isTextBlock() || PsiLiteralUtil.getTextBlockText(expression) == null ||
+            expression.getParent() instanceof PsiTemplateExpression) {
           return;
         }
         holder.registerProblem(expression, JavaBundle.message("inspection.text.block.backward.migration.message"),
