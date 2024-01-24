@@ -2,11 +2,14 @@
 package com.jetbrains.python.sdk.flavors
 
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.SystemProperties
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
@@ -39,6 +42,23 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
     }
 
     return candidates
+  }
+
+  fun isPyenvSdk(path: String?): Boolean {
+    if (path.isNullOrEmpty()) {
+      return false;
+    }
+
+    return isPyenvSdk(tryResolvePath(path))
+  }
+
+  fun isPyenvSdk(path: Path?): Boolean {
+    val real = tryReadLink(path)
+    if (real == null) {
+      return false
+    }
+
+    return getPyenvRootDir()?.toCanonicalPath()?.let { real.startsWith(it) } ?: false
   }
 
   private fun getPyenvVersionsDir(): Path? {
@@ -86,11 +106,12 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
 
   private fun resolveDir(env: String, dirName: String): Path? {
     val envPath = envGetter(env)
-    if (!envPath.isEmpty()) {
-      return tryResolvePath(envPath)
+    val path = if (!envPath.isEmpty()) {
+      tryResolvePath(envPath)
+    } else {
+      tryResolvePath(SystemProperties.getUserHome())?.resolve(dirName)
     }
 
-    val path = tryResolvePath(SystemProperties.getUserHome())?.resolve(dirName)
     if (path != null && path.isDirectory()) {
       return path
     }
@@ -101,9 +122,21 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
   private fun tryResolvePath(str: String): Path? {
     try {
       val path = Paths.get(str)
-      if (path.isDirectory()) {
-        return path
+      return path
+    }
+    catch (ignored: InvalidPathException) {
+    }
+
+    return null
+  }
+
+  private fun tryReadLink(path: Path?): Path? {
+    try {
+      if (path?.isSymbolicLink() == true) {
+        return path.toRealPath()
       }
+
+      return path
     }
     catch (ignored: Exception) {
     }
@@ -112,6 +145,9 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
   }
 
   companion object {
+    @JvmStatic
+    val Instance = VirtualEnvReader()
+
     @JvmStatic
     fun systemEnvGetter(name: String): String {
       return System.getenv(name) ?: String()

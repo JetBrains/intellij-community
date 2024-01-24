@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.flavors
 import com.intellij.grazie.grammar.assertIsEmpty
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testFramework.utils.io.deleteRecursively
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
@@ -105,7 +105,7 @@ class VirtualEnvReaderTest {
     assert(interpreters[0].absolutePathString().endsWith("python"))
 
     // another version w/o match
-    bootstrap.addVersion(bootstrap.pyenv, "3.2.1", "xxxx")
+    bootstrap.setupPyenv(listOf("3.2.1"), "xxxx")
     interpreters = bootstrap.virtualEnvReader.findPyenvInterpreters(setOf("python"), EMPTY_PATTERN)
     assertEquals(1, interpreters.size)
 
@@ -125,5 +125,40 @@ class VirtualEnvReaderTest {
     interpreters = bootstrap.virtualEnvReader.findPyenvInterpreters(setOf("python"), pattern)
     assertEquals(1, interpreters.size)
     assert(interpreters[0].absolutePathString().endsWith("python"))
+  }
+
+  @Test
+  fun testIsPyenvSdk() {
+    val bootstrap = Bootstrap()
+
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(null as String?))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(""))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("aa\u0000bb"))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("a/b/c/d"))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd.resolve("smthg")))
+
+    bootstrap.setupPyenv(listOf("3.2.1"), "xxxx")
+
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(null as String?))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(""))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("aa\u0000bb"))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk("a/b/c/d"))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd))
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.cwd.resolve("smthg")))
+
+    // particularly any path inside pyenv root will work
+    assertTrue(bootstrap.virtualEnvReader.isPyenvSdk(bootstrap.pyenv.resolve("xxx")))
+
+    // should resolve symlinks
+    val link = bootstrap.cwd.resolve("smthg")
+    val target  = bootstrap.pyenv.resolve("xxx")
+
+    // hanging links, should not resolve it
+    Files.createSymbolicLink(link, target)
+    assertFalse(bootstrap.virtualEnvReader.isPyenvSdk(link))
+
+    Files.createFile(target)
+    assertTrue(bootstrap.virtualEnvReader.isPyenvSdk(link))
   }
 }

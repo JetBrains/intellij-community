@@ -18,6 +18,7 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.VirtualEnvReader
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
 import com.jetbrains.python.statistics.InterpreterCreationMode.*
@@ -99,7 +100,8 @@ enum class InterpreterType(val value: String) {
   BASE_CONDA("base_conda"),
   VIRTUALENV("virtualenv"),
   REGULAR("regular"),
-  POETRY("poetry")
+  POETRY("poetry"),
+  PYENV("pyenv"),
 }
 
 enum class InterpreterCreationMode(val value: String) {
@@ -112,7 +114,8 @@ val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value
                                                                           CONDAVENV.value,
                                                                           VIRTUALENV.value,
                                                                           REGULAR.value,
-                                                                          POETRY.value))
+                                                                          POETRY.value,
+                                                                          PYENV.value))
 
 val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
                                                                                      CUSTOM.value,
@@ -135,6 +138,7 @@ val Sdk.interpreterType: InterpreterType
     isPipEnv -> PIPENV
     isPoetry -> POETRY
     PythonSdkUtil.isConda(this) -> CONDAVENV
+    VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV
     PythonSdkUtil.isVirtualEnv(this) -> VIRTUALENV
     else -> REGULAR
   }
