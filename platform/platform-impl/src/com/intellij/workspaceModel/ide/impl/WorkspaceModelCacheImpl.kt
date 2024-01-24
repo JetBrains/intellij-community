@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.isConsistent
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -42,6 +43,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   override val enabled: Boolean = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
+  private lateinit var virtualFileUrlManager: VirtualFileUrlManager
   private val cacheFile by lazy { initCacheFile() }
   private val unloadedEntitiesCacheFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve("unloaded-entities-cache.data") }
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
@@ -53,8 +55,12 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       null
     }
 
-  private val cacheSerializer = WorkspaceModelCacheSerializer(WorkspaceModel.getInstance(project).getVirtualFileUrlManager(),
-                                                              urlRelativizer)
+  private val cacheSerializer by lazy {
+    if (!::virtualFileUrlManager.isInitialized) {
+      throw UninitializedPropertyAccessException("VirtualFileUrlManager was not initialized. Please call `WorkspaceModelCache.setVirtualFileUrlManager` before any other methods.")
+    }
+    WorkspaceModelCacheSerializer(virtualFileUrlManager, urlRelativizer)
+  }
 
   init {
     if (enabled) {
@@ -98,8 +104,9 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   }
 
   private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTimeMillis {
-    val storage = WorkspaceModel.getInstance(project).currentSnapshot
-    val unloadedStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val storage = workspaceModel.currentSnapshot
+    val unloadedStorage = workspaceModel.internal.currentSnapshotOfUnloadedEntities
     if (!storage.isConsistent || !unloadedStorage.isConsistent) {
       invalidateProjectCache()
     }
@@ -141,6 +148,10 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   override fun loadUnloadedEntitiesCache(): MutableEntityStorage? {
     return cacheSerializer.loadCacheFromFile(unloadedEntitiesCacheFile, invalidateCachesMarkerFile,
                                              invalidateProjectCacheMarkerFile)
+  }
+
+  override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
+    virtualFileUrlManager = vfuManager
   }
 
   private fun invalidateProjectCache() {

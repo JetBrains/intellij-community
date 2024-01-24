@@ -73,7 +73,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     val start = System.currentTimeMillis()
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
-    val cache = WorkspaceModelCache.getInstance(project)
+    val cache = WorkspaceModelCache.getInstance(project)?.apply { setVirtualFileUrlManager(virtualFileManager) }
     val (projectEntities, unloadedEntities) = when {
       initialContent != null -> {
         loadedFromCache = initialContent !== ImmutableEntityStorage.empty()

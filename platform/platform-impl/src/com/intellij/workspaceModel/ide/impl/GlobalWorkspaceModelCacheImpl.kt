@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.isConsistent
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -20,6 +21,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : GlobalWorkspaceModelCache {
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val cacheFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
+  private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
   private val urlRelativizer =
     if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", true)) {
@@ -28,7 +30,12 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
       null
     }
 
-  private val cacheSerializer = WorkspaceModelCacheSerializer(GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager(), urlRelativizer)
+  private val cacheSerializer by lazy {
+    if (!::virtualFileUrlManager.isInitialized) {
+      throw UninitializedPropertyAccessException("VirtualFileUrlManager was not initialized. Please call `GlobalWorkspaceModelCache.setVirtualFileUrlManager` before any other methods.")
+    }
+    WorkspaceModelCacheSerializer(virtualFileUrlManager, urlRelativizer)
+  }
 
   init {
     LOG.debug("Global Model Cache at $cacheFile")
@@ -76,6 +83,10 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   override fun loadCache(): MutableEntityStorage? {
     if (ApplicationManager.getApplication().isUnitTestMode) return null
     return cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateCachesMarkerFile)
+  }
+
+  override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
+    virtualFileUrlManager = vfuManager
   }
 
   companion object {

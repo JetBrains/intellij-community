@@ -48,7 +48,8 @@ class GlobalWorkspaceModel : Disposable {
 
   // Marker indicating that changes came from global storage
   internal var isFromGlobalWorkspaceModel: Boolean = false
-  private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()
+  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
+  private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply { setVirtualFileUrlManager(virtualFileManager) }
   private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsGlobalFileEntitySource
                                                                      || entitySource is LegacyCustomLibraryEntitySource }
 
@@ -62,7 +63,6 @@ class GlobalWorkspaceModel : Disposable {
   private val updateModelMethodName = GlobalWorkspaceModel::updateModel.name
   private val onChangedMethodName = GlobalWorkspaceModel::onChanged.name
 
-  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
 
   init {
     LOG.debug { "Loading global workspace model" }
@@ -90,7 +90,9 @@ class GlobalWorkspaceModel : Disposable {
     }
     entityStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
 
-    val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
+    val callback = JpsGlobalModelSynchronizer.getInstance()
+      .apply { setVirtualFileUrlManager(virtualFileManager) }
+      .loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
     val changes = (mutableEntityStorage as MutableEntityStorageInstrumentation).collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()

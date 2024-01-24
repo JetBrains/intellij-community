@@ -3,6 +3,7 @@ package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -15,6 +16,8 @@ public interface WorkspaceModelCache {
 
   public fun loadCache(): MutableEntityStorage?
   public fun loadUnloadedEntitiesCache(): MutableEntityStorage?
+
+  public fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager)
 
   /**
    * Save workspace model caches
