@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.computeWithoutAddingRedundantImp
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -339,31 +338,9 @@ sealed class K2MoveRenameUsageInfo(
                         } else null
                     }.filter { it.first.isValid }.toMap()  // imports can become invalid because they are removed when binding element
                     if (file is KtFile) {
-                        shortenReferences(file, qualifiedElements)
+                        shortenReferences(qualifiedElements.keys.filterIsInstance<KtElement>())
                     }
-
                 }
-            }
-        }
-
-        /**
-         * Ad-hoc implementation of bulk shortening that should be replaced by some better API in the future.
-         */
-        private fun shortenReferences(file: KtFile, qualifiedElements: Map<PsiElement, KtNamedDeclaration>) {
-            fun FqName.proximityTo(other: FqName): Int {
-                return pathSegments().zip(other.pathSegments()).takeWhile { (left, right) -> left == right }.size
-            }
-
-            val nonNestedElems = qualifiedElements.filter { (elem, _) ->
-                qualifiedElements.keys.none { otherElem -> elem != otherElem && otherElem.isAncestor(elem) }
-            }
-            val fileFqn = file.packageFqName
-            val sortedElements = nonNestedElems.keys.sortedByDescending { ref ->
-                val newDecl = nonNestedElems[ref]
-                newDecl?.fqName?.proximityTo(fileFqn)
-            }
-            sortedElements.forEach { qualifiedElem ->
-                shortenReferences(qualifiedElem as KtElement)
             }
         }
     }

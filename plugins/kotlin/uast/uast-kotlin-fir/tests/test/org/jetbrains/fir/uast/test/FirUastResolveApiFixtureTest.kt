@@ -168,6 +168,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkArgumentMappingOOBE(myFixture)
     }
 
+    fun testArgumentMappingSAM() {
+        checkArgumentMappingSAM(myFixture)
+    }
+
+    fun testArgumentMappingSAM_methodReference() {
+        checkArgumentMappingSAM_methodReference(myFixture)
+    }
+
     fun testSyntheticEnumMethods() {
         checkSyntheticEnumMethods(myFixture)
     }

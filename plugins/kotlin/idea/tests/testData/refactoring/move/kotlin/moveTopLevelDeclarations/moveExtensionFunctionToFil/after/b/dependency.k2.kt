@@ -1,6 +1,5 @@
 package b
 
-import a.Foo
 import a.Test
 
 open class Foo {
@@ -10,10 +9,10 @@ open class Foo {
 }
 
 fun Test.test() {
-    val aFoo: a.Foo = Foo()
+    val aFoo: a.Foo = a.Foo()
     val bFoo: Foo = b.Foo()
     val cFoo: c.Foo = c.Foo()
-    val aBar: Foo.Bar = Foo.Bar()
+    val aBar: a.Foo.Bar = a.Foo.Bar()
     val bBar: Foo.Bar = b.Foo.Bar()
     val cBar: c.Foo.Bar = c.Foo.Bar()
 

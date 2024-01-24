@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
@@ -200,6 +201,8 @@ abstract class AbstractKotlinMppGradleImportingTest(private val pluginKind: Kotl
         super.setUp()
 
         checkPluginIsCorrect(pluginKind.isK2)
+        // KMP support in non-JVM modules should be explicitly enabled ATM
+        if (pluginKind.isK2) Registry.get("kotlin.k2.kmp.enabled").setValue(true)
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()
