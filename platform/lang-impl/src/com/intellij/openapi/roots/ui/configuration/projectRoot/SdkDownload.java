@@ -72,6 +72,7 @@ public interface SdkDownload {
    *
    * @return The selected {@link SdkDownloadTask}
    */
+  @Nullable
   default SdkDownloadTask pickSdk(@NotNull SdkTypeId sdkTypeId,
                           @NotNull SdkModel sdkModel,
                           @NotNull JComponent parentComponent,
