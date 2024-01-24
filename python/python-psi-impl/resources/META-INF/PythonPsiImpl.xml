@@ -19,7 +19,7 @@
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
 
-    <projectService serviceInterface="com.jetbrains.python.psi.PyElementGenerator"
+    <projectService serviceInterface="com.jetbrains.python.psi.PyAstElementGenerator"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyElementGeneratorImpl"/>
 
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
