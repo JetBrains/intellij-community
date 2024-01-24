@@ -34,16 +34,16 @@ internal class DocSanitizingTagGeneratingProvider : GeneratingProvider {
   }
 }
 
-internal class DocCodeFenceGeneratingProvider(private val project: Project, private val defaultLanguage: Language?) : GeneratingProvider {
+internal class DocCodeBlockGeneratingProvider(private val project: Project, private val defaultLanguage: Language?) : GeneratingProvider {
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val contents = StringBuilder()
     var language: String? = null
     node.children.forEach { child ->
       when (child.type) {
-        MarkdownTokenTypes.CODE_FENCE_CONTENT, MarkdownTokenTypes.EOL ->
+        MarkdownTokenTypes.CODE_FENCE_CONTENT, MarkdownTokenTypes.CODE_LINE, MarkdownTokenTypes.EOL ->
           contents.append(child.getTextInNode(text))
         MarkdownTokenTypes.FENCE_LANG ->
-          language = HtmlGenerator.leafText(text, child).toString().trim().split(' ')[0]
+          language = HtmlGenerator.leafText(text, child).toString().trim().takeWhile { !it.isWhitespace() }
       }
     }
     visitor.consumeHtml(QuickDocHighlightingHelper.getStyledCodeBlock(

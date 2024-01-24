@@ -85,43 +85,16 @@ object DocMarkdownToHtmlConverter {
   @RequiresReadLock
   @JvmOverloads
   fun convert(project: Project, markdownText: String, defaultLanguage: Language? = null): String {
-    val lines = SPLIT_BY_LINE_PATTERN.split(markdownText)
+    val lines = SPLIT_BY_LINE_PATTERN.split(markdownText.trimIndent())
     val processedLines = ArrayList<String>(lines.size)
     var isInCode = false
-    // Support code blocks indented by 4 with empty lines before and after
-    var codeBlockIndentation = -1
     var isInTable = false
     var tableFormats: List<String>? = null
     for (i in lines.indices) {
       val line = lines[i]
       var processedLine = StringUtil.trimTrailing(line)
-      if (codeBlockIndentation > 0) {
-        if (processedLine.isBlank()) {
-          processedLines.add("")
-          continue
-        } else if (processedLine.indentation() >= codeBlockIndentation) {
-          processedLines.add(processedLine.substring(codeBlockIndentation))
-          continue
-        } else {
-          if (processedLines.last().isBlank()) {
-            processedLines.removeLast()
-          }
-          processedLines.add("```")
-          codeBlockIndentation = -1
-        }
-      }
       if (processedLine.matches("\\s+```.*".toRegex())) {
         processedLine = processedLine.trim { it <= ' ' }
-      } else if (!isInCode
-                 && i >= 2 && processedLine.indentation() >= 3
-                 && lines[i-1].isBlank()
-                 && lines[i-2].indentation() <= 1) {
-        codeBlockIndentation = processedLine.indentation()
-        // Remove last blank line
-        processedLines.removeLast()
-        processedLines.add("```")
-        processedLines.add(processedLine.substring(codeBlockIndentation))
-        continue
       }
 
       val count = StringUtil.getOccurrenceCount(processedLine, FENCED_CODE_BLOCK)
@@ -151,7 +124,6 @@ object DocMarkdownToHtmlConverter {
           isInTable = false
           tableFormats = null
         }
-        processedLine = if (isInCode) processedLine else StringUtil.trimLeading(processedLine)
       }
       processedLines.add(processedLine)
     }
@@ -164,9 +136,6 @@ object DocMarkdownToHtmlConverter {
     }
     return adjustHtml(html)
   }
-
-  private fun String.indentation() =
-    asSequence().takeWhile { it.isWhitespace() }.count()
 
   private fun convertNewLinePlaceholdersToTags(generatedDoc: String): String {
     return StringUtil.replace(generatedDoc, "\n", "\n<p>")

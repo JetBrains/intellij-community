@@ -29,7 +29,8 @@ internal class DocFlavourDescriptor(private val project: Project, private val de
   override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
     val result = HashMap(super.createHtmlGeneratingProviders(linkMap, baseURI))
     result[MarkdownTokenTypes.HTML_TAG] = DocSanitizingTagGeneratingProvider()
-    result[MarkdownElementTypes.CODE_FENCE] = DocCodeFenceGeneratingProvider(project, defaultLanguage)
+    result[MarkdownElementTypes.CODE_BLOCK] = DocCodeBlockGeneratingProvider(project, defaultLanguage)
+    result[MarkdownElementTypes.CODE_FENCE] = DocCodeBlockGeneratingProvider(project, defaultLanguage)
     result[MarkdownElementTypes.CODE_SPAN] = DocCodeSpanGeneratingProvider(project, defaultLanguage)
     return result
   }
