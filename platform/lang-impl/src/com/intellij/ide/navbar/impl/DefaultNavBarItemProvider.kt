@@ -99,21 +99,21 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
     if (item !is DefaultNavBarItem<*>) {
       return emptyList()
     }
-
-    return NavBarModelExtension.EP_NAME
-      .extensionList.asSequence()
-      .flatMap { ext ->
+    return sequence {
+      for (ext in NavBarModelExtension.EP_NAME.extensionList) {
         val children = arrayListOf<Any>()
         ext.processChildren(item.data, null /*TODO: think about passing root here*/) {
           children.add(it)
           true
         }
-        children.asSequence().map { child -> Pair(child, ext) }
+        for (child in children) {
+          val childItem = compatibilityNavBarItem(child, ext)
+          if (childItem != null) {
+            yield(childItem)
+          }
+        }
       }
-      .mapNotNull { (child, ext) ->
-        compatibilityNavBarItem(child, ext)
-      }
-      .asIterable()
+    }.asIterable()
   }
 }
 
