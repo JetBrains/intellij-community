@@ -24,10 +24,9 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import java.util.concurrent.atomic.AtomicInteger
 
-open class CombinedDiffModelImpl(protected val project: Project) : CombinedDiffModel {
-  override val haveParentDisposable = false
-
-  final override val ourDisposable = Disposer.newCheckedDisposable()
+class CombinedDiffModelImpl(val project: Project,
+                            override val haveParentDisposable: Boolean = false) : CombinedDiffModel {
+  override val ourDisposable = Disposer.newCheckedDisposable()
 
   private val modelListeners = EventDispatcher.create(CombinedDiffModelListener::class.java)
 

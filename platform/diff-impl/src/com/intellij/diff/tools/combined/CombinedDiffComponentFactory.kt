@@ -49,7 +49,7 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   internal fun getMainComponent() = mainUi.getComponent()
 
   private fun createMainUI(): CombinedDiffMainUI {
-    return CombinedDiffMainUI(model, ::createGoToChangeAction).also { ui ->
+    return CombinedDiffMainUI(model, createGoToChangeAction()).also { ui ->
       Disposer.register(ourDisposable, ui)
       model.context.putUserData(COMBINED_DIFF_MAIN_UI, ui)
     }

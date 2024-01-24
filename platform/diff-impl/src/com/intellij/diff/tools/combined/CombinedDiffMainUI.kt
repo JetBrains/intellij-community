@@ -45,7 +45,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
-class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory: () -> AnAction?) : Disposable {
+class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToChangeAction: AnAction?) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
   private val context: DiffContext = model.context
@@ -82,8 +82,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       e.presentation.isVisible = false
     }
   }
-
-  private val goToChangeAction = goToChangeFactory()
 
   init {
     Touchbar.setActions(mainPanel, touchbarActionGroup)
