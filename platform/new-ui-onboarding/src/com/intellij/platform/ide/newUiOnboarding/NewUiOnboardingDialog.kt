@@ -29,7 +29,7 @@ import javax.swing.JRootPane
 import javax.swing.border.Border
 
 class NewUiOnboardingDialog(project: Project)
-  : DialogWrapper(project, null, false, IdeModalityType.PROJECT, false) {
+  : DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
   private val backgroundColor: Color
     get() = JBColor.namedColor("NewUiOnboarding.Dialog.background", UIUtil.getPanelBackground())
 
