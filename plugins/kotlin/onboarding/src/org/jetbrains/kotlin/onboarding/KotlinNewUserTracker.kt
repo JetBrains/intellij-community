@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 
 class KotlinNewUserTrackerState : BaseState() {
     // Unix time seconds
@@ -25,7 +26,7 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
     companion object {
         // Offer survey after one week of using Kotlin
         internal val NEW_USER_SURVEY_DELAY = Duration.ofDays(7)
-        internal val NEW_IDEA_USER_DATE = LocalDate.of(2023, 10, 19)
+        internal val NEW_IDEA_USER_DURATION = Duration.ofDays(30)
 
         // How long we will classify a user as new
         internal val NEW_USER_DURATION = Duration.ofDays(30)
@@ -67,14 +68,14 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
      * This is needed temporarily so that the survey is only shown to users who are entirely new to IDEA.
      * We will change it to also show it to old users who are new to Kotlin with an upcoming release.
      */
-    private fun isNewIdeaUser(): Boolean {
+    internal fun isNewIdeaUser(): Boolean {
         val installationDate = getInstallationDate()
         if (installationDate == null) {
             LOG.debug("Could not get InstallationId for IDEA installation")
             return false
         }
         LOG.debug("Got user installation date: $installationDate")
-        return installationDate > NEW_IDEA_USER_DATE
+        return Duration.between(installationDate.atStartOfDay(ZoneId.systemDefault()).toInstant(), Instant.now()) <= NEW_IDEA_USER_DURATION
     }
 
     override fun getState(): KotlinNewUserTrackerState = currentState

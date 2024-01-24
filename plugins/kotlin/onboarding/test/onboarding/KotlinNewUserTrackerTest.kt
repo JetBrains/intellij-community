@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.onboarding
 
 import com.intellij.internal.statistic.DeviceIdManager
-import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_IDEA_USER_DATE
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_DURATION
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_RESET
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_SURVEY_DELAY
@@ -11,7 +10,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.GregorianCalendar
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -23,7 +22,9 @@ class KotlinNewUserTrackerTest {
         return Duration.between(Instant.ofEpochSecond(this), Instant.now()) < Duration.ofSeconds(30)
     }
 
-    private fun createInstance(installationDate: LocalDate? = NEW_IDEA_USER_DATE.minusDays(1)): KotlinNewUserTracker {
+    private fun createInstance(
+        installationDate: LocalDate? = LocalDate.now().minusDays(KotlinNewUserTracker.NEW_IDEA_USER_DURATION.toDays() + 1)
+    ): KotlinNewUserTracker {
         val installationId = installationDate?.let {
             val calendar = GregorianCalendar.from(installationDate.atStartOfDay(ZoneId.systemDefault()))
             DeviceIdManager.generateId(calendar, 'B')
@@ -55,7 +56,7 @@ class KotlinNewUserTrackerTest {
 
     @Test
     fun `New idea users should be marked as new if they open a kotlin file for the first time`() {
-        val instance = createInstance(NEW_IDEA_USER_DATE.atStartOfDay().toLocalDate().plusDays(1))
+        val instance = createInstance(LocalDate.now().plusDays(1))
         instance.onKtFileOpened()
         assertTrue(instance.state.firstKtFileOpened.isRecentEpochTimestamp())
         assertTrue(instance.state.lastKtFileOpened.isRecentEpochTimestamp())
