@@ -479,6 +479,10 @@ fun <T : CommandChain> T.addFile(path: String, fileName: String): T = apply {
   addCommand("${CMD_PREFIX}addFile ${path}, ${fileName}")
 }
 
+fun <T : CommandChain> T.renameFile(path: String, oldFileName: String, newFileName: String): T = apply {
+  addCommand("${CMD_PREFIX}renameFile ${path}, ${oldFileName}, ${newFileName}")
+}
+
 fun <T : CommandChain> T.call(method: KFunction<String?>, vararg args: String): T = apply {
   val javaMethod = method.javaMethod ?: error("Failed to resolve Java Method from the declaration")
   require(Modifier.isStatic(javaMethod.modifiers)) { "Method $method must be static" }

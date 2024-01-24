@@ -1,7 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
@@ -13,7 +12,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-abstract class AbstractFileCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
+abstract class AbstractFileCommand(text: String, line: Int, private val numberOfArguments: Int = 2) : AbstractCallbackBasedCommand(text, line, true) {
   protected fun execute(path: Path, callback: ActionCallback, f: (VirtualFile) -> Any) {
     val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(path)
     if (virtualFile == null) {
@@ -27,7 +26,7 @@ abstract class AbstractFileCommand(text: String, line: Int) : AbstractCallbackBa
   }
 
   protected fun isCommandParametersRight(input: ArrayList<String>): Boolean {
-    return !(input.size < 2 || input.size > 2 || input[0] == "" || input[1] == "")
+    return input.size == numberOfArguments && input.all { it != "" }
   }
 }
 

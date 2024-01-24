@@ -60,6 +60,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(DoHighlighting.PREFIX, DoHighlighting::new),
       Map.entry(ReloadFilesCommand.PREFIX, ReloadFilesCommand::new),
       Map.entry(AddFileCommand.PREFIX, AddFileCommand::new),
+      Map.entry(RenameFileCommand.PREFIX, RenameFileCommand::new),
       Map.entry(DeleteFileCommand.PREFIX, DeleteFileCommand::new),
       Map.entry(ExpandMainMenuCommand.PREFIX, ExpandMainMenuCommand::new),
       Map.entry(ExpandEditorMenuCommand.PREFIX, ExpandEditorMenuCommand::new),
