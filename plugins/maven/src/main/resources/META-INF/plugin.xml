@@ -327,7 +327,7 @@
                  description="Keep existing module names after maven project reimport"/>
 
     <registryKey key="maven.import.module.name.template" defaultValue="artifactId"
-                 description="Defines how IntelliJ IDEA modules are named. Possible values: artifactId, groupId.artifactId, folderName. Other values default to artifactId"/>
+                 description="Defines how IntelliJ IDEA modules are named. Possible values: artifactId, groupId.artifactId, aggregatorArtifactId.artifactId, folderName. Other values default to artifactId"/>
 
     <registryKey key="maven.create.dummy.module.on.first.import" defaultValue="true"
                  description="Create maven dummy module on import"/>

@@ -4,24 +4,25 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.util.*;
 
 import static java.util.Locale.ROOT;
 
 public final class MavenModuleNameMapper {
-  public static Map<MavenProject, String> mapModuleNames(Collection<MavenProject> projects,
+  public static Map<MavenProject, String> mapModuleNames(MavenProjectsTree tree,
+                                                         Collection<MavenProject> projects,
                                                          Map<VirtualFile, String> existingPomModuleName) {
     var mavenProjectToModuleName = new HashMap<MavenProject, String>();
     NameItem[] names = new NameItem[projects.size()];
 
     int i = 0;
     for (MavenProject each : projects) {
-      names[i++] = new NameItem(each, existingPomModuleName.get(each.getFile()));
+      names[i++] = new NameItem(tree, each, existingPomModuleName.get(each.getFile()));
     }
 
     Arrays.sort(names);
@@ -80,18 +81,6 @@ public final class MavenModuleNameMapper {
     return mavenProjectToModuleName;
   }
 
-  private static String getDefaultModuleName(@NotNull MavenProject mavenProject) {
-    var nameTemplate = Registry.stringValue("maven.import.module.name.template");
-    var folderName = mavenProject.getDirectoryFile().getName();
-    var mavenId = mavenProject.getMavenId();
-    var nameCandidate = switch (nameTemplate) {
-      case "folderName" -> folderName;
-      case "groupId.artifactId" -> mavenId.getGroupId() + "." + mavenId.getArtifactId();
-      default -> mavenId.getArtifactId();
-    };
-    return isValidName(nameCandidate) ? nameCandidate : folderName;
-  }
-
   private static boolean isValidName(String name) {
     if (StringUtil.isEmptyOrSpaces(name)) return false;
     if (name.equals(MavenId.UNKNOWN_VALUE)) return false;
@@ -106,6 +95,7 @@ public final class MavenModuleNameMapper {
   }
 
   private static class NameItem implements Comparable<NameItem> {
+    private final MavenProjectsTree tree;
     public final MavenProject project;
     public final String existingName;
 
@@ -115,7 +105,8 @@ public final class MavenModuleNameMapper {
     public int number = -1; // has no duplicates
     public boolean hasDuplicatedGroup;
 
-    private NameItem(MavenProject project, @Nullable String existingName) {
+    private NameItem(MavenProjectsTree tree, MavenProject project, @Nullable String existingName) {
+      this.tree = tree;
       this.project = project;
       this.existingName = existingName;
       originalName = calcOriginalName();
@@ -127,7 +118,25 @@ public final class MavenModuleNameMapper {
     private String calcOriginalName() {
       if (existingName != null) return existingName;
 
-      return getDefaultModuleName(project);
+      return getDefaultModuleName();
+    }
+
+    private String getDefaultModuleName() {
+      var nameTemplate = Registry.stringValue("maven.import.module.name.template");
+      var folderName = project.getDirectoryFile().getName();
+      var mavenId = project.getMavenId();
+      var nameCandidate = switch (nameTemplate) {
+        case "folderName" -> folderName;
+        case "groupId.artifactId" -> mavenId.getGroupId() + "." + mavenId.getArtifactId();
+        case "aggregatorArtifactId.artifactId" -> aggregatorArtifactIdPrefix() + mavenId.getArtifactId();
+        default -> mavenId.getArtifactId();
+      };
+      return isValidName(nameCandidate) ? nameCandidate : folderName;
+    }
+
+    private String aggregatorArtifactIdPrefix() {
+      var aggregator = tree.findAggregator(project);
+      return null == aggregator ? "" : aggregator.getMavenId().getArtifactId() + ".";
     }
 
     public String getResultName() {

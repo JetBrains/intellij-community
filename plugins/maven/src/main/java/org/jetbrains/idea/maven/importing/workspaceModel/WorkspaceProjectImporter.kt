@@ -38,7 +38,6 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -249,7 +248,7 @@ internal class WorkspaceProjectImporter(
 
   private fun buildModuleNameMap(externalSystemModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>,
                                  projectToImport: Map<MavenProject, MavenProjectChanges>): Map<MavenProject, String> {
-    return MavenModuleNameMapper.mapModuleNames(projectToImport.keys, getExistingModuleNames(externalSystemModuleEntities))
+    return MavenModuleNameMapper.mapModuleNames(myProjectsTree, projectToImport.keys, getExistingModuleNames(externalSystemModuleEntities))
   }
 
   private fun importModules(storageBeforeImport: EntityStorage,
