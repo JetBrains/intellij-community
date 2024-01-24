@@ -9,7 +9,7 @@ abstract class GHPRTimelineMergedEvents<T : GHPRTimelineEvent> : GHPRTimelineGro
   override val actor: GHActor?
     get() = items.last().actor
   override val createdAt: Date
-    get() = items.last().createdAt
+    get() = items.maxOf { it.createdAt }
 
   override fun add(item: T) {
     super.add(item)

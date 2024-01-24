@@ -21,6 +21,8 @@ class GHPullRequest(id: String,
                     isDraft: Boolean,
                     author: GHActor?,
                     createdAt: Date,
+                    updatedAt: Date,
+                    isReadByViewer: Boolean,
                     @JsonProperty("assignees") assignees: GraphQLNodesDTO<GHUser>,
                     @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>,
                     @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>,
@@ -38,7 +40,8 @@ class GHPullRequest(id: String,
                     val headRefName: String,
                     val headRefOid: String,
                     val headRepository: HeadRepository?)
-  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, reviewRequests, reviewThreads,
+  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, updatedAt, isReadByViewer,
+                       assignees, labels, reviewRequests, reviewThreads,
                        reviews, mergeable, viewerCanUpdate, viewerDidAuthor) {
 
   @JsonIgnore

@@ -48,7 +48,8 @@ internal class GHPRToolWindowTabComponentFactory(
     val ghostUser = projectVm.dataContext.securityService.ghostUser
     val listVm = projectVm.listVm
     val listModel = cs.scopedDelegatingListModel(listVm.listModel)
-    val list = GHPRListComponentFactory(listModel).create(listVm.avatarIconsProvider, ghostUser)
+    val list = GHPRListComponentFactory(projectVm.dataContext.interactionState, listModel)
+      .create(listVm.avatarIconsProvider, ghostUser)
 
     GHPRStatisticsCollector.logListOpened(project)
     return GHPRListPanelFactory(project, listVm)

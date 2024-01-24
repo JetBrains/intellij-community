@@ -14,6 +14,6 @@ data class GHPullRequestReview(override val id: String,
                                val author: GHActor?,
                                val body: @NlsSafe String,
                                val state: GHPullRequestReviewState,
-                               val createdAt: Date,
+                               override val createdAt: Date,
                                val viewerCanUpdate: Boolean)
   : GHNode(id), GHPRTimelineItem

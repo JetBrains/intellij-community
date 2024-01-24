@@ -22,6 +22,8 @@ open class GHPullRequestShort(id: String,
                               val isDraft: Boolean,
                               val author: GHActor?,
                               val createdAt: Date,
+                              val updatedAt: Date,
+                              val isReadByViewer: Boolean,
                               @JsonProperty("assignees") assignees: GraphQLNodesDTO<GHUser>,
                               @JsonProperty("labels") labels: GraphQLNodesDTO<GHLabel>,
                               @JsonProperty("reviewRequests") reviewRequests: GraphQLNodesDTO<GHPullRequestReviewRequest>,
@@ -52,8 +54,10 @@ open class GHPullRequestShort(id: String,
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is GHPullRequestShort) return false
+    if (javaClass != other?.javaClass) return false
     if (!super.equals(other)) return false
+
+    other as GHPullRequestShort
 
     if (url != other.url) return false
     if (number != other.number) return false
@@ -62,6 +66,8 @@ open class GHPullRequestShort(id: String,
     if (isDraft != other.isDraft) return false
     if (author != other.author) return false
     if (createdAt != other.createdAt) return false
+    if (updatedAt != other.updatedAt) return false
+    if (isReadByViewer != other.isReadByViewer) return false
     if (mergeable != other.mergeable) return false
     if (viewerCanUpdate != other.viewerCanUpdate) return false
     if (viewerDidAuthor != other.viewerDidAuthor) return false
@@ -70,6 +76,7 @@ open class GHPullRequestShort(id: String,
     if (labels != other.labels) return false
     if (reviewRequests != other.reviewRequests) return false
     if (unresolvedReviewThreadsCount != other.unresolvedReviewThreadsCount) return false
+    if (reviews != other.reviews) return false
 
     return true
   }
@@ -83,6 +90,8 @@ open class GHPullRequestShort(id: String,
     result = 31 * result + isDraft.hashCode()
     result = 31 * result + (author?.hashCode() ?: 0)
     result = 31 * result + createdAt.hashCode()
+    result = 31 * result + updatedAt.hashCode()
+    result = 31 * result + isReadByViewer.hashCode()
     result = 31 * result + mergeable.hashCode()
     result = 31 * result + viewerCanUpdate.hashCode()
     result = 31 * result + viewerDidAuthor.hashCode()
@@ -91,6 +100,7 @@ open class GHPullRequestShort(id: String,
     result = 31 * result + labels.hashCode()
     result = 31 * result + reviewRequests.hashCode()
     result = 31 * result + unresolvedReviewThreadsCount
+    result = 31 * result + reviews.hashCode()
     return result
   }
 

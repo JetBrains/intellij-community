@@ -20,12 +20,16 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState
 import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.ListModel
 
-internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullRequestShort>) {
+internal class GHPRListComponentFactory(
+  private val interactionStateService: GHPRPersistentInteractionState,
+  private val listModel: ListModel<GHPullRequestShort>
+) {
 
   fun create(avatarIconsProvider: GHAvatarIconsProvider, ghostUser: GHUser): JBList<GHPullRequestShort> {
     return ReviewListComponentFactory(listModel).create {
@@ -45,27 +49,28 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
     }
   }
 
-  private fun presentPR(avatarIconsProvider: GHAvatarIconsProvider, pr: GHPullRequestShort, ghostUser: GHUser) =
+   private fun presentPR(avatarIconsProvider: GHAvatarIconsProvider, pr: GHPullRequestShort, ghostUser: GHUser): ReviewListItemPresentation =
     ReviewListItemPresentation.Simple(pr.title, "#" + pr.number, pr.createdAt,
-                                      author = createUserPresentation(avatarIconsProvider, pr.author),
-                                      tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels.popup", pr.labels.size),
-                                                                        pr.labels.map(::getLabelPresentation)),
-                                      mergeableStatus = getMergeableStatus(pr.mergeable),
-                                      state = getStateText(pr.state, pr.isDraft),
-                                      userGroup1 = getAssigneesPresentation(avatarIconsProvider, pr.assignees),
-                                      userGroup2 = getReviewersPresentation(
-                                        avatarIconsProvider,
-                                        GHReviewersUtils.getReviewsByReviewers(
-                                          pr.author,
-                                          pr.reviews,
-                                          pr.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer),
-                                          ghostUser
-                                        )
-                                      ),
-                                      commentsCounter = ReviewListItemPresentation.CommentsCounter(
-                                        pr.unresolvedReviewThreadsCount,
-                                        GithubBundle.message("pull.request.unresolved.comments", pr.unresolvedReviewThreadsCount)
-                                      ))
+                                             author = createUserPresentation(avatarIconsProvider, pr.author),
+                                             tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels.popup", pr.labels.size),
+                                               pr.labels.map(::getLabelPresentation)),
+                                             mergeableStatus = getMergeableStatus(pr.mergeable),
+                                             state = getStateText(pr.state, pr.isDraft),
+                                             userGroup1 = getAssigneesPresentation(avatarIconsProvider, pr.assignees),
+                                             userGroup2 = getReviewersPresentation(
+                                               avatarIconsProvider,
+                                               GHReviewersUtils.getReviewsByReviewers(
+                                                 pr.author,
+                                                 pr.reviews,
+                                                 pr.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer),
+                                                 ghostUser
+                                               )
+                                             ),
+                                             commentsCounter = ReviewListItemPresentation.CommentsCounter(
+                                               pr.unresolvedReviewThreadsCount,
+                                               GithubBundle.message("pull.request.unresolved.comments", pr.unresolvedReviewThreadsCount)
+                                             ),
+                                             seen = interactionStateService.isSeen(pr))
 
   private fun getLabelPresentation(label: GHLabel) =
     TagPresentation.Simple(label.name, ColorHexUtil.fromHex(label.color))

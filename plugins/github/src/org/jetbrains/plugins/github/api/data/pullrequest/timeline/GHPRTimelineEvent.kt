@@ -7,7 +7,7 @@ import java.util.*
 
 interface GHPRTimelineEvent : GHPRTimelineItem {
   val actor: GHActor?
-  val createdAt: Date
+  override val createdAt: Date
 
   /**
    * Simple events which can be merged together

@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -26,12 +27,14 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEv
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState.PRState
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineReviewViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import java.util.*
 
 private typealias GHPRTimelineItemDTO = org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 
@@ -78,6 +81,8 @@ internal class GHPRTimelineViewModelImpl(
   private val detailsData = dataProvider.detailsData
   private val reviewData = dataProvider.reviewData
   private val commentsData = dataProvider.commentsData
+
+  private val interactionState = dataContext.interactionState
 
   override val ghostUser: GHUser = securityService.ghostUser
   override val currentUser: GHUser = securityService.currentUser
@@ -133,8 +138,21 @@ internal class GHPRTimelineViewModelImpl(
     timelineLoader.addDataListener(cs.nestedDisposable(), object : GHListLoader.ListDataListener {
       override fun onDataAdded(startIdx: Int) {
         val loadedData = timelineLoader.loadedData
-        timelineModel.add(loadedData.subList(startIdx, loadedData.size))
+        val addedData = loadedData.subList(startIdx, loadedData.size)
+        timelineModel.add(addedData)
         itemsFromModel.value = timelineModel.getItemsList()
+
+        // Update the 'last seen' date to now if there are no further timeline items
+        val prId = detailsVm.details.value.getOrNull()?.id ?: return
+        val latestItemLoaded =
+          if (!timelineLoader.canLoadMore()) System.currentTimeMillis()
+          else addedData.mapNotNull { it.createdAt }.maxOrNull()?.time
+        interactionState.updateStateFor(prId) { st ->
+          PRState(
+            prId,
+            if (latestItemLoaded != null && st?.lastSeen != null) maxOf(latestItemLoaded, st.lastSeen)
+            else latestItemLoaded ?: st?.lastSeen)
+        }
       }
 
       override fun onDataUpdated(idx: Int) {
