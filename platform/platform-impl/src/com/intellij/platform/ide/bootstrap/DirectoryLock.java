@@ -220,6 +220,7 @@ final class DirectoryLock {
         if (selector.select(myTimeoutMs) == 0) throw new SocketTimeoutException(BootstrapBundle.message("bootstrap.error.timeout", address));
         socketChannel.finishConnect();
       }
+      if (LOG.isDebugEnabled()) LOG.debug("connected to " + address);
       socketChannel.register(selector, SelectionKey.OP_READ);
 
       allowActivation();
@@ -229,7 +230,11 @@ final class DirectoryLock {
       request.addAll(args);
       sendLines(socketChannel, request);
 
-      if (selector.select(myTimeoutMs) == 0) throw new SocketTimeoutException(BootstrapBundle.message("bootstrap.error.timeout", address));
+      if (selector.select(myTimeoutMs) == 0) {
+        var e = new SocketTimeoutException(BootstrapBundle.message("bootstrap.error.timeout", address));
+        e.addSuppressed(new Exception("response was not received"));
+        throw e;
+      }
       var response = readLines(socketChannel);
       if (response.size() != 2) throw new IOException(BootstrapBundle.message("bootstrap.error.malformed.response", response));
       var exitCode = Integer.parseInt(response.get(0));
@@ -327,6 +332,7 @@ final class DirectoryLock {
     while (true) {
       try {
         var socketChannel = serverChannel.accept();
+        if (LOG.isDebugEnabled()) LOG.debug("accepted connection " + socketChannel);
         ProcessIOExecutorService.INSTANCE.execute(() -> handleConnection(socketChannel));
       }
       catch (ClosedChannelException e) { break; }
