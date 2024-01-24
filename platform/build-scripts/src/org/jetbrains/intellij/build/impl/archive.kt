@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConstPropertyName")
 
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
-import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.BuildOptions
@@ -217,7 +216,7 @@ internal class NoDuplicateZipArchiveOutputStream(channel: SeekableByteChannel, c
     }
   }
 
-  override fun putArchiveEntry(archiveEntry: ArchiveEntry) {
+  override fun putArchiveEntry(archiveEntry: ZipArchiveEntry) {
     val entryName = archiveEntry.name
     assertRelativePathIsCorrectForPackaging(entryName)
     if (!existingNames.add(entryName)) {
