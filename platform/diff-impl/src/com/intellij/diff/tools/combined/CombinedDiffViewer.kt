@@ -51,19 +51,15 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.min
 import kotlin.math.roundToInt
-
 class CombinedDiffViewer(
   private val context: DiffContext,
-  keys: List<CombinedBlockProducer>,
-  blockToSelect: CombinedBlockId?,
   blockListener: BlockListener,
-) : CombinedDiffNavigation,
+  private val blockState: BlockState
+  ) : CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
     DataProvider,
     Disposable {
   private val project = context.project!! // CombinedDiffContext expected
-
-  val blockState = BlockState(keys.map { it.id }, blockToSelect ?: keys.first().id)
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
   private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = hashMapOf()
@@ -755,52 +751,4 @@ private fun Rectangle.intersects(bb: BlockBounds): Boolean =
 interface BlockListener : EventListener {
   fun blocksHidden(blockIds: Collection<CombinedBlockId>)
   fun blocksVisible(blockIds: Collection<CombinedBlockId>)
-}
-
-internal interface BlockOrder {
-  fun iterateBlocks(): Iterable<CombinedBlockId>
-
-  val blocksCount: Int
-}
-
-class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNextDifferenceIterable, BlockOrder {
-  private val blocks: List<CombinedBlockId> = list.toList()
-
-  private val blockByIndex: MutableMap<CombinedBlockId, Int> = mutableMapOf()
-
-  var currentBlock: CombinedBlockId = current
-
-  init {
-    blocks.forEachIndexed { index, block ->
-      blockByIndex[block] = index
-    }
-    // todo: find and fix initial problem in Space review integration
-    if (!blocks.contains(current)) {
-      currentBlock = blocks.first()
-    }
-  }
-
-  fun indexOf(blockId: CombinedBlockId): Int = blockByIndex[blockId]!!
-
-  operator fun get(index: Int): CombinedBlockId? = if (index in blocks.indices) blocks[index] else null
-
-  override val blocksCount: Int
-    get() = blocks.size
-
-  override fun iterateBlocks(): Iterable<CombinedBlockId> = blocks.asIterable()
-
-  override fun canGoPrev(): Boolean = currentIndex > 0
-
-  override fun canGoNext(): Boolean = currentIndex < blocksCount - 1
-
-  override fun goPrev() {
-    currentBlock = blocks[this.currentIndex - 1]
-  }
-
-  override fun goNext() {
-    currentBlock = blocks[this.currentIndex + 1]
-  }
-
-  private val currentIndex: Int
-    get() = indexOf(currentBlock)
 }

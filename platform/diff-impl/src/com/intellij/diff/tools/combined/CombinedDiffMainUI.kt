@@ -123,7 +123,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   @RequiresEdt
-  fun setContent(viewer: CombinedDiffViewer) {
+  internal fun setContent(viewer: CombinedDiffViewer, blockState: BlockState) {
     clear()
     contentPanel.setContent(viewer.component)
     val toolbarComponents = viewer.init()
@@ -137,7 +137,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     else {
       diffInfoWrapper.setContent(null)
     }
-    buildToolbar(viewer, toolbarComponents.toolbarActions)
+    buildToolbar(blockState, toolbarComponents.toolbarActions)
     buildActionPopup(toolbarComponents.popupActions)
     toolbarStatusPanel.setContent(toolbarComponents.statusPanel)
   }
@@ -178,8 +178,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
 
-  private fun buildToolbar(viewer: CombinedDiffViewer, viewerActions: List<AnAction?>?) {
-    collectToolbarActions(viewer, viewerActions)
+  private fun buildToolbar(blockState: BlockState, viewerActions: List<AnAction?>?) {
+    collectToolbarActions(blockState, viewerActions)
     (leftToolbar as ActionToolbarImpl).reset()
     leftToolbar.updateActionsImmediately()
     leftToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
@@ -193,9 +193,9 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
   }
 
-  private fun collectToolbarActions(viewer: CombinedDiffViewer, viewerActions: List<AnAction?>?) {
+  private fun collectToolbarActions(blockState: BlockState, viewerActions: List<AnAction?>?) {
     leftToolbarGroup.removeAll()
-    val navigationActions = ArrayList<AnAction>(collectNavigationActions(viewer))
+    val navigationActions = ArrayList<AnAction>(collectNavigationActions(blockState))
 
     rightToolbarGroup.add(diffToolChooser)
 
@@ -206,7 +206,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     DiffUtil.addActionBlock(leftToolbarGroup, contextActions)
   }
 
-  private fun collectNavigationActions(viewer: CombinedDiffViewer): List<AnAction> {
+  private fun collectNavigationActions(blockState: BlockState): List<AnAction> {
     return listOfNotNull(
       CombinedPrevBlockAction(context),
       CombinedPrevDifferenceAction(context),

@@ -61,11 +61,13 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
     if (blocks.isEmpty()) return null
 
-    return CombinedDiffViewer(context, blocks, blockToSelect, MyBlockListener()).also { viewer ->
+    val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id)
+
+    return CombinedDiffViewer(context, MyBlockListener(), blockState).also { viewer ->
       Disposer.register(ourDisposable, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_KEY, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)
-      mainUi.setContent(viewer)
+      mainUi.setContent(viewer, blockState)
     }
   }
 
