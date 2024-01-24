@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.highlighter
+package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.impl.RwLockHolder.runWriteAction
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -10,10 +10,13 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import kotlin.apply
+import kotlin.collections.first
+import kotlin.io.writeText
+import kotlin.text.replace
 
 class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
     private fun createKotlinFileAtPath(path: String): KtFile {
@@ -21,8 +24,8 @@ class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
         file.parentFile.mkdirs()
         file.writeText("")
         val filePath = file.toPath()
-        val virtualFile =
-            VirtualFileManager.getInstance().findFileByNioPath(filePath) ?: error("Failed to find virtual file at ${filePath}")
+        val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(filePath)
+            ?: error("Failed to find virtual file at ${filePath}")
         return PsiManager.getInstance(project).findFile(virtualFile) as? KtFile ?: error("Returned file was not a KtFile")
     }
 

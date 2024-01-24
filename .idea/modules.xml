@@ -1387,6 +1387,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-k2/kotlin.highlighting.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-k2/kotlin.highlighting.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-minimal/kotlin.highlighting.minimal.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-minimal/kotlin.highlighting.minimal.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/kotlin.highlighting.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/kotlin.highlighting.shared.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/tests/kotlin.highlighting.shared.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/tests/kotlin.highlighting.shared.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/kotlin.i18n.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/kotlin.i18n.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/tests/kotlin.i18n.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/tests/kotlin.i18n.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.ide/kotlin.ide.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.ide/kotlin.ide.iml" />
