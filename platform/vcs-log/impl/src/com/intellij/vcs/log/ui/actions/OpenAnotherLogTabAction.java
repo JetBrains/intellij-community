@@ -101,9 +101,7 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      if (!Registry.is("vcs.log.open.editor.tab")) {
-        e.getPresentation().setEnabledAndVisible(false);
-      }
+      e.getPresentation().setEnabledAndVisible(false);
     }
 
     @Override
