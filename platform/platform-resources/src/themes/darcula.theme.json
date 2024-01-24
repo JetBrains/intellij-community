@@ -22,7 +22,7 @@
       },
       "selectionForeground": {
         "os.default": "#bbbbbb",
-        "os.mac": "#ffffff"
+        "os.mac": "#bbbbbb"
       }
     },
 
@@ -854,7 +854,7 @@
       "PackageTagSelected.foreground": "#bbbbbb"
     },
     "RunWidget" : {
-      "foreground": "#ffffff",
+      "foreground": "#BBBBBB",
       "runIconColor": "#5fad65",
       "runningBackground": "#599e5e",
       "stopBackground": "#c94f4f",
