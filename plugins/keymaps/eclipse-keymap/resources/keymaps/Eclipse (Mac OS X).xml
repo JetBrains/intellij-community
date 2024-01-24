@@ -5,7 +5,6 @@
   <action id="$Undo">
     <keyboard-shortcut first-keystroke="meta Z"/>
   </action>
-  <action id="ActivateNavBar"/>
   <action id="AutoIndentLines">
     <keyboard-shortcut first-keystroke="meta I"/>
   </action>
