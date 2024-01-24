@@ -530,13 +530,37 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     assertUnorderedElementsAreEqual(actual, *expected)
   }
 
-  protected fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, severity: HighlightSeverity, vararg texts: String) {
-    texts.forEach { assertHighlighting(highlightingInfos, severity, it) }
+  class Highlight(
+    val severity: HighlightSeverity = HighlightSeverity.ERROR,
+    val text: String? = null,
+    val description: String? = null
+  ) {
+    fun matches(info: HighlightInfo): Boolean {
+      return severity == info.severity
+             && (text == null || text == info.text)
+             && (description == null || description == info.description)
+    }
+
+    override fun toString(): String {
+      return "Highlight(severity=$severity, text=$text, description=$description)"
+    }
   }
 
-  private fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, severity: HighlightSeverity, text: String) {
-    val highlightingInfo = highlightingInfos.firstOrNull { it.severity == severity && it.text == text }
-    assertNotNull("Not highlighted: $severity, $text", highlightingInfo)
+  protected suspend fun checkHighlighting(file: VirtualFile, vararg expectedHighlights: Highlight) {
+    withContext(Dispatchers.EDT) {
+      fixture.openFileInEditor(file)
+      val highlightingInfos = fixture.doHighlighting();
+      assertHighlighting(highlightingInfos, *expectedHighlights)
+    }
+  }
+
+  private fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, vararg expectedHighlights: Highlight) {
+    expectedHighlights.forEach { assertHighlighting(highlightingInfos, it) }
+  }
+
+  private fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, expectedHighlight: Highlight) {
+    val highlightingInfo = highlightingInfos.firstOrNull { expectedHighlight.matches(it) }
+    assertNotNull("Not highlighted: $expectedHighlight", highlightingInfo)
   }
 
   protected class HighlightPointer(var element: PsiElement?, var text: String?) {

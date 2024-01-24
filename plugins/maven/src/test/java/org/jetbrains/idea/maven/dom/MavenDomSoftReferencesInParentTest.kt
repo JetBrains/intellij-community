@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -82,11 +81,12 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      fixture.openFileInEditor(projectPom)
-      val highlightingInfos = fixture.doHighlighting();
-      assertHighlighting(highlightingInfos, HighlightSeverity.ERROR, "foo1", "foo2", "foo3")
-    }
+
+    checkHighlighting(projectPom,
+                      Highlight(text = "foo1"),
+                      Highlight(text = "foo2"),
+                      Highlight(text = "foo3"))
+
   }
 
   private suspend fun getDocument(f: VirtualFile): Document {
