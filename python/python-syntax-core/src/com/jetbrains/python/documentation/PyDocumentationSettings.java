@@ -9,14 +9,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
+import com.jetbrains.python.ast.PyAstFile;
+import com.jetbrains.python.ast.PyAstTargetExpression;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
-import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +28,11 @@ public abstract class PyDocumentationSettings
           PyDocumentationSettings.AppService,
           PyDocumentationSettings.ModuleService> {
 
-  private static final PyDefaultProjectAwareServiceClasses<ServiceState, PyDocumentationSettings, AppService, ModuleService>
+  @ApiStatus.Internal
+  public static final PyDefaultProjectAwareServiceClasses<ServiceState, PyDocumentationSettings, AppService, ModuleService>
     SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
 
   final static DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.REST;
-  private static final PyDocumentationSettingsDetector DETECTOR = new PyDocumentationSettingsDetector();
 
   protected PyDocumentationSettings() {
     super(new ServiceState());
@@ -41,11 +40,6 @@ public abstract class PyDocumentationSettings
 
   public static PyDocumentationSettings getInstance(@Nullable Module module) {
     return SERVICE_CLASSES.getService(module);
-  }
-
-  @NotNull
-  public static PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
-    return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES, DETECTOR);
   }
 
 
@@ -58,7 +52,7 @@ public abstract class PyDocumentationSettings
   }
 
   private boolean isFormat(@Nullable PsiFile file, @NotNull DocStringFormat format) {
-    return file instanceof PyFile ? getFormatForFile(file) == format : getState().getFormat() == format;
+    return file instanceof PyAstFile ? getFormatForFile(file) == format : getState().getFormat() == format;
   }
 
   @NotNull
@@ -69,10 +63,10 @@ public abstract class PyDocumentationSettings
 
   @Nullable
   public static DocStringFormat getFormatFromDocformatAttribute(@NotNull PsiFile file) {
-    if (file instanceof PyFile) {
-      final PyTargetExpression expr = ((PyFile)file).findTopLevelAttribute(PyNames.DOCFORMAT);
+    if (file instanceof PyAstFile) {
+      final PyAstTargetExpression expr = ((PyAstFile)file).findTopLevelAttribute(PyNames.DOCFORMAT);
       if (expr != null) {
-        final String docformat = PyPsiUtils.strValue(expr.findAssignedValue());
+        final String docformat = PyPsiUtilsCore.strValue(expr.findAssignedValue());
         if (docformat != null) {
           final List<String> words = StringUtil.split(docformat, " ");
           if (words.size() > 0) {

@@ -1,7 +1,11 @@
 package com.jetbrains.python.ast.impl;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.*;
@@ -74,6 +78,41 @@ public final class PyUtilCore {
   @NotNull
   public static List<PyAstExpression> flattenedParensAndStars(PyAstExpression... targets) {
     return unfoldParentheses(targets, new ArrayList<>(targets.length), false, true);
+  }
+
+  /**
+   * Retrieves the document from {@link PsiDocumentManager} using the anchor PSI element and, if it's not null,
+   * passes it to the consumer function.
+   * <p>
+   * The document is first released from pending PSI operations and then committed after the function has been applied
+   * in a {@code try/finally} block, so that subsequent operations on PSI could be performed.
+   *
+   * @see PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)
+   * @see PsiDocumentManager#commitDocument(Document)
+   * @see #updateDocumentUnblockedAndCommitted(PsiElement, Function)
+   */
+  public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<? super Document> consumer) {
+    updateDocumentUnblockedAndCommitted(anchor, document -> {
+      consumer.consume(document);
+      return null;
+    });
+  }
+
+  @Nullable
+  public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
+    // manager.getDocument(anchor.getContainingFile()) doesn't work with intention preview
+    final Document document = anchor.getContainingFile().getViewProvider().getDocument();
+    if (document != null) {
+      manager.doPostponedOperationsAndUnblockDocument(document);
+      try {
+        return func.fun(document);
+      }
+      finally {
+        manager.commitDocument(document);
+      }
+    }
+    return null;
   }
 
   @Nullable

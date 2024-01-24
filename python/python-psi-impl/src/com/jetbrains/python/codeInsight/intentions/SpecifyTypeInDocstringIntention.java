@@ -117,7 +117,7 @@ public final class SpecifyTypeInDocstringIntention extends TypeIntention {
 
   public static void startTemplate(PyDocstringGenerator generator) {
     Preconditions.checkNotNull(generator.getDocStringOwner(), "For this action docstring owner must be supplied");
-    final PyStringLiteralExpression docStringExpression = generator.getDocStringExpression();
+    final PyStringLiteralExpression docStringExpression = (PyStringLiteralExpression)generator.getDocStringExpression();
     assert docStringExpression != null;
 
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(docStringExpression);

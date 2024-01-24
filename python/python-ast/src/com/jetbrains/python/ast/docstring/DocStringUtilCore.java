@@ -1,6 +1,7 @@
 package com.jetbrains.python.ast.docstring;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.ast.PyAstDocStringOwner;
 import com.jetbrains.python.ast.PyAstElement;
 import com.jetbrains.python.ast.PyAstExpressionStatement;
@@ -32,6 +33,22 @@ public final class DocStringUtilCore {
       PsiElement seeker = PyPsiUtilsCore.getNextNonCommentSibling(parent.getFirstChild(), false);
       if (seeker instanceof PyAstExpressionStatement) seeker = PyPsiUtilsCore.getNextNonCommentSibling(seeker.getFirstChild(), false);
       if (seeker instanceof PyAstStringLiteralExpression) return (PyAstStringLiteralExpression)seeker;
+    }
+    return null;
+  }
+
+  /**
+   * Returns containing docstring expression of class definition, function definition or module.
+   * Useful to test whether particular PSI element is or belongs to such docstring.
+   */
+  @Nullable
+  public static PyAstStringLiteralExpression getParentDefinitionDocString(@NotNull PsiElement element) {
+    final PyAstDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyAstDocStringOwner.class);
+    if (docStringOwner != null) {
+      final PyAstStringLiteralExpression docString = docStringOwner.getDocStringExpression();
+      if (PsiTreeUtil.isAncestor(docString, element, false)) {
+        return docString;
+      }
     }
     return null;
   }

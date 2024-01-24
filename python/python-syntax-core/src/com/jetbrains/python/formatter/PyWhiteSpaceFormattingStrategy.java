@@ -9,9 +9,9 @@ import com.intellij.psi.formatter.StaticSymbolWhiteSpaceDefinitionStrategy;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.editor.PyEditorHandlerConfig;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -146,7 +146,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
   }
 
   private static boolean needInsertBackslash(ASTNode nodeAtCaret, boolean autoWrapInProgress) {
-    if (PsiTreeUtil.getParentOfType(nodeAtCaret.getPsi(), PyFStringFragment.class) != null) {
+    if (PsiTreeUtil.getParentOfType(nodeAtCaret.getPsi(), PyAstFStringFragment.class) != null) {
       return false;
     }
 
@@ -198,7 +198,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
       return false;
     }
     if (wrappableAfter == null) {
-      return !(wrappableBefore instanceof PyDecoratorList);
+      return !(wrappableBefore instanceof PyAstDecoratorList);
     }
     return wrappableBefore != wrappableAfter;
   }
@@ -210,8 +210,8 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
                                  : findAfterCaret(nodeAtCaret, PyEditorHandlerConfig.WRAPPABLE_CLASSES);
     if (wrappable == null) {
       PsiElement emptyTuple = before
-                              ? findBeforeCaret(nodeAtCaret, PyTupleExpression.class)
-                              : findAfterCaret(nodeAtCaret, PyTupleExpression.class);
+                              ? findBeforeCaret(nodeAtCaret, PyAstTupleExpression.class)
+                              : findAfterCaret(nodeAtCaret, PyAstTupleExpression.class);
       if (emptyTuple != null && emptyTuple.getNode().getFirstChildNode().getElementType() == PyTokenTypes.LPAR) {
         wrappable = emptyTuple;
       }
@@ -221,12 +221,12 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
 
   @Nullable
   private static PsiElement findStatementBeforeCaret(ASTNode node) {
-    return findBeforeCaret(node, PyStatement.class, PyStatementPart.class);
+    return findBeforeCaret(node, PyAstStatement.class, PyAstStatementPart.class);
   }
 
   @Nullable
   private static PsiElement findStatementAfterCaret(ASTNode node) {
-    return findAfterCaret(node, PyStatement.class, PyStatementPart.class);
+    return findAfterCaret(node, PyAstStatement.class, PyAstStatementPart.class);
   }
 
   private static PsiElement findBeforeCaret(ASTNode atCaret, Class<? extends PsiElement>... classes) {
@@ -256,7 +256,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
       for (Class<? extends T> aClass : classes) {
         if (aClass.isInstance(run)) return (T)run;
       }
-      if (run instanceof PsiFile || run instanceof PyStatementList) break;
+      if (run instanceof PsiFile || run instanceof PyAstStatementList) break;
       run = run.getParent();
     }
 
@@ -264,7 +264,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
   }
 
   private static boolean inFromImportParentheses(PsiElement statement, int offset) {
-    if (!(statement instanceof PyFromImportStatement fromImportStatement)) {
+    if (!(statement instanceof PyAstFromImportStatement fromImportStatement)) {
       return false;
     }
     PsiElement leftParen = fromImportStatement.getLeftParen();
@@ -275,24 +275,24 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
   }
 
   private static boolean inWithItemsParentheses(@NotNull PsiElement statement, int offset) {
-    if (!(statement instanceof PyWithStatement)) {
+    if (!(statement instanceof PyAstWithStatement)) {
       return false;
     }
 
-    final PsiElement leftParen = PyPsiUtils.getFirstChildOfType(statement, PyTokenTypes.LPAR);
+    final PsiElement leftParen = PyPsiUtilsCore.getFirstChildOfType(statement, PyTokenTypes.LPAR);
     return leftParen != null && offset >= leftParen.getTextRange().getEndOffset();
   }
 
   private static boolean inCaseClauseParentheses(@NotNull PsiElement statement, int offset) {
-    if (!(statement instanceof PyCaseClause caseClause)) {
+    if (!(statement instanceof PyAstCaseClause caseClause)) {
       return false;
     }
-    final PyPattern pattern = caseClause.getPattern();
+    final PyAstPattern pattern = caseClause.getPattern();
     if (pattern == null) {
       return false;
     }
 
-    final PsiElement leftParen = PyPsiUtils.getChildByFilter(pattern, PyTokenTypes.OPEN_BRACES, 0);
+    final PsiElement leftParen = PyPsiUtilsCore.getChildByFilter(pattern, PyTokenTypes.OPEN_BRACES, 0);
     return leftParen != null && offset >= leftParen.getTextRange().getEndOffset();
   }
 }

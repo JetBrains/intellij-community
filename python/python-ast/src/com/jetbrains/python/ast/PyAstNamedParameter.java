@@ -90,6 +90,14 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
     return ParamHelperCore.getDefaultValueText(getDefaultValue());
   }
 
+  /**
+   * @param includeDefaultValue if true, include the default value after an "=".
+   * @return canonical representation of parameter.
+   * Includes asterisks for *param and **param, and name.
+   */
+  @NotNull
+  String getRepr(boolean includeDefaultValue);
+
   @Override
   @NotNull
   default PyAstNamedParameter getAsNamed() {

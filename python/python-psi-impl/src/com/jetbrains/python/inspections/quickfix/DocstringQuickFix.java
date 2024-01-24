@@ -11,6 +11,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ public class DocstringQuickFix extends PsiUpdateModCommandQuickFix {
       .forDocStringOwner(docStringOwner)
       .withInferredParameters(false)
       .addFirstEmptyLine();
-    final PyStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
+    final PyAstStringLiteralExpression updated = docstringGenerator.buildAndInsert().getDocStringExpression();
     if (updated != null && editor != null) {
       final int offset = updated.getTextOffset();
       editor.getCaretModel().moveToOffset(offset);

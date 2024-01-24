@@ -3,7 +3,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.ast.PyAstFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +38,10 @@ public abstract class PySignatureCacheManager {
   public abstract void recordSignature(@NotNull PySignature signature);
 
   @Nullable
-  public abstract String findParameterType(@NotNull PyFunction function, @NotNull String name);
+  public abstract String findParameterType(@NotNull PyAstFunction function, @NotNull String name);
 
   @Nullable
-  public abstract PySignature findSignature(@NotNull PyFunction function);
+  public abstract PySignature findSignature(@NotNull PyAstFunction function);
 
   public abstract boolean clearCache();
 }

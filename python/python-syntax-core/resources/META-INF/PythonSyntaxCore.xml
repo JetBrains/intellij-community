@@ -1,0 +1,12 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
+    <lang.whiteSpaceFormattingStrategy language="Python"
+                                       implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
+
+    <moduleService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$ModuleService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonCodeStyleService"
+                        serviceImplementation="com.jetbrains.python.PythonCodeStyleServiceImpl"/>
+  </extensions>
+</idea-plugin>

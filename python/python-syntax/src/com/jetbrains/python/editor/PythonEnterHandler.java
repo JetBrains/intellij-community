@@ -25,6 +25,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy;
@@ -51,7 +53,7 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       editor = InjectedLanguageUtil.getTopLevelEditor(editor);
       offset = editor.getCaretModel().getOffset();
     }
-    if (!(file instanceof PyFile)) {
+    if (!(file instanceof PyAstFile)) {
       return Result.Continue;
     }
     final Boolean isSplitLine = DataManager.getInstance().loadFromDataContext(dataContext, SplitLineAction.SPLIT_LINE_KEY);
@@ -86,9 +88,9 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     PsiElement elementParent = element.getParent();
     final IElementType nodeType = node.getElementType();
     if (nodeType == PyTokenTypes.LPAR) elementParent = elementParent.getParent();
-    if (elementParent instanceof PyParenthesizedExpression || elementParent instanceof PyGeneratorExpression) return Result.Continue;
+    if (elementParent instanceof PyAstParenthesizedExpression || elementParent instanceof PyAstGeneratorExpression) return Result.Continue;
 
-    final PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false);
+    final PyAstStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyAstStringElement.class, false);
     if (stringElement == null && prevElement == element) {
       return Result.Continue;
     }
@@ -191,10 +193,10 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
   private static void parenthesise(@NotNull PsiElement wrappable, @NotNull Document doc) {
     TextRange rangeToParenthesise;
-    if (wrappable instanceof PyFromImportStatement fromImportStatement) {
+    if (wrappable instanceof PyAstFromImportStatement fromImportStatement) {
       rangeToParenthesise = getRangeForPsiElementArray(fromImportStatement.getImportElements());
     }
-    else if (wrappable instanceof PyWithStatement withStatement) {
+    else if (wrappable instanceof PyAstWithStatement withStatement) {
       rangeToParenthesise = getRangeForPsiElementArray(withStatement.getWithItems());
     }
     else {
@@ -219,7 +221,7 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   private static void insertDocStringStub(Editor editor, PsiElement element, DocstringState state) {
-    PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
+    PyAstDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyAstDocStringOwner.class);
     if (docOwner != null) {
       final int caretOffset = editor.getCaretModel().getOffset();
       final Document document = editor.getDocument();
@@ -242,7 +244,7 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   public Result postProcessEnter(@NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull DataContext dataContext) {
-    if (!(file instanceof PyFile)) {
+    if (!(file instanceof PyAstFile)) {
       return Result.Continue;
     }
     if (myPostprocessShift > 0) {
@@ -260,10 +262,10 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     final PsiElement element = file.findElementAt(offset);
     if (element != null) {
       // Insert additional indentation after section header in Google code style docstrings
-      final PyStringLiteralExpression pyString = DocStringUtil.getParentDefinitionDocString(element);
+      final PyAstStringLiteralExpression pyString = DocStringUtilCore.getParentDefinitionDocString(element);
       if (pyString != null) {
         final String docStringText = pyString.getText();
-        final DocStringFormat format = DocStringUtil.guessDocStringFormat(docStringText, pyString);
+        final DocStringFormat format = DocStringParser.guessDocStringFormat(docStringText, pyString);
         if (format == DocStringFormat.GOOGLE && offset + 1 < document.getTextLength()) {
           final int lineNum = document.getLineNumber(offset);
           final TextRange lineRange = TextRange.create(document.getLineStartOffset(lineNum - 1), document.getLineEndOffset(lineNum - 1));
@@ -292,7 +294,7 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (!quotes.equals("\"\"\"") && !quotes.equals("'''")) {
       return DocstringState.NONE;
     }
-    final PyStringLiteralExpression pyString = DocStringUtil.getParentDefinitionDocString(element);
+    final PyAstStringLiteralExpression pyString = DocStringUtilCore.getParentDefinitionDocString(element);
     if (pyString != null) {
 
       String nodeText = element.getText();

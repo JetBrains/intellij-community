@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
+  </extensions>
+</idea-plugin>

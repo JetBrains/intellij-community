@@ -24,16 +24,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.ast.PyAstStatementList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Contains various methods for manipulation on indentation found in arbitrary text and individual lines:
@@ -89,7 +89,7 @@ public final class PyIndentUtil {
     if (anchor instanceof PsiFile) {
       return "";
     }
-    final PyStatementList statementList = getAnchorStatementList(anchor);
+    final PyAstStatementList statementList = getAnchorStatementList(anchor);
     if (statementList == null) {
       return "";
     }
@@ -105,9 +105,9 @@ public final class PyIndentUtil {
   }
 
   @NotNull
-  private static String getExpectedBlockIndent(@NotNull PyStatementList anchor) {
+  private static String getExpectedBlockIndent(@NotNull PyAstStatementList anchor) {
     final String indentStep = getIndentFromSettings(anchor.getContainingFile());
-    final PyStatementList parentBlock = PsiTreeUtil.getParentOfType(anchor, PyStatementList.class, true);
+    final PyAstStatementList parentBlock = PsiTreeUtil.getParentOfType(anchor, PyAstStatementList.class, true);
     if (parentBlock != null) {
       return getElementIndent(parentBlock) + indentStep;
     }
@@ -115,14 +115,14 @@ public final class PyIndentUtil {
   }
 
   @Nullable
-  private static PyStatementList getAnchorStatementList(@NotNull PsiElement element) {
-    PyStatementList statementList = null;
+  private static PyAstStatementList getAnchorStatementList(@NotNull PsiElement element) {
+    PyAstStatementList statementList = null;
     // First whitespace right before the statement list (right after ":")
     if (element instanceof PsiWhiteSpace) {
-      statementList = as(element.getNextSibling(), PyStatementList.class);
+      statementList = ObjectUtils.tryCast(element.getNextSibling(), PyAstStatementList.class);
     }
     if (statementList == null) {
-      statementList = PsiTreeUtil.getParentOfType(element, PyStatementList.class, false);
+      statementList = PsiTreeUtil.getParentOfType(element, PyAstStatementList.class, false);
     }
     return statementList;
   }

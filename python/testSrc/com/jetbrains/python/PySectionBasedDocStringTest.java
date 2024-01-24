@@ -300,7 +300,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
 
   // PY-16766
   public void testGoogleDocStringContentDetection() {
-    assertTrue(DocStringUtil.isLikeGoogleDocString(
+    assertTrue(DocStringParser.isLikeGoogleDocString(
       """
 
             My Section:
@@ -399,7 +399,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
 
   // PY-17657, PY-16303
   public void testNotGoogleFormatIfDocstringContainTags() {
-    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("""
+    assertEquals(DocStringFormat.REST, DocStringParser.guessDocStringFormat("""
                                                                             ""\"
                                                                             :type sub_field: FieldDescriptor | () -> FieldDescriptor
                                                                             :param sub_field: The type of field in this collection
@@ -408,7 +408,7 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                                                                                     addresses = field.Collection(AddressObject)
                                                                             ""\""""));
 
-    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("""
+    assertEquals(DocStringFormat.REST, DocStringParser.guessDocStringFormat("""
                                                                             ""\"
                                                                             Args:
                                                                                 :param Tuple[int, int] name: Some description

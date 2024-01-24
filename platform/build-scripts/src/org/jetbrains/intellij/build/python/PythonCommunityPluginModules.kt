@@ -31,7 +31,9 @@ object PythonCommunityPluginModules {
     "intellij.commandInterface",
     "intellij.python.sdk",
     "intellij.python.featuresTrainer",
-    "intellij.jupyter.core"
+    "intellij.jupyter.core",
+    "intellij.python.syntax",
+    "intellij.python.syntax.core"
   )
 
   const val pythonCommunityName: String = "python-ce"

@@ -727,27 +727,12 @@ public final class PyUtil {
    * @see #updateDocumentUnblockedAndCommitted(PsiElement, Function)
    */
   public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<? super Document> consumer) {
-    updateDocumentUnblockedAndCommitted(anchor, document -> {
-      consumer.consume(document);
-      return null;
-    });
+    PyUtilCore.updateDocumentUnblockedAndCommitted(anchor, consumer);
   }
 
   @Nullable
   public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
-    // manager.getDocument(anchor.getContainingFile()) doesn't work with intention preview
-    final Document document = anchor.getContainingFile().getViewProvider().getDocument();
-    if (document != null) {
-      manager.doPostponedOperationsAndUnblockDocument(document);
-      try {
-        return func.fun(document);
-      }
-      finally {
-        manager.commitDocument(document);
-      }
-    }
-    return null;
+    return PyUtilCore.updateDocumentUnblockedAndCommitted(anchor, func);
   }
 
   @Nullable

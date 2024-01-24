@@ -12,6 +12,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.ast.*;
+import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,20 @@ public final class PyPsiUtilsCore {
       return start;
     }
     return PsiTreeUtil.skipWhitespacesAndCommentsForward(start);
+  }
+
+  /**
+   * Returns first child psi element with specified element type or {@code null} if no such element exists.
+   * Semantically it's the same as {@code getChildByFilter(element, TokenSet.create(type), 0)}.
+   *
+   * @param element tree parent node
+   * @param type    element type expected
+   * @return child element described
+   */
+  @Nullable
+  public static PsiElement getFirstChildOfType(@NotNull final PsiElement element, @NotNull PyElementType type) {
+    final ASTNode child = element.getNode().findChildByType(type);
+    return child != null ? child.getPsi() : null;
   }
 
   /**

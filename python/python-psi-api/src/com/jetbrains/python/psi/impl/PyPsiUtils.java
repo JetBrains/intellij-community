@@ -218,8 +218,7 @@ public final class PyPsiUtils {
    */
   @Nullable
   public static PsiElement getFirstChildOfType(@NotNull final PsiElement element, @NotNull PyElementType type) {
-    final ASTNode child = element.getNode().findChildByType(type);
-    return child != null ? child.getPsi() : null;
+    return PyPsiUtilsCore.getFirstChildOfType(element, type);
   }
 
   /**

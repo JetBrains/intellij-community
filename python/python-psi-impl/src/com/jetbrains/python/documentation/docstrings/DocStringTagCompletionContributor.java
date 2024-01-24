@@ -41,7 +41,7 @@ public final class DocStringTagCompletionContributor extends CompletionContribut
                                            @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                final PsiFile file = parameters.getOriginalFile();
-               DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(file);
+               DocStringFormat format = DocStringParser.getConfiguredDocStringFormat(file);
                if (format == DocStringFormat.EPYTEXT || format == DocStringFormat.REST) {
                  int offset = parameters.getOffset();
                  final String text = file.getText();

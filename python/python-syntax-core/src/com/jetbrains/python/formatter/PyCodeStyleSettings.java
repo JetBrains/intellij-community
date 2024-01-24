@@ -5,7 +5,7 @@ import com.intellij.formatting.WrapType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PySyntaxCoreBundle;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public enum DictAlignment {
-    NONE(PyPsiBundle.message("formatter.panel.dict.alignment.do.not.align")),
-    ON_VALUE(PyPsiBundle.message("formatter.panel.dict.alignment.align.on.value")),
-    ON_COLON(PyPsiBundle.message("formatter.panel.dict.alignment.align.on.colon"));
+    NONE(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.do.not.align")),
+    ON_VALUE(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.align.on.value")),
+    ON_COLON(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.align.on.colon"));
 
     String description;
 

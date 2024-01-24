@@ -42,6 +42,7 @@ public interface PyNamedParameter extends PyAstNamedParameter, PyParameter, PsiN
    * @return canonical representation of parameter.
    * Includes asterisks for *param and **param, and name.
    */
+  @Override
   @NotNull
   default String getRepr(boolean includeDefaultValue) {
     return getRepr(includeDefaultValue, null);
