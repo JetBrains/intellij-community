@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.problems.FileStateCache
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.removeState
 import com.intellij.codeInsight.daemon.problems.FileStateUpdater.Companion.setPreviousState
 import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.jvm.JvmLanguage
 import com.intellij.openapi.application.ApplicationManager
@@ -37,6 +38,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -120,18 +122,19 @@ internal class ProjectProblemFileRefactoringEventListener(private val project: P
 @OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
 private class ProjectPsiChangesProcessor(private val scope: CoroutineScope) {
-  private val psiChanges = hashSetOf<PsiFile>()
+  private val psiChanges = ConcurrentCollectionFactory.createConcurrentSet<PsiFile>()
   private val psiChangesProcessor = MutableSharedFlow<Unit?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     scope.launch {
       psiChangesProcessor.debounce(2.seconds).collect {
-        for (file in psiChanges) {
+        for (file in psiChanges.toList()) {
           readAction {
             if (file.isValid) {
               updateFileState(file, file.project)
             }
           }
+          psiChanges.remove(file)
         }
       }
     }
