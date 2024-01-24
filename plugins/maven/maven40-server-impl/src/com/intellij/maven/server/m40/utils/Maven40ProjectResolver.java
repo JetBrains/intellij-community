@@ -150,7 +150,7 @@ public class Maven40ProjectResolver {
             if (null != newChecksum) {
               fileToNewChecksum.put(br.getPomFile(), newChecksum);
             }
-            return newChecksum;
+            return br;
           }
         );
 

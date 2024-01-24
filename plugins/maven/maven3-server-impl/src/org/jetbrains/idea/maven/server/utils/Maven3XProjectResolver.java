@@ -174,7 +174,7 @@ public class Maven3XProjectResolver {
             if (null != newChecksum) {
               fileToNewChecksum.put(br.getPomFile(), newChecksum);
             }
-            return newChecksum;
+            return br;
           }
         );
 
