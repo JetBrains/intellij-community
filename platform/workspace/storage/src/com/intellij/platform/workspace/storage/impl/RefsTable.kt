@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.google.common.collect.BiMap
@@ -470,15 +470,6 @@ internal class MutableRefsTable(
       other.abstractOneToOneContainer.toMutableContainer())
   }
 
-  private fun <T> Sequence<T>.mapToIntArray(action: (T) -> Int): IntArray {
-    val intArrayList = IntArrayList()
-    this.forEach { item ->
-      intArrayList.add(action(item))
-    }
-
-    return intArrayList.toIntArray()
-  }
-
   private fun <T> List<T>.mapToIntArray(action: (T) -> Int): IntArray {
     val intArrayList = IntArrayList()
     this.forEach { item ->
@@ -539,33 +530,6 @@ internal sealed class AbstractRefsTable {
       if (!bimap.containsKey(childId)) continue
       val value = bimap[childId] ?: continue
       val existingValue = res.putIfAbsent(connectionId, value)
-      if (existingValue != null) thisLogger().error("This parent already exists")
-    }
-
-    val filteredAbstractOneToOne = abstractOneToOneContainer
-      .filterKeys { it.childClass.findWorkspaceEntity().isAssignableFrom(childClass) }
-    for ((connectionId, bimap) in filteredAbstractOneToOne) {
-      if (!bimap.containsKey(childId)) continue
-      val value = bimap[childId] ?: continue
-      val existingValue = res.putIfAbsent(connectionId, value)
-      if (existingValue != null) thisLogger().error("This parent already exists")
-    }
-
-    return res
-  }
-
-  fun getParentOneToOneRefsOfChild(childId: ChildEntityId): Map<ConnectionId, ParentEntityId> {
-    val childArrayId = childId.id.arrayId
-    val childClassId = childId.id.clazz
-    val childClass = childId.id.clazz.findWorkspaceEntity()
-
-    val res = HashMap<ConnectionId, ParentEntityId>()
-
-    val filteredOneToOne = oneToOneContainer.filterKeys { it.childClass == childClassId }
-    for ((connectionId, bimap) in filteredOneToOne) {
-      if (!bimap.containsKey(childArrayId)) continue
-      val value = bimap.get(childArrayId)
-      val existingValue = res.putIfAbsent(connectionId, createEntityId(value, connectionId.parentClass).asParent())
       if (existingValue != null) thisLogger().error("This parent already exists")
     }
 
@@ -647,33 +611,6 @@ internal sealed class AbstractRefsTable {
       val key = bimap.inverse()[parentId]
       if (key == null) continue
       val existingValue = res.putIfAbsent(connectionId, listOf(key))
-      if (existingValue != null) thisLogger().error("These children already exist")
-    }
-
-    return res
-  }
-
-  fun getChildrenOneToOneRefsOfParentBy(parentId: ParentEntityId): Map<ConnectionId, ChildEntityId> {
-    val parentArrayId = parentId.id.arrayId
-    val parentClassId = parentId.id.clazz
-    val parentClass = parentId.id.clazz.findWorkspaceEntity()
-
-    val res = HashMap<ConnectionId, ChildEntityId>()
-
-    val filteredOneToOne = oneToOneContainer.filterKeys { it.parentClass == parentClassId }
-    for ((connectionId, bimap) in filteredOneToOne) {
-      if (!bimap.containsValue(parentArrayId)) continue
-      val key = bimap.getKey(parentArrayId)
-      val existingValue = res.putIfAbsent(connectionId, createEntityId(key, connectionId.childClass).asChild())
-      if (existingValue != null) thisLogger().error("These children already exist")
-    }
-
-    val filteredAbstractOneToOne = abstractOneToOneContainer
-      .filterKeys { it.parentClass.findWorkspaceEntity().isAssignableFrom(parentClass) }
-    for ((connectionId, bimap) in filteredAbstractOneToOne) {
-      val key = bimap.inverse()[parentId]
-      if (key == null) continue
-      val existingValue = res.putIfAbsent(connectionId, key)
       if (existingValue != null) thisLogger().error("These children already exist")
     }
 
