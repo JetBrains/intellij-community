@@ -157,8 +157,9 @@ internal class JKTypeParameter(
     override fun accept(visitor: JKVisitor) = visitor.visitTypeParameter(this)
 }
 
-internal abstract class JKMethod : JKDeclaration(),
-                                   JKVisibilityOwner, JKModalityOwner, JKOtherModifiersOwner, JKTypeParameterListOwner, JKAnnotationListOwner {
+internal abstract class JKMethod :
+    JKDeclaration(), JKVisibilityOwner, JKModalityOwner, JKOtherModifiersOwner, JKTypeParameterListOwner, JKAnnotationListOwner {
+
     abstract var parameters: List<JKParameter>
     abstract var returnType: JKTypeElement
     abstract var block: JKBlock

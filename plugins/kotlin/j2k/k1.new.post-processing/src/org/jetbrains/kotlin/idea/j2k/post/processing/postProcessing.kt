@@ -120,6 +120,7 @@ fun JKPostProcessingTarget.elements(): List<PsiElement> = when (this) {
         val range = rangeMarker.range ?: return@runReadAction emptyList()
         file.elementsInRange(range)
     }
+
     is JKMultipleFilesPostProcessingTarget -> files
 }
 

@@ -53,7 +53,7 @@ internal class JKPrefixExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitPrefixExpression(this)
 }
 
-internal class JKPostfixExpression (
+internal class JKPostfixExpression(
     expression: JKExpression,
     override var operator: JKOperator,
     override val expressionType: JKType? = null

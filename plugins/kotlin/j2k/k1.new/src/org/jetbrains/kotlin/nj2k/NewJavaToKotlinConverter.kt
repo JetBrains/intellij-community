@@ -170,6 +170,7 @@ class NewJavaToKotlinConverter(
             if (imports.isEmpty()) return
 
             val psiFactory = KtPsiFactory(project)
+
             @Suppress("DEPRECATION") // unclear how to replace this
             val importPsi = psiFactory.createImportDirectives(
                 imports.map { ImportPath(it, isAllUnder = false) }

@@ -7,7 +7,8 @@ import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
-internal class RemoveWrongExtraModifiersForSingleFunctionsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class RemoveWrongExtraModifiersForSingleFunctionsConversion(context: NewJ2kConverterContext) :
+    RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKOtherModifiersOwner) return recurse(element)
         if (element.parentOfType<JKClass>() == null) {

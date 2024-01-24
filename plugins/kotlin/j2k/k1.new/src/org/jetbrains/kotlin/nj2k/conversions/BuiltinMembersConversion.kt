@@ -290,9 +290,9 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.Byte.toString") convertTo ExtensionMethod("kotlin.Byte.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Short.toString") convertTo ExtensionMethod("kotlin.Short.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Integer.toString") convertTo ExtensionMethod("kotlin.Int.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Integer.toString") convertTo primitiveToStringWithRadix() withByArgumentsFilter(::primitiveToStringWithRadixArgumentsFilter) withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Integer.toString") convertTo primitiveToStringWithRadix() withByArgumentsFilter (::primitiveToStringWithRadixArgumentsFilter) withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Long.toString") convertTo ExtensionMethod("kotlin.Long.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.lang.Long.toString") convertTo primitiveToStringWithRadix() withByArgumentsFilter(::primitiveToStringWithRadixArgumentsFilter) withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.lang.Long.toString") convertTo primitiveToStringWithRadix() withByArgumentsFilter (::primitiveToStringWithRadixArgumentsFilter) withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Float.toString") convertTo ExtensionMethod("kotlin.Float.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.lang.Double.toString") convertTo ExtensionMethod("kotlin.Double.toString") withByArgumentsFilter { it.size == 1 } withReplaceType REPLACE_WITH_QUALIFIER,
 
@@ -476,22 +476,21 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
             )
         },
 
-        Method("java.lang.String.concat") convertTo
-            CustomExpression { expression ->
-                if (expression !is JKCallExpression) error("Expression should be JKCallExpression")
-                val parent = expression.parent.cast<JKQualifiedExpression>()
-                val firstArgument = parent::receiver.detached()
-                val secondArgument = expression.arguments.arguments.first()::value.detached()
+        Method("java.lang.String.concat") convertTo CustomExpression { expression ->
+            if (expression !is JKCallExpression) error("Expression should be JKCallExpression")
+            val parent = expression.parent.cast<JKQualifiedExpression>()
+            val firstArgument = parent::receiver.detached()
+            val secondArgument = expression.arguments.arguments.first()::value.detached()
 
-                // Drop the line break to avoid awkward formatting of binary expression with operator on next line
-                firstArgument.lineBreaksAfter = 0
+            // Drop the line break to avoid awkward formatting of binary expression with operator on next line
+            firstArgument.lineBreaksAfter = 0
 
-                JKBinaryExpression(
-                    firstArgument,
-                    secondArgument,
-                    JKKtOperatorImpl(JKOperatorToken.PLUS, typeFactory.types.string)
-                ).parenthesize().withFormattingFrom(parent)
-            } withReplaceType REPLACE_WITH_QUALIFIER,
+            JKBinaryExpression(
+                firstArgument,
+                secondArgument,
+                JKKtOperatorImpl(JKOperatorToken.PLUS, typeFactory.types.string)
+            ).parenthesize().withFormattingFrom(parent)
+        } withReplaceType REPLACE_WITH_QUALIFIER,
 
         // We request the `split` function with the exact signature `split(regex: Regex, limit: Int = 0)`
         // (see `JKSymbolProvider.provideMethodSymbolWithExactSignature`).
@@ -561,7 +560,12 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                     JKExpressionStatement(
                         JKBinaryExpression(
                             //TODO replace with `it` parameter
-                            JKFieldAccessExpression(JKUnresolvedField(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, typeFactory)),
+                            JKFieldAccessExpression(
+                                JKUnresolvedField(
+                                    StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier,
+                                    typeFactory
+                                )
+                            ),
                             JKLiteralExpression("' '", JKLiteralExpression.LiteralType.CHAR),
                             JKKtOperatorImpl(JKOperatorToken.LTEQ, typeFactory.types.boolean)
                         )
@@ -570,12 +574,11 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
             )
         },
         Method("java.lang.String.format") convertTo CustomExpression { expression ->
-            JKClassAccessExpression(
-                symbolProvider.provideClassSymbol(StandardNames.FqNames.string)
-            ).callOn(
-                symbolProvider.provideMethodSymbol("kotlin.text.String.format"),
-                (expression as JKCallExpression).arguments::arguments.detached()
-            )
+            JKClassAccessExpression(symbolProvider.provideClassSymbol(StandardNames.FqNames.string))
+                .callOn(
+                    symbolProvider.provideMethodSymbol("kotlin.text.String.format"),
+                    (expression as JKCallExpression).arguments::arguments.detached()
+                )
         } withReplaceType REPLACE_WITH_QUALIFIER,
 
         // It is the constructor of "kotlin.String" and not "java.lang.String" because

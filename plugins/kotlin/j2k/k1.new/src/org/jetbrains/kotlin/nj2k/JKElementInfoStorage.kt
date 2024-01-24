@@ -59,7 +59,7 @@ value class JKElementInfoInferenceLabel(private val label: String) : JKElementIn
  * Label for optional elements from the original Java code that must be preserved in the resulting Kotlin code.
  *
  * For example, explicit `this` receiver and clarifying parentheses.
- * 
+ *
  * A particular code style may require to use explicit `this` references in Java even when they are not necessary.
  * We want to preserve such references in the resulting Kotlin code in order to not force the user to manually add them back.
  * Since we run a "Redundant explicit 'this'" inspection in post-processing, we must mark those `this` references

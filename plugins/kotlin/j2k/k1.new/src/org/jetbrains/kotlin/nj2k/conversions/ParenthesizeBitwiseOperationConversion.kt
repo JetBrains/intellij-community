@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.parenthesizedWithFormatting
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKBinaryExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtWordOperatorToken
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 
 internal class ParenthesizeBitwiseOperationConversion(override val context: NewJ2kConverterContext) :
     RecursiveApplicableConversionBase(context) {

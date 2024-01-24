@@ -124,7 +124,7 @@ internal class ImplicitCastsConversion(context: NewJ2kConverterContext) : Recurs
         val fieldIsShort = fieldType.asPrimitiveType()?.isShort() == true
         val isOnlyExpressionFloatingPointType =
             expressionType.asPrimitiveType()?.isFloatingPoint() == true &&
-                fieldType.asPrimitiveType()?.isFloatingPoint() == false
+                    fieldType.asPrimitiveType()?.isFloatingPoint() == false
 
         if (fieldIsByte || fieldIsShort || isOnlyExpressionFloatingPointType) {
             // Case 1: Byte and Short don't work with compound assignment (KT-7907)
