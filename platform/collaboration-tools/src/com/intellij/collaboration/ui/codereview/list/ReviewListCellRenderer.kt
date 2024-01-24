@@ -33,6 +33,10 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   private val toolTipManager
     get() = IdeTooltipManager.getInstance()
 
+  private val unseen = JLabel().apply {
+    icon = UnreadDotIcon()
+    border = JBEmptyBorder(0, 2, 0, 0)
+  }
   private val title = JLabel().apply {
     minimumSize = JBDimension(30, 0)
   }
@@ -57,6 +61,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val firstLinePanel = JPanel(HorizontalSidesLayout(6)).apply {
       isOpaque = false
+      add(unseen, SwingConstants.LEFT as Any)
       add(title, SwingConstants.LEFT as Any)
       add(tags, SwingConstants.LEFT as Any)
 
@@ -106,6 +111,9 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val presentation = presenter(value)
 
+    unseen.apply {
+      isVisible = !presentation.seen
+    }
     title.apply {
       text = presentation.title
       foreground = primaryTextColor
