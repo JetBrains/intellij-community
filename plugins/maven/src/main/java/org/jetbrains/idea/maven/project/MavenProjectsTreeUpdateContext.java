@@ -44,7 +44,7 @@ class MavenProjectsTreeUpdateContext {
   private @NotNull List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {
     ArrayList<Pair<MavenProject, MavenProjectChanges>> result = new ArrayList<>(updatedProjectsWithChanges.size());
     for (Map.Entry<MavenProject, MavenProjectChanges> entry : updatedProjectsWithChanges.entrySet()) {
-      entry.getKey().getProblems(); // need for fill problem cache
+      entry.getKey().collectProblems(null); // need for fill problem cache
       result.add(Pair.create(entry.getKey(), entry.getValue()));
     }
     return result;

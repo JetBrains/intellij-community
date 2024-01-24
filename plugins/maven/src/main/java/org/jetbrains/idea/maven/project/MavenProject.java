@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.utils.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
@@ -674,10 +675,18 @@ public class MavenProject {
   }
 
   public @NotNull List<MavenProjectProblem> getProblems() {
+    var problems = myState.myProblemsCache;
+    if (null != problems) return problems;
+
+    return collectProblems(null);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<MavenProjectProblem> collectProblems(Predicate<File> fileExistsPredicate) {
     State state = myState;
     synchronized (state) {
       if (state.myProblemsCache == null) {
-        state.myProblemsCache = collectProblems(myFile, state);
+        state.myProblemsCache = collectProblems(myFile, state, fileExistsPredicate);
       }
       return state.myProblemsCache;
     }
@@ -688,7 +697,7 @@ public class MavenProject {
     return problemsCache == null ? Collections.emptyList() : problemsCache;
   }
 
-  private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
+  private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state, Predicate<File> fileExistsPredicate) {
     List<MavenProjectProblem> result = new ArrayList<>();
 
     validateParent(file, state, result);
@@ -700,7 +709,7 @@ public class MavenProject {
       }
     }
 
-    validateDependencies(file, state, result);
+    validateDependencies(file, state, result, fileExistsPredicate);
     validateExtensions(file, state, result);
     validatePlugins(file, state, result);
 
@@ -713,8 +722,11 @@ public class MavenProject {
     }
   }
 
-  private static void validateDependencies(VirtualFile file, State state, List<MavenProjectProblem> result) {
-    for (MavenArtifact each : getUnresolvedDependencies(state)) {
+  private static void validateDependencies(VirtualFile file,
+                                           State state,
+                                           List<MavenProjectProblem> result,
+                                           Predicate<File> fileExistsPredicate) {
+    for (MavenArtifact each : getUnresolvedDependencies(state, fileExistsPredicate)) {
       result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedDependency",
                                                                           each.getDisplayStringWithType())));
     }
@@ -741,12 +753,12 @@ public class MavenProject {
     return !state.myUnresolvedArtifactIds.contains(state.myParentId);
   }
 
-  private static List<MavenArtifact> getUnresolvedDependencies(State state) {
+  private static List<MavenArtifact> getUnresolvedDependencies(State state, Predicate<File> fileExistsPredicate) {
     synchronized (state) {
       if (state.myUnresolvedDependenciesCache == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
-          boolean resolved = each.isResolved();
+          boolean resolved = each.isResolved(fileExistsPredicate);
           each.setFileUnresolved(!resolved);
           if (!resolved) result.add(each);
         }
@@ -914,7 +926,7 @@ public class MavenProject {
   public boolean hasUnresolvedArtifacts() {
     State state = myState;
     return !isParentResolved(state)
-           || !getUnresolvedDependencies(state).isEmpty()
+           || !getUnresolvedDependencies(state, null).isEmpty()
            || !getUnresolvedExtensions(state).isEmpty()
            || !getUnresolvedAnnotationProcessors(state).isEmpty();
   }

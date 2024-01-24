@@ -143,15 +143,15 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   }
 
   public boolean isResolved() {
-    return isResolved(f -> Files.exists(f.toPath()));
+    return isResolved(null);
   }
 
-  public boolean isResolved(Predicate<? super File> fileExists) {
+  public boolean isResolved(Predicate<File> fileExistsPredicate) {
     if (myResolved && !myStubbed) {
       long currentTime = System.currentTimeMillis();
 
       if (myLastFileCheckTimeStamp + 2000 < currentTime) { // File.exists() is a slow operation, don't run it more than once a second
-        if (!fileExists.test(myFile)) {
+        if (!fileExists(fileExistsPredicate, myFile)) {
           return false; // Don't cache result if file is not exist.
         }
 
@@ -162,6 +162,10 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     }
 
     return false;
+  }
+
+  private static boolean fileExists(Predicate<File> fileExistsPredicate, File f) {
+    return null == fileExistsPredicate ? Files.exists(f.toPath()) : fileExistsPredicate.test(f);
   }
 
   public boolean isResolvedArtifact() {
