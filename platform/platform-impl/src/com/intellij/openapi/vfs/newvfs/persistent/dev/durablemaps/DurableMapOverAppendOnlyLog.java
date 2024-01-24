@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps;
 
 import com.intellij.openapi.util.Pair;
@@ -14,6 +14,7 @@ import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
 import com.intellij.util.io.dev.enumerator.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.util.io.dev.intmultimaps.HashUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,8 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public boolean containsMapping(@NotNull K key) throws IOException {
-    int keyHash = adjustHash(keyDescriptor.getHashCode(key));
+    int hash = keyDescriptor.getHashCode(key);
+    int keyHash = HashUtils.adjustHash(hash);
 
     int foundRecordId = keyHashToIdMap.lookup(keyHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
@@ -98,7 +100,8 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public V get(@NotNull K key) throws IOException {
-    int keyHash = adjustHash(keyDescriptor.getHashCode(key));
+    int hash = keyDescriptor.getHashCode(key);
+    int keyHash = HashUtils.adjustHash(hash);
 
     Ref<Pair<K, V>> resultRef = new Ref<>();
     keyHashToIdMap.lookup(keyHash, recordId -> {
@@ -125,7 +128,8 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   @Override
   public void put(@NotNull K key,
                   @Nullable V value) throws IOException {
-    int keyHash = adjustHash(keyDescriptor.getHashCode(key));
+    int hash = keyDescriptor.getHashCode(key);
+    int keyHash = HashUtils.adjustHash(hash);
     //Abstraction break: synchronize on keyHashToIdMap because we know keyHashToIdMap uses this-monitor to synchronize
     //    itself
     synchronized (keyHashToIdMap) {
@@ -321,18 +325,6 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   private static long convertStoredIdToLogId(int storedRecordId) {
     return storedRecordId;
-  }
-
-  /** @return hash that is acceptable as a key in keyHashToIdMap */
-  private static int adjustHash(int hash) {
-    if (hash == DurableIntToMultiIntMap.NO_VALUE) {
-      //DurableIntToMultiIntMap doesn't allow 0 keys/values, hence replace 0 key with just anything !=0.
-      // Key (=hash) doesn't identify value uniquely anyway, hence this replacement just adds another
-      // collision -- basically, we replaced original Key.hash with our own hash, which avoids 0 at
-      // the cost of slightly higher collision chances
-      return -1;// anything !=0 will do
-    }
-    return hash;
   }
 
   /** valueDescriptor is expected to NOT process null values, so we compare null values separately */
