@@ -727,6 +727,8 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Task_20x20 = load("expui/toolwindow/task@20x20.svg", 1802123925, 2);
     /** 16x16 */ public static final @NotNull Icon Todo = load("expui/toolwindow/todo.svg", -312286457, 2);
     /** 20x20 */ public static final @NotNull Icon Todo_20x20 = load("expui/toolwindow/todo@20x20.svg", 166051278, 2);
+    /** 16x16 */ public static final @NotNull Icon ToolWindowDataView = load("expui/toolwindow/toolWindowDataView.svg", 938491536, 2);
+    /** 20x20 */ public static final @NotNull Icon ToolWindowDataView_20x20 = load("expui/toolwindow/toolWindowDataView@20x20.svg", 575740576, 2);
     /** 16x16 */ public static final @NotNull Icon ToolWindowInternal = load("expui/toolwindow/toolWindowInternal.svg", -743960037, 2);
     /** 20x20 */ public static final @NotNull Icon ToolWindowInternal_20x20 = load("expui/toolwindow/toolWindowInternal@20x20.svg", 235719538, 2);
     /** 16x16 */ public static final @NotNull Icon ToolWindowJsonPath = load("expui/toolwindow/toolWindowJsonPath.svg", -522669516, 2);
