@@ -35,6 +35,7 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Maven40ProjectResolver {
   @NotNull private final Maven40ServerEmbedderImpl myEmbedder;
@@ -140,8 +141,22 @@ public class Maven40ProjectResolver {
 
         fillSessionCache(mavenSession, repositorySession, buildingResults);
 
+        boolean runInParallel = myResolveInParallel;
+        Map<File, String> fileToNewChecksum = new ConcurrentHashMap<>();
+        ParallelRunnerForServer.execute(
+          runInParallel,
+          buildingResults, br -> {
+            String newChecksum = Maven40EffectivePomDumper.checksum(br.getProject());
+            if (null != newChecksum) {
+              fileToNewChecksum.put(br.getPomFile(), newChecksum);
+            }
+            return newChecksum;
+          }
+        );
+
         for (ProjectBuildingResult buildingResult : buildingResults) {
           MavenProject project = buildingResult.getProject();
+          File pomFile = buildingResult.getPomFile();
 
           if (project == null) {
             List<Exception> exceptions = new ArrayList<>();
@@ -153,7 +168,7 @@ public class Maven40ProjectResolver {
           }
 
           String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
-          String newChecksum = Maven40EffectivePomDumper.checksum(buildingResult.getProject());
+          String newChecksum = fileToNewChecksum.get(pomFile);
           if (null != previousChecksum && previousChecksum.equals(newChecksum)) {
             continue;
           }
@@ -168,7 +183,6 @@ public class Maven40ProjectResolver {
         }
 
         task.updateTotalRequests(buildingResultInfos.size());
-        boolean runInParallel = myResolveInParallel;
         Collection<Maven40ExecutionResult> execResults =
           ParallelRunnerForServer.execute(
             runInParallel,

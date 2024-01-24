@@ -44,6 +44,7 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jetbrains.idea.maven.server.Maven3ServerEmbedder.USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING;
 import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER_VERSION;
@@ -164,20 +165,34 @@ public class Maven3XProjectResolver {
 
         boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
 
+        boolean runInParallel = myResolveInParallel;
+        Map<File, String> fileToNewChecksum = new ConcurrentHashMap<>();
+        ParallelRunnerForServer.execute(
+          runInParallel,
+          buildingResults, br -> {
+            String newChecksum = Maven3EffectivePomDumper.checksum(br.getProject());
+            if (null != newChecksum) {
+              fileToNewChecksum.put(br.getPomFile(), newChecksum);
+            }
+            return newChecksum;
+          }
+        );
+
         for (ProjectBuildingResult buildingResult : buildingResults) {
           MavenProject project = buildingResult.getProject();
+          File pomFile = buildingResult.getPomFile();
 
           if (project == null) {
             List<Exception> exceptions = new ArrayList<>();
             for (ModelProblem problem : buildingResult.getProblems()) {
               exceptions.add(problem.getException());
             }
-            executionResults.add(new Maven3ExecutionResult(buildingResult.getPomFile(), exceptions));
+            executionResults.add(new Maven3ExecutionResult(pomFile, exceptions));
             continue;
           }
 
-          String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
-          String newChecksum = Maven3EffectivePomDumper.checksum(buildingResult.getProject());
+          String previousChecksum = fileToChecksum.get(pomFile);
+          String newChecksum = fileToNewChecksum.get(pomFile);
           if (null != previousChecksum && previousChecksum.equals(newChecksum)) {
             continue;
           }
@@ -197,7 +212,6 @@ public class Maven3XProjectResolver {
         }
 
         task.updateTotalRequests(buildingResultInfos.size());
-        boolean runInParallel = myResolveInParallel;
         Collection<Maven3ExecutionResult> execResults =
           ParallelRunnerForServer.execute(
             runInParallel,
