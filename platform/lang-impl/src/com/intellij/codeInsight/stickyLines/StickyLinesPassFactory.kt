@@ -19,7 +19,7 @@ internal class StickyLinesPassFactory : TextEditorHighlightingPassFactoryRegistr
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     val project = editor.project ?: return null
     val virtualFile = editor.virtualFile ?: return null
-    if (editor.settings.isStickyLinesShown) {
+    if (editor.settings.areStickyLinesShown()) {
       return StickyLinesPass(project, editor.document, virtualFile, psiFile)
     }
     return null

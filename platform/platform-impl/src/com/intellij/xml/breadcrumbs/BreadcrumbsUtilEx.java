@@ -9,7 +9,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,30 +65,5 @@ public final class BreadcrumbsUtilEx {
       base = base.getBaseLanguage();
     }
     return language.getID();
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable BreadcrumbsProvider findProviderForSticky(@NotNull FileViewProvider viewProvider) {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (!settings.isStickyLinesShown()) return null;
-
-    Language baseLang = viewProvider.getBaseLanguage();
-    if (!isStickyLinesShownFor(settings, baseLang)) return null;
-
-    BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(baseLang);
-    if (provider == null) {
-      for (Language language : viewProvider.getLanguages()) {
-        if (isStickyLinesShownFor(settings, language)) {
-          provider = BreadcrumbsUtil.getInfoProvider(language);
-          if (provider != null) break;
-        }
-      }
-    }
-    return provider;
-  }
-
-  private static boolean isStickyLinesShownFor(@NotNull EditorSettingsExternalizable settings, Language language) {
-    String id = findLanguageWithBreadcrumbSettings(language);
-    return settings.isStickyLinesShownFor(id);
   }
 }

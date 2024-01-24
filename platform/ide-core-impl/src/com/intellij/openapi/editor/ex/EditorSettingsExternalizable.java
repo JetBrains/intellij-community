@@ -439,7 +439,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     return newValue;
   }
 
-  public boolean isStickyLinesShown() {
+  public boolean areStickyLinesShown() {
     return myOptions.SHOW_STICKY_LINES;
   }
 
@@ -451,7 +451,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     return true;
   }
 
-  public boolean isStickyLinesShownFor(String languageID) {
+  public boolean areStickyLinesShownFor(String languageID) {
     Boolean visible = myOptions.mapLanguageStickyLines.get(languageID);
     if (visible == null) {
       // enabled for all languages by default

@@ -7,9 +7,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.fileTypes.FileTypeEvent
-import com.intellij.openapi.fileTypes.FileTypeListener
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.Disposer
 import java.awt.Point
 import java.awt.Rectangle
@@ -41,7 +38,7 @@ internal class StickyLinesManager(
   private var activeEditorH: Int = -1
 
   override fun visibleAreaChanged(event: VisibleAreaEvent) {
-    if (stickyPanel.isStickyEnabled && isAreaChanged(event)) {
+    if (editor.settings.areStickyLinesShown() && isAreaChanged(event)) {
       activeEditorY = event.newRectangle.y
       activeEditorH = event.newRectangle.height
       if (event.oldRectangle == null || isLineChanged(event)) {

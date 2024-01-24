@@ -172,10 +172,10 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myIsCamelWords: Boolean by property { EditorSettingsExternalizable.getInstance().isCamelWords }
   var myLineNumeration: EditorSettings.LineNumerationType by property { EditorSettingsExternalizable.getInstance().lineNumeration }
 
-  var myIsStickyLinesShown: Boolean by property { EditorSettingsExternalizable.getInstance().isStickyLinesShown }
-  var myIsStickyLinesShownForLanguage: Boolean by property {
+  var myStickyLinesShown: Boolean by property { EditorSettingsExternalizable.getInstance().areStickyLinesShown() }
+  var myStickyLinesShownForLanguage: Boolean by property {
     this.language?.let {
-      EditorSettingsExternalizable.getInstance().isStickyLinesShownFor(it.id)
+      EditorSettingsExternalizable.getInstance().areStickyLinesShownFor(it.id)
     }
     // Return true to avoid late appearance of the sticky panel.
     // Even if the actual value for the language is false,
@@ -249,8 +249,8 @@ class EditorSettingsState(private val editor: EditorImpl?,
             EditorSettingsExternalizable.PropNames.PROP_SHOW_INTENTION_BULB -> refresh(::myShowIntentionBulb)
             EditorSettingsExternalizable.PropNames.PROP_IS_CAMEL_WORDS -> refresh(::myIsCamelWords)
             EditorSettingsExternalizable.PropNames.PROP_LINE_NUMERATION -> refresh(::myLineNumeration)
-            EditorSettingsExternalizable.PropNames.PROP_SHOW_STICKY_LINES -> refresh(::myIsStickyLinesShown)
-            EditorSettingsExternalizable.PropNames.PROP_SHOW_STICKY_LINES_PER_LANGUAGE -> refresh(::myIsStickyLinesShownForLanguage)
+            EditorSettingsExternalizable.PropNames.PROP_SHOW_STICKY_LINES -> refresh(::myStickyLinesShown)
+            EditorSettingsExternalizable.PropNames.PROP_SHOW_STICKY_LINES_PER_LANGUAGE -> refresh(::myStickyLinesShownForLanguage)
             EditorSettingsExternalizable.PropNames.PROP_STICKY_LINES_LIMIT -> refresh(::myStickyLinesLimit)
           }
         }, editor.disposable)
