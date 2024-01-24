@@ -234,8 +234,10 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  private fun isLoggingEnabled() =
-    ApplicationManager.getApplication().isEAP && !Registry.`is`("search.everywhere.force.disable.logging.ml")
+  private fun isLoggingEnabled(): Boolean {
+    val application = ApplicationManager.getApplication()
+    return application.isUnitTestMode || (application.isEAP && !Registry.`is`("search.everywhere.force.disable.logging.ml"))
+  }
 
 
   private fun getSelectedElementsEvents(selectedElements: IntArray,
