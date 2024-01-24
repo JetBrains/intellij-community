@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -42,6 +43,7 @@ import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
+import com.jetbrains.python.sdk.add.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
@@ -59,6 +61,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+
+import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
@@ -291,6 +295,16 @@ public final class PythonSdkType extends SdkType {
       // We decided to get rid of this prefix
       if (homePath.startsWith(LEGACY_TARGET_PREFIX)) {
         ((SdkModificator)currentSdk).setHomePath(homePath.substring(LEGACY_TARGET_PREFIX.length()));
+      }
+
+      if (additional.getAttributeBooleanValue(PyDetectedSdkAdditionalData.PY_DETECTED_SDK_MARKER)) {
+        PyDetectedSdkAdditionalData data = new PyDetectedSdkAdditionalData(null, null);
+        data.load(additional);
+        TargetEnvironmentConfiguration targetEnvironmentConfiguration = loadTargetConfiguration(additional);
+        if (targetEnvironmentConfiguration != null) {
+          data.setTargetEnvironmentConfiguration(targetEnvironmentConfiguration);
+        }
+        return data;
       }
 
       var targetAdditionalData = PyTargetAwareAdditionalData.loadTargetAwareData(currentSdk, additional);
