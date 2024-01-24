@@ -19,7 +19,7 @@ import java.nio.file.*
  */
 fun IjentFileSystemApi.asNioFileSystem(): FileSystem {
   val nioFsProvider = IjentNioFileSystemProvider.getInstance()
-  val uri = URI(nioFsProvider.scheme, id.id, null, null)
+  val uri = id.uri
   return try {
     nioFsProvider.getFileSystem(uri)
   }

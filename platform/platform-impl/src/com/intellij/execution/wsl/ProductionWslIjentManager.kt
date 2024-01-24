@@ -11,9 +11,7 @@ import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -46,7 +44,13 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
         val ijentScope = scope.namedChildScope(scopeName, CoroutineExceptionHandler { _, err ->
           LOG.error("Unexpected error in $scopeName", err)
         })
-        deployAndLaunchIjent(ijentScope, project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
+        try {
+          deployAndLaunchIjent(project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
+        }
+        catch (err: Throwable) {
+          ijentScope.cancel(CancellationException("Failed to start IJent in WSL", err))
+          throw err
+        }
       }
     }!!.getValue()
   }

@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.IjentApi
-import com.intellij.platform.ijent.IjentSessionProvider
+import com.intellij.platform.ijent.bootstrapOverShellSession
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -39,16 +39,14 @@ interface WslIjentManager {
 }
 
 suspend fun deployAndLaunchIjent(
-  ijentCoroutineScope: CoroutineScope,
   project: Project?,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-): IjentApi = deployAndLaunchIjentGettingPath(ijentCoroutineScope, project, wslDistribution, wslCommandLineOptionsModifier).second
+): IjentApi = deployAndLaunchIjentGettingPath(project, wslDistribution, wslCommandLineOptionsModifier).second
 
 @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
 @VisibleForTesting
 suspend fun deployAndLaunchIjentGettingPath(
-  ijentCoroutineScope: CoroutineScope,
   project: Project?,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
@@ -67,5 +65,5 @@ suspend fun deployAndLaunchIjentGettingPath(
   wslDistribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
 
   val process = computeDetached { commandLine.createProcess() }
-  return IjentSessionProvider.bootstrapOverShellSession(ijentCoroutineScope, process)
+  return bootstrapOverShellSession("WSL-${wslDistribution.id}", process)
 }
