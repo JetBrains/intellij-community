@@ -312,7 +312,7 @@ internal class MutableRefsTable(
         add(Modification.Remove(parentId, createEntityId(it, connectionId.childClass)))
       })
       val children = newChildrenEntityIds.mapToIntArray { it.id.arrayId }
-      val previousParents = copiedMap.putAll(children, parentId.arrayId)
+      val previousParents = copiedMap.addAll(children, parentId.arrayId)
       previousParents.forEach(BiConsumer { child, parent ->
         add(Modification.Remove(createEntityId(parent, connectionId.parentClass), createEntityId(child, connectionId.childClass)))
       })
@@ -428,7 +428,7 @@ internal class MutableRefsTable(
       if (existingParent != NonNegativeIntIntBiMap.DEFAULT_RETURN_VALUE && existingParent == parentId.id.arrayId) return emptyList()
 
       val removedParent = copiedMap.removeKey(childId.arrayId)
-      val removedChildren = copiedMap.putAll(intArrayOf(childId.arrayId), parentId.id.arrayId)
+      val removedChildren = copiedMap.addAll(intArrayOf(childId.arrayId), parentId.id.arrayId)
       if (removedParent != null) add(Modification.Remove(createEntityId(removedParent, connectionId.parentClass), childId))
       removedChildren.forEach { (child, parent) ->
         add(Modification.Remove(createEntityId(parent, connectionId.parentClass), createEntityId(child, connectionId.childClass)))
