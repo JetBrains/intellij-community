@@ -8,8 +8,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.TokenType
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -30,7 +30,7 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): List<InlayInfoDetail
         InlayInfoDetails(
             InlayInfo("", lbrace.psi.textRange.endOffset),
             listOf(TextInlayInfoDetail("this: ")) + renderedType,
-            option = KotlinLambdasHintsProvider.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
+            option = SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
         )
     }
 
@@ -42,7 +42,7 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): List<InlayInfoDetail
             InlayInfoDetails(
                 InlayInfo("", lbrace.textRange.endOffset),
                 listOf(TextInlayInfoDetail("it: ")) + renderedType,
-                option = KotlinLambdasHintsProvider.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
+                option = SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
             )
         }
     } else null

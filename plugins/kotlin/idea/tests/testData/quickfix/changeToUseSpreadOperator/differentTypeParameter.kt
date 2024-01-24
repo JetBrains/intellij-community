@@ -3,7 +3,7 @@
 // ACTION: Change parameter 'x' type of function 'foo' to 'Array<Int>'
 // ACTION: Convert to block body
 // ACTION: Create function 'foo'
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Function return types' for 'Types' inlay hints
 // DISABLE-ERRORS
 
 fun foo(vararg x: String) {}

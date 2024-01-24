@@ -1,7 +1,7 @@
 // "Replace with safe (?.) call" "false"
 // ERROR: Operator call corresponds to a dot-qualified call 'p1.compareTo(p2)' which is not allowed on a nullable receiver 'p1'.
 // ACTION: Add non-null asserted (!!) call
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Local variable types' for 'Types' inlay hints
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Flip '>'
 // ACTION: Replace overloaded operator with function call

@@ -5,7 +5,8 @@
 // ACTION: Add braces to all 'if' statements
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Local variable types' for 'Types' inlay hints
+// ACTION: Enable option 'Property types' for 'Types' inlay hints
 // ACTION: Move to constructor
 // WITH_STDLIB
 fun main() {

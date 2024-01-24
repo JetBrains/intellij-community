@@ -19,6 +19,8 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
+import org.jetbrains.kotlin.idea.codeInsight.hints.NamedInlayInfoOption
+import org.jetbrains.kotlin.idea.codeInsight.hints.NoInlayInfoOption
 import org.jetbrains.kotlin.idea.codeInsight.hints.PsiInlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.TypeInlayInfoDetail
@@ -46,12 +48,14 @@ abstract class AbstractKotlinInlayHintsProvider(private vararg val hintTypes: Hi
                 resolved.forEach { hintType ->
                     hintType.provideHintDetails(element).forEach { details: InlayInfoDetails ->
                         val inlayInfo: InlayInfo = details.inlayInfo
-                        if (details.option != null) {
-                            sink.whenOptionEnabled(details.option) {
-                                addInlayInfo(sink, inlayInfo, details)
+                        details.option?.let {
+                            when (it) {
+                                is NamedInlayInfoOption -> sink.whenOptionEnabled(it.name) {
+                                    addInlayInfo(sink, inlayInfo, details)
+                                }
+
+                                NoInlayInfoOption -> addInlayInfo(sink, inlayInfo, details)
                             }
-                        } else {
-                            addInlayInfo(sink, inlayInfo, details)
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 // "Remove variable 'one'" "false"
-// ACTION: Enable 'Types' inlay hints
 // ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Enable option 'Local variable types' for 'Types' inlay hints
 // ACTION: Rename to _
 // ACTION: Specify all types explicitly in destructuring declaration
 // ACTION: Specify type explicitly

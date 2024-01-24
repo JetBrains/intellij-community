@@ -7,7 +7,7 @@
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
 // ACTION: Do not show hints for current method
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Property types' for 'Types' inlay hints
 
 fun takeUInt(u: UInt) = 0
 

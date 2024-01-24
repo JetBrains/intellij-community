@@ -11,6 +11,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_FUNCTION_PARAMETER_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_FUNCTION_RETURN_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_LOCAL_VARIABLE_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_PROPERTY_TYPES
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
@@ -26,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import kotlin.enums.EnumEntries
 
 enum class HintType(
     @Nls private val description: String,
@@ -41,7 +46,7 @@ enum class HintType(
         false
     ) {
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
-            return providePropertyTypeHint(e)
+            return providePropertyTypeHint(e, SHOW_PROPERTY_TYPES)
         }
 
         override fun isApplicable(e: PsiElement): Boolean = e is KtProperty && e.getReturnTypeReference() == null && !e.isLocal
@@ -54,7 +59,7 @@ enum class HintType(
         false
     ) {
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
-            return providePropertyTypeHint(e)
+            return providePropertyTypeHint(e, SHOW_LOCAL_VARIABLE_TYPES)
         }
 
         override fun isApplicable(e: PsiElement): Boolean =
@@ -72,7 +77,7 @@ enum class HintType(
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
             e.safeAs<KtNamedFunction>()?.let { namedFunction ->
                 namedFunction.valueParameterList?.let { paramList ->
-                    provideTypeHint(namedFunction, paramList.endOffset)?.let { return listOf(it) }
+                    provideTypeHint(namedFunction, paramList.endOffset, SHOW_FUNCTION_RETURN_TYPES)?.let { return listOf(it) }
                 }
             }
             e.safeAs<KtExpression>()?.let { expression ->
@@ -96,7 +101,7 @@ enum class HintType(
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
             (e as? KtParameter)?.let { param ->
                 param.nameIdentifier?.let { ident ->
-                    provideTypeHint(param, ident.endOffset)?.let { return listOf(it) }
+                    provideTypeHint(param, ident.endOffset, SHOW_FUNCTION_PARAMETER_TYPES)?.let { return listOf(it) }
                 }
             }
             return emptyList()
@@ -218,7 +223,7 @@ enum class HintType(
     };
 
     companion object {
-        private val values = values()
+        private val values: EnumEntries<HintType> = entries
 
         fun resolve(e: PsiElement): List<HintType> =
             values.filter { it.isApplicable(e) }
@@ -241,14 +246,20 @@ enum class HintType(
     abstract fun isApplicable(e: PsiElement): Boolean
     open fun provideHints(e: PsiElement): List<InlayInfo> = emptyList()
     open fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> =
-        provideHints(e).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text))) }
+        provideHints(e).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text)), NoInlayInfoOption) }
 
     val option = Option("SHOW_${this.name}", { this.description }, defaultEnabled)
     val enabled
         get() = option.get()
 }
 
-data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInfoDetail>, val option: String? = null)
+data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInfoDetail>, val option: InlayInfoOption? = NoInlayInfoOption)
+
+sealed class InlayInfoOption
+
+object NoInlayInfoOption: InlayInfoOption()
+
+class NamedInlayInfoOption(val name: String): InlayInfoOption()
 
 sealed class InlayInfoDetail(val text: String)
 

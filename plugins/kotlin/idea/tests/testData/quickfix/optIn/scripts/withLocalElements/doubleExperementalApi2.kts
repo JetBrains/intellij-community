@@ -1,6 +1,6 @@
 // "Opt in for 'Library' on 't'" "true"
 // ACTION: Add '-opt-in=DoubleExperementalApi2.Library' to module light_idea_test_case compiler arguments
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Local variable types' for 'Types' inlay hints
 // ACTION: Opt in for 'Library' in containing file 'doubleExperementalApi2.kts'
 // ACTION: Opt in for 'Library' on 'bar'
 // ACTION: Opt in for 'Library' on 't'
