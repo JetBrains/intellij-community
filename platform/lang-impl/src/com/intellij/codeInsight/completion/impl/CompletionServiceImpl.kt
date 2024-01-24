@@ -26,12 +26,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.patterns.ElementPattern
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.psi.Weigher
 import com.intellij.util.Consumer
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.ThreadingAssertions
-import io.opentelemetry.api.trace.Span
 import kotlin.concurrent.Volatile
 
 private val LOG = logger<CompletionServiceImpl>()
@@ -53,13 +52,8 @@ open class CompletionServiceImpl : BaseCompletionService() {
     @JvmStatic
     fun assertPhase(vararg possibilities: Class<out CompletionPhase>) {
       val holder = tryGetClientCompletionService(getAppSession())?.completionPhaseHolder ?: DEFAULT_PHASE_HOLDER
-      assertPhase(holder, *possibilities)
-    }
-
-    @SafeVarargs
-    private fun assertPhase(phaseHolder: CompletionPhaseHolder, vararg possibilities: Class<out CompletionPhase>) {
-      if (!isPhase(phaseHolder.phase, *possibilities)) {
-        reportPhase(phaseHolder)
+      if (!isPhase(holder.phase, *possibilities)) {
+        reportPhase(holder)
       }
     }
 
@@ -72,13 +66,11 @@ open class CompletionServiceImpl : BaseCompletionService() {
     @JvmStatic
     var completionPhase: CompletionPhase
       get() {
-        val clientCompletionService = tryGetClientCompletionService(getAppSession())
-        if (clientCompletionService == null) return DEFAULT_PHASE_HOLDER.phase
+        val clientCompletionService = tryGetClientCompletionService(getAppSession()) ?: return DEFAULT_PHASE_HOLDER.phase
         return clientCompletionService.completionPhase
       }
       set(phase) {
-        val clientCompletionService = tryGetClientCompletionService(getAppSession())
-        if (clientCompletionService == null) return
+        val clientCompletionService = tryGetClientCompletionService(getAppSession()) ?: return
         clientCompletionService.completionPhase = phase
       }
   }
@@ -89,9 +81,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
       override fun projectClosing(project: Project) {
         val sessions = getAppSessions(ClientKind.ALL)
         for (session in sessions) {
-          val clientCompletionService = tryGetClientCompletionService(session)
-          if (clientCompletionService == null) continue
-
+          val clientCompletionService = tryGetClientCompletionService(session) ?: continue
           val indicator = clientCompletionService.currentCompletionProgressIndicator
           if (indicator != null && indicator.project === project) {
             indicator.closeAndFinish(true)
@@ -107,8 +97,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         val sessions = getAppSessions(ClientKind.ALL)
         for (session in sessions) {
-          val clientCompletionService = tryGetClientCompletionService(session)
-          if (clientCompletionService == null) continue
+          val clientCompletionService = tryGetClientCompletionService(session) ?: continue
           clientCompletionService.completionPhase = NoCompletion
         }
       }
@@ -117,44 +106,48 @@ open class CompletionServiceImpl : BaseCompletionService() {
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun setAdvertisementText(text: @NlsContexts.PopupAdvertisement String?) {
-    if (text == null) return
-    val completion = currentCompletionProgressIndicator
-    completion?.addAdvertisement(text, null)
+    if (text == null) {
+      return
+    }
+    currentCompletionProgressIndicator?.addAdvertisement(text, null)
   }
 
   override fun createResultSet(parameters: CompletionParameters,
                                consumer: Consumer<in CompletionResult>,
                                contributor: CompletionContributor,
                                matcher: PrefixMatcher): CompletionResultSet {
-    return CompletionResultSetImpl(consumer, matcher, contributor, parameters, null, null)
+    return CompletionResultSetImpl(consumer = consumer,
+                                   prefixMatcher = matcher,
+                                   contributor = contributor,
+                                   parameters = parameters,
+                                   sorter = null,
+                                   original = null)
   }
 
   override fun getCurrentCompletion(): CompletionProcess? {
-    val indicator = currentCompletionProgressIndicator
-    if (indicator != null) {
-      return indicator
+    currentCompletionProgressIndicator?.let {
+      return it
     }
     // TODO we have to move myApiCompletionProcess inside per client service somehow
     // also shouldn't we delegate here to base method instead of accessing the field of the base class?
-    return if (isCurrentlyUnderLocalId) myApiCompletionProcess else null
+    return if (isCurrentlyUnderLocalId) apiCompletionProcess else null
   }
 
-  private class CompletionResultSetImpl(consumer: Consumer<in CompletionResult>?, prefixMatcher: PrefixMatcher?,
-                                        contributor: CompletionContributor?, parameters: CompletionParameters?,
-                                        sorter: CompletionSorter?, original: CompletionResultSetImpl?) : BaseCompletionResultSet(consumer,
-                                                                                                                                 prefixMatcher,
-                                                                                                                                 contributor,
-                                                                                                                                 parameters,
-                                                                                                                                 sorter,
-                                                                                                                                 original) {
+  private class CompletionResultSetImpl(consumer: java.util.function.Consumer<in CompletionResult>?,
+                                        prefixMatcher: PrefixMatcher?,
+                                        contributor: CompletionContributor?,
+                                        parameters: CompletionParameters?,
+                                        sorter: CompletionSorter?,
+                                        original: CompletionResultSetImpl?) :
+    BaseCompletionResultSet(consumer, prefixMatcher, contributor, parameters, sorter, original) {
     override fun addAllElements(elements: Iterable<LookupElement>) {
-      CompletionThreadingBase.withBatchUpdate({ super.addAllElements(elements) }, myParameters.process)
+      CompletionThreadingBase.withBatchUpdate({ super.addAllElements(elements) }, parameters.process)
     }
 
     override fun passResult(result: CompletionResult) {
       val element = result.lookupElement
       if (element != null && element.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR) == null) {
-        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor)
+        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, contributor)
       }
       super.passResult(result)
     }
@@ -164,11 +157,21 @@ open class CompletionServiceImpl : BaseCompletionService() {
         return this
       }
 
-      return CompletionResultSetImpl(consumer, matcher, myContributor, myParameters, mySorter, this)
+      return CompletionResultSetImpl(consumer = consumer,
+                                     prefixMatcher = matcher,
+                                     contributor = contributor,
+                                     parameters = parameters,
+                                     sorter = sorter,
+                                     original = this)
     }
 
     override fun withRelevanceSorter(sorter: CompletionSorter): CompletionResultSet {
-      return CompletionResultSetImpl(consumer, prefixMatcher, myContributor, myParameters, sorter, this)
+      return CompletionResultSetImpl(consumer = consumer,
+                                     prefixMatcher = prefixMatcher,
+                                     contributor = contributor,
+                                     parameters = parameters,
+                                     sorter = sorter,
+                                     original = this)
     }
 
     override fun addLookupAdvertisement(text: String) {
@@ -176,15 +179,14 @@ open class CompletionServiceImpl : BaseCompletionService() {
     }
 
     override fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
-      val process = myParameters.process
+      val process = parameters.process
       if (process is CompletionProcessBase) {
-        process
-          .addWatchedPrefix(myParameters.offset - prefixMatcher.prefix.length, prefixCondition)
+        process.addWatchedPrefix(parameters.offset - prefixMatcher.prefix.length, prefixCondition)
       }
     }
 
     override fun restartCompletionWhenNothingMatches() {
-      val process = myParameters.process
+      val process = parameters.process
       if (process is CompletionProgressIndicator) {
         process.lookup.isStartCompletionWhenNothingMatches = true
       }
@@ -208,14 +210,15 @@ open class CompletionServiceImpl : BaseCompletionService() {
   }
 
   override fun getVariantsFromContributor(params: CompletionParameters, contributor: CompletionContributor, result: CompletionResultSet) {
-    runWithSpan(completionTracer, contributor.javaClass.simpleName) { span: Span ->
-      super.getVariantsFromContributor(params, contributor, result)
-      span.setAttribute("avoid_null_value", true)
-    }
+    completionTracer.spanBuilder(contributor.javaClass.simpleName)
+      .setAttribute("avoid_null_value", true)
+      .useWithScopeBlocking {
+        super.getVariantsFromContributor(params, contributor, result)
+      }
   }
 
   override fun performCompletion(parameters: CompletionParameters, consumer: Consumer<in CompletionResult>) {
-    runWithSpan(completionTracer, "performCompletion") { span: Span ->
+    completionTracer.spanBuilder("performCompletion").useWithScopeBlocking { span ->
       val countingConsumer = object : Consumer<CompletionResult> {
         @JvmField
         var count: Int = 0
@@ -248,10 +251,7 @@ private class ClientCompletionService(private val appSession: ClientAppSession) 
         ThreadingAssertions.assertEventDispatchThread()
         val oldPhase = this.completionPhase
         val oldIndicator = oldPhase.indicator
-        if (oldIndicator != null &&
-            phase !is BgCalculation &&
-            oldIndicator.isRunning &&
-            !oldIndicator.isCanceled) {
+        if (oldIndicator != null && phase !is BgCalculation && oldIndicator.isRunning && !oldIndicator.isCanceled) {
           LOG.error("don't change phase during running completion: oldPhase=$oldPhase")
         }
         val wasCompletionRunning = isRunningPhase(oldPhase)
@@ -262,8 +262,7 @@ private class ClientCompletionService(private val appSession: ClientAppSession) 
         }
 
         Disposer.dispose(oldPhase)
-        val phaseTrace = Throwable()
-        completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = phaseTrace)
+        completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = Throwable())
       }
     }
 

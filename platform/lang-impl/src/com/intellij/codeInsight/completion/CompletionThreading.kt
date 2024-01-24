@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
@@ -17,6 +16,7 @@ import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
@@ -150,10 +150,10 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
           batchList.add(result)
         }
         else {
-          queue.offer(Computable {
+          queue.offer {
             tryReadOrCancel(indicator) { indicator.addItem(result) }
             true
-          })
+          }
         }
       }
     }
@@ -180,11 +180,10 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
   }
 }
 
+@Suppress("SSBasedInspection")
+@TestOnly
 internal fun checkForExceptions(future: Deferred<Unit>) {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
-    @Suppress("SSBasedInspection")
-    runBlocking {
-      future.await()
-    }
+  runBlocking {
+    future.await()
   }
 }

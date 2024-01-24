@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 class FilteringResultSet(
   private val base: CompletionResultSet,
   private val filter: (CompletionContributor) -> Boolean
-) : CompletionResultSet(base.prefixMatcher, base.consumer, base.myContributor) {
+) : CompletionResultSet(base.prefixMatcher, base.consumer, base.contributor) {
   override fun addElement(element: LookupElement) {
     base.addElement(element)
   }
@@ -64,7 +64,7 @@ class FilteringResultSet(
         consumer.consume(result)
       }
     }
-    myCompletionService.getVariantsFromContributors(parameters, myContributor, prefixMatcher, batchConsumer, customSorter, filter)
+    myCompletionService.getVariantsFromContributors(parameters, contributor, prefixMatcher, batchConsumer, customSorter, filter)
   }
 
   companion object {

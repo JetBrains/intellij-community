@@ -19,10 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.OverridingAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,6 +43,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -71,7 +69,6 @@ import java.util.Objects;
 
 import static com.intellij.codeInsight.completion.CompletionThreadingKt.checkForExceptions;
 import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck.DeliberateAdditionalCheckInCompletion;
 
 @SuppressWarnings("deprecation")
@@ -192,12 +189,13 @@ public class CodeCompletionHandlerBase {
       long startingTime = System.currentTimeMillis();
       Runnable initCmd = () -> {
         WriteAction.run(() -> EditorUtil.fillVirtualSpaceUntilCaret(editor));
-        CompletionInitializationContextImpl context = withTimeout(calcSyncTimeOut(startingTime), () ->
-          CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType));
+        CompletionInitializationContextImpl context = withTimeout(calcSyncTimeOut(startingTime), () -> {
+          return CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType);
+        });
 
         boolean hasValidContext = context != null;
         if (!hasValidContext) {
-          final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
+          PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
           context = new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount);
         }
 
@@ -225,19 +223,21 @@ public class CodeCompletionHandlerBase {
                                            int time,
                                            boolean hasModifiers,
                                            @NotNull Caret caret) {
-    runWithSpan(completionTracer, "invokeCompletion", (span) -> {
-      span.setAttribute("project", project.getName());
-      span.setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset());
-
-      invokeCompletion(project, editor, time, hasModifiers, caret);
-    });
+    TraceKt.useWithScopeBlocking(
+      completionTracer.spanBuilder("invokeCompletion")
+        .setAttribute("project", project.getName())
+        .setAttribute("caretOffset", caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset()),
+      span -> {
+        invokeCompletion(project, editor, time, hasModifiers, caret);
+        return null;
+      }
+    );
   }
 
   private static void checkNoWriteAccess() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        throw new AssertionError("Completion should not be invoked inside write action");
-      }
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode() && app.isWriteAccessAllowed()) {
+      throw new AssertionError("Completion should not be invoked inside write action");
     }
   }
 
@@ -263,18 +263,19 @@ public class CodeCompletionHandlerBase {
   }
 
   private void doComplete(CompletionInitializationContextImpl initContext, boolean hasModifiers, boolean isValidContext, long startingTime) {
-    final Editor editor = initContext.getEditor();
+    Editor editor = initContext.getEditor();
     CompletionAssertions.checkEditorValid(editor);
 
     LookupImpl lookup = obtainLookup(editor, initContext.getProject());
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-    if (phase instanceof CompletionPhase.CommittingDocuments) {
+    if (phase instanceof CompletionPhase.CommittingDocuments p) {
       if (phase.indicator != null) {
         phase.indicator.closeAndFinish(false);
       }
-      ((CompletionPhase.CommittingDocuments)phase).replaced = true;
-    } else {
+      p.replaced = true;
+    }
+    else {
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
@@ -305,7 +306,8 @@ public class CodeCompletionHandlerBase {
     if (synchronous) {
       phase = new CompletionPhase.BgCalculation(indicator);
       indicator.showLookup();
-    } else {
+    }
+    else {
       phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()), null);
     }
     CompletionServiceImpl.setCompletionPhase(phase);
@@ -339,7 +341,10 @@ public class CodeCompletionHandlerBase {
 
     int timeout = calcSyncTimeOut(startingTime);
     if (indicator.blockingWaitForFinish(timeout)) {
-      checkForExceptions(future);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        //noinspection TestOnlyProblems
+        checkForExceptions(future);
+      }
       try {
         indicator.getLookup().refreshUi(true, false);
         completionFinished(indicator, hasModifiers);

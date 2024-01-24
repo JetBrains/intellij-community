@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class BaseCompletionService extends CompletionService {
   private static final Logger LOG = Logger.getInstance(BaseCompletionService.class);
 
-  protected @Nullable CompletionProcess myApiCompletionProcess;
+  protected @Nullable CompletionProcess apiCompletionProcess;
 
   @ApiStatus.Internal
   public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
@@ -43,12 +43,12 @@ public class BaseCompletionService extends CompletionService {
 
   @Override
   public void performCompletion(@NotNull CompletionParameters parameters, @NotNull Consumer<? super CompletionResult> consumer) {
-    myApiCompletionProcess = parameters.getProcess();
+    apiCompletionProcess = parameters.getProcess();
     try {
       super.performCompletion(parameters, consumer);
     }
     finally {
-      myApiCompletionProcess = null;
+      apiCompletionProcess = null;
     }
   }
 
@@ -56,8 +56,8 @@ public class BaseCompletionService extends CompletionService {
   public void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text) {
     if (text == null) return;
 
-    if (myApiCompletionProcess instanceof CompletionProcessEx) {
-      ((CompletionProcessEx)myApiCompletionProcess).addAdvertisement(text, null);
+    if (apiCompletionProcess instanceof CompletionProcessEx) {
+      ((CompletionProcessEx)apiCompletionProcess).addAdvertisement(text, null);
     }
   }
 
@@ -88,21 +88,21 @@ public class BaseCompletionService extends CompletionService {
 
   @Override
   public @Nullable CompletionProcess getCurrentCompletion() {
-    return myApiCompletionProcess;
+    return apiCompletionProcess;
   }
 
   protected static class BaseCompletionResultSet extends CompletionResultSet {
-    protected final CompletionParameters myParameters;
-    protected CompletionSorter mySorter;
+    protected final CompletionParameters parameters;
+    protected CompletionSorter sorter;
     protected final @Nullable BaseCompletionService.BaseCompletionResultSet myOriginal;
-    private int myItemCounter = 0;
+    private int itemCounter = 0;
 
-    protected BaseCompletionResultSet(Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
+    protected BaseCompletionResultSet(java.util.function.Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
                                       CompletionContributor contributor, CompletionParameters parameters,
                                       @Nullable CompletionSorter sorter, @Nullable BaseCompletionService.BaseCompletionResultSet original) {
       super(prefixMatcher, consumer, contributor);
-      myParameters = parameters;
-      mySorter = sorter;
+      this.parameters = parameters;
+      this.sorter = sorter;
       myOriginal = original;
     }
 
@@ -111,18 +111,18 @@ public class BaseCompletionService extends CompletionService {
       ProgressManager.checkCanceled();
       if (!element.isValid()) {
         LOG.error("Invalid lookup element: " + element + " of " + element.getClass() +
-                  " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());
+                  " in " + parameters.getOriginalFile() + " of " + parameters.getOriginalFile().getClass());
         return;
       }
 
-      mySorter = mySorter == null ? getCompletionService().defaultSorter(myParameters, getPrefixMatcher()) : mySorter;
+      sorter = sorter == null ? getCompletionService().defaultSorter(parameters, getPrefixMatcher()) : sorter;
 
-      CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), mySorter);
+      CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), sorter);
       if (matched != null) {
-        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor);
+        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
         element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
-        element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, myItemCounter);
-        myItemCounter += 1;
+        element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
+        itemCounter += 1;
         passResult(matched);
       }
     }
@@ -132,7 +132,7 @@ public class BaseCompletionService extends CompletionService {
       if (matcher.equals(getPrefixMatcher())) {
         return this;
       }
-      return new BaseCompletionResultSet(getConsumer(), matcher, myContributor, myParameters, mySorter, this);
+      return new BaseCompletionResultSet(getConsumer(), matcher, contributor, parameters, sorter, this);
     }
 
     @Override
@@ -153,7 +153,7 @@ public class BaseCompletionService extends CompletionService {
 
     @Override
     public @NotNull CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new BaseCompletionResultSet(getConsumer(), getPrefixMatcher(), myContributor, myParameters, sorter, this);
+      return new BaseCompletionResultSet(getConsumer(), getPrefixMatcher(), contributor, parameters, sorter, this);
     }
 
     @Override
