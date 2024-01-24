@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
@@ -17,6 +18,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -34,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 
@@ -316,7 +319,13 @@ public final class SdkConfigurationUtil {
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
     FileChooser.chooseFiles(descriptor, null, component, suggestedSdkRoot, chosen -> {
       final String path = chosen.get(0).getPath();
-      consumer.consume(path);
+      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+      AtomicBoolean isAdjustedPathValid = new AtomicBoolean(false);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> isAdjustedPathValid.set(DiskQueryRelay.compute(() -> sdkType.isValidSdkHome(adjustedPath))),
+        ProjectBundle.message("progress.title.checking.sdk.home"), true, null
+      );
+      consumer.consume(isAdjustedPathValid.get() ? adjustedPath : path);
     });
   }
 
