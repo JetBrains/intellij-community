@@ -27,7 +27,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
     diagnosticBasedProcessing(ReturnTypeMismatchOnOverrideFactory, Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE),
     diagnosticBasedProcessing(AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD), Errors.VIRTUAL_MEMBER_HIDDEN),
     invisibleMemberDiagnosticBasedProcessing(MakeVisibleFactory, Errors.INVISIBLE_MEMBER),
-    diagnosticBasedProcessing(RemoveModifierFixBase.removeNonRedundantModifier, Errors.WRONG_MODIFIER_TARGET),
+    //diagnosticBasedProcessing(RemoveModifierFixBase.removeNonRedundantModifier, Errors.WRONG_MODIFIER_TARGET),
 
     diagnosticBasedProcessing(Errors.PLATFORM_CLASS_MAPPED_TO_KOTLIN) { element: KtDotQualifiedExpression, _ ->
         val parent = element.parent as? KtImportDirective ?: return@diagnosticBasedProcessing
