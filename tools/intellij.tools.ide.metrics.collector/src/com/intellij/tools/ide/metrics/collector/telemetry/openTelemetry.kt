@@ -13,17 +13,6 @@ data class MetricWithAttributes(val metric: Metric,
 
 private val logger = logger<OpentelemetryJsonParser>()
 
-private fun applyAliases(spanElements: List<SpanElement>, aliases: Map<String, String>): List<SpanElement> {
-  return spanElements.map {
-    if (aliases.containsKey(it.name)) {
-      it.copy(name = aliases[it.name]!!)
-    }
-    else {
-      it
-    }
-  }
-}
-
 /**
  * Reports duration of `nameSpan` and all its children spans.
  * Replaces the names with an alias, if one was passed.
@@ -38,15 +27,13 @@ fun getMetricsFromSpanAndChildren(file: Path,
                                   filter: SpanFilter,
                                   metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor(),
                                   aliases: Map<String, String> = mapOf()): List<Metric> {
-  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).toList()
-    .let {
-      if (aliases.isNotEmpty()) {
-        applyAliases(it, aliases)
-      }
-      else {
-        it
-      }
+  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).toList().toList().map {
+    val name = aliases.getOrDefault(it.name, it.name)
+    if (name != it.name) {
+      return@map it.copy(name = name)
     }
+    return@map it
+  }
 
   val spanToMetricMap = spanElements.mapNotNull { metricSpanProcessor.process(it) }
     .groupBy { it.metric.id.name }

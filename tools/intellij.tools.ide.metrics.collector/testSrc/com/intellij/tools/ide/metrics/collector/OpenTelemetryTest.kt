@@ -319,4 +319,26 @@ class OpenTelemetryTest {
     }
 
   }
+
+  @Test
+  fun metricAliases() {
+    val aliases = mapOf(Pair("findUsagesParent", "alias"))
+    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_findUsage_with_warmup.json"),
+                                                SpanFilter.nameEquals("performance_test"), aliases = aliases)
+    metrics.shouldContainAll(listOf(
+      Metric.newDuration("alias", 3342),
+      Metric.newDuration("alias_1", 362),
+      Metric.newDuration("alias_2", 337),
+      Metric.newDuration("alias_3", 336),
+      Metric.newDuration("alias_4", 320),
+      Metric.newDuration("alias_5", 350),
+      Metric.newDuration("alias_6", 342),
+      Metric.newDuration("alias_7", 340),
+      Metric.newDuration("alias_8", 289),
+      Metric.newDuration("alias_9", 326),
+      Metric.newDuration("alias_10", 340),
+      //Check that the alias applies only to the specified metric
+      Metric.newDuration("performance_test", 30662)
+    ))
+  }
 }
