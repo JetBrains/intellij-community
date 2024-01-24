@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.impl
 
 import com.intellij.diagnostic.PluginException
@@ -55,29 +55,8 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
         return null
       }
     }
-
-    val parentWithProvider = fromOldExtensions({ ext ->
-      try {
-        Pair(ext.getParent(item.data), ext)
-      }
-      catch (pce: ProcessCanceledException) {
-        // implementations may throw PCE manually, try to replace it with expected exception
-        ProgressManager.checkCanceled()
-        Pair(null, ext)
-      }
-    }, { parentWithProvider ->
-      val (parent, _) = parentWithProvider
-      parent != null && parent != item.data
-    })
-    if (parentWithProvider == null) {
-      return null
-    }
-    val (parent, parentProvider) = parentWithProvider
-    if (parent == null) {
-      return null
-    }
-    ensurePsiFromExtensionIsValid(parent, "Extension returned invalid parent", parentProvider.javaClass)
-
+    val parent = parentFromOldExtensions(item)
+                 ?: return null
     val containingFile = parent.containingFile
     if (containingFile != null && containingFile.virtualFile == null) return null
 
@@ -150,21 +129,28 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   }
 }
 
-
-fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?): T? {
+private fun parentFromOldExtensions(item: PsiNavBarItem): PsiElement? {
   for (ext in NavBarModelExtension.EP_NAME.extensionList) {
-    val selected = selector(ext)
-    if (selected != null) {
-      return selected
+    try {
+      val parent = ext.getParent(item.data)
+      if (parent == null || parent == item.data) {
+        continue
+      }
+      ensurePsiFromExtensionIsValid(parent, "Extension returned invalid parent", ext.javaClass)
+      return parent
+    }
+    catch (pce: ProcessCanceledException) {
+      // implementations may throw PCE manually, try to replace it with expected exception
+      ProgressManager.checkCanceled()
     }
   }
   return null
 }
 
-fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?, predicate: (T) -> Boolean): T? {
+fun <T> fromOldExtensions(selector: (ext: NavBarModelExtension) -> T?): T? {
   for (ext in NavBarModelExtension.EP_NAME.extensionList) {
     val selected = selector(ext)
-    if (selected != null && predicate(selected)) {
+    if (selected != null) {
       return selected
     }
   }
