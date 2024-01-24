@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.*;
@@ -42,7 +42,7 @@ public class BaseCompletionService extends CompletionService {
   public static final Key<Boolean> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 
   @Override
-  public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
+  public void performCompletion(@NotNull CompletionParameters parameters, @NotNull Consumer<? super CompletionResult> consumer) {
     myApiCompletionProcess = parameters.getProcess();
     try {
       super.performCompletion(parameters, consumer);
@@ -62,7 +62,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  protected String suggestPrefix(CompletionParameters parameters) {
+  protected String suggestPrefix(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     final int offset = parameters.getOffset();
     TextRange range = position.getTextRange();

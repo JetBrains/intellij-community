@@ -1,353 +1,301 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.completion.impl;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.completion.impl
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.Classifier;
-import com.intellij.codeInsight.lookup.ClassifierFactory;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.client.ClientAppSession;
-import com.intellij.openapi.client.ClientKind;
-import com.intellij.openapi.client.ClientSessionsManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.psi.Weigher;
-import com.intellij.util.Consumer;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.messages.SimpleMessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionPhase.*
+import com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher
+import com.intellij.codeInsight.lookup.Classifier
+import com.intellij.codeInsight.lookup.ClassifierFactory
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.util.CodeCompletion
+import com.intellij.codeWithMe.ClientId.Companion.current
+import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
+import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientAppSession
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager.Companion.getAppSession
+import com.intellij.openapi.client.ClientSessionsManager.Companion.getAppSessions
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.patterns.ElementPattern
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.psi.Weigher
+import com.intellij.util.Consumer
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.ThreadingAssertions
+import io.opentelemetry.api.trace.Span
+import kotlin.concurrent.Volatile
 
-import java.util.List;
+private val LOG = logger<CompletionServiceImpl>()
+private val DEFAULT_PHASE_HOLDER = CompletionPhaseHolder(NoCompletion, null)
 
-import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
+open class CompletionServiceImpl : BaseCompletionService() {
+  private val completionTracer = TelemetryManager.getInstance().getTracer(CodeCompletion)
 
-/**
- * @author peter
- */
-public class CompletionServiceImpl extends BaseCompletionService {
-  private static final Logger LOG = Logger.getInstance(CompletionServiceImpl.class);
+  companion object {
+    @JvmStatic
+    val completionService: CompletionServiceImpl
+      get() = getCompletionService() as CompletionServiceImpl
 
-  private static final CompletionPhaseHolder DEFAULT_PHASE_HOLDER = new CompletionPhaseHolder(CompletionPhase.NoCompletion, null);
-  private final IJTracer myCompletionTracer = TelemetryManager.getInstance().getTracer(CodeCompletion);
+    @JvmStatic
+    val currentCompletionProgressIndicator: CompletionProgressIndicator?
+      get() = tryGetClientCompletionService(getAppSession())?.currentCompletionProgressIndicator
 
-  private static final class ClientCompletionService implements Disposable {
-    public static @Nullable ClientCompletionService tryGetInstance(@Nullable ClientAppSession session) {
-      if (session == null) {
-        return null;
-      }
-      return session.getService(ClientCompletionService.class);
+    @SafeVarargs
+    @JvmStatic
+    fun assertPhase(vararg possibilities: Class<out CompletionPhase>) {
+      val holder = tryGetClientCompletionService(getAppSession())?.completionPhaseHolder ?: DEFAULT_PHASE_HOLDER
+      assertPhase(holder, *possibilities)
     }
 
-    private final @NotNull ClientAppSession myAppSession;
-
-    private volatile @NotNull CompletionPhaseHolder myPhaseHolder = DEFAULT_PHASE_HOLDER;
-
-    ClientCompletionService(@NotNull ClientAppSession appSession) {
-      myAppSession = appSession;
-    }
-
-    @Override
-    public void dispose() {
-      Disposer.dispose(myPhaseHolder.phase);
-    }
-
-    public void setCompletionPhase(@NotNull CompletionPhase phase) {
-      // wrap explicitly with client id for the case when some called API depends on ClientId.current
-      try (AccessToken ignored = ClientId.withClientId(myAppSession.getClientId())) {
-        ThreadingAssertions.assertEventDispatchThread();
-        CompletionPhase oldPhase = getCompletionPhase();
-        CompletionProgressIndicator oldIndicator = oldPhase.indicator;
-        if (oldIndicator != null &&
-            !(phase instanceof CompletionPhase.BgCalculation) &&
-            oldIndicator.isRunning() &&
-            !oldIndicator.isCanceled()) {
-          LOG.error("don't change phase during running completion: oldPhase=" + oldPhase);
-        }
-        boolean wasCompletionRunning = isRunningPhase(oldPhase);
-        boolean isCompletionRunning = isRunningPhase(phase);
-        if (isCompletionRunning != wasCompletionRunning) {
-          ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionPhaseListener.TOPIC)
-            .completionPhaseChanged(isCompletionRunning);
-        }
-
-        Disposer.dispose(oldPhase);
-        Throwable phaseTrace = new Throwable();
-        myPhaseHolder = new CompletionPhaseHolder(phase, phaseTrace);
+    @SafeVarargs
+    private fun assertPhase(phaseHolder: CompletionPhaseHolder, vararg possibilities: Class<out CompletionPhase>) {
+      if (!isPhase(phaseHolder.phase, *possibilities)) {
+        reportPhase(phaseHolder)
       }
     }
 
-    public @NotNull CompletionPhase getCompletionPhase() {
-      return getCompletionPhaseHolder().phase;
+    @SafeVarargs
+    @JvmStatic
+    fun isPhase(vararg possibilities: Class<out CompletionPhase>): Boolean {
+      return isPhase(phase = completionPhase, possibilities = possibilities)
     }
 
-    public @NotNull CompletionPhaseHolder getCompletionPhaseHolder() {
-      return myPhaseHolder;
-    }
-
-    public CompletionProgressIndicator getCurrentCompletionProgressIndicator() {
-      return getCurrentCompletionProgressIndicator(getCompletionPhase());
-    }
-
-    public CompletionProgressIndicator getCurrentCompletionProgressIndicator(@NotNull CompletionPhase phase) {
-      if (isPhase(phase, CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class,
-                  CompletionPhase.CommittingDocuments.class, CompletionPhase.Synchronous.class)) {
-        return phase.indicator;
+    @JvmStatic
+    var completionPhase: CompletionPhase
+      get() {
+        val clientCompletionService = tryGetClientCompletionService(getAppSession())
+        if (clientCompletionService == null) return DEFAULT_PHASE_HOLDER.phase
+        return clientCompletionService.completionPhase
       }
-      return null;
-    }
+      set(phase) {
+        val clientCompletionService = tryGetClientCompletionService(getAppSession())
+        if (clientCompletionService == null) return
+        clientCompletionService.completionPhase = phase
+      }
   }
 
-  public CompletionServiceImpl() {
-    super();
-    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
-    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        List<ClientAppSession> sessions = ClientSessionsManager.getAppSessions(ClientKind.ALL);
-        for (ClientAppSession session : sessions) {
-          ClientCompletionService clientCompletionService = ClientCompletionService.tryGetInstance(session);
-          if (clientCompletionService == null)
-            continue;
+  init {
+    val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosing(project: Project) {
+        val sessions = getAppSessions(ClientKind.ALL)
+        for (session in sessions) {
+          val clientCompletionService = tryGetClientCompletionService(session)
+          if (clientCompletionService == null) continue
 
-          CompletionProgressIndicator indicator = clientCompletionService.getCurrentCompletionProgressIndicator();
-          if (indicator != null && indicator.getProject() == project) {
-            indicator.closeAndFinish(true);
-            clientCompletionService.setCompletionPhase(CompletionPhase.NoCompletion);
+          val indicator = clientCompletionService.currentCompletionProgressIndicator
+          if (indicator != null && indicator.project === project) {
+            indicator.closeAndFinish(true)
+            clientCompletionService.completionPhase = NoCompletion
           }
           else if (indicator == null) {
-            clientCompletionService.setCompletionPhase(CompletionPhase.NoCompletion);
+            clientCompletionService.completionPhase = NoCompletion
           }
         }
       }
-    });
-    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        List<ClientAppSession> sessions = ClientSessionsManager.getAppSessions(ClientKind.ALL);
-        for (ClientAppSession session : sessions) {
-          ClientCompletionService clientCompletionService = ClientCompletionService.tryGetInstance(session);
-          if (clientCompletionService == null)
-            continue;
-          clientCompletionService.setCompletionPhase(CompletionPhase.NoCompletion);
+    })
+    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        val sessions = getAppSessions(ClientKind.ALL)
+        for (session in sessions) {
+          val clientCompletionService = tryGetClientCompletionService(session)
+          if (clientCompletionService == null) continue
+          clientCompletionService.completionPhase = NoCompletion
         }
       }
-    });
+    })
   }
 
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  public static CompletionServiceImpl getCompletionService() {
-    return (CompletionServiceImpl)CompletionService.getCompletionService();
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun setAdvertisementText(text: @NlsContexts.PopupAdvertisement String?) {
+    if (text == null) return
+    val completion = currentCompletionProgressIndicator
+    completion?.addAdvertisement(text, null)
   }
 
-  @Override
-  public void setAdvertisementText(final @NlsContexts.PopupAdvertisement @Nullable String text) {
-    if (text == null) return;
-    final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator();
-    if (completion != null) {
-      completion.addAdvertisement(text, null);
-    }
+  override fun createResultSet(parameters: CompletionParameters,
+                               consumer: Consumer<in CompletionResult>,
+                               contributor: CompletionContributor,
+                               matcher: PrefixMatcher): CompletionResultSet {
+    return CompletionResultSetImpl(consumer, matcher, contributor, parameters, null, null)
   }
 
-  @Override
-  protected CompletionResultSet createResultSet(@NotNull CompletionParameters parameters,
-                                                @NotNull Consumer<? super CompletionResult> consumer,
-                                                @NotNull CompletionContributor contributor,
-                                                @NotNull PrefixMatcher matcher) {
-    return new CompletionResultSetImpl(consumer, matcher, contributor, parameters, null, null);
-  }
-
-  @Override
-  public CompletionProcess getCurrentCompletion() {
-    CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
+  override fun getCurrentCompletion(): CompletionProcess? {
+    val indicator = currentCompletionProgressIndicator
     if (indicator != null) {
-      return indicator;
+      return indicator
     }
     // TODO we have to move myApiCompletionProcess inside per client service somehow
     // also shouldn't we delegate here to base method instead of accessing the field of the base class?
-    return ClientId.isCurrentlyUnderLocalId() ? myApiCompletionProcess : null;
+    return if (isCurrentlyUnderLocalId) myApiCompletionProcess else null
   }
 
-  public static @Nullable CompletionProgressIndicator getCurrentCompletionProgressIndicator() {
-    ClientCompletionService clientCompletionService = ClientCompletionService.tryGetInstance(ClientSessionsManager.getAppSession());
-    if (clientCompletionService == null)
-      return null;
-    return clientCompletionService.getCurrentCompletionProgressIndicator();
-  }
-
-  private static final class CompletionResultSetImpl extends BaseCompletionResultSet {
-    CompletionResultSetImpl(Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
-                            CompletionContributor contributor, CompletionParameters parameters,
-                            @Nullable CompletionSorter sorter, @Nullable CompletionResultSetImpl original) {
-      super(consumer, prefixMatcher, contributor, parameters, sorter, original);
+  private class CompletionResultSetImpl(consumer: Consumer<in CompletionResult>?, prefixMatcher: PrefixMatcher?,
+                                        contributor: CompletionContributor?, parameters: CompletionParameters?,
+                                        sorter: CompletionSorter?, original: CompletionResultSetImpl?) : BaseCompletionResultSet(consumer,
+                                                                                                                                 prefixMatcher,
+                                                                                                                                 contributor,
+                                                                                                                                 parameters,
+                                                                                                                                 sorter,
+                                                                                                                                 original) {
+    override fun addAllElements(elements: Iterable<LookupElement>) {
+      CompletionThreadingBase.withBatchUpdate({ super.addAllElements(elements) }, myParameters.process)
     }
 
-    @Override
-    public void addAllElements(@NotNull Iterable<? extends LookupElement> elements) {
-      CompletionThreadingBase.withBatchUpdate(() -> super.addAllElements(elements), myParameters.getProcess());
-    }
-
-    @Override
-    public void passResult(@NotNull CompletionResult result) {
-      LookupElement element = result.getLookupElement();
+    override fun passResult(result: CompletionResult) {
+      val element = result.lookupElement
       if (element != null && element.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR) == null) {
-        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor);
+        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor)
       }
-      super.passResult(result);
+      super.passResult(result)
     }
 
-    @Override
-    public @NotNull CompletionResultSet withPrefixMatcher(final @NotNull PrefixMatcher matcher) {
-      if (matcher.equals(getPrefixMatcher())) {
-        return this;
+    override fun withPrefixMatcher(matcher: PrefixMatcher): CompletionResultSet {
+      if (matcher == prefixMatcher) {
+        return this
       }
 
-      return new CompletionResultSetImpl(getConsumer(), matcher, myContributor, myParameters, mySorter, this);
+      return CompletionResultSetImpl(consumer, matcher, myContributor, myParameters, mySorter, this)
     }
 
-    @Override
-    public @NotNull CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), getPrefixMatcher(), myContributor, myParameters, sorter, this);
+    override fun withRelevanceSorter(sorter: CompletionSorter): CompletionResultSet {
+      return CompletionResultSetImpl(consumer, prefixMatcher, myContributor, myParameters, sorter, this)
     }
 
-    @Override
-    public void addLookupAdvertisement(@NotNull String text) {
-      getCompletionService().setAdvertisementText(text);
+    override fun addLookupAdvertisement(text: String) {
+      completionService.setAdvertisementText(text)
     }
 
-    @Override
-    public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
-      CompletionProcess process = myParameters.getProcess();
-      if (process instanceof CompletionProcessBase) {
-        ((CompletionProcessBase)process)
-          .addWatchedPrefix(myParameters.getOffset() - getPrefixMatcher().getPrefix().length(), prefixCondition);
+    override fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
+      val process = myParameters.process
+      if (process is CompletionProcessBase) {
+        process
+          .addWatchedPrefix(myParameters.offset - prefixMatcher.prefix.length, prefixCondition)
       }
     }
 
-    @Override
-    public void restartCompletionWhenNothingMatches() {
-      CompletionProcess process = myParameters.getProcess();
-      if (process instanceof CompletionProgressIndicator) {
-        ((CompletionProgressIndicator)process).getLookup().setStartCompletionWhenNothingMatches(true);
+    override fun restartCompletionWhenNothingMatches() {
+      val process = myParameters.process
+      if (process is CompletionProgressIndicator) {
+        process.lookup.isStartCompletionWhenNothingMatches = true
       }
     }
   }
 
-  @SafeVarargs
-  public static void assertPhase(Class<? extends CompletionPhase> @NotNull ... possibilities) {
-    ClientCompletionService clientCompletionService = ClientCompletionService.tryGetInstance(ClientSessionsManager.getAppSession());
-    CompletionPhaseHolder holder =
-      clientCompletionService != null ? clientCompletionService.getCompletionPhaseHolder() : DEFAULT_PHASE_HOLDER;
-    assertPhase(holder, possibilities);
+  override fun addWeighersBefore(sorter: CompletionSorterImpl): CompletionSorterImpl {
+    val processed = super.addWeighersBefore(sorter)
+    return processed.withClassifier(CompletionSorterImpl.weighingFactory(LiveTemplateWeigher()))
   }
 
-  @SafeVarargs
-  private static void assertPhase(@NotNull CompletionPhaseHolder phaseHolder,
-                           Class<? extends CompletionPhase> @NotNull ... possibilities) {
-    if (!isPhase(phaseHolder.phase(), possibilities)) {
-      reportPhase(phaseHolder);
+  override fun processStatsWeigher(sorter: CompletionSorterImpl,
+                                   weigher: Weigher<*, *>,
+                                   location: CompletionLocation): CompletionSorterImpl {
+    val processedSorter = super.processStatsWeigher(sorter, weigher, location)
+    return processedSorter.withClassifier(object : ClassifierFactory<LookupElement>("stats") {
+      override fun createClassifier(next: Classifier<LookupElement>): Classifier<LookupElement> {
+        return LookupStatisticsWeigher(location, next)
+      }
+    })
+  }
+
+  override fun getVariantsFromContributor(params: CompletionParameters, contributor: CompletionContributor, result: CompletionResultSet) {
+    runWithSpan(completionTracer, contributor.javaClass.simpleName) { span: Span ->
+      super.getVariantsFromContributor(params, contributor, result)
+      span.setAttribute("avoid_null_value", true)
     }
   }
 
-  private static void reportPhase(@NotNull CompletionPhaseHolder phaseHolder) {
-    Throwable phaseTrace = phaseHolder.phaseTrace();
-    String traceText = phaseTrace != null ? "; set at " + ExceptionUtil.getThrowableText(phaseTrace) : "";
-    LOG.error(phaseHolder.phase() + "; " + ClientId.getCurrent() + traceText);
-  }
+  override fun performCompletion(parameters: CompletionParameters, consumer: Consumer<in CompletionResult>) {
+    runWithSpan(completionTracer, "performCompletion") { span: Span ->
+      val countingConsumer = object : Consumer<CompletionResult> {
+        @JvmField
+        var count: Int = 0
 
-  @SafeVarargs
-  public static boolean isPhase(Class<? extends CompletionPhase> @NotNull ... possibilities) {
-    return isPhase(getCompletionPhase(), possibilities);
-  }
-
-  @SafeVarargs
-  private static boolean isPhase(@NotNull CompletionPhase phase, Class<? extends CompletionPhase> @NotNull ... possibilities) {
-    for (Class<? extends CompletionPhase> possibility : possibilities) {
-      if (possibility.isInstance(phase)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static void setCompletionPhase(@NotNull CompletionPhase phase) {
-    ClientCompletionService clientCompletionService = ClientCompletionService.tryGetInstance(ClientSessionsManager.getAppSession());
-    if (clientCompletionService == null)
-      return;
-    clientCompletionService.setCompletionPhase(phase);
-  }
-
-  private static boolean isRunningPhase(@NotNull CompletionPhase phase) {
-    return phase != CompletionPhase.NoCompletion && !(phase instanceof CompletionPhase.ZombiePhase) &&
-           !(phase instanceof CompletionPhase.ItemsCalculated);
-  }
-
-  public static @NotNull CompletionPhase getCompletionPhase() {
-    ClientCompletionService clientCompletionService = ClientCompletionService.tryGetInstance(ClientSessionsManager.getAppSession());
-    if (clientCompletionService == null)
-      return DEFAULT_PHASE_HOLDER.phase;
-    return clientCompletionService.getCompletionPhase();
-  }
-
-  @Override
-  protected @NotNull CompletionSorterImpl addWeighersBefore(@NotNull CompletionSorterImpl sorter) {
-    CompletionSorterImpl processed = super.addWeighersBefore(sorter);
-    return processed.withClassifier(CompletionSorterImpl.weighingFactory(new LiveTemplateWeigher()));
-  }
-
-  @Override
-  protected @NotNull CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
-                                                              @NotNull Weigher weigher,
-                                                              @NotNull CompletionLocation location) {
-    CompletionSorterImpl processedSorter = super.processStatsWeigher(sorter, weigher, location);
-    return processedSorter.withClassifier(new ClassifierFactory<>("stats") {
-      @Override
-      public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-        return new StatisticsWeigher.LookupStatisticsWeigher(location, next);
-      }
-    });
-  }
-
-  @Override
-  protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
-    runWithSpan(myCompletionTracer, contributor.getClass().getSimpleName(), span -> {
-      super.getVariantsFromContributor(params, contributor, result);
-      span.setAttribute("avoid_null_value", true);
-    });
-  }
-
-  @Override
-  public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
-    runWithSpan(myCompletionTracer, "performCompletion", span -> {
-      var countingConsumer = new Consumer<CompletionResult>() {
-        int count = 0;
-
-        @Override
-        public void consume(CompletionResult result) {
-          count++;
-          consumer.consume(result);
+        override fun consume(result: CompletionResult) {
+          count++
+          consumer.consume(result)
         }
-      };
-
-      super.performCompletion(parameters, countingConsumer);
-
-      span.setAttribute("lookupsFound", countingConsumer.count);
-    });
-  }
-
-  private record CompletionPhaseHolder(@NotNull CompletionPhase phase, @Nullable Throwable phaseTrace) {
+      }
+      super.performCompletion(parameters, countingConsumer)
+      span.setAttribute("lookupsFound", countingConsumer.count.toLong())
+    }
   }
 }
+
+private class ClientCompletionService(private val appSession: ClientAppSession) : Disposable {
+  @Volatile
+  var completionPhaseHolder: CompletionPhaseHolder = DEFAULT_PHASE_HOLDER
+    private set
+
+  override fun dispose() {
+    Disposer.dispose(completionPhaseHolder.phase)
+  }
+
+  var completionPhase: CompletionPhase
+    get() = completionPhaseHolder.phase
+    set(phase) {
+      // wrap explicitly with a client id for the case when some called API depends on ClientId.current
+      withClientId(appSession.clientId).use {
+        ThreadingAssertions.assertEventDispatchThread()
+        val oldPhase = this.completionPhase
+        val oldIndicator = oldPhase.indicator
+        if (oldIndicator != null &&
+            phase !is BgCalculation &&
+            oldIndicator.isRunning &&
+            !oldIndicator.isCanceled) {
+          LOG.error("don't change phase during running completion: oldPhase=$oldPhase")
+        }
+        val wasCompletionRunning = isRunningPhase(oldPhase)
+        val isCompletionRunning = isRunningPhase(phase)
+        if (isCompletionRunning != wasCompletionRunning) {
+          ApplicationManager.getApplication().messageBus.syncPublisher(CompletionPhaseListener.TOPIC)
+            .completionPhaseChanged(isCompletionRunning)
+        }
+
+        Disposer.dispose(oldPhase)
+        val phaseTrace = Throwable()
+        completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = phaseTrace)
+      }
+    }
+
+  val currentCompletionProgressIndicator: CompletionProgressIndicator?
+    get() = getCurrentCompletionProgressIndicator(this.completionPhase)
+
+  fun getCurrentCompletionProgressIndicator(phase: CompletionPhase): CompletionProgressIndicator? {
+    if (isPhase(phase, BgCalculation::class.java, ItemsCalculated::class.java, CommittingDocuments::class.java, Synchronous::class.java)) {
+      return phase.indicator
+    }
+    return null
+  }
+}
+
+private fun tryGetClientCompletionService(session: ClientAppSession?): ClientCompletionService? {
+  return session?.getService(ClientCompletionService::class.java)
+}
+
+@SafeVarargs
+private fun isPhase(phase: CompletionPhase, vararg possibilities: Class<out CompletionPhase>): Boolean {
+  return possibilities.any { it.isInstance(phase) }
+}
+
+private fun isRunningPhase(phase: CompletionPhase): Boolean {
+  return phase !== NoCompletion && phase !is ZombiePhase && phase !is ItemsCalculated
+}
+
+private fun reportPhase(phaseHolder: CompletionPhaseHolder) {
+  val phaseTrace = phaseHolder.phaseTrace
+  val traceText = if (phaseTrace == null) "" else "; set at ${ExceptionUtil.getThrowableText(phaseTrace)}"
+  LOG.error("${phaseHolder.phase}; $current$traceText")
+}
+
+private data class CompletionPhaseHolder(@JvmField val phase: CompletionPhase, @JvmField val phaseTrace: Throwable?)
+
