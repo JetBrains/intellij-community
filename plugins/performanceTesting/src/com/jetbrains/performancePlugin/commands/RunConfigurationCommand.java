@@ -31,7 +31,7 @@ import java.util.Arrays;
  * Command runs specified configuration.
  * If configuration is absent prints all available for the project.
  * There are two modes: TILL_STARTED and TILL_TERMINATED
- * Set -failureExpected param f failure expected
+ * Set -failureExpected param if failure expected
  * Set -debug param if you want to run configuration in debug mode
  * <p>
  * Syntax: %runConfiguration [mode] <configurationName> [failureExpected] [debug]
