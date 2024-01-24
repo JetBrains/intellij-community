@@ -1,0 +1,17 @@
+Index: platform/util/ui/src/com/intellij/openapi/util/IconLoader.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/util/ui/src/com/intellij/openapi/util/IconLoader.kt b/platform/util/ui/src/com/intellij/openapi/util/IconLoader.kt
+--- a/platform/util/ui/src/com/intellij/openapi/util/IconLoader.kt	(revision a26be3a3446f1a15034e40c5577f03e31e8b9384)
++++ b/platform/util/ui/src/com/intellij/openapi/util/IconLoader.kt	(date 1706101024270)
+@@ -327,6 +327,7 @@
+     }.replaceIcon(icon)
+   }
+ 
++  @JvmStatic
+   fun detachClassLoader(classLoader: ClassLoader) {
+     iconCache.asMap().entries.removeIf { (key, icon) ->
+       icon.detachClassLoader(classLoader) || key.second === classLoader
+ 
