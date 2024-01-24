@@ -81,6 +81,8 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private val thrownExceptions = mutableListOf<Throwable>()
 
+    protected val agentList = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
+
     private fun initContexts(suspendContext: SuspendContextImpl) {
         myEvaluationContext = createEvaluationContext(suspendContext)
         myDebuggerContext = createDebuggerContext(suspendContext)
@@ -368,12 +370,22 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
         addMavenDependency(compilerFacility, library, module)
+        processAgentDependencies(library, compilerFacility)
     }
 
-    fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String, module: Module) {
+    private fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String, module: Module) {
         val regex = Regex(MAVEN_DEPENDENCY_REGEX)
         val result = regex.matchEntire(library) ?: return
         val (_, groupId: String, artifactId: String, version: String) = result.groupValues
+        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
+    }
+
+    private fun processAgentDependencies(library: String, compilerFacility: DebuggerTestCompilerFacility) {
+        val regex = Regex(pattern = "$MAVEN_DEPENDENCY_REGEX(-javaagent)?")
+        val result = regex.matchEntire(library) ?: return
+        val (_, groupId: String, artifactId: String, version: String, agent: String) = result.groupValues
+        if ("-javaagent" == agent)
+            agentList.add(JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, false))
         addMavenDependency(compilerFacility, groupId, artifactId, version, module)
     }
 
@@ -381,6 +393,12 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val params = super.createJavaParameters(mainClass)
         for (entry in classPath) {
             params.classPath.add(entry)
+        }
+        for (agent in agentList) {
+            val dependencies = loadDependencies(agent)
+            for (dependency in dependencies) {
+                params.vmParametersList.add("-javaagent:${dependency.file.presentableUrl}")
+            }
         }
         return params
     }
