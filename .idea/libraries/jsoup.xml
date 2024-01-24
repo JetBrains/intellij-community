@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="jsoup" type="repository">
-    <properties maven-id="org.jsoup:jsoup:1.16.2">
+    <properties maven-id="org.jsoup:jsoup:1.17.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.2/jsoup-1.16.2.jar">
-          <sha256sum>a73a1eb5d02b51490547c46485e30f4f14e68af3624840b57abe8c4580a00b83</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.17.2/jsoup-1.17.2.jar">
+          <sha256sum>f60b33b38e9d7ac93eaaa68a6c70f706bb99036494b2e2add2bfee11d09ac6f5</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.2/jsoup-1.16.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.17.2/jsoup-1.17.2.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.2/jsoup-1.16.2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.17.2/jsoup-1.17.2-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.2/jsoup-1.16.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.17.2/jsoup-1.17.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
