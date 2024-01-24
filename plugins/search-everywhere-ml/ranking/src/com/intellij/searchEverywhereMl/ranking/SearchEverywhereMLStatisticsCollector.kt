@@ -42,7 +42,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                               timeToFirstResult: Int,
                               mixedListInfo: SearchEverywhereMixedListInfo,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
-    if (!isLoggingEnabled()) return
+    if (!isLoggingEnabled) return
     val elements = elementsProvider.invoke()
     val additionalEvents = buildList {
       addAll(getSelectedElementsEvents(selectedIndices, elements, elementIdProvider, selectedItems))
@@ -70,7 +70,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                 timeToFirstResult: Int,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
                                 elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
-    if (!isLoggingEnabled()) return
+    if (!isLoggingEnabled) return
     val elements = elementsProvider.invoke()
     val additionalEvents = getOnFinishEvents(closePopup = true)
     reportElements(
@@ -95,7 +95,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                  timeToFirstResult: Int,
                                  mixedListInfo: SearchEverywhereMixedListInfo,
                                  elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
-    if (!isLoggingEnabled()) return
+    if (!isLoggingEnabled) return
     val elements = elementsProvider.invoke()
     val additionalEvents = buildList {
       if (cache.searchStartReason == SearchRestartReason.SEARCH_STARTED) {
@@ -234,10 +234,11 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  private fun isLoggingEnabled(): Boolean {
-    val application = ApplicationManager.getApplication()
-    return application.isUnitTestMode || (application.isEAP && !Registry.`is`("search.everywhere.force.disable.logging.ml"))
-  }
+  private val isLoggingEnabled: Boolean
+    get() {
+      val application = ApplicationManager.getApplication()
+      return application.isUnitTestMode || (application.isEAP && !Registry.`is`("search.everywhere.force.disable.logging.ml"))
+    }
 
 
   private fun getSelectedElementsEvents(selectedElements: IntArray,
