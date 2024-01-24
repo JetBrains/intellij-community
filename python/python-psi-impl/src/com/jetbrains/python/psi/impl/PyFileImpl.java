@@ -223,11 +223,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
-  public PyTargetExpression findTopLevelAttribute(@NotNull String name) {
-    return findByName(name, getTopLevelAttributes());
-  }
-
-  @Override
   public @NotNull List<PyTypeAliasStatement> getTypeAliasStatements() {
     return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyTypeAliasStatement.class);
   }
