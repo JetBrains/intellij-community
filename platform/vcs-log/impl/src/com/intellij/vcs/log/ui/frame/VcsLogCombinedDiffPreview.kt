@@ -15,9 +15,7 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
 
   override fun createPreviewModel(): CombinedDiffPreviewModel {
     val previewModel = VcsLogCombinedDiffPreviewModel(browser)
-    val blocks = CombinedDiffPreviewModel.prepareCombinedDiffModelRequests(browser.viewer.project,
-                                                                           previewModel.iterateAllChanges().toList())
-    previewModel.model.setBlocks(blocks)
+    previewModel.updateBlocks()
     return previewModel
   }
 
