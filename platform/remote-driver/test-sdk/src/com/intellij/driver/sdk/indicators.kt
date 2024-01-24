@@ -2,6 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.service
+import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -25,14 +26,34 @@ fun Driver.waitForProjectOpen(timeout: Duration = 1.minutes) {
   }
 }
 
-fun Driver.waitForIndicators(timeout: Duration) {
-  waitFor(timeout) {
-    isProjectOpened() && !areIndicatorsVisible(singleProject())
-  }
+fun Driver.waitForIndicators(project: Project, timeout: Duration) {
+  waitForIndicators({ project }, timeout)
 }
 
-fun Driver.waitForIndicators(project: Project, timeout: Duration) {
+fun Driver.waitForIndicators(timeout: Duration) {
+  waitForIndicators(::singleProject, timeout)
+}
+
+private fun Driver.waitForIndicators(projectGet: () -> Project, timeout: Duration) {
+  var smartLongEnoughStart: Instant? = null
+
   waitFor(timeout) {
-    !areIndicatorsVisible(project)
+    if (!isProjectOpened() || areIndicatorsVisible(projectGet.invoke())) {
+      smartLongEnoughStart = null
+      return@waitFor false
+    }
+
+    val start = smartLongEnoughStart
+    if (start == null) {
+      smartLongEnoughStart = Instant.now()
+    }
+    else {
+      val now = Instant.now()
+      if (start.plusSeconds(3).isBefore(now)) {
+        return@waitFor true // we are smart long enough
+      }
+    }
+
+    false
   }
 }

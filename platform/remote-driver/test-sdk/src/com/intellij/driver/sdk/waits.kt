@@ -6,7 +6,7 @@ import kotlin.time.Duration.Companion.seconds
 
 fun waitFor(
   duration: Duration = 5.seconds,
-  interval: Duration = 2.seconds,
+  interval: Duration = 1.seconds,
   errorMessage: String = "",
   condition: () -> Boolean
 ) {
