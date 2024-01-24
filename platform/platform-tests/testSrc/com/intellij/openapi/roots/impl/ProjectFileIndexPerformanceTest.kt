@@ -11,7 +11,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -19,7 +18,6 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.getInstance
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -46,7 +44,7 @@ class ProjectFileIndexPerformanceTest {
     fun initProject() {
       runWriteActionAndWait {
         val builder = MutableEntityStorage.create()
-        val fileUrlManager = VirtualFileUrlManager.getInstance(ourProjectModel.project)
+        val fileUrlManager = WorkspaceModel.getInstance(ourProjectModel.project).getVirtualFileUrlManager()
         val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!
         ourProjectRoot = fsRoot.subdir(ProjectFileIndexPerformanceTest::class.java.simpleName)
         val bigModuleRoot = ourProjectRoot.subdir("big")

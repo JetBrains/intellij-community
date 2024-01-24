@@ -23,9 +23,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -143,7 +141,8 @@ private fun convertToRepositoryLibraryAction(
     val newLibraryConfig = JarRepositoryManager.resolveAndDownload(project, artifact, setOf(ArtifactKind.ARTIFACT), null, null)
 
     WriteAction.run<Nothing> {
-      WorkspaceModel.getInstance(project).updateProjectModel("Converting library '${library.name}' to repository type") { builder ->
+      val workspaceModel = WorkspaceModel.getInstance(project)
+      workspaceModel.updateProjectModel("Converting library '${library.name}' to repository type") { builder ->
         val libraryEditor = NewLibraryEditor()
         newLibraryConfig?.addRoots(libraryEditor)
 
@@ -152,7 +151,7 @@ private fun convertToRepositoryLibraryAction(
             propertiesXmlTag = """<properties maven-id="${artifact.mavenId}" />"""
           }
 
-          val urlManager = VirtualFileUrlManager.getInstance(project)
+          val urlManager = workspaceModel.getVirtualFileUrlManager()
           libraryEditor.getUrls(OrderRootType.CLASSES)
             .asSequence()
             .map { urlString -> urlManager.getOrCreateFromUri(urlString) }

@@ -27,7 +27,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.getGlobalInstance
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -187,7 +186,7 @@ class GlobalWorkspaceModel : Disposable {
 
     val workspaceModel = WorkspaceModel.getInstance(targetProject)
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(entityStorage.current,
-                                                           VirtualFileUrlManager.getInstance(targetProject))
+                                                           workspaceModel.getVirtualFileUrlManager())
     workspaceModel.updateProjectModel("Sync global entities with project: ${targetProject.name}") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
@@ -197,7 +196,8 @@ class GlobalWorkspaceModel : Disposable {
                                  targetBuilder: MutableEntityStorage) = applyStateToProjectBuilderTimeMs.addMeasuredTimeMillis {
     LOG.info("Sync global entities with mutable entity storage")
     targetBuilder.replaceBySource(globalEntitiesFilter,
-                                  copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
+                                  copyEntitiesToEmptyStorage(entityStorage.current,
+                                                             WorkspaceModel.getInstance(project).getVirtualFileUrlManager()))
   }
 
   @RequiresWriteLock

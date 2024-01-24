@@ -18,9 +18,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.collections.set
@@ -64,7 +62,9 @@ internal class ImporterModifiableArtifact(private val project: Project,
   }
 
   override fun setOutputPath(outputPath: String?) {
-    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).getOrCreateFromUri(VfsUtilCore.pathToUrl(it)) }
+    val outputUrl = outputPath?.let {
+      WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUri(VfsUtilCore.pathToUrl(it))
+    }
     this.outputUrl = outputUrl!!
   }
 
@@ -133,7 +133,7 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
     val uniqueName = generateUniqueName(name)
 
     val outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, project)
-    val fileManager = VirtualFileUrlManager.getInstance(project)
+    val fileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val outputUrl = outputPath?.let { fileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(it)) }
 
     val artifact = ImporterModifiableArtifact(project, uniqueName, artifactType, outputUrl!!, rootElement, externalSource)

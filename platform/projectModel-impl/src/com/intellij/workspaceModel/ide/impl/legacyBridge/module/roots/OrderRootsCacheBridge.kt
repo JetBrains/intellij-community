@@ -8,10 +8,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -19,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
 class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) : OrderRootsCache(parentDisposable) {
-  private val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+  private val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   private val myRootUrls = AtomicReference<ConcurrentMap<CacheKey, Array<String>>>()
   private val myRootVirtualFiles = AtomicReference<ConcurrentMap<CacheKey, Array<VirtualFile>>>()
 

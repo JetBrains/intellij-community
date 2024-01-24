@@ -30,7 +30,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.getGlobalInstance
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -112,7 +111,10 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {
-    val virtualFileUrlManager = if (project == null) VirtualFileUrlManager.getGlobalInstance() else VirtualFileUrlManager.getInstance(project)
+    val virtualFileUrlManager = if (project == null)
+      VirtualFileUrlManager.getGlobalInstance()
+    else
+      WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager, false)
   }
 

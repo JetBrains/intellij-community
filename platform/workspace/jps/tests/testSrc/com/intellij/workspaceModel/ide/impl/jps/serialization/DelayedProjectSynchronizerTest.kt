@@ -34,7 +34,6 @@ import com.intellij.testFramework.OpenProjectTaskBuilder
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
@@ -69,7 +68,7 @@ class DelayedProjectSynchronizerTest {
   @Before
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }
@@ -93,11 +92,12 @@ class DelayedProjectSynchronizerTest {
   }
 
   private fun checkSerializersConsistency(project: Project) {
-    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val storage = workspaceModel.currentSnapshot
     val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
-    val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
+    val unloadedEntitiesStorage = workspaceModel.internal.currentSnapshotOfUnloadedEntities
     serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage,
-                                 VirtualFileUrlManager.getInstance(project))
+                                 workspaceModel.getVirtualFileUrlManager())
   }
 
   @Test

@@ -2,16 +2,17 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.*
 
 class ReplaceBySourceTest {
@@ -23,7 +24,7 @@ class ReplaceBySourceTest {
 
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
   }
 
   @Test

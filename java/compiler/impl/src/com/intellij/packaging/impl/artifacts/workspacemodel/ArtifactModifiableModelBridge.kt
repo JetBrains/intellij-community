@@ -26,13 +26,11 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.mapInPlace
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
@@ -130,7 +128,7 @@ class ArtifactModifiableModelBridge(
 
     val outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, project)
 
-    val fileManager = VirtualFileUrlManager.getInstance(project)
+    val fileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
     val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, externalSource)
 

@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -78,7 +78,7 @@ class JpsIncorrectDataLoading : HeavyPlatformTestCase() {
 
   private fun loadProject(projectFile: File): EntityStorage {
     val storageBuilder = MutableEntityStorage.create()
-    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val virtualFileManager: VirtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager,
                 errorReporter = errorCollector)
     return storageBuilder.toSnapshot()

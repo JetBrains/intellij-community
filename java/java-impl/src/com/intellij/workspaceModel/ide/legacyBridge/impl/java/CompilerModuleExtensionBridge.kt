@@ -8,13 +8,12 @@ import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
@@ -27,7 +26,7 @@ internal class CompilerModuleExtensionBridge(
 ) : CompilerModuleExtension(), ModuleExtensionBridge {
 
   private var changed = false
-  private val virtualFileManager = VirtualFileUrlManager.getInstance(module.project)
+  private val virtualFileManager = WorkspaceModel.getInstance(module.project).getVirtualFileUrlManager()
 
   private val javaSettings: JavaModuleSettingsEntity?
     get() = module.findModuleEntity(entityStorage.current)?.javaSettings

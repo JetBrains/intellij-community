@@ -11,10 +11,8 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
-import com.intellij.workspaceModel.ide.getInstance
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import java.nio.file.Path
@@ -38,9 +36,10 @@ fun KotlinScriptEntity.listDependencies(project: Project, rootTypeId: KotlinScri
 }
 
 fun VirtualFile.findDependentScripts(project: Project): List<KotlinScriptEntity>? {
-    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val storage = workspaceModel.currentSnapshot
     val index = storage.getVirtualFileUrlIndex()
-    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val fileUrlManager = workspaceModel.getVirtualFileUrlManager()
 
     var currentFile: VirtualFile? = this
     while (currentFile != null) {
@@ -250,7 +249,7 @@ private fun MutableEntityStorage.addNewScriptEntity(
     libraryRefs: Set<KotlinScriptLibraryId>,
     project: Project
 ): KotlinScriptEntity {
-    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val scriptSource = KotlinScriptEntitySource(scriptFile.toVirtualFileUrl(fileUrlManager))
     val scriptEntity = KotlinScriptEntity(scriptFile.path, libraryRefs, scriptSource)
     return addEntity(scriptEntity)
@@ -357,7 +356,7 @@ private fun Project.createLibraryEntity(
     rootTypeId: KotlinScriptLibraryRootTypeId,
 ): KotlinScriptLibraryEntity {
 
-    val fileUrlManager = VirtualFileUrlManager.getInstance(this)
+    val fileUrlManager = WorkspaceModel.getInstance(this).getVirtualFileUrlManager()
     val fileUrl = dependency.toVirtualFileUrl(fileUrlManager)
     val libraryEntitySource = KotlinScriptLibraryEntitySource(fileUrl)
     val libraryRoots = mutableListOf(KotlinScriptLibraryRoot(fileUrl, rootTypeId))

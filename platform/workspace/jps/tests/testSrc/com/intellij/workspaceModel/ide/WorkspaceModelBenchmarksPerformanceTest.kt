@@ -304,7 +304,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @Test
   fun `10_000 orphan content roots to modules`(testInfo: TestInfo) {
-    val manager = VirtualFileUrlManager.getInstance(projectModel.project)
+    val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
     val newFolder = tempFolder.newRandomDirectory()
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {
@@ -341,7 +341,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   @Test
   fun `10_000 orphan source roots to modules`(testInfo: TestInfo) {
     val newFolder = VfsUtilCore.pathToUrl(tempFolder.newRandomDirectory().toString())
-    val manager = VirtualFileUrlManager.getInstance(projectModel.project)
+    val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {
       runWriteActionAndWait {
@@ -388,7 +388,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   @Test
   fun `10_000 orphan source roots to many content roots to modules`(testInfo: TestInfo) {
     val newFolder = tempFolder.newRandomDirectory()
-    val manager = VirtualFileUrlManager.getInstance(projectModel.project)
+    val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {
       runWriteActionAndWait {

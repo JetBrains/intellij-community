@@ -14,7 +14,6 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -23,7 +22,6 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.getInstance
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -129,7 +127,7 @@ abstract class TrustedProjectsHeavyTestCase {
     moduleName: String,
     contentRoots: List<VirtualFile>
   ) {
-    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val moduleEntity = ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource) {
       this.contentRoots = contentRoots.map {
         ContentRootEntity.invoke(it.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource)

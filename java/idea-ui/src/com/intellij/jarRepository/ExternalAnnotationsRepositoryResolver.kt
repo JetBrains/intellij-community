@@ -13,15 +13,14 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import org.jetbrains.concurrency.AsyncPromise
@@ -93,7 +92,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     LOG.debug("Found ${newRoots.size} external annotations for ${library.name}")
 
     val libraryEntity: LibraryEntity = diff.findLibraryEntity(library) ?: return true
-    val vfUrlManager = VirtualFileUrlManager.getInstance(project)
+    val vfUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val newUrls = newRoots.map { it.file.toVirtualFileUrl(vfUrlManager) }.toHashSet()
     val toRemove = mutableListOf<LibraryRoot>()
     val annotationsRootType = LibraryRootTypeId(AnnotationOrderRootType.ANNOTATIONS_ID)

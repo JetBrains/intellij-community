@@ -20,8 +20,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.isConsistent
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.getInstance
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -55,7 +53,8 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       null
     }
 
-  private val cacheSerializer = WorkspaceModelCacheSerializer(VirtualFileUrlManager.getInstance(project), urlRelativizer)
+  private val cacheSerializer = WorkspaceModelCacheSerializer(WorkspaceModel.getInstance(project).getVirtualFileUrlManager(),
+                                                              urlRelativizer)
 
   init {
     if (enabled) {

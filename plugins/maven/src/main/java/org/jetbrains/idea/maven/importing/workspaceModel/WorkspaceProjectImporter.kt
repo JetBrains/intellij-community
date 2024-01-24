@@ -35,9 +35,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.ExceptionUtil
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -77,7 +75,7 @@ internal class WorkspaceProjectImporter(
   private val myModifiableModelsProvider: IdeModifiableModelsProvider,
   private val myProject: Project
 ) : MavenProjectImporter {
-  private val virtualFileUrlManager = VirtualFileUrlManager.getInstance(myProject)
+  private val virtualFileUrlManager = WorkspaceModel.getInstance(myProject).getVirtualFileUrlManager()
   private val createdModulesList = java.util.ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
@@ -577,8 +575,9 @@ internal class WorkspaceProjectImporter(
 
       val mavenManager = MavenProjectsManager.getInstance(project)
       val projectsTree = mavenManager.projectsTree
+      val workspaceModel = WorkspaceModel.getInstance(project)
       val importer = WorkspaceFolderImporter(builder,
-                                             VirtualFileUrlManager.getInstance(project),
+                                             workspaceModel.getVirtualFileUrlManager(),
                                              mavenManager.importingSettings,
                                              folderImportingContext)
 

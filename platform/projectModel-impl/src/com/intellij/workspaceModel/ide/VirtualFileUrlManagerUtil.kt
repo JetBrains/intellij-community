@@ -5,7 +5,6 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -14,10 +13,10 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 
 /**
- * Returns instance of [VirtualFileUrlManager] which should be used to create [VirtualFileUrl] instances to be stored in 
+ * Returns instance of [VirtualFileUrlManager] which should be used to create [VirtualFileUrl] instances to be stored in
  * [WorkspaceModel][com.intellij.platform.backend.workspace.WorkspaceModel] entities.
  */
-fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUrlManager = project.service()
+//fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUrlManager = project.service()
 
 /**
  * Returns instance of [VirtualFileUrlManager] which should be used to create [VirtualFileUrl] instances to be stored in entities added in

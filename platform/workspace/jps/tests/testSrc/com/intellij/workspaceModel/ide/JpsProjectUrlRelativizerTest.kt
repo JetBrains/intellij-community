@@ -7,6 +7,7 @@ import com.intellij.facet.mock.registerFacetType
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
@@ -58,7 +59,7 @@ class JpsProjectUrlRelativizerTest {
     Registry.get("ide.workspace.model.store.relative.paths.in.cache").setValue(true)
 
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
 

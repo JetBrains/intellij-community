@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
@@ -16,10 +17,8 @@ import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -37,7 +36,7 @@ internal class ModifiableContentEntryBridge(
     private val LOG = logger<ModifiableContentEntryBridge>()
   }
 
-  private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
+  private val virtualFileManager = WorkspaceModel.getInstance(modifiableRootModel.project).getVirtualFileUrlManager()
 
   private val currentContentEntry = CachedValueImpl {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryBridge
@@ -170,7 +169,7 @@ internal class ModifiableContentEntryBridge(
     if (!excludedUrls.contains(virtualFileUrl)) return false
 
     val contentRootEntity = currentContentEntry.value.entity
-    val (new, toRemove) = contentRootEntity.excludedUrls.partition {excludedUrl -> excludedUrl.url != virtualFileUrl  }
+    val (new, toRemove) = contentRootEntity.excludedUrls.partition { excludedUrl -> excludedUrl.url != virtualFileUrl }
     updateContentEntry {
       this.excludedUrls = new
     }

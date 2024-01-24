@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -18,7 +19,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
-import com.intellij.workspaceModel.ide.getInstance
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
@@ -71,7 +71,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   }
 
   private fun checkSampleProjectConfiguration(storage: EntityStorage, projectDir: File) {
-    val projectUrl = projectDir.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project))
+    val projectUrl = projectDir.toVirtualFileUrl(WorkspaceModel.getInstance(project).getVirtualFileUrlManager())
     val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(3, modules.size)
 
@@ -245,7 +245,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
   private fun loadProject(projectFile: File): EntityStorage {
     val storageBuilder = MutableEntityStorage.create()
-    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val virtualFileManager: VirtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager)
     return storageBuilder.toSnapshot()
   }
