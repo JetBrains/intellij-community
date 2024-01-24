@@ -149,10 +149,13 @@ if (Get-Module -Name PSReadLine) {
   $Global:__JetBrainsIntellijOriginalAddToHistoryHandler = (Get-PSReadLineOption).AddToHistoryHandler
 
   Set-PSReadLineOption -AddToHistoryHandler {
-    param($Command)
+    param([string]$Command)
     if (__JetBrainsIntellijIsGeneratorCommand $Command) {
       return $false
     }
-    return $Global:__JetBrainsIntellijOriginalAddToHistoryHandler.Invoke($Command)
+    if ($Global:__JetBrainsIntellijOriginalAddToHistoryHandler -ne $null) {
+      return $Global:__JetBrainsIntellijOriginalAddToHistoryHandler.Invoke($Command)
+    }
+    return $true
   }
 }

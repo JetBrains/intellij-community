@@ -26,7 +26,7 @@
                  description="Enable new terminal for Fish"/>
     <registryKey key="terminal.new.ui.powershell.win11" defaultValue="true"
                  description="Enable new terminal for PowerShell on Windows 11"/>
-    <registryKey key="terminal.new.ui.powershell.win10" defaultValue="false"
+    <registryKey key="terminal.new.ui.powershell.win10" defaultValue="true"
                  description="Enable new terminal for PowerShell on Windows 10"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
