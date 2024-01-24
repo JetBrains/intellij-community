@@ -300,6 +300,10 @@ object CommunityRepositoryModules {
       "intellij.turboComplete",
     ) { spec ->
       spec.withModule("intellij.turboComplete.languages.kotlin")
+    },
+    pluginAuto(listOf("intellij.performanceTesting", "intellij.performanceTesting.remoteDriver")) { spec ->
+      spec.withModule("intellij.driver.model")
+      spec.withModule("intellij.driver.impl")
     }
   )
 
