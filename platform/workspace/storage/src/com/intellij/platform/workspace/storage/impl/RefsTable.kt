@@ -155,7 +155,7 @@ internal class MutableRefsTable(
     else {
       val copy = LinkedBidirectionalMap<ChildEntityId, ParentEntityId>()
       val original = oneToAbstractManyContainer[connectionId]!!
-      original.forEach { (k, v) -> copy[k] = v }
+      original.forEach { (k, v) -> copy.add(k, v) }
       oneToAbstractManyContainer[connectionId] = copy
       oneToAbstractManyCopiedToModify.add(connectionId)
       copy
@@ -330,7 +330,7 @@ internal class MutableRefsTable(
       val removedChildren = copiedMap.removeValue(parentId)
       removedChildren.forEach { add(Modification.Remove(parentId.id, it.id)) }
       newChildrenEntityIds.forEach {
-        val previousParentOfChild = copiedMap.put(it, parentId)
+        val previousParentOfChild = copiedMap.add(it, parentId)
         if (previousParentOfChild != null) add(Modification.Remove(previousParentOfChild.id, it.id))
         add(Modification.Add(parentId.id, it.id))
       }
@@ -448,7 +448,7 @@ internal class MutableRefsTable(
     if (copiedMap[childId] == parentId) return emptyList()
 
     val removedParent = copiedMap.remove(childId)
-    copiedMap.put(childId, parentId)
+    copiedMap.add(childId, parentId)
     return buildList {
       if (removedParent != null) add(Modification.Remove(removedParent.id, childId.id))
       add(Modification.Add(parentId.id, childId.id))
