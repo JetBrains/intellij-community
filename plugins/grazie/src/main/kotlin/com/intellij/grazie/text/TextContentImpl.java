@@ -15,19 +15,21 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.ranges.IntRange;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-class TextContentImpl extends UserDataHolderBase implements TextContent {
+@ApiStatus.Internal
+public class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
   final List<TokenInfo> tokens;
   private volatile String text;
   private volatile int[] tokenOffsets;
 
-  TextContentImpl(TextDomain domain, List<TokenInfo> _tokens) {
+  public TextContentImpl(TextDomain domain, List<TokenInfo> _tokens) {
     this.domain = domain;
     tokens = new ArrayList<>(_tokens.size());
     if (_tokens.isEmpty()) {
@@ -422,7 +424,7 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
     return null;
   }
 
-  abstract static class TokenInfo {
+  public abstract static class TokenInfo {
     final String text;
 
     TokenInfo(String text) {
@@ -439,15 +441,15 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
     }
   }
 
-  enum TokenKind { text, markup, unknown }
+  public enum TokenKind { text, markup, unknown }
 
-  static class PsiToken extends TokenInfo {
+  public static class PsiToken extends TokenInfo {
     final PsiElement psi;
     final TextRange rangeInPsi;
     final TextRange rangeInFile;
     final TokenKind kind;
 
-    PsiToken(String text, PsiElement psi, TextRange rangeInPsi, TokenKind kind) {
+    public PsiToken(String text, PsiElement psi, TextRange rangeInPsi, TokenKind kind) {
       super(text);
       this.psi = psi;
       this.rangeInPsi = rangeInPsi;
@@ -511,8 +513,8 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
     }
   }
 
-  static class WSTokenInfo extends TokenInfo {
-    WSTokenInfo(char ws) { super(String.valueOf(ws)); }
+  public static class WSTokenInfo extends TokenInfo {
+    public WSTokenInfo(char ws) { super(String.valueOf(ws)); }
 
     @Override
     public boolean equals(Object obj) {
