@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -666,7 +667,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
       @Override
       protected void onEditorCreated(@NotNull Editor editor) {
-        editor.getDocument().setReadOnly(true);
+        if (editor instanceof EditorEx) {
+          ((EditorEx)editor).setRendererMode(true);
+        }
+
         editor.getContentComponent().addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
