@@ -11,9 +11,10 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
@@ -266,49 +267,86 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
                                                    destroy: suspend V.() -> Unit,
                                                    update: (suspend V.(T) -> Unit)? = null)
   : Flow<Map<K, V>> = channelFlow {
-  val cs = this
-  var initial = true
-  var prevResult = createLinkedMap<K, V>(hashingStrategy)
-
-  collect { items ->
-    var hasStructureChanges = false
-    val newItemsSet = CollectionFactory.createLinkedCustomHashingStrategySet(hashingStrategy).also {
-      items.mapTo(it, keyExtractor)
-    }
-
-    // remove missing
-    val iter = prevResult.iterator()
-    while (iter.hasNext()) {
-      val (key, exisingResult) = iter.next()
-      if (!newItemsSet.contains(key)) {
-        iter.remove()
-        hasStructureChanges = true
-        exisingResult.destroy()
-      }
-    }
-
-    val result = createLinkedMap<K, V>(hashingStrategy)
-    // add new or update existing
-    for (item in items) {
-      val itemKey = keyExtractor(item)
-      val existing = prevResult[itemKey]
-      if (existing == null) {
-        result[itemKey] = valueExtractor(cs.childScope(), item)
-        hasStructureChanges = true
-      }
-      else {
-        if (update != null) existing.update(item)
-        result[itemKey] = existing
-      }
-    }
-
-    prevResult = result
-    if (hasStructureChanges || initial) {
-      initial = false
-      send(result)
+  val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
+  launchNow {
+    collect { items ->
+      container.update(items)
     }
   }
-  awaitClose()
+  container.mapState.collect {
+    send(it)
+  }
+}
+
+/**
+ * Allows mapping a collection of items [T] to scoped (coroutine scope bound) values [V]
+ * An intermittent key [K] is used to uniquely identify items
+ *
+ * @param cs parent scope for value scopes
+ * @param keyExtractor should be a quick-to-run function extracting a key from item
+ * @param hashingStrategy strategy used to compare keys
+ * @param mapper factory function to create a value from item
+ * @param destroy destructor function to destroy a value
+ * @param update function used to update value if a new item is supplied for the existing key
+ */
+private class MappingScopedItemsContainer<T, K, V>(
+  private val cs: CoroutineScope,
+  private val keyExtractor: (T) -> K,
+  private val hashingStrategy: HashingStrategy<K>,
+  private val mapper: CoroutineScope.(T) -> V,
+  private val destroy: suspend V.() -> Unit,
+  private val update: (suspend V.(T) -> Unit)? = null
+) {
+  private val _mapState = MutableStateFlow<Map<K, ScopingWrapper<V>>>(emptyMap())
+  val mapState: StateFlow<Map<K, V>> = _mapState.mapState { it.mapValues { (_, value) -> value.value } }
+  private val mapGuard = Mutex()
+
+  suspend fun update(items: Iterable<T>) = mapGuard.withLock {
+    withContext(NonCancellable) {
+      val currentMap = _mapState.value
+      var hasStructureChanges = false
+      val newItemsSet = CollectionFactory.createLinkedCustomHashingStrategySet(hashingStrategy).also {
+        items.mapTo(it, keyExtractor)
+      }
+
+      val result = createLinkedMap<K, ScopingWrapper<V>>(hashingStrategy)
+      // destroy missing
+      for ((key, scopedValue) in currentMap) {
+        if (!newItemsSet.contains(key)) {
+          hasStructureChanges = true
+          scopedValue.value.destroy()
+          scopedValue.cancel()
+        }
+        else {
+          result[key] = scopedValue
+        }
+      }
+
+      // add new or update existing
+      for (item in items) {
+        val itemKey = keyExtractor(item)
+        val existing = result[itemKey]
+        if (existing == null) {
+          val valueScope = cs.childScope()
+          result[itemKey] = ScopingWrapper(valueScope, mapper(valueScope, item))
+          hasStructureChanges = true
+        }
+        else {
+          // if not inferring nullability fsr
+          update?.let { existing.value.it(item) }
+          result[itemKey] = existing
+        }
+      }
+
+      if (hasStructureChanges) {
+        _mapState.value = result
+      }
+    }
+  }
+}
+
+private data class ScopingWrapper<T>(val scope: CoroutineScope, val value: T) {
+  suspend fun cancel() = scope.cancelAndJoinSilently()
 }
 
 private fun <T, R> createLinkedMap(hashingStrategy: HashingStrategy<T>): MutableMap<T, R> =
@@ -321,16 +359,8 @@ private fun <T, R> createLinkedMap(hashingStrategy: HashingStrategy<T>): Mutable
  */
 private fun <T, R> Flow<Iterable<T>>.associateCaching(hashingStrategy: HashingStrategy<T>,
                                                       mapper: CoroutineScope.(T) -> R,
-                                                      update: (suspend R.(T) -> Unit)? = null): Flow<Map<T, ScopingWrapper<R>>> {
-  val updater: (suspend ScopingWrapper<R>.(T) -> Unit)? = if (update != null) {
-    { value.update(it) }
-  }
-  else null
-  return associateCachingBy({ it }, hashingStrategy, { ScopingWrapper(this, mapper(it)) }, { cancel() }, updater)
-}
-
-private data class ScopingWrapper<T>(val scope: CoroutineScope, val value: T) {
-  suspend fun cancel() = scope.cancelAndJoinSilently()
+                                                      update: (suspend R.(T) -> Unit)? = null): Flow<Map<T, R>> {
+  return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
 }
 
 fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
@@ -345,13 +375,13 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
 fun <T, R> Flow<Iterable<T>>.mapDataToModel(sourceIdentifier: (T) -> Any,
                                             mapper: CoroutineScope.(T) -> R,
                                             update: (suspend R.(T) -> Unit)): Flow<List<R>> =
-  associateCaching(HashingUtil.mappingStrategy(sourceIdentifier), mapper, update).map { it.values.mapTo(mutableListOf()) { it.value } }
+  associateCaching(HashingUtil.mappingStrategy(sourceIdentifier), mapper, update).map { it.values.toList() }
 
 /**
  * Create a list of view models from models
  */
 fun <T, R> Flow<Iterable<T>>.mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
-  associateCaching(HashingStrategy.identity(), mapper).map { it.values.mapTo(mutableListOf()) { it.value } }
+  associateCaching(HashingStrategy.identity(), mapper).map { it.values.toList() }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
 
