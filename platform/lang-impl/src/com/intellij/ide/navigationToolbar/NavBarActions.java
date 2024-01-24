@@ -31,8 +31,8 @@ public sealed abstract class NavBarActions extends AnAction implements ActionRem
     event.getPresentation().setEnabled(isEnabled);
   }
 
-  private @Nullable NavBarActionHandler actionHandler(@NotNull AnActionEvent event) {
-    return isEnabledInV2() ? event.getData(NAV_BAR_ACTION_HANDLER) : null;
+  private static @Nullable NavBarActionHandler actionHandler(@NotNull AnActionEvent event) {
+    return event.getData(NAV_BAR_ACTION_HANDLER);
   }
 
   @Override
@@ -41,10 +41,6 @@ public sealed abstract class NavBarActions extends AnAction implements ActionRem
   }
 
   protected boolean isEnabledWithActivePopupSpeedSearch() {
-    return true;
-  }
-
-  protected boolean isEnabledInV2() {
     return true;
   }
 
