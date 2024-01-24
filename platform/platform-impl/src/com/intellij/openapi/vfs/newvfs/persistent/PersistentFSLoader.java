@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentHashEnumeratorOverDurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentStorageAdapter;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.VFSContentStorageOverMMappedFile;
@@ -701,7 +702,17 @@ public final class PersistentFSLoader {
                                                                              @NotNull Path contentsFile) throws IOException {
     if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_MMAPPED_FILE) {
       LOG.info("VFS uses content storage over memory-mapped file (compress if > " + FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN + "b)");
-      return new VFSContentStorageOverMMappedFile(contentsFile, FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
+
+      //Use larger pages: content storage is usually quite big.
+      int pageSize = 64 * IOUtil.MiB;
+
+      if (pageSize <= FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+        //pageSize is an upper limit on record size for AppendOnlyLogOverMMappedFile:
+        LOG.warn("ContentStorage.pageSize(=" + pageSize + ") " +
+                 "must be > FileUtilRt.LARGE_FOR_CONTENT_LOADING(=" + FileUtilRt.LARGE_FOR_CONTENT_LOADING + "b), " +
+                 "otherwise large content can't fit");
+      }
+      return new VFSContentStorageOverMMappedFile(contentsFile, FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN, pageSize);
     }
 
     RefCountingContentStorage contentStorage;

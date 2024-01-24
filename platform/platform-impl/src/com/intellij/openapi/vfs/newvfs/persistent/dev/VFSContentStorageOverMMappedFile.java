@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
@@ -70,19 +69,10 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   private final int compressContentLargerThan;
 
   public VFSContentStorageOverMMappedFile(Path storagePath,
-                                          int compressContentLargerThan) throws IOException {
+                                          int compressContentLargerThan,
+                                          int pageSize) throws IOException {
     this.storagePath = storagePath;
     this.compressContentLargerThan = compressContentLargerThan;
-
-    //Use larger pages: content storage is usually quite big.
-    int pageSize = 64 * IOUtil.MiB;
-    if (pageSize <= FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
-      //pageSize is an upper limit on record size for AppendOnlyLogOverMMappedFile:
-      throw new IllegalStateException(
-        "PageSize(=" + pageSize + ") must be > FileUtilRt.LARGE_FOR_CONTENT_LOADING(=" + FileUtilRt.LARGE_FOR_CONTENT_LOADING + "b), " +
-        "otherwise large content can't fit"
-      );
-    }
 
     contentStorage = AppendOnlyLogFactory.withDefaults()
       .pageSize(pageSize)
