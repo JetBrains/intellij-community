@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -110,7 +111,8 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           return;
         }
 
-        if (TestFrameworks.getInstance().isTestClass(aClass)) {
+        if (TestFrameworks.getInstance().isTestClass(aClass) ||
+            UnusedSymbolUtil.isImplicitUsage(aClass.getProject(), aClass)) {
           return;
         }
 
