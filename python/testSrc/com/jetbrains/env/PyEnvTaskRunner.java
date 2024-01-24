@@ -144,17 +144,6 @@ public class PyEnvTaskRunner {
     }
   }
 
-  private static boolean isNeededToRun(@NotNull Set<String> tagsToCover, @NotNull List<String> envTags) {
-    for (String tag : envTags) {
-      if (tagsToCover.contains(tag)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-
   protected boolean shouldRun(String root, PyTestTask task) {
     return true;
   }
