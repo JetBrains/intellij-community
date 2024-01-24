@@ -33,7 +33,9 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
@@ -57,7 +59,8 @@ internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
         val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
 
         return ideView.directories.any {
-            projectFileIndex.isInSourceContent(it.virtualFile) ||
+            val virtualFile = it.virtualFile
+            RootKindFilter.projectSources.matches(project, virtualFile) ||
                     CreateTemplateInPackageAction.isInContentRoot(it.virtualFile, projectFileIndex)
         }
     }
