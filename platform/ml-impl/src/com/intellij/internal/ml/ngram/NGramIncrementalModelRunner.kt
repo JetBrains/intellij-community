@@ -56,7 +56,8 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
   }
 
   fun createScorer(): NGramModelScorer {
-    val prefix = if (prevTokens.size > 1) prevTokens.subList(1, prevTokens.size).toTypedArray() else emptyArray()
+    val prevTokensSnapshot = prevTokens.toList()  // IDEA-343644 - Without the snapshot, subList may throw ConcurrentModificationException
+    val prefix = if (prevTokensSnapshot.size > 1) prevTokensSnapshot.subList(1, prevTokensSnapshot.size).toTypedArray() else emptyArray()
     return NGramModelScorer({ scoreTokens(it) }, prefix)
   }
 
