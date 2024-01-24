@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,6 +58,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -130,45 +131,80 @@ public final class IncProjectBuilder {
   }
 
   public void checkUpToDate(@NotNull CompileScope scope) {
-    CompileContextImpl context = null;
+    CompileContextImpl context = createContext(scope);
     try {
-      context = createContext(scope);
       final BuildFSState fsState = myProjectDescriptor.fsState;
+
+      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("IncProjectBuilder Check UpToDate Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+      List<Future<?>> tasks = new ArrayList<>();
+
+      var notifier = new Object() {
+        private final AtomicBoolean hasWorkToDo = new AtomicBoolean(false);
+
+        boolean hasChanges() {
+          return hasWorkToDo.get();
+        }
+
+        void signalHasChanges() {
+          if (!hasWorkToDo.getAndSet(true)) {
+            // this will serve as a marker that compiler has work to do
+            myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
+          }
+        }
+      };
+
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
-        context.checkCanceled();
+        if (notifier.hasChanges()) {
+          break;
+        }
         if (scope.isAffected(target)) {
-          BuildOperations.ensureFSStateInitialized(context, target, true);
-          final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
-          delta.lockData();
-          try {
-            for (Set<File> files : delta.getSourcesToRecompile().values()) {
-              for (File file : files) {
-                if (scope.isAffected(target, file)) {
-                  // this will serve as a marker that compiler has work to do
-                  myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
-                  return;
+          tasks.add(executor.submit(() -> {
+            try {
+              if (notifier.hasChanges()) {
+                return;
+              }
+              if (context.getCancelStatus().isCanceled()) {
+                notifier.signalHasChanges(); // unable to check all targets => assume has changes
+                return;
+              }
+              BuildOperations.ensureFSStateInitialized(context, target, true);
+              final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
+              delta.lockData();
+              try {
+                for (Set<File> files : delta.getSourcesToRecompile().values()) {
+                  for (File file : files) {
+                    if (scope.isAffected(target, file)) {
+                      notifier.signalHasChanges();
+                      return;
+                    }
+                  }
                 }
               }
+              finally {
+                delta.unlockData();
+              }
             }
-          }
-          finally {
-            delta.unlockData();
-          }
+            catch (Throwable e) {
+              LOG.info(e);
+              notifier.signalHasChanges(); // data can be corrupted => rebuild required => has changes
+            }
+          }));
+        }
+      }
+
+      for (Future<?> task : tasks) {
+        try {
+          task.get();
+        }
+        catch (Throwable e) {
+          LOG.info(e);
         }
       }
     }
-    catch (Exception e) {
-      LOG.info(e);
-      // this will serve as a marker that compiler has work to do
-      myMessageDispatcher.processMessage(DoneSomethingNotification.INSTANCE);
-    }
     finally {
-      if (context != null) {
-        flushContext(context);
-      }
+      flushContext(context);
     }
   }
-
 
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
     Tracer.Span rebuildRequiredSpan = Tracer.start("IncProjectBuilder.checkRebuildRequired");
