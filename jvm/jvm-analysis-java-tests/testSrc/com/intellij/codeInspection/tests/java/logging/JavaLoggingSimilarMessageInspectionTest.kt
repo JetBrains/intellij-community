@@ -554,5 +554,26 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
      }
     """.trimIndent())
   }
+
+  fun `test idea with additional info`() {
+    LoggingTestUtils.addIdeaLog(myFixture)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+     class Logging {        
+        private static com.intellij.openapi.diagnostic.Logger LOG = null;
+        
+        private static void request1(String i) {
+            String msg = "log messages: "  + i + ")";
+            LOG.info(msg);
+            LOG.error(msg);
+        }
+    
+        private static void request2(int i) {
+            String msg = "log messages: " + i + "something" + i +")";
+            LOG.info(msg);
+            LOG.error(msg);
+        }
+     }
+    """.trimIndent())
+  }
 }
 

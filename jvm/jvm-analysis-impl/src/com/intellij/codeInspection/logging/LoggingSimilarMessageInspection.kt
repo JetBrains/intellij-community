@@ -146,12 +146,11 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
           if (mySkipErrorLogLevel) {
             val hasSetMessage = hasSetThrowable(node, loggerTypeSearcher)
             if (hasSetMessage) return false
-            if (LoggingUtil.getLoggerLevel(node) == LoggingUtil.Companion.LevelType.ERROR) {
-              if (loggerTypeSearcher == IDEA_PLACEHOLDERS) return false
-              val valueArguments = node.valueArguments
-              if (loggerTypeSearcher != SLF4J_BUILDER_HOLDER && loggerTypeSearcher != LOG4J_LOG_BUILDER_HOLDER &&
-                  !valueArguments.isEmpty() && hasThrowableType(valueArguments.last())) return false
-            }
+            val loggerLevel = LoggingUtil.getLoggerLevel(node)
+            if (loggerLevel == LoggingUtil.Companion.LevelType.ERROR && loggerTypeSearcher == IDEA_PLACEHOLDERS) return false
+            val valueArguments = node.valueArguments
+            if (loggerTypeSearcher != SLF4J_BUILDER_HOLDER && loggerTypeSearcher != LOG4J_LOG_BUILDER_HOLDER &&
+                !valueArguments.isEmpty() && hasThrowableType(valueArguments.last())) return false
           }
           result.add(node)
           return true
@@ -325,8 +324,12 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
   val secondFirstIsText = firstIsText(second)
   val secondLastIsText = lastIsText(second)
 
-  if (!firstFirstIsText && !firstLastIsText && (secondFirstIsText || secondLastIsText)) return false
-  if (!secondFirstIsText && !secondLastIsText && (firstFirstIsText || firstLastIsText)) return false
+  if (firstFirstIsText != secondFirstIsText) return false
+  if (firstLastIsText != secondLastIsText) return false
+
+  val firstCount = first.count { it.isConstant && it.text != null }
+  val secondCount = second.count { it.isConstant && it.text != null }
+  if (firstCount != 0 && secondCount != 0 && firstCount != secondCount) return false
 
   while (firstIterator.hasNext() && secondIterator.hasNext()) {
     //example: "something {} something", `{}` is skipped here
