@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.icons.AllIcons;
@@ -284,19 +284,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       }
     }
     return size;
-  }
-
-  @Override
-  public Insets getWrapperPanelInsets(Insets insets) {
-    final JBInsets result = JBInsets.create(insets);
-    if (shouldPaintWrapperPanel()) {
-      result.top += JBUIScale.scale(1);
-    }
-    return result;
-  }
-
-  private static boolean shouldPaintWrapperPanel() {
-    return false; //return !UISettings.getInstance().SHOW_MAIN_TOOLBAR && NavBarRootPaneExtension.runToolbarExists();
   }
 
   protected Color getBackgroundColor() {

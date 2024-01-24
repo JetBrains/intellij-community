@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.ide.navigationToolbar.NavBarItem;
@@ -43,8 +43,6 @@ public interface NavBarUI {
   Insets getElementPadding(NavBarItem item);
 
   Font getElementFont(NavBarItem navBarItem);
-
-  Insets getWrapperPanelInsets(Insets insets);
 
   /**
    * NavBarItem uses standard selection color from LaF. However, sometimes it looks very aggressive.
