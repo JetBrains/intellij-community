@@ -169,11 +169,6 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
     NavBarService.getInstance(project).uiSettingsChanged(uiSettings)
 
     val navigationBar = navigationBar ?: return
-    @Suppress("DEPRECATION")
-    if (navigationBar is NavBarPanel) {
-      navigationBar.updateState(uiSettings.showNavigationBar)
-    }
-
     val visible = uiSettings.isNavbarShown()
     if (ExperimentalUI.isNewUI()) {
       scrollPane!!.isVisible = visible
@@ -408,18 +403,14 @@ private class NavBarContainer(layout: LayoutManager,
     scrollPane.viewportBorder = null
     if (ExperimentalUI.isNewUI()) {
       ClientProperty.put(scrollPane, JBScrollPane.FORCE_HORIZONTAL_SCROLL, true)
-      val visible = settings.isNavbarShown()
-      scrollPane.isVisible = visible
-      @Suppress("DEPRECATION")
-      (navigationBar as? NavBarPanel)?.updateState(visible)
+      scrollPane.isVisible = settings.isNavbarShown()
     }
     navigationBar?.border = null
   }
 
   override fun updateAutoscrollLimit(limit: AutoscrollLimit) {
     val navigationBar = navigationBar
-    @Suppress("DEPRECATION")
-    if (navigationBar is NavBarPanel) {
+    if (navigationBar is ScrollableToSelected) {
       navigationBar.updateAutoscrollLimit(limit)
     }
   }
