@@ -2017,9 +2017,10 @@
         <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" />
         <constraint name="Param3" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" text="var $Param2$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+      <searchConfiguration name="Use `lt` instead of `lifetime` as argument name" uuid="75974233-e6df-342f-bb28-90fa3ddfde86" text="class $Cls$ {&#10;  var $Param2$&#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" _kotlinAlsoMatchVal="enabled" />
+        <constraint name="Cls" script="&quot;import org.jetbrains.kotlin.psi.KtClass;  &#10;def cls = __context__ as KtClass&#10;!(&quot;Lifetimed&quot; in cls.superTypeList?.entries?.text ?: [])&quot;" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="Use explicit function to cast as SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - asSwiftExpressionThatMightBeStatement()&#10; - asSwiftExpression()&#10; - asSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.as" problemDescriptor="Use explicit function to cast as SwiftExpression" text="$ref$ as SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
         <constraint name="__context__" within="" contains="" />
