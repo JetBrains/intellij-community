@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -81,19 +82,11 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    setFileContentAsync(projectPom, createPomXml("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>jar</packaging>
-                       <build>
-                       <sourceDirectory><error>foo1</error></sourceDirectory>
-                       <testSourceDirectory><error>foo2</error></testSourceDirectory>
-                       <scriptSourceDirectory><error>foo3</error></scriptSourceDirectory>
-                       </build>
-                       """.trimIndent()), true)
-
-    checkHighlighting()
+    withContext(Dispatchers.EDT) {
+      fixture.openFileInEditor(projectPom)
+      val highlightingInfos = fixture.doHighlighting();
+      assertHighlighting(highlightingInfos, HighlightSeverity.ERROR, "foo1", "foo2", "foo3")
+    }
   }
 
   private suspend fun getDocument(f: VirtualFile): Document {

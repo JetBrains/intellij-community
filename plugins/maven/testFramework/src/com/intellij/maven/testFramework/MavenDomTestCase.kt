@@ -4,6 +4,7 @@ package com.intellij.maven.testFramework
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
@@ -11,6 +12,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
@@ -526,6 +528,15 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
 
     assertUnorderedElementsAreEqual(actual, *expected)
+  }
+
+  protected fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, severity: HighlightSeverity, vararg texts: String) {
+    texts.forEach { assertHighlighting(highlightingInfos, severity, it) }
+  }
+
+  private fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, severity: HighlightSeverity, text: String) {
+    val highlightingInfo = highlightingInfos.firstOrNull { it.severity == severity && it.text == text }
+    assertNotNull("Not highlighted: $severity, $text", highlightingInfo)
   }
 
   protected class HighlightPointer(var element: PsiElement?, var text: String?) {
