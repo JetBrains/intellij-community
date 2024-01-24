@@ -1,8 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.utils.doc.impl
 
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.guessLanguage
+import com.intellij.lang.Language
+import com.intellij.lang.documentation.QuickDocHighlightingHelper
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.guessLanguage
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -33,7 +34,7 @@ internal class DocSanitizingTagGeneratingProvider : GeneratingProvider {
   }
 }
 
-internal class DocCodeFenceGeneratingProvider(private val project: Project?) : GeneratingProvider {
+internal class DocCodeFenceGeneratingProvider(private val project: Project, private val defaultLanguage: Language?) : GeneratingProvider {
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val contents = StringBuilder()
     var language: String? = null
@@ -45,17 +46,18 @@ internal class DocCodeFenceGeneratingProvider(private val project: Project?) : G
           language = HtmlGenerator.leafText(text, child).toString().trim().split(' ')[0]
       }
     }
-    visitor.consumeHtml(QuickDocCodeHighlightingHelper.getStyledCodeBlock(contents.toString(), guessLanguage(language), project))
+    visitor.consumeHtml(QuickDocHighlightingHelper.getStyledCodeBlock(
+      project, guessLanguage(language) ?: defaultLanguage, contents.toString()))
   }
 
 }
 
-internal class DocCodeSpanGeneratingProvider : GeneratingProvider {
+internal class DocCodeSpanGeneratingProvider(private val project: Project, private val defaultLanguage: Language?) : GeneratingProvider {
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val nodes = node.children.subList(1, node.children.size - 1)
     val output = nodes
       .filter { it.type != MarkdownTokenTypes.BLOCK_QUOTE }
       .joinToString(separator = "") { it.getTextInNode(text) }.trim()
-    visitor.consumeHtml(QuickDocCodeHighlightingHelper.getStyledInlineCode(output))
+    visitor.consumeHtml(QuickDocHighlightingHelper.getStyledInlineCode(project, defaultLanguage, output))
   }
 }

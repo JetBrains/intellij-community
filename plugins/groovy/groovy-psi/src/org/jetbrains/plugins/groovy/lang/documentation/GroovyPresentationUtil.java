@@ -3,9 +3,8 @@ package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.lang.documentation.DocumentationSettings;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
@@ -137,7 +136,7 @@ public final class GroovyPresentationUtil {
     @Nullable String value
   ) {
     if (doHighlighting) {
-      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, attributesKey, value, DocumentationSettings.getHighlightingSaturation(false));
+      QuickDocHighlightingHelper.appendStyledFragment(buffer, value, attributesKey);
     }
     else {
       buffer.append(value);

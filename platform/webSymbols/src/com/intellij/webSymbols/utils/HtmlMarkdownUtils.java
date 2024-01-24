@@ -2,11 +2,13 @@
 package com.intellij.webSymbols.utils;
 
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter;
+import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use {@link DocMarkdownToHtmlConverter} directly
+ * @deprecated Use {@link DocMarkdownToHtmlConverter#convert(Project, String)} instead
  */
 @Deprecated(forRemoval = true)
 public final class HtmlMarkdownUtils {
@@ -16,13 +18,13 @@ public final class HtmlMarkdownUtils {
 
   @Contract(pure = true)
   public static @NotNull String toHtml(@NotNull String markdownText) {
-    return DocMarkdownToHtmlConverter.convert(markdownText);
+    return DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().getDefaultProject(), markdownText);
   }
 
 
   @Contract(pure = true)
   public static @NotNull String toHtml(@NotNull String markdownText, boolean convertTagCodeBlocks) {
-    return DocMarkdownToHtmlConverter.convert(markdownText);
+    return DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().getDefaultProject(), markdownText);
   }
 
 }

@@ -64,7 +64,7 @@ abstract class CustomElementsManifestScopeBase :
 
   protected class CustomElementsManifestJsonOriginImpl(
     override val library: String,
-    private val project: Project?,
+    private val project: Project,
     override val version: String? = null,
     override val typeSupport: WebSymbolTypeSupport? = null,
     private val sourceSymbolResolver: (source: SourceReference, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
@@ -76,7 +76,7 @@ abstract class CustomElementsManifestScopeBase :
       sourceSymbolResolver(source, cacheHolder)
 
     override fun renderDescription(description: String): String =
-      DocMarkdownToHtmlConverter.convert(description, project)
+      DocMarkdownToHtmlConverter.convert(project, description)
 
     override fun toString(): String {
       return "$library@$version"

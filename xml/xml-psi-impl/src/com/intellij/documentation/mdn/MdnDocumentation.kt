@@ -15,6 +15,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
+import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
@@ -209,7 +210,12 @@ class MdnSymbolDocumentationAdapter(override val name: String,
 
   override val description: String
     get() = capitalize(
-      doc.doc?.let { if (it.contains("```")) DocMarkdownToHtmlConverter.convert(it) else it } ?: ""
+      doc.doc?.let {
+        if (it.contains("```"))
+          DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().defaultProject, it)
+        else
+          it
+      } ?: ""
     ).fixUrls()
 
   override val sections: Map<String, String>

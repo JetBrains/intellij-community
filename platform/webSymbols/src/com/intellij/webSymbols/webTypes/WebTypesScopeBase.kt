@@ -184,7 +184,7 @@ abstract class WebTypesScopeBase :
   protected class WebTypesJsonOriginImpl(
     webTypes: WebTypes,
     override val typeSupport: WebSymbolTypeSupport,
-    private val project: Project?,
+    private val project: Project,
     private val symbolLocationResolver: (source: SourceBase) -> WebTypesSymbol.Location? = { null },
     private val sourceSymbolResolver: (location: WebTypesSymbol.Location, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
     private val iconLoader: (path: String) -> Icon? = { null },
@@ -198,7 +198,7 @@ abstract class WebTypesScopeBase :
     private val descriptionRenderer: (String) -> String =
       when (webTypes.descriptionMarkupWithLegacy) {
         WebTypes.DescriptionMarkup.HTML -> { doc -> doc }
-        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> DocMarkdownToHtmlConverter.convert(doc, project) }
+        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> DocMarkdownToHtmlConverter.convert(project, doc) }
         else -> { doc -> "<p>" + StringUtil.escapeXmlEntities(doc).replace(EOL_PATTERN, "<br>") }
       }
 

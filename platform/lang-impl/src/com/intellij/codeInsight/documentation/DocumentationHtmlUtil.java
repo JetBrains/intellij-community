@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.module.ModuleType;
@@ -92,7 +92,7 @@ public final class DocumentationHtmlUtil {
 
     // Styled code
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    result.addAll(QuickDocCodeHighlightingHelper.getDefaultDocCodeStyles(globalScheme, background));
+    result.addAll(QuickDocHighlightingHelper.getDefaultDocCodeStyles(globalScheme, background));
 
     return result;
   }

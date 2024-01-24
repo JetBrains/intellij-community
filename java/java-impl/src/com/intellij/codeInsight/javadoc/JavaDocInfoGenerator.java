@@ -83,7 +83,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.*;
-import static com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.*;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.*;
 
 
 public class JavaDocInfoGenerator {

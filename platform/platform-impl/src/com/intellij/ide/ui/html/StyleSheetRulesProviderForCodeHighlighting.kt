@@ -6,12 +6,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.impl.EditorCssFontResolver
 import com.intellij.ui.ColorUtil
 import com.intellij.util.containers.addAllIfNotNull
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import kotlin.math.abs
 
 /**
  * Provides list of CSS rules for rendering code tags
  */
+@Internal
 object StyleSheetRulesProviderForCodeHighlighting {
 
   const val CODE_BLOCK_PREFIX = "<div class='styled-code'><pre style=\"padding: 0px; margin: 0px\">"

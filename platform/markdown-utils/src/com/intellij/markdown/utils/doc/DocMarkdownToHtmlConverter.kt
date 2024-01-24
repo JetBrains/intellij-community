@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.utils.doc
 
+import com.intellij.lang.Language
+import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.markdown.utils.doc.impl.DocFlavourDescriptor
 import com.intellij.markdown.utils.doc.impl.DocTagRenderer
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -9,7 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiFile
 import com.intellij.ui.ColorUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
@@ -20,9 +25,12 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import java.util.regex.Pattern
 
+/**
+ * [DocMarkdownToHtmlConverter] handles conversion of Markdown text to HTML, which is intended
+ * to be displayed in Quick Doc popup, or inline in an editor.
+ */
 object DocMarkdownToHtmlConverter {
   private val LOG = Logger.getInstance(DocMarkdownToHtmlConverter::class.java)
-
   private val TAG_START_OR_CLOSE_PATTERN: Pattern = Pattern.compile("(<)/?(\\w+)[> ]")
   internal val TAG_PATTERN: Pattern = Pattern.compile("^</?([a-z][a-z-_0-9]*)[^>]*>$", Pattern.CASE_INSENSITIVE)
   private val SPLIT_BY_LINE_PATTERN: Pattern = Pattern.compile("\n|\r|\r\n")
@@ -65,10 +73,18 @@ object DocMarkdownToHtmlConverter {
       ))
     }
 
+  /**
+   * Converts provided Markdown text to HTML. The results are intended to be used for Quick Documentation.
+   * If [defaultLanguage] is provided, it will be used for syntax coloring of inline code and code blocks, if language specifier is missing.
+   * Block and inline code syntax coloring is being done by [QuickDocHighlightingHelper], which honors [DocumentationSettings].
+   * Conversion must be run within a Read Action as it might require to create intermediate [PsiFile] to highlight block of code,
+   * or an inline code.
+   */
   @Contract(pure = true)
   @JvmStatic
+  @RequiresReadLock
   @JvmOverloads
-  fun convert(markdownText: String, project: Project? = null): String {
+  fun convert(project: Project, markdownText: String, defaultLanguage: Language? = null): String {
     val lines = SPLIT_BY_LINE_PATTERN.split(markdownText)
     val processedLines = ArrayList<String>(lines.size)
     var isInCode = false
@@ -125,7 +141,7 @@ object DocMarkdownToHtmlConverter {
           if (!ContainerUtil.isEmpty(tableFormats)) {
             val parts = splitTableCols(processedLine)
             if (isTableHeaderSeparator(parts)) continue
-            processedLine = getProcessedRow(isInTable, parts, tableFormats, project)
+            processedLine = getProcessedRow(project, defaultLanguage, isInTable, parts, tableFormats)
             if (!isInTable) processedLine = "<table style=\"border: 0px;\" cellspacing=\"0\">$processedLine"
             isInTable = true
           }
@@ -142,7 +158,7 @@ object DocMarkdownToHtmlConverter {
     var normalizedMarkdown = StringUtil.join(processedLines, "\n")
     if (isInTable) normalizedMarkdown += "</table>" //NON-NLS
 
-    var html = performConversion(normalizedMarkdown, project)
+    var html = performConversion(project, defaultLanguage, normalizedMarkdown)
     if (html == null) {
       html = replaceProhibitedTags(convertNewLinePlaceholdersToTags(markdownText), ContainerUtil.emptyList())
     }
@@ -181,10 +197,11 @@ object DocMarkdownToHtmlConverter {
     return parts
   }
 
-  private fun getProcessedRow(isInTable: Boolean,
+  private fun getProcessedRow(project: Project,
+                              defaultLanguage: Language?,
+                              isInTable: Boolean,
                               parts: List<String>,
-                              tableFormats: List<String>?,
-                              project: Project?): String {
+                              tableFormats: List<String>?): String {
     val openingTagStart = if (isInTable)
       "<td style=\"$border\" "
     else
@@ -196,7 +213,7 @@ object DocMarkdownToHtmlConverter {
       if (i > 0) {
         resultBuilder.append(closingTag).append(openingTagStart).append("align=\"").append(getAlign(i, tableFormats)).append("\">")
       }
-      resultBuilder.append(performConversion(parts[i].trim { it <= ' ' }, project))
+      resultBuilder.append(performConversion(project, defaultLanguage, parts[i].trim { it <= ' ' }))
     }
     resultBuilder.append(closingTag).append("</tr>")
     return resultBuilder.toString()
@@ -215,9 +232,9 @@ object DocMarkdownToHtmlConverter {
 
   private val embeddedHtmlType = IElementType("ROOT")
 
-  private fun performConversion(text: @Nls String, project: Project?): @NlsSafe String? {
+  private fun performConversion(project: Project, defaultLanguage: Language?, text: @Nls String): @NlsSafe String? {
     try {
-      val flavour = DocFlavourDescriptor(project)
+      val flavour = DocFlavourDescriptor(project, defaultLanguage)
       val parsedTree = MarkdownParser(flavour).parse(embeddedHtmlType, text, true)
       return HtmlGenerator(text, parsedTree, flavour, false)
         .generateHtml(DocTagRenderer(text))

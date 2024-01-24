@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,20 +36,24 @@ public final class HtmlSyntaxInfoUtil {
 
   private HtmlSyntaxInfoUtil() { }
 
-  public static @NotNull String getStyledSpan(@Nullable String value, String @NotNull ... properties) {
-    return appendStyledSpan(new StringBuilder(), value, properties).toString();
-  }
-
+  /**
+   * @deprecated Use {@link QuickDocHighlightingHelper} for adding highlighted HTML to documentation
+   */
+  @Deprecated(forRemoval = true)
   public static @NotNull String getStyledSpan(@NotNull TextAttributesKey attributesKey, @Nullable String value, float saturationFactor) {
     return appendStyledSpan(new StringBuilder(), attributesKey, value, saturationFactor).toString();
   }
 
+  /**
+   * @deprecated Use {@link QuickDocHighlightingHelper} for adding highlighted HTML to documentation
+   */
+  @Deprecated(forRemoval = true)
   public static @NotNull String getStyledSpan(@NotNull TextAttributes attributes, @Nullable String value, float saturationFactor) {
     return appendStyledSpan(new StringBuilder(), attributes, value, saturationFactor).toString();
   }
 
   /**
-   * @deprecated Use {@link QuickDocCodeHighlightingHelper} for adding code fragments to documentation
+   * @deprecated Use {@link QuickDocHighlightingHelper} for adding code fragments to documentation
    */
   @Deprecated(forRemoval = true)
   public static @NotNull String getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
@@ -108,6 +113,7 @@ public final class HtmlSyntaxInfoUtil {
     return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet, true, saturationFactor);
   }
 
+  @RequiresReadLock
   public static @NotNull StringBuilder appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
     @NotNull StringBuilder buffer,
     @NotNull Project project,
