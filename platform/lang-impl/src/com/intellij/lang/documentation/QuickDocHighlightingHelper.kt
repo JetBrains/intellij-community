@@ -34,6 +34,8 @@ object QuickDocHighlightingHelper {
    * has syntax highlighted, if there is language provided and
    * [DocumentationSettings.isHighlightingOfCodeBlocksEnabled] is `true`. The code block will
    * be rendered with a special background if [DocumentationSettings.isCodeBackgroundEnabled] is `true`.
+   *
+   * Any special HTML characters, like `<` or `>` are escaped.
    */
   @JvmStatic
   @RequiresReadLock
@@ -45,6 +47,8 @@ object QuickDocHighlightingHelper {
    * which has syntax highlighted, if there is language provided and
    * [DocumentationSettings.isHighlightingOfCodeBlocksEnabled] is `true`. The code block will
    * be rendered with a special background if [DocumentationSettings.isCodeBackgroundEnabled] is `true`.
+   *
+   * Any special HTML characters, like `<` or `>` are escaped.
    */
   @JvmStatic
   @RequiresReadLock
@@ -63,6 +67,8 @@ object QuickDocHighlightingHelper {
    * [DocumentationSettings.getInlineCodeHighlightingMode] is [DocumentationSettings.InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING].
    * The code block will be rendered with a special background if [DocumentationSettings.isCodeBackgroundEnabled] is `true` and
    * [DocumentationSettings.getInlineCodeHighlightingMode] is not [DocumentationSettings.InlineCodeHighlightingMode.NO_HIGHLIGHTING].
+   *
+   * Any special HTML characters, like `<` or `>` are escaped.
    */
   @JvmStatic
   @RequiresReadLock
@@ -75,6 +81,8 @@ object QuickDocHighlightingHelper {
    * [DocumentationSettings.getInlineCodeHighlightingMode] is [DocumentationSettings.InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING].
    * The code block will be rendered with a special background if [DocumentationSettings.isCodeBackgroundEnabled] is `true` and
    * [DocumentationSettings.getInlineCodeHighlightingMode] is not [DocumentationSettings.InlineCodeHighlightingMode.NO_HIGHLIGHTING].
+   *
+   * Any special HTML characters, like `<` or `>` are escaped.
    */
   @JvmStatic
   @RequiresReadLock
@@ -87,6 +95,7 @@ object QuickDocHighlightingHelper {
 
   /**
    * Returns an HTML fragment containing [code] highlighted with [language].
+   * Any special HTML characters, like `<` or `>` are escaped.
    *
    * Should not be used when generating Quick Doc signature or [PsiElement] links.
    */
@@ -97,6 +106,7 @@ object QuickDocHighlightingHelper {
 
   /**
    * Appends an HTML fragment containing [code] highlighted with [language].
+   * Any special HTML characters, like `<` or `>` are escaped.
    *
    * Should not be used when generating Quick Doc signature or [PsiElement] links.
    */
@@ -107,28 +117,29 @@ object QuickDocHighlightingHelper {
 
   /**
    * This method should be used when generating links to PsiElements.
+   * Any special HTML characters, like `<` or `>` are escaped.
    *
    * Appends an HTML fragment containing [contents] colored according to [textAttributes]
    * if [DocumentationSettings.isSemanticHighlightingOfLinksEnabled] is `true`.
    */
   @JvmStatic
   fun StringBuilder.appendStyledLinkFragment(contents: String, textAttributes: TextAttributes): StringBuilder =
-    appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), textAttributes,
-                     contents, false)
+    appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), textAttributes, contents, false)
 
   /**
    * This method should be used when generating links to PsiElements.
+   * Any special HTML characters, like `<` or `>` are escaped.
    *
    * Appends an HTML fragment containing [contents] colored according to [textAttributesKey]
    * if [DocumentationSettings.isSemanticHighlightingOfLinksEnabled] is `true`.
    */
   @JvmStatic
   fun StringBuilder.appendStyledLinkFragment(contents: String, textAttributesKey: TextAttributesKey): StringBuilder =
-    appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), textAttributesKey,
-                     contents, false)
+    appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), textAttributesKey, contents, false)
 
   /**
    * This method should be used when generating Quick Doc element signatures.
+   * Special HTML characters, like `<` or `>` are **not** escaped.
    *
    * Appends an HTML fragment containing [contents] colored according to [textAttributes]
    * if [DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled] is `true`.
@@ -140,6 +151,7 @@ object QuickDocHighlightingHelper {
 
   /**
    * This method should be used when generating Quick Doc element signatures.
+   * Special HTML characters, like `<` or `>` are **not** escaped.
    *
    * Appends an HTML fragment containing [contents] colored according to [textAttributesKey]
    * if [DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled] is `true`.
@@ -151,8 +163,9 @@ object QuickDocHighlightingHelper {
 
   /**
    * This method should be used when generating Quick Doc element signatures.
+   * Any special HTML characters, like `<` or `>` are escaped.
    *
-   * Appends an HTML fragment containing containing [code] highlighted with [language]
+   * Appends an HTML fragment containing [code] highlighted with [language]
    * if [DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled] is `true`.
    */
   @JvmStatic
@@ -162,6 +175,7 @@ object QuickDocHighlightingHelper {
 
   /**
    * Returns an HTML fragment containing [contents] colored according to [textAttributes].
+   * Special HTML characters, like `<` or `>` are **not** escaped.
    *
    * Should not be used when generating Quick Doc signature or [PsiElement] links.
    */
@@ -171,6 +185,7 @@ object QuickDocHighlightingHelper {
 
   /**
    * Returns an HTML fragment containing [contents] colored according to [textAttributesKey].
+   * Special HTML characters, like `<` or `>` are **not** escaped.
    *
    * Should not be used when generating Quick Doc signature or [PsiElement] links.
    */
@@ -180,6 +195,7 @@ object QuickDocHighlightingHelper {
 
   /**
    * Appends an  HTML fragment containing [contents] colored according to [textAttributes].
+   * Special HTML characters, like `<` or `>` are **not** escaped.
    *
    * Should not be used when generating Quick Doc signature or [PsiElement] links.
    */
@@ -188,7 +204,8 @@ object QuickDocHighlightingHelper {
     appendStyledSpan(true, textAttributes, contents, false)
 
   /**
-   * Appends an  HTML fragment containing [contents] colored according to [textAttributesKey].
+   * Appends an HTML fragment containing [contents] colored according to [textAttributesKey].
+   * Special HTML characters, like `<` or `>` are **not** escaped.
    *
    * Should not be used when generating Quick Doc signature or [PsiElement] links.
    */
@@ -273,7 +290,7 @@ object QuickDocHighlightingHelper {
       HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
     }
     else {
-      append(XmlStringUtil.escapeString(value))
+      append(value)
     }
     return this
   }
@@ -284,7 +301,7 @@ object QuickDocHighlightingHelper {
       HtmlSyntaxInfoUtil.appendStyledSpan(this, attributes, value, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
     }
     else {
-      append(XmlStringUtil.escapeString(value))
+      append(value)
     }
     return this
   }
