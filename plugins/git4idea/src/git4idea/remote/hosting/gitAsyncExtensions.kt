@@ -5,8 +5,13 @@ import com.intellij.collaboration.api.ServerPath
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import git4idea.GitRemoteBranch
+import git4idea.branch.GitBranchSyncStatus
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.*
 import kotlinx.coroutines.CoroutineScope
@@ -81,6 +86,34 @@ fun GitRepoInfo.findRemoteBranchTrackedByCurrent(remote: GitRemote): GitRemoteBr
 }
 
 private typealias GitRemotesFlow = Flow<Collection<GitRemoteUrlCoordinates>>
+
+/**
+ * A flow of sync state between a branch and a local repository state.
+ * Branch state is represented by a list of commit hashes in the receiver flow.
+ * Receiver flow should emit an ordered list of commits where the last commits in the list is actually the last commits in a branch.
+ */
+fun Flow<List<String>>.localCommitsSyncStatus(repository: GitRepository): Flow<GitBranchSyncStatus?> {
+  val currentRevisionFlow = repository.infoFlow().map { it.currentRevision }.distinctUntilChanged()
+  return combine(currentRevisionFlow) { commits, currentRev ->
+    if (currentRev == null) null else checkSyncState(repository, currentRev, commits)
+  }
+}
+
+private suspend fun checkSyncState(repository: GitRepository, currentRev: String, commits: List<String>): GitBranchSyncStatus {
+  val headSha = commits.last()
+  if (currentRev == headSha) return GitBranchSyncStatus.SYNCED
+  if (commits.contains(currentRev)) return GitBranchSyncStatus(true, false)
+  if (testCurrentBranchContains(repository, headSha)) return GitBranchSyncStatus(false, true)
+  return GitBranchSyncStatus(true, true)
+}
+
+private suspend fun testCurrentBranchContains(repository: GitRepository, sha: String): Boolean =
+  coroutineToIndicator {
+    val h = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_BASE)
+    h.setSilent(true)
+    h.addParameters("--is-ancestor", sha, "HEAD")
+    Git.getInstance().runCommand(h).success()
+  }
 
 fun <S : ServerPath, M : HostedGitRepositoryMapping> GitRemotesFlow.mapToServers(serversState: Flow<Set<S>>,
                                                                                  mapper: (S, GitRemoteUrlCoordinates) -> M?)

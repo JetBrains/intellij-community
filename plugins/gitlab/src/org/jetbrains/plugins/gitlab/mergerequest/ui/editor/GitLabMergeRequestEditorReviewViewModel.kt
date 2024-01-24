@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapNullableScoped
-import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -12,7 +11,6 @@ import com.intellij.collaboration.util.selectedChange
 import com.intellij.collaboration.util.withLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
@@ -23,10 +21,7 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitLineHandler
-import git4idea.remote.hosting.changesSignalFlow
+import git4idea.remote.hosting.localCommitsSyncStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -66,30 +61,16 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
 
   private val filesVms: MutableMap<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>> = mutableMapOf()
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   val localRepositorySyncStatus: StateFlow<GitBranchSyncStatus?> = run {
     val repository = projectMapping.remote.repository
-    val changesFlow = _actualChangesState.map { (it as? ChangesState.Loaded)?.changes }.distinctUntilChanged()
-    val currentRevisionFlow = repository.changesSignalFlow().withInitial(Unit).map { repository.currentRevision }.distinctUntilChanged()
-    combine(changesFlow, currentRevisionFlow) { changes, currentRev ->
-      if (changes == null || currentRev == null) null
-      else checkSyncState(changes, currentRev)
+    _actualChangesState.map {
+      (it as? ChangesState.Loaded)?.changes?.commits?.map { it.sha }
+    }.distinctUntilChanged().transformLatest {
+      if (it == null) emit(null)
+      else flowOf(it).localCommitsSyncStatus(repository).collect(this)
     }.stateIn(cs, SharingStarted.Lazily, null)
   }
-
-  private suspend fun checkSyncState(changes: GitBranchComparisonResult, currentRev: String): GitBranchSyncStatus {
-    if (currentRev == changes.headSha) return GitBranchSyncStatus.SYNCED
-    if (changes.commits.mapTo(mutableSetOf()) { it.sha }.contains(currentRev)) return GitBranchSyncStatus(true, false)
-    if (testCurrentBranchContains(changes.headSha)) return GitBranchSyncStatus(false, true)
-    return GitBranchSyncStatus(true, true)
-  }
-
-  private suspend fun testCurrentBranchContains(sha: String): Boolean =
-    coroutineToIndicator {
-      val h = GitLineHandler(projectMapping.gitRepository.project, projectMapping.remote.repository.root, GitCommand.MERGE_BASE)
-      h.setSilent(true)
-      h.addParameters("--is-ancestor", sha, "HEAD")
-      Git.getInstance().runCommand(h).success()
-    }
 
   init {
     cs.launchNow {
