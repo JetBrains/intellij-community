@@ -20,7 +20,7 @@ internal fun JsonSchemaSetup.appliedToJsonFile(@Language("YAML") yaml: String) =
 
 
 fun testNestedCompletionsWithPredefinedCompletionsRoot(predefinedNestedCompletionsRoot: NestedCompletionsNode?, test: () -> Unit) {
-  JsonSchemaNestedCompletionsTreeProvider.EXTENSION_POINT_NAME.maskingExtensions(listOf(predefinedNestedCompletionsRoot.asSchemaMapper())) {
+  JsonSchemaNestedCompletionsTreeProvider.EXTENSION_POINT_NAME.maskingExtensions(listOf(predefinedNestedCompletionsRoot.asNestedCompletionsTreeProvider())) {
     test()
   }
 }
@@ -36,8 +36,8 @@ private fun <T : Any> ExtensionPointName<T>.maskingExtensions(extensions: List<T
   }
 }
 
-private fun NestedCompletionsNode?.asSchemaMapper(): JsonSchemaNestedCompletionsTreeProvider = object : JsonSchemaNestedCompletionsTreeProvider {
+private fun NestedCompletionsNode?.asNestedCompletionsTreeProvider(): JsonSchemaNestedCompletionsTreeProvider = object : JsonSchemaNestedCompletionsTreeProvider {
   override fun getNestedCompletionsRoot(editedFile: PsiFile): NestedCompletionsNode? {
-    return this@asSchemaMapper
+    return this@asNestedCompletionsTreeProvider
   }
 }

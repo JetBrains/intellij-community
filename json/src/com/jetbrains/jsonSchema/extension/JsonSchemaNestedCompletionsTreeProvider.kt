@@ -8,11 +8,10 @@ import com.jetbrains.jsonSchema.impl.nestedCompletions.merge
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Extension point used for extending completion provided by JsonSchemaCompletionContributor.
- * Provided instance of NestedCompletionsNode will be converted into a completion item with a several level json/yaml tree to insert.
- * See the NestedCompletionsNode's documentation for a more detailed description of how exactly the completion item's text will be constructed.
- *
- * */
+ * Extension point used for extending completion provided by [com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor].
+ * Provided instance of [NestedCompletionsNode] will be converted into a completion item with a several level json/yaml tree to insert.
+ * See the [NestedCompletionsNode]'s documentation for a more detailed description of how exactly the completion item's text will be constructed.
+ */
 @ApiStatus.Experimental
 interface JsonSchemaNestedCompletionsTreeProvider {
   companion object {
