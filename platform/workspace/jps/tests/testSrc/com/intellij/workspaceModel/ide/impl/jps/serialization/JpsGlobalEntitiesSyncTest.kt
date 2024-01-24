@@ -12,12 +12,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
@@ -116,7 +114,7 @@ class JpsGlobalEntitiesSyncTest {
     UsefulTestCase.assertSameElements(sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name) }, sdkInfos)
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val globalVirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+    val globalVirtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
 
     val sdkEntities = globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
     UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
@@ -206,7 +204,7 @@ class JpsGlobalEntitiesSyncTest {
     UsefulTestCase.assertSameElements(globalLibrariesNames, libraryBridges.map { it.name })
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val globalVirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+    val globalVirtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
 
     val globalLibraryEntities = globalWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).associateBy { it.name }
     UsefulTestCase.assertSameElements(globalLibrariesNames, globalLibraryEntities.keys)

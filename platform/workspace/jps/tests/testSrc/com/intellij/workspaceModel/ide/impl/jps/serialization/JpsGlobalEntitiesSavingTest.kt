@@ -9,11 +9,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
@@ -49,7 +47,7 @@ class JpsGlobalEntitiesSavingTest {
       val workspaceModel = GlobalWorkspaceModel.getInstance()
       Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList().size)
 
-      val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
+      val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
       val globalLibraryTableId = LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
@@ -86,7 +84,7 @@ class JpsGlobalEntitiesSavingTest {
       val workspaceModel = GlobalWorkspaceModel.getInstance()
       Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList().size)
 
-      val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
+      val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
           workspaceModel.updateModel("Test update") { builder ->

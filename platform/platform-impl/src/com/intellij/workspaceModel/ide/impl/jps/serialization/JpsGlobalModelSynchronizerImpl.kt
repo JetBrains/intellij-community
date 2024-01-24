@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
@@ -84,7 +83,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   @TestOnly
   suspend fun saveSdkEntities() {
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(VirtualFileUrlManager.getGlobalInstance(), sortedRootTypes) as JpsFileEntityTypeSerializer<WorkspaceEntity>
+    val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager(), sortedRootTypes) as JpsFileEntityTypeSerializer<WorkspaceEntity>
     val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
     serializeEntities(entityStorage, sdkSerializer, contentWriter)
@@ -162,7 +161,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     }
     serializers.forEach { serializer ->
       LOG.info("Loading global entities ${serializer.mainEntityClass.name} from files")
-      val newEntities = serializer.loadEntities(contentReader, errorReporter, VirtualFileUrlManager.getGlobalInstance())
+      val newEntities = serializer.loadEntities(contentReader, errorReporter, GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager())
       serializer.checkAndAddToBuilder(mutableStorage, mutableStorage, newEntities.data)
       newEntities.exception?.let { throw it }
     }
@@ -178,7 +177,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   private fun createSerializers(): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
     if (isSerializationProhibited) return emptyList()
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    return JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance(),
+    return JpsGlobalEntitiesSerializers.createApplicationSerializers(GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager(),
                                                                      sortedRootTypes)
   }
 

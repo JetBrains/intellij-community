@@ -24,8 +24,8 @@ import java.nio.file.Path
  * It's important not to use this function for entities stored in the main [WorkspaceModel][com.intellij.platform.backend.workspace.WorkspaceModel] 
  * storage, because this would create a memory leak: these instances won't be removed when the project is closed. 
  */
-@ApiStatus.Internal
-fun VirtualFileUrlManager.Companion.getGlobalInstance(): VirtualFileUrlManager = ApplicationManager.getApplication().service()
+//@ApiStatus.Internal
+//fun VirtualFileUrlManager.Companion.getGlobalInstance(): VirtualFileUrlManager = ApplicationManager.getApplication().service()
 
 fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean = FileUtil.startsWith(other.url.removeSuffix("/"), url.removeSuffix("/"))
 

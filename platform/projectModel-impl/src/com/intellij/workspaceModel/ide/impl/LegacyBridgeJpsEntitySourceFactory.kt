@@ -12,9 +12,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySou
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 
 object LegacyBridgeJpsEntitySourceFactory {
@@ -59,7 +57,7 @@ object LegacyBridgeJpsEntitySourceFactory {
   }
 
   fun createEntitySourceForGlobalLibrary(): EntitySource {
-    val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
     val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUri(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
     return JpsGlobalFileEntitySource(globalLibrariesFile)
   }
