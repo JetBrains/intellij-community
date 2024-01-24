@@ -55,25 +55,44 @@ else:
 
 _BINARY_OPS = set([opname for opname in dis.opname if opname.startswith('BINARY_')])
 
-_BINARY_OP_MAP = {
-    'BINARY_POWER': '__pow__',
-    'BINARY_MULTIPLY': '__mul__',
-    'BINARY_MATRIX_MULTIPLY': '__matmul__',
-    'BINARY_FLOOR_DIVIDE': '__floordiv__',
-    'BINARY_TRUE_DIVIDE': '__div__',
-    'BINARY_MODULO': '__mod__',
-    'BINARY_ADD': '__add__',
-    'BINARY_SUBTRACT': '__sub__',
-    'BINARY_LSHIFT': '__lshift__',
-    'BINARY_RSHIFT': '__rshift__',
-    'BINARY_AND': '__and__',
-    'BINARY_OR': '__or__',
-    'BINARY_XOR': '__xor__',
-    'BINARY_SUBSCR': '__getitem__',
-}
+if IS_PY311_OR_GREATER:
+    _BINARY_OP_MAP = {
+        '**': '__pow__',
+        '*': '__mul__',
+        '@': '__matmul__',
+        '//': '__floordiv__',
+        '/': '__div__',
+        '%': '__mod__',
+        '+': '__add__',
+        '-': '__sub__',
+        '<<': '__lshift__',
+        '>>': '__rshift__',
+        '&': '__and__',
+        '|': '__or__',
+        '^': '__xor__',
+        'BINARY_SUBSCR': '__getitem__',
+        'BINARY_SLICE': '__getitem__',
+    }
+else:
+    _BINARY_OP_MAP = {
+        'BINARY_POWER': '__pow__',
+        'BINARY_MULTIPLY': '__mul__',
+        'BINARY_MATRIX_MULTIPLY': '__matmul__',
+        'BINARY_FLOOR_DIVIDE': '__floordiv__',
+        'BINARY_TRUE_DIVIDE': '__div__',
+        'BINARY_MODULO': '__mod__',
+        'BINARY_ADD': '__add__',
+        'BINARY_SUBTRACT': '__sub__',
+        'BINARY_LSHIFT': '__lshift__',
+        'BINARY_RSHIFT': '__rshift__',
+        'BINARY_AND': '__and__',
+        'BINARY_OR': '__or__',
+        'BINARY_XOR': '__xor__',
+        'BINARY_SUBSCR': '__getitem__',
+    }
 
-if not IS_PY3K:
-    _BINARY_OP_MAP['BINARY_DIVIDE'] = '__div__'
+    if not IS_PY3K:
+        _BINARY_OP_MAP['BINARY_DIVIDE'] = '__div__'
 
 _UNARY_OPS = set([opname for opname in dis.opname if opname.startswith('UNARY_')
                   and opname != 'UNARY_NOT'])
@@ -325,7 +344,8 @@ def _get_smart_step_into_candidates_311(code):
     for instruction in dis.get_instructions(code):
         if instruction.opname == 'CALL':
             while stk and stk[-1].opname not in ('LOAD_NAME', 'LOAD_GLOBAL',
-                                                 'LOAD_ATTR', 'LOAD_METHOD'):
+                                                 'LOAD_ATTR', 'LOAD_METHOD',
+                                                 'LOAD_DEREF'):
                 stk.pop()
             if not stk:
                 continue
@@ -337,6 +357,16 @@ def _get_smart_step_into_candidates_311(code):
                 tos.argval,
                 tos.offset,
                 tos.positions.lineno
+            ))
+        elif _is_binary_opname(instruction.opname):
+            result.append(_Instruction(
+                instruction.opname,
+                instruction.opcode,
+                instruction.arg,
+                _BINARY_OP_MAP[
+                    instruction.argrepr if instruction.argrepr else instruction.opname],
+                instruction.offset,
+                instruction.positions.lineno
             ))
         else:
             stk.append(instruction)

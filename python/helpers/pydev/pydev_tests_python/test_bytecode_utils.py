@@ -27,17 +27,20 @@ def function_with_try_except_code():
     return f.__code__
 
 
+def f():
+    return 1
+
+
+def g():
+    return 2
+
+
+def h():
+    return 3
+
+
 @pytest.fixture
 def consecutive_calls():
-    def f():
-        return 1
-
-    def g():
-        return 2
-
-    def h():
-        return 3
-
     def i():
         return f() + g() + h()
 
@@ -63,7 +66,9 @@ def test_candidates_for_function_with_try_except(function_with_try_except_code):
 
 def test_candidates_for_consecutive_calls(consecutive_calls):
     variants = pydevd_bytecode_utils.get_smart_step_into_candidates(consecutive_calls)
-    assert len(variants) == 3
+    assert len(variants) == 5
     assert variants[0].argval == 'f'
     assert variants[1].argval == 'g'
-    assert variants[2].argval == 'h'
+    assert variants[2].argval == '__add__'
+    assert variants[3].argval == 'h'
+    assert variants[4].argval == '__add__'
