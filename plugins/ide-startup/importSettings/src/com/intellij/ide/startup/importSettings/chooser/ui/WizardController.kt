@@ -6,6 +6,7 @@ import com.intellij.ide.startup.importSettings.wizard.keymapChooser.KeymapChoose
 import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardPluginsPage
 import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardProgressPage
 import com.intellij.ide.startup.importSettings.wizard.themeChooser.ThemeChooserPage
+import com.intellij.util.ui.accessibility.ScreenReader
 
 interface WizardController : BaseController {
   companion object {
@@ -26,9 +27,15 @@ interface WizardController : BaseController {
 }
 
 class WizardControllerImpl(dialog: OnboardingDialog,
-                           override val service: WizardService, override val goBackAction: (() -> Unit)?) : WizardController, BaseControllerImpl(dialog){
+                           override val service: WizardService,
+                           override val goBackAction: (() -> Unit)?) : WizardController, BaseControllerImpl(dialog) {
 
   override fun goToThemePage() {
+    if (ScreenReader.isActive()) {
+      goToKeymapPage()
+      return
+    }
+
     val page = ThemeChooserPage(this)
     dialog.changePage(page)
   }
@@ -44,11 +51,12 @@ class WizardControllerImpl(dialog: OnboardingDialog,
   }
 
   override fun goToInstallPluginPage(ids: List<String>) {
-    if(ids.isNotEmpty()) {
+    if (ids.isNotEmpty()) {
       val importProgress = service.getPluginService().install(ids)
       val page = WizardProgressPage(importProgress, this)
       dialog.changePage(page)
-    } else {
+    }
+    else {
       skipPlugins()
     }
   }
