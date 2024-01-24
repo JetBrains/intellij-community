@@ -136,9 +136,7 @@
       <action id="NavBar-selectDown" class="com.intellij.ide.navigationToolbar.NavBarActions$Down" use-shortcut-of="EditorDown"/>
       <action id="NavBar-selectLeft" class="com.intellij.ide.navigationToolbar.NavBarActions$Left" use-shortcut-of="EditorLeft"/>
       <action id="NavBar-selectRight" class="com.intellij.ide.navigationToolbar.NavBarActions$Right" use-shortcut-of="EditorRight"/>
-      <action id="NavBar-cancel" class="com.intellij.ide.navigationToolbar.NavBarActions$Escape" use-shortcut-of="EditorEscape"/>
       <action id="NavBar-return" class="com.intellij.ide.navigationToolbar.NavBarActions$Enter" use-shortcut-of="EditorEnter"/>
-      <action id="NavBar-navigate" class="com.intellij.ide.navigationToolbar.NavBarActions$Navigate" use-shortcut-of="EditSource"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 

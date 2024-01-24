@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navbar.actions.NavBarActionHandler;
@@ -112,49 +112,10 @@ public sealed abstract class NavBarActions extends AnAction implements ActionRem
     }
   }
 
-  /**
-   * @deprecated unused in ide.navBar.v2
-   */
-  @Deprecated
-  public static final class Escape extends NavBarActions {
-
-    @Override
-    protected boolean isEnabledInV2() {
-      return false;
-    }
-
-    @Override
-    protected boolean isEnabledWithActivePopupSpeedSearch() {
-      return false;
-    }
-
-    @Override
-    void actionPerformed(@NotNull NavBarActionHandler handler) {
-      handler.escape();
-    }
-  }
-
   public static final class Enter extends NavBarActions {
     @Override
     void actionPerformed(@NotNull NavBarActionHandler handler) {
       handler.enter();
-    }
-  }
-
-  /**
-   * @deprecated unused in ide.navBar.v2
-   */
-  @Deprecated
-  public static final class Navigate extends NavBarActions {
-
-    @Override
-    protected boolean isEnabledInV2() {
-      return false;
-    }
-
-    @Override
-    void actionPerformed(@NotNull NavBarActionHandler handler) {
-      handler.navigate();
     }
   }
 }
