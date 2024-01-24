@@ -24,6 +24,7 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -73,7 +74,7 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
         if (filePathBefore.equals(filePath)) return;
 
         builder.modifyEntity(FileOrDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
-          VirtualFileUrlManager manager = VirtualFileUrls.getVirtualFileUrlManager(myProject);
+          VirtualFileUrlManager manager = WorkspaceModel.getInstance(myProject).getVirtualFileUrlManager();
           if (filePath != null) {
             VirtualFileUrl fileUrl = manager.getOrCreateFromUri(VfsUtilCore.pathToUrl(filePath));
             ent.setFilePath(fileUrl);

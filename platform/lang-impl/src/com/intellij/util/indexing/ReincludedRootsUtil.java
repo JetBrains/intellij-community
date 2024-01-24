@@ -106,7 +106,7 @@ public final class ReincludedRootsUtil {
 
     void classifyFiles(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
       WorkspaceFileIndex workspaceFileIndex = WorkspaceFileIndex.getInstance(project);
-      VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
+      VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
       for (VirtualFile file : files) {
         WorkspaceFileSet fileSet = ReadAction.nonBlocking(() -> {
           return workspaceFileIndex.findFileSet(file, true, true, true, true, true);

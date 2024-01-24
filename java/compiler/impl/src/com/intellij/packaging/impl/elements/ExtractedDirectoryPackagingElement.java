@@ -12,7 +12,7 @@ import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.ExtractedDirectoryPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
@@ -107,7 +107,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     WorkspaceEntity existingEntity = getExistingEntity(diff);
     if (existingEntity != null) return existingEntity;
 
-    VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
+    VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
     Objects.requireNonNull(this.myFilePath, "filePath is not specified");
     Objects.requireNonNull(this.myPathInJar, "pathInJar is not specified");
     VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(this.myFilePath));
