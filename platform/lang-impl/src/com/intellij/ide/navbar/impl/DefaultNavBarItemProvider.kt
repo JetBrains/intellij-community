@@ -177,7 +177,7 @@ internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, cla
   }
 }
 
-private fun compatibilityNavBarItem(o: Any, ext: NavBarModelExtension): NavBarItem? {
+internal fun compatibilityNavBarItem(o: Any, ext: NavBarModelExtension?): NavBarItem? {
   return when (o) {
     is Project -> {
       ProjectNavBarItem(o)
@@ -186,7 +186,7 @@ private fun compatibilityNavBarItem(o: Any, ext: NavBarModelExtension): NavBarIt
       ModuleNavBarItem(o)
     }
     is PsiElement -> {
-      if (ext.normalizeChildren()) {
+      if (ext != null && ext.normalizeChildren()) {
         val adjusted = adjustWithAllExtensions(o)
         adjusted?.let { PsiNavBarItem(it, ownerExtension = null) }
       }
