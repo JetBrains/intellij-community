@@ -40,7 +40,7 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
     assert(vocabulary.maxVocabularySize >= nGramOrder && vocabulary.recentSequence.maxSequenceLength >= nGramOrder)
   }
 
-  internal var prevTokens: MutableList<String> = arrayListOf()
+  internal val prevTokens: MutableList<String> = arrayListOf()
 
   fun learnNextToken(token: String) {
     updatePrevTokens(token)
