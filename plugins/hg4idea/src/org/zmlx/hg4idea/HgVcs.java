@@ -198,6 +198,14 @@ public class HgVcs extends AbstractVcs {
   }
 
   @Override
+  public FileStatus[] getProvidedStatuses() {
+    return new FileStatus[]{
+      HgChangeProvider.FileStatuses.COPIED,
+      HgChangeProvider.FileStatuses.RENAMED
+    };
+  }
+
+  @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
     return committedChangesProvider;
   }
