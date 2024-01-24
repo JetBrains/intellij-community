@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.modcommand.ModCommandAction
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -172,9 +173,12 @@ fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PS
     diagnosticClasses.map { diagnosticFixFactoryFromIntentionActions(it, createIntentionActions) }
 
 private class IntentionActionAsQuickFixWrapper<T : PsiElement>(val intentionAction: IntentionAction, element: T) :
-    QuickFixActionBase<T>(element) {
+    QuickFixActionBase<T>(element), ReportingClassSubstitutor {
     override fun getText(): String = intentionAction.text
     override fun getFamilyName(): String = intentionAction.familyName
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) = intentionAction.invoke(project, editor, file)
     override fun startInWriteAction(): Boolean = intentionAction.startInWriteAction()
+    override fun getSubstitutedClass(): Class<*> {
+      return intentionAction.javaClass
+    }
 }
