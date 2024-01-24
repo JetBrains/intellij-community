@@ -859,7 +859,7 @@ public class GradleExecutionHelper {
     LOG.debug("Gradle java home: " + javaHome);
     LOG.debug("Gradle jvm arguments: " + jvmArguments);
     var javaVersion = ExternalSystemJdkUtil.getJavaVersion(javaHome.getPath());
-    if (javaVersion == null || !GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)) {
+    if (javaVersion != null && !GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)) {
       throw new UnsupportedGradleJvmByIdeaException(gradleVersion, javaVersion);
     }
   }

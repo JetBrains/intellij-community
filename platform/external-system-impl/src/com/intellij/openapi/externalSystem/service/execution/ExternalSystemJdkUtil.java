@@ -191,8 +191,12 @@ public final class ExternalSystemJdkUtil {
     return getJavaSdk();
   }
 
-  @Nullable
-  public static JavaVersion getJavaVersion(@NotNull String javaHome) {
+  /**
+   * Resolves, version for Java that located in {@code javaHome} directory.
+   * <p>
+   * Note: This method cannot resolve a Java version for the Java on WSL. In this case, it returns {@code null}
+   */
+  public static @Nullable JavaVersion getJavaVersion(@NotNull String javaHome) {
     var javaSdkType = getJavaSdkType();
     var javaVersionString = javaSdkType.getVersionString(javaHome);
     return JavaVersion.tryParse(javaVersionString);
