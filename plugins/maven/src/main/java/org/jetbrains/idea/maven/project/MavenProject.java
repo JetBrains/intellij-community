@@ -113,6 +113,8 @@ public class MavenProject {
 
     newState.myLastReadStamp = myState.myLastReadStamp + 1;
 
+    boolean keepPreviousPlugins = keepPreviousArtifacts;
+
     doUpdateState(newState,
                   readerResult.mavenModel,
                   readerResult.readingProblems,
@@ -121,7 +123,8 @@ public class MavenProject {
                   readerResult.nativeModelMap,
                   settings,
                   keepPreviousArtifacts,
-                  false
+                  false,
+                  keepPreviousPlugins
     );
 
     return setState(newState);
@@ -136,7 +139,8 @@ public class MavenProject {
                                          @NotNull Set<MavenId> unresolvedArtifactIds,
                                          @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
                                          @NotNull MavenGeneralSettings settings,
-                                         boolean keepPreviousArtifacts) {
+                                         boolean keepPreviousArtifacts,
+                                         boolean keepPreviousPlugins) {
     State newState = myState.clone();
 
     if (null != dependencyHash) {
@@ -151,7 +155,8 @@ public class MavenProject {
                   nativeModelMap,
                   settings,
                   keepPreviousArtifacts,
-                  true
+                  true,
+                  keepPreviousPlugins
     );
 
     return setState(newState);
@@ -165,7 +170,8 @@ public class MavenProject {
                              @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
                              @NotNull MavenGeneralSettings settings,
                              boolean keepPreviousArtifacts,
-                             boolean keepPreviousProfiles) {
+                             boolean keepPreviousProfiles,
+                             boolean keepPreviousPlugins) {
     newState.myReadingProblems = readingProblems;
     newState.myLocalRepository = MavenUtil.resolveLocalRepository(settings.getLocalRepository(),
                                                                   staticOrBundled(settings.getMavenHomeType()),
@@ -192,7 +198,7 @@ public class MavenProject {
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
 
-    doSetResolvedAttributes(newState, model, unresolvedArtifactIds, keepPreviousArtifacts);
+    doSetResolvedAttributes(newState, model, unresolvedArtifactIds, keepPreviousArtifacts, keepPreviousPlugins);
 
     MavenModelPropertiesPatcher.patch(newState.myProperties, newState.myPlugins);
 
@@ -241,7 +247,8 @@ public class MavenProject {
   private static void doSetResolvedAttributes(State state,
                                               MavenModel model,
                                               Set<MavenId> unresolvedArtifactIds,
-                                              boolean keepPreviousArtifacts) {
+                                              boolean keepPreviousArtifacts,
+                                              boolean keepPreviousPlugins) {
     Set<MavenId> newUnresolvedArtifacts = new HashSet<>();
     LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<>();
@@ -255,9 +262,12 @@ public class MavenProject {
       if (state.myRemoteRepositories != null) newRepositories.addAll(state.myRemoteRepositories);
       if (state.myDependencies != null) newDependencies.addAll(state.myDependencies);
       if (state.myDependencyTree != null) newDependencyTree.addAll(state.myDependencyTree);
-      if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
       if (state.myExtensions != null) newExtensions.addAll(state.myExtensions);
       if (state.myAnnotationProcessors != null) newAnnotationProcessors.addAll(state.myAnnotationProcessors);
+    }
+
+    if (keepPreviousPlugins) {
+      if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
     }
 
     newUnresolvedArtifacts.addAll(unresolvedArtifactIds);

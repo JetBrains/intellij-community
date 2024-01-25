@@ -316,7 +316,8 @@ class MavenProjectResolver(private val myProject: Project) {
       return
     }
     val snapshot = mavenProjectCandidate.snapshot
-    val keepPreviousArtifacts = MavenUtil.shouldKeepPreviousArtifacts(result.readingProblems) || result.dependencyResolutionSkipped
+    val keepPreviousPlugins = MavenUtil.shouldKeepPreviousArtifacts(result.readingProblems) // TODO: refactor
+    val keepPreviousArtifacts = result.dependencyResolutionSkipped
 
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
@@ -329,7 +330,8 @@ class MavenProjectResolver(private val myProject: Project) {
       result.unresolvedArtifactIds,
       result.nativeModelMap,
       generalSettings,
-      keepPreviousArtifacts)
+      keepPreviousArtifacts,
+      keepPreviousPlugins)
 
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
