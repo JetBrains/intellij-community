@@ -56,7 +56,7 @@ internal data class PyEnvTestSettings(
 /**
  * Env variables used to configure tests
  */
-private enum class PyTestEnvVars(private val getVarName: (PyTestEnvVars) -> String = { it.name }) {
+enum class PyTestEnvVars(private val getVarName: (PyTestEnvVars) -> String = { it.name }) {
   /**
    * Path to folder with CPythons
    */
