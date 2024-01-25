@@ -12,7 +12,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import javax.swing.JPanel
 
-class JavaConfigurablePanel(
+class JvmLoggingConfigurablePanel(
   private val project: Project,
   private val settings: JavaSettingsStorage.State) {
   private lateinit var warningRow: Row

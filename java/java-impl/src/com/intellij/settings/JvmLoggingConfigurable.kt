@@ -8,12 +8,12 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 
-class JavaConfigurable(project: Project) : SearchableConfigurable, NoScroll {
-  private val delegate = JavaConfigurablePanel(project, project.service<JavaSettingsStorage>().state)
+class JvmLoggingConfigurable(project: Project) : SearchableConfigurable, NoScroll {
+  private val delegate = JvmLoggingConfigurablePanel(project, project.service<JavaSettingsStorage>().state)
 
-  override fun getDisplayName(): String = JavaBundle.message("java.configurable.display.name")
+  override fun getDisplayName(): String = JavaBundle.message("jvm.logging.configurable.display.name")
 
-  override fun getId(): String = JavaBundle.message("java.configurable.id")
+  override fun getId(): String = JavaBundle.message("jvm.logging.configurable.display.name")
 
   override fun createComponent(): JComponent = delegate.getMainPanel()
 

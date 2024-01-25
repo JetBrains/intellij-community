@@ -16,7 +16,7 @@ enum class JavaLoggerInfo(
     "%s.class.getName()"
   ) {
     override fun toString(): String {
-      return "JAVA LOGGING"
+      return "java.util.logging"
     }
   },
   SLF4J(
@@ -26,7 +26,7 @@ enum class JavaLoggerInfo(
     "%s.class",
   ) {
     override fun toString(): String {
-      return "SLF4J"
+      return "Slf4j"
     }
   },
   COMMONS_LOGGING(
@@ -36,7 +36,7 @@ enum class JavaLoggerInfo(
     "%s.class",
   ) {
     override fun toString(): String {
-      return "COMMONS_LOGGING"
+      return "Apache Commons Logging"
     }
   },
   LOG4J(
@@ -46,7 +46,7 @@ enum class JavaLoggerInfo(
     "%s.class"
   ) {
     override fun toString(): String {
-      return "LOG4J"
+      return "Log4j"
     }
   },
   LOG4J2(
@@ -56,7 +56,7 @@ enum class JavaLoggerInfo(
     "%s.class"
   ) {
     override fun toString(): String {
-      return "LOG4J2"
+      return "Log4j2"
     }
   };
 
