@@ -41,7 +41,7 @@ interface GHPRDiffChangeViewModel {
   fun markViewed()
 }
 
-internal class UpdateableGHPRDiffChangeViewModel(
+internal class GHPRDiffChangeViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
@@ -52,7 +52,6 @@ internal class UpdateableGHPRDiffChangeViewModel(
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>
 ) : GHPRDiffChangeViewModel {
   private val cs = parentCs.childScope(classAsCoroutineName())
-  private val diffDataState = MutableStateFlow(diffData)
 
   override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = dataProvider.reviewData.canComment()
@@ -61,7 +60,7 @@ internal class UpdateableGHPRDiffChangeViewModel(
     dataProvider.reviewData.createThreadsRequestsFlow()
       .computationStateIn(cs)
       .transformConsecutiveSuccesses(false) {
-        combine(this, diffDataState, discussionsViewOption) { threads, diffData, viewOption ->
+        combine(this, discussionsViewOption) { threads, viewOption ->
           threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
             val isVisible = when (viewOption) {
               DiscussionsViewOption.ALL -> true
@@ -84,8 +83,7 @@ internal class UpdateableGHPRDiffChangeViewModel(
       it.values.mapNotNullTo(mutableSetOf()) { (isVisible, location) -> location?.takeIf { isVisible } }
     }.stateInNow(cs, emptySet())
 
-  private val _newComments =
-    MutableStateFlow<Map<GHPRReviewCommentLocation, GHPRNewCommentDiffViewModelImpl>>(emptyMap())
+  private val _newComments = MutableStateFlow<Map<GHPRReviewCommentLocation, GHPRNewCommentDiffViewModelImpl>>(emptyMap())
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
     _newComments.mapState { it.values }
 
@@ -119,7 +117,7 @@ internal class UpdateableGHPRDiffChangeViewModel(
 
   private fun createNewCommentVm(location: GHPRReviewCommentLocation): GHPRNewCommentDiffViewModelImpl =
     GHPRNewCommentDiffViewModelImpl(project, cs, dataContext, dataProvider,
-                                    GHPRReviewCommentPosition(change, diffDataState.value.isCumulative, location)) {
+                                    GHPRReviewCommentPosition(change, diffData.isCumulative, location)) {
       cancelNewComment(location)
     }
 
@@ -129,10 +127,6 @@ internal class UpdateableGHPRDiffChangeViewModel(
     val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, change.filePath)
 
     dataProvider.viewedStateData.updateViewedState(repositoryRelativePath, true)
-  }
-
-  fun updateDiffData(diffData: GitTextFilePatchWithHistory) {
-    diffDataState.value = diffData
   }
 }
 

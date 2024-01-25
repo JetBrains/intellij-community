@@ -480,6 +480,27 @@ fun <T> Flow<CompletableFuture<T>>.computationStateIn(cs: CoroutineScope): State
 }
 
 /**
+ * Transforms the flow of some computation requests to a flow of computation states of this request
+ * Will not emit "loading" state if the computation was completed before handling its state
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
+  transformLatest { request ->
+    if (!request.isCompleted) {
+      emit(ComputedResult.loading())
+    }
+    try {
+      val value = request.await()
+      emit(ComputedResult.success(value))
+    }
+    catch (e: Exception) {
+      if (e !is CancellationException) {
+        emit(ComputedResult.failure(e))
+      }
+    }
+  }
+
+/**
  * Maps the flow of requests to a flow of successfully computed values
  */
 fun <T> Flow<CompletableFuture<T>>.values(): Flow<T> = mapNotNull {
