@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.FileIndex
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,6 +32,8 @@ import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.SourceKotlinRootType
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
@@ -89,6 +90,13 @@ fun Module.asSourceInfo(sourceRootType: KotlinSourceRootType?): ModuleSourceInfo
         else -> null
     }
 
+fun Module.asSourceInfo(rootType: JpsModuleSourceRootType<*>?): ModuleSourceInfoWithExpectedBy? =
+    when (rootType) {
+        SourceKotlinRootType -> ModuleProductionSourceInfo(this)
+        TestSourceKotlinRootType -> ModuleTestSourceInfo(this)
+        else -> null
+    }
+
 val Module.sourceModuleInfos: List<ModuleSourceInfo>
     get() = listOfNotNull(testSourceInfo, productionSourceInfo)
 
@@ -115,19 +123,29 @@ var PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED
     @ApiStatus.Internal get
     @ApiStatus.Internal set
 
-private val testRootTypes: Set<JpsModuleSourceRootType<*>> = setOf(
+private val testRootSourceTypes: Set<JpsModuleSourceRootType<*>> = setOf(
     JavaSourceRootType.TEST_SOURCE,
-    JavaResourceRootType.TEST_RESOURCE,
     TestSourceKotlinRootType,
+)
+
+private val testRootResourceTypes: Set<JpsModuleSourceRootType<*>> = setOf(
+    JavaResourceRootType.TEST_RESOURCE,
     TestResourceKotlinRootType
 )
 
-private val sourceRootTypes = setOf<JpsModuleSourceRootType<*>>(
+private val testRootTypes: Set<JpsModuleSourceRootType<*>> = testRootSourceTypes + testRootResourceTypes
+
+private val sourceRootSourceTypes = setOf<JpsModuleSourceRootType<*>>(
     JavaSourceRootType.SOURCE,
-    JavaResourceRootType.RESOURCE,
     SourceKotlinRootType,
+)
+
+private val sourceRootResourceTypes = setOf<JpsModuleSourceRootType<*>>(
+    JavaResourceRootType.RESOURCE,
     ResourceKotlinRootType
 )
+
+private val sourceRootTypes = sourceRootSourceTypes + sourceRootResourceTypes
 
 val JpsModuleSourceRootType<*>.sourceRootType: KotlinSourceRootType?
     get() = when (this) {
@@ -146,10 +164,29 @@ fun ProjectFileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSo
     return runReadAction {
         val sourceRootType = getContainingSourceRootType(virtualFile) ?: return@runReadAction null
         when (sourceRootType) {
-          in testRootTypes -> TestSourceKotlinRootType
-          in sourceRootTypes -> SourceKotlinRootType
-          else -> null
+            in testRootTypes -> TestSourceKotlinRootType
+            in sourceRootTypes -> SourceKotlinRootType
+            else -> null
         }
+    }
+}
+
+fun ProjectFileIndex.getRootType(virtualFile: VirtualFile): JpsModuleSourceRootType<*>? {
+    // Ignore injected files
+    if (virtualFile is VirtualFileWindow) {
+        return null
+    }
+
+    return runReadAction {
+        val sourceRootType: JpsModuleSourceRootType<*> = getContainingSourceRootType(virtualFile) ?: return@runReadAction null
+        val rootType = when (sourceRootType) {
+            in testRootSourceTypes -> TestSourceKotlinRootType
+            in testRootResourceTypes -> TestResourceKotlinRootType
+            in sourceRootSourceTypes -> SourceKotlinRootType
+            in sourceRootResourceTypes -> ResourceKotlinRootType
+            else -> null
+        }
+        rootType
     }
 }
 

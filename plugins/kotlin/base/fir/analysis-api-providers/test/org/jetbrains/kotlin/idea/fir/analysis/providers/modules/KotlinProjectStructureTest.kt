@@ -409,8 +409,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             },
         )
 
-        // KTIJ-26841: Should be KtNotUnderContentRootModule as well
-        assertKtModuleType<KtSourceModule>("resource.kt")
+        assertKtModuleType<KtNotUnderContentRootModule>("resource.kt")
     }
 
     fun `test dangling file module`() {
