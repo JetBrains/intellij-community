@@ -115,16 +115,16 @@ public class MavenProject {
 
     if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
 
-    newState.myReadingProblems = readerResult.getReadingProblems();
+    newState.myReadingProblems = readerResult.readingProblems;
     newState.myLocalRepository = MavenUtil.resolveLocalRepository(settings.getLocalRepository(),
                                                                   staticOrBundled(settings.getMavenHomeType()),
                                                                   settings.getUserSettingsFile());
-    newState.myActivatedProfilesIds = readerResult.getActivatedProfiles();
-    if (null != readerResult.getDependencyHash()) {
-      newState.myDependencyHash = readerResult.getDependencyHash();
+    newState.myActivatedProfilesIds = readerResult.activatedProfiles;
+    if (null != readerResult.dependencyHash) {
+      newState.myDependencyHash = readerResult.dependencyHash;
     }
 
-    MavenModel model = readerResult.getMavenModel();
+    MavenModel model = readerResult.mavenModel;
 
     newState.myMavenId = model.getMavenId();
     if (model.getParent() != null) {
@@ -141,7 +141,7 @@ public class MavenProject {
     newState.myOutputDirectory = model.getBuild().getOutputDirectory();
     newState.myTestOutputDirectory = model.getBuild().getTestOutputDirectory();
 
-    doSetFolders(newState, readerResult.getMavenModel().getBuild());
+    doSetFolders(newState, readerResult.mavenModel.getBuild());
 
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
@@ -161,7 +161,7 @@ public class MavenProject {
       newState.myProfilesIds = newProfiles;
     }
 
-    newState.myModelMap = readerResult.getNativeModelMap();
+    newState.myModelMap = readerResult.nativeModelMap;
 
     return setState(newState);
   }
@@ -197,7 +197,7 @@ public class MavenProject {
   private static void doSetResolvedAttributes(State state,
                                               MavenProjectReaderResult readerResult,
                                               boolean keepPreviousArtifacts) {
-    MavenModel model = readerResult.getMavenModel();
+    MavenModel model = readerResult.mavenModel;
 
     Set<MavenId> newUnresolvedArtifacts = new HashSet<>();
     LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<>();
@@ -217,7 +217,7 @@ public class MavenProject {
       if (state.myAnnotationProcessors != null) newAnnotationProcessors.addAll(state.myAnnotationProcessors);
     }
 
-    newUnresolvedArtifacts.addAll(readerResult.getUnresolvedArtifactIds());
+    newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
     newRepositories.addAll(model.getRemoteRepositories());
     newDependencyTree.addAll(model.getDependencyTree());
     newDependencies.addAll(model.getDependencies());
