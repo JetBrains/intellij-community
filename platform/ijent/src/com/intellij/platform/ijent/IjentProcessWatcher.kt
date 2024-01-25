@@ -1,16 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.diagnostic.*
 import com.intellij.util.io.awaitExit
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * A wrapper for a [Process] that runs IJent. The wrapper logs stderr lines, waits for the exit code, terminates the process in case
@@ -30,17 +34,19 @@ class IjentProcessWatcher private constructor(internal val process: Process) {
     /** See the docs of [IjentProcessWatcher] */
     @OptIn(DelicateCoroutinesApi::class)
     fun launch(coroutineScope: CoroutineScope, process: Process, ijentId: IjentId): IjentProcessWatcher {
+      val lastStderrMessages = Channel<String>(capacity = 30, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
       GlobalScope.launch(blockingDispatcher + coroutineScope.coroutineNameAppended("$ijentId > stderr logger")) {
-        ijentProcessStderrLogger(process, ijentId)
+        ijentProcessStderrLogger(process, ijentId, lastStderrMessages)
       }
 
       val processWatcher = IjentProcessWatcher(process)
 
       coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > exit code awaiter")) {
-        ijentProcessExitCodeAwaiter(ijentId, processWatcher)
+        ijentProcessExitCodeAwaiter(ijentId, processWatcher, lastStderrMessages)
       }
 
       coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > finalizer")) {
@@ -49,22 +55,29 @@ class IjentProcessWatcher private constructor(internal val process: Process) {
 
       return processWatcher
     }
+
+    @VisibleForTesting
+    val lastStderrMessagesTimeout = 5.seconds // A random timeout.
   }
 }
 
-private suspend fun ijentProcessStderrLogger(process: Process, ijentId: IjentId) {
+private suspend fun ijentProcessStderrLogger(process: Process, ijentId: IjentId, lastStderrMessages: SendChannel<String>) {
   try {
     process.errorStream.reader().useLines { lines ->
       for (line in lines) {
         yield()
         if (line.isNotEmpty()) {
           logIjentStderr(ijentId, line)
+          lastStderrMessages.send(line)
         }
       }
     }
   }
   catch (err: IOException) {
     LOG.debug { "$ijentId bootstrap got an error: $err" }
+  }
+  finally {
+    lastStderrMessages.close()
   }
 }
 
@@ -79,9 +92,11 @@ private fun logIjentStderr(ijentId: IjentId, line: String) {
   }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private suspend fun ijentProcessExitCodeAwaiter(
   ijentId: IjentId,
   processWatcher: IjentProcessWatcher,
+  lastStderrMessages: ReceiveChannel<String>,
 ) {
   val exitCode = processWatcher.process.awaitExit()
   LOG.debug { "IJent process $ijentId exited with code $exitCode" }
@@ -91,7 +106,24 @@ private suspend fun ijentProcessExitCodeAwaiter(
     }
     else -> {
       val message = "The process suddenly exited with the code $exitCode"
-      LOG.error(message)
+
+      // This coroutine must be bound to something that outlives `coroutineScope`, in order to not block its cancellation and
+      // to not truncate the last lines of the logs, which are usually the most important.
+      GlobalScope.launch {
+        val stderr = StringBuilder()
+        try {
+          withTimeout(IjentProcessWatcher.lastStderrMessagesTimeout) {
+            for (msg in lastStderrMessages) {
+              stderr.append(msg)
+              stderr.append("\n")
+            }
+          }
+        }
+        finally {
+          // There's `LOG.error(message, Attachment)`, but it doesn't work well with `LoggedErrorProcessor.executeAndReturnLoggedError`.
+          LOG.error(RuntimeExceptionWithAttachments(message, Attachment("stderr", stderr.toString())))
+        }
+      }
       coroutineContext.cancel(CancellationException(message))
     }
   }
