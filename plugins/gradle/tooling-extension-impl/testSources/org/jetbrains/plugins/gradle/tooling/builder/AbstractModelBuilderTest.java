@@ -115,9 +115,6 @@ public abstract class AbstractModelBuilderTest {
 
     try (InputStream buildScriptStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.DEFAULT_SCRIPT_NAME)) {
       String text = StreamUtil.readText(new InputStreamReader(buildScriptStream, StandardCharsets.UTF_8));
-      text = text.replaceAll("<<compile>>", "implementation");
-      text = text.replaceAll("<<testCompile>>", "testImplementation");
-      text = text.replaceAll("<<integrationTestCompile>>", "integrationTestImplementation");
       FileUtil.writeToFile(new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME), text, StandardCharsets.UTF_8);
     }
 
