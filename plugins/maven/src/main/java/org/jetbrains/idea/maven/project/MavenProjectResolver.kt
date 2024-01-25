@@ -17,16 +17,10 @@ import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue.getIssue
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue
 import org.jetbrains.idea.maven.importing.MavenImporter
-import org.jetbrains.idea.maven.model.MavenArtifact
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.model.MavenProjectProblem
-import org.jetbrains.idea.maven.model.MavenWorkspaceMap
+import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.BLOCKED_MIRROR_FOR_REPOSITORIES
 import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.MavenResolveProblemHolder
-import org.jetbrains.idea.maven.server.MavenConfigParseException
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
-import org.jetbrains.idea.maven.server.MavenServerExecutionResult
+import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.ParallelRunner
@@ -36,6 +30,29 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 @ApiStatus.Internal
 data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collection<MavenProjectWithHolder>>)
+
+@ApiStatus.Internal
+class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
+                                 @JvmField val dependencyHash: String?,
+                                 @JvmField val nativeModelMap: Map<String, String?>,
+                                 @JvmField val activatedProfiles: MavenExplicitProfiles,
+                                 val nativeMavenProject: NativeMavenProjectHolder?,
+                                 @JvmField val readingProblems: MutableCollection<MavenProjectProblem>,
+                                 @JvmField val unresolvedArtifactIds: MutableSet<MavenId>,
+                                 val unresolvedProblems: Collection<MavenProjectProblem>) {
+  constructor(readerResult: MavenProjectReaderResult) :
+    this(
+      readerResult.mavenModel,
+      readerResult.dependencyHash,
+      readerResult.nativeModelMap,
+      readerResult.activatedProfiles,
+      readerResult.nativeMavenProject,
+      readerResult.readingProblems,
+      readerResult.unresolvedArtifactIds,
+      readerResult.unresolvedProblems,
+    )
+
+}
 
 @ApiStatus.Internal
 class MavenProjectResolver(private val myProject: Project) {
@@ -146,7 +163,7 @@ class MavenProjectResolver(private val myProject: Project) {
     return projectsWithUnresolvedPlugins
   }
 
-  fun getProblems(results: Collection<MavenProjectReaderResult>): MavenResolveProblemHolder {
+  fun getProblems(results: Collection<MavenProjectResolverResult>): MavenResolveProblemHolder {
     val repositoryBlockedProblems: MutableSet<MavenProjectProblem> = HashSet()
     val unresolvedArtifactProblems: MutableSet<MavenProjectProblem> = HashSet()
     val unresolvedArtifacts: MutableSet<MavenArtifact?> = HashSet()
@@ -202,29 +219,29 @@ class MavenProjectResolver(private val myProject: Project) {
                                      eventHandler: MavenEventHandler,
                                      workspaceMap: MavenWorkspaceMap?,
                                      updateSnapshots: Boolean,
-                                     userProperties: Properties): Collection<MavenProjectReaderResult> {
+                                     userProperties: Properties): Collection<MavenProjectResolverResult> {
     val files = fileToDependencyHash.keys
     return try {
       val executionResults = embedder.resolveProject(
         fileToDependencyHash, explicitProfiles, progressReporter, eventHandler, workspaceMap, updateSnapshots, userProperties)
       val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
       filesMap.putAll(files.associateBy { it.path })
-      val readerResults: MutableCollection<MavenProjectReaderResult> = ArrayList()
+      val readerResults: MutableCollection<MavenProjectResolverResult> = ArrayList()
       for (result in executionResults) {
         val projectData = result.projectData
         if (projectData == null) {
           val file = detectPomFile(filesMap, result)
           MavenLog.LOG.debug("Project resolution: projectData is null, file $file")
           if (file != null) {
-            val temp: MavenProjectReaderResult = reader.readProjectAsync(generalSettings, file, explicitProfiles, locator)
+            val temp = reader.readProjectAsync(generalSettings, file, explicitProfiles, locator)
             temp.readingProblems.addAll(result.problems)
             temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts)
-            readerResults.add(temp)
+            readerResults.add(MavenProjectResolverResult(temp))
             MavenLog.LOG.debug("Project resolution: projectData is null, read project")
           }
         }
         else {
-          readerResults.add(MavenProjectReaderResult(
+          readerResults.add(MavenProjectResolverResult(
             projectData.mavenModel,
             projectData.dependencyHash,
             projectData.mavenModelMap,
@@ -241,7 +258,7 @@ class MavenProjectResolver(private val myProject: Project) {
       MavenLog.LOG.info(e)
       MavenLog.printInTests(e) // print exception since we need to know if something wrong with our logic
       files.map {
-        val result: MavenProjectReaderResult = reader.readProjectAsync(generalSettings, it, explicitProfiles, locator)
+        val result = reader.readProjectAsync(generalSettings, it, explicitProfiles, locator)
         val message = e.message
         if (message != null) {
           result.readingProblems.add(MavenProjectProblem.createStructureProblem(it.getPath(), message))
@@ -249,7 +266,7 @@ class MavenProjectResolver(private val myProject: Project) {
         else {
           result.readingProblems.add(MavenProjectProblem.createSyntaxProblem(it.getPath(), MavenProjectProblem.ProblemType.SYNTAX))
         }
-        result
+        MavenProjectResolverResult(result)
       }
     }
   }
@@ -267,7 +284,7 @@ class MavenProjectResolver(private val myProject: Project) {
     return null
   }
 
-  private fun doResolve(result: MavenProjectReaderResult,
+  private fun doResolve(result: MavenProjectResolverResult,
                         artifactIdToMavenProjects: Map<String, List<MavenProject>>,
                         generalSettings: MavenGeneralSettings,
                         embedder: MavenEmbedderWrapper,
@@ -299,7 +316,19 @@ class MavenProjectResolver(private val myProject: Project) {
 
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
-    mavenProjectCandidate.updateFromReaderResult(result, generalSettings, false, keepPreviousArtifacts, true)
+
+    mavenProjectCandidate.updateFromReaderResult(
+      result.mavenModel,
+      result.dependencyHash,
+      result.readingProblems,
+      result.activatedProfiles,
+      result.unresolvedArtifactIds,
+      result.nativeModelMap,
+      generalSettings,
+      false,
+      keepPreviousArtifacts,
+      true)
+
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
       for (eachImporter in MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
@@ -349,7 +378,7 @@ class MavenProjectResolver(private val myProject: Project) {
                                   progressReporter: RawProgressReporter,
                                   eventHandler: MavenEventHandler,
                                   workspaceMap: MavenWorkspaceMap?,
-                                  updateSnapshots: Boolean): Collection<MavenProjectReaderResult> {
+                                  updateSnapshots: Boolean): Collection<MavenProjectResolverResult> {
     return runBlockingMaybeCancellable {
       resolveProject(
         reader,

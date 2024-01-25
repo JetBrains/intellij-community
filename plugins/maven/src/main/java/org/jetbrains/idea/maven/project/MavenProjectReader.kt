@@ -565,7 +565,7 @@ class MavenProjectReader(private val myProject: Project) {
                      explicitProfiles: MavenExplicitProfiles,
                      locator: MavenProjectReaderProjectLocator): Collection<MavenProjectReaderResult> {
     val reporter = object : RawProgressReporter {}
-    return MavenProjectResolver(myProject).resolveProjectSync(
+    val resolverResult = MavenProjectResolver(myProject).resolveProjectSync(
       this,
       generalSettings,
       embedder,
@@ -576,5 +576,17 @@ class MavenProjectReader(private val myProject: Project) {
       MavenLogEventHandler,
       null,
       false)
+    return resolverResult.map {
+      MavenProjectReaderResult(
+        it.mavenModel,
+        it.dependencyHash,
+        it.nativeModelMap,
+        it.activatedProfiles,
+        it.nativeMavenProject,
+        it.readingProblems,
+        it.unresolvedArtifactIds,
+        it.unresolvedProblems,
+      )
+    }
   }
 }
