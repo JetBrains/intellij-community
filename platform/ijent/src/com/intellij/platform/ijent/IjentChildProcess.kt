@@ -39,6 +39,13 @@ interface IjentChildProcess {
 
   sealed class SendStdinError(msg: String) : Exception(msg) {
     class ProcessExited : SendStdinError("Process exited")
+
+    /**
+     * This error doesn't imply that the process has already exited. It is possible to close the stdin of the process, and the process
+     * may live quite a long time after that. However, usually processes exit immediately right after their stdin are closed.
+     * Therefore, it may turn out that the process exits at the moment when this error is being observed by the API user.
+     */
+    class StdinClosed : SendStdinError("Stdin closed")
   }
 
   suspend fun terminate()
