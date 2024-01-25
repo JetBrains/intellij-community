@@ -101,7 +101,6 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabledAndVisible(false);
     }
 
     @Override
