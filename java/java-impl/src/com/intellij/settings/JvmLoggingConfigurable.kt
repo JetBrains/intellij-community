@@ -57,6 +57,4 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
   override fun reset() = panel.reset()
 
   override fun apply() = panel.apply()
-
-  override fun disposeUIResources() = boundedExecutor.shutdown()
 }
