@@ -3200,24 +3200,21 @@ public final class HighlightUtil {
                                                            @NotNull String reason) {
     PsiType baseLType = PsiUtil.convertAnonymousToBaseType(lType);
     PsiType baseRType = rType == null ? null : PsiUtil.convertAnonymousToBaseType(rType);
-    String styledReason = reason.isEmpty() ? ""
-                                           : String
-                            .format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
-    String toolTip = createIncompatibleTypesTooltip(baseLType, baseRType,
-                                                    (lRawType, lTypeArguments, rRawType, rTypeArguments) -> {
-                                                      PairTypeResult result = getDifferentAnonymousTypes(lType, rType, lRawType, rRawType, baseLType, baseRType);
-                                                      return JavaErrorBundle
-                                                        .message("incompatible.types.html.tooltip", result.lRawType(), lTypeArguments,
-                                                                 result.rRawType(),
-                                                                 rTypeArguments, styledReason,
-                                                                 "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground()));
-                                                    });
+    String styledReason = reason.isEmpty() ? "" :
+                          String.format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
+    IncompatibleTypesTooltipComposer tooltipComposer = (lTypeString, lTypeArguments, rTypeString, rTypeArguments) -> {
+      lTypeString = addAnonymousIfNecessary(lType, lTypeString);
+      rTypeString = addAnonymousIfNecessary(rType, rTypeString);
+      return JavaErrorBundle.message("incompatible.types.html.tooltip",
+                                     lTypeString, lTypeArguments,
+                                     rTypeString, rTypeArguments,
+                                     styledReason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground()));
+    };
+    String toolTip = createIncompatibleTypesTooltip(baseLType, baseRType, tooltipComposer);
 
-    String lRawType = JavaHighlightUtil.formatType(baseLType);
-    String rRawType = JavaHighlightUtil.formatType(baseRType);
-    PairTypeResult result = getDifferentAnonymousTypes(lType, rType, lRawType, rRawType, baseLType, baseRType);
-    String description = JavaErrorBundle.message(
-      "incompatible.types", result.lRawType(), result.rRawType());
+    String lTypeString = JavaHighlightUtil.formatType(lType);
+    String rTypeString = JavaHighlightUtil.formatType(rType);
+    String description = JavaErrorBundle.message("incompatible.types", lTypeString, rTypeString);
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
       .range(textRange)
       .description(description)
@@ -3226,35 +3223,19 @@ public final class HighlightUtil {
   }
 
   /**
-   * Gets the different types if they are equal and one of them or both is anonymous types
    *
-   * @param lType      the left type
-   * @param rType      the right type
-   * @param lRawType   the left raw type (base type of anonymous type)
-   * @param rRawType   the right raw type (base type of anonymous type)
-   * @param baseLType  the base left type (text representation)
-   * @param baseRType  the base right type (text representation)
-   * @return a PairTypeResult object representing the different types
+   * @param type      the type
+   * @param typeString   the raw type (base type of anonymous type)
+   * @return String representation if `anonymous` is requried
    */
   @NotNull
-  private static PairTypeResult getDifferentAnonymousTypes(@NotNull PsiType lType,
-                                                           @Nullable PsiType rType,
-                                                           @NotNull String lRawType,
-                                                           @NotNull String rRawType,
-                                                           @NotNull PsiType baseLType,
-                                                           @Nullable PsiType baseRType) {
-    if (lRawType.equals(rRawType)) {
-      if (!lType.equals(baseLType)) {
-        lRawType = ANONYMOUS + " " + lRawType;
-      }
-      if (rType != null && !rType.equals(baseRType)) {
-        rRawType = ANONYMOUS + " " + rRawType;
-      }
+  private static String addAnonymousIfNecessary(@Nullable PsiType type,
+                                                @NotNull String typeString) {
+    if (type instanceof PsiClassType lClassType &&
+        lClassType.resolve() instanceof PsiAnonymousClass) {
+      typeString = ANONYMOUS + " " + typeString;
     }
-    return new PairTypeResult(lRawType, rRawType);
-  }
-
-  private record PairTypeResult(@NotNull String lRawType, @NotNull String rRawType) {
+    return typeString;
   }
 
   public static HighlightInfo.Builder checkArrayType(PsiTypeElement type) {

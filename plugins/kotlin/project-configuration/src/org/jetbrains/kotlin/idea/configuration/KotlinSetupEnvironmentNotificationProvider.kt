@@ -133,7 +133,11 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             checkHideNonConfiguredNotifications(project)
         }
 
-        fun createConfiguratorsPopup(project: Project, configurators: List<KotlinProjectConfigurator>): ListPopup {
+        fun createConfiguratorsPopup(
+            project: Project,
+            configurators: List<KotlinProjectConfigurator>,
+            onConfiguratorApplied: (KotlinProjectConfigurator) -> Unit = {}
+        ): ListPopup {
             val step = object : BaseListPopupStep<KotlinProjectConfigurator>(
                 KotlinProjectConfigurationBundle.message("title.choose.configurator"),
                 configurators
@@ -142,7 +146,9 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
                 override fun onChosen(selectedValue: KotlinProjectConfigurator?, finalChoice: Boolean): PopupStep<*>? {
                     return doFinalStep {
-                        selectedValue?.apply(project)
+                        if (selectedValue == null) return@doFinalStep
+                        selectedValue.apply(project)
+                        onConfiguratorApplied(selectedValue)
                     }
                 }
             }

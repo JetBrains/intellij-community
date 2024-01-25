@@ -19,11 +19,16 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
 private class MyGoToChangePopupAction(val model: CombinedDiffModel) : PresentableGoToChangePopupAction.Default<PresentableChange>() {
 
   val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+  val previewModel get() = model.context.getUserData(COMBINED_DIFF_PREVIEW_MODEL)
 
   override fun getChanges(): ListSelection<out PresentableChange> {
-    val changes =
-      if (model is CombinedDiffPreviewModel) (model as CombinedDiffPreviewModel).iterateAllChanges().toList()
-      else model.requests.map { it.producer }.filterIsInstance<PresentableChange>()
+    val previewModel = previewModel
+    val changes = if (previewModel != null) {
+      previewModel.iterateAllChanges().toList()
+    }
+    else {
+      model.requests.map { it.producer }.filterIsInstance<PresentableChange>()
+    }
 
     val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
     val selectedIndex = when {
@@ -38,8 +43,9 @@ private class MyGoToChangePopupAction(val model: CombinedDiffModel) : Presentabl
   }
 
   override fun canNavigate(): Boolean {
-    if (model is CombinedDiffPreviewModel) {
-      val allChanges = toListIfNotMany((model as CombinedDiffPreviewModel).iterateAllChanges(), true)
+    val previewModel = previewModel
+    if (previewModel != null) {
+      val allChanges = toListIfNotMany(previewModel.iterateAllChanges(), true)
       return allChanges == null || allChanges.size > 1
     }
 
@@ -47,8 +53,9 @@ private class MyGoToChangePopupAction(val model: CombinedDiffModel) : Presentabl
   }
 
   override fun onSelected(change: PresentableChange) {
-    if (model is CombinedDiffPreviewModel && change is Wrapper) {
-      (model as CombinedDiffPreviewModel).selected = change
+    val previewModel = previewModel
+    if (previewModel != null && change is Wrapper) {
+      previewModel.selected = change
     }
     else {
       viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,

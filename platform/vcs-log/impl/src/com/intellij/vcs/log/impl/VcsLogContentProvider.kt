@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.ide.DataManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
@@ -31,7 +32,7 @@ import java.util.function.Supplier
  *
  * Delegates to the VcsLogManager.
  */
-class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
+class VcsLogContentProvider(private val project: Project) : ChangesViewContentProvider {
   private val projectLog = VcsProjectLog.getInstance(project)
   private val container = JBPanel<JBPanel<*>>(BorderLayout())
 
@@ -46,6 +47,8 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
 
   override fun initTabContent(content: Content) {
     if (projectLog.isDisposing) return
+
+    thisLogger<VcsLogContentProvider>().debug("Adding main Log ui container to the content for ${project.name}")
 
     tabContent = content
 
@@ -67,6 +70,8 @@ class VcsLogContentProvider(project: Project) : ChangesViewContentProvider {
   internal fun addMainUi(logManager: VcsLogManager) {
     ThreadingAssertions.assertEventDispatchThread()
     if (ui == null) {
+      thisLogger<VcsLogContentProvider>().debug("Creating main Log ui for ${project.name}")
+
       ui = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false)
       val panel = VcsLogPanel(logManager, ui!!)
       container.add(panel, BorderLayout.CENTER)

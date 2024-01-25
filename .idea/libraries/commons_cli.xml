@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="commons-cli" type="repository">
-    <properties maven-id="commons-cli:commons-cli:1.5.0">
+    <properties maven-id="commons-cli:commons-cli:1.6.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.5.0/commons-cli-1.5.0.jar">
-          <sha256sum>bc8bb01fc0fad250385706e20f927ddcff6173f6339b387dc879237752567ac6</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.6.0/commons-cli-1.6.0.jar">
+          <sha256sum>69e1237059acd56f0f8654dcde09d8a1412eee82918bef5564d51f8fb275711b</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -11,11 +11,11 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/commons-cli" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.5.0/commons-cli-1.5.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.6.0/commons-cli-1.6.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.5.0/commons-cli-1.5.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.6.0/commons-cli-1.6.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

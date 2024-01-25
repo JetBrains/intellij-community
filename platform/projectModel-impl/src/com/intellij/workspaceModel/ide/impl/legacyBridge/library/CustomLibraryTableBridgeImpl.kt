@@ -14,8 +14,6 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsLibraryEntities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.legacyBridge.CustomLibraryTableBridge
 import org.jdom.Element
@@ -99,7 +97,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
     libraryTableTag.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG).forEach { libraryTag ->
       val name = libraryTag.getAttributeValue(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
       val libraryEntity = JpsLibraryEntitiesSerializer.loadLibrary(name, libraryTag, libraryTableId, entitySource,
-                                                                 VirtualFileUrlManager.getGlobalInstance())
+                                                                   GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager())
       mutableEntityStorage.addEntity(libraryEntity)
     }
 

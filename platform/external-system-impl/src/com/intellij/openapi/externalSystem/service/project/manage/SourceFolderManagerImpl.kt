@@ -5,10 +5,7 @@ import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.blockingContext
@@ -170,7 +167,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     }
 
     val application = ApplicationManager.getApplication()
-    val future = project.coroutineScope.async {
+    val future = (project as ComponentManagerEx).getCoroutineScope().async {
       blockingContext {
         updateSourceFolders(sourceFoldersToChange)
       }

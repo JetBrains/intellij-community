@@ -1,5 +1,7 @@
 class Foo {
     internal var internalVarPrivateSet: String
+        private set
+
     protected lateinit var protectedLateinitVar: String
 
     public var int1: Int

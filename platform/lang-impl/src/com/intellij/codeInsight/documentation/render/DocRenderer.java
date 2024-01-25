@@ -7,7 +7,7 @@ import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -385,7 +385,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         ".section {padding-right: 5; white-space: nowrap}" +
         ".content {padding: 2 0 2 0}" +
         (useTipsKit ? createAdditionalStylesForTips(editor) : "") +
-        StringUtil.join(QuickDocCodeHighlightingHelper.getDefaultDocCodeStyles(
+        StringUtil.join(QuickDocHighlightingHelper.getDefaultDocCodeStyles(
           colorsScheme, colorsScheme.getDefaultBackground()), "\n");
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
       if (!useTipsKit) {

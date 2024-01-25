@@ -75,5 +75,5 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
 // for upsource
 @ApiStatus.Experimental
 interface VirtualFileResolver {
-  fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation) = doResolveVirtualFile(path, reasonOperation)
+  fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation): VirtualFile?
 }

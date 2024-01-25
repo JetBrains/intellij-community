@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.namedChildScope
@@ -11,6 +12,11 @@ import kotlinx.coroutines.sync.Semaphore
 
 @Service(Service.Level.PROJECT)
 class ParallelRunner(val project: Project, val cs: CoroutineScope) {
+
+  fun <T> runInParallelBlocking(collection: Collection<T>, method: (T) -> Unit) =
+    runBlockingMaybeCancellable {
+      runInParallel(collection, method)
+    }
 
   suspend fun <T> runInParallel(collection: Collection<T>, method: suspend (T) -> Unit) {
     if (collection.isEmpty()) return

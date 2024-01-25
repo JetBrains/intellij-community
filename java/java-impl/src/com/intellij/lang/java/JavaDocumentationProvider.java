@@ -61,7 +61,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledSignatureFragment;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledSignatureFragment;
 import static com.intellij.util.ObjectUtils.notNull;
 
 /**

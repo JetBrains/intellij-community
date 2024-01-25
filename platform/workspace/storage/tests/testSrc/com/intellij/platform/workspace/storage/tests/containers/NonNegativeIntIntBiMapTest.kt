@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntBiMap
@@ -11,8 +11,8 @@ class NonNegativeIntIntBiMapTest {
   fun `add and replace value`() {
     val map = MutableNonNegativeIntIntBiMap()
 
-    map.putAll(intArrayOf(1), 10)
-    map.putAll(intArrayOf(1), 20)
+    map.addAll(intArrayOf(1), 10)
+    map.addAll(intArrayOf(1), 20)
 
     assertArrayEquals(intArrayOf(1), map.getKeys(20).toArray())
     assertArrayEquals(intArrayOf(), map.getKeys(10).toArray())
@@ -22,8 +22,8 @@ class NonNegativeIntIntBiMapTest {
   fun `add different keys with the same value`() {
     val map = MutableNonNegativeIntIntBiMap()
 
-    map.putAll(intArrayOf(1), 10)
-    map.putAll(intArrayOf(2), 10)
+    map.addAll(intArrayOf(1), 10)
+    map.addAll(intArrayOf(2), 10)
 
     assertArrayEquals(intArrayOf(1, 2), map.getKeys(10).toArray())
 
@@ -35,7 +35,7 @@ class NonNegativeIntIntBiMapTest {
   fun `add different keys with the same value 3`() {
     val map = MutableNonNegativeIntIntBiMap()
 
-    map.putAll(intArrayOf(1, 1), 10)
+    map.addAll(intArrayOf(1, 1), 10)
 
     assertEquals(10, map.get(1))
   }

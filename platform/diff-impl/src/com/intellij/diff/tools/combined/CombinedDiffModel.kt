@@ -23,8 +23,7 @@ interface CombinedDiffModel {
    */
   fun setBlocks(requests: List<CombinedBlockProducer>)
 
-  fun getCurrentRequest(): DiffRequest?
-
+  fun getLoadedRequest(blockId: CombinedBlockId): DiffRequest?
   fun getLoadedRequests(): List<DiffRequest>
 
   fun loadRequestContents(blockIds: Collection<CombinedBlockId>)

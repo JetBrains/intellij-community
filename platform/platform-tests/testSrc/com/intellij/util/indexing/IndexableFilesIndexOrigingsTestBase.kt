@@ -15,9 +15,9 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -28,7 +28,6 @@ import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
-import com.intellij.workspaceModel.ide.getInstance
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -78,7 +77,7 @@ abstract class IndexableFilesIndexOriginsTestBase {
   protected fun createSdkOrigin(sdk: Sdk): IndexableSetOrigin = SdkIndexableFilesIteratorImpl.createIterator(sdk).origin
 
   protected fun createIndexableSetOrigin(contributor: IndexableSetContributor,
-                                       project: Project?): IndexableSetOrigin =
+                                         project: Project?): IndexableSetOrigin =
     IndexableEntityProviderMethods.createForIndexableSetContributor(contributor,
                                                                     project != null,
                                                                     project?.let { contributor.getAdditionalProjectRootsToIndex(project) }
@@ -167,5 +166,5 @@ abstract class IndexableFilesIndexOriginsTestBase {
     get() = resolveVirtualFile()
 
   private val ContentSpec.virtualFileUrl: VirtualFileUrl
-    get() = file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project))
+    get() = file.toVirtualFileUrl(WorkspaceModel.getInstance(project).getVirtualFileUrlManager())
 }

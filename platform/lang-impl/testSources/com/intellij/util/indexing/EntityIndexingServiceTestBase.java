@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.workspace.storage.EntityChange;
@@ -15,7 +16,6 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.IndexableIteratorPresentation;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCas
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
+    fileUrlManager = WorkspaceModel.getInstance(myProject).getVirtualFileUrlManager();
   }
 
   @Override

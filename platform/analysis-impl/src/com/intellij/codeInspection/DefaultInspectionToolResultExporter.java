@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -62,6 +63,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public static final @NonNls String INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE = "attribute_key";
   public static final @NonNls String INSPECTION_RESULTS_ID_ATTRIBUTE = "id";
   public static final @NonNls String INSPECTION_RESULTS_DESCRIPTION_ELEMENT = "description";
+  public static final @NonNls String INSPECTION_RESULTS_FINGERPRINT_DATA = "fingerprint";
   protected static final @NonNls String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
   protected static final @NonNls String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
   protected static final @NonNls String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
@@ -256,6 +258,16 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           int length = textRange.getLength();
           element.addContent(new Element("offset").addContent(String.valueOf(offset)));
           element.addContent(new Element("length").addContent(String.valueOf(length)));
+        }
+      }
+      if (descriptor instanceof UserDataHolder) {
+        var fingerprintData = ((UserDataHolder)descriptor).getUserData(ProblemDescriptorUserDataKt.FINGERPRINT_DATA);
+        if (fingerprintData != null) {
+          var fingerprintElement = new Element(INSPECTION_RESULTS_FINGERPRINT_DATA);
+          for (var e : fingerprintData.entrySet()) {
+            fingerprintElement.setAttribute(e.getKey(), e.getValue());
+          }
+          element.addContent(fingerprintElement);
         }
       }
     }

@@ -34,6 +34,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.utils.io.createDirectory
@@ -75,7 +76,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @BeforeEach
   fun beforeTest() {
-    //Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on local run")
+    Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on local run")
     println("> Benchmark test started")
     Registry.get(EntitiesOrphanage.orphanageKey).setValue(true)
   }
@@ -304,7 +305,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @Test
   fun `10_000 orphan content roots to modules`(testInfo: TestInfo) {
-    val manager = VirtualFileUrlManager.getInstance(projectModel.project)
+    val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
     val newFolder = tempFolder.newRandomDirectory()
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {
@@ -341,7 +342,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   @Test
   fun `10_000 orphan source roots to modules`(testInfo: TestInfo) {
     val newFolder = VfsUtilCore.pathToUrl(tempFolder.newRandomDirectory().toString())
-    val manager = VirtualFileUrlManager.getInstance(projectModel.project)
+    val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {
       runWriteActionAndWait {
@@ -388,7 +389,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
   @Test
   fun `10_000 orphan source roots to many content roots to modules`(testInfo: TestInfo) {
     val newFolder = tempFolder.newRandomDirectory()
-    val manager = VirtualFileUrlManager.getInstance(projectModel.project)
+    val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
     PlatformTestUtil.startPerformanceTest(testInfo.displayName, 100500) {
       runWriteActionAndWait {

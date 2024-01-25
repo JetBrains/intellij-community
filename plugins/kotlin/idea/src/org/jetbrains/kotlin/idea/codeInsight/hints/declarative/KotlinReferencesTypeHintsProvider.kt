@@ -2,16 +2,13 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints.declarative
 
 import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
+import org.jetbrains.kotlin.idea.codeInsight.hints.NamedInlayInfoOption
+
+val SHOW_PROPERTY_TYPES = NamedInlayInfoOption("hints.type.property")
+val SHOW_LOCAL_VARIABLE_TYPES = NamedInlayInfoOption("hints.type.variable")
+val SHOW_FUNCTION_RETURN_TYPES = NamedInlayInfoOption("hints.type.function.return")
+val SHOW_FUNCTION_PARAMETER_TYPES = NamedInlayInfoOption("hints.type.function.parameter")
 
 class KotlinReferencesTypeHintsProvider : AbstractKotlinInlayHintsProvider(
     HintType.PROPERTY_HINT, HintType.LOCAL_VARIABLE_HINT, HintType.FUNCTION_HINT, HintType.PARAMETER_TYPE_HINT
-) {
-
-    companion object {
-        const val SHOW_PROPERTY_TYPES = "hints.type.property"
-        const val SHOW_LOCAL_VARIABLE_TYPES = "hints.type.variable"
-        const val SHOW_FUNCTION_RETURN_TYPES = "hints.type.function.return"
-        const val SHOW_FUNCTION_PARAMETER_TYPES = "hints.type.function.parameter"
-    }
-
-}
+)

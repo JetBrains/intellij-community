@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.configurationStore.statistic.eventLog
@@ -9,10 +9,7 @@ import com.intellij.configurationStore.getStateForComponent
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -27,7 +24,7 @@ private val PERIOD_DELAY = 1.days
 
 internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracker {
   override fun initialize() {
-    ApplicationManager.getApplication().coroutineScope.launch {
+    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
       delay(PERIOD_DELAY)
       while (true) {
         logConfigStateEvents()
@@ -84,15 +81,14 @@ private suspend fun logInitializedComponentsAndContinue(project: Project?,
                                                         reporter: FeatureUsageSettingsEvents) {
   while (true) {
     val nextComponentName = names.pollFirst() ?: return
-    logInitializedComponent(project = project,
-                            info = components.get(nextComponentName) ?: continue,
+    logInitializedComponent(info = components.get(nextComponentName) ?: continue,
                             name = nextComponentName,
                             reporter = reporter)
     logInitializedComponentsAndContinue(project = project, components = components, names = names, reporter = reporter)
   }
 }
 
-private suspend fun logInitializedComponent(project: Project?, info: ComponentInfo, name: String, reporter: FeatureUsageSettingsEvents) {
+private suspend fun logInitializedComponent(info: ComponentInfo, name: String, reporter: FeatureUsageSettingsEvents) {
   val stateSpec = info.stateSpec
   if (stateSpec == null || !stateSpec.reportStatistic) {
     return

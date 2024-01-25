@@ -4,9 +4,13 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.utils.ParallelRunner;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 class MavenProjectsTreeUpdateContext {
@@ -42,9 +46,20 @@ class MavenProjectsTreeUpdateContext {
   }
 
   private @NotNull List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {
+    var existingFiles = new ConcurrentHashMap<File, Boolean>();
+    Predicate<File> fileExistsPredicate = f -> {
+      return existingFiles.computeIfAbsent(f, file -> {
+        return Files.exists(file.toPath());
+      });
+    };
+
+    ParallelRunner.getInstance(myTree.getProject()).runInParallelBlocking(updatedProjectsWithChanges.keySet(), mavenProject -> {
+      mavenProject.collectProblems(fileExistsPredicate); // need for fill problem cache
+      return null;
+    });
+
     ArrayList<Pair<MavenProject, MavenProjectChanges>> result = new ArrayList<>(updatedProjectsWithChanges.size());
     for (Map.Entry<MavenProject, MavenProjectChanges> entry : updatedProjectsWithChanges.entrySet()) {
-      entry.getKey().collectProblems(null); // need for fill problem cache
       result.add(Pair.create(entry.getKey(), entry.getValue()));
     }
     return result;

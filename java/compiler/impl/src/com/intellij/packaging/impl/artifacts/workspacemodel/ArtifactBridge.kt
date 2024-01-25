@@ -25,9 +25,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toExternalSource
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
@@ -174,7 +172,9 @@ open class ArtifactBridge(
   }
 
   override fun setOutputPath(outputPath: String?) {
-    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).getOrCreateFromUri(VfsUtilCore.pathToUrl(it)) }
+    val outputUrl = outputPath?.let {
+      WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUri(VfsUtilCore.pathToUrl(it))
+    }
     val entity = diff.get(artifactId)
     diff.modifyEntity(entity) {
       this.outputUrl = outputUrl

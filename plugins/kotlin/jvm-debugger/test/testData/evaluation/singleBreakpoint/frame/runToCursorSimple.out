@@ -1,0 +1,11 @@
+LineBreakpoint created at runToCursorSimple.kt:5
+Run Java
+Connected to the target VM
+runToCursorSimple.kt:5
+runToCursorSimple.kt:8
+KotlinStackFrame (runToCursorSimple.kt:8)
+    JavaValue[local] a: int = 1 (runToCursorSimple.kt:5)
+    JavaValue[local] b: int = 2 (runToCursorSimple.kt:6)
+Disconnected from the target VM
+
+Process finished with exit code 0

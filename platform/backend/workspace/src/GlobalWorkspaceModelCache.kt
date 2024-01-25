@@ -4,6 +4,7 @@ package com.intellij.platform.backend.workspace
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -11,6 +12,8 @@ public interface GlobalWorkspaceModelCache {
   public fun loadCache(): MutableEntityStorage?
   public fun scheduleCacheSave()
   public fun invalidateCaches()
+
+  public fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager)
 
   public companion object {
     public fun getInstance(): GlobalWorkspaceModelCache? =

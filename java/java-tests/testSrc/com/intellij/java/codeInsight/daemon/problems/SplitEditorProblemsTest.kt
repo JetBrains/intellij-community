@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
@@ -32,8 +33,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     val project = project
     project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
-    @Suppress("DEPRECATION")
-    manager = FileEditorManagerImpl(project, project.coroutineScope.childScope()).also { it.initDockableContentFactory() }
+    manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope()).also { it.initDockableContentFactory() }
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
 
@@ -109,7 +109,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     rehighlight(parentEditor)
     assertEmpty(getProblems(parentEditor))
 
-    // open child class in horizontal split, focus stays in parent editor
+    // open child class in horizontal split, focus stays in the parent editor
     val currentWindow = editorManager.currentWindow!!
     editorManager.createSplitter(SwingConstants.HORIZONTAL, currentWindow)
     val nextWindow = editorManager.getNextWindow(currentWindow)!!

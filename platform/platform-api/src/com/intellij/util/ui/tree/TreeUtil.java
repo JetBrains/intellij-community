@@ -19,6 +19,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.DelegatingEdtBgtTreeVisitor;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
@@ -92,7 +93,7 @@ public final class TreeUtil {
   public static @NotNull JBTreeTraverser<TreePath> treePathTraverser(@NotNull JTree tree) {
     TreeModel model = tree.getModel();
     Object root = model.getRoot();
-    TreePath rootPath = root == null ? null : new TreePath(root);
+    TreePath rootPath = root == null ? null : new CachingTreePath(root);
     return JBTreeTraverser.<TreePath>from(path -> nodeChildren(path.getLastPathComponent(), model)
       .map(o -> path.pathByAddingChild(o)))
       .withRoot(rootPath);
@@ -279,7 +280,7 @@ public final class TreeUtil {
 
   public static @NotNull TreePath getPath(@NotNull TreeNode aRootNode, @NotNull TreeNode aNode) {
     TreeNode[] nodes = getPathFromRootTo(aRootNode, aNode, true);
-    return new TreePath(nodes);
+    return new CachingTreePath(nodes);
   }
 
   public static boolean isAncestor(@NotNull TreeNode ancestor, @NotNull TreeNode node) {
@@ -293,7 +294,7 @@ public final class TreeUtil {
 
   public static @NotNull TreePath getPathFromRoot(@NotNull TreeNode node) {
     TreeNode[] path = getPathFromRootTo(null, node, false);
-    return new TreePath(path);
+    return new CachingTreePath(path);
   }
 
   private static TreeNode @NotNull [] getPathFromRootTo(@Nullable TreeNode root, @NotNull TreeNode node, boolean includeRoot) {
@@ -369,7 +370,7 @@ public final class TreeUtil {
   public static @NotNull TreePath getFirstNodePath(@NotNull JTree tree) {
     TreeModel model = tree.getModel();
     Object root = model.getRoot();
-    TreePath selectionPath = new TreePath(root);
+    TreePath selectionPath = new CachingTreePath(root);
     if (!tree.isRootVisible() && model.getChildCount(root) > 0) {
       selectionPath = selectionPath.pathByAddingChild(model.getChild(root, 0));
     }
@@ -378,7 +379,7 @@ public final class TreeUtil {
 
   public static int getRowForNode(@NotNull JTree tree, @NotNull DefaultMutableTreeNode targetNode) {
     TreeNode[] path = targetNode.getPath();
-    return tree.getRowForPath(new TreePath(path));
+    return tree.getRowForPath(new CachingTreePath(path));
   }
 
   /**
@@ -388,7 +389,7 @@ public final class TreeUtil {
   public static @NotNull TreePath getFirstLeafNodePath(@NotNull JTree tree) {
     final TreeModel model = tree.getModel();
     Object root = model.getRoot();
-    TreePath selectionPath = new TreePath(root);
+    TreePath selectionPath = new CachingTreePath(root);
     while (model.getChildCount(root) > 0) {
       final Object child = model.getChild(root, 0);
       selectionPath = selectionPath.pathByAddingChild(child);
@@ -858,6 +859,7 @@ public final class TreeUtil {
     // use the parent path of the normalized selection path to prohibit its collapsing
     TreePath prohibited = leadSelectionPath == null ? null : normalize(leadSelectionPath, minCount, keepSelectionLevel).getParentPath();
     // Collapse all
+    var paths = new ArrayList<TreePath>();
     while (0 < row--) {
       if (!strict && row == 0) break;
       TreePath path = tree.getPathForRow(row);
@@ -865,11 +867,26 @@ public final class TreeUtil {
       int pathCount = path.getPathCount();
       if (pathCount < minCount) continue;
       if (pathCount == minCount && row > 0) strict = true;
-      if (!isAlwaysExpand(path) && !path.isDescendant(prohibited)) tree.collapsePath(path);
+      if (!isAlwaysExpand(path) && !path.isDescendant(prohibited)) {
+        paths.add(path);
+      }
     }
+    collapsePaths(tree, paths);
     if (leadSelectionPath == null) return; // no selection to restore
     if (!strict) minCount++; // top level node is not collapsed
     internalSelect(tree, normalize(leadSelectionPath, minCount, keepSelectionLevel));
+  }
+
+  private static void collapsePaths(@NotNull JTree tree, @Nullable List<TreePath> paths) {
+    if (paths == null || paths.isEmpty()) {
+      return;
+    }
+    if (Tree.isBulkExpandCollapseSupported() && tree instanceof Tree jbTree) {
+      jbTree.collapsePaths(paths);
+    }
+    else {
+      paths.forEach(tree::collapsePath);
+    }
   }
 
   /**
@@ -929,7 +946,7 @@ public final class TreeUtil {
       TreeModel model = tree.getModel();
       Object root = model.getRoot();
       if (root == null) return;
-      TreePath rootPath = new TreePath(root);
+      TreePath rootPath = new CachingTreePath(root);
       tree.expandPath(rootPath);
       if (model.getChildCount(root) == 1) {
         Object firstChild = model.getChild(root, 0);
@@ -998,7 +1015,17 @@ public final class TreeUtil {
    */
   public static @NotNull Promise<?> promiseExpand(@NotNull JTree tree, int depth) {
     AsyncPromise<?> promise = new AsyncPromise<>();
-    promiseMakeVisible(tree, path -> depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE, promise)
+    promiseMakeVisible(tree, new TreeVisitor() {
+      @Override
+      public @NotNull TreeVisitor.VisitThread visitThread() {
+        return Registry.is("ide.tree.background.expand", true) ? VisitThread.BGT : VisitThread.EDT;
+      }
+
+      @Override
+      public @NotNull Action visit(@NotNull TreePath path) {
+        return depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE;
+      }
+    }, promise)
       .onError(promise::setError)
       .onSuccess(path -> {
         if (promise.isCancelled()) return;
@@ -1014,7 +1041,7 @@ public final class TreeUtil {
   public static @NotNull ActionCallback selectInTree(@Nullable DefaultMutableTreeNode node, boolean requestFocus, @NotNull JTree tree, boolean center) {
     if (node == null) return ActionCallback.DONE;
 
-    final TreePath treePath = new TreePath(node.getPath());
+    final TreePath treePath = new CachingTreePath(node.getPath());
     tree.expandPath(treePath);
     if (requestFocus) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(tree, true));
@@ -1025,7 +1052,7 @@ public final class TreeUtil {
   public static @NotNull ActionCallback selectInTree(Project project, @Nullable DefaultMutableTreeNode node, boolean requestFocus, @NotNull JTree tree, boolean center) {
     if (node == null) return ActionCallback.DONE;
 
-    final TreePath treePath = new TreePath(node.getPath());
+    final TreePath treePath = new CachingTreePath(node.getPath());
     tree.expandPath(treePath);
     if (requestFocus) {
       ActionCallback result = new ActionCallback(2);
@@ -1799,7 +1826,7 @@ public final class TreeUtil {
     Object root = model.getRoot();
     if (root == null) return null;
 
-    TreePath path = new TreePath(root);
+    TreePath path = new CachingTreePath(root);
     switch (visitor.visit(path)) {
       case INTERRUPT -> {
         return path; // root path is found

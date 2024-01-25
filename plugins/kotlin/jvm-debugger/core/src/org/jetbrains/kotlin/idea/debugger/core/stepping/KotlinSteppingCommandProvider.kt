@@ -12,6 +12,7 @@ import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
@@ -67,8 +68,8 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         ignoreBreakpoints: Boolean
     ): DebugProcessImpl.ResumeCommand? {
         if (suspendContext == null || suspendContext.isResumed) return null
-        val sourcePosition = suspendContext.getSourcePosition() ?: return null
-        if (sourcePosition.file !is KtFile) return null
+        // We may try Run-To-Cursor to/from even Java code inside one coroutine
+        if (!Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")) return null
 
         return DebuggerSteppingHelper.createRunToCursorCommand(suspendContext, position, ignoreBreakpoints)
     }

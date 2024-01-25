@@ -4,6 +4,7 @@ package com.intellij.maven.testFramework
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
@@ -11,6 +12,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
@@ -526,6 +528,39 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
 
     assertUnorderedElementsAreEqual(actual, *expected)
+  }
+
+  class Highlight(
+    val severity: HighlightSeverity = HighlightSeverity.ERROR,
+    val text: String? = null,
+    val description: String? = null
+  ) {
+    fun matches(info: HighlightInfo): Boolean {
+      return severity == info.severity
+             && (text == null || text == info.text)
+             && (description == null || description == info.description)
+    }
+
+    override fun toString(): String {
+      return "Highlight(severity=$severity, text=$text, description=$description)"
+    }
+  }
+
+  protected suspend fun checkHighlighting(file: VirtualFile, vararg expectedHighlights: Highlight) {
+    withContext(Dispatchers.EDT) {
+      fixture.openFileInEditor(file)
+      val highlightingInfos = fixture.doHighlighting();
+      assertHighlighting(highlightingInfos, *expectedHighlights)
+    }
+  }
+
+  private fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, vararg expectedHighlights: Highlight) {
+    expectedHighlights.forEach { assertHighlighting(highlightingInfos, it) }
+  }
+
+  private fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, expectedHighlight: Highlight) {
+    val highlightingInfo = highlightingInfos.firstOrNull { expectedHighlight.matches(it) }
+    assertNotNull("Not highlighted: $expectedHighlight", highlightingInfo)
   }
 
   protected class HighlightPointer(var element: PsiElement?, var text: String?) {

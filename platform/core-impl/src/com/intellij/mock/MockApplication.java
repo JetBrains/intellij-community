@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.lang.MetaLanguage;
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.AnyModalityState;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -26,7 +27,7 @@ import java.lang.reflect.Modifier;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-public class MockApplication extends MockComponentManager implements ApplicationEx {
+public class MockApplication extends MockComponentManager implements ApplicationEx, ComponentManagerEx {
   public static int INSTANCES_CREATED;
 
   public MockApplication(@NotNull Disposable parentDisposable) {
@@ -56,7 +57,10 @@ public class MockApplication extends MockComponentManager implements Application
 
   private <T> T doGetService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
     T service = super.getService(serviceClass);
-    if (service == null && createIfNeeded && Modifier.isFinal(serviceClass.getModifiers()) && serviceClass.isAnnotationPresent(Service.class)) {
+    if (service == null &&
+        createIfNeeded &&
+        Modifier.isFinal(serviceClass.getModifiers()) &&
+        serviceClass.isAnnotationPresent(Service.class)) {
       //noinspection SynchronizeOnThis,SynchronizationOnLocalVariableOrMethodParameter
       synchronized (serviceClass) {
         service = super.getService(serviceClass);

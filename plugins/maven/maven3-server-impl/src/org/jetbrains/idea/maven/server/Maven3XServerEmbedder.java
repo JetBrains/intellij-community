@@ -508,12 +508,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                                                                     @NotNull ProjectResolutionRequest request,
                                                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
-    Map<@NotNull File, String> fileToChecksum = request.getFileToChecksum();
+    PomHashMap pomHashMap = request.getPomHashMap();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
     MavenWorkspaceMap workspaceMap = request.getWorkspaceMap();
     boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
-    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, fileToChecksum.size(), myConsoleWrapper)) {
+    try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pomHashMap.size(), myConsoleWrapper)) {
       Maven3XProjectResolver projectResolver = new Maven3XProjectResolver(
         this,
         updateSnapshots,
@@ -529,7 +529,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         customizeComponents(workspaceMap);
         ArrayList<MavenServerExecutionResult> result = projectResolver.resolveProjects(
           task,
-          fileToChecksum,
+          pomHashMap,
           activeProfiles,
           inactiveProfiles);
         return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token));

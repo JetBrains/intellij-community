@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.JpsFileEntitySource;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntitySource;
@@ -99,7 +99,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   @Override
   public void attach(@NotNull ModuleRootModel model) {
     updateEntitySource(model.getModule(), source -> {
-      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(model.getModule().getProject());
+      VirtualFileUrlManager virtualFileUrlManager = WorkspaceModel.getInstance(model.getModule().getProject()).getVirtualFileUrlManager();
       String contentRoot = getContentRoot(model);
       String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
       return new EclipseProjectFile(virtualFileUrlManager.getOrCreateFromUri(classpathFileUrl), (JpsFileEntitySource)source);

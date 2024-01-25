@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.containers
 
 import it.unimi.dsi.fastutil.ints.Int2IntMaps
@@ -30,7 +30,7 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
   /**
    * Returns map of removed pairs
    */
-  fun putAll(keys: IntArray, value: Int): Int2IntWithDefaultMap {
+  fun addAll(keys: IntArray, value: Int): Int2IntWithDefaultMap {
     startWrite()
 
     val previousValues = Int2IntWithDefaultMap()
@@ -49,9 +49,9 @@ internal class MutableNonNegativeIntIntBiMap private constructor(
       if (oldValue != value && oldValue != DEFAULT_RETURN_VALUE) previousValues.put(it, oldValue)
     }
     if (hasDuplicates) {
-      value2Keys.putAll(value, duplicatesFinder.toIntArray())
+      value2Keys.addAll(value, duplicatesFinder.toIntArray())
     } else {
-      value2Keys.putAll(value, keys)
+      value2Keys.addAll(value, keys)
     }
     return previousValues
   }

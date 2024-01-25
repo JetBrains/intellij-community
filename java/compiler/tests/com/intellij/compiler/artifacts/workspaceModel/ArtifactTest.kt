@@ -35,12 +35,10 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.JUnit38AssumeSupportRunner
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.workspaceModel.ide.getInstance
 import junit.framework.TestCase
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
@@ -138,11 +136,12 @@ class ArtifactTest : ArtifactsTestCase() {
     val file2 = createTempFile("file2.txt", null)
     addArtifact("a", TestPackagingElementBuilder.root(project).file(file1.systemIndependentPath).build())
     runWriteAction {
-      WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+      val workspaceModel = WorkspaceModel.getInstance(project)
+      workspaceModel.updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
         builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
-          filePath = VirtualFileUrlManager.getInstance(project).getOrCreateFromUri(VfsUtilCore.pathToUrl(file2.systemIndependentPath))
+          filePath = workspaceModel.getVirtualFileUrlManager().getOrCreateFromUri(VfsUtilCore.pathToUrl(file2.systemIndependentPath))
         }
       }
     }

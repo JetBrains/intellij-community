@@ -86,6 +86,8 @@ public final class ParameterInfoComponent extends JPanel {
 
   private final boolean mySimpleDesignMode = ExperimentalUI.isNewUI();
 
+  private boolean mySetup;
+
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, @NotNull Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
     return createContext(objects, editor, handler, currentParameterIndex, null);
@@ -236,6 +238,10 @@ public final class ParameterInfoComponent extends JPanel {
       .collect(Collectors.joining("\n"));
   }
 
+  public boolean isSetup() {
+    return mySetup;
+  }
+
   final class MyParameterContext implements ParameterInfoUIContextEx {
     private final boolean mySingleParameterInfo;
     private int i;
@@ -254,6 +260,7 @@ public final class ParameterInfoComponent extends JPanel {
                                                boolean strikeout,
                                                boolean isDisabledBeforeHighlight,
                                                Color background) {
+      mySetup = true;
       List<String> split = StringUtil.split(text, ",", false);
       StringBuilder plainLine = new StringBuilder();
       final List<Integer> startOffsets = new ArrayList<>();
@@ -288,6 +295,7 @@ public final class ParameterInfoComponent extends JPanel {
 
     @Override
     public void setupRawUIComponentPresentation(@NlsContexts.Label String htmlText) {
+      mySetup = true;
       ParameterInfoControllerBase.RawSignatureItem item = new ParameterInfoControllerBase.RawSignatureItem(htmlText);
 
       result.current = getCurrentParameterIndex();
@@ -301,6 +309,7 @@ public final class ParameterInfoComponent extends JPanel {
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
+      mySetup = true;
       final String resultedText = myPanels[i].setup(result, texts, myEscapeFunction, flags, background);
       if (!mySimpleDesignMode) {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);

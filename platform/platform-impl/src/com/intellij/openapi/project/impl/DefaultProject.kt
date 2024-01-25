@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.project.impl
@@ -146,8 +146,7 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
 
   override fun isDefault(): Boolean = true
 
-  @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
-  override fun getCoroutineScope(): CoroutineScope = ApplicationManager.getApplication().getCoroutineScope()
+  override fun getCoroutineScope(): CoroutineScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
 
   @Suppress("DEPRECATION")
   @Deprecated("")

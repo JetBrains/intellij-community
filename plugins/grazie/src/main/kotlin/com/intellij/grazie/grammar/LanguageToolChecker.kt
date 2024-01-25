@@ -64,7 +64,9 @@ open class LanguageToolChecker : TextChecker() {
               val indicator = ProgressManager.getGlobalProgressIndicator()
               checkNotNull(indicator) { "Indicator was not set for current job" }
               return@coroutineToIndicator ApplicationUtil.runWithCheckCanceled(
-                { collectLanguageToolProblems(extracted, text, language) },
+                {
+                  collectLanguageToolProblems(extracted = extracted, text = text, lang = language)
+                },
                 indicator
               )
             }

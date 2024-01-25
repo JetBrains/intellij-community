@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.toolWindow
@@ -37,7 +37,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowMa
 
 private inline fun Logger.debug(project: Project, lazyMessage: (project: String) -> @NonNls String) {
   if (isDebugEnabled) {
-    // project.name must be not used - only projectFilePath is side effect free
+    // project.name must be not used - only projectFilePath is side-effect-free
     debug(lazyMessage(project.presentableUrl ?: ""))
   }
 }
@@ -73,8 +73,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     }
     else {
       pendingLayout.set(newLayout)
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch(Dispatchers.EDT) {
+      manager.coroutineScope.launch(Dispatchers.EDT) {
         manager.setLayout(pendingLayout.getAndSet(null) ?: return@launch)
       }
     }
@@ -143,6 +142,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
                                           shouldRegister = { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID })
         for (toolWindowPane in manager.getToolWindowPanes()) {
           toolWindowPane.buttonManager.initMoreButton(project)
+          toolWindowPane.buttonManager.updateResizeState(project)
           toolWindowPane.buttonManager.revalidateNotEmptyStripes()
           toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(toolWindowPane.paneId))
         }

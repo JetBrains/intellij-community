@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.ide.DataManager
@@ -12,17 +12,18 @@ import com.intellij.openapi.actionSystem.impl.Utils.freezeDataContext
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ArrayUtil
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
-import java.awt.event.*
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import java.lang.ref.WeakReference
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -62,21 +66,20 @@ class PopupMenuPreloader private constructor(component: JComponent,
                                              actionPlace: String,
                                              popupHandler: PopupHandler?,
                                              groupSupplier: () -> ActionGroup?) : HierarchyListener {
-  private val myPlace: String
-  private val myGroupSupplier: () -> ActionGroup?
+  private val place = actionPlace
+  private val groupSupplier: () -> ActionGroup?
   private val myComponentRef = WeakReference(component)
   private val myPopupHandlerRef = if (popupHandler == null) null else WeakReference(popupHandler)
   private val myStarted = System.nanoTime()
 
   private var myRetries = 0
-  private var myJob: Job? = null
+  private var job: Job? = null
   private var myDisposed = false
 
   private var removeIdleListener: AccessToken? = null
 
   init {
-    myPlace = actionPlace
-    myGroupSupplier = groupSupplier
+    this.groupSupplier = groupSupplier
     component.addHierarchyListener(this)
   }
 
@@ -96,23 +99,26 @@ class PopupMenuPreloader private constructor(component: JComponent,
       dispose("popupHandler removed")
       return
     }
-    val actionGroup = myGroupSupplier()
+    val actionGroup = groupSupplier()
     if (actionGroup == null) {
       dispose("action group not found")
       return
     }
-    if (myJob?.isActive == true) {
+    if (job?.isActive == true) {
       return
     }
     if (myRetries++ > MAX_RETRIES) {
       dispose("no retries left")
       return
     }
-    val contextComponent: Component =
-      if (ActionPlaces.MAIN_MENU == myPlace) IJSwingUtilities.getFocusedComponentInWindowOrSelf(component)
-      else component
+    val contextComponent: Component = if (ActionPlaces.MAIN_MENU == place) {
+      IJSwingUtilities.getFocusedComponentInWindowOrSelf(component)
+    }
+    else {
+      component
+    }
     val dataContext = DataManager.getInstance().getDataContext(contextComponent)
-    myJob = application.coroutineScope.launch(Dispatchers.EDT) {
+    job = service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       withTimeout(MAX_PRELOAD_TIME) {
         doPreload(actionGroup, dataContext)
       }
@@ -125,7 +131,7 @@ class PopupMenuPreloader private constructor(component: JComponent,
     try {
       Utils.expandActionGroupSuspend(
         actionGroup, PresentationFactory(), dataContext,
-        "$myPlace$PRELOADER_PLACE_SUFFIX", false, false)
+        "$place$PRELOADER_PLACE_SUFFIX", false, false)
       dispose(TimeoutUtil.getDurationMillis(start))
     }
     catch (ex: Throwable) {
@@ -142,8 +148,8 @@ class PopupMenuPreloader private constructor(component: JComponent,
     val success = millis > 0
 
     myDisposed = true
-    myJob?.apply {
-      myJob = null
+    job?.apply {
+      job = null
       cancel()
     }
     removeIdleListener?.apply {
@@ -156,15 +162,15 @@ class PopupMenuPreloader private constructor(component: JComponent,
         ourEditorContextMenuPreloadCount++
       }
     }
-    val group = myGroupSupplier()
+    val group = groupSupplier()
     val text = if (group == null) "" else
       (group.templateText ?: ActionManager.getInstance().getId(group) ?: "")
     if (success) {
-      LOG.info("'$text' at '$myPlace' is preloaded in $millis ms " +
+      LOG.info("'$text' at '$place' is preloaded in $millis ms " +
                "(${TimeoutUtil.getDurationMillis(myStarted)} ms since showing)")
     }
     else {
-      LOG.info("'$text' at '$myPlace' failed to preloaded: $reason " +
+      LOG.info("'$text' at '$place' failed to preloaded: $reason " +
                "(${TimeoutUtil.getDurationMillis(myStarted)} ms since showing)")
     }
   }

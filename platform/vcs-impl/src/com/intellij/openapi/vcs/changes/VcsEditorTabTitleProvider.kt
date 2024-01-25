@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.DiffRequestProcessorEditor
@@ -6,6 +6,7 @@ import com.intellij.diff.tools.combined.CombinedDiffEditor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.progress.blockingContext
@@ -56,7 +57,7 @@ private class VcsEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
     }
 
     @Suppress("DEPRECATION")
-    val future = project.coroutineScope.async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    val future = (project as ComponentManagerEx).getCoroutineScope().async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       blockingContext {
         supplier()
       }

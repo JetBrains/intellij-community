@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -157,7 +158,7 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull DefaultMutableTreeNode treeNode) {
-    return createOn(tree, new TreePath(treeNode.getPath()));
+    return createOn(tree, new CachingTreePath(treeNode.getPath()));
   }
 
   public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull TreePath rootPath) {
@@ -269,7 +270,7 @@ public final class TreeState implements JDOMExternalizable {
     ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
       @Override
       public void perform() {
-        facade.batch(indicator -> applyExpandedTo(facade, new TreePath(root), indicator));
+        facade.batch(indicator -> applyExpandedTo(facade, new CachingTreePath(root), indicator));
       }
     });
     if (tree.getSelectionCount() == 0) {
@@ -299,7 +300,7 @@ public final class TreeState implements JDOMExternalizable {
     List<TreePath> selection = new ArrayList<>();
     for (PathElement[] path : mySelectedPaths) {
       TreeModel model = tree.getModel();
-      TreePath treePath = new TreePath(model.getRoot());
+      TreePath treePath = new CachingTreePath(model.getRoot());
       for (int i = 1; treePath != null && i < path.length; i++) {
         treePath = findMatchedChild(model, treePath, path[i]);
       }

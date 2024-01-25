@@ -42,6 +42,11 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     right.initMoreButton(project)
   }
 
+  override fun updateResizeState(project: Project) {
+    left.updateResizeState(project)
+    right.updateResizeState(project)
+  }
+
   override fun layout(size: Dimension, layeredPane: JComponent) {
     layeredPane.setBounds(0, 0, size.width, size.height)
   }

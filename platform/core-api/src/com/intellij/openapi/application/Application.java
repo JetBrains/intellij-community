@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -610,16 +609,6 @@ public interface Application extends ComponentManager {
   boolean isEAP();
 
   //<editor-fold desc="Deprecated stuff">
-
-  /**
-   * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
-   * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
-   * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#why-application.getcoroutinescope-are-project.getcoroutinescope-are-bad">Why? See here.</a>
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @ApiStatus.Internal
-  CoroutineScope getCoroutineScope();
 
   /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
   @Deprecated

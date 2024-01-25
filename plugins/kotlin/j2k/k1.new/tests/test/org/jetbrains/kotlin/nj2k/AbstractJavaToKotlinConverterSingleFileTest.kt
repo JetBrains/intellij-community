@@ -4,11 +4,9 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -64,19 +62,16 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
                 settings.publicByDefault = it.toBoolean()
             }
 
-            val rawConverted = WriteCommandAction.runWriteCommandAction(project, Computable {
-                PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
-                return@Computable when (prefix) {
-                    "expression" -> expressionToKotlin(javaCode, settings, project)
-                    "statement" -> statementToKotlin(javaCode, settings, project)
-                    "method" -> methodToKotlin(javaCode, settings, project)
-                    "class" -> fileToKotlin(javaCode, settings, project)
-                    "file" -> fileToKotlin(javaCode, settings, project)
-                    else -> throw IllegalStateException(
-                        "Specify what is it: file, class, method, statement or expression using the first line of test data file"
-                    )
-                }
-            })
+            val rawConverted = when (prefix) {
+                "expression" -> expressionToKotlin(javaCode, settings, project)
+                "statement" -> statementToKotlin(javaCode, settings, project)
+                "method" -> methodToKotlin(javaCode, settings, project)
+                "class" -> fileToKotlin(javaCode, settings, project)
+                "file" -> fileToKotlin(javaCode, settings, project)
+                else -> throw IllegalStateException(
+                    "Specify what is it: file, class, method, statement or expression using the first line of test data file"
+                )
+            }
 
             val reformatInFun = prefix in setOf("element", "expression", "statement")
 

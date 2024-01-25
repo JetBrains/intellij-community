@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar.experimental
 
 import com.intellij.ide.ui.ToolbarSettings
@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.ToolbarActionsUpdatedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
@@ -215,8 +216,7 @@ private class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
       val disposable = Disposer.newDisposable()
       this.disposable = disposable
 
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      (project as ComponentManagerEx).getCoroutineScope().launch {
         RunWidgetAvailabilityManager.getInstance(project).availabilityChanged.collectLatest {
           withContext(Dispatchers.EDT) {
             LOG.info("New toolbar: run widget availability changed $it")
@@ -227,8 +227,7 @@ private class NewToolbarRootPaneExtension : IdeRootPaneNorthExtension {
 
       ApplicationManager.getApplication().messageBus.connect(disposable)
         .subscribe(ToolbarActionsUpdatedListener.TOPIC, ToolbarActionsUpdatedListener {
-          @Suppress("DEPRECATION")
-          project.coroutineScope.launch(Dispatchers.EDT) {
+          project.getCoroutineScope().launch(Dispatchers.EDT) {
             revalidate()
             doLayout()
           }

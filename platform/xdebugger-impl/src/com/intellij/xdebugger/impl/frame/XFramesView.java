@@ -28,6 +28,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -709,6 +710,33 @@ public final class XFramesView extends XDebugView {
       return selectCurrentFrame();
     }
   }
+
+  private static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor {
+
+    private final int hiddenFrameCount;
+
+    public HiddenStackFramesItem(int count) {
+      hiddenFrameCount = count;
+    }
+
+    @Override
+    public void customizePresentation(@NotNull ColoredTextContainer component) {
+      component.append(XDebuggerBundle.message("label.hidden.frames", hiddenFrameCount), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      component.setIcon(EmptyIcon.ICON_16);
+    }
+
+    @Override
+    public @Nullable Color getBackgroundColor() {
+      return null;
+    }
+  }
+
+  public static List<XStackFrame> createHiddenFramePlaceholder(int hiddenFrameCount) {
+    return Registry.is("debugger.hidden.frames.placeholder")
+           ? Collections.singletonList(new HiddenStackFramesItem(hiddenFrameCount))
+           : Collections.emptyList();
+  }
+
 
   static void addFramesNavigationAd(JPanel parent) {
     if (!(parent.getLayout() instanceof BorderLayout)) {

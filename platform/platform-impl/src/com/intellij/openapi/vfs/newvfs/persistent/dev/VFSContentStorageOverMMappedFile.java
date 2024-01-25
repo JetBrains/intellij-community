@@ -34,10 +34,30 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extend
 /**
  * {@link VFSContentStorage} implemented with memory-mapped files: uses {@link AppendOnlyLogOverMMappedFile} for
  * storing data records (contentHash, content), and uses {@link ExtendibleHashMap} for mapping (contentHash->contentId)
+ * <p>
+ * Uses 2 files:
+ * [content] stores records (contentHash, compressed | uncompressed content)
+ * [content.hashToId] stores mapping from contentHash to [content] records with such contentHash
+ * <p>
+ * Compresses (currently: java.util.zip) content larger than threshold, configured in the ctor.
+ * <p/>
+ * Max record size (compressed) is limited by the pageSize.
+ * <p>
+ * Storage is mostly thread-safe -- except for unmap, that should be called from a single thread
+ * after all other usages are stopped.
+ * <p>
+ * Storage is mostly app-crash-safe: as long, as OS doesn't crash, and hence keeps current mmapped
+ * files content stored -- all the records written (i.e. {@link #storeRecord(ByteArraySequence)} is
+ * finished and return a record id) should be available after storage re-open. But opening a storage
+ * after app crash takes longer -- some recovery steps needs to be done.
  */
 public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unmappable {
   private static final Logger LOG = Logger.getInstance(VFSContentStorageOverMMappedFile.class);
 
+  /**
+   * Version of storage format itself: headers sizes, fields meaning, compression algo used, etc.
+   * Ctor fails if file-to-open has this version different from current value
+   */
   private static final int STORAGE_FORMAT_VERSION = 1;
 
   private static final int EXTERNAL_VERSION_FIELD_NO = 0;
@@ -48,6 +68,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   //TODO/MAYBE RC:
   //           1. Check multithreading semantics: it seems like hashToContentRecordIdMap being lock-protected, and
   //              contentStorage being non-blocking give us thread-safety -- but needs to check more carefully
+  //           2. Use lz4 compression (lz4.kt)? Pure java impl, already battle-tested in indexes, less compression
+  //              ratio, but much faster than zip...
 
 
   private final Path storagePath;
@@ -149,10 +171,6 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         return storageIdToContentId(storageId);
       }
     );
-  }
-
-  private boolean shouldCompress(@NotNull ByteArraySequence contentBytes) {
-    return contentBytes.length() > compressContentLargerThan;
   }
 
   @Override
@@ -265,7 +283,6 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
     };
   }
 
-
   @Override
   public int getRecordsCount() throws IOException {
     return hashToContentRecordIdMap.size();
@@ -319,6 +336,10 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   }
 
   //===================== implementation infrastructure: ================================
+
+  private boolean shouldCompress(@NotNull ByteArraySequence contentBytes) {
+    return contentBytes.length() > compressContentLargerThan;
+  }
 
   private static @NotNull ByteArraySequence compress(@NotNull ByteArraySequence bytes) {
     Deflater deflater = new Deflater();
@@ -380,7 +401,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
     }
 
     long id = ((storageId - 1) >> 2) + 1;
-    //return Math.toIntExact(id);
+    //Math.toIntExact(id) doesn't include id value in exception:
     if ((int)id != id) {
       throw new IOException("Overflow: storageId(=" + storageId + ") >MAX_INT even after /4");
     }
@@ -388,11 +409,20 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   }
 
   private static long contentIdToStorageId(int recordId) {
+    //rely on AppendOnlyLogOverMMappedFile impl detail: records are int32-aligned
     return (((long)recordId - 1) << 2) + 1;
   }
 
+  /** @return hash code (for use in hashtable) of crypto-hash bytes */
   private static int hashCodeOf(byte[] contentHash) {
-    int hashCode = 0; // take first 4 bytes, this should be good enough hash given we reference git revisions with 7-8 hex digits
+    //Just use contentHash[0..3] as hash code (int32)
+    //Why we expect it to be good enough hash-code: we just rely on crypto-hash being a good
+    // (regular) hash: spreading set of contents over all possible hash bytes uniformly -- which
+    // means each byte of contentHash should have all values with equal probability
+    //Simple practical reasoning: in most git repositories we could refer revisions with the only
+    // first 7-8 hex digits (~4bytes) of crypto-hash -- i.e. those first 4 bytes of crypto-hash are
+    // unique across many millions file revisions.
+    int hashCode = 0;
     for (int i = 0; i < 4; i++) {
       hashCode = (hashCode << 8) + (contentHash[i] & 0xFF);
     }

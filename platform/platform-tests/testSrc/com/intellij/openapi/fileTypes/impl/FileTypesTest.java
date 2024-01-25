@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,7 +97,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     super.setUp();
     // we test against myFileTypeManager instance only, standard FileTypeManager.getInstance() must not be changed in any way
     //noinspection deprecation
-    myFileTypeManager = new FileTypeManagerImpl(myProject.getCoroutineScope());
+    myFileTypeManager = new FileTypeManagerImpl(((ComponentManagerEx)myProject).getCoroutineScope());
     myFileTypeManager.listenAsyncVfsEvents();
     myFileTypeManager.initializeComponent();
     myFileTypeManager.getRegisteredFileTypes();

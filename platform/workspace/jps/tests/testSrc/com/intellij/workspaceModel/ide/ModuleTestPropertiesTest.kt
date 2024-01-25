@@ -14,7 +14,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity
 import com.intellij.platform.workspace.jps.entities.modifyEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -71,7 +70,7 @@ class ModuleTestPropertiesTest {
 
     val projectPath = File(PathManagerEx.getCommunityHomePath(),
                            "platform/workspace/jps/tests/testData/serialization/moduleTestProperties")
-    val virtualFileUrlManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    val virtualFileUrlManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
     val storage = copyAndLoadProject(projectPath, virtualFileUrlManager).storage
 
     val mainModuleEntity = storage.resolve(ModuleId(mainModuleName))

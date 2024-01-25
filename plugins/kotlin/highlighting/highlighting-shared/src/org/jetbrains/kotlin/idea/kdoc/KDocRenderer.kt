@@ -6,11 +6,12 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledCodeBlock
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledInlineCode
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledInlineCodeFragment
-import com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledLinkFragment
+import com.intellij.lang.documentation.QuickDocHighlightingHelper
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeBlock
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledFragment
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledInlineCode
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledInlineCodeFragment
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledLinkFragment
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
@@ -18,7 +19,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -200,14 +200,14 @@ object KDocRenderer {
                     append("<p>")
                     this@appendSamplesList.appendHyperlink(subjectLink)
                     this@appendSamplesList.appendStyledCodeBlock(
+                        subjectLink.project,
+                        KotlinLanguage.INSTANCE,
                         if (DumbService.isDumb(subjectLink.project))
                             "// " + KotlinBundle.message("kdoc.comment.unresolved")
                         else when (val target = subjectLink.getTargetElement()) {
                             null -> "// " + KotlinBundle.message("kdoc.comment.unresolved")
                             else -> trimCommonIndent(target.extractExampleText()).htmlEscape()
-                        },
-                        KotlinLanguage.INSTANCE,
-                        subjectLink.project
+                        }
                     )
                 }
             }
@@ -388,7 +388,7 @@ object KDocRenderer {
                     val startDelimiter = node.child(MarkdownTokenTypes.BACKTICK)?.text
                     if (startDelimiter != null) {
                         val text = node.text.substring(startDelimiter.length).removeSuffix(startDelimiter)
-                        sb.appendStyledInlineCode(text, KotlinLanguage.INSTANCE, comment.project)
+                        sb.appendStyledInlineCode(comment.project, KotlinLanguage.INSTANCE, text)
                     }
                 }
 
@@ -406,7 +406,11 @@ object KDocRenderer {
                                 language = child.text.trim().split(' ')[0]
                         }
                     }
-                    sb.appendStyledCodeBlock(contents, QuickDocCodeHighlightingHelper.guessLanguage(language) ?: KotlinLanguage.INSTANCE)
+                    sb.appendStyledCodeBlock(
+                        project = comment.project,
+                        language = QuickDocHighlightingHelper.guessLanguage(language) ?: KotlinLanguage.INSTANCE,
+                        code = contents
+                    )
                 }
 
                 MarkdownTokenTypes.FENCE_LANG, MarkdownTokenTypes.CODE_LINE, MarkdownTokenTypes.CODE_FENCE_CONTENT -> {
@@ -438,7 +442,7 @@ object KDocRenderer {
                                         true
                                     )
                                 }
-                                ?: sb.appendStyledSpan(true, KotlinHighlightingColors.RESOLVED_TO_ERROR, label)
+                                ?: sb.appendStyledFragment(label, KotlinHighlightingColors.RESOLVED_TO_ERROR)
                         }
                     } else {
                         sb.append(node.text)
@@ -566,15 +570,6 @@ object KDocRenderer {
         }
     }
 
-    private fun StringBuilder.appendStyledSpan(doHighlighting: Boolean, attributesKey: TextAttributesKey, value: String?): StringBuilder {
-        if (doHighlighting) {
-            HtmlSyntaxInfoUtil.appendStyledSpan(this, attributesKey, value, DocumentationSettings.getHighlightingSaturation(true))
-        } else {
-            append(value)
-        }
-        return this
-    }
-
     /**
      * If highlighted links has the same color as highlighted inline code blocks they will be indistinguishable.
      * In this case we should change link color to standard hyperlink color which we believe is apriori different.
@@ -633,16 +628,11 @@ object KDocRenderer {
                 value: String,
                 attributes: TextAttributesAdapter
             ) {
-                HtmlSyntaxInfoUtil.appendStyledSpan(
-                    this,
-                    attributes.attributes,
-                    value,
-                    DocumentationSettings.getHighlightingSaturation(false)
-                )
+                appendStyledFragment(value, attributes.attributes)
             }
 
             override fun StringBuilder.appendCodeSnippetHighlightedByLexer(codeSnippet: String) {
-                appendStyledInlineCodeFragment(codeSnippet, KotlinLanguage.INSTANCE, project)
+                appendStyledInlineCodeFragment(project, KotlinLanguage.INSTANCE, codeSnippet)
             }
 
             private fun resolveKey(key: TextAttributesKey): TextAttributesAdapter {

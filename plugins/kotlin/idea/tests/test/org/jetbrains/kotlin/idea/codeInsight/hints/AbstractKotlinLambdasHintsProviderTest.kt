@@ -9,9 +9,9 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import junit.framework.ComparisonFailure
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider.Companion.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider.Companion.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.io.File
@@ -43,15 +43,15 @@ abstract class AbstractKotlinLambdasHintsProvider :
         with(org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider()) {
             val fileContents = FileUtil.loadFile(File(fileName), true)
             val options = buildMap<String, Boolean> {
-                put(SHOW_RETURN_EXPRESSIONS, false)
-                put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS, false)
+                put(SHOW_RETURN_EXPRESSIONS.name, false)
+                put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name, false)
 
                 when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
-                    "return" -> put(SHOW_RETURN_EXPRESSIONS, true)
-                    "receivers_params" -> put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS, true)
+                    "return" -> put(SHOW_RETURN_EXPRESSIONS.name, true)
+                    "receivers_params" -> put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name, true)
                     "return-&-receivers_params" -> {
-                        put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS, true)
-                        put(SHOW_RETURN_EXPRESSIONS, true)
+                        put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name, true)
+                        put(SHOW_RETURN_EXPRESSIONS.name, true)
                     }
                 }
             }

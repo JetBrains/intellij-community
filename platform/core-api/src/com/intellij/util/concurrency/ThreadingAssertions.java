@@ -124,8 +124,15 @@ public final class ThreadingAssertions {
    */
   public static void assertWriteIntentReadAccess() {
     if (!ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
-      throwThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION);
+      throwWriteIntentReadAccess();
     }
+  }
+
+  /**
+   * Throw error that current thread hasn't write-intent read access.
+   */
+  public static void throwWriteIntentReadAccess() {
+    throwThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION);
   }
 
   /**

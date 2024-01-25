@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.application.*
@@ -53,7 +53,7 @@ object ApplicationActivationStateManager {
       // So let's postpone the application deactivation for a while
       state = ApplicationActivationStateManagerState.DEACTIVATING
       LOG.debug("The app is in the deactivating state")
-      app.coroutineScope.launch(CoroutineName("ApplicationDeactivation")) {
+      app.getCoroutineScope().launch(CoroutineName("ApplicationDeactivation")) {
         delay(Registry.intValue("application.deactivation.timeout", 1_500).milliseconds)
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           if (state != ApplicationActivationStateManagerState.DEACTIVATING) {

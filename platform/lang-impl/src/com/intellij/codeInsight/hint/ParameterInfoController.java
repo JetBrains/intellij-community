@@ -54,9 +54,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
   private final MyBestLocationPointProvider myProvider;
 
+  private Runnable myLateShowHintCallback;
+
   @Override
   protected boolean canBeDisposed() {
-    return !myHint.isVisible() && !myKeepOnHintHidden && !ApplicationManager.getApplication().isHeadlessEnvironment()
+    return myLateShowHintCallback == null && !myHint.isVisible() && !myKeepOnHintHidden && !ApplicationManager.getApplication().isHeadlessEnvironment()
            || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid();
   }
 
@@ -189,6 +191,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
+    int finalFlags = flags;
 
     Editor editorToShow = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
 
@@ -197,7 +200,15 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
     // is case of injection we need to calculate position for EditorWindow
     // also we need to show the hint in the main editor because of intention bulb
-    HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), flags, 0, false, hintHint);
+    Runnable showHintCallback =
+      () -> HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), finalFlags, 0, false, hintHint);
+    if (myComponent.isSetup()) {
+      showHintCallback.run();
+      myLateShowHintCallback = null;
+    }
+    else {
+      myLateShowHintCallback = showHintCallback;
+    }
 
     updateComponent();
   }
@@ -226,10 +237,15 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
           if (myKeepOnHintHidden && knownParameter && !myHint.isVisible()) {
             AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
           }
-          if (!myDisposed && (myHint.isVisible() && !myEditor.isDisposed() &&
+          if (!myDisposed && ((myHint.isVisible() || myLateShowHintCallback != null) && !myEditor.isDisposed() &&
                               (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode()) ||
                               ApplicationManager.getApplication().isHeadlessEnvironment())) {
             Model result = myComponent.update(mySingleParameterInfo);
+            if (myLateShowHintCallback != null) {
+              Runnable showHintCallback = myLateShowHintCallback;
+              myLateShowHintCallback = null;
+              showHintCallback.run();
+            }
             result.project = myProject;
             result.range = myParameterInfoControllerData.getParameterOwner().getTextRange();
             result.editor = myEditor;
@@ -275,7 +291,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
             })
               .withDocumentsCommitted(myProject)
               .expireWhen(
-                () -> !myKeepOnHintHidden && !myHint.isVisible() && !ApplicationManager.getApplication().isHeadlessEnvironment() ||
+                () -> !myKeepOnHintHidden && !myHint.isVisible() && myLateShowHintCallback == null && !ApplicationManager.getApplication().isHeadlessEnvironment() ||
                       getCurrentOffset() != context.getOffset() ||
                       !elementForUpdating.isValid())
               .expireWith(this),
@@ -471,6 +487,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
   @Override
   protected void hideHint() {
+    myLateShowHintCallback = null;
     myHint.hide();
     for (ParameterInfoListener listener : ParameterInfoListener.EP_NAME.getExtensionList()) {
       listener.hintHidden(myProject);

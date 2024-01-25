@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,7 @@ public final class WrongPackageStatementInspection extends AbstractBaseJavaLocal
       }
     }
     else {
+      if (ContainerUtil.or(javaFile.getClasses(), c -> c instanceof PsiImplicitClass)) return null;
       final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
       PsiPackage classPackage = (PsiPackage)packageReference.resolve();
       List<LocalQuickFix> availableFixes = new ArrayList<>();

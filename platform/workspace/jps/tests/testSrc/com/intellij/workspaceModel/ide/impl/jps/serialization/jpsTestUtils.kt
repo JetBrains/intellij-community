@@ -39,7 +39,6 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.CoroutineScope
@@ -442,7 +441,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
     ApplicationManager.getApplication().replaceService(GlobalWorkspaceModel::class.java, GlobalWorkspaceModel(), parentDisposable)
 
     // Entity source for global entities
-    val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
+    val virtualFileManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
     val globalLibrariesFile = virtualFileManager.getOrCreateFromUri("$testDir/options/applicationLibraries.xml")
     val libraryEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 

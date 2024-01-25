@@ -88,12 +88,8 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
         }
     }
 
-    override fun prepareOperation(usages: Array<UsageInfo>): Set<KtFile> = usages.mapNotNullTo(LinkedHashSet()) {
+    private fun prepareOperation(usages: Array<UsageInfo>): Set<KtFile> = usages.mapNotNullTo(LinkedHashSet()) {
         if (!it.isNonCodeUsage) it.file as? KtFile else null
-    }
-
-    override fun prepareOperation(usages: Array<UsageInfo>, primaryElement: PsiElement): Set<KtFile> {
-        return prepareOperation(usages, listOf(primaryElement))
     }
 
     override fun prepareOperation(usages: Array<UsageInfo>, elements: List<PsiElement>): Set<KtFile> {

@@ -3,16 +3,16 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.rules.ProjectModelRule
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -28,7 +28,7 @@ class JpsProjectSaveAllEntitiesTest {
 
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
   }
 
   @Test

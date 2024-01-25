@@ -2,7 +2,7 @@
 // ACTION: Convert function to property
 // ACTION: Convert member to extension
 // ACTION: Convert to block body
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Function return types' for 'Types' inlay hints
 // ACTION: Make 'open'
 // ACTION: Move to companion object
 // ACTION: Specify return type explicitly

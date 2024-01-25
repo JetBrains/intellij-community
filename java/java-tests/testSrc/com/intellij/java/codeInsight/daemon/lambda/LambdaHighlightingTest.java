@@ -16,12 +16,8 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.ColorUtil;
-import com.intellij.util.ui.UIUtil;
-import org.junit.Assert;
 
 public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/highlighting/";
@@ -38,23 +34,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testReassignUsedVars() { doTest(); }
   public void testLambdaContext() { doTest(); }
   public void testReturnTypeCompatibility() { doTest(); }
-  public void testTypeObject() {
-      doTest();
-      String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
-      String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-      String expected = "<html><table>" +
-                         "<tr>" +
-                         "<td style='padding: 0px 16px 8px 4px;color: "+greyed+"'>Required type:</td>" +
-                         "<td style='padding: 0px 4px 8px 0px;'>anonymous <font color=\""+toolTipForeground+"\">Object</font></td></tr>" +
-                         "<tr><td style='padding: 0px 16px 0px 4px;color: "+greyed+"'>Provided:</td><td style='padding: 0px 4px 0px 0px;'><font color=\""+toolTipForeground+"\">Object</font></td></tr>" +
-                         "</table>" +
-                         "</html>";
 
-      doHighlighting()
-        .stream()
-        .filter(info -> info.type == HighlightInfoType.ERROR)
-        .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
-  }
   public void testTypeArgsConsistency() { doTest(); }
   public void testTypeArgsConsistencyMisc1() { doTest(); }
   public void testTypeArgsConsistencyMisc2() { doTest(); }

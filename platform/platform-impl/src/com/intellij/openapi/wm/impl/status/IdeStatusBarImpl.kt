@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.openapi.wm.impl.status
@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
@@ -973,8 +974,7 @@ internal fun adaptV2Widget(id: String,
                            dataContext: WidgetPresentationDataContext,
                            presentationFactory: (CoroutineScope) -> WidgetPresentation): StatusBarWidget {
   return object : StatusBarWidget, CustomStatusBarWidget {
-    @Suppress("DEPRECATION")
-    private val coroutineScope = dataContext.project.coroutineScope.childScope()
+    private val coroutineScope = (dataContext.project as ComponentManagerEx).getCoroutineScope().childScope()
 
     override fun ID(): String = id
 

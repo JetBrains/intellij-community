@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -41,8 +42,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
 
     val project = project
     project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
-    @Suppress("DEPRECATION")
-    manager = FileEditorManagerImpl(project, project.coroutineScope.childScope())
+    manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope())
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
     check(DockManager.getInstance(project).containers.size == 1) {

@@ -3,34 +3,25 @@ package org.jetbrains.idea.maven.navigator.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
+import org.jetbrains.idea.maven.indices.MavenUpdatableIndex
 import org.jetbrains.idea.maven.utils.MavenDataKeys
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 
 
-class UpdateLocalIndexAction : IndexUpdateAction() {
-
-}
-
-class ShowIndexAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    TODO("Not yet implemented")
-  }
-
-}
-
-abstract class IndexUpdateAction : DumbAwareAction() {
+class IndexUpdateAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val mavenRepo = e.getData(MavenDataKeys.MAVEN_REPOSITORY) ?: return
 
     val manager = MavenSystemIndicesManager.getInstance()
-    MavenSystemIndicesManager.getInstance().cs.launch(Dispatchers.IO + CoroutineName(this.javaClass.name)) {
-      manager.startUpdateLuceneIndex(mavenRepo)
-    }
+    manager.updateIndexContentFromEDT(mavenRepo)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

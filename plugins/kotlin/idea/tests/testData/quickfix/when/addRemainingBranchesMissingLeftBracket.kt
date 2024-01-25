@@ -1,5 +1,5 @@
 // "Add remaining branches" "false"
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Local variable types' for 'Types' inlay hints
 // WITH_STDLIB
 // ERROR: 'when' expression must be exhaustive, add necessary 'is B' branch or 'else' branch instead
 

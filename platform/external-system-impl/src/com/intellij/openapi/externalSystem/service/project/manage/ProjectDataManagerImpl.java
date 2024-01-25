@@ -25,6 +25,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,7 +180,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         }
       });
 
-      commit(modelsProvider, project, true, "Imported data", activityId, projectSystemId, Span.current());
+      commit(modelsProvider, project, true, "Imported data", activityId, projectSystemId);
       if (indicator != null) {
         indicator.setIndeterminate(true);
       }
@@ -188,6 +189,8 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       importSucceeded = true;
     }
     catch (Throwable t) {
+      dataServicesSpan.recordException(t);
+      dataServicesSpan.setStatus(StatusCode.ERROR);
       errorsCount += 1;
       topic.onImportFailed(projectPath, t);
       ExternalSystemSyncActionsCollector.logError(null, activityId, t);
@@ -409,7 +412,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         }
       }
 
-      commit(modelsProvider, project, synchronous, "Removed data", null, projectData.getOwner(), Span.current());
+      commit(modelsProvider, project, synchronous, "Removed data", null, projectData.getOwner());
     }
     catch (Throwable t) {
       dispose(modelsProvider, project, synchronous);
@@ -467,8 +470,8 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
                              boolean synchronous,
                              @NotNull final String commitDesc,
                              @Nullable Long activityId,
-                             ProjectSystemId projectSystemId,
-                             @NotNull Span parentSpan) {
+                             @Nullable ProjectSystemId projectSystemId) {
+    Span parentSpan = Span.current();
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {

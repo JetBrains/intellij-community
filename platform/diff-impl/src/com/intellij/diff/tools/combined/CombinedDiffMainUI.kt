@@ -5,15 +5,12 @@ import com.intellij.CommonBundle
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffTool
-import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
-import com.intellij.diff.impl.ui.DifferencesLabel
+import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.tools.util.base.DiffViewerBase
-import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -44,13 +41,12 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
-import java.lang.Boolean.getBoolean
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
-class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory: () -> AnAction?) : Disposable {
+class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToChangeAction: AnAction?) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
   private val context: DiffContext = model.context
@@ -87,10 +83,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       e.presentation.isVisible = false
     }
   }
-
-  private val goToChangeAction = goToChangeFactory()
-
-  private val differencesLabel by lazy { MyDifferencesLabel(goToChangeAction) }
 
   init {
     Touchbar.setActions(mainPanel, touchbarActionGroup)
@@ -130,7 +122,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   @RequiresEdt
-  fun setContent(viewer: CombinedDiffViewer) {
+  internal fun setContent(viewer: CombinedDiffViewer, blockState: BlockState) {
     clear()
     contentPanel.setContent(viewer.component)
     val toolbarComponents = viewer.init()
@@ -144,7 +136,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     else {
       diffInfoWrapper.setContent(null)
     }
-    buildToolbar(toolbarComponents.toolbarActions)
+    buildToolbar(blockState, toolbarComponents.toolbarActions)
     buildActionPopup(toolbarComponents.popupActions)
     toolbarStatusPanel.setContent(toolbarComponents.statusPanel)
   }
@@ -185,8 +177,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
 
-  private fun buildToolbar(viewerActions: List<AnAction?>?) {
-    collectToolbarActions(viewerActions)
+  private fun buildToolbar(blockState: BlockState, viewerActions: List<AnAction?>?) {
+    collectToolbarActions(blockState, viewerActions)
     (leftToolbar as ActionToolbarImpl).reset()
     leftToolbar.updateActionsImmediately()
     leftToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
@@ -200,9 +192,9 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
   }
 
-  private fun collectToolbarActions(viewerActions: List<AnAction?>?) {
+  private fun collectToolbarActions(blockState: BlockState, viewerActions: List<AnAction?>?) {
     leftToolbarGroup.removeAll()
-    val navigationActions = ArrayList<AnAction>(collectNavigationActions())
+    val navigationActions = ArrayList<AnAction>(collectNavigationActions(blockState))
 
     rightToolbarGroup.add(diffToolChooser)
 
@@ -211,24 +203,13 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     DiffUtil.addActionBlock(rightToolbarGroup, viewerActions, false)
     val contextActions = context.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
     DiffUtil.addActionBlock(leftToolbarGroup, contextActions)
-
-    //if (SystemInfo.isMac) { // collect touchbar actions
-    //  touchbarActionGroup.removeAll()
-    //  touchbarActionGroup.addAll(CombinedPrevDifferenceAction(settings, context), CombinedNextDifferenceAction(settings, context),
-    //                             OpenInEditorAction(),
-    //                             Separator.getInstance(),
-    //                             CombinedPrevChangeAction(context), CombinedNextChangeAction(context))
-    //  if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null) {
-    //    touchbarActionGroup.addAll(viewerActions)
-    //  }
-    //}
   }
 
-  private fun collectNavigationActions(): List<AnAction> {
+  private fun collectNavigationActions(blockState: BlockState): List<AnAction> {
     return listOfNotNull(
       CombinedPrevBlockAction(context),
       CombinedPrevDifferenceAction(context),
-      differencesLabel,
+      FilesLabelAction(goToChangeAction, leftToolbar.component, blockState),
       CombinedNextDifferenceAction(context),
       CombinedNextBlockAction(context),
       openInEditorAction,
@@ -288,37 +269,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     }
   }
 
-  fun countDifferences(blockId: CombinedBlockId, viewer: DiffViewer) {
-    differencesLabel.countDifferences(blockId, viewer)
-  }
-
-  private inner class MyDifferencesLabel(goToChangeAction: AnAction?) :
-    DifferencesLabel(goToChangeAction, leftToolbar.component) {
-
-    private val loadedDifferences = hashMapOf<CombinedBlockId, Int>()
-
-    override fun getFileCount(): Int = combinedViewer?.getDiffBlocksCount() ?: 0
-    override fun getTotalDifferences(): Int = calculateTotalDifferences()
-
-    fun countDifferences(blockId: CombinedBlockId, childViewer: DiffViewer) {
-      loadedDifferences[blockId] = 1
-
-      if (childViewer is DiffViewerBase) {
-        val listener = object : DiffViewerListener() {
-          override fun onAfterRediff() {
-            loadedDifferences[blockId] = if (childViewer is DifferencesCounter) childViewer.getTotalDifferences() else 1
-          }
-        }
-        childViewer.addListener(listener)
-
-
-        Disposer.register(childViewer, Disposable { childViewer.removeListener(listener) })
-      }
-    }
-
-    private fun calculateTotalDifferences(): Int = loadedDifferences.values.sum()
-  }
-
   private inner class MyDiffToolChooser : DiffToolChooser(context.project) {
     private val availableTools = arrayListOf<CombinedDiffTool>().apply {
       addAll(DiffManagerEx.getInstance().diffTools.filterIsInstance<CombinedDiffTool>())
@@ -365,7 +315,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       if (data != null) return data
 
       return when {
-        DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> model.getCurrentRequest()
+        DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> getCurrentRequest()
         OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.`is`(dataId) -> Runnable {  DiffUtil.minimizeDiffIfOpenedInWindow(this)}
         CommonDataKeys.PROJECT.`is`(dataId) -> context.project
         PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> {
@@ -377,10 +327,15 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
           }
         }
         DiffDataKeys.DIFF_CONTEXT.`is`(dataId) -> context
-        else -> model.getCurrentRequest()?.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
+        else -> getCurrentRequest()?.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
                 ?: context.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
       }
     }
+  }
+
+  fun getCurrentRequest(): DiffRequest? {
+    val id = combinedViewer?.getCurrentBlockId() ?: return null
+    return model.getLoadedRequest(id)
   }
 
   private inner class ShowActionGroupPopupAction : DumbAwareAction() {
@@ -410,9 +365,5 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     }
 
     override fun getProject() = context.project
-  }
-
-  companion object {
-    private val SHOW_VIEWER_ACTIONS_IN_TOUCHBAR = getBoolean("touchbar.diff.show.viewer.actions")
   }
 }

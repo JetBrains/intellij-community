@@ -54,7 +54,7 @@ class FacetModelBridgeTest {
   val disposableRule = DisposableRule()
 
   private val virtualFileManager: VirtualFileUrlManager
-    get() = VirtualFileUrlManager.getInstance(projectModel.project)
+    get() = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
   @Before
   fun registerFacetType() {

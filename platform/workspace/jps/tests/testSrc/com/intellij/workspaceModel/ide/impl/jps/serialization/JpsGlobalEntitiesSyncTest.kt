@@ -12,13 +12,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.workspaceModel.ide.getGlobalInstance
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
@@ -92,7 +89,7 @@ class JpsGlobalEntitiesSyncTest {
       // Check global entities in sync after adding entity via project storage
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
-          val virtualFileManager = VirtualFileUrlManager.getInstance(project)
+          val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
             val projectSdkEntity = SdkEntity("oracle-1.8", "JavaSDK",
                                              listOf(SdkRoot(virtualFileManager.getOrCreateFromUri("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
@@ -117,14 +114,14 @@ class JpsGlobalEntitiesSyncTest {
     UsefulTestCase.assertSameElements(sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name) }, sdkInfos)
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val globalVirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+    val globalVirtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
 
     val sdkEntities = globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
     UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
 
     loadedProjects.forEach { loadedProject ->
       val projectWorkspaceModel = WorkspaceModel.getInstance(loadedProject)
-      val projectVirtualFileUrlManager = VirtualFileUrlManager.getInstance(loadedProject)
+      val projectVirtualFileUrlManager = projectWorkspaceModel.getVirtualFileUrlManager()
       projectWorkspaceModel as WorkspaceModelImpl
       val projectSdkEntities = projectWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
       UsefulTestCase.assertSameElements(sdkInfos, projectSdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
@@ -173,8 +170,9 @@ class JpsGlobalEntitiesSyncTest {
       val project = loadedProjects.first()
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
-          val virtualFileManager = VirtualFileUrlManager.getInstance(project)
-          WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
+          val workspaceModel = WorkspaceModel.getInstance(project)
+          val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
+          workspaceModel.updateProjectModel("Test update") { builder ->
             val libraryEntity = builder.entities(LibraryEntity::class.java).first { it.name == "com.google.plugin" }
             val libraryNameToRemove = libraryEntity.name
             builder.removeEntity(libraryEntity)
@@ -206,14 +204,14 @@ class JpsGlobalEntitiesSyncTest {
     UsefulTestCase.assertSameElements(globalLibrariesNames, libraryBridges.map { it.name })
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val globalVirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+    val globalVirtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
 
     val globalLibraryEntities = globalWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).associateBy { it.name }
     UsefulTestCase.assertSameElements(globalLibrariesNames, globalLibraryEntities.keys)
 
     loadedProjects.forEach { loadedProject ->
       val projectWorkspaceModel = WorkspaceModel.getInstance(loadedProject)
-      val projectVirtualFileUrlManager = VirtualFileUrlManager.getInstance(loadedProject)
+      val projectVirtualFileUrlManager = projectWorkspaceModel.getVirtualFileUrlManager()
       projectWorkspaceModel as WorkspaceModelImpl
       val projectLibraryEntities = projectWorkspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList()
       UsefulTestCase.assertSameElements(projectLibrariesNames + globalLibrariesNames, projectLibraryEntities.map { it.name })

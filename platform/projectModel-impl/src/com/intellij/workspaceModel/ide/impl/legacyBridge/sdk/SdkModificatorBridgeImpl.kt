@@ -14,11 +14,9 @@ import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import org.jdom.Element
@@ -54,7 +52,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
 
   override fun setHomePath(path: String?) {
     modifiedSdkEntity.homePath = if (path != null) {
-      val globalInstance = VirtualFileUrlManager.getGlobalInstance()
+      val globalInstance = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
       globalInstance.getOrCreateFromUri(path)
     } else {
       null
@@ -84,7 +82,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
   }
 
   override fun addRoot(root: VirtualFile, rootType: OrderRootType) {
-    val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
     modifiedSdkEntity.roots.add(
       SdkRoot(virtualFileUrlManager.getOrCreateFromUri(root.url), rootTypes[rootType.customName]!!)
     )

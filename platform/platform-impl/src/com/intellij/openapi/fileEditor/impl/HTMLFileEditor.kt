@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -43,8 +44,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)
-  @Suppress("DEPRECATION")
-  private val htmlTabScope = project.coroutineScope.namedChildScope("HTMLFileEditor[${file.name}]")
+  private val htmlTabScope = (project as ComponentManagerEx).getCoroutineScope().namedChildScope("HTMLFileEditor[${file.name}]")
 
   private val multiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent = when (key) {

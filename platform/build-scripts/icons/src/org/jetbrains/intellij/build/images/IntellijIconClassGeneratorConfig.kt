@@ -132,6 +132,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "org.jetbrains.plugins.github"
       )
 
+      "intellij.javaee.jpabuddy.jpabuddy" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JpbIcons",
+        packageName = "com.intellij.jpb"
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }

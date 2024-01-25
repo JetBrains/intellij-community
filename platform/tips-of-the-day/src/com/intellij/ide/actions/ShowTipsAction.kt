@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -21,8 +22,7 @@ private class ShowTipsAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
-    @Suppress("DEPRECATION")
-    (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope).launch {
+    ((project ?: ApplicationManager.getApplication()) as ComponentManagerEx).getCoroutineScope().launch {
       val openTipsDialog: suspend CoroutineScope.() -> Unit = {
         TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.manually)
         TipAndTrickManager.getInstance().showTipDialog(project)

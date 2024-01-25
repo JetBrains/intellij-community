@@ -3,9 +3,9 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 
@@ -13,9 +13,9 @@ import com.intellij.project.stateStore
  * Returns `null` for the default project
  */
 fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
+  val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   return if (project.isDirectoryBased) {
     project.basePath?.let {
-      val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
       val ideaFolder = project.stateStore.directoryStorePath!!.toVirtualFileUrl(virtualFileUrlManager)
       val baseUrl = VfsUtilCore.pathToUrl(it)
       JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.getOrCreateFromUri(baseUrl), ideaFolder)
@@ -23,7 +23,6 @@ fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
   }
   else {
     project.projectFilePath?.let {
-      val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
       val projectFileUrl = VfsUtilCore.pathToUrl(it)
       val iprFile = virtualFileUrlManager.getOrCreateFromUri(projectFileUrl)
       JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.diagnostic.ActivityImpl
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Ref
@@ -41,8 +42,8 @@ import kotlin.time.Duration.Companion.seconds
 class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boolean) : TelemetryManager {
   // for the unit (performance) tests that use Application
   @TestOnly
-  @Suppress("unused", "DEPRECATION")
-  constructor() : this(ApplicationManager.getApplication().coroutineScope, ApplicationManager.getApplication().isUnitTestMode)
+  @Suppress("unused")
+  constructor() : this((ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope(), ApplicationManager.getApplication().isUnitTestMode)
 
   private val sdk: OpenTelemetrySdk
 

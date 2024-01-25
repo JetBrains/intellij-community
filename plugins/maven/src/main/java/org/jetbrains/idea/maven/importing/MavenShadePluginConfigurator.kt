@@ -8,12 +8,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
@@ -76,7 +75,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     val mavenId = dependencyMavenProject.mavenId
     val fileName = "${mavenId.artifactId}-${mavenId.version}.jar"
     val jarPath = Path.of(dependencyMavenProject.buildDirectory, fileName).pathString
-    val jarUrl = VirtualFileUrlManager.getInstance(project).getOrCreateFromUri("jar://$jarPath!/")
+    val jarUrl = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUri("jar://$jarPath!/")
 
     addLibraryEntity(
       builder,

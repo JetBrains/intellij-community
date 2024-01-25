@@ -49,7 +49,7 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   internal fun getMainComponent() = mainUi.getComponent()
 
   private fun createMainUI(): CombinedDiffMainUI {
-    return CombinedDiffMainUI(model, ::createGoToChangeAction).also { ui ->
+    return CombinedDiffMainUI(model, createGoToChangeAction()).also { ui ->
       Disposer.register(ourDisposable, ui)
       model.context.putUserData(COMBINED_DIFF_MAIN_UI, ui)
     }
@@ -61,11 +61,13 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
     if (blocks.isEmpty()) return null
 
-    return CombinedDiffViewer(context, blocks, blockToSelect, MyBlockListener()).also { viewer ->
+    val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id)
+
+    return CombinedDiffViewer(context, MyBlockListener(), blockState).also { viewer ->
       Disposer.register(ourDisposable, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_KEY, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)
-      mainUi.setContent(viewer)
+      mainUi.setContent(viewer, blockState)
     }
   }
 
@@ -85,7 +87,6 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     override fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest) {
       val viewer = combinedViewer ?: return
       buildBlockContent(mainUi, model.context, request, blockId)?.let { newContent ->
-        mainUi.countDifferences(blockId, newContent.viewer)
         viewer.updateBlockContent(newContent)
         request.onAssigned(true)
       }

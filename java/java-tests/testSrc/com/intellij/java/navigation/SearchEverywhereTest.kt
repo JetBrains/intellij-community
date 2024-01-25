@@ -106,6 +106,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(listOf("item8", "item7", "item2", "item5", "item1", "item4", "item6", "item3"), waitForFuture(future, SEARCH_TIMEOUT))
   }
 
+  @IJIgnore(issue = "IDEA-336674")
   fun `test priority for actions with space in pattern`() {
     mixingResultsFlag.set(true)
 

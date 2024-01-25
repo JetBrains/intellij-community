@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.process.internal.JvmOptions;
@@ -277,12 +278,16 @@ public class GradleExecutionHelper {
       }
     }
     catch (ProcessCanceledException e) {
+      span.recordException(e);
       throw e;
     }
     catch (IOException e) {
       LOG.warn("Can't update wrapper", e);
+      span.recordException(e);
     }
     catch (Throwable e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR);
       LOG.warn("Can't update wrapper", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);
       ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
@@ -836,6 +841,8 @@ public class GradleExecutionHelper {
         buildEnvironment = modelBuilder.get();
       }
       catch (Throwable t) {
+        span.recordException(t);
+        span.setStatus(StatusCode.ERROR);
         LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
       }
       if (buildEnvironment != null) {

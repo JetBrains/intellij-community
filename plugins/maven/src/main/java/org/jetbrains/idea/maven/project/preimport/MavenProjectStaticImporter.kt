@@ -280,23 +280,30 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
    * This helps avoid a situation where the root directory is added as a source root
    * in complex cases involving variables and properties
    */
-  private fun resolveProperty(project: MavenProjectData, value: String): String? {
-    val start = value.indexOf("${'$'}{")
-    if (start == -1) return value
-    val end = value.indexOf("}")
-    if (start + 2 >= end) return null // some syntax error probably
-    val variable = value.substring(start + 2, end)
-    val resolvedValue = doResolveVariable(project.properties, variable) ?: return null
-    if (start == 0 && end == value.length - 1) {
-      return resolveProperty(project, resolvedValue)
+  private fun resolveProperty(project: MavenProjectData, propertyValue: String): String? {
+
+    var value = propertyValue;
+    val recursionProtector = HashSet<String>()
+    while (recursionProtector.add(value)) {
+      val start = value.indexOf("${'$'}{")
+      if (start == -1) return value
+      val end = value.indexOf("}")
+      if (start + 2 >= end) return null // some syntax error probably
+      val variable = value.substring(start + 2, end)
+      val resolvedValue = doResolveVariable(project.properties, variable) ?: return null
+      if (start == 0 && end == value.length - 1) {
+        value = resolvedValue;
+        continue
+      }
+      val tail = if (end == value.length - 1) {
+        ""
+      }
+      else {
+        value.substring(end + 1, value.length)
+      }
+      value = value.substring(0, start) + resolvedValue + tail
     }
-    val tail = if (end == value.length - 1) {
-      ""
-    }
-    else {
-      value.substring(end + 1, value.length)
-    }
-    return resolveProperty(project, value.substring(0, start) + resolvedValue + tail)
+    return value
   }
 
   private fun doResolveVariable(properties: HashMap<String, String>, variable: String): String? {
@@ -516,6 +523,7 @@ private class StatisticsData(val project: Project, val rootProjects: Int) {
 
   val modulesBefore = (WorkspaceModel.getInstance(project).currentSnapshot as ImmutableEntityStorageInstrumentation)
     .entityCount(ModuleEntity::class.java)
+
   fun add(forest: List<ProjectTree>, allProjects: ArrayList<MavenProject>) {
     val time = System.currentTimeMillis()
     try {

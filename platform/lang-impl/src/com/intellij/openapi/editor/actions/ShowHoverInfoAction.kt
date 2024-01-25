@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager
 import com.intellij.openapi.project.DumbAware
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,7 @@ class ShowHoverInfoAction: AnAction(), ActionToIgnore, PopupAction, DumbAware, P
     val project = e.project ?: return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
 
-    project.coroutineScope.launch {
+    (project as ComponentManagerEx).getCoroutineScope().launch {
       // When there are multiple warnings at the same offset, this will return the HighlightInfo
       // containing all of them, not just the first one as found by findInfo()
       val highlightInfo = readAction {

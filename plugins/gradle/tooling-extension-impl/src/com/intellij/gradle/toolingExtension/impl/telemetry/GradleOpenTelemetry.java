@@ -7,6 +7,7 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
-import java.util.List;
+import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -75,6 +76,11 @@ public final class GradleOpenTelemetry {
     try (Scope ignore = span.makeCurrent()) {
       return fn.apply(span);
     }
+    catch (Exception e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR);
+      throw e;
+    }
     finally {
       span.end();
     }
@@ -97,7 +103,7 @@ public final class GradleOpenTelemetry {
       }
       // the data should be exported only after OpenTelemetry was closed to prevent data loss
       if (mySpanDataCollector != null) {
-        List<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
+        Collection<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
         return SpanDataSerializer.serialize(collectedSpans);
       }
     }

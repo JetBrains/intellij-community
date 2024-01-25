@@ -3563,10 +3563,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myVerticalScrollBar;
   }
 
-  /**
-   * @deprecated try to avoid impl api, probably width management can be implemented in a more transparent way
-   */
-  @Deprecated
+  @ApiStatus.Internal
   public int getStickyLinesPanelWidth() {
     return myPanel.getWidth() - myVerticalScrollBar.getWidth();
   }

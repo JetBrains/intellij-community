@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,7 +11,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
@@ -21,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -41,10 +45,13 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
 public class IdeTooltipManager implements Disposable {
@@ -779,18 +786,19 @@ public class IdeTooltipManager implements Disposable {
         }
         return view;
       })
+      .withFontResolver(EditorCssFontResolver.getGlobalInstance())
       .build();
-
-    String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
-    if (editorFontName != null) {
-      String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";
-      kit.getStyleSheet().addRule("pre {" + style + "}");
-      text = text.replace("<code>", "<code style='" + style + "'>");
-    }
+    Ref<StyleSheet> currentDefaultStyleSheet = new Ref<>();
+    updateHintPaneDefaultCssRules(pane, kit, currentDefaultStyleSheet);
+    // Remove <style> rule for <code> added by prepareHintText() call above
+    text = text.replaceFirst("code \\{[^]]*;}", "");
+    pane.addPropertyChangeListener(evt -> {
+      var propertyName = evt.getPropertyName();
+      if ("background".equals(propertyName) || "UI".equals(propertyName)) {
+        updateHintPaneDefaultCssRules(pane, kit, currentDefaultStyleSheet);
+      }
+    });
     pane.setEditorKit(kit);
-    pane.setText(text);
-    pane.setCaretPosition(0);
-    pane.setEditable(false);
 
     if (hintHint.isOwnBorderAllowed()) {
       setBorder(pane);
@@ -806,6 +814,10 @@ public class IdeTooltipManager implements Disposable {
 
     pane.setOpaque(hintHint.isOpaqueAllowed());
     pane.setBackground(hintHint.getTextBackground());
+
+    pane.setText(text);
+    pane.setCaretPosition(0);
+    pane.setEditable(false);
 
     if (!limitWidthToScreen) {
       AppUIUtil.targetToDevice(pane, layeredPane);
@@ -849,5 +861,29 @@ public class IdeTooltipManager implements Disposable {
 
   private static boolean isInside(Balloon balloon, RelativePoint target) {
     return balloon instanceof IdeTooltip.Ui && ((IdeTooltip.Ui)balloon).isInside(target);
+  }
+
+  private static void updateHintPaneDefaultCssRules(
+    @NotNull JEditorPane editorPane,
+    @NotNull HTMLEditorKit editorKit,
+    @NotNull Ref<StyleSheet> currentDefaultStyleSheet
+    ) {
+    StyleSheet editorStyleSheet = editorKit.getStyleSheet();
+    if (currentDefaultStyleSheet.get() != null) {
+      editorStyleSheet.removeStyleSheet(currentDefaultStyleSheet.get());
+    }
+    var newDefaultStyleSheet = new StyleSheet();
+    for (String rule : getHintPaneStyleSheetRules(editorPane.getBackground())) {
+      newDefaultStyleSheet.addRule(rule);
+    }
+    editorStyleSheet.addStyleSheet(newDefaultStyleSheet);
+    currentDefaultStyleSheet.set(newDefaultStyleSheet);
+  }
+
+  private static List<String> getHintPaneStyleSheetRules(@NotNull Color background) {
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    return StyleSheetRulesProviderForCodeHighlighting.getRules(
+      globalScheme, background, Collections.singletonList(""), Collections.emptyList(),
+      true, true, UIUtil.getToolTipActionBackground());
   }
 }

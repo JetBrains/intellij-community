@@ -2,13 +2,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints.declarative
 
 import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
+import org.jetbrains.kotlin.idea.codeInsight.hints.HintType.*
+import org.jetbrains.kotlin.idea.codeInsight.hints.NamedInlayInfoOption
 
-class KotlinLambdasHintsProvider :
-    AbstractKotlinInlayHintsProvider(HintType.LAMBDA_RETURN_EXPRESSION, HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER) {
+val SHOW_RETURN_EXPRESSIONS = NamedInlayInfoOption("hints.lambda.return")
+val SHOW_IMPLICIT_RECEIVERS_AND_PARAMS = NamedInlayInfoOption("hints.lambda.receivers.parameters")
 
-    companion object {
-        const val SHOW_RETURN_EXPRESSIONS = "hints.lambda.return"
-        const val SHOW_IMPLICIT_RECEIVERS_AND_PARAMS = "hints.lambda.receivers.parameters"
-    }
-
-}
+class KotlinLambdasHintsProvider : AbstractKotlinInlayHintsProvider(LAMBDA_RETURN_EXPRESSION, LAMBDA_IMPLICIT_PARAMETER_RECEIVER)

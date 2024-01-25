@@ -24,9 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public final class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<PsiJavaFile>> {
-
-  @Override
-  public Set<PsiJavaFile> prepareOperation(final UsageInfo @NotNull [] usages) {
+  private static Set<PsiJavaFile> prepareOperation(final UsageInfo @NotNull [] usages) {
     Set<PsiJavaFile> javaFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
@@ -39,12 +37,7 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
   }
 
   @Override
-  public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull PsiElement primaryElement) {
-    return prepareOperation(usages, List.of(primaryElement));
-  }
-
-  @Override
-  public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, List<@NotNull PsiElement> elements) {
+  public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<@NotNull PsiElement> elements) {
     Set<PsiJavaFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), PsiJavaFile.class));
     return ContainerUtil.union(movedFiles, prepareOperation(usages));
   }

@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.filePrediction.features.history
 
 import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
 import com.intellij.internal.ml.ngram.NGramModelSerializer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -38,8 +39,7 @@ object FileHistoryPersistence {
 
   fun saveNGramsAsync(project: Project, runner: NGramIncrementalModelRunner) {
     val path = getPathToStorage(project, NGRAM_FILE_NAME_SUFFIX) ?: return
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
       try {
         Files.createDirectories(path.parent)
         NGramModelSerializer.saveNGrams(path, runner)

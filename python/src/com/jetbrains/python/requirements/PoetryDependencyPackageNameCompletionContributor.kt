@@ -11,8 +11,7 @@ import org.toml.lang.psi.TomlTable
 class PoetryDependencyPackageNameCompletionContributor : CompletionContributor() {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val fileName = parameters.originalFile.name
-    if (fileName != "pyproject.toml") return
+    if (parameters.originalFile.name != "pyproject.toml") return
     val project = parameters.editor.project ?: return
 
     val position = parameters.position

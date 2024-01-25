@@ -31,12 +31,11 @@ internal class RepositoriesNode(structure: MavenProjectsStructure, parent: Proje
     myRepositoryNodes.addAll(remotes.mapSmart { RepositoryNode(myMavenProjectsStructure, this, it.id, it.url, false) })
   }
 
-  public fun updateStatus(state: MavenIndexUpdateState) {
+  fun updateStatus(state: MavenIndexUpdateState) {
     val nodesToUpdate = myRepositoryNodes.filter { it.url == state.myUrl }
     if (nodesToUpdate.isEmpty()) return;
 
     nodesToUpdate.forEach {
-      it.setLastStatus(state)
       it.update()
     }
   }

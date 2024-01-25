@@ -18,6 +18,9 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 
 interface ThreadingSupport {
+  @ApiStatus.Internal
+  fun postInit(writeThread: Thread) {}
+
   /**
    * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
    * immediately if no write action is currently running, or blocked until the currently running write action

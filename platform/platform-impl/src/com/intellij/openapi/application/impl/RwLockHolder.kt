@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.lang.Deprecated
 import java.util.concurrent.Callable
@@ -54,7 +55,8 @@ object RwLockHolder: ThreadingSupport {
   @Volatile
   private var myWriteActionPending = false
 
-  internal fun postInit(writeThread: Thread) {
+  @Internal
+  override fun postInit(writeThread: Thread) {
     lock = ReadMostlyRWLock(writeThread)
   }
 

@@ -22,6 +22,29 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
     @TestMetadata("../../idea/tests/testData/shortenRefsFir")
     public abstract static class ShortenRefsFir extends AbstractFirShortenRefsTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/shortenRefsFir/bulk")
+        public static class Bulk extends AbstractFirShortenRefsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+            }
+
+            @TestMetadata("nested.kt")
+            public void testNested() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/bulk/nested.kt");
+            }
+
+            @TestMetadata("noShortening.kt")
+            public void testNoShortening() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/bulk/noShortening.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/bulk/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/calls")
         public static class Calls extends AbstractFirShortenRefsTest {
             private void runTest(String testDataFilePath) throws Exception {

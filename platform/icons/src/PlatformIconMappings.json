@@ -806,6 +806,7 @@
       "todo.svg": "toolwindows/toolWindowTodo.svg",
       "toolWindowJsonPath.svg": "toolwindows/toolWindowJsonPath.svg",
       "toolWindowVariableView.svg": "toolwindows/toolWindowVariableView.svg",
+      "toolWindowDataView.svg": "toolwindows/toolWindowDataView.svg",
       "vcs.svg": "toolwindows/toolWindowChanges.svg",
       "web.svg": [
         "toolwindows/webToolWindow.svg",

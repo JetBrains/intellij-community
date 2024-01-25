@@ -73,16 +73,9 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                       """.trimIndent())
     importProjectAsync()
 
-    createModulePom("m",
-                    """
-                      <<error descr="'version' child tag should be defined">parent</error>>
-                          <groupId>test</groupId>
-                          <artifactId>project</artifactId>
-                        </parent>
-                         <artifactId>m</artifactId>
-                        """.trimIndent())
     fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
-    checkHighlighting(m)
+
+    checkHighlighting(m, Highlight(text = "parent", description = "'version' child tag should be defined"))
   }
 
   @Test

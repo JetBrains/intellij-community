@@ -1,7 +1,7 @@
 // "Make 'bar' private" "true"
 // ACTION: Convert member to extension
 // ACTION: Convert to block body
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Function return types' for 'Types' inlay hints
 // ACTION: Make 'Data' internal
 // ACTION: Make 'Data' public
 // ACTION: Make 'bar' private

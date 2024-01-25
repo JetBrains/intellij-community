@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
@@ -24,6 +25,7 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
   private val group2Artifacts = ConcurrentHashMap<String, MutableSet<String>>()
   private val mavenIds2Versions = ConcurrentHashMap<String, MutableSet<String>>()
   private val repoFile = Paths.get(repo.url).toFile().canonicalFile
+  private val mutex = Mutex();
 
   override fun close(releaseIndexContext: Boolean) {
     mavenIds2Versions.clear()
@@ -55,36 +57,45 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
     var success = false
     var filesProcessed = 0
     val startTime = System.currentTimeMillis()
-    withContext(Dispatchers.IO) {
+    if(mutex.tryLock()){
       try {
-        repoFile.walkBottomUp()
-          .filter { it.name.endsWith(".pom") }
-          .mapNotNull { extractMavenId(it) }
-          .forEach { id ->
-            addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
-            addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
-            if (filesProcessed % 100 == 0) {
-              indicator.setText(IndicesBundle.message("maven.indices.scanned.artifacts", filesProcessed))
-            }
-            if (!isActive) throw MavenProcessCanceledException()
-            filesProcessed++
+        withContext(Dispatchers.IO) {
+          try {
+            repoFile.walkBottomUp()
+              .filter { it.name.endsWith(".pom") }
+              .mapNotNull { extractMavenId(it) }
+              .forEach { id ->
+                addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
+                addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
+                if (filesProcessed % 100 == 0) {
+                  indicator.setText(IndicesBundle.message("maven.indices.scanned.artifacts", filesProcessed))
+                }
+                if (!isActive) throw MavenProcessCanceledException()
+                filesProcessed++
+              }
+            success = true
+            indicator.setText(IndicesBundle.message("maven.indices.updated.for.repo", repo.name))
           }
-        success = true
-        indicator.setText(IndicesBundle.message("maven.indices.updated.for.repo", repo.name))
-      }
-      finally {
-        MavenLog.LOG.info(
-          "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis")
-        activity.finished {
-          listOf(
-            MavenIndexUsageCollector.MANUAL.with(explicit),
-            MavenIndexUsageCollector.IS_SUCCESS.with(success),
-            MavenIndexUsageCollector.GROUPS_COUNT.with(group2Artifacts.size),
-            MavenIndexUsageCollector.ARTIFACTS_COUNT.with(filesProcessed),
-          )
+          finally {
+            MavenLog.LOG.info(
+              "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis")
+            activity.finished {
+              listOf(
+                MavenIndexUsageCollector.MANUAL.with(explicit),
+                MavenIndexUsageCollector.IS_SUCCESS.with(success),
+                MavenIndexUsageCollector.GROUPS_COUNT.with(group2Artifacts.size),
+                MavenIndexUsageCollector.ARTIFACTS_COUNT.with(filesProcessed),
+              )
+            }
+          }
         }
+      } finally {
+        mutex.unlock()
       }
+    } else {
+      MavenLog.LOG.info("maven index updating already")
     }
+
   }
 
 

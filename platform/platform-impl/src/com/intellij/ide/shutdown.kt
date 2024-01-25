@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.diagnostic.dumpCoroutines
@@ -27,7 +27,7 @@ private val LOG = Logger.getInstance("#com.intellij.ide.shutdown")
 internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
   EDT.assertIsEdt()
   LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed)
-  cancelAndJoinBlocking(application.coroutineScope, debugString = "Application $application") { containerJob, dumpJob ->
+  cancelAndJoinBlocking(application.getCoroutineScope(), debugString = "Application $application") { containerJob, dumpJob ->
     containerJob.invokeOnCompletion {
       // Unblock `getNextEvent()` in case it's blocked.
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
@@ -49,7 +49,7 @@ internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
 }
 
 internal fun cancelAndJoinBlocking(project: ProjectImpl) {
-  cancelAndJoinBlocking(project.coroutineScope, debugString = "Project $project") { job, _ ->
+  cancelAndJoinBlocking(project.getCoroutineScope(), debugString = "Project $project") { job, _ ->
     runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
       job.join()
     }

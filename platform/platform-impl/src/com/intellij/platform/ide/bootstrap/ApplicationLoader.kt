@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING")
@@ -106,7 +106,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
       try {
-        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(coroutineScope = app.coroutineScope, isUnitTestMode = app.isUnitTestMode))
+        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(coroutineScope = app.getCoroutineScope(), isUnitTestMode = app.isUnitTestMode))
       }
       catch (e: CancellationException) {
         throw e
@@ -116,7 +116,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
       }
     }
 
-    app.coroutineScope.launch {
+    app.getCoroutineScope().launch {
       // precompute after plugin model loaded
       ideFingerprint()
     }
@@ -174,7 +174,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
-        callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
+        callAppInitialized(listeners = appInitializedListeners, asyncScope = app.getCoroutineScope())
       }
     }
 

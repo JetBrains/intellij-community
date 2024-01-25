@@ -35,7 +35,9 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     // keyValue is created by handler, there is no need in inserting completion char
     context.setAddCompletionChar(false);
 
-    YamlOffsetContext offsetContext = new YamlOffsetContext(context.getFile(), context.getStartOffset());
+    int startOffset = context.getStartOffset();
+    PsiFile psiFile = context.getFile();
+    YamlOffsetContext offsetContext = new YamlOffsetContext(psiFile, startOffset);
     @SuppressWarnings("DataFlowIssue")
     YAMLValue oldValue = (offsetContext.holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
                          deleteLookupTextAndRetrieveOldValue(context, offsetContext.currentElement) :
@@ -45,13 +47,10 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     }
 
     if (oldValue == null && !offsetContext.holdingDocument.isValid()) {
-      offsetContext = new YamlOffsetContext(context.getFile(), context.getStartOffset());
+      offsetContext = new YamlOffsetContext(psiFile, startOffset);
     }
-    @SuppressWarnings("DataFlowIssue") final YAMLKeyValue created = createNewEntry(offsetContext.holdingDocument, item,
-                                                                                   offsetContext.parent != null &&
-                                                                                   offsetContext.parent.isValid()
-                                                                                   ? offsetContext.parent
-                                                                                   : null);
+    @SuppressWarnings("DataFlowIssue") final YAMLKeyValue created =
+      createNewEntry(offsetContext.holdingDocument, item, offsetContext.getParentIfValid());
 
     YAMLValue createdValue = created.getValue();
     if (createdValue != null) {
@@ -195,8 +194,19 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
       assert currentElement != null : "no element at " + offset;
 
       parent = PsiTreeUtil.getParentOfType(currentElement, YAMLKeyValue.class);
-      holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
+      if (currentElement.getParent() instanceof YAMLFile yamlFile) {
+        YAMLDocument document = PsiTreeUtil.getPrevSiblingOfType(currentElement, YAMLDocument.class);
+        holdingDocument = document == null ? ContainerUtil.getFirstItem(yamlFile.getDocuments()) : document;
+      }
+      else {
+        holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
+      }
       assert holdingDocument != null;
+    }
+
+    @Nullable
+    YAMLKeyValue getParentIfValid() {
+      return parent != null && parent.isValid() ? parent : null;
     }
   }
 }

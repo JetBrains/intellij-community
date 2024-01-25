@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -66,6 +67,12 @@ public interface WorkspaceModel {
    */
   @ApiStatus.Experimental
   public suspend fun update(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
+
+  /**
+   * Returns the actual instance of VirtualFileUrlManager for URLs (in the Virtual File System format) of files that
+   * are referenced from workspace model entities.
+   */
+  public fun getVirtualFileUrlManager(): VirtualFileUrlManager
 
   public companion object {
     @JvmStatic

@@ -8,14 +8,12 @@ import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.memory.utils.StackFrameItem
-import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutinePreflightFrame
 import org.jetbrains.kotlin.idea.debugger.test.util.XDebuggerTestUtil
@@ -30,8 +28,6 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
         const val INDENT_FRAME = 1
         const val INDENT_VARIABLES = 2
     }
-
-    private val agentList = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
 
     private fun out(frame: XStackFrame) {
         out(INDENT_FRAME, frame.javaClass.simpleName + " FRAME:" + XDebuggerTestUtil.getFramePresentation(frame))
@@ -148,25 +144,5 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
             System.err.println("Kotlin coroutine async stack trace provider is not found")
         }
         return provider
-    }
-
-    override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        val regex = Regex(pattern = "$MAVEN_DEPENDENCY_REGEX(-javaagent)?")
-        val result = regex.matchEntire(library) ?: return
-        val (_, groupId: String, artifactId: String, version: String, agent: String) = result.groupValues
-        if ("-javaagent" == agent)
-            agentList.add(JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, false))
-        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
-    }
-
-    override fun createJavaParameters(mainClass: String?): JavaParameters {
-        val params = super.createJavaParameters(mainClass)
-        for (agent in agentList) {
-            val dependencies = loadDependencies(agent)
-            for (dependency in dependencies) {
-                params.vmParametersList.add("-javaagent:${dependency.file.presentableUrl}")
-            }
-        }
-        return params
     }
 }

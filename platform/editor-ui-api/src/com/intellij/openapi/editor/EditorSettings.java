@@ -210,7 +210,7 @@ public interface EditorSettings {
 
   boolean isInsertParenthesesAutomatically();
 
-  boolean isStickyLinesShown();
+  boolean areStickyLinesShown();
   int getStickyLinesLimit();
 
   enum LineNumerationType {

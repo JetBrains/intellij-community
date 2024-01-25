@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -38,6 +37,7 @@ import java.util.UUID;
 
 import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFileTypes;
 import static com.intellij.psi.search.GlobalSearchScope.projectScope;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
 final class LombokBuildManagerListener implements BuildManagerListener {
   private final SingletonNotificationManager myNotificationManager =
@@ -45,7 +45,7 @@ final class LombokBuildManagerListener implements BuildManagerListener {
 
   @Override
   public void beforeBuildProcessStarted(@NotNull Project project, @NotNull UUID sessionId) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    executeOnPooledIoThread(() -> {
       if (ReadAction.nonBlocking(() -> requiresAnnotationProcessing(project)).executeSynchronously()) {
         suggestEnableAnnotations(project);
       }

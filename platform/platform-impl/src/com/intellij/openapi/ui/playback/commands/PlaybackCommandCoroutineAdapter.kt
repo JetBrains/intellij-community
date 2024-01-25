@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.ui.playback.PlaybackCommand
 import com.intellij.openapi.ui.playback.PlaybackContext
 import kotlinx.coroutines.async
@@ -25,8 +26,7 @@ abstract class PlaybackCommandCoroutineAdapter(protected val text: @NonNls Strin
   override fun execute(context: PlaybackContext): CompletableFuture<*> {
     context.code(text, line)
 
-    @Suppress("DEPRECATION")
-    val job = ApplicationManager.getApplication().coroutineScope.async {
+    val job = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().async {
       doExecute(context)
     }
     job.invokeOnCompletion {

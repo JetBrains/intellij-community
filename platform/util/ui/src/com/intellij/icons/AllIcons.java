@@ -1023,11 +1023,13 @@ public class AllIcons {
   }
 
   public static final class Providers {
+    /** 16x16 */ public static final @NotNull Icon ActiveMQ = load("providers/activeMQ.svg", -1202590345, 0);
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", 1920166272, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("providers/apacheDerby.svg", -1039281205, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheIgnite = load("providers/apacheIgnite.svg", 550257054, 2);
     /** 16x16 */ public static final @NotNull Icon ApachePhoenix = load("providers/apachePhoenix.svg", 426659470, 0);
     /** 16x16 */ public static final @NotNull Icon Athena = load("providers/athena.svg", 1959048894, 0);
+    /** 16x16 */ public static final @NotNull Icon Aws = load("providers/aws.svg", 1091870915, 2);
     /** 16x16 */ public static final @NotNull Icon Azure = load("providers/azure.svg", 146675790, 0);
     /** 16x16 */ public static final @NotNull Icon BigQuery = load("providers/bigQuery.svg", 1138709532, 0);
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("providers/cassandra.svg", -819208447, 2);
@@ -1053,6 +1055,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Impala = load("providers/impala.svg", -1453615062, 2);
     /** 16x16 */ public static final @NotNull Icon Informix = load("providers/informix.svg", -751153930, 0);
     /** 16x16 */ public static final @NotNull Icon IntersystemCache = load("providers/intersystemCache.svg", 836219844, 2);
+    /** 16x16 */ public static final @NotNull Icon Kafka = load("providers/kafka.svg", 185527233, 2);
     /** 16x16 */ public static final @NotNull Icon Liquibase = load("providers/liquibase.svg", -1061466874, 0);
     /** 16x16 */ public static final @NotNull Icon Mariadb = load("providers/mariadb.svg", -66597132, 2);
     /** 16x16 */ public static final @NotNull Icon Microsoft = load("providers/microsoft.svg", 1693855115, 0);
@@ -1064,6 +1067,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Oracle = load("providers/oracle.svg", -2123432217, 0);
     /** 16x16 */ public static final @NotNull Icon Postgresql = load("providers/postgresql.svg", 2080604372, 2);
     /** 16x16 */ public static final @NotNull Icon Presto = load("providers/presto.svg", -452330035, 2);
+    /** 16x16 */ public static final @NotNull Icon RabbitMQ = load("providers/rabbitMQ.svg", -1667525054, 0);
     /** 16x16 */ public static final @NotNull Icon Redis = load("providers/redis.svg", 1275648116, 2);
     /** 16x16 */ public static final @NotNull Icon Redshift = load("providers/redshift.svg", -1692420973, 0);
     /** 16x16 */ public static final @NotNull Icon Singlestore = load("providers/singlestore.svg", -981783807, 0);
@@ -1195,6 +1199,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowCommander = load("toolwindows/toolWindowCommander.svg", -572791393, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCommit = load("toolwindows/toolWindowCommit.svg", -1809755118, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowCoverage = load("toolwindows/toolWindowCoverage.svg", -43772594, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowDataView = load("toolwindows/toolWindowDataView.svg", 929762492, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowDebugger = load("toolwindows/toolWindowDebugger.svg", 332521029, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowFavorites = load("toolwindows/toolWindowFavorites.svg", -940563083, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowFind = load("toolwindows/toolWindowFind.svg", -2111567640, 2);

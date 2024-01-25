@@ -706,6 +706,26 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/frame/remapThis.kt");
             }
 
+            @TestMetadata("runToCursorSimple.kt")
+            public void testRunToCursorSimple() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/runToCursorSimple.kt");
+            }
+
+            @TestMetadata("runToCursorSuspendSameJobCompletionOnly.kt")
+            public void testRunToCursorSuspendSameJobCompletionOnly() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/runToCursorSuspendSameJobCompletionOnly.kt");
+            }
+
+            @TestMetadata("runToCursorSuspendSameJobContinuation.kt")
+            public void testRunToCursorSuspendSameJobContinuation() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/runToCursorSuspendSameJobContinuation.kt");
+            }
+
+            @TestMetadata("runToCursorSuspendSameLambda.kt")
+            public void testRunToCursorSuspendSameLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/runToCursorSuspendSameLambda.kt");
+            }
+
             @TestMetadata("showPropertiesFromMethods.kt")
             public void testShowPropertiesFromMethods() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/showPropertiesFromMethods.kt");

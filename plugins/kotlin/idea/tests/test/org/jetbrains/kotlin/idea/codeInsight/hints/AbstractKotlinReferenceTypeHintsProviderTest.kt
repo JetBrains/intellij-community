@@ -12,11 +12,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.intellij.util.ThrowableRunnable
 import junit.framework.ComparisonFailure
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_FUNCTION_PARAMETER_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_FUNCTION_RETURN_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_LOCAL_VARIABLE_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider.Companion.SHOW_PROPERTY_TYPES
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_FUNCTION_PARAMETER_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_FUNCTION_RETURN_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_LOCAL_VARIABLE_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_PROPERTY_TYPES
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
@@ -56,20 +56,27 @@ abstract class AbstractKotlinReferenceTypeHintsProviderTest :
         with(org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider()) {
             val fileContents = FileUtil.loadFile(File(fileName), true)
             val options = buildMap<String, Boolean> {
-                put(SHOW_PROPERTY_TYPES, false)
-                put(SHOW_LOCAL_VARIABLE_TYPES, false)
-                put(SHOW_FUNCTION_RETURN_TYPES, false)
-                put(SHOW_FUNCTION_PARAMETER_TYPES, false)
+                put(SHOW_PROPERTY_TYPES.name, false)
+                put(SHOW_LOCAL_VARIABLE_TYPES.name, false)
+                put(SHOW_FUNCTION_RETURN_TYPES.name, false)
+                put(SHOW_FUNCTION_PARAMETER_TYPES.name, false)
                 when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
-                    "function_return" -> put(SHOW_FUNCTION_RETURN_TYPES, true)
-                    "local_variable" -> put(SHOW_LOCAL_VARIABLE_TYPES, true)
-                    "parameter" -> put(SHOW_FUNCTION_PARAMETER_TYPES, true)
-                    "property" -> put(SHOW_PROPERTY_TYPES, true)
+                    "function_return" -> {
+                        put(SHOW_PROPERTY_TYPES.name, true)
+                        put(SHOW_FUNCTION_RETURN_TYPES.name, true)
+                        put(SHOW_LOCAL_VARIABLE_TYPES.name, true)
+                    }
+                    "local_variable" -> put(SHOW_LOCAL_VARIABLE_TYPES.name, true)
+                    "parameter" -> put(SHOW_FUNCTION_PARAMETER_TYPES.name, true)
+                    "property" -> {
+                        put(SHOW_PROPERTY_TYPES.name, true)
+                        put(SHOW_FUNCTION_RETURN_TYPES.name, true)
+                    }
                     "all" -> {
-                        put(SHOW_PROPERTY_TYPES, true)
-                        put(SHOW_LOCAL_VARIABLE_TYPES, true)
-                        put(SHOW_FUNCTION_RETURN_TYPES, true)
-                        put(SHOW_FUNCTION_PARAMETER_TYPES, true)
+                        put(SHOW_PROPERTY_TYPES.name, true)
+                        put(SHOW_LOCAL_VARIABLE_TYPES.name, true)
+                        put(SHOW_FUNCTION_RETURN_TYPES.name, true)
+                        put(SHOW_FUNCTION_PARAMETER_TYPES.name, true)
                     }
                     else -> {}
                 }

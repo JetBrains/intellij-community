@@ -13,6 +13,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.TreeUiBulkExpandCollapseSupport;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -37,6 +40,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
@@ -51,7 +55,7 @@ import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
-public class DefaultTreeUI extends BasicTreeUI {
+public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollapseSupport {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
@@ -669,6 +673,61 @@ public class DefaultTreeUI extends BasicTreeUI {
         }
       }
     };
+  }
+
+  private final @NotNull AtomicInteger bulkOperationsInProgress = new AtomicInteger();
+
+  @Override
+  public void beginBulkOperation() {
+    if (!bulkOperationsSupported()) {
+      return;
+    }
+    bulkOperationsInProgress.incrementAndGet();
+  }
+
+  @Override
+  public void endBulkOperation() {
+    if (!bulkOperationsSupported()) {
+      return;
+    }
+    if (bulkOperationsInProgress.decrementAndGet() == 0) {
+      completeEditing();
+      var layoutCache = (DefaultTreeLayoutCache)treeState;
+      layoutCache.updateExpandedPaths(((Tree)tree).getExpandedPaths());
+      updateLeadSelectionRow();
+      updateSize();
+    }
+  }
+
+  @Override
+  protected TreeExpansionListener createTreeExpansionListener() {
+    return new MyTreeExpansionListener(super.createTreeExpansionListener());
+  }
+
+  private class MyTreeExpansionListener implements TreeExpansionListener {
+    private final TreeExpansionListener myOriginal;
+
+    MyTreeExpansionListener(TreeExpansionListener original) {
+      myOriginal = original;
+    }
+
+    @Override
+    public void treeExpanded(TreeExpansionEvent event) {
+      if (bulkOperationsInProgress.get() == 0) {
+        myOriginal.treeExpanded(event);
+      }
+    }
+
+    @Override
+    public void treeCollapsed(TreeExpansionEvent event) {
+      if (bulkOperationsInProgress.get() == 0) {
+        myOriginal.treeCollapsed(event);
+      }
+    }
+  }
+
+  private boolean bulkOperationsSupported() {
+    return tree instanceof Tree && treeState instanceof DefaultTreeLayoutCache;
   }
 
   private static boolean shouldAutoExpand(JTree tree, TreePath path) {

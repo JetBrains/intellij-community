@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -44,6 +45,8 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   final override val entityStorage: VersionedEntityStorageImpl
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
+
+  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
 
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>()
 
@@ -70,7 +73,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     val start = System.currentTimeMillis()
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
-    val cache = WorkspaceModelCache.getInstance(project)
+    val cache = WorkspaceModelCache.getInstance(project)?.apply { setVirtualFileUrlManager(virtualFileManager) }
     val (projectEntities, unloadedEntities) = when {
       initialContent != null -> {
         loadedFromCache = initialContent !== ImmutableEntityStorage.empty()
@@ -114,6 +117,8 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   override val currentSnapshotOfUnloadedEntities: ImmutableEntityStorage
     get() = unloadedEntitiesStorage.current
+
+  override fun getVirtualFileUrlManager(): VirtualFileUrlManager = virtualFileManager
 
   /**
    * Used only in Rider IDE

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
@@ -40,7 +40,7 @@ public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   @Override
   protected void addExtraPopupMenuActions(@NotNull DefaultActionGroup group) {
     group.addSeparator();
-    group.add(new ExcludeFromCompileAction(myProject) {
+    group.add(new ExcludeFromCompileAction(project) {
       @Override
       protected @Nullable VirtualFile getFile() {
         return getSelectedFile();
@@ -58,7 +58,7 @@ public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   @Override
   protected boolean shouldShowFirstErrorInEditor() {
-    return CompilerWorkspaceConfiguration.getInstance(myProject).AUTO_SHOW_ERRORS_IN_EDITOR;
+    return CompilerWorkspaceConfiguration.getInstance(project).AUTO_SHOW_ERRORS_IN_EDITOR;
   }
 
   @Override

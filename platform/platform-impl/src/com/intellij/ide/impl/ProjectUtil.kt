@@ -13,6 +13,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -49,7 +50,10 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.*
+import com.intellij.util.ModalityUiUtil
+import com.intellij.util.PathUtil
+import com.intellij.util.PlatformUtils
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.ui.StartupUiUtil
@@ -721,8 +725,7 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 @Internal
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledThread(task: Runnable) {
-  @Suppress("DEPRECATION")
-  coroutineScope.launch { blockingContext { task.run() } }
+  (this as ComponentManagerEx).getCoroutineScope().launch { blockingContext { task.run() } }
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")
@@ -738,5 +741,5 @@ fun Project.executeOnPooledThread(coroutineScope: CoroutineScope, task: Runnable
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledIoThread(task: Runnable) {
   @Suppress("DEPRECATION")
-  coroutineScope.launch(Dispatchers.IO) { blockingContext { task.run() } }
+  (this as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) { blockingContext { task.run() } }
 }

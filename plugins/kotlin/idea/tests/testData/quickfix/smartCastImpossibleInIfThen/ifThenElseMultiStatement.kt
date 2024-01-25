@@ -1,6 +1,6 @@
 // "Replace 'if' expression with elvis expression" "false"
 // ACTION: Add non-null asserted (!!) call
-// ACTION: Enable 'Types' inlay hints
+// ACTION: Enable option 'Local variable types' for 'Types' inlay hints
 // ACTION: Introduce local variable
 // DISABLE-ERRORS
 class Test {

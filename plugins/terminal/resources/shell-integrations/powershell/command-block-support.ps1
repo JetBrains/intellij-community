@@ -34,6 +34,11 @@ function Global:Prompt() {
   $Success = $?
   if ($Global:__JetBrainsIntellijGeneratorRunning) {
     $Global:__JetBrainsIntellijGeneratorRunning = $false
+    # Hide internal command in the built-in session history.
+    # See "Set-PSReadLineOption -AddToHistoryHandler" for hiding same commands in the PSReadLine history.
+    Clear-History -CommandLine "__JetBrainsIntellijGetCompletions*",`
+                               "__jetbrains_intellij_get_environment*",`
+                               "__jetbrains_intellij_get_directory_files*"
     return ""
   }
 
@@ -149,10 +154,13 @@ if (Get-Module -Name PSReadLine) {
   $Global:__JetBrainsIntellijOriginalAddToHistoryHandler = (Get-PSReadLineOption).AddToHistoryHandler
 
   Set-PSReadLineOption -AddToHistoryHandler {
-    param($Command)
+    param([string]$Command)
     if (__JetBrainsIntellijIsGeneratorCommand $Command) {
       return $false
     }
-    return $Global:__JetBrainsIntellijOriginalAddToHistoryHandler.Invoke($Command)
+    if ($Global:__JetBrainsIntellijOriginalAddToHistoryHandler -ne $null) {
+      return $Global:__JetBrainsIntellijOriginalAddToHistoryHandler.Invoke($Command)
+    }
+    return $true
   }
 }

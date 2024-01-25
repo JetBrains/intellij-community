@@ -53,6 +53,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   private var loadedFromDisk: Boolean = false
   private val isSerializationProhibited: Boolean
     get() = !forceEnableLoading && ApplicationManager.getApplication().isUnitTestMode
+  private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
   override fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
                                 loadedFromCache: Boolean): () -> Unit = jpsLoadInitialStateMs.addMeasuredTimeMillis {
@@ -71,6 +72,10 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     return@addMeasuredTimeMillis callback
   }
 
+  override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
+    virtualFileUrlManager = vfuManager
+  }
+
   suspend fun saveGlobalEntities() = jpsSaveGlobalEntitiesMs.addMeasuredTimeMillis {
     val serializers = createSerializers()
     val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
@@ -84,7 +89,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   @TestOnly
   suspend fun saveSdkEntities() {
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(VirtualFileUrlManager.getGlobalInstance(), sortedRootTypes) as JpsFileEntityTypeSerializer<WorkspaceEntity>
+    val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(virtualFileUrlManager, sortedRootTypes) as JpsFileEntityTypeSerializer<WorkspaceEntity>
     val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
     serializeEntities(entityStorage, sdkSerializer, contentWriter)
@@ -162,7 +167,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     }
     serializers.forEach { serializer ->
       LOG.info("Loading global entities ${serializer.mainEntityClass.name} from files")
-      val newEntities = serializer.loadEntities(contentReader, errorReporter, VirtualFileUrlManager.getGlobalInstance())
+      val newEntities = serializer.loadEntities(contentReader, errorReporter, virtualFileUrlManager)
       serializer.checkAndAddToBuilder(mutableStorage, mutableStorage, newEntities.data)
       newEntities.exception?.let { throw it }
     }
@@ -178,8 +183,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   private fun createSerializers(): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
     if (isSerializationProhibited) return emptyList()
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    return JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance(),
-                                                                     sortedRootTypes)
+    return JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, sortedRootTypes)
   }
 
   private fun bridgesInitializationCallback(mutableStorage: MutableEntityStorage,

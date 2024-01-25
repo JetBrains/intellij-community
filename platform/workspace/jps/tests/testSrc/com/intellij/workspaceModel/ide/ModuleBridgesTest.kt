@@ -78,7 +78,7 @@ class ModuleBridgesTest {
   @Before
   fun prepareProject() {
     project = projectModel.project
-    virtualFileManager = VirtualFileUrlManager.getInstance(project)
+    virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   }
 
   @Test

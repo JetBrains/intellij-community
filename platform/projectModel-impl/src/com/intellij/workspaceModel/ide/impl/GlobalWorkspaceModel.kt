@@ -26,8 +26,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.getGlobalInstance
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -50,7 +48,8 @@ class GlobalWorkspaceModel : Disposable {
 
   // Marker indicating that changes came from global storage
   internal var isFromGlobalWorkspaceModel: Boolean = false
-  private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()
+  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
+  private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply { setVirtualFileUrlManager(virtualFileManager) }
   private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsGlobalFileEntitySource
                                                                      || entitySource is LegacyCustomLibraryEntitySource }
 
@@ -63,6 +62,7 @@ class GlobalWorkspaceModel : Disposable {
 
   private val updateModelMethodName = GlobalWorkspaceModel::updateModel.name
   private val onChangedMethodName = GlobalWorkspaceModel::onChanged.name
+
 
   init {
     LOG.debug { "Loading global workspace model" }
@@ -90,7 +90,9 @@ class GlobalWorkspaceModel : Disposable {
     }
     entityStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
 
-    val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
+    val callback = JpsGlobalModelSynchronizer.getInstance()
+      .apply { setVirtualFileUrlManager(virtualFileManager) }
+      .loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
     val changes = (mutableEntityStorage as MutableEntityStorageInstrumentation).collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()
@@ -144,6 +146,15 @@ class GlobalWorkspaceModel : Disposable {
     }
   }
 
+  /**
+   * Returns instance of [VirtualFileUrlManager] which should be used to create [VirtualFileUrl] instances to be stored in entities added in
+   * the global application-level storage.
+   * It's important not to use this function for entities stored in the main [WorkspaceModel][com.intellij.platform.backend.workspace.WorkspaceModel]
+   * storage, because this would create a memory leak: these instances won't be removed when the project is closed.
+   */
+  @ApiStatus.Internal
+  fun getVirtualFileUrlManager(): VirtualFileUrlManager = virtualFileManager
+
   override fun dispose() = Unit
 
   @RequiresWriteLock
@@ -187,7 +198,7 @@ class GlobalWorkspaceModel : Disposable {
 
     val workspaceModel = WorkspaceModel.getInstance(targetProject)
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(entityStorage.current,
-                                                           VirtualFileUrlManager.getInstance(targetProject))
+                                                           workspaceModel.getVirtualFileUrlManager())
     workspaceModel.updateProjectModel("Sync global entities with project: ${targetProject.name}") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
@@ -197,7 +208,8 @@ class GlobalWorkspaceModel : Disposable {
                                  targetBuilder: MutableEntityStorage) = applyStateToProjectBuilderTimeMs.addMeasuredTimeMillis {
     LOG.info("Sync global entities with mutable entity storage")
     targetBuilder.replaceBySource(globalEntitiesFilter,
-                                  copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
+                                  copyEntitiesToEmptyStorage(entityStorage.current,
+                                                             WorkspaceModel.getInstance(project).getVirtualFileUrlManager()))
   }
 
   @RequiresWriteLock
@@ -206,7 +218,7 @@ class GlobalWorkspaceModel : Disposable {
 
     filteredProject = sourceProject
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(WorkspaceModel.getInstance(sourceProject).currentSnapshot,
-                                                           VirtualFileUrlManager.getGlobalInstance())
+                                                           virtualFileManager)
     updateModel("Sync entities from project ${sourceProject.name} with global storage") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }

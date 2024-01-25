@@ -6,7 +6,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.getVirtualFileUrlManager
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.JavaPsiFacade
@@ -35,10 +34,11 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
   }
 
   private fun reindexFile(fileA: VirtualFile) {
-    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val storage = workspaceModel.currentSnapshot
     val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
     assertNotNull(moduleEntity)
-    val iterators = createIterators(moduleEntity, IndexingUrlRootHolder.fromUrl(fileA.toVirtualFileUrl(getVirtualFileUrlManager(project))),
+    val iterators = createIterators(moduleEntity, IndexingUrlRootHolder.fromUrl(fileA.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())),
                                     storage)
     UnindexedFilesScanner(myFixture.project, ArrayList(iterators), null,
                           "Partial reindex of one of two indexable files").queue()

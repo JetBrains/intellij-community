@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.ide.navbar.tests.TestFrameworkKt.contextNavBarPathStrings;
 
 public class JavaNavBarTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -36,12 +37,8 @@ public class JavaNavBarTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void assertNavBarModel(String... expectedItems) {
-    NavBarModel model = new NavBarModel(myFixture.getProject());
-    model.updateModel(((EditorEx)myFixture.getEditor()).getDataContext());
-    List<String> items = new ArrayList<>();
-    for (int i = 0; i < model.size(); i++) {
-      items.add(NavBarPresentation.calcPresentableText(model.get(i), false));
-    }
+    DataContext dataContext = ((EditorEx)myFixture.getEditor()).getDataContext();
+    List<String> items = contextNavBarPathStrings(dataContext);
     assertOrderedEquals(items, expectedItems);
   }
 }

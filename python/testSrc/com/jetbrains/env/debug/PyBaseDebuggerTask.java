@@ -131,11 +131,13 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     getSmartStepIntoVariantsAsync().onSuccess(smartStepIntoVariants -> {
-      for (Object o : smartStepIntoVariants) {
-        PySmartStepIntoVariant variant = (PySmartStepIntoVariant) o;
-        if (variant.getFunctionName().equals(funcName) && variant.getCallOrder() == callOrder)
-          myDebugProcess.startSmartStepInto(variant);
-      }
+      ApplicationManager.getApplication().invokeLater(() -> {
+          for (Object o : smartStepIntoVariants) {
+            PySmartStepIntoVariant variant = (PySmartStepIntoVariant)o;
+            if (variant.getFunctionName().equals(funcName) && variant.getCallOrder() == callOrder)
+              myDebugProcess.startSmartStepInto(variant);
+          }
+      });
     });
   }
 

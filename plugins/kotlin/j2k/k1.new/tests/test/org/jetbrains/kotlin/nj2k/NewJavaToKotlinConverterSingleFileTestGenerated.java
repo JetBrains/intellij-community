@@ -1262,6 +1262,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/comments/fieldsInitializedFromParams.java");
         }
 
+        @TestMetadata("generatedImportsWithPackage.java")
+        public void testGeneratedImportsWithPackage() throws Exception {
+            runTest("testData/newJ2k/comments/generatedImportsWithPackage.java");
+        }
+
         @TestMetadata("identicalComments.java")
         public void testIdenticalComments() throws Exception {
             runTest("testData/newJ2k/comments/identicalComments.java");

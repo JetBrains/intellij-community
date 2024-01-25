@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LeakingThis")
 
 package com.intellij.openapi.wm.impl.status
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -66,7 +67,7 @@ abstract class EditorBasedStatusBarPopup(
   protected val scope: CoroutineScope,
 ) : EditorBasedWidget(project), Multiframe, CustomStatusBarWidget {
   @Suppress("DEPRECATION")
-  constructor(project: Project, isWriteableFileRequired: Boolean) : this(project, isWriteableFileRequired, project.coroutineScope)
+  constructor(project: Project, isWriteableFileRequired: Boolean) : this(project, isWriteableFileRequired, (project as ComponentManagerEx).getCoroutineScope())
 
   private val component: Lazy<JPanel> = lazy {
     if (!ApplicationManager.getApplication().isUnitTestMode) {

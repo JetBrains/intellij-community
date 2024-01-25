@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.containers
 
 import it.unimi.dsi.fastutil.ints.*
@@ -174,14 +174,16 @@ internal sealed class MutableNonNegativeIntIntMultiMap(
     return EmptyIntSequence
   }
 
-  fun putAll(key: Int, newValues: IntArray): Boolean {
-    if (newValues.isEmpty()) return false
+  /**
+   * Append [newValues] to the existing list of values by [key]
+   */
+  fun addAll(key: Int, newValues: IntArray) {
+    if (newValues.isEmpty()) return
     startWrite()
 
     // According to the docs, this constructor doesn't create a copy of the array
     val myList = IntImmutableList(newValues)
     startModifyingKey(key).addAll(myList)
-    return true
   }
 
   /**

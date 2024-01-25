@@ -153,16 +153,7 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
    * Most of the callers should first check {@link #isRunOnSaveEnabled()}.
    */
   public boolean isFileTypeSelected(@NotNull FileType fileType) {
-    if (myState.myAllFileTypesSelected) {
-      return true;
-    }
-    if (fileType instanceof LanguageFileType lft && lft.isSecondary()) {
-      LanguageFileType associatedFileType = lft.getLanguage().getAssociatedFileType();
-      if (associatedFileType != null) {
-        return myState.mySelectedFileTypes.contains(associatedFileType.getName());
-      }
-    }
-    return myState.mySelectedFileTypes.contains(fileType.getName());
+    return myState.myAllFileTypesSelected || myState.mySelectedFileTypes.contains(fileType.getName());
   }
 
   Set<String> getSelectedFileTypes() {

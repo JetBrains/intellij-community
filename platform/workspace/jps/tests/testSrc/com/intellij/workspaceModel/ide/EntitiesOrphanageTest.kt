@@ -35,7 +35,7 @@ class EntitiesOrphanageTest {
   val projectModel: ProjectModelExtension = ProjectModelExtension()
 
   private val virtualFileManager: VirtualFileUrlManager
-    get() = VirtualFileUrlManager.getInstance(projectModel.project)
+    get() = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
   @BeforeEach
   fun setUp() {

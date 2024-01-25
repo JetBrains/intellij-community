@@ -148,7 +148,12 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
 
   private static HtmlChunk generateClassDoc(@NotNull PsiElement element) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
-    return HtmlChunk.raw(StringUtil.notNullize(documentationProvider.generateDoc(element, null)));
+    String doc = StringUtil.notNullize(documentationProvider.generateDoc(element, null));
+    int bodyIndex = doc.indexOf("<body>");
+    if (bodyIndex >= 0) {
+      doc = doc.substring(bodyIndex + 6);
+    }
+    return HtmlChunk.raw(doc);
   }
 
   private static HtmlChunk createSectionRow(HtmlChunk sectionName, @Nls String sectionContent) {

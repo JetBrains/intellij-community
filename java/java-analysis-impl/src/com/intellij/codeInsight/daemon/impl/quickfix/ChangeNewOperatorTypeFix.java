@@ -123,6 +123,7 @@ public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<Ps
   }
 
   public static void register(@NotNull HighlightInfo.Builder highlightInfo, PsiExpression expression, PsiType lType) {
+    if (lType instanceof PsiClassType lClassType && lClassType.resolve() instanceof PsiAnonymousClass) return;
     expression = PsiUtil.deparenthesizeExpression(expression);
     if (!(expression instanceof PsiNewExpression newExpression)) return;
     final PsiType rType = expression.getType();

@@ -61,7 +61,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.intellij.lang.documentation.QuickDocCodeHighlightingHelper.appendStyledSignatureFragment;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledSignatureFragment;
 
 
 public class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {

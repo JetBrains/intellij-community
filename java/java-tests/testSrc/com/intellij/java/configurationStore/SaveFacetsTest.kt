@@ -18,14 +18,12 @@ import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.junit.Before
@@ -75,11 +73,12 @@ class SaveFacetsTest {
   @Test
   fun `facet in module with custom storage`() {
     class SampleCustomModuleSource(override val internalSource: JpsFileEntitySource) : EntitySource, CustomModuleEntitySource
-    val moduleDir = projectModel.baseProjectDir.virtualFileRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
+    val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
+    val moduleDir = projectModel.baseProjectDir.virtualFileRoot.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
     val source = SampleCustomModuleSource(
       JpsProjectFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
     runWriteActionAndWait {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+      workspaceModel.updateProjectModel {
         val moduleEntity = it addEntity ModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source)
         it addEntity ModuleCustomImlDataEntity(HashMap(mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID)),
                                                source) {
@@ -95,7 +94,7 @@ class SaveFacetsTest {
     projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("facet-in-module-with-custom-storage")))
 
     runWriteActionAndWait {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+      workspaceModel.updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
         it.modifyEntity(moduleEntity) {
           dependencies = mutableListOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency)

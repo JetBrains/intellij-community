@@ -81,19 +81,12 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    setFileContentAsync(projectPom, createPomXml("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>jar</packaging>
-                       <build>
-                       <sourceDirectory><error>foo1</error></sourceDirectory>
-                       <testSourceDirectory><error>foo2</error></testSourceDirectory>
-                       <scriptSourceDirectory><error>foo3</error></scriptSourceDirectory>
-                       </build>
-                       """.trimIndent()), true)
 
-    checkHighlighting()
+    checkHighlighting(projectPom,
+                      Highlight(text = "foo1"),
+                      Highlight(text = "foo2"),
+                      Highlight(text = "foo3"))
+
   }
 
   private suspend fun getDocument(f: VirtualFile): Document {

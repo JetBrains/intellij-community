@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -72,7 +73,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       return
     }
 
-    autoSyncFuture = ApplicationManager.getApplication().coroutineScope.launch {
+    autoSyncFuture = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
       catchAndLog {
         icsManager.runInAutoCommitDisabledMode {
           doSync()

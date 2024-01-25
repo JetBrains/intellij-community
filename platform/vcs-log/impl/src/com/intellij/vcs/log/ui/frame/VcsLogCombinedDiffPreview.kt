@@ -13,13 +13,14 @@ import com.intellij.vcs.log.VcsLogBundle
 
 class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : CombinedTreeDiffPreview(browser.viewer, browser) {
 
-  override fun createModel(): CombinedDiffPreviewModel = VcsLogCombinedDiffPreviewModel(browser).apply {
-    val blocks = CombinedDiffPreviewModel.prepareCombinedDiffModelRequests(browser.viewer.project, iterateAllChanges().toList())
-    setBlocks(blocks)
+  override fun createPreviewModel(): CombinedDiffPreviewModel {
+    val previewModel = VcsLogCombinedDiffPreviewModel(browser)
+    previewModel.updateBlocks()
+    return previewModel
   }
 
   override fun getCombinedDiffTabTitle(): String {
-    val filePath = model?.selected?.filePath
+    val filePath = previewModel?.selected?.filePath
     return if (filePath == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
     else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", filePath.name)
   }
@@ -29,8 +30,8 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
 class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) : CombinedTreeDiffPreviewModel(browser.viewer, browser) {
 
   init {
-    context.putUserData(DISABLE_LOADING_BLOCKS, true)
-    context.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.VCS_LOG_VIEW)
+    model.context.putUserData(DISABLE_LOADING_BLOCKS, true)
+    model.context.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.VCS_LOG_VIEW)
   }
 
   override fun iterateSelectedChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {

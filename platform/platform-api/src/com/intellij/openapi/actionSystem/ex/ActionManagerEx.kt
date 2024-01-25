@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.openapi.Disposable
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.PluginId
@@ -66,8 +67,7 @@ abstract class ActionManagerEx : ActionManager() {
       val app = ApplicationManager.getApplication()
       val created = app.serviceIfCreated<ActionManager>()
       if (created == null) {
-        @Suppress("DEPRECATION")
-        (scope ?: app.coroutineScope).launch {
+        (scope ?: (app as ComponentManagerEx).getCoroutineScope()).launch {
           val actionManager = app.serviceAsync<ActionManager>()
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             task(actionManager)

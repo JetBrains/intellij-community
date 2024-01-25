@@ -366,15 +366,16 @@ public abstract class InplaceRefactoring {
       return false;
     }
 
+    if (myBalloon == null) {
+      showBalloon();
+    }
+
     beforeTemplateStart();
 
     WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> startTemplate(builder));
 
     afterTemplateStart();
 
-    if (myBalloon == null) {
-      showBalloon();
-    }
     return true;
   }
 

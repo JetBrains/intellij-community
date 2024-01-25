@@ -51,19 +51,15 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.min
 import kotlin.math.roundToInt
-
 class CombinedDiffViewer(
   private val context: DiffContext,
-  keys: List<CombinedBlockProducer>,
-  blockToSelect: CombinedBlockId?,
   blockListener: BlockListener,
-) : CombinedDiffNavigation,
+  private val blockState: BlockState
+  ) : CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
     DataProvider,
     Disposable {
   private val project = context.project!! // CombinedDiffContext expected
-
-  private val blockState = BlockState(keys.map { it.id }, blockToSelect ?: keys.first().id)
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
   private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = hashMapOf()
@@ -482,35 +478,33 @@ class CombinedDiffViewer(
   override fun moveCaretPageDown() = movePageUpDown(pageUp = false)
 
   private fun movePageUpDown(pageUp: Boolean) {
-    // move viewport in the new position
-    val viewRect = scrollPane.viewport.viewRect
-
-    val pageHeightWithoutStickyHeader = viewRect.height - stickyHeaderPanel.height
     val editor = getCurrentDiffViewer()?.currentEditor ?: return
-    val lineHeight = editor.lineHeight
-    val pageOffset = (if (pageUp) -pageHeightWithoutStickyHeader else pageHeightWithoutStickyHeader) / lineHeight * lineHeight
+    val caretModel = editor.caretModel
 
-    val maxNewY = scrollPane.viewport.view.height - 1
-    viewRect.y = (viewRect.y + pageOffset).coerceAtLeast(0).coerceAtMost(maxNewY)
+    val caretPositionBeforeJump = caretModel.currentCaret.visualPosition
 
-    scrollPane.viewport.viewPosition = Point(viewRect.x, viewRect.y)
-
-    // move caret
-    val visualPositionInCurrentEditor = editor.caretModel.visualPosition
-    val pointInCurrentEditor = editor.visualPositionToXY(visualPositionInCurrentEditor)
-    val pointInView = SwingUtilities.convertPoint(editor.component, pointInCurrentEditor, scrollPane.viewport.view)
-
-    val newPointInView = Point(pointInView.x, (pointInView.y + pageOffset).coerceAtLeast(0).coerceAtMost(maxNewY))
-    val newComponent = scrollPane.viewport.view.getComponentAt(newPointInView)
-    if (newComponent is CombinedSimpleDiffBlock) {
-      selectDiffBlock(newComponent.id, true, null)
-      val newEditor = getCurrentDiffViewer()?.currentEditor ?: return
-      val pointInNewEditor = SwingUtilities.convertPoint(scrollPane.viewport.view, newPointInView, newEditor.component)
-      val visualPositionInNewEditor = newEditor.xyToVisualPosition(pointInNewEditor)
-      newEditor.caretModel.moveToVisualPosition(visualPositionInNewEditor)
-      requestFocusInDiffViewer(blockState.currentBlock)
+    if (pageUp) {
+      EditorActionUtil.moveCaretPageUp(editor, false)
+    } else {
+      EditorActionUtil.moveCaretPageDown(editor, false)
     }
-    scrollToCaret()
+
+    val caretPositionAfterJump = caretModel.currentCaret.visualPosition
+
+    if (caretPositionBeforeJump != caretPositionAfterJump) {
+      scrollToCaret()
+      return
+    }
+
+    if (pageUp) {
+      if (canGoPrevBlock()) {
+        moveCaretToPrevBlock()
+      }
+    } else {
+      if (canGoNextBlock()) {
+        moveCaretToNextBlock()
+      }
+    }
   }
 
   fun scrollToCaret() {
@@ -757,52 +751,4 @@ private fun Rectangle.intersects(bb: BlockBounds): Boolean =
 interface BlockListener : EventListener {
   fun blocksHidden(blockIds: Collection<CombinedBlockId>)
   fun blocksVisible(blockIds: Collection<CombinedBlockId>)
-}
-
-internal interface BlockOrder {
-  fun iterateBlocks(): Iterable<CombinedBlockId>
-
-  val blocksCount: Int
-}
-
-private class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNextDifferenceIterable, BlockOrder {
-  private val blocks: List<CombinedBlockId> = list.toList()
-
-  private val blockByIndex: MutableMap<CombinedBlockId, Int> = mutableMapOf()
-
-  var currentBlock: CombinedBlockId = current
-
-  init {
-    blocks.forEachIndexed { index, block ->
-      blockByIndex[block] = index
-    }
-    // todo: find and fix initial problem in Space review integration
-    if (!blocks.contains(current)) {
-      currentBlock = blocks.first()
-    }
-  }
-
-  fun indexOf(blockId: CombinedBlockId): Int = blockByIndex[blockId]!!
-
-  operator fun get(index: Int): CombinedBlockId? = if (index in blocks.indices) blocks[index] else null
-
-  override val blocksCount: Int
-    get() = blocks.size
-
-  override fun iterateBlocks(): Iterable<CombinedBlockId> = blocks.asIterable()
-
-  override fun canGoPrev(): Boolean = currentIndex > 0
-
-  override fun canGoNext(): Boolean = currentIndex < blocksCount - 1
-
-  override fun goPrev() {
-    currentBlock = blocks[this.currentIndex - 1]
-  }
-
-  override fun goNext() {
-    currentBlock = blocks[this.currentIndex + 1]
-  }
-
-  private val currentIndex: Int
-    get() = indexOf(currentBlock)
 }

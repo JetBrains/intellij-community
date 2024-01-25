@@ -17,9 +17,12 @@ import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.isNewLockEnabled
+import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport
 import com.intellij.openapi.application.impl.InvocationUtil
 import com.intellij.openapi.application.impl.RwLockHolder
 import com.intellij.openapi.components.serviceIfCreated
@@ -80,7 +83,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
 
   @Internal
-  val rwLockHolder: RwLockHolder = RwLockHolder
+  val threadingSupport: ThreadingSupport = if (isNewLockEnabled) AnyThreadWriteThreadingSupport else RwLockHolder
   val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
   val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
   val popupManager: IdePopupManager = IdePopupManager()
@@ -143,7 +146,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
     assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
     systemEventQueue.push(this)
-    rwLockHolder.postInit(Thread.currentThread())
+    threadingSupport.postInit(Thread.currentThread())
     EDT.updateEdt()
     replaceDefaultKeyboardFocusManager()
     addDispatcher(WindowsAltSuppressor(), null)
@@ -581,8 +584,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> rwLockHolder.runWithImplicitRead { dispatchMouseEvent(e) }
-      e is KeyEvent -> rwLockHolder.runWithImplicitRead { dispatchKeyEvent(e) }
+      e is MouseEvent -> threadingSupport.runWithImplicitRead { dispatchMouseEvent(e) }
+      e is KeyEvent -> threadingSupport.runWithImplicitRead { dispatchKeyEvent(e) }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {
@@ -590,9 +593,9 @@ class IdeEventQueue private constructor() : EventQueue() {
             (app.serviceIfCreated<WindowManager>() as? WindowManagerEx)?.dispatchComponentEvent(e)
           }
         }
-        rwLockHolder.runWithoutImplicitRead { defaultDispatchEvent(e) }
+        threadingSupport.runWithoutImplicitRead { defaultDispatchEvent(e) }
       }
-      else -> rwLockHolder.runWithoutImplicitRead { defaultDispatchEvent(e) }
+      else -> threadingSupport.runWithoutImplicitRead { defaultDispatchEvent(e) }
     }
   }
 

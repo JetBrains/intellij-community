@@ -1,8 +1,8 @@
 // "Remove single lambda parameter declaration" "false"
 // ACTION: Convert to anonymous function
 // ACTION: Convert to multi-line lambda
-// ACTION: Enable 'Types' inlay hints
 // ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Enable option 'Function parameter types' for 'Types' inlay hints
 // ACTION: Move lambda argument into parentheses
 // ACTION: Rename to _
 // ACTION: Specify explicit lambda signature

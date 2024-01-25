@@ -1,32 +1,37 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowMoveAction
+import com.intellij.ide.actions.ToolWindowShowNamesAction
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
+import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.UIBundle
+import com.intellij.ui.*
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Rectangle
+import com.intellij.util.ui.UIUtil
+import sun.swing.SwingUtilities2
+import java.awt.*
 import java.awt.event.MouseEvent
+import java.awt.image.BufferedImage
 import java.util.function.Supplier
 import javax.swing.Icon
+import javax.swing.UIManager
 
 internal abstract class AbstractSquareStripeButton(
   action: AnAction, presentation: Presentation,
@@ -62,7 +67,7 @@ internal abstract class AbstractSquareStripeButton(
   }
 }
 
-internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl, presentation: Presentation, minimumSize: Supplier<Dimension>? = null) :
+internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl, presentation: Presentation, minimumSize: Supplier<Dimension>? = null) :
   AbstractSquareStripeButton(action, presentation, minimumSize) {
   constructor(action: SquareAnActionButton, toolWindow: ToolWindowImpl) : this(action, toolWindow, createPresentation(toolWindow))
   constructor(toolWindow: ToolWindowImpl) : this(SquareAnActionButton(toolWindow), toolWindow)
@@ -70,10 +75,125 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
     fun createMoveGroup(): ToolWindowMoveAction.Group = ToolWindowMoveAction.Group()
   }
 
+  private var myShowName = false
+
   init {
     doInit { createPopupGroup(toolWindow) }
-    @Suppress("LeakingThis")
     MouseDragHelper.setComponentDraggable(this, true)
+    setLook(object : SquareStripeButtonLook(this@SquareStripeButton) {
+      private var myPressedColor: Color? = null
+      private var myPressedColorKey: String? = null
+
+      private fun getBackgroundColor(): Color {
+        if (isFocused()) {
+          return StripeButtonUi.SELECTED_BACKGROUND_COLOR
+        }
+        if (toolWindow.isVisible) {
+          return JBUI.CurrentTheme.ActionButton.pressedBackground()
+        }
+        if (isHovered()) {
+          return StripeButtonUi.BACKGROUND_COLOR
+        }
+        return this@SquareStripeButton.background
+      }
+
+      private fun getForegroundColor(): Color {
+        return if (toolWindow.isActive) StripeButtonUi.SELECTED_FOREGROUND_COLOR else StripeButtonUi.FOREGROUND_COLOR
+      }
+
+      override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
+        if (!myShowName) {
+          super.paintIcon(g, actionButton, icon)
+        }
+        else {
+          // because SquareStripeButtonLook doesn't know about name and pref size contains it height we need change height for right icon layout
+          val buttonWrapper = object : ActionButtonComponent {
+            override fun getPopState() = actionButton!!.popState
+
+            override fun getWidth() = actionButton!!.width
+
+            override fun getHeight() = super@SquareStripeButton.getPreferredSize().height
+
+            override fun getInsets() = actionButton!!.insets
+          }
+          val color = UIManager.getColor("ToolWindow.Button.selectedForeground")
+          val iconPosition: Point
+          if (!toolWindow.isActive || color == null) {
+            super.paintIcon(g, buttonWrapper, icon)
+            iconPosition = getIconPosition(buttonWrapper, icon)
+            iconPosition.y += icon.iconHeight
+          }
+          else {
+            val strokeIcon = toStrokeIcon(icon, color)
+            super.paintIcon(g, buttonWrapper, strokeIcon)
+            iconPosition = getIconPosition(buttonWrapper, strokeIcon)
+            iconPosition.y += strokeIcon.iconHeight
+          }
+
+          val f = getTextFont()
+          val fm = getFontMetrics(f)
+          val text = toolWindow.stripeTitleProvider.get()
+          val button = this@SquareStripeButton
+          val insets = button.insets
+          val x = insets.left + JBUI.scale(6)
+          val y = iconPosition.y + JBUI.scale(2)
+          val totalWidth = button.width - insets.left - insets.right - JBUI.scale(12)
+          val textWidth = SwingUtilities2.stringWidth(this@SquareStripeButton, fm, text)
+          val textHeight = fm.height
+
+          val g2d = g!!.create() as Graphics2D
+
+          try {
+            g2d.color = getForegroundColor()
+            g2d.font = f
+            UISettings.setupAntialiasing(g2d)
+            UIUtil.drawCenteredString(g2d, Rectangle(x, y, totalWidth, textHeight), text)
+
+            if (textWidth > totalWidth) {
+              val gradientWidth = JBUI.scale(4)
+              val gradientX = x + totalWidth - gradientWidth
+              var bgColor = getBackgroundColor()
+
+              // special case if we have hover/pressed color (0,0,0,alpha) or (255,255,255,alpha) that we don't know result bg color and will need calculate it
+              if ((bgColor.red == 0 && bgColor.green == 0 && bgColor.blue == 0 ||
+                   bgColor.red == 255 && bgColor.green == 255 && bgColor.blue == 255) && bgColor.alpha < 255) {
+                val pressedColorKey = "${button.background.rgb}:${bgColor.rgb}"
+                if (myPressedColor == null || pressedColorKey != myPressedColorKey) {
+                  val image = UIUtil.createImage(button, 4, 4, BufferedImage.TYPE_INT_ARGB)
+                  val imageG = image.createGraphics()
+                  try {
+                    imageG.color = button.background
+                    imageG.fill(Rectangle(0, 0, 4, 4))
+                    imageG.color = bgColor
+                    imageG.fill(Rectangle(0, 0, 4, 4))
+                  }
+                  finally {
+                    imageG.dispose()
+                  }
+                  @Suppress("UseJBColor")
+                  myPressedColor = Color(image.getRGB(2, 2))
+                  myPressedColorKey = pressedColorKey
+                }
+                bgColor = myPressedColor!!
+              }
+              g2d.paint = GradientPaint(gradientX.toFloat(), y.toFloat(), ColorUtil.withAlpha(bgColor, 0.4),
+                                        (gradientX + gradientWidth).toFloat(), y.toFloat(), bgColor)
+
+              g2d.fill(Rectangle(gradientX, y, gradientWidth, textHeight))
+            }
+          }
+          finally {
+            g2d.dispose()
+          }
+        }
+      }
+    })
+  }
+
+  override fun paintButtonLook(g: Graphics?) {
+    val look = buttonLook
+    look.paintBackground(g, this)
+    look.paintIcon(g, this, icon)
   }
 
   override fun updateUI() {
@@ -107,6 +227,8 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
       .setHideDelay(0)
       .installOn(this)
     HelpTooltip.setMasterPopupOpenCondition(this) { !((parent as? AbstractDroppableStripe)?.isDroppingButton() ?: false) }
+
+    setOrUpdateShowName(ToolWindowManagerEx.getInstanceEx(toolWindow.project).isShowNames())
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
@@ -120,6 +242,22 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
       else -> HelpTooltip.Alignment.RIGHT
     }
   }
+
+  fun setOrUpdateShowName(value: Boolean) {
+    myShowName = value
+    revalidate()
+    repaint()
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val size = super.getPreferredSize()
+    if (myShowName) {
+      size.height += JBUI.scale(2) + getFontMetrics(getTextFont()).height
+    }
+    return size
+  }
+
+  private fun getTextFont() = RelativeFont.TINY.derive(font)
 }
 
 private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
@@ -141,6 +279,8 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
   group.add(HideAction(toolWindow))
   group.addSeparator()
   group.add(createMoveGroup())
+  group.addSeparator()
+  group.add(ToolWindowShowNamesAction())
   return group
 }
 
