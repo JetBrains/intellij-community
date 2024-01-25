@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment {
-  public static final Key<Integer> FRAGMENT_INDENT_KEY = Key.create("FRAGMENT_INDENT_KEY");
+  private static final Key<Integer> FRAGMENT_INDENT_KEY = Key.create("FRAGMENT_INDENT_KEY");
 
   public PsiFragmentImpl(@NotNull IElementType type, @NotNull CharSequence text) {
     super(type, text);
