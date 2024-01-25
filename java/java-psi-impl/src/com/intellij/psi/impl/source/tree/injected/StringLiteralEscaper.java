@@ -44,7 +44,9 @@ public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends Li
 
   @Override
   public boolean isOneLine() {
-    return true;
+    boolean textBlock = myHost instanceof PsiFragment && ((PsiFragment)myHost).isTextBlock() ||
+                        myHost instanceof PsiLiteralExpression && ((PsiLiteralExpression)myHost).isTextBlock();
+    return !textBlock;
   }
 
   @Override
