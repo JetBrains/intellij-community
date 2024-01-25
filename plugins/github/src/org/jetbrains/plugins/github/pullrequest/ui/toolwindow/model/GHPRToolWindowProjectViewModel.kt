@@ -8,7 +8,7 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.computeEmitting
-import com.intellij.collaboration.util.exceptionOrNull
+import com.intellij.collaboration.util.onFailure
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -142,7 +142,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
           computeEmitting {
             val targetRepository = connection.repo.repository.repositoryPath
             dataContext.creationService.findOpenPullRequest(null, targetRepository, remoteBranch)
-          }?.exceptionOrNull()?.let {
+          }?.onFailure {
             LOG.warn("Could not lookup a pull request for current branch", it)
           }
         }

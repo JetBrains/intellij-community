@@ -39,6 +39,11 @@ fun <T> ComputedResult<T>.getOrNull(): T? = result?.getOrNull()
 
 fun ComputedResult<*>.exceptionOrNull(): Throwable? = result?.exceptionOrNull()
 
+fun ComputedResult<*>.onFailure(consumer: (Throwable) -> Unit): ComputedResult<*> = apply {
+  result?.exceptionOrNull()?.let(consumer)
+}
+
+
 fun <T, R> ComputedResult<T>.map(mapper: (value: T) -> R): ComputedResult<R> = ComputedResult(result?.map(mapper))
 
 /**
