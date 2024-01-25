@@ -29,8 +29,8 @@ fun isCoroutineDumpHeader(line: String): Boolean {
   return line == COROUTINE_DUMP_HEADER || line == COROUTINE_DUMP_HEADER_STRIPPED
 }
 
-fun enableCoroutineDump() {
-  runCatching {
+fun enableCoroutineDump(): Result<Unit> {
+  return runCatching {
     DebugProbes.enableCreationStackTraces = false
     DebugProbes.install()
   }

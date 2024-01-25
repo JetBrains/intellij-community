@@ -4,7 +4,10 @@
 @file:Suppress("RAW_RUN_BLOCKING")
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -47,6 +50,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -178,13 +182,23 @@ internal suspend fun loadApp(app: ApplicationImpl,
       }
     }
 
+    val coroutineDebugJob = launch(CoroutineName("coroutine debug probes init")) {
+      enableCoroutineDump().onFailure { e ->
+        LOG.error("Cannot enable coroutine debug dump", e)
+      }
+      enableJstack()
+    }
+
     asyncScope.launch {
-      launch(CoroutineName("checkThirdPartyPluginsAllowed")) {
+      // do not use launch here - don't overload CPU, let some room for JIT and other CPU-intensive tasks during start-up
+      coroutineDebugJob.join()
+
+      span("checkThirdPartyPluginsAllowed") {
         checkThirdPartyPluginsAllowed()
       }
 
       // doesn't block app start-up
-      launch(CoroutineName("post app init tasks")) {
+      span("post app init tasks") {
         runPostAppInitTasks()
       }
 
@@ -194,6 +208,17 @@ internal suspend fun loadApp(app: ApplicationImpl,
     appInitializedListenerJob.join()
 
     applicationStarter.await()
+  }
+}
+
+private suspend fun enableJstack() {
+  span("coroutine jstack configuration") {
+    JBR.getJstack()?.includeInfoFrom {
+      """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines(stripDump = false)}
+"""
+    }
   }
 }
 

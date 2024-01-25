@@ -26,9 +26,9 @@ private val LOG: Logger
   get() = logger<IdeStartupWizard>()
 
 val isIdeStartupWizardEnabled: Boolean
-  get() = !ApplicationManagerEx.isInIntegrationTest()
-          && System.getProperty ("intellij.startup.wizard", "true").toBoolean()
-          && IdeStartupExperiment.isExperimentEnabled()
+  get() = !ApplicationManagerEx.isInIntegrationTest() &&
+          System.getProperty ("intellij.startup.wizard", "true").toBoolean() &&
+          IdeStartupExperiment.isExperimentEnabled()
 
 @ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
@@ -174,9 +174,9 @@ private object IdeStartupExperiment {
 
   @Suppress("DEPRECATION")
   private fun getGroupKind(group: Int) = when {
-    PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro() -> when {
-      group in 0..7 -> GroupKind.Experimental
-      group == 8 || group == 9 -> GroupKind.Control
+    PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro() -> when (group) {
+      in 0..7 -> GroupKind.Experimental
+      8, 9 -> GroupKind.Control
       else -> GroupKind.Undefined
     }
     else -> when (group) {
@@ -186,12 +186,13 @@ private object IdeStartupExperiment {
     }
   }
 
-  private fun String.asBucket() = MathUtil.nonNegativeAbs(this.hashCode()) % 256
+  private fun asBucket(s: String) = MathUtil.nonNegativeAbs(s.hashCode()) % 256
+
   private fun getBucket(): Int {
     val deviceId = LOG.runAndLogException {
       DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "FUS")
     } ?: return 0
-    return deviceId.asBucket()
+    return asBucket(deviceId)
   }
 
   val experimentGroup by lazy {
@@ -204,7 +205,7 @@ private object IdeStartupExperiment {
     experimentGroup
   }
 
-  val experimentGroupKind by lazy {
+  val experimentGroupKind: GroupKind by lazy {
     getGroupKind(experimentGroup)
   }
 
