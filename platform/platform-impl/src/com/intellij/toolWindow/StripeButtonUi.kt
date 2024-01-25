@@ -16,6 +16,8 @@ import javax.swing.plaf.metal.MetalToggleButtonUI
 
 class StripeButtonUi : MetalToggleButtonUI() {
   companion object {
+    val FOREGROUND_COLOR: Color = JBColor.namedColor("ToolWindow.Button.foreground", 0x5A5D6B, 0x9DA0A8)
+
     val BACKGROUND_COLOR: Color = JBColor.namedColor("ToolWindow.Button.hoverBackground",
                                                      JBColor(Gray.x55.withAlpha(40), Gray.x0F.withAlpha(40)))
     val SELECTED_BACKGROUND_COLOR: Color = JBColor.namedColor("ToolWindow.Button.selectedBackground",

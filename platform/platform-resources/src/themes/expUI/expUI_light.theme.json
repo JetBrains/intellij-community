@@ -662,6 +662,7 @@
         "hoverInactiveBackground": "Grey12"
       },
       "Button": {
+        "foreground": "Grey5",
         "selectedForeground": "Grey14",
         "selectedBackground": "Blue4",
         "hoverBackground": "Grey12",

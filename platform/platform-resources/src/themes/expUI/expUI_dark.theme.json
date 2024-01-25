@@ -654,6 +654,7 @@
         "hoverInactiveBackground": "Grey3"
       },
       "Button": {
+        "foreground": "Grey9",
         "selectedForeground": "Grey14",
         "selectedBackground": "Blue6",
         "DragAndDrop" : {

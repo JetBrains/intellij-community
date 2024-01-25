@@ -85,6 +85,6 @@ public interface ToolWindowManagerListener extends EventListener {
     ActivateToolWindow, HideToolWindow, RegisterToolWindow, SetContentUiType, SetLayout, SetShowStripeButton,
     SetSideTool, SetSideToolAndAnchor, SetToolWindowAnchor, SetToolWindowAutoHide, SetToolWindowType, SetVisibleOnLargeStripe,
     ShowToolWindow, UnregisterToolWindow, ToolWindowAvailable, ToolWindowUnavailable, MovedOrResized,
-    MoreButtonUpdated
+    MoreButtonUpdated, ShowNames, SideCustomWidth
   }
 }

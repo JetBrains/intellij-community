@@ -28,11 +28,14 @@ interface ToolWindowManagerState : PersistentStateComponent<Element> {
   val isEditorComponentActive: Boolean
   var frame: ProjectFrameHelper?
   var moreButton: ToolWindowAnchor
+  var showNames: Boolean
+  val sideCustomWidth: MutableMap<ToolWindowAnchor, Int>
 }
 
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 private const val RECENT_TW_TAG = "recentWindows"
 private const val MORE_BUTTON_TAG = "moreButton"
+private const val SIDE_WIDTH_TAG = "sideWidth"
 
 @ApiStatus.Internal
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
@@ -57,6 +60,10 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
   override var frame: ProjectFrameHelper? = null
 
   override var moreButton: ToolWindowAnchor = ToolWindowAnchor.LEFT
+
+  override var showNames: Boolean = false
+
+  override val sideCustomWidth: MutableMap<ToolWindowAnchor, Int> = mutableMapOf()
 
   override fun getState(): Element? {
     if (frame == null) {
@@ -84,6 +91,13 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
     }
     if (moreButton != ToolWindowAnchor.LEFT) {
       element.addContent(Element(MORE_BUTTON_TAG).setAttribute("side", moreButton.toString()))
+    }
+    if (showNames) {
+      val sideWidth = Element(SIDE_WIDTH_TAG)
+      for (info in sideCustomWidth.entries) {
+        sideWidth.setAttribute(info.key.toString(), info.value.toString())
+      }
+      element.addContent(sideWidth)
     }
     return element
   }
@@ -130,6 +144,12 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
         }
         MORE_BUTTON_TAG -> {
           moreButton = ToolWindowAnchor.fromText(element.getAttributeValue("side"))
+        }
+        SIDE_WIDTH_TAG -> {
+          showNames = true
+          for (attribute in element.attributes) {
+            sideCustomWidth[ToolWindowAnchor.fromText(attribute.name)] = attribute.value.toInt()
+          }
         }
       }
     }

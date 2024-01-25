@@ -142,6 +142,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
                                           shouldRegister = { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID })
         for (toolWindowPane in manager.getToolWindowPanes()) {
           toolWindowPane.buttonManager.initMoreButton(project)
+          toolWindowPane.buttonManager.updateResizeState(project)
           toolWindowPane.buttonManager.revalidateNotEmptyStripes()
           toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(toolWindowPane.paneId))
         }

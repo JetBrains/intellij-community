@@ -59,8 +59,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MoreButtonUpdated
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.*
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
@@ -1526,6 +1525,40 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     fireStateChanged(MoreButtonUpdated)
+  }
+
+  override fun isShowNames() = state.showNames
+
+  override fun setShowNames(value: Boolean) {
+    state.showNames = value
+
+    if (isNewUi) {
+      if (value) {
+        val defaultWidth = JBUI.scale(if (UISettings.Companion.getInstance().compactMode) 40 else 54)
+        state.sideCustomWidth[ToolWindowAnchor.LEFT] = defaultWidth
+        state.sideCustomWidth[ToolWindowAnchor.RIGHT] = defaultWidth
+      }
+      else {
+        state.sideCustomWidth.remove(ToolWindowAnchor.LEFT)
+        state.sideCustomWidth.remove(ToolWindowAnchor.RIGHT)
+      }
+
+      for (pane in toolWindowPanes.values) {
+        val buttonManager = pane.buttonManager
+        if (buttonManager is ToolWindowPaneNewButtonManager) {
+          buttonManager.updateResizeState(project)
+        }
+      }
+    }
+
+    fireStateChanged(ShowNames)
+  }
+
+  override fun getSideCustomWidth(side: ToolWindowAnchor) = state.sideCustomWidth[side] ?: 0
+
+  override fun setSideCustomWidth(side: ToolWindowAnchor, width: Int) {
+    state.sideCustomWidth[side] = width
+    fireStateChanged(SideCustomWidth)
   }
 
   override fun invokeLater(runnable: Runnable) {
