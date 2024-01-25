@@ -109,43 +109,68 @@ public class MavenProject {
   public MavenProjectChanges updateFromReaderResult(@NotNull MavenProjectReaderResult readerResult,
                                                     @NotNull MavenGeneralSettings settings,
                                                     boolean keepPreviousArtifacts) {
-    return updateFromReaderResult(
-      readerResult.mavenModel,
-      null,
-      readerResult.readingProblems,
-      readerResult.activatedProfiles,
-      Set.of(),
-      readerResult.nativeModelMap,
-      settings,
-      true,
-      keepPreviousArtifacts,
-      false);
+    State newState = myState.clone();
+
+    newState.myLastReadStamp = myState.myLastReadStamp + 1;
+
+    doUpdateState(newState,
+                  readerResult.mavenModel,
+                  readerResult.readingProblems,
+                  readerResult.activatedProfiles,
+                  Set.of(),
+                  readerResult.nativeModelMap,
+                  settings,
+                  keepPreviousArtifacts,
+                  false
+    );
+
+    return setState(newState);
   }
 
   @NotNull
   @ApiStatus.Internal
-  public MavenProjectChanges updateFromReaderResult(@NotNull MavenModel model,
-                                                    @Nullable String dependencyHash,
-                                                    @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
-                                                    @NotNull MavenExplicitProfiles activatedProfiles,
-                                                    @NotNull Set<MavenId> unresolvedArtifactIds,
-                                                    @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
-                                                    @NotNull MavenGeneralSettings settings,
-                                                    boolean updateLastReadStamp,
-                                                    boolean keepPreviousArtifacts,
-                                                    boolean keepPreviousProfiles) {
+  public MavenProjectChanges updateState(@NotNull MavenModel model,
+                                         @Nullable String dependencyHash,
+                                         @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
+                                         @NotNull MavenExplicitProfiles activatedProfiles,
+                                         @NotNull Set<MavenId> unresolvedArtifactIds,
+                                         @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
+                                         @NotNull MavenGeneralSettings settings,
+                                         boolean keepPreviousArtifacts) {
     State newState = myState.clone();
 
-    if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
+    if (null != dependencyHash) {
+      newState.myDependencyHash = dependencyHash;
+    }
 
+    doUpdateState(newState,
+                  model,
+                  readingProblems,
+                  activatedProfiles,
+                  unresolvedArtifactIds,
+                  nativeModelMap,
+                  settings,
+                  keepPreviousArtifacts,
+                  true
+    );
+
+    return setState(newState);
+  }
+
+  private void doUpdateState(State newState,
+                             @NotNull MavenModel model,
+                             @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
+                             @NotNull MavenExplicitProfiles activatedProfiles,
+                             @NotNull Set<MavenId> unresolvedArtifactIds,
+                             @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
+                             @NotNull MavenGeneralSettings settings,
+                             boolean keepPreviousArtifacts,
+                             boolean keepPreviousProfiles) {
     newState.myReadingProblems = readingProblems;
     newState.myLocalRepository = MavenUtil.resolveLocalRepository(settings.getLocalRepository(),
                                                                   staticOrBundled(settings.getMavenHomeType()),
                                                                   settings.getUserSettingsFile());
     newState.myActivatedProfilesIds = activatedProfiles;
-    if (null != dependencyHash) {
-      newState.myDependencyHash = dependencyHash;
-    }
 
     newState.myMavenId = model.getMavenId();
     if (model.getParent() != null) {
@@ -183,8 +208,6 @@ public class MavenProject {
     }
 
     newState.myModelMap = nativeModelMap;
-
-    return setState(newState);
   }
 
   private MavenProjectChanges setState(State newState) {

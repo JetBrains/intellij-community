@@ -318,7 +318,7 @@ class MavenProjectResolver(private val myProject: Project) {
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
 
-    mavenProjectCandidate.updateFromReaderResult(
+    mavenProjectCandidate.updateState(
       result.mavenModel,
       result.dependencyHash,
       result.readingProblems,
@@ -326,9 +326,7 @@ class MavenProjectResolver(private val myProject: Project) {
       result.unresolvedArtifactIds,
       result.nativeModelMap,
       generalSettings,
-      false,
-      keepPreviousArtifacts,
-      true)
+      keepPreviousArtifacts)
 
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
