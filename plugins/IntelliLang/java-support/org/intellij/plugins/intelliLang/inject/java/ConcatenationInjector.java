@@ -436,8 +436,9 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
       while (endOffset > 0) {
         endOffset++;
         result.add(new TextRange(startOffset, endOffset));
-        startOffset = endOffset + indent;
-        endOffset = text.indexOf('\n', startOffset);
+        int newEndOffset = text.indexOf('\n', endOffset);
+        startOffset = Math.min(endOffset + indent, newEndOffset == -1 ? Integer.MAX_VALUE : newEndOffset);
+        endOffset = newEndOffset;
       }
       endOffset = textRange.getEndOffset();
       if (startOffset <= endOffset) {

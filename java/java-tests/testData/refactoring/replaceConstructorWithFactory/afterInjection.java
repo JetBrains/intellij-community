@@ -9,6 +9,7 @@ public class Hello {
   void test(@Subst("MyClass") String name, String message) {
     String s = JAVA."""
                 import static java.lang.System.*;
+                
                 class \{name} {
                     private MyClass() {
                     }
