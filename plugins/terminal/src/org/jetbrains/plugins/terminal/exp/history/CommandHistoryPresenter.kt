@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.history
 
-import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.invokeLater
@@ -25,13 +24,11 @@ internal class CommandHistoryPresenter(private val project: Project,
     initialCommand = command
     val prefix = command.trim()
     val arranger = CommandHistoryLookupArranger()
-    val lookup = LookupManager.getInstance(project).createLookup(editor, emptyArray(), prefix, arranger) as LookupImpl
-    val matcher = PlainPrefixMatcher(prefix, true)
-    history.forEachIndexed { index, cmd ->
+    val elements = history.mapIndexed { index, cmd ->
       // put index as lookup object to make each lookup element distinct in terms of 'equals' method of LookupElementBuilder
-      val item = LookupElementBuilder.create(index, cmd)
-      lookup.addItem(item, matcher)
+      LookupElementBuilder.create(index, cmd)
     }
+    val lookup = LookupManager.getInstance(project).createLookup(editor, elements.toTypedArray(), prefix, arranger) as LookupImpl
 
     lookup.putUserData(IS_COMMAND_HISTORY_LOOKUP_KEY, true)
 
