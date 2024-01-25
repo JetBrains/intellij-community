@@ -7,16 +7,13 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.io.await
 import git4idea.changes.GitBranchComparisonResult
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.plugins.github.api.data.GHCommit
 import java.util.concurrent.CompletableFuture
 
@@ -70,12 +67,13 @@ fun GHPRChangesDataProvider.fetchedChangesFlow(): Flow<Deferred<GitBranchCompari
       async {
         try {
           //TODO: don't fetch when not necessary
-          fetchBaseBranch().await()
-          fetchHeadBranch().await()
-          loadChanges().await()
+          fetchBaseBranch().asDeferred().await()
+          fetchHeadBranch().asDeferred().await()
+          loadChanges().asDeferred().await()
         }
         catch (e: ProcessCanceledException) {
-          throw CancellationException("Cancelled", e)
+          cancel()
+          awaitCancellation()
         }
       }.let {
         trySend(it)
