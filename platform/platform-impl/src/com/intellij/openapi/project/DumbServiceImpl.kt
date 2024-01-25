@@ -398,7 +398,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       // isRunning will be false eventually, because we are on EDT, and no new task can be queued outside the EDT
       // (we only wait for currently running task to terminate).
       myGuiDumbTaskRunner.cancelAllTasks()
-      while (myGuiDumbTaskRunner.isRunning.value && !myProject.isDisposed) {
+      mySyncDumbTaskRunner.cancelAllTasks()
+      while ((myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value) && !myProject.isDisposed) {
         PingProgress.interactWithEdtProgress()
         LockSupport.parkNanos(50000000)
       }
@@ -576,10 +577,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @TestOnly
   suspend fun waitUntilFinished() {
     myGuiDumbTaskRunner.waitUntilFinished()
+    mySyncDumbTaskRunner.isRunning.first { !it }
   }
 
   @TestOnly
-  val isRunning = myGuiDumbTaskRunner.isRunning
+  val isRunning: Boolean = myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value
 
   companion object {
     @JvmField

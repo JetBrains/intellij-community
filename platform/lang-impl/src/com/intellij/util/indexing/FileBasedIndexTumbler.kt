@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.util.Disposer
@@ -36,8 +37,6 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {
-        val headless = app.isHeadlessEnvironment
-        if (!headless) {
           val wasUp = dumbModeSemaphore.isUp
           dumbModeSemaphore.down()
           if (wasUp) {
@@ -55,7 +54,6 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
               MyDumbModeTask(dumbModeSemaphore).queue(project)
             }
           }
-        }
 
         LOG.assertTrue(fileTypeTracker == null)
         fileTypeTracker = FileTypeTracker()
@@ -86,18 +84,15 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
     if (nestedLevelCount == 0) {
       try {
         fileBasedIndex.loadIndexes()
-        val headless = ApplicationManager.getApplication().isHeadlessEnvironment
-        if (headless) {
+        if (DumbServiceImpl.isSynchronousTaskExecution) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
         }
-        if (!headless) {
-          for (project in ProjectUtil.getOpenProjects()) {
-            UnindexedFilesScannerExecutor.getInstance(project).resumeQueue(onFinish = {})
-            project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
-            FileBasedIndexInfrastructureExtension.attachAllExtensionsData(project)
-          }
-          dumbModeSemaphore.up()
+        for (project in ProjectUtil.getOpenProjects()) {
+          UnindexedFilesScannerExecutor.getInstance(project).resumeQueue(onFinish = {})
+          project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
+          FileBasedIndexInfrastructureExtension.attachAllExtensionsData(project)
         }
+        dumbModeSemaphore.up()
 
         val runRescanning = CorruptionMarker.requireInvalidation() || (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
                             snapshot is FbiSnapshot.RebuildRequired ||
@@ -129,6 +124,9 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
     private class MyDumbModeTask(val semaphore: Semaphore) : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) {
+        if (DumbServiceImpl.isSynchronousTaskExecution) {
+          return // TODO: this will be a deadlock otherwise (IJPL-578)
+        }
         indicator.text = IndexingBundle.message("indexes.reloading")
         semaphore.waitFor()
       }

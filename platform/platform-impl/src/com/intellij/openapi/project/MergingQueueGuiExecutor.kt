@@ -145,6 +145,8 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
       startedInBackground = mySingleTaskExecutor.tryStartProcess { task: AutoclosableProgressive ->
         try {
+          // TODO: there seems to be a race between mySingleTaskExecutor.tryStartProcess and FileBasedIndexTumbler. Return now
+          if (mySuspended.get()) return@tryStartProcess
           backgroundTasksSubmitted.incrementAndGet()
           startInBackgroundWithVisibleOrInvisibleProgress { visibleOrInvisibleIndicator ->
             try {

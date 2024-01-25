@@ -98,7 +98,7 @@ class IndexingTestUtil(private val project: Project) {
   }
 
   private fun isRunning(): Boolean {
-    return UnindexedFilesScannerExecutor.getInstance(project).isRunning.value || DumbServiceImpl.getInstance(project).isRunning.value
+    return UnindexedFilesScannerExecutor.getInstance(project).isRunning.value || DumbServiceImpl.getInstance(project).isRunning
   }
 
   suspend fun suspendUntilIndexesAreReady() {
