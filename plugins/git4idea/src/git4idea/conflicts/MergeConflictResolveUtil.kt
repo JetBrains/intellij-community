@@ -199,14 +199,16 @@ object MergeConflictResolveUtil {
 
   class MyStagingAreaListener : StagingAreaListener {
     override fun stagingAreaChanged(repository: GitRepository) {
+      val project = repository.project
       runInEdt(ModalityState.nonModal()) {
-        updateMergeConflictEditorNotifications(repository.project)
+        updateMergeConflictEditorNotifications(project)
       }
     }
   }
 }
 
 fun updateMergeConflictEditorNotifications(project: Project) {
+  if (project.isDisposed) return
   val provider: MergeConflictResolveUtil.NotificationProvider =
     EditorNotificationProvider.EP_NAME.findExtension(MergeConflictResolveUtil.NotificationProvider::class.java, project) ?: return
   EditorNotifications.getInstance(project).updateNotifications(provider)
