@@ -110,6 +110,11 @@ class TerminalPromptController(
     listeners.forEach { it.commandHistoryStateChanged(showing = false) }
   }
 
+  @RequiresEdt
+  fun showCommandSearch() {
+    listeners.forEach { it.commandSearchRequested() }
+  }
+
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
     if (disposable != null) {
       editor.document.addDocumentListener(listener, disposable)
@@ -120,6 +125,7 @@ class TerminalPromptController(
   interface PromptStateListener {
     fun promptLabelChanged(newText: @NlsSafe String) {}
     fun commandHistoryStateChanged(showing: Boolean) {}
+    fun commandSearchRequested() {}
     fun promptVisibilityChanged(visible: Boolean) {}
   }
 

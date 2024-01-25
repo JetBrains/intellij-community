@@ -21,12 +21,15 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
 
 @Service(Service.Level.PROJECT)
 class TerminalInlineCompletion(private val scope: CoroutineScope) {
@@ -61,6 +64,12 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
     if (!isAtTheEnd) return null
 
     val lookup = LookupManager.getActiveLookup(editor) ?: return null
+    val isCommandHistory = (lookup as? UserDataHolder)?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
+    val isCommandSearch = (lookup as? UserDataHolder)?.getUserData(CommandSearchPresenter.IS_COMMAND_SEARCH_LOOKUP_KEY) == true
+    if (isCommandHistory || isCommandSearch) {
+      return null
+    }
+
     val item = lookup.currentItem ?: return null
     val itemPrefix = lookup.itemPattern(item)
     if (SystemInfo.isFileSystemCaseSensitive && !item.lookupString.startsWith(itemPrefix)) {

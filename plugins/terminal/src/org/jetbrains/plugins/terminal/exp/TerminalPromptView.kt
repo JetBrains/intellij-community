@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
 import java.awt.Color
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -41,6 +42,7 @@ class TerminalPromptView(
   private val editor: EditorImpl
   private val promptLabel: JLabel
   private val commandHistoryPresenter: CommandHistoryPresenter
+  private val commandSearchPresenter: CommandSearchPresenter
 
   init {
     val editorTextField = createPromptTextField(session)
@@ -52,6 +54,7 @@ class TerminalPromptView(
     promptLabel.text = controller.promptText
 
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, commandExecutor)
+    commandSearchPresenter = CommandSearchPresenter(project, editor)
 
     val innerBorder = JBUI.Borders.empty(TerminalUi.promptTopInset,
                                          TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
@@ -90,6 +93,13 @@ class TerminalPromptView(
     }
     else {
       commandHistoryPresenter.onCommandHistoryClosed()
+    }
+  }
+
+  override fun commandSearchRequested() {
+    val history = controller.commandHistory
+    if (history.isNotEmpty()) {
+      commandSearchPresenter.showCommandSearch(history)
     }
   }
 

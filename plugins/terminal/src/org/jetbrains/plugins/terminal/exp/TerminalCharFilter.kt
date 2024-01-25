@@ -8,13 +8,19 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
 
 class TerminalCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
-    return if (lookup is UserDataHolder && lookup.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true) {
-      // It is command history lookup
-      // Close lookup on any char typed
+    val isCommandHistory = (lookup as? UserDataHolder)?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
+    val isCommandSearch = (lookup as? UserDataHolder)?.getUserData(CommandSearchPresenter.IS_COMMAND_SEARCH_LOOKUP_KEY) == true
+    return if (isCommandHistory) {
+      // Close the lookup on any char typed for command history because the user wants to edit the command
       Result.HIDE_LOOKUP
+    }
+    else if (isCommandSearch) {
+      // Add any char to prefix in command search, because command can contain various characters
+      Result.ADD_TO_PREFIX
     }
     else if (lookup.editor.isPromptEditor) {
       // It is command completion lookup

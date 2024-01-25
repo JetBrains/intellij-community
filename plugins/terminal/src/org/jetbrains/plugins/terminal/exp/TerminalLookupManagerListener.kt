@@ -10,6 +10,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEdito
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.exp.documentation.TerminalDocumentationManager
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
 import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -48,6 +49,7 @@ class TerminalLookupManagerListener : LookupManagerListener {
       val chosenItem = event.item
       if (lookup == null
           || lookup.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
+          || lookup.getUserData(CommandSearchPresenter.IS_COMMAND_SEARCH_LOOKUP_KEY) == true
           || event.completionChar != '\n'
           || chosenItem == null) {
         return

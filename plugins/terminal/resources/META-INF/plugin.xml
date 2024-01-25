@@ -156,6 +156,11 @@
       <keyboard-shortcut first-keystroke="control W" keymap="Mac OS X" replace-all="true"/>
       <keyboard-shortcut first-keystroke="control W" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
+    <action id="Terminal.SearchInCommandHistory" class="org.jetbrains.plugins.terminal.exp.history.CommandSearchAction">
+      <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
 
     <group id="Terminal.OutputContextMenu">
       <reference ref="Terminal.CopyBlock"/>
