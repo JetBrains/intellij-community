@@ -1728,7 +1728,7 @@ public class MavenUtil {
   }
 
   @ApiStatus.Internal
-  public static boolean shouldKeepPreviousArtifacts(Collection<MavenProjectProblem> readingProblems) {
+  public static boolean shouldKeepPreviousResolutionResults(Collection<MavenProjectProblem> readingProblems) {
     return !shouldResetDependenciesAndFolders(readingProblems);
   }
 

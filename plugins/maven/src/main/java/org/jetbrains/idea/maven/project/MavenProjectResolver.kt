@@ -159,7 +159,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val projectsWithUnresolvedPlugins = ConcurrentLinkedQueue<MavenProjectWithHolder>()
 
     ParallelRunner.getInstance(myProject).runInParallel(results) {
-      collectProjectWithUnresolvedPlugin(it, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
+      collectProjectWithUnresolvedPlugins(it, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
     }
     MavenLog.LOG.debug("Project resolution finished: ${projectsWithUnresolvedPlugins.size}")
     return projectsWithUnresolvedPlugins
@@ -288,12 +288,12 @@ class MavenProjectResolver(private val myProject: Project) {
     return null
   }
 
-  private fun collectProjectWithUnresolvedPlugin(result: MavenProjectResolverResult,
-                                                 artifactIdToMavenProjects: Map<String, List<MavenProject>>,
-                                                 generalSettings: MavenGeneralSettings,
-                                                 embedder: MavenEmbedderWrapper,
-                                                 tree: MavenProjectsTree,
-                                                 projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
+  private fun collectProjectWithUnresolvedPlugins(result: MavenProjectResolverResult,
+                                                  artifactIdToMavenProjects: Map<String, List<MavenProject>>,
+                                                  generalSettings: MavenGeneralSettings,
+                                                  embedder: MavenEmbedderWrapper,
+                                                  tree: MavenProjectsTree,
+                                                  projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
     val mavenId = result.mavenModel.mavenId
     val artifactId = mavenId.artifactId
     val mavenProjects = artifactIdToMavenProjects[artifactId]
@@ -316,8 +316,8 @@ class MavenProjectResolver(private val myProject: Project) {
       return
     }
     val snapshot = mavenProjectCandidate.snapshot
-    val keepPreviousPlugins = MavenUtil.shouldKeepPreviousArtifacts(result.readingProblems) // TODO: refactor
-    val keepPreviousArtifacts = result.dependencyResolutionSkipped
+    val keepPreviousResolutionResults = MavenUtil.shouldKeepPreviousResolutionResults(result.readingProblems)
+    val keepPreviousArtifacts = keepPreviousResolutionResults || result.dependencyResolutionSkipped
 
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
@@ -331,7 +331,7 @@ class MavenProjectResolver(private val myProject: Project) {
       result.nativeModelMap,
       generalSettings,
       keepPreviousArtifacts,
-      keepPreviousPlugins)
+      keepPreviousResolutionResults)
 
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
