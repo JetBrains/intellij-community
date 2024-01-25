@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
@@ -13,16 +12,19 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.asSafely
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.createPendingReviewRequestsFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
@@ -46,7 +48,7 @@ interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewMod
 internal class GHPRReviewNewCommentEditorViewModelImpl(
   override val project: Project,
   parentCs: CoroutineScope,
-  private val reviewDataProvider: GHPRReviewDataProvider,
+  dataProvider: GHPRDataProvider,
   private val repository: GitRepository,
   override val currentUser: GHActor,
   override val avatarIconsProvider: GHAvatarIconsProvider,
@@ -55,6 +57,9 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
 ) : CodeReviewSubmittableTextViewModelBase(project, parentCs, ""),
     GHPRReviewNewCommentEditorViewModel {
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
+  private val reviewDataProvider = dataProvider.reviewData
+  private val changesState: StateFlow<ComputedResult<GitBranchComparisonResult>> =
+    dataProvider.changesData.changesRequestFlow().computationState().stateInNow(cs, ComputedResult.loading())
 
   private val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
     reviewDataProvider.createPendingReviewRequestsFlow().computationState().stateInNow(cs, ComputedResult.loading())
@@ -62,21 +67,25 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val reviewCommentPreferred = settings.reviewCommentsPreferredState
 
   override val submitActions: StateFlow<List<SubmitAction>> =
-    pendingReviewState.combineState(reviewCommentPreferred) { reviewResult, reviewPreferred ->
-      if (reviewResult.isSuccess) {
+    combine(pendingReviewState, reviewCommentPreferred, changesState) { reviewResult, reviewPreferred, changesResult ->
+      if (reviewResult.isSuccess && changesResult.isSuccess) {
         val review = reviewResult.getOrNull()
+        val changes = changesResult.getOrNull()
         if (review == null) {
           if (reviewPreferred) listOf(createReviewAction, createSingleCommentAction)
           else listOf(createSingleCommentAction, createReviewAction)
         }
+        else if (changes != null) {
+          listOf(createReviewCommentAction(review.id, changes.changes.contains(position.change)))
+        }
         else {
-          listOf(createReviewCommentAction(review.id))
+          emptyList()
         }
       }
       else {
         emptyList()
       }
-    }
+    }.stateInNow(cs, emptyList())
 
   override fun cancel() = onCancel()
 
@@ -100,12 +109,12 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
     }
   }
 
-  private fun createReviewCommentAction(reviewId: String) = SubmitAction.CreateReviewComment {
+  private fun createReviewCommentAction(reviewId: String, isCumulative: Boolean) = SubmitAction.CreateReviewComment {
     submit {
       val filePath = relativePath(repository.root, position.change.filePath)
       val location = position.location
       val line = location.lineIdx.inc()
-      if (position.isCumulative) {
+      if (isCumulative) {
         val startLine = location.asSafely<GHPRReviewCommentLocation.MultiLine>()?.startLineIdx?.inc() ?: line
         reviewDataProvider.createThread(EmptyProgressIndicator(), reviewId, it, line, location.side, startLine, filePath)
       }

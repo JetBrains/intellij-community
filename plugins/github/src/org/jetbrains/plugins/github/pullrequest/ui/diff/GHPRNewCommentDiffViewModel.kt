@@ -28,7 +28,7 @@ internal class GHPRNewCommentDiffViewModelImpl(project: Project,
   : GHPRNewCommentDiffViewModel {
   private val cs = parentCs.childScope(classAsCoroutineName())
 
-  override val newCommentVm = GHPRReviewNewCommentEditorViewModelImpl(project, cs, dataProvider.reviewData,
+  override val newCommentVm = GHPRReviewNewCommentEditorViewModelImpl(project, cs, dataProvider,
                                                                       dataContext.repositoryDataService.remoteCoordinates.repository,
                                                                       dataContext.securityService.currentUser,
                                                                       dataContext.avatarIconsProvider,

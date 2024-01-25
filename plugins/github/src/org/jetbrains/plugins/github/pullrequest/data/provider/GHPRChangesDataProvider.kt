@@ -60,6 +60,29 @@ interface GHPRChangesDataProvider {
   fun fetchHeadBranch(): CompletableFuture<Unit>
 }
 
+fun GHPRChangesDataProvider.changesRequestFlow(): Flow<Deferred<GitBranchComparisonResult>> =
+  channelFlow {
+    val listenerDisposable = Disposer.newDisposable()
+    val listener: () -> Unit = {
+      async {
+        try {
+          loadChanges().asDeferred().await()
+        }
+        catch (e: ProcessCanceledException) {
+          cancel()
+          awaitCancellation()
+        }
+      }.let {
+        trySend(it)
+      }
+    }
+    addChangesListener(listenerDisposable, listener)
+    listener()
+    awaitClose {
+      Disposer.dispose(listenerDisposable)
+    }
+  }.flowOn(Dispatchers.Main)
+
 fun GHPRChangesDataProvider.fetchedChangesFlow(): Flow<Deferred<GitBranchComparisonResult>> =
   channelFlow {
     val listenerDisposable = Disposer.newDisposable()

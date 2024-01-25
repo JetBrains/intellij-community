@@ -17,7 +17,6 @@ import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -108,16 +107,13 @@ internal class GHPRDiffChangeViewModelImpl(
     _newComments.update {
       val oldVm = it[location]
       val newMap = it - location
-      cs.launch {
-        oldVm?.destroy()
-      }
+      oldVm?.destroy()
       newMap
     }
   }
 
   private fun createNewCommentVm(location: GHPRReviewCommentLocation): GHPRNewCommentDiffViewModelImpl =
-    GHPRNewCommentDiffViewModelImpl(project, cs, dataContext, dataProvider,
-                                    GHPRReviewCommentPosition(change, diffData.isCumulative, location)) {
+    GHPRNewCommentDiffViewModelImpl(project, cs, dataContext, dataProvider, GHPRReviewCommentPosition(change, location)) {
       cancelNewComment(location)
     }
 

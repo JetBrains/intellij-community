@@ -3,4 +3,4 @@ package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.util.RefComparisonChange
 
-data class GHPRReviewCommentPosition(val change: RefComparisonChange, val isCumulative: Boolean, val location: GHPRReviewCommentLocation)
+data class GHPRReviewCommentPosition(val change: RefComparisonChange, val location: GHPRReviewCommentLocation)
