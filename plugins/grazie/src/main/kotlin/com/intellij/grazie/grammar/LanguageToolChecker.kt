@@ -17,8 +17,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.html.*
 import org.jetbrains.annotations.ApiStatus
 import org.languagetool.JLanguageTool
@@ -51,26 +49,25 @@ open class LanguageToolChecker : TextChecker() {
 
   private fun doCheck(extracted: TextContent): List<Problem> {
     val text = extracted.toString()
-    if (text.isBlank()) return emptyList()
+    if (text.isBlank()) {
+      return emptyList()
+    }
 
     val language = LangDetector.getLang(text) ?: return emptyList()
-
     try {
-      return ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
-        runBlockingCancellable {
-          withContext(Dispatchers.IO) {
-            // LT will use indicator for cancelled checks
-            coroutineToIndicator {
-              val indicator = ProgressManager.getGlobalProgressIndicator()
-              checkNotNull(indicator) { "Indicator was not set for current job" }
-              return@coroutineToIndicator ApplicationUtil.runWithCheckCanceled(
-                {
-                  collectLanguageToolProblems(extracted = extracted, text = text, lang = language)
-                },
-                indicator
-              )
-            }
-          }
+      return runBlockingCancellable {
+        // LT will use indicator for cancelled checks
+        coroutineToIndicator {
+          val indicator = ProgressManager.getGlobalProgressIndicator()
+          checkNotNull(indicator) { "Indicator was not set for current job" }
+          return@coroutineToIndicator ApplicationUtil.runWithCheckCanceled(
+            {
+              ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+                collectLanguageToolProblems(extracted = extracted, text = text, lang = language)
+              }
+            },
+            indicator
+          )
         }
       }
     }
