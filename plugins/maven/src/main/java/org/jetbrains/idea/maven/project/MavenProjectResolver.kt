@@ -43,13 +43,13 @@ class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
   constructor(readerResult: MavenProjectReaderResult) :
     this(
       readerResult.mavenModel,
-      readerResult.dependencyHash,
+      null,
       readerResult.nativeModelMap,
       readerResult.activatedProfiles,
-      readerResult.nativeMavenProject,
+      null,
       readerResult.readingProblems,
-      readerResult.unresolvedArtifactIds,
-      readerResult.unresolvedProblems,
+      mutableSetOf(),
+      emptyList(),
     )
 
 }
@@ -226,22 +226,23 @@ class MavenProjectResolver(private val myProject: Project) {
         fileToDependencyHash, explicitProfiles, progressReporter, eventHandler, workspaceMap, updateSnapshots, userProperties)
       val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
       filesMap.putAll(files.associateBy { it.path })
-      val readerResults: MutableCollection<MavenProjectResolverResult> = ArrayList()
+      val resolverResults: MutableCollection<MavenProjectResolverResult> = ArrayList()
       for (result in executionResults) {
         val projectData = result.projectData
         if (projectData == null) {
           val file = detectPomFile(filesMap, result)
           MavenLog.LOG.debug("Project resolution: projectData is null, file $file")
           if (file != null) {
-            val temp = reader.readProjectAsync(generalSettings, file, explicitProfiles, locator)
+            val readerResult = reader.readProjectAsync(generalSettings, file, explicitProfiles, locator)
+            val temp = MavenProjectResolverResult(readerResult)
             temp.readingProblems.addAll(result.problems)
             temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts)
-            readerResults.add(MavenProjectResolverResult(temp))
+            resolverResults.add(temp)
             MavenLog.LOG.debug("Project resolution: projectData is null, read project")
           }
         }
         else {
-          readerResults.add(MavenProjectResolverResult(
+          resolverResults.add(MavenProjectResolverResult(
             projectData.mavenModel,
             projectData.dependencyHash,
             projectData.mavenModelMap,
@@ -252,7 +253,7 @@ class MavenProjectResolver(private val myProject: Project) {
             result.unresolvedProblems))
         }
       }
-      readerResults
+      resolverResults
     }
     catch (e: Throwable) {
       MavenLog.LOG.info(e)

@@ -113,10 +113,10 @@ public class MavenProject {
                                                     boolean keepPreviousProfiles) {
     return updateFromReaderResult(
       readerResult.mavenModel,
-      readerResult.dependencyHash,
+      null,
       readerResult.readingProblems,
       readerResult.activatedProfiles,
-      readerResult.unresolvedArtifactIds,
+      Set.of(),
       readerResult.nativeModelMap,
       settings,
       updateLastReadStamp,

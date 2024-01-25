@@ -65,9 +65,7 @@ class MavenProjectReader(private val myProject: Project) {
     return MavenProjectReaderResult(model,
                                     modelMap,
                                     readResult.second,
-                                    null,
-                                    readResult.first.problems,
-                                    HashSet())
+                                    readResult.first.problems)
   }
 
   private suspend fun doReadProjectModel(generalSettings: MavenGeneralSettings,
@@ -579,13 +577,9 @@ class MavenProjectReader(private val myProject: Project) {
     return resolverResult.map {
       MavenProjectReaderResult(
         it.mavenModel,
-        it.dependencyHash,
         it.nativeModelMap,
         it.activatedProfiles,
-        it.nativeMavenProject,
         it.readingProblems,
-        it.unresolvedArtifactIds,
-        it.unresolvedProblems,
       )
     }
   }

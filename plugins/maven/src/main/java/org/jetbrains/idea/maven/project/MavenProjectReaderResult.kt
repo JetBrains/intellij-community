@@ -16,30 +16,10 @@
 package org.jetbrains.idea.maven.project
 
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenModel
 import org.jetbrains.idea.maven.model.MavenProjectProblem
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
+
 class MavenProjectReaderResult(@JvmField val mavenModel: MavenModel,
-                               @JvmField val dependencyHash: String?,
                                @JvmField val nativeModelMap: Map<String, String?>,
                                @JvmField val activatedProfiles: MavenExplicitProfiles,
-                               val nativeMavenProject: NativeMavenProjectHolder?,
-                               @JvmField val readingProblems: MutableCollection<MavenProjectProblem>,
-                               @JvmField val unresolvedArtifactIds: MutableSet<MavenId>,
-                               val unresolvedProblems: Collection<MavenProjectProblem>) {
-  constructor(mavenModel: MavenModel,
-              nativeModelMap: Map<String, String?>,
-              activatedProfiles: MavenExplicitProfiles,
-              nativeMavenProject: NativeMavenProjectHolder?,
-              readingProblems: MutableCollection<MavenProjectProblem>,
-              unresolvedArtifactIds: MutableSet<MavenId>) :
-    this(mavenModel,
-         null,
-         nativeModelMap,
-         activatedProfiles,
-         nativeMavenProject,
-         readingProblems,
-         unresolvedArtifactIds,
-         emptyList<MavenProjectProblem>())
-}
+                               @JvmField val readingProblems: MutableCollection<MavenProjectProblem>)
