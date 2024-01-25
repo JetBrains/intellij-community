@@ -8,7 +8,12 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.Nls
 
-open class PythonPackage(val name: String, val version: String) {
+open class PythonPackage(var name: String, val version: String) {
+
+  init {
+    name = name.replace('_', '-')
+  }
+
   override fun toString(): String {
     return "PythonPackage(name='$name', version='$version')"
   }
@@ -59,7 +64,7 @@ interface PythonPackageSpecification {
   val repository: PyPackageRepository?
   val relation: PyRequirementRelation?
 
-  fun buildInstallationString(): List<String>  = buildList {
+  fun buildInstallationString(): List<String> = buildList {
     val versionString = if (version != null) "${relation?.presentableText ?: "=="}$version" else ""
     add("$name$versionString")
     if (repository == PyEmptyPackagePackageRepository) {
@@ -83,6 +88,7 @@ interface PythonLocationBasedPackageSpecification : PythonPackageSpecification {
     get() = null
   override val relation: PyRequirementRelation?
     get() = null
+
   override fun buildInstallationString(): List<String> = if (editable) listOf("-e", "$prefix$location") else listOf("$prefix$location")
 }
 

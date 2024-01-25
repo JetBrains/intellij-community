@@ -15,7 +15,7 @@ public final class PyPackage extends InstalledPackage {
   private final @NotNull List<PyRequirement> myRequirements;
 
   public PyPackage(@NotNull String name, @NotNull String version, @Nullable String location, @NotNull List<PyRequirement> requirements) {
-    super(name, version);
+    super(name.replace('_', '-'), version);
     myLocation = location;
     myRequirements = requirements;
   }

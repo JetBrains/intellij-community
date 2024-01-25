@@ -80,13 +80,14 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   fun handleSearch(query: String) {
     currentQuery = query
+    val normalizedQuery = query.replace('_', '-')
     if (query.isNotEmpty()) {
       searchJob?.cancel()
       searchJob = serviceScope.launch {
-        val installed = installedPackages.filter { StringUtil.containsIgnoreCase(it.name, query) }
+        val installed = installedPackages.filter { StringUtil.containsIgnoreCase(it.name, normalizedQuery) }
 
         val packagesFromRepos = manager.repositoryManager.packagesByRepository().map {
-          filterPackagesForRepo(it.second, query, it.first)
+          filterPackagesForRepo(it.second, normalizedQuery, it.first)
         }.toList()
 
         if (isActive) {
