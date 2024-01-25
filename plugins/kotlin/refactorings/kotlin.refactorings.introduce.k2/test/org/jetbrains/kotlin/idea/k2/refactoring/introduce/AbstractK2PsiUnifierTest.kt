@@ -16,6 +16,12 @@ abstract class AbstractK2PsiUnifierTest : AbstractKotlinPsiUnifierTest() {
     override fun KtElement.getMatches(file: KtFile): List<TextRange> = allowAnalysisOnEdt {
         analyze(file) {
             val matches = K2SemanticMatcher.findMatches(patternElement = this@getMatches, scopeElement = file)
+            for (match in matches) {
+                assertTrue(
+                    "Unexpected asymmetry in matching of ${match.text} and ${this@getMatches.text}",
+                    with(K2SemanticMatcher) { this@getMatches.isSemanticMatch(match) },
+                )
+            }
 
             matches.map { it.textRange }
         }
