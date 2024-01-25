@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -78,8 +79,8 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     return file!!
   }
 
-  protected fun createFile(path: String, content: ByteArray): VirtualFile {
-    val io = Path.of(testDataPath + path)
+  protected fun createTempFile(path: String, content: ByteArray): VirtualFile {
+    val io = Path.of(FileUtil.getTempDirectory(), path)
     io.write(content)
     val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(io)
     assertNotNull("Can't find $io", file)

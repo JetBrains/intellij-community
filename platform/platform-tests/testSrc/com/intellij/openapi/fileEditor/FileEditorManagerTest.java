@@ -250,7 +250,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(), myFixture.getTestRootDisposable());
     VirtualFile createdFile = DumbModeTestUtils.computeInDumbModeSynchronously(getProject(), () -> {
-      VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+      VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
       FileEditor[] editors = manager.openFile(file, false);
       assertEquals(ContainerUtil.map(editors, ed-> ed + " of " + ed.getClass()).toString(), 1, editors.length);
       return file;
@@ -275,7 +275,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testHideDefaultEditor() {
-    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());
@@ -307,7 +307,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testHideOtherEditors() {
-    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());
