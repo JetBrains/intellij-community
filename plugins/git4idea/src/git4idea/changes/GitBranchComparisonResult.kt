@@ -30,6 +30,9 @@ interface GitBranchComparisonResult {
 
   val changes: List<RefComparisonChange>
 
+  /**
+   * Ordered list of commits where the last commit is the commit with [headSha]
+   */
   val commits: List<GitCommitShaWithPatches>
   val changesByCommits: Map<String, List<RefComparisonChange>>
 
