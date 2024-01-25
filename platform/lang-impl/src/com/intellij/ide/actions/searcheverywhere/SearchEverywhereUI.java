@@ -457,10 +457,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       myMlService.onDialogClose();
     }
 
-    if (myUsagePreviewPanel != null) {
-      myUsagePreviewPanel.releaseEditor();
-    }
-
     for (Disposable disposable : myUsagePreviewDisposableList) {
       Disposer.dispose(disposable);
     }
@@ -679,6 +675,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         });
       }
     };
+    Disposer.register(this, myUsagePreviewPanel);
 
     myUsagePreviewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
 
