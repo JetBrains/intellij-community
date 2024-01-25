@@ -5,20 +5,17 @@ import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
-import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
-import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 
 class TerminalCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
-    val isCommandHistory = (lookup as? UserDataHolder)?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
-    val isCommandSearch = (lookup as? UserDataHolder)?.getUserData(CommandSearchPresenter.IS_COMMAND_SEARCH_LOOKUP_KEY) == true
-    return if (isCommandHistory) {
+    return if (lookup.isTerminalCommandHistory) {
       // Close the lookup on any char typed for command history because the user wants to edit the command
       Result.HIDE_LOOKUP
     }
-    else if (isCommandSearch) {
+    else if (lookup.isTerminalCommandSearch) {
       // Add any char to prefix in command search, because command can contain various characters
       Result.ADD_TO_PREFIX
     }

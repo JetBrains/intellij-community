@@ -7,9 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.blockTerminalController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
@@ -18,6 +16,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptControl
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 
 class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   // order matters, because only the first enabled handler will be executed
@@ -57,9 +56,7 @@ class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBeha
     }
 
     override fun isEnabled(e: AnActionEvent): Boolean {
-      val lookup = LookupManager.getActiveLookup(e.editor) as? UserDataHolder
-      return e.editor?.isPromptEditor == true
-             && lookup?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
+      return e.editor?.isPromptEditor == true && LookupManager.getActiveLookup(e.editor)?.isTerminalCommandHistory == true
     }
   }
 

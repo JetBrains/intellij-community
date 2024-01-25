@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 
 
 internal class TerminalCaretUpHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
@@ -37,8 +38,7 @@ internal class TerminalCaretDownHandler(private val originalHandler: EditorActio
     val promptController = dataContext.promptController
     if (promptController != null) {
       val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
-      if (lookup != null && lookup.isAvailableToUser
-          && lookup.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true) {
+      if (lookup != null && lookup.isAvailableToUser && lookup.isTerminalCommandHistory) {
         if (lookup.selectedIndex == lookup.list.model.size - 1) {
           promptController.onCommandHistoryClosed()
           lookup.hideLookup(true)

@@ -9,8 +9,8 @@ import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.exp.documentation.TerminalDocumentationManager
-import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
-import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -45,11 +45,11 @@ class TerminalLookupManagerListener : LookupManagerListener {
    */
   private class TerminalCompletionLookupListener : LookupListener {
     override fun itemSelected(event: LookupEvent) {
-      val lookup = event.lookup as? LookupImpl
+      val lookup = event.lookup
       val chosenItem = event.item
       if (lookup == null
-          || lookup.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
-          || lookup.getUserData(CommandSearchPresenter.IS_COMMAND_SEARCH_LOOKUP_KEY) == true
+          || lookup.isTerminalCommandHistory
+          || lookup.isTerminalCommandSearch
           || event.completionChar != '\n'
           || chosenItem == null) {
         return

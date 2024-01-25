@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
 import kotlin.math.max
 
@@ -102,6 +103,9 @@ internal class CommandHistoryPresenter(private val project: Project,
   }
 
   companion object {
-    val IS_COMMAND_HISTORY_LOOKUP_KEY: Key<Boolean> = Key.create("isCommandHistoryLookup")
+    private val IS_COMMAND_HISTORY_LOOKUP_KEY: Key<Boolean> = Key.create("isCommandHistoryLookup")
+
+    val Lookup.isTerminalCommandHistory: Boolean
+      get() = (this as? UserDataHolder)?.getUserData(IS_COMMAND_HISTORY_LOOKUP_KEY) == true
   }
 }
