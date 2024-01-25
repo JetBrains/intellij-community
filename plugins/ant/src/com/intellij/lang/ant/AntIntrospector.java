@@ -131,7 +131,7 @@ public final class AntIntrospector {
   }
 
   @Nullable
-  private static Object getHelper(final Class aClass) {
+  private static Object getHelper(Class aClass) {
     Object result = null;
 
     synchronized (ourCache) {
@@ -143,7 +143,7 @@ public final class AntIntrospector {
       Class<?> helperClass = null;
       try {
         final ClassLoader loader = aClass.getClassLoader();
-        helperClass = loader != null? loader.loadClass(IntrospectionHelper.class.getName()) : IntrospectionHelper.class;
+        helperClass = loader != null? loader.loadClass("org.apache.tools.ant.IntrospectionHelper") : IntrospectionHelper.class;
         final Method getHelperMethod = helperClass.getMethod("getHelper", Class.class);
         result = getHelperMethod.invoke(null, aClass);
       }

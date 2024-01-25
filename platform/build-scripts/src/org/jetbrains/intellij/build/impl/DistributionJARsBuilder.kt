@@ -74,8 +74,6 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
 
     val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.bundledPluginModules,
                                                          productLayout = context.productProperties.productLayout)
-    val antDir = if (context.productProperties.isAntRequired) context.paths.distAllDir.resolve("lib/ant") else null
-    val antTargetFile = antDir?.resolve("lib/ant.jar")
     val moduleOutputPatcher = ModuleOutputPatcher()
     val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext) {
       spanBuilder("build platform lib").useWithScope {
@@ -90,7 +88,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
           persistentListOf(PLATFORM_LOADER_JAR)
         }
         else {
-          generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
+          generateClasspath(homeDir = distAllDir, libDir = libDir)
         }
         result
       }
@@ -108,7 +106,6 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
         val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
         buildNonBundledPlugins(state.pluginsToPublish, compressPluginArchive, buildPlatformJob, state, context)
       },
-      if (antDir == null) null else async(Dispatchers.IO) { copyAnt(antDir, antTargetFile!!, context) }
     )
   }.flatMap { it.getCompleted() }
 
@@ -723,7 +720,7 @@ private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
+suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
   return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope {
     val sources = ArrayList<ZipSource>()
     val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED, reason = "ant")

@@ -50,14 +50,11 @@ fun reorderJar(relativePath: String, file: Path) {
     }
 }
 
-fun generateClasspath(homeDir: Path, libDir: Path, antTargetFile: Path?): List<String> {
+fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
   spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
     .useWithoutActiveScope { span ->
       val files = computeAppClassPath(homeDir = homeDir, libDir = libDir)
-      if (antTargetFile != null) {
-        files.add(antTargetFile)
-      }
       val result = files.map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
       return result
