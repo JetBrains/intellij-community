@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.computationState
-import com.intellij.collaboration.async.computationStateIn
 import com.intellij.collaboration.async.mapNullableScoped
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewModelComputer
@@ -78,7 +78,7 @@ internal class GHPRDiffViewModelImpl(
   private val changeVmsMap = mutableMapOf<RefComparisonChange, StateFlow<GHPRDiffChangeViewModelImpl?>>()
 
   private val threads: StateFlow<ComputedResult<List<GHPullRequestReviewThread>>> =
-    reviewDataProvider.createThreadsRequestsFlow().computationStateIn(cs)
+    reviewDataProvider.createThreadsRequestsFlow().computationState().stateInNow(cs, ComputedResult.loading())
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()

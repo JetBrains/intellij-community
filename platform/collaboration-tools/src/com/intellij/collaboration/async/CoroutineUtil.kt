@@ -487,27 +487,23 @@ fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
  * Transforms the flow of some computation requests to a flow of computation states of this request
  * Will not emit "loading" state if the computation was completed before handling its state
  */
-fun <T> Flow<CompletableFuture<T>>.computationStateIn(cs: CoroutineScope): StateFlow<ComputedResult<T>> {
-  val loadingRequestFlow = this
-  val state = MutableStateFlow<ComputedResult<T>>(ComputedResult.loading())
-  cs.launchNow {
-    loadingRequestFlow.collectLatest { request ->
-      if (!request.isDone) {
-        state.value = ComputedResult.loading()
-      }
-      try {
-        val value = request.await()
-        state.value = ComputedResult.success(value)
-      }
-      catch (e: Exception) {
-        if (!CompletableFutureUtil.isCancellation(e)) {
-          state.value = ComputedResult.failure(e)
-        }
+@JvmName("futureComputationState")
+@OptIn(ExperimentalCoroutinesApi::class)
+fun <T> Flow<CompletableFuture<T>>.computationState(): Flow<ComputedResult<T>> =
+  transformLatest { request ->
+    if (!request.isDone) {
+      emit(ComputedResult.loading())
+    }
+    try {
+      val value = request.await()
+      emit(ComputedResult.success(value))
+    }
+    catch (e: Exception) {
+      if (!CompletableFutureUtil.isCancellation(e)) {
+        emit(ComputedResult.failure(e))
       }
     }
   }
-  return state
-}
 
 /**
  * Transforms the flow of some computation requests to a flow of computation states of this request

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.computationStateIn
+import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.launchNowIn
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.util.SingleCoroutineLauncher
@@ -67,7 +67,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
 
   init {
     body = MutableStateFlow("")
-    reviewData.createThreadsRequestsFlow().computationStateIn(cs).mapNotNull { it.getOrNull() }.onEach { threads ->
+    reviewData.createThreadsRequestsFlow().computationState().mapNotNull { it.getOrNull() }.onEach { threads ->
       val thread = threads.find { it.id == threadId }
       threadData.value = thread?.let {
         val lineCount = (if (it.line != null && it.startLine != null) {

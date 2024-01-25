@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.computationStateIn
+import com.intellij.collaboration.async.computationState
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.util.ComputedResult
@@ -56,7 +57,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
 
   private val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
-    reviewDataProvider.createPendingReviewRequestsFlow().computationStateIn(cs)
+    reviewDataProvider.createPendingReviewRequestsFlow().computationState().stateInNow(cs, ComputedResult.loading())
 
   private val reviewCommentPreferred = settings.reviewCommentsPreferredState
 

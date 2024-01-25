@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 
-import com.intellij.collaboration.async.computationStateIn
+import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
@@ -106,7 +106,7 @@ class UpdateableGHPRTimelineReviewViewModel internal constructor(
 
   private fun GHPRReviewDataProvider.createThreadsVmsFlow() =
     createThreadsRequestsFlow()
-      .computationStateIn(cs)
+      .computationState()
       .transformConsecutiveSuccesses {
         map { threads -> threads.filter { it.reviewId == id } }.mapDataToModel({ id }, { createThread(it) }, { update(it) })
       }

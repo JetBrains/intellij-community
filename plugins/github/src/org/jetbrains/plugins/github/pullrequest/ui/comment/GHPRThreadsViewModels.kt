@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.async.classAsCoroutineName
-import com.intellij.collaboration.async.computationStateIn
+import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.util.getOrNull
@@ -28,7 +28,7 @@ internal class GHPRThreadsViewModels(
 
   val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
     dataProvider.reviewData.createThreadsRequestsFlow()
-      .computationStateIn(cs)
+      .computationState()
       .transformConsecutiveSuccesses(false) {
         mapDataToModel(GHPullRequestReviewThread::id,
                        { createThread(it) },

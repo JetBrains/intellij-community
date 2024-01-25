@@ -58,7 +58,7 @@ internal class GHPRDiffChangeViewModelImpl(
 
   private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewThreadDiffViewModel.MappingData>> =
     dataProvider.reviewData.createThreadsRequestsFlow()
-      .computationStateIn(cs)
+      .computationState()
       .transformConsecutiveSuccesses(false) {
         combine(this, discussionsViewOption) { threads, viewOption ->
           threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
