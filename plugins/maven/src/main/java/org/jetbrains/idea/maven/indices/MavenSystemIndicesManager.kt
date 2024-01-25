@@ -309,7 +309,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     }
   }
 
-  fun scheduleUpdateIndexContent(toUpdate: List<MavenUpdatableIndex>, explicit: Boolean) {
+  internal fun scheduleUpdateIndexContent(toUpdate: List<MavenUpdatableIndex>, explicit: Boolean) {
     val luceneUpdate = ArrayList<MavenLuceneClassIndexServer>()
     val inMemoryUpdate = ArrayList<MavenGAVIndex>()
     for (idx: MavenUpdatableIndex in toUpdate) {
@@ -386,7 +386,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
         val mavenIndicator = MavenProgressIndicator(null, indicator, null)
         runBlockingCancellable {
           val mavenIndex = getClassIndexForRepository(repositoryInfo)
-          (mavenIndex as? MavenUpdatableIndex)?.updateOrRepair(true, mavenIndicator, true)
+          (mavenIndex as? MavenUpdatableIndex)?.update(mavenIndicator, true)
         }
       }
     }
