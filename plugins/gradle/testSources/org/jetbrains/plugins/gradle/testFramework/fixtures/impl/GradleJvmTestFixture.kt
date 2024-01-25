@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
 
 
 class GradleJvmTestFixture(private val gradleVersion: GradleVersion) : SdkTestFixture {

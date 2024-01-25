@@ -1,16 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.tooling
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
@@ -55,7 +55,8 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
 
   private fun findSdkInTable(): Sdk? {
     val table = ProjectJdkTable.getInstance()
-    return runReadAction { table.allJdks }.asSequence()
+    return ReadAction.compute(ThrowableComputable { table.allJdks })
+      .asSequence()
       .filter { it.versionString != null && isSdkSupported(it.versionString!!) }
       .sortedBy { it.versionString }
       .firstOrNull()
@@ -73,14 +74,14 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
 
   private fun createAndAddSdk(sdkHome: String, parentDisposable: Disposable): Sdk? {
     val table = ProjectJdkTable.getInstance()
-    val sdk = runInEdtAndGet {
+    val sdk = WriteAction.computeAndWait(ThrowableComputable {
       SdkConfigurationUtil.createAndAddSDK(sdkHome, sdkType)
-    }
+    })
     if (sdk != null) {
       Disposer.register(parentDisposable, Disposable {
-        runWriteActionAndWait {
+        WriteAction.computeAndWait(ThrowableComputable {
           table.removeJdk(sdk)
-        }
+        })
       })
     }
     return sdk
