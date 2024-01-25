@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -207,11 +207,6 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
     action.run();
-  }
-
-  @ApiStatus.Internal
-  default boolean isExitInProgress() {
-    return false;
   }
 
   default boolean isLightEditMode() {

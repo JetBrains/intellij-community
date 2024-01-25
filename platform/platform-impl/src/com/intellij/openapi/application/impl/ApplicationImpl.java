@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -300,7 +301,17 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     //noinspection deprecation
     myDispatcher.getMulticaster().applicationExiting();
 
+    IComponentStore componentStore = getServiceIfCreated(IComponentStore.class);
     super.dispose();
+    if (componentStore != null) {
+      try {
+        componentStore.release();
+      }
+      catch (Exception e) {
+        getLogger().error(e);
+      }
+    }
+
     // Remove IW lock from EDT as EDT might be re-created, which might lead to deadlock if anybody uses this disposed app
     if (!StartupUtil.isImplicitReadOnEDTDisabled() || isUnitTestMode()) {
       invokeLater(() -> releaseWriteIntentLock(), ModalityState.nonModal());
@@ -558,7 +569,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       }
 
       stopServicePreloading();
-
 
       if (BitUtil.isSet(flags, SAVE)) {
         TraceUtil.runWithSpanThrows(tracer, "saveSettingsOnExit",

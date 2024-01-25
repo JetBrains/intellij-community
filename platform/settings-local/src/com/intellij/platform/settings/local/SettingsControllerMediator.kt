@@ -58,4 +58,11 @@ internal class SettingsControllerMediator : SettingsController {
       else -> null
     }
   }
+
+  @IntellijInternalApi
+  override fun release() {
+    for (controller in controllers) {
+      controller.close()
+    }
+  }
 }

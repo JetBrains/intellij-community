@@ -1,17 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.platform.settings.local
 
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.settings.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -33,24 +30,20 @@ private class LocalSettingsController : DelegatedSettingsController {
     service.setItem(key, value)
     return false
   }
+
+  override fun close() {
+    service.storeManager.close()
+  }
 }
 
 @Service(Service.Level.APP)
-private class LocalSettingsControllerService(coroutineScope: CoroutineScope) : SettingsSavingComponent {
+private class LocalSettingsControllerService : SettingsSavingComponent {
   @JvmField val storeManager: MvStoreManager = MvStoreManager()
 
   // Telemetry is not ready at this point yet
   private val cacheMap by lazy { InternalStateStorageService(storeManager.openMap("cache_v1"), telemetryScopeName = "cacheStateStorage") }
   private val internalMap by lazy {
     InternalStateStorageService(storeManager.openMap("internal_v1"), telemetryScopeName = "internalStateStorage")
-  }
-
-  init {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      coroutineScope.coroutineContext.job.invokeOnCompletion {
-        storeManager.close()
-      }
-    }
   }
 
   override suspend fun save() {

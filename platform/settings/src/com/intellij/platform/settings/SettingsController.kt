@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings
 
 import com.intellij.openapi.util.IntellijInternalApi
@@ -23,6 +23,10 @@ interface SettingsController {
   @Internal
   @IntellijInternalApi
   fun createStateStorage(collapsedPath: String, file: Path): Any?
+
+  @Internal
+  @IntellijInternalApi
+  fun release()
 }
 
 @JvmInline
@@ -65,6 +69,9 @@ interface DelegatedSettingsController {
    */
   @Throws(ReadOnlySettingException::class)
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean
+
+  fun close() {
+  }
 }
 
 class ReadOnlySettingException(val key: SettingDescriptor<*>) : IllegalStateException()

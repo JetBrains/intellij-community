@@ -608,6 +608,11 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
+  @ApiStatus.Internal
+  default boolean isExitInProgress() {
+    return false;
+  }
+
   //<editor-fold desc="Deprecated stuff">
 
   /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */

@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.platform.settings.local
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -41,7 +42,12 @@ internal class MvStoreManager {
   fun openMap(name: String): MvMapManager = MvMapManager(openMap(store, name))
 
   suspend fun save() {
-    if ((nowAsDuration() - lastSaved) < 5.minutes) {
+    // Save upon exit.
+    // This function will be executed under progress.
+    // If saving is skipped here, 'close' would be invoked on `dispose`, which will trigger `save`.
+    // This in turn would lead to saving in EDT — that must be avoided.
+    val exitInProgress = ApplicationManager.getApplication().isExitInProgress
+    if (!exitInProgress && (nowAsDuration() - lastSaved) < 5.minutes) {
       return
     }
 
@@ -51,7 +57,7 @@ internal class MvStoreManager {
 
       ensureActive()
 
-      if (isCompacted.compareAndSet(false, true)) {
+      if (!exitInProgress && isCompacted.compareAndSet(false, true)) {
         compactStore()
       }
     }
