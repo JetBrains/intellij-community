@@ -110,7 +110,8 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
       try {
-        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(coroutineScope = app.getCoroutineScope(), isUnitTestMode = app.isUnitTestMode))
+        TelemetryManager.setTelemetryManager(
+          TelemetryManagerImpl(coroutineScope = app.getCoroutineScope(), isUnitTestMode = app.isUnitTestMode))
       }
       catch (e: CancellationException) {
         throw e
@@ -174,6 +175,13 @@ internal suspend fun loadApp(app: ApplicationImpl,
     appRegisteredJob.join()
     initConfigurationStoreJob.join()
 
+    __coroutineDebugJob = launch(CoroutineName("coroutine debug probes init")) {
+      enableCoroutineDump().onFailure { e ->
+        LOG.error("Cannot enable coroutine debug dump", e)
+      }
+      enableJstack()
+    }
+
     val appInitializedListenerJob = launch {
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
@@ -182,16 +190,9 @@ internal suspend fun loadApp(app: ApplicationImpl,
       }
     }
 
-    val coroutineDebugJob = launch(CoroutineName("coroutine debug probes init")) {
-      enableCoroutineDump().onFailure { e ->
-        LOG.error("Cannot enable coroutine debug dump", e)
-      }
-      enableJstack()
-    }
-
     asyncScope.launch {
       // do not use launch here - don't overload CPU, let some room for JIT and other CPU-intensive tasks during start-up
-      coroutineDebugJob.join()
+      __coroutineDebugJob?.join()
 
       span("checkThirdPartyPluginsAllowed") {
         checkThirdPartyPluginsAllowed()
@@ -210,6 +211,12 @@ internal suspend fun loadApp(app: ApplicationImpl,
     applicationStarter.await()
   }
 }
+
+// todo remove when will be clear what's wrong with out tests / when we will remove byte-buddy usage
+@Suppress("ObjectPropertyName")
+@Internal
+@JvmField
+var __coroutineDebugJob: Job? = null
 
 private suspend fun enableJstack() {
   span("coroutine jstack configuration") {

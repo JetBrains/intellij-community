@@ -5,6 +5,7 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
+import com.intellij.platform.ide.bootstrap.__coroutineDebugJob
 import com.intellij.util.Alarm
 import kotlinx.coroutines.CompletableDeferred
 
@@ -37,6 +38,8 @@ class WaitForSmartCommand(text: String, line: Int) : PlaybackCommandCoroutineAda
     val completion = CompletableDeferred<Unit>()
     completeWhenSmartModeIsLongEnough(context.project, completion)
     completion.await()
+
+    __coroutineDebugJob?.join()
   }
 
   private fun completeWhenSmartModeIsLongEnough(project: Project, completion: CompletableDeferred<Unit>) {
