@@ -7,9 +7,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.progress.RawProgressReporter
 import org.jdom.Element
-import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
@@ -562,18 +560,7 @@ class MavenProjectReader(private val myProject: Project) {
                      files: Collection<VirtualFile>,
                      explicitProfiles: MavenExplicitProfiles,
                      locator: MavenProjectReaderProjectLocator): Collection<MavenProjectReaderResult> {
-    val reporter = object : RawProgressReporter {}
-    val resolverResult = MavenProjectResolver(myProject).resolveProjectSync(
-      this,
-      generalSettings,
-      embedder,
-      files,
-      explicitProfiles,
-      locator,
-      reporter,
-      MavenLogEventHandler,
-      null,
-      false)
+    val resolverResult = MavenProjectResolver(myProject).resolveProjectSync(embedder, files, explicitProfiles)
     return resolverResult.map {
       MavenProjectReaderResult(
         it.mavenModel,

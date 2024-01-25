@@ -162,6 +162,16 @@ public class MavenProject {
     return setState(newState);
   }
 
+  @NotNull
+  @ApiStatus.Internal
+  public MavenProjectChanges updateState(@NotNull Collection<@NotNull MavenProjectProblem> readingProblems) {
+    State newState = myState.clone();
+
+    newState.myReadingProblems = readingProblems;
+
+    return setState(newState);
+  }
+
   private void doUpdateState(State newState,
                              @NotNull MavenModel model,
                              @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
