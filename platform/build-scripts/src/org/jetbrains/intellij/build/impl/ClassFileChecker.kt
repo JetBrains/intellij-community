@@ -1,18 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.lang.JavaVersion
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.InputStream
 import java.nio.channels.FileChannel
@@ -40,14 +39,13 @@ import java.util.zip.ZipException
 internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
                                      forbiddenSubPaths: List<String>,
                                      forbiddenSubPathExceptions: List<String>,
-                                     root: Path,
-                                     messages: BuildMessages) {
+                                     root: Path) {
   spanBuilder("verify class files")
     .setAttribute("ruleCount", versionCheckConfig.size.toLong())
     .setAttribute("forbiddenSubPathCount", forbiddenSubPaths.size.toLong())
     .setAttribute("forbiddenSubPathExceptionsCount", forbiddenSubPathExceptions.size.toLong())
     .setAttribute("root", root.toString())
-    .useWithScope {
+    .useWithScope { span ->
       val rules = ArrayList<Rule>(versionCheckConfig.size)
       for (entry in versionCheckConfig.entries) {
         rules.add(Rule(path = entry.key, version = classVersion(entry.value)))
@@ -64,17 +62,19 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
         })
       }
 
-      val checker = ClassFileChecker(messages, rules, forbiddenSubPaths, forbiddenSubPathExceptions)
+      val checker = ClassFileChecker(versionRules = rules,
+                                     forbiddenSubPaths = forbiddenSubPaths,
+                                     forbiddenSubPathExceptions = forbiddenSubPathExceptions)
       val errors = ConcurrentLinkedQueue<String>()
       if (Files.isDirectory(root)) {
         coroutineScope {
           checker.apply {
-            visitDirectory(root, "", errors)
+            visitDirectory(directory = root, relativePath = "", errors = errors)
           }
         }
       }
       else {
-        checker.visitFile(root, "", errors)
+        checker.visitFile(file = root, relativePath = "", errors = errors)
       }
 
       check(rules.isEmpty() || checker.checkedClassCount.get() != 0) {
@@ -82,18 +82,13 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
       }
 
       val errorCount = errors.size
-      Span.current()
+      val errorList = java.util.List.copyOf(errors)
+      span
         .setAttribute("checkedClasses", checker.checkedClassCount.get().toLong())
         .setAttribute("checkedJarCount", checker.checkedJarCount.get().toLong())
-        .setAttribute("errorCount", errorCount.toLong())
-      for (error in errors) {
-        messages.warning("---\n$error")
-      }
+        .setAttribute(AttributeKey.stringArrayKey("errors"), errorList)
       check(errorCount == 0) {
-        throw ClassFileCheckError(
-          "Failed with $errorCount problems. First 5 of them:\n" +
-          errors.take(5).joinToString("\n"),
-          errors)
+        throw ClassFileCheckError("Failed with $errorCount problems. First 5 of them:\n" + errorList.take(5).joinToString("\n"), errorList)
       }
 
       val unusedRules = rules.filter { !it.wasUsed }
@@ -104,46 +99,47 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
     }
 }
 
-class ClassFileCheckError(message: String, val errors: Collection<String> = emptyList()) : Exception(message)
+class ClassFileCheckError(message: String, @JvmField val errors: Collection<String> = emptyList()) : Exception(message)
 
 private val READ = EnumSet.of(StandardOpenOption.READ)
 
-private class ClassFileChecker(private val messages: BuildMessages,
-                               private val versionRules: List<Rule>,
+private class ClassFileChecker(private val versionRules: List<Rule>,
                                private val forbiddenSubPaths: List<String>,
                                private val forbiddenSubPathExceptions: List<String>) {
   val checkedJarCount = AtomicInteger()
   val checkedClassCount = AtomicInteger()
 
-  fun CoroutineScope.visitDirectory(directory: Path, relPath: String, errors: MutableCollection<String>) {
+  fun CoroutineScope.visitDirectory(directory: Path, relativePath: String, errors: MutableCollection<String>) {
     Files.newDirectoryStream(directory).use { dirStream ->
       // closure must be used, otherwise variables are not captured by FJT
       for (child in dirStream) {
         if (Files.isDirectory(child)) {
           launch {
-            visitDirectory(directory = child, relPath = join(relPath, "/", child.fileName.toString()), errors = errors)
+            visitDirectory(directory = child, relativePath = join(relativePath, "/", child.fileName.toString()), errors = errors)
           }
         }
         else {
           launch {
-            visitFile(file = child, relPath = join(relPath, "/", child.fileName.toString()), errors = errors)
+            visitFile(file = child, relativePath = join(relativePath, "/", child.fileName.toString()), errors = errors)
           }
         }
       }
     }
   }
 
-  fun visitFile(file: Path, relPath: String, errors: MutableCollection<String>) {
+  fun visitFile(file: Path, relativePath: String, errors: MutableCollection<String>) {
     val fullPath = file.toString()
     if (fullPath.endsWith(".zip") || fullPath.endsWith(".jar")) {
-      visitZip(fullPath, relPath, ZipFile(FileChannel.open(file, READ)), errors)
+      visitZip(zipPath = fullPath, zipRelPath = relativePath, file = ZipFile(FileChannel.open(file, READ)), errors = errors)
     }
     else if (fullPath.endsWith(".class")) {
-      checkIfSubPathIsForbidden(relPath, errors)
+      checkIfSubPathIsForbidden(relativePath, errors)
 
       val contentCheckRequired = versionRules.isNotEmpty() && !fullPath.endsWith("module-info.class") && !isMultiVersion(fullPath)
       if (contentCheckRequired) {
-        BufferedInputStream(Files.newInputStream(file)).use { checkVersion(relPath, it, errors) }
+        Files.newInputStream(file).buffered(32).use {
+          checkVersion(path = relativePath, stream = it, errors = errors)
+        }
       }
     }
   }
@@ -173,13 +169,13 @@ private class ClassFileChecker(private val messages: BuildMessages,
           }
         }
         else if (name.endsWith(".class")) {
-          val relPath = join(zipRelPath, "!/", name)
+          val relativePath = join(zipRelPath, "!/", name)
 
-          checkIfSubPathIsForbidden(relPath, errors)
+          checkIfSubPathIsForbidden(relativePath, errors)
 
           val contentCheckRequired = versionRules.isNotEmpty() && !name.endsWith("module-info.class") && !isMultiVersion(name)
           if (contentCheckRequired) {
-            checkVersion(relPath, file.getInputStream(entry), errors)
+            checkVersion(path = relativePath, stream = file.getInputStream(entry), errors = errors)
           }
         }
       }
@@ -188,14 +184,12 @@ private class ClassFileChecker(private val messages: BuildMessages,
 
   private fun checkIfSubPathIsForbidden(relPath: String, errors: MutableCollection<String>) {
     if (forbiddenSubPathExceptions.contains(relPath)) {
-      messages.info("$relPath is explicitly allowed and will be excepted from the forbidden sub paths check.")
+      Span.current().addEvent("$relPath is explicitly allowed and will be excepted from the forbidden sub paths check.")
       return
     }
 
     for (f in forbiddenSubPaths) {
       if (relPath.contains(f)) {
-
-
         errors.add("$relPath: .class file has a forbidden sub-path: $f")
       }
     }

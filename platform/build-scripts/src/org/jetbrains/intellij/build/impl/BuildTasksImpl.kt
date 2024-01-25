@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
@@ -244,7 +244,7 @@ private suspend fun layoutShared(context: BuildContext) {
       context.productProperties.copyAdditionalFiles(context, context.paths.getDistAll())
     }
   }
-  checkClassFiles(context.paths.distAllDir, context, isDistAll = true)
+  checkClassFiles(root = context.paths.distAllDir, context = context, isDistAll = true)
 }
 
 private fun findBrandingResource(relativePath: String, context: BuildContext): Path {
@@ -1039,7 +1039,7 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
 
 private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll: Boolean) {
   // version checking patterns are only for dist all (all non-os and non-arch specific files)
-  if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS) || !isDistAll) {
+  if (!isDistAll || context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
     return
   }
 
@@ -1049,22 +1049,21 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
   if (forbiddenSubPaths.isNotEmpty()) {
     val forbiddenString = forbiddenSubPaths.let { "(${it.size}): ${it.joinToString()}" }
     val exceptionsString = forbiddenSubPathExceptions.let { "(${it.size}): ${it.joinToString()}" }
-    context.messages.warning("checkClassFiles: forbiddenSubPaths $forbiddenString, exceptions $exceptionsString")
+    Span.current().addEvent("checkClassFiles: forbiddenSubPaths $forbiddenString, exceptions $exceptionsString")
   }
   else {
-    context.messages.warning("checkClassFiles: forbiddenSubPaths: EMPTY (no scrambling checks will be done)")
+    Span.current().addEvent("checkClassFiles: forbiddenSubPaths: EMPTY (no scrambling checks will be done)")
   }
 
   if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
     checkClassFiles(versionCheckConfig = versionCheckerConfig,
                     forbiddenSubPaths = forbiddenSubPaths,
                     forbiddenSubPathExceptions = forbiddenSubPathExceptions,
-                    root = root,
-                    messages = context.messages)
+                    root = root)
   }
 
   if (forbiddenSubPaths.isNotEmpty()) {
-    context.messages.warning("checkClassFiles: SUCCESS for forbiddenSubPaths at '$root': ${forbiddenSubPaths.joinToString()}")
+    Span.current().addEvent("checkClassFiles: SUCCESS for forbiddenSubPaths at '$root': ${forbiddenSubPaths.joinToString()}")
   }
 }
 
