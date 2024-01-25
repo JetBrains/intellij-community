@@ -52,18 +52,18 @@ public class MavenServerExecutionResult implements Serializable {
   public static class ProjectData implements Serializable {
     @NotNull
     public final MavenModel mavenModel;
-    public final String pomChecksum;
+    public final String dependencyHash;
     public final Map<String, String> mavenModelMap;
     public final NativeMavenProjectHolder nativeMavenProject;
     public final Collection<String> activatedProfiles;
 
     public ProjectData(@NotNull MavenModel mavenModel,
-                       @Nullable String pomChecksum,
+                       @Nullable String dependencyHash,
                        Map<String, String> mavenModelMap,
                        NativeMavenProjectHolder nativeMavenProject,
                        Collection<String> activatedProfiles) {
       this.mavenModel = mavenModel;
-      this.pomChecksum = pomChecksum;
+      this.dependencyHash = dependencyHash;
       this.mavenModelMap = mavenModelMap;
       this.nativeMavenProject = nativeMavenProject;
       this.activatedProfiles = activatedProfiles;
@@ -73,7 +73,7 @@ public class MavenServerExecutionResult implements Serializable {
     public String toString() {
       return "{" +
              "mavenModel=" + mavenModel +
-             ", checksum=" + pomChecksum +
+             ", dependencyHash=" + dependencyHash +
              '}';
     }
   }

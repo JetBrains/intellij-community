@@ -33,7 +33,7 @@ public class MavenProjectReaderResult {
   @NotNull
   public final MavenModel mavenModel;
   @Nullable
-  public final String pomChecksum;
+  public final String dependencyHash;
   public final Map<String, String> nativeModelMap;
   public final MavenExplicitProfiles activatedProfiles;
   @Nullable public final NativeMavenProjectHolder nativeMavenProject;
@@ -51,7 +51,7 @@ public class MavenProjectReaderResult {
   }
 
   public MavenProjectReaderResult(@NotNull MavenModel mavenModel,
-                                  @Nullable String pomChecksum,
+                                  @Nullable String dependencyHash,
                                   Map<String, String> nativeModelMap,
                                   MavenExplicitProfiles activatedProfiles,
                                   @Nullable NativeMavenProjectHolder nativeMavenProject,
@@ -59,7 +59,7 @@ public class MavenProjectReaderResult {
                                   Set<MavenId> unresolvedArtifactIds,
                                   @NotNull Collection<MavenProjectProblem> unresolvedProblems) {
     this.mavenModel = mavenModel;
-    this.pomChecksum = pomChecksum;
+    this.dependencyHash = dependencyHash;
     this.nativeModelMap = nativeModelMap;
     this.activatedProfiles = activatedProfiles;
     this.nativeMavenProject = nativeMavenProject;

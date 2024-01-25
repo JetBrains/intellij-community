@@ -120,8 +120,8 @@ public class MavenProject {
                                                                   staticOrBundled(settings.getMavenHomeType()),
                                                                   settings.getUserSettingsFile());
     newState.myActivatedProfilesIds = readerResult.activatedProfiles;
-    if (null != readerResult.pomChecksum) {
-      newState.myPomChecksum = readerResult.pomChecksum;
+    if (null != readerResult.dependencyHash) {
+      newState.myDependencyHash = readerResult.dependencyHash;
     }
 
     MavenModel model = readerResult.mavenModel;
@@ -847,8 +847,8 @@ public class MavenProject {
     return myState.myActivatedProfilesIds;
   }
 
-  public @Nullable String getPomChecksum() {
-    return myState.myPomChecksum;
+  public @Nullable String getDependencyHash() {
+    return myState.myDependencyHash;
   }
 
   public @NotNull List<MavenArtifact> getDependencies() {
@@ -1204,7 +1204,7 @@ public class MavenProject {
 
     Collection<String> myProfilesIds;
     MavenExplicitProfiles myActivatedProfilesIds;
-    String myPomChecksum;
+    String myDependencyHash;
 
     Collection<MavenProjectProblem> myReadingProblems;
     Set<MavenId> myUnresolvedArtifactIds;

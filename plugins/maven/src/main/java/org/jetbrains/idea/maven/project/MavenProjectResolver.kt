@@ -109,12 +109,12 @@ class MavenProjectResolver(private val myProject: Project) {
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))
     val explicitProfiles = tree.explicitProfiles
-    val fileToChecksum = mavenProjects.associate { it.file to if (incrementally) it.pomChecksum else null }
+    val fileToDependencyHash = mavenProjects.associate { it.file to if (incrementally) it.dependencyHash else null }
     val results = resolveProject(
       MavenProjectReader(myProject),
       generalSettings,
       embedder,
-      fileToChecksum,
+      fileToDependencyHash,
       explicitProfiles,
       tree.projectLocator,
       progressReporter,
@@ -145,7 +145,7 @@ class MavenProjectResolver(private val myProject: Project) {
   private suspend fun resolveProject(reader: MavenProjectReader,
                                      generalSettings: MavenGeneralSettings,
                                      embedder: MavenEmbedderWrapper,
-                                     fileToChecksum: Map<VirtualFile, String?>,
+                                     fileToDependencyHash: Map<VirtualFile, String?>,
                                      explicitProfiles: MavenExplicitProfiles,
                                      locator: MavenProjectReaderProjectLocator,
                                      progressReporter: RawProgressReporter,
@@ -153,10 +153,10 @@ class MavenProjectResolver(private val myProject: Project) {
                                      workspaceMap: MavenWorkspaceMap?,
                                      updateSnapshots: Boolean,
                                      userProperties: Properties): Collection<MavenProjectReaderResult> {
-    val files = fileToChecksum.keys
+    val files = fileToDependencyHash.keys
     return try {
       val executionResults = embedder.resolveProject(
-        fileToChecksum, explicitProfiles, progressReporter, eventHandler, workspaceMap, updateSnapshots, userProperties)
+        fileToDependencyHash, explicitProfiles, progressReporter, eventHandler, workspaceMap, updateSnapshots, userProperties)
       val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
       filesMap.putAll(files.associateBy { it.path })
       val readerResults: MutableCollection<MavenProjectReaderResult> = ArrayList()
@@ -176,7 +176,7 @@ class MavenProjectResolver(private val myProject: Project) {
         else {
           readerResults.add(MavenProjectReaderResult(
             projectData.mavenModel,
-            projectData.pomChecksum,
+            projectData.dependencyHash,
             projectData.mavenModelMap,
             MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.disabledProfiles),
             projectData.nativeMavenProject,
