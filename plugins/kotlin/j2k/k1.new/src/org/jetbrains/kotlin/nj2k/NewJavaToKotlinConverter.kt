@@ -190,17 +190,18 @@ class NewJavaToKotlinConverter(
             packageDirective?.ensureLineBreaksAfter(psiFactory)
         }
 
-        private fun KtFile.addImportList(importList: KtImportList): KtImportList {
+        private fun KtFile.addImportList(importList: KtImportList) {
             if (packageDirective != null) {
-                return addAfter(importList, packageDirective) as KtImportList
+                addAfter(importList, packageDirective) as KtImportList
+                return
             }
 
             val firstDeclaration = findChildByClass(KtDeclaration::class.java)
             if (firstDeclaration != null) {
-                return addBefore(importList, firstDeclaration) as KtImportList
+                addBefore(importList, firstDeclaration) as KtImportList
+            } else {
+                add(importList) as KtImportList
             }
-
-            return add(importList) as KtImportList
         }
 
         private fun PsiElement.ensureLineBreaksAfter(psiFactory: KtPsiFactory) {
