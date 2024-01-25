@@ -18,6 +18,7 @@ public class Maven40ExecutionResult {
   private final List<ModelProblem> myModelProblems;
   private final DependencyResolutionResult myDependencyResolutionResult;
   private String dependencyHash;
+  private boolean dependencyResolutionSkipped;
 
   public Maven40ExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
     this(mavenProject, null, exceptions, Collections.emptyList());
@@ -78,5 +79,13 @@ public class Maven40ExecutionResult {
 
   public void setDependencyHash(String dependencyHash) {
     this.dependencyHash = dependencyHash;
+  }
+
+  public boolean isDependencyResolutionSkipped() {
+    return dependencyResolutionSkipped;
+  }
+
+  public void setDependencyResolutionSkipped(boolean dependencyResolutionSkipped) {
+    this.dependencyResolutionSkipped = dependencyResolutionSkipped;
   }
 }

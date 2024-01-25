@@ -194,6 +194,10 @@ public class Maven3XProjectResolver {
           String previousDependencyHash = pomHashMap.getDependencyHash(pomFile);
           String newDependencyHash = fileToNewDependencyHash.get(pomFile);
           if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
+            Maven3ExecutionResult res = new Maven3ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
+            res.setDependencyHash(previousDependencyHash);
+            res.setDependencyResolutionSkipped(true);
+            executionResults.add(res);
             continue;
           }
 
@@ -306,7 +310,7 @@ public class Maven3XProjectResolver {
 
     Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), mavenModelMap, holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), result.isDependencyResolutionSkipped(), mavenModelMap, holder, activatedProfiles);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 

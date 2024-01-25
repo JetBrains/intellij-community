@@ -34,6 +34,7 @@ data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collect
 @ApiStatus.Internal
 class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
                                  @JvmField val dependencyHash: String?,
+                                 @JvmField val dependencyResolutionSkipped: Boolean,
                                  @JvmField val nativeModelMap: Map<String, String?>,
                                  @JvmField val activatedProfiles: MavenExplicitProfiles,
                                  val nativeMavenProject: NativeMavenProjectHolder?,
@@ -44,6 +45,7 @@ class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
     this(
       readerResult.mavenModel,
       null,
+      false,
       readerResult.nativeModelMap,
       readerResult.activatedProfiles,
       null,
@@ -245,6 +247,7 @@ class MavenProjectResolver(private val myProject: Project) {
           resolverResults.add(MavenProjectResolverResult(
             projectData.mavenModel,
             projectData.dependencyHash,
+            projectData.dependencyResolutionSkipped,
             projectData.mavenModelMap,
             MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.disabledProfiles),
             projectData.nativeMavenProject,
@@ -313,7 +316,7 @@ class MavenProjectResolver(private val myProject: Project) {
       return
     }
     val snapshot = mavenProjectCandidate.snapshot
-    val keepPreviousArtifacts = MavenUtil.shouldKeepPreviousArtifacts(result.readingProblems)
+    val keepPreviousArtifacts = MavenUtil.shouldKeepPreviousArtifacts(result.readingProblems) || result.dependencyResolutionSkipped
 
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")

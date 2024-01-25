@@ -167,6 +167,10 @@ public class Maven40ProjectResolver {
           String previousDependencyHash = pomHashMap.getDependencyHash(buildingResult.getPomFile());
           String newDependencyHash = fileToNewDependencyHash.get(pomFile);
           if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
+            Maven40ExecutionResult res = new Maven40ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
+            res.setDependencyHash(previousDependencyHash);
+            res.setDependencyResolutionSkipped(true);
+            executionResults.add(res);
             continue;
           }
 
@@ -307,7 +311,7 @@ public class Maven40ProjectResolver {
 
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), mavenModelMap, holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), result.isDependencyResolutionSkipped(), mavenModelMap, holder, activatedProfiles);
     if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
       data = null;
     }
