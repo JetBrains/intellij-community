@@ -33,13 +33,13 @@ public class MavenProjectReaderResult {
   @NotNull
   public final MavenModel mavenModel;
   @Nullable
-  public final String dependencyHash;
-  public final Map<String, String> nativeModelMap;
-  public final MavenExplicitProfiles activatedProfiles;
-  @Nullable public final NativeMavenProjectHolder nativeMavenProject;
-  public final Collection<MavenProjectProblem> readingProblems;
-  public final Set<MavenId> unresolvedArtifactIds;
-  @NotNull public final Collection<MavenProjectProblem> unresolvedProblems;
+  private final String dependencyHash;
+  private final Map<String, String> nativeModelMap;
+  private final MavenExplicitProfiles activatedProfiles;
+  @Nullable private final NativeMavenProjectHolder nativeMavenProject;
+  private final Collection<MavenProjectProblem> readingProblems;
+  private final Set<MavenId> unresolvedArtifactIds;
+  @NotNull private final Collection<MavenProjectProblem> unresolvedProblems;
 
   public MavenProjectReaderResult(@NotNull MavenModel mavenModel,
                                   Map<String, String> nativeModelMap,
@@ -66,5 +66,37 @@ public class MavenProjectReaderResult {
     this.readingProblems = readingProblems;
     this.unresolvedArtifactIds = unresolvedArtifactIds;
     this.unresolvedProblems = unresolvedProblems;
+  }
+
+  public @NotNull MavenModel getMavenModel() {
+    return mavenModel;
+  }
+
+  public @Nullable String getDependencyHash() {
+    return dependencyHash;
+  }
+
+  public Map<String, String> getNativeModelMap() {
+    return nativeModelMap;
+  }
+
+  public MavenExplicitProfiles getActivatedProfiles() {
+    return activatedProfiles;
+  }
+
+  public @Nullable NativeMavenProjectHolder getNativeMavenProject() {
+    return nativeMavenProject;
+  }
+
+  public Collection<MavenProjectProblem> getReadingProblems() {
+    return readingProblems;
+  }
+
+  public Set<MavenId> getUnresolvedArtifactIds() {
+    return unresolvedArtifactIds;
+  }
+
+  public @NotNull Collection<MavenProjectProblem> getUnresolvedProblems() {
+    return unresolvedProblems;
   }
 }
