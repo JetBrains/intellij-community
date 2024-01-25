@@ -8,11 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.List;
 
 public final class SpanDataSerializer {
 
-  public static byte[] serialize(@NotNull List<SpanData> spanData) {
+  public static byte[] serialize(@NotNull Collection<SpanData> spanData) {
     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
       serializeIntoProtobuf(spanData, outputStream);
       return outputStream.toByteArray();
@@ -32,7 +31,7 @@ public final class SpanDataSerializer {
    * As a result, ClasspathInferer can load an older version of ASM ClassReader and at the same time, parse Jackson components compiled
    * into Java 17+ bytecode.
    */
-  private static void serializeIntoProtobuf(@NotNull List<SpanData> spanData, @NotNull OutputStream outputStream)
+  private static void serializeIntoProtobuf(@NotNull Collection<SpanData> spanData, @NotNull OutputStream outputStream)
     throws ReflectiveOperationException {
     Object marshaller = Class.forName("io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler")
       .getMethod("create", Collection.class)

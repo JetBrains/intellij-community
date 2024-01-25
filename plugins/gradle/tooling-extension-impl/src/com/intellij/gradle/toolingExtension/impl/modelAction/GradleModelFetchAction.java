@@ -71,12 +71,14 @@ public class GradleModelFetchAction {
     Set<GradleBuild> nestedBuilds = myTelemetry.callWithSpan("NestedBuildsResolve", span -> getNestedBuilds(controller, mainGradleBuild));
 
     myTelemetry.runWithSpan("MainBuildAddModels", span -> addModels(controller, mainGradleBuild));
-    for (GradleBuild includedBuild : nestedBuilds) {
-      if (!myIsProjectsLoadedAction) {
-        myAllModels.addIncludedBuild(DefaultBuild.convertGradleBuild(includedBuild));
+    myTelemetry.runWithSpan("IncludedBuildAddModels", span -> {
+      for (GradleBuild includedBuild : nestedBuilds) {
+        if (!myIsProjectsLoadedAction) {
+          myAllModels.addIncludedBuild(DefaultBuild.convertGradleBuild(includedBuild));
+        }
+        addModels(controller, includedBuild);
       }
-      addModels(controller, includedBuild);
-    }
+    });
     setupIncludedBuildsHierarchy(myAllModels.getIncludedBuilds(), nestedBuilds);
     if (myIsProjectsLoadedAction) {
       controller.getModel(TurnOffDefaultTasks.class);

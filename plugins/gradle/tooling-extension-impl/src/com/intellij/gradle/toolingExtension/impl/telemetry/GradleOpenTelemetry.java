@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
-import java.util.List;
+import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -103,7 +103,7 @@ public final class GradleOpenTelemetry {
       }
       // the data should be exported only after OpenTelemetry was closed to prevent data loss
       if (mySpanDataCollector != null) {
-        List<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
+        Collection<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
         return SpanDataSerializer.serialize(collectedSpans);
       }
     }

@@ -334,26 +334,26 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final long startDataConversionTime = System.currentTimeMillis();
     int resolversErrorsCount = 0;
 
-    Span gradleProjectResolversSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
-      .spanBuilder("GradleProjectResolvers")
+    Span projectDataProcessingSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+      .spanBuilder("GradleProjectResolverDataProcessing")
       .startSpan();
     try (GradleTargetPathsConverter pathsConverter = new GradleTargetPathsConverter(executionSettings);
-         Scope ignore = gradleProjectResolversSpan.makeCurrent()) {
+         Scope ignore = projectDataProcessingSpan.makeCurrent()) {
       pathsConverter.mayBeApplyTo(allModels);
       return convertData(allModels, executionSettings, resolverCtx, gradleVersion,
                          tracedResolverChain, performanceTrace, isBuildSrcProject, useCustomSerialization);
     }
     catch (Throwable t) {
       resolversErrorsCount += 1;
-      gradleProjectResolversSpan.recordException(t);
-      gradleProjectResolversSpan.setStatus(StatusCode.ERROR);
+      projectDataProcessingSpan.recordException(t);
+      projectDataProcessingSpan.setStatus(StatusCode.ERROR);
       throw t;
     }
     finally {
       final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
       performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
       LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
-      gradleProjectResolversSpan.end();
+      projectDataProcessingSpan.end();
       syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name()).end();
       ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.PROJECT_RESOLVERS, timeConversionInMs,
                                                           resolversErrorsCount);
