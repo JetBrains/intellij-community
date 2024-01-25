@@ -12,18 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class ProjectSaveSessionProducerManager(protected val project: Project) : SaveSessionProducerManager() {
-  suspend fun saveWithAdditionalSaveSessions(extraSessions: Collection<SaveSession>): SaveResult {
-    val saveSessions = mutableListOf<SaveSession>()
-    saveSessions.addAll(extraSessions)
-    collectSaveSessions(saveSessions)
-    if (saveSessions.isEmpty()) {
-      return SaveResult.EMPTY
-    }
-
-    val saveResult = SaveResult()
+  suspend fun saveAndValidate(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
     saveSessions(saveSessions, saveResult)
     validate(saveResult)
-    return saveResult
   }
 
   private suspend fun validate(saveResult: SaveResult) {
