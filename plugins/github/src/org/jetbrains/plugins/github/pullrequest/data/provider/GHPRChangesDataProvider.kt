@@ -6,6 +6,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
@@ -62,9 +63,10 @@ interface GHPRChangesDataProvider {
 
 fun GHPRChangesDataProvider.changesRequestFlow(): Flow<Deferred<GitBranchComparisonResult>> =
   channelFlow {
+    val cs = childScope()
     val listenerDisposable = Disposer.newDisposable()
     val listener: () -> Unit = {
-      async {
+      cs.async {
         try {
           loadChanges().asDeferred().await()
         }
@@ -85,9 +87,10 @@ fun GHPRChangesDataProvider.changesRequestFlow(): Flow<Deferred<GitBranchCompari
 
 fun GHPRChangesDataProvider.fetchedChangesFlow(): Flow<Deferred<GitBranchComparisonResult>> =
   channelFlow {
+    val cs = childScope()
     val listenerDisposable = Disposer.newDisposable()
     val listener: () -> Unit = {
-      async {
+      cs.async {
         try {
           //TODO: don't fetch when not necessary
           fetchBaseBranch().asDeferred().await()
