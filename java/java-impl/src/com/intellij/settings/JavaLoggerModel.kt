@@ -4,8 +4,8 @@ package com.intellij.settings
 import javax.swing.AbstractListModel
 import javax.swing.ComboBoxModel
 
-class JavaLoggerModel(loggersList : List<JavaLoggerInfo>, initialLogger : JavaLoggerInfo) : AbstractListModel<JavaLoggerInfo>(), ComboBoxModel<JavaLoggerInfo> {
-  private val loggers = loggersList
+class JavaLoggerModel(loggerList : List<JavaLoggerInfo>, initialLogger : JavaLoggerInfo) : AbstractListModel<JavaLoggerInfo>(), ComboBoxModel<JavaLoggerInfo> {
+  private val loggers = loggerList
 
   private var currentLogger = initialLogger
 
@@ -17,7 +17,7 @@ class JavaLoggerModel(loggersList : List<JavaLoggerInfo>, initialLogger : JavaLo
     }
   }
 
-  override fun getSelectedItem(): Any {
+  override fun getSelectedItem(): JavaLoggerInfo {
     return currentLogger
   }
 

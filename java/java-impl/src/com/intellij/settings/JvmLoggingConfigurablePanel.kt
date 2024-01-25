@@ -17,20 +17,22 @@ class JvmLoggingConfigurablePanel(
   private val settings: JavaSettingsStorage.State) {
   private lateinit var warningRow: Row
   private lateinit var panel: DialogPanel
-  private val boundedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("ScalingImagePanel", 1)
+  private val boundedExecutor = AppExecutorUtil.getAppExecutorService()
 
   fun getMainPanel(): JPanel {
     panel = panel {
-      row {
-        label(JavaBundle.message("label.configurable.logger.type"))
-        comboBox(JavaLoggerModel(JavaLoggerInfo.allLoggers, settings.logger)).bindItem(settings::logger.toNullableProperty()).onChanged {
-          updateWarningRow(it.item.loggerName)
+      group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
+        row {
+          label(JavaBundle.message("label.configurable.logger.type"))
+          comboBox(JavaLoggerModel(JavaLoggerInfo.allLoggers, settings.logger)).bindItem(settings::logger.toNullableProperty()).onChanged {
+            updateWarningRow(it.item.loggerName)
+          }
         }
+        warningRow = row {
+          icon(AllIcons.General.Warning).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
+          text(JavaBundle.message("java.configurable.logger.not.found"))
+        }.visible(false)
       }
-      warningRow = row {
-        icon(AllIcons.General.Warning).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
-        text(JavaBundle.message("java.configurable.logger.not.found"))
-      }.visible(false)
     }
     updateWarningRow(settings.logger.loggerName)
     return panel
