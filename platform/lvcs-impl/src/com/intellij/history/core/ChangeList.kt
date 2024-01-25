@@ -1,185 +1,158 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.history.core;
+package com.intellij.history.core
 
-import com.intellij.history.ActivityId;
-import com.intellij.history.core.changes.Change;
-import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.history.core.changes.ChangeVisitor;
-import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.NlsContexts;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.history.ActivityId
+import com.intellij.history.core.changes.Change
+import com.intellij.history.core.changes.ChangeSet
+import com.intellij.history.core.changes.ChangeVisitor
+import com.intellij.history.core.changes.ChangeVisitor.StopVisitingException
+import com.intellij.history.utils.LocalHistoryLog
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Clock
+import com.intellij.openapi.util.NlsContexts
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import org.jetbrains.annotations.TestOnly
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+open class ChangeList(private val storage: ChangeListStorage) {
+  private var changeSetDepth = 0
+  private var currentChangeSet: ChangeSet? = null
 
-public class ChangeList {
-  private final ChangeListStorage myStorage;
+  private var intervalBetweenActivities = 12 * 60 * 60 * 1000 // 12 hours
 
-  private int myChangeSetDepth;
-  private ChangeSet myCurrentChangeSet;
-
-  private int myIntervalBetweenActivities = 12 * 60 * 60 * 1000; // 12 hours
-
-  public ChangeList(ChangeListStorage storage) {
-    myStorage = storage;
-  }
-
-  public synchronized void close() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      LocalHistoryLog.LOG.assertTrue(myCurrentChangeSet == null || myCurrentChangeSet.isEmpty(),
-                                     "current changes won't be saved: " + myCurrentChangeSet);
+  @Synchronized
+  fun close() {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      LocalHistoryLog.LOG.assertTrue(currentChangeSet == null || currentChangeSet!!.isEmpty,
+                                     "current changes won't be saved: $currentChangeSet")
     }
-    myStorage.close();
+    storage.close()
   }
 
-  public synchronized void force() {
-    myStorage.force();
+  @Synchronized
+  fun force() = storage.force()
+
+  @Synchronized
+  fun nextId(): Long = storage.nextId()
+
+  @Synchronized
+  fun addChange(c: Change) {
+    assert(changeSetDepth != 0)
+    currentChangeSet!!.addChange(c)
   }
 
-  public synchronized long nextId() {
-    return myStorage.nextId();
+  @Synchronized
+  fun beginChangeSet() {
+    changeSetDepth++
+    if (changeSetDepth > 1) return
+
+    doBeginChangeSet()
   }
 
-  public synchronized void addChange(Change c) {
-    assert myChangeSetDepth != 0;
-    myCurrentChangeSet.addChange(c);
+  private fun doBeginChangeSet() {
+    currentChangeSet = ChangeSet(nextId(), Clock.getTime())
   }
 
-  public synchronized void beginChangeSet() {
-    myChangeSetDepth++;
-    if (myChangeSetDepth > 1) return;
+  @Synchronized
+  fun forceBeginChangeSet(): ChangeSet? {
+    val lastChangeSet = if (changeSetDepth > 0) doEndChangeSet(null, null) else null
 
-    doBeginChangeSet();
+    changeSetDepth++
+    doBeginChangeSet()
+    return lastChangeSet
   }
 
-  private void doBeginChangeSet() {
-    myCurrentChangeSet = new ChangeSet(nextId(), Clock.getTime());
+  @Synchronized
+  fun endChangeSet(name: @NlsContexts.Label String?, activityId: ActivityId?): ChangeSet? {
+    LocalHistoryLog.LOG.assertTrue(changeSetDepth > 0, "not balanced 'begin/end-change set' calls")
+
+    changeSetDepth--
+    if (changeSetDepth > 0) return null
+
+    return doEndChangeSet(name, activityId)
   }
 
-  public synchronized @Nullable ChangeSet forceBeginChangeSet() {
-    ChangeSet lastChangeSet = null;
-    if (myChangeSetDepth > 0) {
-      lastChangeSet = doEndChangeSet(null, null);
-    }
-
-    myChangeSetDepth++;
-    doBeginChangeSet();
-    return lastChangeSet;
-  }
-
-  public synchronized @Nullable ChangeSet endChangeSet(@NlsContexts.Label String name, @Nullable ActivityId activityId) {
-    LocalHistoryLog.LOG.assertTrue(myChangeSetDepth > 0, "not balanced 'begin/end-change set' calls");
-
-    myChangeSetDepth--;
-    if (myChangeSetDepth > 0) return null;
-
-    return doEndChangeSet(name, activityId);
-  }
-
-  private @Nullable ChangeSet doEndChangeSet(@Nullable @NlsContexts.Label String name, @Nullable ActivityId activityId) {
-    if (myCurrentChangeSet.isEmpty()) {
-      myCurrentChangeSet = null;
-      return null;
+  private fun doEndChangeSet(name: @NlsContexts.Label String?, activityId: ActivityId?): ChangeSet? {
+    if (currentChangeSet!!.isEmpty) {
+      currentChangeSet = null
+      return null
     }
 
-    ChangeSet lastChangeSet = myCurrentChangeSet;
-    lastChangeSet.setName(name);
-    lastChangeSet.setActivityId(activityId);
-    lastChangeSet.lock();
-    myStorage.writeNextSet(lastChangeSet);
+    val lastChangeSet = currentChangeSet
+    lastChangeSet!!.name = name
+    lastChangeSet.activityId = activityId
+    lastChangeSet.lock()
+    storage.writeNextSet(lastChangeSet)
 
-    myCurrentChangeSet = null;
+    currentChangeSet = null
 
-    return lastChangeSet;
+    return lastChangeSet
   }
 
-  @TestOnly
-  public List<ChangeSet> getChangesInTests() {
-    List<ChangeSet> result = new ArrayList<>();
-    for (ChangeSet each : iterChanges()) {
-      result.add(each);
-    }
-    return result;
-  }
+  @get:TestOnly
+  val changesInTests: List<ChangeSet> get() = iterChanges().toList()
 
   // todo synchronization issue: changeset may me modified while being iterated
-  public synchronized Iterable<ChangeSet> iterChanges() {
-    return new Iterable<>() {
-      @Override
-      public Iterator<ChangeSet> iterator() {
-        return new Iterator<>() {
-          private final IntOpenHashSet recursionGuard = new IntOpenHashSet(1000);
+  @Synchronized
+  fun iterChanges(): Iterable<ChangeSet> {
+    return Iterable {
+      object : Iterator<ChangeSet> {
+        private val recursionGuard = IntOpenHashSet(1000)
 
-          private ChangeSetHolder currentBlock;
-          private ChangeSet next = fetchNext();
+        private var currentBlock: ChangeSetHolder? = null
+        private var next = fetchNext()
 
-          @Override
-          public boolean hasNext() {
-            return next != null;
-          }
+        override fun hasNext(): Boolean = next != null
 
-          @Override
-          public ChangeSet next() {
-            ChangeSet result = next;
-            next = fetchNext();
-            return result;
-          }
+        override fun next(): ChangeSet {
+          val result = next!!
+          next = fetchNext()
+          return result
+        }
 
-          private ChangeSet fetchNext() {
-            if (currentBlock == null) {
-              synchronized (ChangeList.this) {
-                if (myCurrentChangeSet != null) {
-                  currentBlock = new ChangeSetHolder(-1, myCurrentChangeSet);
-                }
-                else {
-                  currentBlock = myStorage.readPrevious(-1, recursionGuard);
-                }
+        private fun fetchNext(): ChangeSet? {
+          if (currentBlock == null) {
+            synchronized(this@ChangeList) {
+              currentBlock = if (currentChangeSet != null) {
+                ChangeSetHolder(-1, currentChangeSet)
+              }
+              else {
+                storage.readPrevious(-1, recursionGuard)
               }
             }
-            else {
-              synchronized (ChangeList.this) {
-                currentBlock = myStorage.readPrevious(currentBlock.id(), recursionGuard);
-              }
+          }
+          else {
+            synchronized(this@ChangeList) {
+              currentBlock = storage.readPrevious(currentBlock!!.id, recursionGuard)
             }
-            if (currentBlock == null) return null;
-            return currentBlock.changeSet();
           }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
+          return currentBlock?.changeSet
+        }
       }
-    };
+    }
   }
 
-  public void accept(ChangeVisitor v) {
+  fun accept(v: ChangeVisitor) {
     try {
-      for (ChangeSet change : iterChanges()) {
-        change.accept(v);
+      for (change in iterChanges()) {
+        change.accept(v)
       }
     }
-    catch (ChangeVisitor.StopVisitingException e) {
+    catch (_: StopVisitingException) {
     }
-    v.finished();
+    v.finished()
   }
 
-  public synchronized void purgeObsolete(long period) {
-    myStorage.purge(period, myIntervalBetweenActivities, changeSet -> {
-      for (Content each : changeSet.getContentsToPurge()) {
-        each.release();
+  @Synchronized
+  fun purgeObsolete(period: Long) {
+    storage.purge(period, intervalBetweenActivities) { changeSet ->
+      for (each in changeSet.contentsToPurge) {
+        each.release()
       }
-    });
+    }
   }
 
   @TestOnly
-  public void setIntervalBetweenActivities(int value) {
-    myIntervalBetweenActivities = value;
+  fun setIntervalBetweenActivities(value: Int) {
+    intervalBetweenActivities = value
   }
 }
