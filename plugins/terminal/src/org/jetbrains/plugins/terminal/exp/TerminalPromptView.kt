@@ -18,6 +18,7 @@ import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import java.awt.Color
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent

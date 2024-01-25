@@ -17,6 +17,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDI
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryManager
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 

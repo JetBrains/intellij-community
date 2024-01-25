@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.exp.history
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.lookup.*
@@ -11,11 +11,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
+import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
 import kotlin.math.max
 
-class CommandHistoryPresenter(private val project: Project,
-                              private val editor: Editor,
-                              private val commandExecutor: TerminalCommandExecutor) {
+internal class CommandHistoryPresenter(private val project: Project,
+                                       private val editor: Editor,
+                                       private val commandExecutor: TerminalCommandExecutor) {
   private var initialCommand: String? = null
 
   fun showCommandHistory(history: List<String>) {

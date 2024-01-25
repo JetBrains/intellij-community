@@ -39,9 +39,9 @@
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEnterHandler"
                          id="terminalEnter" order="first"/>
-    <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretUpHandler"
+    <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.exp.history.TerminalCaretUpHandler"
                          id="terminalUp" order="first"/>
-    <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretDownHandler"
+    <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.history.TerminalCaretDownHandler"
                          id="terminalDown" order="first"/>
     <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindHandler"
                          id="terminalFind" order="first"/>

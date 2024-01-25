@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.plugins.terminal.exp.CommandHistoryPresenter
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.blockTerminalController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor

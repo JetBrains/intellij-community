@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.terminal.exp.CommandHistoryPresenter.Companion.IS_COMMAND_HISTORY_LOOKUP_KEY
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.IS_COMMAND_HISTORY_LOOKUP_KEY
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.documentation.TerminalDocumentationManager

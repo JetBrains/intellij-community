@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.exp.history
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEdito
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 
 
-class TerminalCaretUpHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+internal class TerminalCaretUpHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val promptController = dataContext.promptController
     if (promptController != null) {
@@ -32,7 +32,7 @@ class TerminalCaretUpHandler(private val originalHandler: EditorActionHandler) :
   }
 }
 
-class TerminalCaretDownHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+internal class TerminalCaretDownHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val promptController = dataContext.promptController
     if (promptController != null) {

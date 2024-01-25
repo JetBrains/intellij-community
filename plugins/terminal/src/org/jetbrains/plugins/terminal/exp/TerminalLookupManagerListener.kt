@@ -9,6 +9,7 @@ import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.exp.documentation.TerminalDocumentationManager
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
