@@ -58,7 +58,7 @@ class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCorout
   }
 
   private fun generateVcsFilter(projectFile: VirtualFile?, rawParams: String, vcsLogData: VcsLogData): VcsLogFilterCollection {
-    val regex = "-(\\w+)\\s'([a-zA-Z0-9\\s/\\\\]+)'".toRegex()
+    val regex = "-(\\w+)\\s'([a-zA-Z0-9\\s/\\\\.]+)'".toRegex()
 
     val matches = regex.findAll(rawParams)
     val result = mutableListOf<VcsLogDetailsFilter>()
