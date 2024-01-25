@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EdtReplacementThread
-import com.intellij.openapi.application.ModalityState
+import com.intellij.codeWithMe.ClientId
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -13,9 +13,18 @@ import com.intellij.openapi.util.Ref
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.EdtInvocationManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
+import kotlin.Result
+import kotlin.time.Duration.Companion.milliseconds
 
 object ApplicationUtil {
   // throws exception if it can't grab read action right now
@@ -33,13 +42,15 @@ object ApplicationUtil {
    * Allows interrupting a process which does not perform checkCancelled() calls by itself.
    * Note that the process may continue to run in the background indefinitely - so **avoid using this method unless absolutely needed**.
    */
+  @OptIn(ExperimentalCoroutinesApi::class)
   @Throws(Exception::class)
   @JvmStatic
-  fun <T> runWithCheckCanceled(callable: Callable<out T>, indicator: ProgressIndicator): T? {
-    var result: T? = null
-    var error: Throwable? = null
-
-    val future = ApplicationManager.getApplication().executeOnPooledThread {
+  @ApiStatus.Obsolete
+  fun <T> runWithCheckCanceled(callable: Callable<out T>, indicator: ProgressIndicator): T {
+    @Suppress("UsagesOfObsoleteApi")
+    val task = ClientId.decorateCallable {
+      var result: T? = null
+      var error: Throwable? = null
       ProgressManager.getInstance().executeProcessUnderProgress(
         {
           try {
@@ -49,32 +60,46 @@ object ApplicationUtil {
             error = e
           }
         }, indicator)
-    }
-
-    try {
-      while (true) {
-        indicator.checkCanceled()
-
-        try {
-          future.get(10, TimeUnit.MILLISECONDS)
-          break
-        }
-        catch (e: InterruptedException) {
-          throw ProcessCanceledException(e)
-        }
-        catch (ignored: TimeoutException) {
-        }
-      }
 
       error?.let {
         throw it
       }
+
+      @Suppress("UNCHECKED_CAST")
+      result as T
     }
-    catch (e: ProcessCanceledException) {
-      future.cancel(false)
-      throw e
+
+    @Suppress("UsagesOfObsoleteApi", "RedundantSuppression")
+    val deferred = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().async(Dispatchers.IO) {
+      task.call()
     }
-    return result
+
+    @Suppress("SSBasedInspection")
+    return runBlocking {
+      while (true) {
+        select<Result<T>?> {
+          deferred.onAwait {
+            Result.success(it)
+          }
+
+          onTimeout(10.milliseconds) {
+            try {
+              indicator.checkCanceled()
+              null
+            }
+            catch (e: ProcessCanceledException) {
+              deferred.cancel()
+              Result.failure(e)
+            }
+          }
+        }?.let {
+          return@runBlocking it.getOrThrow()
+        }
+      }
+
+      @Suppress("UNREACHABLE_CODE")
+      throw IllegalStateException("cannot be")
+    }
   }
 
   /**
