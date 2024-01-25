@@ -59,7 +59,7 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
           reviewVm?.getViewModelFor(file)?.collectLatest { fileVm ->
             if (fileVm != null) {
               val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
-              val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.incoming != true }.distinctUntilChanged()
+              val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }.distinctUntilChanged()
               combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest { enabled ->
                 if (enabled) supervisorScope {
                   setupReview(settings, fileVm, editor)

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable
@@ -59,18 +60,18 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
         )
         GitLabMergeRequestEditorReviewViewModel.ChangesState.NotLoaded,
         is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> {
-          if (vm.localRepositorySyncStatus.value?.incoming != true) {
-            GitCurrentBranchPresenter.Presentation(
-              GitlabIcons.GitLabLogo,
-              GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
-              GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)
-            )
-          }
-          else {
+          if (vm.localRepositorySyncStatus.value?.getOrNull()?.incoming != false) {
             GitCurrentBranchPresenter.Presentation(
               GitlabIcons.GitLabWarning,
               GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
               GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName)
+            )
+          }
+          else {
+            GitCurrentBranchPresenter.Presentation(
+              GitlabIcons.GitLabLogo,
+              GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
+              GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)
             )
           }
         }
@@ -101,7 +102,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
     override fun update(e: AnActionEvent) {
       val action = e.project?.serviceIfCreated<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value
         ?.takeIf {
-          it.localRepositorySyncStatus.value?.incoming == true
+          it.localRepositorySyncStatus.value?.getOrNull()?.incoming == true
         }?.let {
           { it.updateBranch() }
         }
@@ -120,7 +121,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
 
     override fun update(e: AnActionEvent) {
       val vm = e.project?.serviceIfCreated<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value
-      if (vm == null || vm.localRepositorySyncStatus.value?.incoming == true) {
+      if (vm == null || vm.localRepositorySyncStatus.value?.getOrNull()?.incoming == true) {
         e.presentation.isEnabledAndVisible = false
         e.presentation.putClientProperty(actionKey, null)
         return

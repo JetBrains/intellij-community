@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.lang.annotation.HighlightSeverity
@@ -80,7 +81,7 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
         return
       }
       val shown = vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW
-      val synced = vm.localRepositorySyncStatus.value?.incoming?.not() ?: true
+      val synced = vm.localRepositorySyncStatus.value?.getOrNull()?.incoming?.not() ?: true
       with(e.presentation) {
         if (shown) {
           text = GitLabBundle.message("merge.request.review.mode.title")
@@ -106,7 +107,7 @@ private class ReviewModeActionGroup(private val editor: Editor) : ActionGroup(),
           e.presentation.isEnabledAndVisible = false
           return
         }
-        e.presentation.isEnabledAndVisible = vm.localRepositorySyncStatus.value?.incoming == true
+        e.presentation.isEnabledAndVisible = vm.localRepositorySyncStatus.value?.getOrNull()?.incoming == true
       }
 
       override fun actionPerformed(e: AnActionEvent) {

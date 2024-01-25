@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -54,7 +55,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
               editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
               try {
                 val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
-                val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.incoming != true }.distinctUntilChanged()
+                val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }.distinctUntilChanged()
                 combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest { enabled ->
                   if (enabled) supervisorScope {
                     val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()

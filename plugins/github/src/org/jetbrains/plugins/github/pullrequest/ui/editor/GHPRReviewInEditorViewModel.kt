@@ -29,7 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 
 interface GHPRReviewInEditorViewModel : CodeReviewDiscussionsViewModel {
-  val localRepositorySyncStatus: StateFlow<GitBranchSyncStatus?>
+  val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?>
 
   fun getViewModelFor(file: VirtualFile): Flow<GHPRReviewFileEditorViewModel?>
 }
@@ -57,7 +57,7 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val filesVmsMap = mutableMapOf<FilePath, StateFlow<GHPRReviewFileEditorViewModelImpl?>>()
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val localRepositorySyncStatus: StateFlow<GitBranchSyncStatus?> = run {
+  override val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> =
     changesComputationState.map {
       it.getOrNull()?.commits?.map { it.sha }
     }.distinctUntilChanged().transformLatest {
@@ -67,8 +67,7 @@ internal class GHPRReviewInEditorViewModelImpl(
       else {
         flowOf(it).localCommitsSyncStatus(repository).collect(this)
       }
-    }.stateIn(cs, SharingStarted.Lazily, null)
-  }
+    }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()

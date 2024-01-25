@@ -2,6 +2,7 @@
 package git4idea.remote.hosting
 
 import com.intellij.collaboration.api.ServerPath
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.components.serviceAsync
@@ -92,10 +93,13 @@ private typealias GitRemotesFlow = Flow<Collection<GitRemoteUrlCoordinates>>
  * Branch state is represented by a list of commit hashes in the receiver flow.
  * Receiver flow should emit an ordered list of commits where the last commits in the list is actually the last commits in a branch.
  */
-fun Flow<List<String>>.localCommitsSyncStatus(repository: GitRepository): Flow<GitBranchSyncStatus?> {
+fun Flow<List<String>>.localCommitsSyncStatus(repository: GitRepository): Flow<ComputedResult<GitBranchSyncStatus?>?> {
   val currentRevisionFlow = repository.infoFlow().map { it.currentRevision }.distinctUntilChanged()
   return combine(currentRevisionFlow) { commits, currentRev ->
-    if (currentRev == null) null else checkSyncState(repository, currentRev, commits)
+    if (currentRev == null) ComputedResult.success(null)
+    else ComputedResult.compute {
+      checkSyncState(repository, currentRev, commits)
+    }
   }
 }
 

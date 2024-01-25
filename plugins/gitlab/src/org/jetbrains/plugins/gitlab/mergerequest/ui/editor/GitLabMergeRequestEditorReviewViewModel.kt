@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.selectedChange
 import com.intellij.collaboration.util.withLocation
 import com.intellij.diff.util.Side
@@ -62,7 +63,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val filesVms: MutableMap<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>> = mutableMapOf()
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  val localRepositorySyncStatus: StateFlow<GitBranchSyncStatus?> = run {
+  val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> = run {
     val repository = projectMapping.remote.repository
     _actualChangesState.map {
       (it as? ChangesState.Loaded)?.changes?.commits?.map { it.sha }
