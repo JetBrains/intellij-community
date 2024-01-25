@@ -1,8 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.Alarm.ThreadToUse
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 class SingleAlarm @JvmOverloads constructor(
   private val task: Runnable,
@@ -10,7 +16,8 @@ class SingleAlarm @JvmOverloads constructor(
   parentDisposable: Disposable?,
   threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
   private val modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null
-) : Alarm(threadToUse, parentDisposable) {
+) : Disposable {
+
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
     : this(task = task,
            delay = delay,
@@ -30,16 +37,32 @@ class SingleAlarm @JvmOverloads constructor(
     }
   }
 
+  private val impl = Alarm(threadToUse, parentDisposable)
+
+  override fun dispose() {
+    Disposer.dispose(impl)
+  }
+
+  val isDisposed: Boolean get() = impl.isDisposed
+
+  val isEmpty: Boolean get() = impl.isEmpty
+
+  @TestOnly
+  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  fun waitForAllExecuted(timeout: Long, unit: TimeUnit) {
+    return impl.waitForAllExecuted(timeout, unit)
+  }
+
   @JvmOverloads
   fun request(forceRun: Boolean = false, delay: Int = this@SingleAlarm.delay) {
-    if (isEmpty) {
-      _addRequest(task, if (forceRun) 0 else delay.toLong(), modalityState)
+    if (impl.isEmpty) {
+      impl._addRequest(task, if (forceRun) 0 else delay.toLong(), modalityState)
     }
   }
 
   fun request(modalityState: ModalityState) {
-    if (isEmpty) {
-      _addRequest(task, delay.toLong(), modalityState)
+    if (impl.isEmpty) {
+      impl._addRequest(task, delay.toLong(), modalityState)
     }
   }
 
@@ -47,7 +70,7 @@ class SingleAlarm @JvmOverloads constructor(
    * Cancel doesn't interrupt already running task.
    */
   fun cancel() {
-    cancelAllRequests()
+    impl.cancelAllRequests()
   }
 
   /**
@@ -55,9 +78,13 @@ class SingleAlarm @JvmOverloads constructor(
    */
   @JvmOverloads
   fun cancelAndRequest(forceRun: Boolean = false) {
-    if (!isDisposed) {
-      cancelAllAndAddRequest(task, if (forceRun) 0 else delay, modalityState)
+    if (!impl.isDisposed) {
+      impl.cancelAllAndAddRequest(task, if (forceRun) 0 else delay, modalityState)
     }
+  }
+
+  fun cancelAllRequests(): Int {
+    return impl.cancelAllRequests()
   }
 
   companion object {
