@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.vcs.log.CommitId
@@ -65,12 +64,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
                                                                      coroutineScope: CoroutineScope) {
       // Dispatchers.EDT is not immediate -
       // later invocation is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
-      val scope = coroutineScope.childScope(Dispatchers.EDT)
-      Disposer.register(dataProvider) {
-        scope.cancel()
-      }
-
-      scope.launch(CoroutineName("Vcs log table ${table.id} rows visibility tracker")) {
+      val job = coroutineScope.launch(Dispatchers.EDT + CoroutineName("Vcs log table ${table.id} rows visibility tracker")) {
         combine(
           table.columnVisibilityFlow(column),
           combine(table.modelChangedFlow(),
@@ -86,6 +80,9 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
             table.onColumnDataChanged(column)
           }
         }
+      }
+      Disposer.register(dataProvider) {
+        job.cancel()
       }
     }
 
