@@ -28,12 +28,13 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
   override fun getId(): String = JavaBundle.message("jvm.logging.configurable.display.name")
 
   override fun createComponent(): JComponent {
+    val isOnlyOnSetup = JvmLogger.getAllLoggersNames(settings.loggerId == JvmLogger.UNSPECIFIED_LOGGER_NAME)
     panel = panel {
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
           label(JavaBundle.message("label.configurable.logger.type"))
-          comboBox(JavaLoggerModel(JvmLogger.getAllLoggersNames(), settings.logger)).bindItem(
-            settings::logger.toNullableProperty()).onChanged {
+          comboBox(JavaLoggerModel(isOnlyOnSetup, settings.loggerId)).bindItem(
+            settings::loggerId.toNullableProperty()).onChanged {
             updateWarningRow(it.item)
           }
         }
@@ -43,13 +44,13 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
         }.visible(false)
       }
     }
-    updateWarningRow(settings.logger)
+    updateWarningRow(settings.loggerId)
     return panel
   }
 
   private fun updateWarningRow(loggerDisplayName: String?) {
     ReadAction.nonBlocking<Boolean> {
-      val logger = JvmLogger.EP_NAME.extensionList.find { it.toString() == loggerDisplayName } ?: return@nonBlocking false
+      val logger = JvmLogger.getLoggerByName(loggerDisplayName) ?: return@nonBlocking false
       !JavaLibraryUtil.hasLibraryClass(project, logger.loggerName)
     }.finishOnUiThread(ModalityState.any()) { isVisible ->
       warningRow.visible(isVisible)

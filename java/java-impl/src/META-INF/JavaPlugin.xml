@@ -922,7 +922,7 @@
     <jvm.logging implementation="com.intellij.logging.Log4j2Logger"/>
     <jvm.logging implementation="com.intellij.logging.Log4jLogger"/>
     <jvm.logging implementation="com.intellij.logging.Slf4jLogger"/>
-    <jvm.logging implementation="com.intellij.logging.JavaUtilLogger"/>
+    <jvm.logging implementation="com.intellij.logging.UnspecifiedLogger"/>
 
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection$ForEachNonFinalFix"/>

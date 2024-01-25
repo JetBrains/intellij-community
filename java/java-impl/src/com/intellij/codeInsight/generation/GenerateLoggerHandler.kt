@@ -64,7 +64,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     clazz.add(field) as? PsiField
   }
 
-  private fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.EP_NAME.extensionList.filter {
+  private fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.getAllLoggers(false).filter {
     JavaLibraryUtil.hasLibraryClass(module, it.loggerName)
   }
 
@@ -72,7 +72,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     if (availableLoggers.isEmpty()) return null
     if (availableLoggers.size == 1) return availableLoggers.first()
 
-    val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.logger)
+    val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.loggerId)
 
     val chooseLoggerDialog = ChooseLoggerDialogWrapper(
       availableLoggers.map { it.toString() },
@@ -104,7 +104,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
         if (psiField.name == JvmLogger.LOGGER_IDENTIFIER) return false
 
-        for (logger in JvmLogger.EP_NAME.extensionList) {
+        for (logger in JvmLogger.getAllLoggers(false)) {
           if (logger.loggerName == typeName) return false
         }
       }

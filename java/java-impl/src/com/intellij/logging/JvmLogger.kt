@@ -9,6 +9,8 @@ abstract class JvmLogger {
   protected abstract val methodName: String
   protected abstract val classNamePattern: String
 
+  open fun isOnlyOnStartup() = false
+
   fun createLoggerFieldText(className: String): String {
     return "$loggerName ${LOGGER_IDENTIFIER} = ${factoryName}.$methodName(${String.format(classNamePattern, className)});"
   }
@@ -37,11 +39,16 @@ abstract class JvmLogger {
 
   companion object {
     const val LOGGER_IDENTIFIER = "LOGGER"
+    const val UNSPECIFIED_LOGGER_NAME = "Unspecified"
 
-    val EP_NAME = ExtensionPointName<JvmLogger>("com.intellij.jvm.logging")
+    private val EP_NAME = ExtensionPointName<JvmLogger>("com.intellij.jvm.logging")
 
-    fun getAllLoggersNames(): List<String> {
-      return EP_NAME.extensionList.map { it.toString() }
+    fun getAllLoggersNames(isOnlyOnSetup: Boolean): List<String> {
+      return getAllLoggers(isOnlyOnSetup).map { it.toString() }
+    }
+
+    fun getAllLoggers(isOnlyOnSetup: Boolean): List<JvmLogger> {
+      return EP_NAME.extensionList.filter { if (!isOnlyOnSetup) !it.isOnlyOnStartup() else true }
     }
 
     fun getLoggerByName(loggerName : String?) = EP_NAME.extensionList.find { it.toString() == loggerName }
