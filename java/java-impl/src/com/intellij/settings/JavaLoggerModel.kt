@@ -4,7 +4,8 @@ package com.intellij.settings
 import javax.swing.AbstractListModel
 import javax.swing.ComboBoxModel
 
-class JavaLoggerModel(loggerList : List<JvmLoggerType>, initialLogger : JvmLoggerType) : AbstractListModel<JvmLoggerType>(), ComboBoxModel<JvmLoggerType> {
+class JavaLoggerModel(loggerList: List<JvmLoggerType>,
+                      initialLogger: JvmLoggerType) : AbstractListModel<JvmLoggerType>(), ComboBoxModel<JvmLoggerType> {
   private val loggers = loggerList
 
   private var currentLogger = initialLogger

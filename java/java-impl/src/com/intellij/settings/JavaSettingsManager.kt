@@ -6,7 +6,7 @@ import com.intellij.openapi.components.*
 @Service(Service.Level.PROJECT)
 @State(name = "JavaSettingsStorage",
        storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class JavaSettingsStorage : SimplePersistentStateComponent<JavaSettingsStorage.State>(State())  {
+class JavaSettingsStorage : SimplePersistentStateComponent<JavaSettingsStorage.State>(State()) {
   class State : BaseState() {
     var logger by enum<JvmLoggerType>(JvmLoggerType.JAVA_LOGGING)
   }

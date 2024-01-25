@@ -4,8 +4,8 @@ package com.intellij.settings
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
 enum class JvmLoggerType(
-  val loggerName : String,
-  val factoryName : String,
+  val loggerName: String,
+  val factoryName: String,
   val methodName: String,
   private val classNamePattern: String
 ) {
@@ -60,7 +60,7 @@ enum class JvmLoggerType(
     }
   };
 
-  fun createLoggerFieldText(className : String) : String {
+  fun createLoggerFieldText(className: String): String {
     return "$loggerName $LOGGER_IDENTIFIER = ${factoryName}.$methodName(${String.format(classNamePattern, className)});"
   }
 
