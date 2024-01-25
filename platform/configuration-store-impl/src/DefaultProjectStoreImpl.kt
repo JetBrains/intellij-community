@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -14,14 +14,10 @@ import java.nio.file.Path
 
 @NonNls private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
-private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
-  override val configuration = object: FileBasedStorageConfiguration {
-    override val isUseVfsForRead: Boolean
-      get() = false
-
-    override val isUseVfsForWrite: Boolean
-      get() = false
-  }
+private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) :
+  FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED)
+{
+  override val configuration = appFileBasedStorageConfiguration
 
   public override fun loadLocalData(): Element? {
     val element = super.loadLocalData() ?: return null
