@@ -259,19 +259,8 @@ class MavenProjectResolver(private val myProject: Project) {
       resolverResults
     }
     catch (e: Throwable) {
-      MavenLog.LOG.info(e)
-      MavenLog.printInTests(e) // print exception since we need to know if something wrong with our logic
-      files.map {
-        val result = reader.readProjectAsync(generalSettings, it, explicitProfiles, locator)
-        val message = e.message
-        if (message != null) {
-          result.readingProblems.add(MavenProjectProblem.createStructureProblem(it.getPath(), message))
-        }
-        else {
-          result.readingProblems.add(MavenProjectProblem.createSyntaxProblem(it.getPath(), MavenProjectProblem.ProblemType.SYNTAX))
-        }
-        MavenProjectResolverResult(result)
-      }
+      MavenLog.LOG.error(e)
+      emptyList()
     }
   }
 
