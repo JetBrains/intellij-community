@@ -29,13 +29,16 @@ class DisposalCountingHolder<T : Any>(private val valueFactory: (CheckedDisposab
     }
 
     disposalCounter++
-    Disposer.register(disposable, Disposable {
-      disposalCounter--
-      if (disposalCounter <= 0) {
-        disposeValue()
-      }
-    })
+    Disposer.register(disposable, Disposable { release() })
     return value
+  }
+
+  @Synchronized
+  private fun release() {
+    disposalCounter--
+    if (disposalCounter <= 0) {
+      disposeValue()
+    }
   }
 
   @Synchronized
