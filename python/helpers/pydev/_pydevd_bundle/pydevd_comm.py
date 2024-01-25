@@ -93,7 +93,7 @@ from _pydevd_bundle import pydevd_vars
 import pydevd_tracing
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vm_type
-from _pydevd_bundle import pydevd_bytecode_utils
+from _pydevd_bundle.smart_step_into import find_stepping_variants
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client, is_real_file
 import pydevd_file_utils
 import os
@@ -1479,7 +1479,7 @@ class InternalGetSmartStepIntoVariants(InternalThreadCommand):
     def do_it(self, dbg):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
-            variants = pydevd_bytecode_utils.find_stepping_targets(frame, self.start_line, self.end_line)
+            variants = find_stepping_variants(frame, self.start_line, self.end_line)
             xml = "<xml>"
 
             for name, is_visited in variants:
