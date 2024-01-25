@@ -69,9 +69,8 @@ public final class UnreachableCodeInspection extends AbstractBaseJavaLocalInspec
               // Nested method or class: will be reported for the corresponding anchor
               continue;
             }
-            holder.registerProblem(psiElement, JavaBundle.message("inspection.data.flow.unreachable.code.display.name"),
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                   range.shiftLeft(psiElement.getTextRange().getStartOffset()));
+            holder.registerProblem(psiElement, range.shiftLeft(psiElement.getTextRange().getStartOffset()),
+                                   JavaBundle.message("inspection.data.flow.unreachable.code.display.name"));
           }
         }
       }
