@@ -193,15 +193,6 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
     }
   }
 
-  /**
-   * Schedule update local gav index content async.
-   */
-  fun scheduleUpdateContentLocalGav(explicit: Boolean) {
-    val localIndex = localMavenGavIndex;
-    if (localIndex is MavenUpdatableIndex) {
-      MavenSystemIndicesManager.getInstance().scheduleUpdateIndexContent(listOf(localIndex), explicit)
-    }
-  }
 
   fun scheduleUpdateContentAll(explicit: Boolean) {
     val toUpdate = ArrayList<MavenUpdatableIndex>()
