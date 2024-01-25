@@ -150,7 +150,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
       prepareToShow()?.invoke()
     }
 
-    fun prepareToShow(): (() -> Unit)? {
+    internal fun prepareToShow(): (() -> Unit)? {
       if (instance != null) {
         return null
       }

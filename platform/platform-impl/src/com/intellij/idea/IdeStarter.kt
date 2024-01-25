@@ -15,6 +15,7 @@ import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -186,11 +187,18 @@ open class IdeStarter : ModernApplicationStarter() {
 
   private suspend fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
-    serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
-      showWelcomeFrameTask()
-      runCatching {
-        lifecyclePublisher.welcomeScreenDisplayed()
-      }.getOrLogException(thisLogger())
+    serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      // https://youtrack.jetbrains.com/issue/IJPL-522
+      launch {
+        serviceAsync<ActionManager>()
+      }
+
+      withContext(Dispatchers.EDT) {
+        showWelcomeFrameTask()
+        runCatching {
+          lifecyclePublisher.welcomeScreenDisplayed()
+        }.getOrLogException(thisLogger())
+      }
     }
     return false
   }
