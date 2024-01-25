@@ -17,12 +17,11 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -63,12 +62,9 @@ final class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSa
 
   @Override
   protected void addApplicableFileTypes(@NotNull Collection<? super FileType> result) {
-    // add all file types that can be handled by the IDE internal formatter (== have FormattingModelBuilder)
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-
     // The formatting capability of a file is generally determined by its programming language rather than its file type.
     // The UI task involves displaying all file types that
-    //  - have the defined system pattern
+    //  - have the defined file name pattern (fileTypeManager.getAssociations())
     //  - can be formatted
     // We perform various language-based checks to assess the code's formattability.
     // Upon successful verification, we add all associated file types for that language to the UI list.
@@ -79,32 +75,23 @@ final class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSa
     // and the details can be found in the file history (CPP-37117).
 
     // prepare the language to "file types with patterns" map
-    HashMap<Language, List<LanguageFileType>> languageFileTypes = new HashMap<>();
+    MultiMap<Language, LanguageFileType> languageFileTypes = new MultiMap<>();
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (FileType fileType : fileTypeManager.getRegisteredFileTypes()) {
-      if (fileType instanceof LanguageFileType lft
-          && !fileTypeManager.getAssociations(fileType).isEmpty()) {
-        Language language = lft.getLanguage();
-        List<LanguageFileType> types = languageFileTypes.get(language);
-        if (types == null) {
-          types = new ArrayList<>();
-        }
-        types.add(lft);
-        languageFileTypes.put(language, types);
+      if (fileType instanceof LanguageFileType lft && !fileTypeManager.getAssociations(fileType).isEmpty()) {
+        languageFileTypes.putValue(lft.getLanguage(), lft);
       }
     }
 
     // if the language is formattable, add all file types from the created map
     Consumer<Language> addLanguageFileTypes = (@Nullable Language language) -> {
-      if (language == null)
-        return;
-
-      List<LanguageFileType> fileTypes = languageFileTypes.get(language);
-      if (fileTypes != null) {
-        result.addAll(fileTypes);
+      if (language != null) {
+        result.addAll(languageFileTypes.get(language));
+        ContainerUtil.addIfNotNull(result, language.getAssociatedFileType());
       }
-      ContainerUtil.addIfNotNull(result, language.getAssociatedFileType());
     };
 
+    // add all file types that can be handled by the IDE internal formatter (== have FormattingModelBuilder)
     for (Language language : languageFileTypes.keySet()) {
       if (LanguageFormatting.INSTANCE.forLanguage(language) != null) {
         addLanguageFileTypes.accept(language);
