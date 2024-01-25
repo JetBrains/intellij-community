@@ -11,7 +11,6 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
-import com.intellij.ide.ui.LafReference.Companion.SEPARATOR
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
@@ -32,6 +31,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
@@ -108,7 +108,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var preferredDarkThemeId: String? = null
 
   private val storedDefaults = HashMap<String?, MutableMap<String, Any?>>()
-  private val lafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> { LafComboBoxModel() }
+  private val lafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> {
+    LafComboBoxModel(ThemeListProvider.getInstance().getShownThemes())
+  }
   private val settingsToolbar = lazy {
     val group = DefaultActionGroup(PreferredLafAction())
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
@@ -409,7 +411,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     LafReference(it.name, it.id)
   }
 
-  override fun getLookAndFeelCellRenderer(): ListCellRenderer<LafReference> = LafCellRenderer()
+  override fun getLookAndFeelCellRenderer(): ListCellRenderer<LafReference> = LafCellRenderer(lafComboBoxModel.value as? LafComboBoxModel)
 
   override fun getSettingsToolbar(): JComponent = settingsToolbar.value.component
 
@@ -833,32 +835,25 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 }
 
-private class LafCellRenderer : SimpleListCellRenderer<LafReference>() {
-  companion object {
-    private val separator: SeparatorWithText = object : SeparatorWithText() {
-      override fun paintComponent(g: Graphics) {
-        g.color = foreground
-        val bounds = Rectangle(width, height)
-        JBInsets.removeFrom(bounds, insets)
-        paintLine(g, bounds.x, bounds.y + bounds.height / 2, bounds.width)
-      }
+private class LafCellRenderer(private val model: LafComboBoxModel?) : GroupedComboBoxRenderer<LafReference>() {
+  override fun getText(item: LafReference): String {
+    return item.name
+  }
+
+  override fun separatorFor(value: LafReference): ListSeparator? {
+    model ?: return null
+
+    if (value.themeId.isEmpty()) return ListSeparator()
+
+    val firstItemInGroup = model.groupedThemes.asSequence().drop(1).firstOrNull {
+      value.themeId == it.firstOrNull()?.id
     }
-  }
 
-  override fun getListCellRendererComponent(list: JList<out LafReference>,
-                                            value: LafReference,
-                                            index: Int,
-                                            isSelected: Boolean,
-                                            cellHasFocus: Boolean): Component {
-    return if (value === SEPARATOR) separator else super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-  }
-
-  override fun customize(list: JList<out LafReference>,
-                         value: LafReference,
-                         index: Int,
-                         selected: Boolean,
-                         hasFocus: Boolean) {
-    text = value.name
+    if (firstItemInGroup != null) {
+      if (firstItemInGroup.first().isThemeFromJetBrains) return ListSeparator()
+      else return ListSeparator(IdeBundle.message("combobox.list.custom.section.title"))
+    }
+    return null
   }
 }
 
@@ -1231,23 +1226,8 @@ internal fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
   return themeListManager.findThemeById(id) ?: error("Default theme not found(id=$id, isDark=$isDark, isNewUI=$isNewUi)")
 }
 
-private class LafComboBoxModel : CollectionComboBoxModel<LafReference>(getAllReferences()) {
-  override fun setSelectedItem(item: Any?) {
-    if (item !== SEPARATOR) {
-      super.setSelectedItem(item)
-    }
-  }
-}
+private class LafComboBoxModel(val groupedThemes: List<List<UIThemeLookAndFeelInfo>>)
+  : CollectionComboBoxModel<LafReference>(getAllReferences(groupedThemes))
 
-private fun getAllReferences(): List<LafReference> {
-  val result = ArrayList<LafReference>()
-  for (group in ThemeListProvider.getInstance().getShownThemes()) {
-    if (result.isNotEmpty()) {
-      result.add(SEPARATOR)
-    }
-    for (info in group) {
-      result.add(LafReference(info.name, info.id))
-    }
-  }
-  return result
-}
+private fun getAllReferences(groupedThemes: List<List<UIThemeLookAndFeelInfo>>): List<LafReference> =
+  groupedThemes.asSequence().flatten().map { LafReference(it.name, it.id) }.toList()

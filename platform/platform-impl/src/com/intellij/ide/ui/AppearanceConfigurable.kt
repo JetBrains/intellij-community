@@ -174,10 +174,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       panel {
         row(message("combobox.look.and.feel")) {
           val lafComboBoxModelWrapper = LafComboBoxModelWrapper(lafManager.lafComboBoxModel)
-          val theme = comboBox(lafComboBoxModelWrapper, lafManager.lookAndFeelCellRenderer)
+          val theme = comboBox(lafComboBoxModelWrapper)
             .bindItem(lafProperty)
             .accessibleName(message("combobox.look.and.feel"))
 
+          theme.component.isSwingPopup = false
+          theme.component.renderer = lafManager.lookAndFeelCellRenderer
           lafComboBoxModelWrapper.comboBoxComponent = theme.component
 
           val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
@@ -650,7 +652,7 @@ private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
 
 private class LafComboBoxModelWrapper(private val lafComboBoxModel: CollectionComboBoxModel<LafReference>): ComboBoxModel<LafReference> {
   private val moreAction = LafReference(name = message("link.get.more.themes"), themeId = "")
-  private val additionalItems = listOf(LafReference.SEPARATOR, moreAction)
+  private val additionalItems = listOf(moreAction)
   var comboBoxComponent: JComponent? = null
 
   override fun getSize(): Int = lafComboBoxModel.size.let { if (it > 0) it + additionalItems.size else it }

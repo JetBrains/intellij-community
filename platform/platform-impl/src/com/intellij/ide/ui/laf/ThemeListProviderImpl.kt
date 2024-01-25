@@ -10,7 +10,6 @@ private class ThemeListProviderImpl : ThemeListProvider {
     val result = mutableListOf<List<UIThemeLookAndFeelInfo>>()
     val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
 
-    val defaultAuthor = "JetBrains"
     val newUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
     val classicUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
     val customThemes = mutableListOf<UIThemeLookAndFeelInfo>()
@@ -20,7 +19,7 @@ private class ThemeListProviderImpl : ThemeListProvider {
 
     if (ExperimentalUI.isNewUI()) {
       uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.NEW).forEach { info ->
-        if (info.author == defaultAuthor) newUiThemes.add(info)
+        if (info.isThemeFromJetBrains) newUiThemes.add(info)
         else customThemes.add(info)
       }
     }
@@ -32,7 +31,7 @@ private class ThemeListProviderImpl : ThemeListProvider {
             || info.id == "IntelliJ"
             || (info.id == "JetBrainsLightTheme" && ExperimentalUI.isNewUI())) return@forEach
 
-        if (info.author == defaultAuthor) classicUiThemes.add(info)
+        if (info.isThemeFromJetBrains) classicUiThemes.add(info)
         else customThemes.add(info)
       }
 

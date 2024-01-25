@@ -5,8 +5,4 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-data class LafReference(@NlsSafe @JvmField val name: String, @JvmField val themeId: String) {
-  companion object {
-    val SEPARATOR: LafReference = LafReference("", "")
-  }
-}
+data class LafReference(@NlsSafe @JvmField val name: String, @JvmField val themeId: String)

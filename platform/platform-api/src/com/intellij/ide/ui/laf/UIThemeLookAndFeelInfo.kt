@@ -57,3 +57,5 @@ fun EditorColorsScheme.isDefaultForTheme(theme: UIThemeLookAndFeelInfo?): Boolea
   (theme?.editorSchemeId ?: defaultNonLaFSchemeName()) == Scheme.getBaseName(name)
 
 private fun defaultNonLaFSchemeName() = if (StartupUiUtil.isDarkTheme) "Darcula" else "Default"
+
+val UIThemeLookAndFeelInfo.isThemeFromJetBrains: Boolean get() = author == "JetBrains"
