@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
@@ -211,7 +211,7 @@ private class Uploader(serverUrl: String, val authHeader: String) {
 
   fun isExist(path: String, logIfExists: Boolean = false): Boolean {
     val url = pathToUrl(path)
-    spanBuilder("head").setAttribute("url", url).use { span ->
+    spanBuilder("head").setAttribute("url", url).useWithoutActiveScope { span ->
       val code = retryWithExponentialBackOff {
         httpClient.head(url, authHeader)
       }

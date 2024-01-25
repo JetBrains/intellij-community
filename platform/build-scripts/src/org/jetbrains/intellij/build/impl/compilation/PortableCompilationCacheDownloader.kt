@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
@@ -79,7 +79,7 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private fun isExist(path: String): Boolean =
-    TraceManager.spanBuilder("head").setAttribute("url", remoteCacheUrl).use {
+    TraceManager.spanBuilder("head").setAttribute("url", remoteCacheUrl).useWithoutActiveScope {
       retryWithExponentialBackOff {
         httpClient.head(path, remoteCache.authHeader) == 200
       }

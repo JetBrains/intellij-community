@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
@@ -473,7 +473,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     val ideaSystemPath = Path.of("$tempDir/system")
-    spanBuilder("idea.system.path cleanup").use {
+    spanBuilder("idea.system.path cleanup").useWithoutActiveScope {
       NioFiles.deleteRecursively(ideaSystemPath)
     }
     @Suppress("SpellCheckingInspection")
@@ -569,7 +569,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
   override suspend fun runTestsSkippedInHeadlessEnvironment() {
     CompilationTasks.create(context).compileAllModulesAndTests()
-    val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use { loadTestsSkippedInHeadlessEnvironment() }
+    val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").useWithoutActiveScope { loadTestsSkippedInHeadlessEnvironment() }
     for (it in tests) {
       options.batchTestIncludes = it.getFirst()
       options.mainModule = it.getSecond()

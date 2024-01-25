@@ -27,7 +27,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * See [span concept](https://opentelemetry.io/docs/concepts/signals/traces/#spans) for more details on span nesting.
  */
 inline fun <T> SpanBuilder.useWithScopeBlocking(operation: (Span) -> T): T {
-  return startSpan().use { span ->
+  return startSpan().useWithoutActiveScope { span ->
     span.makeCurrent().use {
       operation(span)
     }
@@ -41,7 +41,7 @@ inline fun <T> SpanBuilder.useWithScopeBlocking(operation: (Span) -> T): T {
  * See [span concept](https://opentelemetry.io/docs/concepts/signals/traces/#spans) for more details on span nesting.
  */
 inline fun <T> Span.useWithScopeBlocking(operation: (Span) -> T): T {
-  return use {
+  return useWithoutActiveScope {
     makeCurrent().use {
       operation(this)
     }
@@ -118,16 +118,18 @@ fun runWithSpan(tracer: Tracer, spanName: String, parentSpan: Span, operation: C
 }
 
 /**
- * Consider using [useWithScopeBlocking] instead
+ * Does not activate the span scope, so **new spans created inside will not be linked to the started span**.
+ * Consider using [useWithScopeBlocking] to also the scope.
  */
-inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
-  return startSpan().use(operation)
+inline fun <T> SpanBuilder.useWithoutActiveScope(operation: (Span) -> T): T {
+  return startSpan().useWithoutActiveScope(operation)
 }
 
 /**
- * Consider using [useWithScopeBlocking] instead
+ * Does not activate the span scope, so **new spans created inside will not be linked to [this] span**.
+ * Consider using [useWithScopeBlocking] to also the scope.
  */
-inline fun <T> Span.use(operation: (Span) -> T): T {
+inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
   try {
     return operation(this)
   }

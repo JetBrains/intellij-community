@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -136,7 +136,7 @@ fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, 
     Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
   }
   else {
-    spanBuilder(stepMessage).startSpan().use {
+    spanBuilder(stepMessage).startSpan().useWithoutActiveScope {
       step.run()
     }
   }

@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
@@ -97,7 +97,7 @@ fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: Com
   }
 
   createBufferPool().use { bufferPool ->
-    spanBuilder("upload packed classes").use {
+    spanBuilder("upload packed classes").useWithoutActiveScope {
       upload(config = config, zipDir = zipDir, messages = context.messages, items = items, bufferPool = bufferPool)
     }
   }
@@ -120,7 +120,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
   Files.createDirectories(zipDir)
 
   val items = ArrayList<PackAndUploadItem>(2048)
-  spanBuilder("compute module list to pack").use { span ->
+  spanBuilder("compute module list to pack").useWithoutActiveScope { span ->
     // production, test
     for (subRoot in Files.newDirectoryStream(context.classesOutputDirectory).use(DirectoryStream<Path>::toList)) {
       if (!Files.isDirectory(subRoot)) {
@@ -163,7 +163,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
     val traceContext = Context.current()
     ForkJoinTask.invokeAll(items.map { item ->
       ForkJoinTask.adapt(Callable {
-        spanBuilder("pack").setParent(traceContext).setAttribute("name", item.name).use {
+        spanBuilder("pack").setParent(traceContext).setAttribute("name", item.name).useWithoutActiveScope {
           // we compress the whole file using ZSTD
           zip(
             targetFile = item.archive,
@@ -173,7 +173,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
             addDirEntriesMode = addDirEntriesMode
           )
         }
-        spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).use {
+        spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).useWithoutActiveScope {
           item.hash = computeHash(item.archive)
         }
       })

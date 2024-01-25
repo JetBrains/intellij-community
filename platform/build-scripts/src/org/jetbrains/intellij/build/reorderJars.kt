@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -45,7 +45,7 @@ fun reorderJar(relativePath: String, file: Path) {
   spanBuilder("reorder jar")
     .setAttribute("relativePath", relativePath)
     .setAttribute("file", file.toString())
-    .use {
+    .useWithoutActiveScope {
       reorderJar(jarFile = file, orderedNames = orderedNames)
     }
 }
@@ -53,7 +53,7 @@ fun reorderJar(relativePath: String, file: Path) {
 fun generateClasspath(homeDir: Path, libDir: Path, antTargetFile: Path?): List<String> {
   spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
-    .use { span ->
+    .useWithoutActiveScope { span ->
       val files = computeAppClassPath(homeDir = homeDir, libDir = libDir)
       if (antTargetFile != null) {
         files.add(antTargetFile)

@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import io.opentelemetry.api.common.AttributeKey
@@ -77,7 +77,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val names = LinkedHashSet<String>()
     spanBuilder("collect dependencies")
       .setAttribute(AttributeKey.longKey("moduleCount"), modules.size.toLong())
-      .use { span ->
+      .useWithoutActiveScope { span ->
         val requiredDependencies = ArrayList<String>()
         for (module in modules) {
           requiredDependencies.clear()
