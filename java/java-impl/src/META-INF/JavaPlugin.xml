@@ -285,6 +285,7 @@
                     interface="com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension" interface="com.intellij.compiler.cache.client.JpsServerAuthExtension" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.execution.applicationRunLineMarkerHider" interface="com.intellij.execution.ApplicationRunLineMarkerHider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.jvm.logging" interface="com.intellij.logging.JvmLogger" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -916,6 +917,11 @@
                     overrides="true"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
+
+    <jvm.logging implementation="com.intellij.logging.ApacheCommonsLogger"/>
+    <jvm.logging implementation="com.intellij.logging.Log4j2Logger"/>
+    <jvm.logging implementation="com.intellij.logging.Log4jLogger"/>
+    <jvm.logging implementation="com.intellij.logging.Slf4jLogger"/>
 
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection$ForEachNonFinalFix"/>
