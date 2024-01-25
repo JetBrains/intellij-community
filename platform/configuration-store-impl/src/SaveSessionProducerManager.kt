@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.writeAction
@@ -13,7 +13,7 @@ import java.util.*
 open class SaveSessionProducerManager {
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
-  // actually, all storages for component store share the same value, but for flexibility and to simplify code, compute on the fly
+  // withing a single component store, individual storages might be heterogeneous, hence computing on the fly
   private var isVfsRequired = false
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
@@ -53,65 +53,53 @@ open class SaveSessionProducerManager {
       return SaveResult.EMPTY
     }
 
-    val result = SaveResult()
+    val saveResult = SaveResult()
+    saveSessions(saveSessions, saveResult)
+    return saveResult
+  }
+
+  protected suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
     if (isVfsRequired) {
       writeAction {
-        blockingSaveSessions(saveSessions, result)
+        for (saveSession in saveSessions) {
+          executeSaveBlocking(saveSession, saveResult)
+        }
       }
     }
     else {
-      saveSessions(saveSessions, result)
+      for (saveSession in saveSessions) {
+        executeSave(saveSession, saveResult)
+      }
     }
-    return result
   }
-}
 
-internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, result: SaveResult) {
-  for (saveSession in saveSessions) {
-    executeSave(saveSession, result)
+  private suspend fun executeSave(session: SaveSession, result: SaveResult) {
+    try {
+      session.save()
+    }
+    catch (e: ReadOnlyModificationException) {
+      LOG.warn(e)
+      result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
+    }
+    catch (e: ProcessCanceledException) { throw e }
+    catch (e: CancellationException) { throw e }
+    catch (e: Exception) {
+      result.addError(e)
+    }
   }
-}
 
-internal fun blockingSaveSessions(saveSessions: Collection<SaveSession>, result: SaveResult) {
-  for (saveSession in saveSessions) {
-    executeSaveBlocking(saveSession, result)
-  }
-}
-
-private suspend fun executeSave(session: SaveSession, result: SaveResult) {
-  try {
-    session.save()
-  }
-  catch (e: ReadOnlyModificationException) {
-    LOG.warn(e)
-    result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
-  }
-  catch (e: ProcessCanceledException) {
-    throw e
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    result.addError(e)
-  }
-}
-
-private fun executeSaveBlocking(session: SaveSession, result: SaveResult) {
-  try {
-    session.saveBlocking()
-  }
-  catch (e: ReadOnlyModificationException) {
-    LOG.warn(e)
-    result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
-  }
-  catch (e: ProcessCanceledException) {
-    throw e
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    result.addError(e)
+  private fun executeSaveBlocking(session: SaveSession, result: SaveResult) {
+    try {
+      session.saveBlocking()
+    }
+    catch (e: ReadOnlyModificationException) {
+      LOG.warn(e)
+      result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
+    }
+    catch (e: ProcessCanceledException) { throw e }
+    catch (e: CancellationException) { throw e }
+    catch (e: Exception) {
+      result.addError(e)
+    }
   }
 }

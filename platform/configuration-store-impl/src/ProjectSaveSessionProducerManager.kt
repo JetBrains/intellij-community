@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
@@ -15,17 +14,14 @@ import org.jetbrains.annotations.ApiStatus
 open class ProjectSaveSessionProducerManager(protected val project: Project) : SaveSessionProducerManager() {
   suspend fun saveWithAdditionalSaveSessions(extraSessions: Collection<SaveSession>): SaveResult {
     val saveSessions = mutableListOf<SaveSession>()
+    saveSessions.addAll(extraSessions)
     collectSaveSessions(saveSessions)
-    if (saveSessions.isEmpty() && extraSessions.isEmpty()) {
+    if (saveSessions.isEmpty()) {
       return SaveResult.EMPTY
     }
 
-    val saveResult = writeAction {
-      val r = SaveResult()
-      blockingSaveSessions(extraSessions, r)
-      blockingSaveSessions(saveSessions, r)
-      r
-    }
+    val saveResult = SaveResult()
+    saveSessions(saveSessions, saveResult)
     validate(saveResult)
     return saveResult
   }
@@ -52,13 +48,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
 
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
-    writeAction {
-      val r = SaveResult()
-      for (entry in oldList) {
-        blockingSaveSessions(listOf(entry.session), r)
-      }
-      r
-    }.appendTo(saveResult)
+    saveSessions(oldList.map { it.session }, saveResult)
 
     if (readonlyFiles.isNotEmpty()) {
       dropUnableToSaveProjectNotification(project, getFileList(readonlyFiles))
