@@ -109,8 +109,8 @@ public class MavenProject {
   public MavenProjectChanges updateFromReaderResult(@NotNull MavenProjectReaderResult readerResult,
                                                     @NotNull MavenGeneralSettings settings,
                                                     boolean updateLastReadStamp,
-                                                    boolean resetArtifacts,
-                                                    boolean resetProfiles) {
+                                                    boolean keepPreviousArtifacts,
+                                                    boolean keepPreviousProfiles) {
     State newState = myState.clone();
 
     if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
@@ -146,19 +146,19 @@ public class MavenProject {
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
 
-    doSetResolvedAttributes(newState, readerResult, resetArtifacts);
+    doSetResolvedAttributes(newState, readerResult, keepPreviousArtifacts);
 
     MavenModelPropertiesPatcher.patch(newState.myProperties, newState.myPlugins);
 
     newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory());
     Collection<String> newProfiles = collectProfilesIds(model.getProfiles());
-    if (resetProfiles || newState.myProfilesIds == null) {
-      newState.myProfilesIds = newProfiles;
-    }
-    else {
+    if (keepPreviousProfiles && newState.myProfilesIds != null) {
       Set<String> mergedProfiles = new HashSet<>(newState.myProfilesIds);
       mergedProfiles.addAll(newProfiles);
       newState.myProfilesIds = new ArrayList<>(mergedProfiles);
+    }
+    else {
+      newState.myProfilesIds = newProfiles;
     }
 
     newState.myModelMap = readerResult.nativeModelMap;
@@ -196,7 +196,7 @@ public class MavenProject {
 
   private static void doSetResolvedAttributes(State state,
                                               MavenProjectReaderResult readerResult,
-                                              boolean reset) {
+                                              boolean keepPreviousArtifacts) {
     MavenModel model = readerResult.mavenModel;
 
     Set<MavenId> newUnresolvedArtifacts = new HashSet<>();
@@ -207,7 +207,7 @@ public class MavenProject {
     LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifact> newAnnotationProcessors = new LinkedHashSet<>();
 
-    if (!reset) {
+    if (keepPreviousArtifacts) {
       if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
       if (state.myRemoteRepositories != null) newRepositories.addAll(state.myRemoteRepositories);
       if (state.myDependencies != null) newDependencies.addAll(state.myDependencies);

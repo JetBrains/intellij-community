@@ -67,7 +67,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
       val oldProjectId = if (mavenProject.isNew) null else mavenProject.mavenId
       val oldParentId = mavenProject.parentId
       val readerResult = reader.readProjectAsync(generalSettings, mavenProject.file, explicitProfiles, tree.projectLocator)
-      val readChanges = mavenProject.updateFromReaderResult(readerResult, generalSettings, true, false, true)
+      val readChanges = mavenProject.updateFromReaderResult(readerResult, generalSettings, true, true, false)
 
       tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId)
 

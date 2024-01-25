@@ -1727,6 +1727,11 @@ public class MavenUtil {
     return unrecoverable == null;
   }
 
+  @ApiStatus.Internal
+  public static boolean shouldKeepPreviousArtifacts(Collection<MavenProjectProblem> readingProblems) {
+    return !shouldResetDependenciesAndFolders(readingProblems);
+  }
+
   public static @Nullable VirtualFile getEffectiveSuperPom(Project project, @NotNull String workingDir) {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDir);
     MavenHomeType type = MavenProjectsManager.getInstance(project).getGeneralSettings().getMavenHomeType();

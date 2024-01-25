@@ -248,11 +248,11 @@ class MavenProjectResolver(private val myProject: Project) {
       return
     }
     val snapshot = mavenProjectCandidate.snapshot
-    val resetArtifacts = MavenUtil.shouldResetDependenciesAndFolders(result.readingProblems)
+    val keepPreviousArtifacts = MavenUtil.shouldKeepPreviousArtifacts(result.readingProblems)
 
     MavenLog.LOG.debug(
-      "Project resolution: updating maven project $mavenProjectCandidate, resetArtifacts=$resetArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
-    mavenProjectCandidate.updateFromReaderResult(result, generalSettings, false, resetArtifacts, false)
+      "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
+    mavenProjectCandidate.updateFromReaderResult(result, generalSettings, false, keepPreviousArtifacts, true)
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
       for (eachImporter in MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
