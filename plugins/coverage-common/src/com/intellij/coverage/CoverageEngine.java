@@ -83,7 +83,7 @@ public abstract class CoverageEngine {
   /**
    * Create a suite from a run configuration.
    */
-  public final @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
     CoverageRunner runner = config.getCoverageRunner();
     if (runner == null) return null;
     return createCoverageSuite(runner, config.createSuiteName(), config.createFileProvider(), config);

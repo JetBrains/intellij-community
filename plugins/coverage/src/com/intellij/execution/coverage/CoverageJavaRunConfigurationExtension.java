@@ -127,7 +127,6 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     coverageConfig.setCurrentCoverageSuite(null);
     if (runnerSettings instanceof CoverageRunnerData) {
       Project project = configuration.getProject();
-      coverageConfig.setCoverageRunner(JavaCoverageOptionsProvider.getInstance(project).getCoverageRunner());
       CoverageSuite suite = CoverageDataManager.getInstance(project).addCoverageSuite(coverageConfig);
       if (suite != null) {
         coverageConfig.setCurrentCoverageSuite(suite);
