@@ -1,6 +1,0 @@
-//noinspection GrPackage
-include "lib"
-include "api"
-include "service"
-include "withIdeaModelCustomisations"
-include "withIdeRepoFileDependency"
