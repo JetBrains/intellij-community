@@ -58,10 +58,12 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
 
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
-
     try {
       return ProgressManager.getInstance().runProcess(
-        Computable { runBlockingCancellable { readAction { getCodeVisionState(editor, project) } } },
+        Computable { runBlockingCancellable { readAction {
+          if (project.isDisposed || editor.isDisposed) CodeVisionState.READY_EMPTY
+          else getCodeVisionState(editor, project)
+        } } },
         EmptyProgressIndicator()
       )
     }
