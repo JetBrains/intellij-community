@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import java.util.Collections;
 import java.util.List;
 
-/** @deprecated Use {@link com.intellij.ui.popup.PopupFactoryImpl.ActionItem#INLINE_ACTIONS} instead */
+/** @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#INLINE_ACTIONS} instead */
 @Deprecated(forRemoval = true)
 public interface InlineActionsHolder {
 
