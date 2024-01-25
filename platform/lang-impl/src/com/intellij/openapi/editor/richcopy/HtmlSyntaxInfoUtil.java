@@ -4,6 +4,8 @@ package com.intellij.openapi.editor.richcopy;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
+import com.intellij.lang.documentation.QuickDocSyntaxHighlightingHandler;
+import com.intellij.lang.documentation.QuickDocSyntaxHighlightingHandlerFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -29,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.Objects;
+import java.util.List;
+import java.util.*;
 
 
 public final class HtmlSyntaxInfoUtil {
@@ -126,10 +129,20 @@ public final class HtmlSyntaxInfoUtil {
     String trimmed = doTrimIndent ? StringsKt.trimIndent(codeSnippet) : codeSnippet;
     String zeroIndentCode = trimmed.replace("\t", "    ");
     if (!zeroIndentCode.isEmpty()) {
-      PsiFile fakePsiFile = PsiFileFactory.getInstance(project).createFileFromText(language, codeSnippet);
+      var factory = QuickDocSyntaxHighlightingHandlerFactory.Companion.getEXTENSION$intellij_platform_lang_impl().forLanguage(language);
+      var handler = factory != null ? factory.createHandler() : null;
+      String preprocessedCode = handler != null ? handler.preprocessCode(zeroIndentCode) : zeroIndentCode;
+
+      PsiFile fakePsiFile = PsiFileFactory.getInstance(project).createFileFromText(language, preprocessedCode);
       EditorColorsScheme scheme =
         new ColorsSchemeWithChangedSaturation(EditorColorsManager.getInstance().getGlobalScheme(), saturationFactor);
-      buffer.append(getHtmlContent(fakePsiFile, zeroIndentCode, null, scheme, 0, zeroIndentCode.length()));
+
+      List<QuickDocSyntaxHighlightingHandler.HighlightInfo> semanticHighlighting =
+        handler != null ? handler.performSemanticHighlighting(fakePsiFile) : Collections.emptyList();
+      var rangeIterator = semanticHighlighting.isEmpty() ? null : new HighlightInfoIterator(semanticHighlighting, scheme);
+      var html = getHtmlContent(fakePsiFile, preprocessedCode, rangeIterator, scheme, 0, preprocessedCode.length());
+      var postProcessedHtml = handler != null && html != null ? handler.postProcessHtml(html.toString()) : html;
+      buffer.append(postProcessedHtml);
     }
     return buffer;
   }
@@ -339,4 +352,48 @@ public final class HtmlSyntaxInfoUtil {
 
     }
   }
+
+  private static class HighlightInfoIterator implements SyntaxInfoBuilder.RangeIterator {
+
+    private final Iterator<QuickDocSyntaxHighlightingHandler.HighlightInfo> myIterator;
+    private final EditorColorsScheme myScheme;
+    private QuickDocSyntaxHighlightingHandler.HighlightInfo myCurrentInfo = null;
+
+    private HighlightInfoIterator(List<QuickDocSyntaxHighlightingHandler.HighlightInfo> highlightInfos,
+                                  EditorColorsScheme scheme) {
+      myIterator = highlightInfos.stream()
+        .sorted(Comparator.comparing(el -> el.getStartOffset()))
+        .iterator();
+      myScheme = scheme;
+    }
+
+    @Override
+    public void advance() {
+      if (myIterator.hasNext()) {
+        myCurrentInfo = myIterator.next();
+      }
+    }
+
+    @Override
+    public boolean atEnd() {
+      return !myIterator.hasNext(); }
+
+    @Override
+    public int getRangeStart() {
+      return myCurrentInfo.getStartOffset(); }
+
+    @Override
+    public int getRangeEnd() {
+      return myCurrentInfo.getEndOffset(); }
+
+    @Override
+    public TextAttributes getTextAttributes() {
+      return myCurrentInfo.getTextAttributes(myScheme);
+    }
+
+    @Override
+    public void dispose() { }
+  }
+
+
 }
