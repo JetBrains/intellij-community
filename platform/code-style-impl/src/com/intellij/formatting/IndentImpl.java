@@ -23,6 +23,7 @@ public class IndentImpl extends Indent {
     this(type, absolute, spaces, relativeToDirectParent, enforceIndentToChildren, false);
   }
 
+  @ApiStatus.Experimental
   public IndentImpl(@NotNull Type type, boolean absolute, final int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren, boolean enforceChildrenToBeRelativeToMe) {
     myType = type;
     myIsAbsolute = absolute;
