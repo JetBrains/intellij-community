@@ -7,7 +7,6 @@ import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -22,13 +21,9 @@ import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
-import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
-import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
@@ -37,10 +32,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -56,16 +48,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeThat;
 
 /**
  * @author Vladislav.Soroka
@@ -99,7 +85,7 @@ public abstract class AbstractModelBuilderTest {
   @Before
   public void setUp() throws Exception {
     GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
-    assumeThat(gradleVersion, versionMatcherRule.getMatcher());
+    Assume.assumeThat(gradleVersion, versionMatcherRule.getMatcher());
     String gradleJvmHomePath = GradleJvmResolver.resolveGradleJvmHomePath(_gradleVersion);
 
     ensureTempDirCreated();
@@ -151,23 +137,26 @@ public abstract class AbstractModelBuilderTest {
       executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
 
       buildActionExecutor.withArguments(executionSettings.getArguments());
+      buildActionExecutor.setStandardError(System.err);
+      buildActionExecutor.setStandardOutput(System.out);
       buildActionExecutor.setJavaHome(new File(gradleJvmHomePath));
       buildActionExecutor.setJvmArguments("-Xmx128m", "-XX:MaxPermSize=64m");
       allModels = buildActionExecutor.run();
-      assertNotNull(allModels);
+      Assert.assertNotNull(allModels);
     }
   }
 
   @NotNull
   public static Set<Class<?>> getToolingExtensionClasses() {
-    return ContainerUtil.newHashSet(ExternalSystemRtClass.class, // intellij.platform.externalSystem.rt
-                                    GradleToolingExtensionClass.class, // intellij.gradle.toolingExtension
-                                    GradleToolingExtensionImplClass.class, // intellij.gradle.toolingExtension.impl
-                                    Multimap.class, // repacked gradle guava
-                                    ShortTypeHandling.class, // groovy
-                                    Object2ObjectMap.class, // fastutil
-                                    IonType.class,  // ion-java jar
-                                    SystemInfoRt.class // jar containing classes of `intellij.platform.util.rt` module
+    return ContainerUtil.newHashSet(
+      ExternalSystemRtClass.class, // intellij.platform.externalSystem.rt
+      GradleToolingExtensionClass.class, // intellij.gradle.toolingExtension
+      GradleToolingExtensionImplClass.class, // intellij.gradle.toolingExtension.impl
+      Multimap.class, // repacked gradle guava
+      ShortTypeHandling.class, // groovy
+      Object2ObjectMap.class, // fastutil
+      IonType.class,  // ion-java jar
+      SystemInfoRt.class // jar containing classes of `intellij.platform.util.rt` module
     );
   }
 
@@ -179,40 +168,6 @@ public abstract class AbstractModelBuilderTest {
   }
 
   protected abstract Set<Class<?>> getModels();
-
-
-  protected <T> Map<String, T> getModulesMap(final Class<T> aClass) {
-    final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
-
-    final String filterKey = "to_filter";
-    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, module -> {
-      final T value = allModels.getModel(module, aClass);
-      final String key = value != null ? module.getGradleProject().getPath() : filterKey;
-      return Pair.create(key, value);
-    });
-
-    map.remove(filterKey);
-    return map;
-  }
-
-  protected void assertBuildClasspath(String projectPath, String... classpath) {
-    final Map<String, BuildScriptClasspathModel> classpathModelMap = getModulesMap(BuildScriptClasspathModel.class);
-    final BuildScriptClasspathModel classpathModel = classpathModelMap.get(projectPath);
-
-    assertNotNull(classpathModel);
-
-    final List<? extends ClasspathEntryModel> classpathEntryModels = classpathModel.getClasspath().getAll();
-    assertEquals(classpath.length, classpathEntryModels.size());
-
-    for (int i = 0, length = classpath.length; i < length; i++) {
-      String classpathEntry = classpath[i];
-      final ClasspathEntryModel classpathEntryModel = classpathEntryModels.get(i);
-      assertNotNull(classpathEntryModel);
-      assertEquals(1, classpathEntryModel.getClasses().size());
-      final String path = classpathEntryModel.getClasses().iterator().next();
-      assertEquals(classpathEntry, new File(path).getName());
-    }
-  }
 
   private static void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;
