@@ -101,8 +101,8 @@ object QuickDocHighlightingHelper {
    */
   @JvmStatic
   @RequiresReadLock
-  fun getStyledInlineCodeFragment(project: Project, language: Language, @NlsSafe code: String): @NlsSafe String =
-    StringBuilder().apply { appendStyledInlineCodeFragment(project, language, code) }.toString()
+  fun getStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): @NlsSafe String =
+    StringBuilder().apply { appendStyledCodeFragment(project, language, code) }.toString()
 
   /**
    * Appends an HTML fragment containing [code] highlighted with [language].
@@ -112,7 +112,7 @@ object QuickDocHighlightingHelper {
    */
   @JvmStatic
   @RequiresReadLock
-  fun StringBuilder.appendStyledInlineCodeFragment(project: Project, language: Language, @NlsSafe code: String): StringBuilder =
+  fun StringBuilder.appendStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): StringBuilder =
     appendHighlightedCode(project, language, true, code, false)
 
   /**
