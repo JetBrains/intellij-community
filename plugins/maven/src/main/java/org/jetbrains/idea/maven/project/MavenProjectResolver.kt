@@ -14,16 +14,20 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue.getIssue
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue
 import org.jetbrains.idea.maven.importing.MavenImporter
+import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
+import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.BLOCKED_MIRROR_FOR_REPOSITORIES
+import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.MavenResolveProblemHolder
 import org.jetbrains.idea.maven.server.MavenConfigParseException
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.ParallelRunner
 import java.lang.reflect.InvocationTargetException
@@ -122,13 +126,13 @@ class MavenProjectResolver(private val myProject: Project) {
       workspaceMap,
       updateSnapshots,
       userProperties)
-    val problems = MavenResolveResultProblemProcessor.getProblems(results)
+    val problems = getProblems(results)
     val problemsExist = !problems.isEmpty
     if (problemsExist) {
       MavenLog.LOG.debug(
         "Project resolution problems: ${problems.unresolvedArtifacts.size} ${problems.unresolvedArtifactProblems.size} ${problems.repositoryBlockedProblems.size}")
     }
-    MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems)
+    notifySyncForProblem(problems)
     val artifactIdToMavenProjects = mavenProjects
       .groupBy { mavenProject -> mavenProject.mavenId.artifactId }
       .filterKeys { it != null }
@@ -140,6 +144,52 @@ class MavenProjectResolver(private val myProject: Project) {
     }
     MavenLog.LOG.debug("Project resolution finished: ${projectsWithUnresolvedPlugins.size}")
     return projectsWithUnresolvedPlugins
+  }
+
+  fun getProblems(results: Collection<MavenProjectReaderResult>): MavenResolveProblemHolder {
+    val repositoryBlockedProblems: MutableSet<MavenProjectProblem> = HashSet()
+    val unresolvedArtifactProblems: MutableSet<MavenProjectProblem> = HashSet()
+    val unresolvedArtifacts: MutableSet<MavenArtifact?> = HashSet()
+
+    var hasProblem = false
+    for (result in results) {
+      for (problem in result.readingProblems) {
+        if (!hasProblem) hasProblem = true
+        if (problem.mavenArtifact != null) {
+          if (unresolvedArtifacts.add(problem.mavenArtifact)) {
+            unresolvedArtifactProblems.add(problem)
+          }
+        }
+        val message = problem.description
+        if (message != null && message.contains(BLOCKED_MIRROR_FOR_REPOSITORIES)) {
+          repositoryBlockedProblems.add(problem)
+        }
+      }
+      for (problem in result.unresolvedProblems) {
+        if (unresolvedArtifacts.add(problem.mavenArtifact)) {
+          unresolvedArtifactProblems.add(problem)
+        }
+      }
+    }
+    return MavenResolveProblemHolder(repositoryBlockedProblems, unresolvedArtifactProblems, unresolvedArtifacts)
+  }
+
+  private fun notifySyncForProblem(problem: MavenResolveProblemHolder) {
+    if (problem.isEmpty) return
+
+    val syncConsole = MavenProjectsManager.getInstance(myProject).syncConsole
+    for (projectProblem in problem.repositoryBlockedProblems) {
+      if (projectProblem.description == null) continue
+      val buildIssue = getIssue(myProject, projectProblem.description!!)
+      syncConsole.showBuildIssue(buildIssue)
+    }
+
+    for (projectProblem in problem.unresolvedArtifactProblems) {
+      if (projectProblem.mavenArtifact == null || projectProblem.description == null) continue
+      syncConsole.showArtifactBuildIssue(MavenServerConsoleIndicator.ResolveType.DEPENDENCY,
+                                         projectProblem.mavenArtifact!!.mavenId.key,
+                                         projectProblem.description)
+    }
   }
 
   private suspend fun resolveProject(reader: MavenProjectReader,
@@ -186,9 +236,6 @@ class MavenProjectResolver(private val myProject: Project) {
         }
       }
       readerResults
-    }
-    catch (e: MavenProcessCanceledException) {
-      throw e
     }
     catch (e: Throwable) {
       MavenLog.LOG.info(e)

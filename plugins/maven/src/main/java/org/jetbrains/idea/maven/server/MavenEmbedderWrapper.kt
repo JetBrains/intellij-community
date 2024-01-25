@@ -51,7 +51,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
   }
 
-  @Throws(MavenProcessCanceledException::class)
   suspend fun resolveProject(fileToDependencyHash: Map<VirtualFile, String?>,
                              explicitProfiles: MavenExplicitProfiles,
                              progressReporter: RawProgressReporter,
