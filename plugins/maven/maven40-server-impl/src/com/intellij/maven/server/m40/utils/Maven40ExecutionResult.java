@@ -28,8 +28,8 @@ public class Maven40ExecutionResult {
     this(null, null, exceptions, Collections.emptyList());
   }
 
-  public Maven40ExecutionResult(@Nullable File pomFile, List<Exception> exceptions) {
-    this(null, null, exceptions, Collections.emptyList());
+  public Maven40ExecutionResult(@Nullable File pomFile, @NotNull List<ModelProblem> modelProblems) {
+    this(null, null, Collections.emptyList(), modelProblems);
     myPomFile = pomFile;
   }
 

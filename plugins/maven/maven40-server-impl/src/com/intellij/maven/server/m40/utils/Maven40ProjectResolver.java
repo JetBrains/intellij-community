@@ -156,11 +156,7 @@ public class Maven40ProjectResolver {
           File pomFile = buildingResult.getPomFile();
 
           if (project == null) {
-            List<Exception> exceptions = new ArrayList<>();
-            for (ModelProblem problem : buildingResult.getProblems()) {
-              exceptions.add(problem.getException());
-            }
-            executionResults.add(new Maven40ExecutionResult(buildingResult.getPomFile(), exceptions));
+            executionResults.add(new Maven40ExecutionResult(pomFile, buildingResult.getProblems()));
             continue;
           }
 

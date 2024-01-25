@@ -183,11 +183,7 @@ public class Maven3XProjectResolver {
           File pomFile = buildingResult.getPomFile();
 
           if (project == null) {
-            List<Exception> exceptions = new ArrayList<>();
-            for (ModelProblem problem : buildingResult.getProblems()) {
-              exceptions.add(problem.getException());
-            }
-            executionResults.add(new Maven3ExecutionResult(pomFile, exceptions));
+            executionResults.add(new Maven3ExecutionResult(pomFile, buildingResult.getProblems()));
             continue;
           }
 

@@ -42,8 +42,8 @@ public class Maven3ExecutionResult {
     this(null, null, exceptions, Collections.emptyList());
   }
 
-  public Maven3ExecutionResult(@Nullable File pomFile, List<Exception> exceptions) {
-    this(null, null, exceptions, Collections.emptyList());
+  public Maven3ExecutionResult(@Nullable File pomFile, @NotNull List<ModelProblem> modelProblems) {
+    this(null, null, Collections.emptyList(), modelProblems);
     myPomFile = pomFile;
   }
 
