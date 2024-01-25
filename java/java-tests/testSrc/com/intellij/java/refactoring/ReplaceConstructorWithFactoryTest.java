@@ -10,6 +10,9 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.modcommand.*;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,7 +21,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21_ANNOTATED;
+
 public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase {
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21_ANNOTATED;
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -64,6 +76,11 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testConstructorTypeParameters() { runTest("08", null); }
   
   public void testInnerClass2() { runTest("InnerClass2", "SimpleClass"); }
+  
+  public void testInjection() {
+    runTest("Injection", null); 
+  }
+  
   public void testRecords() {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + "RecordConstructor" + ".java");
     ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
@@ -110,6 +127,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
 
   private void runTest(final String testIndex, @NonNls String targetClassName) {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + testIndex + ".java");
+    setupEditorForInjectedLanguage();
     perform(targetClassName);
     checkResultByFile("/refactoring/replaceConstructorWithFactory/after" + testIndex + ".java");
   }
