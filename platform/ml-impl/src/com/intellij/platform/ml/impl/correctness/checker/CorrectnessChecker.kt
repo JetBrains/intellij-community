@@ -24,5 +24,6 @@ interface CorrectnessChecker {
   fun checkSemantic(file: PsiFile,
                     suggestion: String,
                     offset: Int,
-                    prefix: String): CheckResult
+                    prefix: String,
+                    matchedEnclosuresIndices: Set<Int>? = null): CheckResult
 }

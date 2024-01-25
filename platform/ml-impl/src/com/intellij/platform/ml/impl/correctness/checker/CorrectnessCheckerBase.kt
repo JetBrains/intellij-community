@@ -25,7 +25,7 @@ open class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChe
    * @return a file to be passed to [semanticCheckers].
    * @see [checkSemantic]
    */
-  protected open fun buildPsiForSemanticChecks(file: PsiFile, suggestion: String, offset: Int, prefix: String): PsiFile {
+  protected open fun buildPsiForSemanticChecks(file: PsiFile, suggestion: String, offset: Int, prefix: String, matchedEnclosuresIndices: Set<Int>?): PsiFile {
     return file
   }
 
@@ -39,8 +39,8 @@ open class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChe
 
   private val rawSemanticCheckers = semanticCheckers.filterIsInstance<RawSemanticChecker>()
 
-  final override fun checkSemantic(file: PsiFile, suggestion: String, offset: Int, prefix: String): CorrectnessChecker.CheckResult {
-    val fullPsi = buildPsiForSemanticChecks(file, suggestion, offset, prefix)
+  final override fun checkSemantic(file: PsiFile, suggestion: String, offset: Int, prefix: String, matchedEnclosuresIndices: Set<Int>?): CorrectnessChecker.CheckResult {
+    val fullPsi = buildPsiForSemanticChecks(file, suggestion, offset, prefix, matchedEnclosuresIndices)
 
     val range = TextRange(offset - prefix.length, offset + suggestion.length - prefix.length)
 
