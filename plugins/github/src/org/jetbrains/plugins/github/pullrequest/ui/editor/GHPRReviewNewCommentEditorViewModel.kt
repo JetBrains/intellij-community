@@ -63,13 +63,18 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
 
   override val submitActions: StateFlow<List<SubmitAction>> =
     pendingReviewState.combineState(reviewCommentPreferred) { reviewResult, reviewPreferred ->
-      val review = reviewResult.getOrNull()
-      if (review == null) {
-        if (reviewPreferred) listOf(createReviewAction, createSingleCommentAction)
-        else listOf(createSingleCommentAction, createReviewAction)
+      if (reviewResult.isSuccess) {
+        val review = reviewResult.getOrNull()
+        if (review == null) {
+          if (reviewPreferred) listOf(createReviewAction, createSingleCommentAction)
+          else listOf(createSingleCommentAction, createReviewAction)
+        }
+        else {
+          listOf(createReviewCommentAction(review.id))
+        }
       }
       else {
-        listOf(createReviewCommentAction(review.id))
+        emptyList()
       }
     }
 

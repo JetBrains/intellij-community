@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
+import com.intellij.CommonBundle
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.mapState
@@ -107,9 +108,7 @@ internal object GHPRReviewEditorComponentsFactory {
     }.stateInNow(cs, null)
 
     val secondaryActions = vm.submitActions.mapScoped { actions ->
-      actions.drop(1).mapNotNull {
-        createUiAction(vm, it)
-      }
+      actions.drop(1).map { createUiAction(vm, it) }
     }.stateInNow(cs, emptyList())
 
     val cancelAction = swingAction("") {
@@ -153,7 +152,7 @@ internal object GHPRReviewEditorComponentsFactory {
   }
 
   private fun CoroutineScope.createUiAction(vm: GHPRReviewNewCommentEditorViewModel,
-                                            action: GHPRReviewNewCommentEditorViewModel.SubmitAction?): Action? {
+                                            action: GHPRReviewNewCommentEditorViewModel.SubmitAction?): Action {
     val cs = this
     return when (action) {
       is GHPRReviewNewCommentEditorViewModel.SubmitAction.CreateReview ->
@@ -162,7 +161,9 @@ internal object GHPRReviewEditorComponentsFactory {
         vm.submitActionIn(cs, GithubBundle.message("pull.request.review.editor.add.review.comment")) { action() }
       is GHPRReviewNewCommentEditorViewModel.SubmitAction.CreateSingleComment ->
         vm.submitActionIn(cs, GithubBundle.message("pull.request.review.editor.add.single.comment")) { action() }
-      null -> null
+      null -> swingAction(CommonBundle.getLoadingTreeNodeText()) {}.apply {
+        isEnabled = false
+      }
     }
   }
 }
