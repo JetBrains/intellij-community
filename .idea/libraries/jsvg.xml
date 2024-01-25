@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jsvg" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.github.weisj:jsvg:1.2.0-jb.1">
+    <properties include-transitive-deps="false" maven-id="com.github.weisj:jsvg:1.3.0-jb.5">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/1.2.0-jb.1/jsvg-1.2.0-jb.1.jar">
-          <sha256sum>8c4fd87b5a88064eacd04c2319300d871e87b0b46c4c5588679bf9975e98207d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/1.3.0-jb.5/jsvg-1.3.0-jb.5.jar">
+          <sha256sum>03acff10b0c3011391a8151aab3098115d5eff7c18810ec404876544785d54ae</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/1.2.0-jb.1/jsvg-1.2.0-jb.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/1.3.0-jb.5/jsvg-1.3.0-jb.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/1.2.0-jb.1/jsvg-1.2.0-jb.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/1.3.0-jb.5/jsvg-1.3.0-jb.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

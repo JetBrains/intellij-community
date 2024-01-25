@@ -9,6 +9,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.proguard.OptimizeLibraryContext
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,6 +42,7 @@ data class ZipSource(
   @JvmField val file: Path,
   @JvmField val excludes: List<Regex> = emptyList(),
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
+  @JvmField val optimizeConfigId: String? = null,
   val distributionFileEntryProducer: DistributionFileEntryProducer?,
 ) : Source, Comparable<ZipSource> {
   override var size: Int = 0
@@ -142,14 +144,15 @@ internal interface NativeFileHandler {
 }
 
 suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
-  buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null)
+  buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null, optimizeLibraryContext = null)
 }
 
 internal suspend fun buildJar(targetFile: Path,
                               sources: List<Source>,
                               compress: Boolean = false,
                               notify: Boolean = true,
-                              nativeFileHandler: NativeFileHandler? = null) {
+                              nativeFileHandler: NativeFileHandler? = null,
+                              optimizeLibraryContext: OptimizeLibraryContext?) {
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(channel = outChannel,
@@ -187,13 +190,42 @@ internal suspend fun buildJar(targetFile: Path,
           }
 
           is ZipSource -> {
-            handleZipSource(source = source,
-                            nativeFileHandler = nativeFileHandler,
-                            uniqueNames = uniqueNames,
-                            sources = sources,
-                            packageIndexBuilder = packageIndexBuilder,
-                            zipCreator = zipCreator,
-                            compress = compress)
+            var sourceFile = source.file
+            try {
+              //if (source.optimizeConfigId != null) {
+              //  TraceManager.spanBuilder("optimize").setAttribute("library", source.optimizeConfigId).useWithoutActiveScope {
+              //    val tempDir = optimizeLibraryContext!!.tempDir
+              //    val suffix = System.nanoTime().toString(Character.MAX_RADIX)
+              //    sourceFile = tempDir.resolve("${source.optimizeConfigId}-$suffix.jar")
+              //    val mappingFile = tempDir.resolve("${source.optimizeConfigId}-${System.nanoTime().toString(Character.MAX_RADIX)}.jar")
+              //    try {
+              //      optimizeLibrary(name = source.optimizeConfigId,
+              //                      input = source.file,
+              //                      output = sourceFile,
+              //                      javaHome = optimizeLibraryContext.javaHome.toString(),
+              //                      mapping = mappingFile)
+              //      zipCreator.file("${source.optimizeConfigId}.map.txt", mappingFile)
+              //    }
+              //    finally {
+              //      Files.deleteIfExists(mappingFile)
+              //    }
+              //  }
+              //}
+
+              handleZipSource(source = source,
+                              sourceFile = sourceFile,
+                              nativeFileHandler = nativeFileHandler,
+                              uniqueNames = uniqueNames,
+                              sources = sources,
+                              packageIndexBuilder = packageIndexBuilder,
+                              zipCreator = zipCreator,
+                              compress = compress)
+            }
+            finally {
+              if (sourceFile !== source.file) {
+                Files.deleteIfExists(sourceFile)
+              }
+            }
           }
         }
 
@@ -209,6 +241,7 @@ internal suspend fun buildJar(targetFile: Path,
 }
 
 private suspend fun handleZipSource(source: ZipSource,
+                                    sourceFile: Path,
                                     nativeFileHandler: NativeFileHandler?,
                                     uniqueNames: MutableMap<String, Path>,
                                     sources: List<Source>,
@@ -226,7 +259,6 @@ private suspend fun handleZipSource(source: ZipSource,
     }
   }
 
-  val sourceFile = source.file
   // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
   // ability to read data without setting channel position, as setting channel position will require synchronization
   suspendAwareReadZipFile(sourceFile) { name, dataSupplier ->
@@ -287,7 +319,7 @@ private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, so
 }
 
 fun isNative(name: String): Boolean {
-  @Suppress("SpellCheckingInspection")
+  @Suppress("SpellCheckingInspection", "RedundantSuppression")
   return name.endsWith(".jnilib") ||
          name.endsWith(".dylib") ||
          name.endsWith(".so") ||

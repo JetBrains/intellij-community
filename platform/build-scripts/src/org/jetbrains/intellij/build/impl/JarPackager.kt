@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.proguard.OptimizeLibraryContext
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -133,7 +134,6 @@ class JarPackager private constructor(private val outputDir: Path,
                      dryRun: Boolean,
                      moduleWithSearchableOptions: Set<String> = emptySet(),
                      context: BuildContext): Collection<DistributionFileEntry> {
-
       val packager = JarPackager(outputDir = outputDir, platformLayout = platformLayout, isRootDir = isRootDir, context = context)
       packager.computeModuleSources(includedModules = includedModules,
                                     moduleOutputPatcher = moduleOutputPatcher,
@@ -493,8 +493,9 @@ class JarPackager private constructor(private val outputDir: Path,
       libToMetadata.put(library, libraryData)
       val libName = library.name
       var packMode = libraryData.packMode
-      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.values.any { it(libName, clientModuleFilter) } && !isLibraryMergeable(
-          libName)) {
+      if (packMode == LibraryPackMode.MERGED &&
+          !predefinedMergeRules.values.any { it(libName, clientModuleFilter) } &&
+          !isLibraryMergeable(libName)) {
         packMode = LibraryPackMode.STANDALONE_MERGED
       }
 
@@ -533,10 +534,12 @@ class JarPackager private constructor(private val outputDir: Path,
 
   private fun filesToSourceWithMapping(sources: MutableList<Source>, files: List<Path>, library: JpsLibrary) {
     val moduleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
-    val isPreSignedCandidate = isRootDir && presignedLibNames.contains(library.name)
+    val libraryName = library.name
+    val isPreSignedCandidate = isRootDir && presignedLibNames.contains(libraryName)
     for (file in files) {
       sources.add(ZipSource(file = file,
                             isPreSignedAndExtractedCandidate = isPreSignedCandidate,
+                            optimizeConfigId = libraryName.takeIf { isRootDir && (libraryName == "jsvg") },
                             distributionFileEntryProducer = { size, hash,  targetFile ->
                               moduleName?.let {
                                 ModuleLibraryFileEntry(
@@ -549,7 +552,7 @@ class JarPackager private constructor(private val outputDir: Path,
                                 )
                               } ?: ProjectLibraryEntry(
                                 path = targetFile,
-                                data = libToMetadata.get(library) ?: throw IllegalStateException("Metadata not found for ${library.name}"),
+                                data = libToMetadata.get(library) ?: throw IllegalStateException("Metadata not found for $libraryName"),
                                 libraryFile = file,
                                 hash = hash,
                                 size = size,
@@ -622,7 +625,7 @@ private fun nameToJarFileName(name: String): String {
   return "${sanitizeFileName(name.lowercase(), replacement = "-")}.jar"
 }
 
-@Suppress("SpellCheckingInspection")
+@Suppress("SpellCheckingInspection", "RedundantSuppression")
 private val excludedFromMergeLibs = java.util.Set.of(
   "async-profiler",
   "dexlib2", // android-only lib
@@ -672,6 +675,7 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
     }
   }
 
+  val optimizeLibraryContext = OptimizeLibraryContext(tempDir = context.paths.tempDir, javaHome = context.getStableJdkHome())
   val list = withContext(Dispatchers.IO) {
     descriptors.map { item ->
       async {
@@ -712,7 +716,11 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
                   }
 
                   override suspend fun produce() {
-                    buildJar(targetFile = file, sources = sources, nativeFileHandler = nativeFileHandler, notify = false)
+                    buildJar(targetFile = file,
+                             sources = sources,
+                             nativeFileHandler = nativeFileHandler,
+                             notify = false,
+                             optimizeLibraryContext = optimizeLibraryContext)
                   }
                 }
               )

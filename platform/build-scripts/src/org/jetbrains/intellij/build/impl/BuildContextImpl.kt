@@ -333,7 +333,7 @@ class BuildContextImpl(
         }
 
         override suspend fun produce() {
-          buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
+          buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false, optimizeLibraryContext = null)
         }
       },
     )
