@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionListModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -17,10 +18,12 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListPersistentSearchHistory
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchHistoryModel
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import javax.swing.ListModel
 
 @ApiStatus.Experimental
@@ -31,6 +34,7 @@ class GHPRListViewModel internal constructor(
 ) : ReviewListViewModel {
   private val cs = parentCs.childScope()
 
+  private val interactionStateService = project.service<GHPRPersistentInteractionState>()
   private val repositoryDataService = dataContext.repositoryDataService
   private val listLoader = dataContext.listLoader
 
@@ -42,12 +46,22 @@ class GHPRListViewModel internal constructor(
       override fun onDataAdded(startIdx: Int) {
         val loadedData = listLoader.loadedData
         model.add(loadedData.subList(startIdx, loadedData.size))
+        hasUpdatesState.update { hasUpdates -> hasUpdates || loadedData.any { !interactionStateService.isSeen(it) } }
       }
 
-      override fun onDataUpdated(idx: Int) = model.setElementAt(listLoader.loadedData[idx], idx)
-      override fun onDataRemoved(idx: Int) = model.remove(idx)
+      override fun onDataUpdated(idx: Int) {
+        model.setElementAt(listLoader.loadedData[idx], idx)
+        hasUpdatesState.update { model.items.any { !interactionStateService.isSeen(it) } }
+      }
+      override fun onDataRemoved(idx: Int) {
+        model.remove(idx)
+        hasUpdatesState.update { model.items.any { !interactionStateService.isSeen(it) } }
+      }
 
-      override fun onAllDataRemoved() = model.removeAll()
+      override fun onAllDataRemoved() {
+        model.removeAll()
+        hasUpdatesState.update { false }
+      }
     })
   }
 
@@ -57,6 +71,9 @@ class GHPRListViewModel internal constructor(
   val error: SharedFlow<Throwable?> = errorState.asSharedFlow()
   private val outdatedState = MutableStateFlow(false)
   val outdated: SharedFlow<Boolean> = outdatedState.asSharedFlow()
+
+  private val hasUpdatesState = MutableStateFlow(false)
+  val hasUpdates = hasUpdatesState.asSharedFlow()
 
   init {
     val listenersDisposable = cs.nestedDisposable()

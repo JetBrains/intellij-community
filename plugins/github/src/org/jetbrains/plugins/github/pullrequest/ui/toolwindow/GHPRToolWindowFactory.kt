@@ -17,14 +17,23 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.IconManager
+import com.intellij.ui.JBColor
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import javax.swing.UIManager
 
 internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
@@ -67,11 +76,26 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
   }
 
   @RequiresEdt
+  @OptIn(ExperimentalCoroutinesApi::class)
   fun manageContent(toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
 
     cs.launch {
       val vm = project.serviceAsync<GHPRToolWindowViewModel>()
+      val focusColor = UIManager.getColor("ToolWindow.Button.selectedForeground")
+
+      launch {
+        vm.projectVm
+          .filterNotNull().flatMapLatest { it.listVm.hasUpdates }
+          .distinctUntilChanged()
+          .collectLatest {
+            toolWindow.setIcon(
+              if (!it) GithubIcons.PullRequestsToolWindow
+              else IconManager.getInstance().withIconBadge(GithubIcons.PullRequestsToolWindow, JBColor {
+                if (toolWindow.isActive) focusColor else JBUI.CurrentTheme.IconBadge.INFORMATION
+              }))
+          }
+      }
 
       coroutineScope {
         toolWindow.contentManager.addDataProvider {
