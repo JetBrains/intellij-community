@@ -370,6 +370,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       // When updating styles here, consider updating styles in DocumentationHtmlUtil#getDocumentationPaneDefaultCssRules
       @Language("CSS") String input =
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
+        "pre {white-space: pre-wrap}" +  // supported by JetBrains Runtime
         "h1, h2, h3, h4, h5, h6 {margin-top: 0; padding-top: 1}" +
         "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
         "p {padding: 7 0 2 0}" +
