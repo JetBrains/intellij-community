@@ -1643,7 +1643,7 @@
                        key="inspection.incorrect.formatting.notification.group"/>
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
-    <platform.backend.documentation.inlineDocumentationProvider id="defaultInlineDocumentationProvider"
+    <platform.backend.documentation.inlineDocumentationProvider order="last"
       implementation="com.intellij.codeInsight.documentation.render.CompatibilityInlineDocumentationProvider"/>
 
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>
