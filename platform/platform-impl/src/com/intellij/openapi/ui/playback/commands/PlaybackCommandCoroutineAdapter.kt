@@ -23,7 +23,7 @@ abstract class PlaybackCommandCoroutineAdapter(protected val text: @NonNls Strin
 
   override fun canGoFurther(): Boolean = true
 
-  override fun execute(context: PlaybackContext): CompletableFuture<*> {
+  final override fun execute(context: PlaybackContext): CompletableFuture<*> {
     context.code(text, line)
 
     val job = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().async {
