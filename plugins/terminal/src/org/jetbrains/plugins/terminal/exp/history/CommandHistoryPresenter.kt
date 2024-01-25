@@ -9,10 +9,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.util.containers.map2Array
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
-import kotlin.math.max
 
 internal class CommandHistoryPresenter(private val project: Project,
                                        private val editor: Editor,
@@ -22,13 +21,11 @@ internal class CommandHistoryPresenter(private val project: Project,
   fun showCommandHistory(history: List<String>) {
     val command = editor.document.text
     initialCommand = command
-    val prefix = command.trim()
-    val arranger = CommandHistoryLookupArranger()
-    val elements = history.mapIndexed { index, cmd ->
-      // put index as lookup object to make each lookup element distinct in terms of 'equals' method of LookupElementBuilder
-      LookupElementBuilder.create(index, cmd)
-    }
-    val lookup = LookupManager.getInstance(project).createLookup(editor, elements.toTypedArray(), prefix, arranger) as LookupImpl
+    val arranger = LookupArranger.DefaultArranger()
+    // Reverse the history to move the most recent values to the top.
+    // It will be reversed again internally to show them at the bottom.
+    val elements = history.asReversed().map2Array { LookupElementBuilder.create(it) }
+    val lookup = LookupManager.getInstance(project).createLookup(editor, elements, command, arranger) as LookupImpl
 
     lookup.putUserData(IS_COMMAND_HISTORY_LOOKUP_KEY, true)
 
@@ -84,18 +81,6 @@ internal class CommandHistoryPresenter(private val project: Project,
           editor.caretModel.moveToOffset(commandToRestore.length)
         }
       }
-    }
-  }
-
-  private class CommandHistoryLookupArranger : LookupArranger() {
-    override fun arrangeItems(lookup: Lookup, onExplicitAction: Boolean): Pair<List<LookupElement>, Int> {
-      val result = matchingItems.reversed()
-      val selectedIndex = if (!lookup.isSelectionTouched && onExplicitAction) 0 else result.indexOf(lookup.currentItem)
-      return Pair.create(result, max(selectedIndex, 0))
-    }
-
-    override fun createEmptyCopy(): LookupArranger {
-      return CommandHistoryLookupArranger()
     }
   }
 
