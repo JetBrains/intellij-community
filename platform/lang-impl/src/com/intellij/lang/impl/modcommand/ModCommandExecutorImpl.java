@@ -52,6 +52,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -316,16 +317,21 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
     if (psiFile == null) return false;
     TextRange range = rename.symbolRange().range();
-    PsiElement injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, range.getStartOffset());
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
+    PsiElement injectedElement = manager.findInjectedElementAt(psiFile, range.getStartOffset());
     PsiElement psiElement = injectedElement != null ? injectedElement : psiFile.findElementAt(range.getStartOffset());
     PsiNamedElement namedElement = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiNamedElement.class);
     if (namedElement == null) return false;
     Editor finalEditor = getEditor(project, editor, file);
     if (finalEditor == null) return false;
+    if (injectedElement != null) {
+      finalEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(finalEditor, injectedElement.getContainingFile()); 
+    }
     DataContext context = DataManager.getInstance().getDataContext(finalEditor.getComponent());
     DataContext finalContext = SimpleDataContext.builder()
       .setParent(context)
       .add(CommonDataKeys.PSI_ELEMENT, namedElement)
+      .add(CommonDataKeys.EDITOR, finalEditor)
       .add(PsiElementRenameHandler.NAME_SUGGESTIONS, rename.nameSuggestions())
       .build();
     PsiElement anchor = namedElement instanceof PsiNameIdentifierOwner owner ? 
@@ -390,8 +396,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     if (editor == null) return false;
     List<IntentionActionWithTextCaching> actionsWithTextCaching = ContainerUtil.map(
       actions, (actionAndPresentation) -> {
-        IntentionAction intention = actionAndPresentation.action().asIntention();
-        intention.isAvailable(context.project(), finalEditor, context.file()); // cache text and icon
+        IntentionAction intention = new ModCommandActionWrapper(actionAndPresentation.action(), actionAndPresentation.presentation());
         return new IntentionActionWithTextCaching(intention);
       });
     IntentionContainer intentions = new IntentionContainer() {

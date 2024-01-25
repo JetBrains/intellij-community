@@ -49,7 +49,7 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
 
   @Override
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
-    ASTNode valueNode = getNode().getFirstChildNode();
+    ASTNode valueNode = getNode();
     assert valueNode instanceof LeafElement;
     ((LeafElement)valueNode).replaceWithText(text);
     return this;
