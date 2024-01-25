@@ -25,6 +25,10 @@
     <backgroundPostStartupActivity implementation="org.jetbrains.plugins.github.pullrequest.GHServerVersionsCollector$Initializer"/>
 
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewDiffExtension"/>
+
+    <editorFactoryListener
+      implementation="org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorController$InstallerListener"/>
+
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
       id="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"
       implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"

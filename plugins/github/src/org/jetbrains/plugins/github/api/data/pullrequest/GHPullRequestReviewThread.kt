@@ -5,7 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
+import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.diff.util.Side
+import git4idea.changes.GitTextFilePatchWithHistory
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.GHNode
@@ -38,4 +41,48 @@ data class GHPullRequestReviewThread(override val id: String,
   val createdAt: Date = root.createdAt
   val diffHunk: String = root.diffHunk
   val reviewId: String? = root.reviewId
+}
+
+fun GHPullRequestReviewThread.isVisible(viewOption: DiscussionsViewOption): Boolean =
+  when (viewOption) {
+    DiscussionsViewOption.ALL -> true
+    DiscussionsViewOption.UNRESOLVED_ONLY -> !isResolved
+    DiscussionsViewOption.DONT_SHOW -> false
+  }
+
+fun GHPullRequestReviewThread.mapToLocation(diffData: GitTextFilePatchWithHistory, sideBias: Side? = null): DiffLineLocation? {
+  val threadData = this
+  if (threadData.line == null && threadData.originalLine == null) return null
+
+  return if (threadData.line != null) {
+    val commitSha = threadData.commit?.oid ?: return null
+    if (!diffData.contains(commitSha, threadData.path)) return null
+    when (threadData.side) {
+      Side.RIGHT -> {
+        diffData.mapLine(commitSha, threadData.line - 1, sideBias ?: Side.RIGHT)
+      }
+      Side.LEFT -> {
+        diffData.fileHistory.findStartCommit()?.let { baseSha ->
+          diffData.mapLine(baseSha, threadData.line - 1, sideBias ?: Side.LEFT)
+        }
+      }
+    }
+  }
+  else if (threadData.originalLine != null) {
+    val originalCommitSha = threadData.originalCommit?.oid ?: return null
+    if (!diffData.contains(originalCommitSha, threadData.path)) return null
+    when (threadData.side) {
+      Side.RIGHT -> {
+        diffData.mapLine(originalCommitSha, threadData.originalLine - 1, sideBias ?: Side.RIGHT)
+      }
+      Side.LEFT -> {
+        diffData.fileHistory.findFirstParent(originalCommitSha)?.let { parentSha ->
+          diffData.mapLine(parentSha, threadData.originalLine - 1, sideBias ?: Side.LEFT)
+        }
+      }
+    }
+  }
+  else {
+    null
+  }
 }

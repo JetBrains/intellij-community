@@ -23,6 +23,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     var selectedUrlAndAccountId by property<UrlAndAccount?>(null) { it == null }
     var recentNewPullRequestHead by property<RepoCoordinatesHolder?>(null) { it == null }
     var reviewCommentPreferred by property(true) { !it }
+    var highlightDiffLinesInEditor by property(false) { !it }
   }
 
   var selectedUrlAndAccount: Pair<String, GithubAccount>?
@@ -49,7 +50,14 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
       state.reviewCommentPreferred = value
     }
 
+  var highlightDiffLinesInEditor: Boolean
+    get() = state.highlightDiffLinesInEditor
+    set(value) {
+      state.highlightDiffLinesInEditor = value
+    }
+
   val reviewCommentsPreferredState: StateFlow<Boolean> = stateOfState.mapState { it.reviewCommentPreferred }
+  val highlightDiffLinesInEditorState: StateFlow<Boolean> = stateOfState.mapState { it.highlightDiffLinesInEditor }
 
   override fun getStateModificationCount(): Long = state.modificationCount
   override fun getState(): SettingsState = stateOfState.value

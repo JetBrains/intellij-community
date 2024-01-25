@@ -30,6 +30,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
@@ -118,6 +119,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   fun acquireInfoViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRInfoViewModel =
     pullRequestsVms[id].acquireValue(disposable).infoVm
+
+  fun acquireEditorReviewViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRReviewInEditorViewModel =
+    pullRequestsVms[id].acquireValue(disposable).editorVm
 
   fun acquireDiffViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRDiffViewModel =
     pullRequestsVms[id].acquireValue(disposable).diffVm

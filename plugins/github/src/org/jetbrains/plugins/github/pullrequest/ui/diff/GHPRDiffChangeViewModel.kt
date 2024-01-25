@@ -8,15 +8,19 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Range
-import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
+import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
@@ -61,12 +65,8 @@ internal class GHPRDiffChangeViewModelImpl(
       .transformConsecutiveSuccesses(false) {
         combine(this, discussionsViewOption) { threads, viewOption ->
           threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
-            val isVisible = when (viewOption) {
-              DiscussionsViewOption.ALL -> true
-              DiscussionsViewOption.UNRESOLVED_ONLY -> !threadData.isResolved
-              DiscussionsViewOption.DONT_SHOW -> false
-            }
-            val location = mapThread(diffData, threadData)
+            val isVisible = threadData.isVisible(viewOption)
+            val location = threadData.mapToLocation(diffData)
             MappedGHPRReviewThreadDiffViewModel.MappingData(isVisible, location)
           }
         }
@@ -119,42 +119,6 @@ internal class GHPRDiffChangeViewModelImpl(
     val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, change.filePath)
 
     dataProvider.viewedStateData.updateViewedState(repositoryRelativePath, true)
-  }
-}
-
-private fun mapThread(diffData: GitTextFilePatchWithHistory, threadData: GHPullRequestReviewThread): DiffLineLocation? {
-  if (threadData.line == null && threadData.originalLine == null) return null
-
-  return if (threadData.line != null) {
-    val commitSha = threadData.commit?.oid ?: return null
-    if (!diffData.contains(commitSha, threadData.path)) return null
-    when (threadData.side) {
-      Side.RIGHT -> {
-        diffData.mapLine(commitSha, threadData.line - 1, Side.RIGHT)
-      }
-      Side.LEFT -> {
-        diffData.fileHistory.findStartCommit()?.let { baseSha ->
-          diffData.mapLine(baseSha, threadData.line - 1, Side.LEFT)
-        }
-      }
-    }
-  }
-  else if (threadData.originalLine != null) {
-    val originalCommitSha = threadData.originalCommit?.oid ?: return null
-    if (!diffData.contains(originalCommitSha, threadData.path)) return null
-    when (threadData.side) {
-      Side.RIGHT -> {
-        diffData.mapLine(originalCommitSha, threadData.originalLine - 1, Side.RIGHT)
-      }
-      Side.LEFT -> {
-        diffData.fileHistory.findFirstParent(originalCommitSha)?.let { parentSha ->
-          diffData.mapLine(parentSha, threadData.originalLine - 1, Side.LEFT)
-        }
-      }
-    }
-  }
-  else {
-    null
   }
 }
 

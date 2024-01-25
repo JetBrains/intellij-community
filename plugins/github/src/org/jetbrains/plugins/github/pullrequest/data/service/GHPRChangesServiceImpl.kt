@@ -20,9 +20,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
-import git4idea.changes.GitCommitShaWithPatches
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitBranchComparisonResultImpl
+import git4idea.changes.GitCommitShaWithPatches
 import git4idea.fetch.GitFetchSupport
 import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.api.GHGQLRequests

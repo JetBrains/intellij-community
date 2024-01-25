@@ -19,6 +19,8 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModelImpl
@@ -50,6 +52,13 @@ internal class GHPRViewModelContainer(
   val diffVm: GHPRDiffViewModel by lazy {
     GHPRDiffViewModelImpl(project, cs, dataContext, dataProvider, reviewVmHelper, threadsVms).apply {
       setup()
+    }
+  }
+
+  val editorVm: GHPRReviewInEditorViewModel by lazy {
+    GHPRReviewInEditorViewModelImpl(project, cs, dataContext, dataProvider, threadsVms) {
+      diffSelectionRequests.tryEmit(it)
+      projectVm.openPullRequestDiff(pullRequestId, true)
     }
   }
 

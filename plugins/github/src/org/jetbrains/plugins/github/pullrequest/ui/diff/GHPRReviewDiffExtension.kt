@@ -28,10 +28,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRNewCommentEditorInlayRenderer
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewThreadEditorInlayRenderer
+import org.jetbrains.plugins.github.pullrequest.ui.editor.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -97,7 +94,7 @@ private class DiffEditorModel(
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     diffVm.locationsWithDiscussions.map {
       val lines = it.mapNotNullTo(mutableSetOf(), locationToLine)
-      GutterState(lines, if (diffVm.canComment) transferRanges(diffVm.commentableRanges) else emptyList())
+      GHPRReviewEditorGutterControlsState(lines, if (diffVm.canComment) transferRanges(diffVm.commentableRanges) else emptyList())
     }.stateInNow(cs, null)
 
   private fun transferRanges(ranges: List<Range>): List<LineRange> = ranges.mapNotNull {
@@ -159,15 +156,5 @@ private class DiffEditorModel(
     override val key: Any = "NEW_${vm.position.location}"
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val line: StateFlow<Int?> = MutableStateFlow(locationToLine(location))
-  }
-
-  private data class GutterState(
-    override val linesWithComments: Set<Int>,
-    val commentableLines: List<LineRange>
-  ) : CodeReviewEditorGutterControlsModel.ControlsState {
-    override fun isLineCommentable(lineIdx: Int): Boolean = commentableLines.any {
-      val end = if (it.start == it.end) it.end.inc() else it.end
-      lineIdx in it.start until end
-    }
   }
 }
