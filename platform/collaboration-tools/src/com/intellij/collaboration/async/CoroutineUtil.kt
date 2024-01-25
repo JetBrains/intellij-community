@@ -289,7 +289,7 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
  * @param destroy destructor function to destroy a value
  * @param update function used to update value if a new item is supplied for the existing key
  */
-private class MappingScopedItemsContainer<T, K, V>(
+class MappingScopedItemsContainer<T, K, V>(
   private val cs: CoroutineScope,
   private val keyExtractor: (T) -> K,
   private val hashingStrategy: HashingStrategy<K>,
@@ -342,6 +342,22 @@ private class MappingScopedItemsContainer<T, K, V>(
         _mapState.value = result
       }
     }
+  }
+
+  suspend fun addIfAbsent(item: T): V = mapGuard.withLock {
+    withContext(NonCancellable) {
+      val key = keyExtractor(item)
+      _mapState.value[key]?.value ?: _mapState.updateAndGet {
+        val valueScope = cs.childScope()
+        val newValue = ScopingWrapper(valueScope, mapper(valueScope, item))
+        it + (key to newValue)
+      }[key]!!.value
+    }
+  }
+
+  companion object {
+    fun <T, V> byIdentity(cs: CoroutineScope, mapper: CoroutineScope.(T) -> V) =
+      MappingScopedItemsContainer(cs, { it }, HashingStrategy.identity(), mapper, {})
   }
 }
 

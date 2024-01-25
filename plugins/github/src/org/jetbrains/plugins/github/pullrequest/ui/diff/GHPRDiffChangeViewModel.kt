@@ -11,7 +11,6 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitTextFilePatchWithHistory
@@ -24,6 +23,8 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsReque
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
+import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 
 interface GHPRDiffChangeViewModel {
   val commentableRanges: List<Range>
@@ -41,19 +42,18 @@ interface GHPRDiffChangeViewModel {
 }
 
 internal class GHPRDiffChangeViewModelImpl(
-  private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   private val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
-  threadsVms: GHPRThreadsViewModels,
+  private val threadsVms: GHPRThreadsViewModels,
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>
 ) : GHPRDiffChangeViewModel {
   private val cs = parentCs.childScope(classAsCoroutineName())
 
   override val commentableRanges: List<Range> = diffData.patch.ranges
-  override val canComment: Boolean = dataProvider.reviewData.canComment()
+  override val canComment: Boolean = threadsVms.canComment
 
   private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewThreadDiffViewModel.MappingData>> =
     dataProvider.reviewData.createThreadsRequestsFlow()
@@ -82,40 +82,36 @@ internal class GHPRDiffChangeViewModelImpl(
       it.values.mapNotNullTo(mutableSetOf()) { (isVisible, location) -> location?.takeIf { isVisible } }
     }.stateInNow(cs, emptySet())
 
-  private val _newComments = MutableStateFlow<Map<GHPRReviewCommentLocation, GHPRNewCommentDiffViewModelImpl>>(emptyMap())
+  private val newCommentsContainer =
+    MappingScopedItemsContainer.byIdentity<GHPRReviewNewCommentEditorViewModel, GHPRNewCommentDiffViewModelImpl>(cs) {
+      GHPRNewCommentDiffViewModelImpl(it.position.location.lineLocation, it)
+    }
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
-    _newComments.mapState { it.values }
+    newCommentsContainer.mapState.mapState { it.values }
+
+  init {
+    cs.launchNow {
+      threadsVms.newComments.collect {
+        val commentForChange = it.values.filter { it.position.change == change }
+        newCommentsContainer.update(commentForChange)
+      }
+    }
+  }
 
   override fun requestNewComment(location: GHPRReviewCommentLocation, focus: Boolean) {
-    if (!canComment) return
-    _newComments.updateAndGet { currentNewComments ->
-      if (!currentNewComments.containsKey(location)) {
-        val vm = createNewCommentVm(location)
-        currentNewComments + (location to vm)
-      }
-      else {
-        currentNewComments
-      }
-    }.apply {
-      if (focus) {
-        get(location)?.requestFocus()
+    val position = GHPRReviewCommentPosition(change, location)
+    val sharedVm = threadsVms.requestNewComment(position)
+    if (focus) {
+      cs.launchNow {
+        newCommentsContainer.addIfAbsent(sharedVm).requestFocus()
       }
     }
   }
 
   override fun cancelNewComment(location: GHPRReviewCommentLocation) {
-    _newComments.update {
-      val oldVm = it[location]
-      val newMap = it - location
-      oldVm?.destroy()
-      newMap
-    }
+    val position = GHPRReviewCommentPosition(change, location)
+    threadsVms.cancelNewComment(position)
   }
-
-  private fun createNewCommentVm(location: GHPRReviewCommentLocation): GHPRNewCommentDiffViewModelImpl =
-    GHPRNewCommentDiffViewModelImpl(project, cs, dataContext, dataProvider, GHPRReviewCommentPosition(change, location)) {
-      cancelNewComment(location)
-    }
 
   override fun markViewed() {
     if (!diffData.isCumulative) return

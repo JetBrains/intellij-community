@@ -154,7 +154,7 @@ private class DiffEditorModel(
   }
 
   private inner class MappedNewComment(vm: GHPRNewCommentDiffViewModel)
-    : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm.newCommentVm) {
+    : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm) {
     private val location = vm.position.location.let { it.side to it.lineIdx }
     override val key: Any = "NEW_${vm.position.location}"
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)

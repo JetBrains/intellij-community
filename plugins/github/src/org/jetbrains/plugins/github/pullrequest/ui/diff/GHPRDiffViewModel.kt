@@ -117,5 +117,5 @@ internal class GHPRDiffViewModelImpl(
   }
 
   private fun CoroutineScope.createChangeVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory) =
-    GHPRDiffChangeViewModelImpl(project, this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption)
+    GHPRDiffChangeViewModelImpl(this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption)
 }

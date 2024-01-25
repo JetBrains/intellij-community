@@ -9,14 +9,13 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModelImpl
 
 internal class GHPRThreadsViewModels(
   private val project: Project,
@@ -25,6 +24,7 @@ internal class GHPRThreadsViewModels(
   private val dataProvider: GHPRDataProvider,
 ) {
   private val cs = parentCs.childScope(classAsCoroutineName())
+  val canComment: Boolean = dataProvider.reviewData.canComment()
 
   val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
     dataProvider.reviewData.createThreadsRequestsFlow()
@@ -36,7 +36,37 @@ internal class GHPRThreadsViewModels(
       }.map { it.getOrNull().orEmpty() }
       .stateIn(cs, SharingStarted.Lazily, emptyList())
 
-  private fun CoroutineScope.createThread(initialData: GHPullRequestReviewThread): UpdateableGHPRCompactReviewThreadViewModel {
-    return UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData)
-  }
+  private fun CoroutineScope.createThread(initialData: GHPullRequestReviewThread) =
+    UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData)
+
+  private val _newComments = MutableStateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModelImpl>>(emptyMap())
+  val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>> = _newComments.asStateFlow()
+
+  fun requestNewComment(location: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel =
+    _newComments.updateAndGet { currentNewComments ->
+      if (!currentNewComments.containsKey(location)) {
+        val vm = createNewCommentVm(location)
+        currentNewComments + (location to vm)
+      }
+      else {
+        currentNewComments
+      }
+    }[location]!!
+
+  fun cancelNewComment(location: GHPRReviewCommentPosition) =
+    _newComments.update {
+      val oldVm = it[location]
+      val newMap = it - location
+      oldVm?.destroy()
+      newMap
+    }
+
+  private fun createNewCommentVm(position: GHPRReviewCommentPosition) =
+    GHPRReviewNewCommentEditorViewModelImpl(project, cs, dataProvider,
+                                            dataContext.repositoryDataService.remoteCoordinates.repository,
+                                            dataContext.securityService.currentUser,
+                                            dataContext.avatarIconsProvider,
+                                            position) {
+      cancelNewComment(position)
+    }
 }

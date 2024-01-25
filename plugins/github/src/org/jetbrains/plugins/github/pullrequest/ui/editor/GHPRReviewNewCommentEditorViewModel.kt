@@ -15,6 +15,7 @@ import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.future.await
@@ -32,6 +33,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEd
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
 interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewModel {
+  val position: GHPRReviewCommentPosition
+
   val currentUser: GHActor
   val avatarIconsProvider: GHAvatarIconsProvider
   val submitActions: StateFlow<List<SubmitAction>>
@@ -52,7 +55,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val repository: GitRepository,
   override val currentUser: GHActor,
   override val avatarIconsProvider: GHAvatarIconsProvider,
-  private val position: GHPRReviewCommentPosition,
+  override val position: GHPRReviewCommentPosition,
   private val onCancel: () -> Unit
 ) : CodeReviewSubmittableTextViewModelBase(project, parentCs, ""),
     GHPRReviewNewCommentEditorViewModel {
@@ -135,4 +138,6 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
         GHPullRequestDraftReviewThread(body, location.lineIdx.inc(), filePath, location.side, null, null)
     }
   }
+
+  fun destroy() = cs.cancel()
 }
