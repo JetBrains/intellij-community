@@ -7,14 +7,16 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.keyboard.RemoteKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
+import kotlin.time.Duration.Companion.seconds
 
 
 fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JTree']",
                                                               JTreeUiComponent::class.java)
 
 class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy {  driver.new(JTreeFixtureRef::class, robotService.robot, component) }
+  private val fixture by lazy { driver.new(JTreeFixtureRef::class, robotService.robot, component) }
   private val remoteKeyboard by lazy { RemoteKeyboard(robotService.robot) }
 
   private fun clickRow(row: Int) = fixture.clickRow(row)
@@ -26,9 +28,9 @@ class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
       clickRow(it.row)
     } ?: throw PathNotFoundException(path.toList())
   }
-  
+
   fun enterOnSelectedRow(vararg path: String, fullMatch: Boolean = true) {
-    findExpandedPath(*path, fullMatch = fullMatch)?.let { 
+    findExpandedPath(*path, fullMatch = fullMatch)?.let {
       fixture.selectRow(it.row)?.let { remoteKeyboard.enter() }
     }
   }
@@ -47,24 +49,32 @@ class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException(path.toList())
   }
 
-  private fun expandPath(vararg path: String, fullMatch: Boolean = true) {
-    val expandedPath = mutableListOf<String>()
-    path.forEach {
-      var currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
-      if (currentPathPaths.isEmpty()) {
-        doubleClickPath(*expandedPath.toTypedArray(), fullMatch = fullMatch)
-        currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
+  private fun expandPath(vararg path: String, fullMatch: Boolean = true) = waitFor(10.seconds, errorMessage = "Failed find $path") {
+    try {
+      val expandedPath = mutableListOf<String>()
+      path.forEach {
+        var currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
+        if (currentPathPaths.isEmpty()) {
+          doubleClickPath(*expandedPath.toTypedArray(), fullMatch = fullMatch)
+          currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
+        }
+        if (currentPathPaths.isEmpty()) {
+          throw PathNotFoundException(expandedPath + listOf(it))
+        }
+        expandedPath.add(it)
       }
-      if (currentPathPaths.isEmpty()) {
-        throw PathNotFoundException(expandedPath + listOf(it) + " path not found")
-      }
-      expandedPath.add(it)
+      true
+    }
+    catch (e: PathNotFoundException) {
+      false
     }
   }
 
-  private fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path, fullMatch = fullMatch).singleOrNull()
+  private fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path,
+                                                                                                            fullMatch = fullMatch).singleOrNull()
 
-  private fun findExpandedPaths(vararg path: String, fullMatch: Boolean): List<TreePathToRow> = collectExpandedPaths().filter { expandedPath ->
+  private fun findExpandedPaths(vararg path: String,
+                                fullMatch: Boolean): List<TreePathToRow> = collectExpandedPaths().filter { expandedPath ->
     expandedPath.path.size == path.size && expandedPath.path.containsAllNodes(*path, fullMatch = fullMatch) ||
     expandedPath.path.size - 1 == path.size && expandedPath.path.drop(1).containsAllNodes(*path, fullMatch = fullMatch)
   }
@@ -76,7 +86,8 @@ class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private fun List<String>.containsAllNodes(vararg treePath: String, fullMatch: Boolean): Boolean = zip(treePath).all {
     if (fullMatch) {
       it.first.equals(it.second, true)
-    } else {
+    }
+    else {
       it.first.contains(it.second, true)
     }
   }
@@ -87,7 +98,7 @@ class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JTreeTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
-interface JTreeFixtureRef: Component {
+interface JTreeFixtureRef : Component {
   fun clickRow(row: Int): JTreeFixtureRef
   fun clickPath(path: String): JTreeFixtureRef
   fun doubleClickRow(row: Int): JTreeFixtureRef
