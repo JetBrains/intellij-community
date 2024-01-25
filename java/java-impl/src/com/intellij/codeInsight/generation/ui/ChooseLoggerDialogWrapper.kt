@@ -4,15 +4,14 @@ package com.intellij.codeInsight.generation.ui
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.settings.JvmLoggerType
 import com.intellij.settings.JavaLoggerModel
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
-class ChooseLoggerDialogWrapper(private val availableLoggers: List<JvmLoggerType>,
-                                selectedLogger: JvmLoggerType,
+class ChooseLoggerDialogWrapper(private val availableLoggers: List<String>,
+                                selectedLogger: String,
                                 project: Project) : DialogWrapper(project, true) {
-  var selectedLogger: JvmLoggerType = selectedLogger
+  var selectedLogger: String = selectedLogger
     private set
 
   init {

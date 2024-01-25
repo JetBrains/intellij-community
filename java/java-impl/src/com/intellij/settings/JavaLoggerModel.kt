@@ -4,21 +4,21 @@ package com.intellij.settings
 import javax.swing.AbstractListModel
 import javax.swing.ComboBoxModel
 
-class JavaLoggerModel(loggerList: List<JvmLoggerType>,
-                      initialLogger: JvmLoggerType) : AbstractListModel<JvmLoggerType>(), ComboBoxModel<JvmLoggerType> {
+class JavaLoggerModel(loggerList: List<String>,
+                      initialLogger: String?) : AbstractListModel<String>(), ComboBoxModel<String> {
   private val loggers = loggerList
 
-  private var currentLogger = initialLogger
+  private var currentLogger = initialLogger ?: throw IllegalStateException()
 
   override fun setSelectedItem(anItem: Any) {
-    if (anItem !is JvmLoggerType) return
+    if (anItem !is String) return
     if (currentLogger != anItem) {
       currentLogger = anItem
       fireContentsChanged(this, -1, -1)
     }
   }
 
-  override fun getSelectedItem(): JvmLoggerType {
+  override fun getSelectedItem(): String {
     return currentLogger
   }
 
@@ -26,7 +26,7 @@ class JavaLoggerModel(loggerList: List<JvmLoggerType>,
     return loggers.size
   }
 
-  override fun getElementAt(index: Int): JvmLoggerType {
+  override fun getElementAt(index: Int): String {
     return loggers[index]
   }
 }

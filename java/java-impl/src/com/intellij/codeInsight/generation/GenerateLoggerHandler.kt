@@ -4,6 +4,7 @@ package com.intellij.codeInsight.generation
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.logging.JvmLogger
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
@@ -18,7 +19,6 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentsOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.settings.JavaSettingsStorage
-import com.intellij.settings.JvmLoggerType
 import org.jetbrains.java.generate.GenerationUtil
 
 class GenerateLoggerHandler : CodeInsightActionHandler {
@@ -64,30 +64,30 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     clazz.add(field) as? PsiField
   }
 
-  private fun findSuitableLoggers(module: Module?): List<JvmLoggerType> = JvmLoggerType.allLoggers.filter {
+  private fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.EP_NAME.extensionList.filter {
     JavaLibraryUtil.hasLibraryClass(module, it.loggerName)
   }
 
-  private fun getSelectedLogger(project: Project, availableLoggers: List<JvmLoggerType>): JvmLoggerType? {
+  private fun getSelectedLogger(project: Project, availableLoggers: List<JvmLogger>): JvmLogger? {
     if (availableLoggers.isEmpty()) return null
     if (availableLoggers.size == 1) return availableLoggers.first()
 
-    val preferredLogger = project.service<JavaSettingsStorage>().state.logger
+    val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.logger)
 
     val chooseLoggerDialog = ChooseLoggerDialogWrapper(
-      availableLoggers,
-      if (preferredLogger in availableLoggers) {
+      availableLoggers.map { it.toString() },
+      (if (preferredLogger in availableLoggers) {
         preferredLogger
       }
       else {
         availableLoggers.first()
-      },
+      }).toString(),
       project,
     )
 
     if (!chooseLoggerDialog.showAndGet()) return null
 
-    return chooseLoggerDialog.selectedLogger
+    return JvmLogger.getLoggerByName(chooseLoggerDialog.selectedLogger)
   }
 
   override fun startInWriteAction(): Boolean = false
@@ -102,9 +102,9 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
       for (psiField in psiClass.fields) {
         val typeName = psiField.type.canonicalText
 
-        if (psiField.name == JvmLoggerType.LOGGER_IDENTIFIER) return false
+        if (psiField.name == JvmLogger.LOGGER_IDENTIFIER) return false
 
-        for (logger in JvmLoggerType.allLoggers) {
+        for (logger in JvmLogger.EP_NAME.extensionList) {
           if (logger.loggerName == typeName) return false
         }
       }

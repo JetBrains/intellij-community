@@ -4,6 +4,7 @@ package com.intellij.settings
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.logging.JvmLogger
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import javax.swing.JComponent
+
 
 class JvmLoggingConfigurable(private val project: Project) : SearchableConfigurable, NoScroll {
   private lateinit var warningRow: Row
@@ -30,8 +32,9 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
           label(JavaBundle.message("label.configurable.logger.type"))
-          comboBox(JavaLoggerModel(JvmLoggerType.allLoggers, settings.logger)).bindItem(settings::logger.toNullableProperty()).onChanged {
-            updateWarningRow(it.item.loggerName)
+          comboBox(JavaLoggerModel(JvmLogger.getAllLoggersNames(), settings.logger)).bindItem(
+            settings::logger.toNullableProperty()).onChanged {
+            updateWarningRow(it.item)
           }
         }
         warningRow = row {
@@ -40,13 +43,14 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
         }.visible(false)
       }
     }
-    updateWarningRow(settings.logger.loggerName)
+    updateWarningRow(settings.logger)
     return panel
   }
 
-  private fun updateWarningRow(loggerName: String) {
+  private fun updateWarningRow(loggerDisplayName: String?) {
     ReadAction.nonBlocking<Boolean> {
-      !JavaLibraryUtil.hasLibraryClass(project, loggerName)
+      val logger = JvmLogger.EP_NAME.extensionList.find { it.toString() == loggerDisplayName } ?: return@nonBlocking false
+      !JavaLibraryUtil.hasLibraryClass(project, logger.loggerName)
     }.finishOnUiThread(ModalityState.any()) { isVisible ->
       warningRow.visible(isVisible)
     }.submit(boundedExecutor)
