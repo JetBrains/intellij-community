@@ -183,8 +183,11 @@ class NewJavaToKotlinConverter(
                 val updatedList = if (importList.firstChild != null) {
                     createdImportList.addRangeBefore(importList.firstChild, importList.lastChild, createdImportList.firstChild)
                 } else createdImportList
-                importList.replace(updatedList)
+                val result = importList.replace(updatedList)
+                result.ensureLineBreaksAfter(psiFactory)
             }
+
+            packageDirective?.ensureLineBreaksAfter(psiFactory)
         }
 
         private fun KtFile.addImportList(importList: KtImportList): KtImportList {
@@ -198,6 +201,16 @@ class NewJavaToKotlinConverter(
             }
 
             return add(importList) as KtImportList
+        }
+
+        private fun PsiElement.ensureLineBreaksAfter(psiFactory: KtPsiFactory) {
+            val nextWhiteSpace = (nextSibling as? PsiWhiteSpace)?.text ?: return
+            val numberOfNewLinesToAdd = when {
+                nextWhiteSpace.startsWith("\n\n") -> return
+                nextWhiteSpace.startsWith("\n") -> 1
+                else -> 2
+            }
+            parent?.addAfter(psiFactory.createNewLine(numberOfNewLinesToAdd), /* anchor = */ this)
         }
     }
 }
