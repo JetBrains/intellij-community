@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -8,7 +8,10 @@ import com.intellij.platform.backend.documentation.InlineDocumentationProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 
-class PsiInlineDocumentationProvider: InlineDocumentationProvider {
+/**
+ * A provider which delegates to older [DocumentationManager]/[com.intellij.lang.documentation.DocumentationProvider] API.
+ */
+class CompatibilityInlineDocumentationProvider: InlineDocumentationProvider {
   override fun inlineDocumentationItems(file: PsiFile): Collection<InlineDocumentation> {
     val result = SmartList<InlineDocumentation>()
     DocumentationManager.getProviderFromElement(file).collectDocComments(file) {

@@ -1644,7 +1644,7 @@
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
     <platform.backend.documentation.inlineDocumentationProvider id="defaultInlineDocumentationProvider"
-      implementation="com.intellij.codeInsight.documentation.render.PsiInlineDocumentationProvider"/>
+      implementation="com.intellij.codeInsight.documentation.render.CompatibilityInlineDocumentationProvider"/>
 
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>
 
