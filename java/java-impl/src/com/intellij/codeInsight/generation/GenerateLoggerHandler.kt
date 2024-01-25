@@ -14,11 +14,11 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.parentsOfType
 import com.intellij.refactoring.suggested.endOffset
-import com.intellij.settings.JvmLoggerType
 import com.intellij.settings.JavaSettingsStorage
+import com.intellij.settings.JvmLoggerType
 import org.jetbrains.java.generate.GenerationUtil
 
 class GenerateLoggerHandler : CodeInsightActionHandler {
@@ -46,7 +46,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
     CommandProcessor.getInstance().executeCommand(project, {
       try {
-        val appendedField = insertLogger(project, field, lastClass, editor).singleOrNull()?.psiMember ?: return@executeCommand
+        val appendedField = insertLogger(project, field, lastClass) ?: return@executeCommand
         val identifier = appendedField.nameIdentifier
         editor.caretModel.moveToOffset(identifier.endOffset)
         editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
@@ -59,10 +59,9 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
   private fun insertLogger(project: Project,
                            field: PsiField,
-                           clazz: PsiClass,
-                           editor: Editor): List<PsiGenerationInfo<PsiField>> = WriteAction.compute<List<PsiGenerationInfo<PsiField>>, Exception> {
+                           clazz: PsiClass): PsiField? = WriteAction.compute<PsiField?, Exception> {
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(field)
-    GenerateMembersUtil.insertMembersAtOffset(clazz, editor.caretModel.offset, listOf(PsiGenerationInfo(field)))
+    clazz.add(field) as? PsiField
   }
 
   private fun findSuitableLoggers(module: Module?): List<JvmLoggerType> = JvmLoggerType.allLoggers.filter {
@@ -94,29 +93,22 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
   override fun startInWriteAction(): Boolean = false
 
   companion object {
-    fun getPossiblePlacesForLogger(element: PsiElement): List<PsiClass> {
-      val places = mutableListOf<PsiClass>()
+    fun getPossiblePlacesForLogger(element: PsiElement): List<PsiClass> = element.parentsOfType(PsiClass::class.java, false)
+      .filter { clazz -> clazz !is PsiAnonymousClass && isPossibleToPlaceLogger(clazz) }
+      .toList()
 
-      var psiClass: PsiClass? = PsiTreeUtil.getParentOfType(element, PsiClass::class.java) ?: return places
-
-      while (psiClass != null) {
-        if (isPossibleToPlaceLogger(psiClass)) {
-          places.add(psiClass)
-        }
-        psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass::class.java)
-      }
-      return places
-    }
 
     private fun isPossibleToPlaceLogger(psiClass: PsiClass): Boolean {
       for (psiField in psiClass.fields) {
         val typeName = psiField.type.canonicalText
 
+        if (psiField.name == JvmLoggerType.LOGGER_IDENTIFIER) return false
+
         for (logger in JvmLoggerType.allLoggers) {
           if (logger.loggerName == typeName) return false
         }
       }
-      return psiClass.findFieldByName(JvmLoggerType.LOGGER_IDENTIFIER, false) == null
+      return true
     }
   }
 }
