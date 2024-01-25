@@ -1,4 +1,3 @@
-// "Fix all 'Trailing whitespace in text block' problems in file" "true"
 class Foo {
   void test() {
     String text = """

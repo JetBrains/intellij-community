@@ -2,6 +2,6 @@
 
 class StringTemplate2 {
   String s = STR."""
-          before\{}<caret> 
+          before\{}<warning descr="Trailing whitespace characters inside text block"><caret> </warning>
           \{}after""";
 }
