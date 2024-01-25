@@ -109,19 +109,19 @@ public class Maven3XProjectResolver {
   private static class ProjectBuildingResultInfo {
     ProjectBuildingResult buildingResult;
     List<Exception> exceptions;
-    String checksum;
+    String dependencyHash;
 
-    private ProjectBuildingResultInfo(ProjectBuildingResult buildingResult, List<Exception> exceptions, String checksum) {
+    private ProjectBuildingResultInfo(ProjectBuildingResult buildingResult, List<Exception> exceptions, String dependencyHash) {
       this.buildingResult = buildingResult;
       this.exceptions = exceptions;
-      this.checksum = checksum;
+      this.dependencyHash = dependencyHash;
     }
 
     @Override
     public String toString() {
       return "ProjectBuildingResultData{" +
              "projectId=" + buildingResult.getProjectId() +
-             ", checksum=" + checksum +
+             ", dependencyHash=" + dependencyHash +
              '}';
     }
   }
@@ -166,13 +166,13 @@ public class Maven3XProjectResolver {
         boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
 
         boolean runInParallel = myResolveInParallel;
-        Map<File, String> fileToNewChecksum = new ConcurrentHashMap<>();
+        Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
         ParallelRunnerForServer.execute(
           runInParallel,
           buildingResults, br -> {
-            String newChecksum = Maven3EffectivePomDumper.checksum(br.getProject());
-            if (null != newChecksum) {
-              fileToNewChecksum.put(br.getPomFile(), newChecksum);
+            String newDependencyHash = Maven3EffectivePomDumper.dependencyHash(br.getProject());
+            if (null != newDependencyHash) {
+              fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
             }
             return br;
           }
@@ -191,9 +191,9 @@ public class Maven3XProjectResolver {
             continue;
           }
 
-          String previousChecksum = pomHashMap.getDependencyHash(pomFile);
-          String newChecksum = fileToNewChecksum.get(pomFile);
-          if (null != previousChecksum && previousChecksum.equals(newChecksum)) {
+          String previousDependencyHash = pomHashMap.getDependencyHash(pomFile);
+          String newDependencyHash = fileToNewDependencyHash.get(pomFile);
+          if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
             continue;
           }
 
@@ -207,7 +207,7 @@ public class Maven3XProjectResolver {
             executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, myLocalRepository));
           }
           else {
-            buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newChecksum));
+            buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
           }
         }
 
@@ -218,7 +218,7 @@ public class Maven3XProjectResolver {
             buildingResultInfos, br -> {
               if (task.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
               Maven3ExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult, br.exceptions);
-              result.setChecksum(br.checksum);
+              result.setDependencyHash(br.dependencyHash);
               task.incrementFinishedRequests();
               return result;
             }
@@ -306,7 +306,7 @@ public class Maven3XProjectResolver {
 
     Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, result.getChecksum(), mavenModelMap, holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), mavenModelMap, holder, activatedProfiles);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 

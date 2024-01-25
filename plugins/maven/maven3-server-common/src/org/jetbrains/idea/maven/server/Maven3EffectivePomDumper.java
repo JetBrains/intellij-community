@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.server;
 
 import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -37,6 +39,45 @@ public final class Maven3EffectivePomDumper {
    * The Settings XSD URL
    */
   private static final String SETTINGS_XSD_URL = "http://maven.apache.org/xsd/settings-1.0.0.xsd";
+
+  public static @Nullable String dependencyHash(@Nullable MavenProject project) {
+    if (null == project) return null;
+
+    Model model = project.getModel();
+    if (null == model) return null;
+
+    List<Dependency> dependencies = model.getDependencies();
+    if (null == dependencies) return null;
+
+    if (dependencies.isEmpty()) return "";
+
+    StringBuffer stringBuffer = new StringBuffer();
+    for (Dependency dependency : dependencies) {
+      append(stringBuffer, dependency.getGroupId());
+      append(stringBuffer, dependency.getArtifactId());
+      append(stringBuffer, dependency.getVersion());
+      append(stringBuffer, dependency.getType());
+      append(stringBuffer, dependency.getClassifier());
+      append(stringBuffer, dependency.getScope());
+      append(stringBuffer, dependency.getSystemPath());
+
+      List<Exclusion> exclusions = dependency.getExclusions();
+      if (null != exclusions) {
+        for (Exclusion exclusion : exclusions) {
+          append(stringBuffer, exclusion.getArtifactId());
+          append(stringBuffer, exclusion.getGroupId());
+        }
+      }
+
+      append(stringBuffer, dependency.getOptional());
+    }
+
+    return ChecksumUtil.checksum(stringBuffer.toString());
+  }
+
+  private static void append(StringBuffer buffer, String s) {
+    if (null != s) buffer.append(s);
+  }
 
   public static @Nullable String checksum(@Nullable MavenProject project) {
     if (null == project) return null;
