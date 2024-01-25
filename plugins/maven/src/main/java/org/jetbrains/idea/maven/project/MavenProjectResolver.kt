@@ -104,7 +104,7 @@ class MavenProjectResolver(private val myProject: Project) {
                                 userProperties: Properties): Collection<MavenProjectWithHolder> {
     if (mavenProjects.isEmpty()) return listOf()
     checkCancelled()
-    MavenLog.LOG.debug("Dependency resolution started: ${mavenProjects.size}")
+    MavenLog.LOG.debug("Project resolution started: ${mavenProjects.size}")
     val names = mavenProjects.map { it.displayName }
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))
@@ -126,7 +126,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val problemsExist = !problems.isEmpty
     if (problemsExist) {
       MavenLog.LOG.debug(
-        "Dependency resolution problems: ${problems.unresolvedArtifacts.size} ${problems.unresolvedArtifactProblems.size} ${problems.repositoryBlockedProblems.size}")
+        "Project resolution problems: ${problems.unresolvedArtifacts.size} ${problems.unresolvedArtifactProblems.size} ${problems.repositoryBlockedProblems.size}")
     }
     MavenResolveResultProblemProcessor.notifySyncForProblem(myProject, problems)
     val artifactIdToMavenProjects = mavenProjects
@@ -138,7 +138,7 @@ class MavenProjectResolver(private val myProject: Project) {
     ParallelRunner.getInstance(myProject).runInParallel(results) {
       doResolve(it, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
     }
-    MavenLog.LOG.debug("Dependency resolution finished: ${projectsWithUnresolvedPlugins.size}")
+    MavenLog.LOG.debug("Project resolution finished: ${projectsWithUnresolvedPlugins.size}")
     return projectsWithUnresolvedPlugins
   }
 
@@ -164,13 +164,13 @@ class MavenProjectResolver(private val myProject: Project) {
         val projectData = result.projectData
         if (projectData == null) {
           val file = detectPomFile(filesMap, result)
-          MavenLog.LOG.debug("Dependency resolution: projectData is null, file $file")
+          MavenLog.LOG.debug("Project resolution: projectData is null, file $file")
           if (file != null) {
             val temp: MavenProjectReaderResult = reader.readProjectAsync(generalSettings, file, explicitProfiles, locator)
             temp.readingProblems.addAll(result.problems)
             temp.unresolvedArtifactIds.addAll(result.unresolvedArtifacts)
             readerResults.add(temp)
-            MavenLog.LOG.debug("Dependency resolution: projectData is null, read project")
+            MavenLog.LOG.debug("Project resolution: projectData is null, read project")
           }
         }
         else {
@@ -251,7 +251,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val resetArtifacts = MavenUtil.shouldResetDependenciesAndFolders(result.readingProblems)
 
     MavenLog.LOG.debug(
-      "Dependency resolution: updating maven project $mavenProjectCandidate, resetArtifacts=$resetArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
+      "Project resolution: updating maven project $mavenProjectCandidate, resetArtifacts=$resetArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
     mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false)
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
