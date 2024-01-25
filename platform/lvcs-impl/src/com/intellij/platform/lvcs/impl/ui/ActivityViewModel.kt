@@ -28,7 +28,7 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
 
   init {
     coroutineScope.launch {
-      combine(activityProvider.activityItemsChanged.debounce(500), scopeFilterFlow,
+      combine(activityProvider.getActivityItemsChanged(activityScope).debounce(500), scopeFilterFlow,
               isVisibleFlow) { _, filter, isVisible -> filter to isVisible }
         .filter { (_, isVisible) -> isVisible }
         .map { it.first }

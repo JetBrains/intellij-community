@@ -2,7 +2,9 @@
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.core.LocalHistoryFacade
+import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.collectChanges
+import com.intellij.history.core.matches
 import com.intellij.history.core.processContents
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
@@ -18,8 +20,9 @@ internal const val USE_OLD_CONTENT = true
 internal class LocalHistoryActivityProvider(val project: Project, private val gateway: IdeaGateway) : ActivityProvider {
   private val facade = LocalHistoryImpl.getInstanceImpl().facade!!
 
-  override val activityItemsChanged: Flow<Unit>
-    get() = facade.onChangeSetFinished()
+  override fun getActivityItemsChanged(scope: ActivityScope): Flow<Unit> {
+    return facade.onChangeSetFinished(project, gateway, scope)
+  }
 
   override fun loadActivityList(scope: ActivityScope, scopeFilter: String?): List<ActivityItem> {
     val result = mutableListOf<ActivityItem>()
@@ -83,12 +86,23 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   }
 }
 
-private fun LocalHistoryFacade.onChangeSetFinished(): Flow<Unit> {
+private fun LocalHistoryFacade.onChangeSetFinished(project: Project, gateway: IdeaGateway, scope: ActivityScope): Flow<Unit> {
+  val condition: (ChangeSet) -> Boolean
+  if (scope is ActivityScope.File) {
+    val path = gateway.getPathOrUrl(scope.file)
+    condition = { changeSet -> changeSet.anyChangeMatches { change -> change.matches(project.locationHash, path, null) } }
+  }
+  else {
+    condition = { true }
+  }
+
   return callbackFlow {
     val listenerDisposable = Disposer.newDisposable()
     this@onChangeSetFinished.addListener(object : LocalHistoryFacade.Listener() {
-      override fun changeSetFinished() {
-        trySend(Unit)
+      override fun changeSetFinished(changeSet: ChangeSet) {
+        if (condition(changeSet)) {
+          trySend(Unit)
+        }
       }
     }, listenerDisposable)
     trySend(Unit)

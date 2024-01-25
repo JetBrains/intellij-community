@@ -25,29 +25,29 @@ public class ChangeSetTest extends LocalHistoryTestCase {
     ChangeSet cs1 = cs(new CreateFileChange(nextId(), "file"));
     ChangeSet cs2 = cs(new CreateDirectoryChange(nextId(), "dir"));
 
-    assertTrue(cs1.isCreationalFor("file"));
-    assertTrue(cs2.isCreationalFor("dir"));
+    assertTrue(isCreationalFor(cs1, "file"));
+    assertTrue(isCreationalFor(cs2, "dir"));
 
-    assertFalse(cs1.isCreationalFor("dir"));
+    assertFalse(isCreationalFor(cs1, "dir"));
   }
 
   @Test
   public void testNonCreational() {
     ChangeSet cs = cs(new ContentChange(nextId(), "file", null, -1));
-    assertFalse(cs.isCreationalFor("file"));
+    assertFalse(isCreationalFor(cs, "file"));
   }
 
   @Test
   public void testCreationalAndNonCreationalInOneChangeSet() {
     ChangeSet cs = cs(new CreateFileChange(nextId(), "file"), new ContentChange(nextId(), "file", null, -1));
-    assertTrue(cs.isCreationalFor("file"));
+    assertTrue(isCreationalFor(cs, "file"));
   }
 
   @Test
   public void testToCreationalChangesInOneChangeSet() {
     ChangeSet cs = cs(new CreateFileChange(nextId(), "file"), new CreateDirectoryChange(nextId(), "dir"));
-    assertTrue(cs.isCreationalFor("file"));
-    assertTrue(cs.isCreationalFor("dir"));
+    assertTrue(isCreationalFor(cs, "file"));
+    assertTrue(isCreationalFor(cs, "dir"));
   }
 
   @Test
@@ -56,5 +56,9 @@ public class ChangeSetTest extends LocalHistoryTestCase {
     assertTrue(cs(new ContentChange(nextId(), "f", null, -1)).isContentChangeOnly());
     assertFalse(cs(new ContentChange(nextId(), "f1", null, -1), new ContentChange(nextId(), "f2", null, -1)).isContentChangeOnly());
     assertFalse(cs(new CreateFileChange(nextId(), "f1"), new ContentChange(nextId(), "f2", null, -1)).isContentChangeOnly());
+  }
+
+  private static boolean isCreationalFor(ChangeSet changeSet, String path) {
+    return changeSet.anyChangeMatches(change -> change.isCreationalFor(path));
   }
 }

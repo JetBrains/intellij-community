@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.history.integration.revertion.Reverter;
@@ -111,7 +112,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     facade.addListener(new LocalHistoryFacade.Listener() {
       @Override
-      public void changeSetFinished() {
+      public void changeSetFinished(@NotNull ChangeSet changeSet) {
         scheduleRevisionsUpdate(null);
       }
     }, this);

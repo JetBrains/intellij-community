@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface ActivityProvider {
-  val activityItemsChanged: Flow<Unit>
+  fun getActivityItemsChanged(scope: ActivityScope): Flow<Unit>
 
   fun loadActivityList(scope: ActivityScope, scopeFilter: String?): List<ActivityItem>
   fun filterActivityList(scope: ActivityScope, data: ActivityData, activityFilter: String?): Set<ActivityItem>?

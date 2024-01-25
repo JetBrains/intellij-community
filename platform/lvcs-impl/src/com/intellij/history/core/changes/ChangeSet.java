@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class ChangeSet {
@@ -129,19 +130,10 @@ public final class ChangeSet {
     return accessChanges(() -> myChanges.isEmpty());
   }
 
-  public boolean affectsPath(final String paths) {
+  public boolean anyChangeMatches(@NotNull Predicate<Change> predicate) {
     return accessChanges(() -> {
       for (Change c : myChanges) {
-        if (c.affectsPath(paths)) return true;
-      }
-      return false;
-    });
-  }
-
-  public boolean isCreationalFor(final String path) {
-    return accessChanges(() -> {
-      for (Change c : myChanges) {
-        if (c.isCreationalFor(path)) return true;
+        if (predicate.test(c)) return true;
       }
       return false;
     });
