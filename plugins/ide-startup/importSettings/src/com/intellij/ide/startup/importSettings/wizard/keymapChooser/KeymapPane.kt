@@ -12,6 +12,7 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -19,7 +20,7 @@ import javax.swing.SwingConstants
 class KeymapPane(val keymap: Keymap) {
   private val KEY_BACKGROUND = JBColor(0xDFE1E5, 0x4E5157)
 
-  private val names = mutableListOf<JLabel>()
+  private val names = mutableListOf<ShortcutItem>()
 
   var active: Boolean = false
     set(value) {
@@ -37,7 +38,10 @@ class KeymapPane(val keymap: Keymap) {
                                                   RoundedPanel.RADIUS)
 
 
+  private val keyMapGridBagLayout = GridBagLayout()
   val pane = JPanel().apply {
+    setFocusable(true)
+
     layout = VerticalLayout(0)
     border = regularBorder
 
@@ -48,7 +52,7 @@ class KeymapPane(val keymap: Keymap) {
       minimumSize = Dimension(0, 0)
     })
 
-    add(JPanel(GridBagLayout()).apply {
+    add(JPanel(keyMapGridBagLayout).apply {
       isOpaque = false
       minimumSize = Dimension(0, 0)
       val gbc1 = GridBagConstraints()
@@ -61,9 +65,7 @@ class KeymapPane(val keymap: Keymap) {
         gbc1.gridx = 0
         gbc1.anchor = GridBagConstraints.CENTER
         gbc1.fill = GridBagConstraints.HORIZONTAL
-        val name = JLabel(it.name).apply {
-          names.add(this)
-        }
+        val name = JLabel(it.name)
         add(name, gbc1)
 
         gbc1.gridx = 1
@@ -81,6 +83,7 @@ class KeymapPane(val keymap: Keymap) {
         }
         border = JBUI.Borders.empty(0, 8)
 
+        names.add(ShortcutItem(name, keyPanel))
         add(keyPanel, gbc1)
         gbc1.gridy += 1
       }
@@ -93,9 +96,16 @@ class KeymapPane(val keymap: Keymap) {
 
 
   private fun update() {
-    names.forEach { it.isVisible = active }
+    names.forEach {
+      it.name.isVisible = active
+      val constraints = keyMapGridBagLayout.getConstraints(it.value)
+      constraints.anchor = if(active) GridBagConstraints.LINE_START else GridBagConstraints.CENTER
+      keyMapGridBagLayout.setConstraints(it.value, constraints)
+    }
     pane.border = if (active) activeBorder else regularBorder
   }
+
+  private data class ShortcutItem(val name: JComponent, val value: JComponent)
 }
 
 data class Keymap(val id: String, val name: @NlsSafe String, val shortcut: List<ShortcutValue>)

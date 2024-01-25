@@ -110,6 +110,8 @@ class WizardPluginsPage(val controller: WizardController) : OnboardingPage {
     contentPage = WizardPagePane(pane, buttons, leftLabel)
 
     changeHandler()
+
+    continueAction.requestFocus()
   }
 
   override val content: JComponent = contentPage
