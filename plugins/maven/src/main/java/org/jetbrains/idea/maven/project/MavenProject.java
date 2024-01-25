@@ -106,11 +106,11 @@ public class MavenProject {
 
   @NotNull
   @ApiStatus.Internal
-  public MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
-                                 @NotNull MavenGeneralSettings settings,
-                                 boolean updateLastReadStamp,
-                                 boolean resetArtifacts,
-                                 boolean resetProfiles) {
+  public MavenProjectChanges updateFromReaderResult(@NotNull MavenProjectReaderResult readerResult,
+                                                    @NotNull MavenGeneralSettings settings,
+                                                    boolean updateLastReadStamp,
+                                                    boolean resetArtifacts,
+                                                    boolean resetProfiles) {
     State newState = myState.clone();
 
     if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;

@@ -252,7 +252,7 @@ class MavenProjectResolver(private val myProject: Project) {
 
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProjectCandidate, resetArtifacts=$resetArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
-    mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false)
+    mavenProjectCandidate.updateFromReaderResult(result, generalSettings, false, resetArtifacts, false)
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
       for (eachImporter in MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
