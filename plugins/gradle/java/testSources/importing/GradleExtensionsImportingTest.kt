@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.entry
+import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.junit.Test
 
@@ -21,85 +20,49 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
     val extensions = GradleExtensionsSettings.getInstance(myProject).getExtensionsFor(getModule("project"))!!
 
     if (isGradleOlderThan("8.2")) {
-      val conventionsMap = extensions.conventions.map { it.name to it.typeFqn }.toMap()
-      assertThat(conventionsMap).containsExactly(
-        entry("base", "org.gradle.api.plugins.BasePluginConvention"),
-        entry("java", "org.gradle.api.plugins.JavaPluginConvention")
-      )
+      val actualConventionMap = extensions.conventions.associate { it.name to it.typeFqn }
+      val expectedConventionMap = buildMap {
+        put("base", "org.gradle.api.plugins.BasePluginConvention")
+        put("java", "org.gradle.api.plugins.JavaPluginConvention")
+      }
+      Assertions.assertThat(actualConventionMap)
+        .containsExactlyInAnyOrderEntriesOf(expectedConventionMap)
     }
 
-    val extensionsMap = extensions.extensions.mapValues { entry -> entry.value.typeFqn }
-
-    val expectedExtensions = when {
-      isGradleOlderOrSameAs("4.9") ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension")
-
-      isGradleOlderThan("4.10.3") ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
-                               "sourceSets" to "org.gradle.api.internal.tasks.DefaultSourceSetContainer",
-                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension")
-
-      isGradleOlderThan("6.2") ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
-                               "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
-                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension")
-
-      isGradleOlderThan("6.8") ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
-                               "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
-                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
-                               "javaInstalls" to "org.gradle.jvm.toolchain.internal.DefaultJavaInstallationRegistry")
-      isGradleOlderThan("7.0") ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
-                               "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
-                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
-                               "javaInstalls" to "org.gradle.jvm.toolchain.internal.DefaultJavaInstallationRegistry",
-                               "javaToolchains" to "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService")
-      isGradleOlderThan("7.1") ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
-                               "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
-                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
-                               "javaToolchains" to "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService")
-
-      isGradleOlderThan("7.4")  ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
-                               "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
-                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
-                               "javaToolchains" to "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService",
-                               "base" to "org.gradle.api.plugins.internal.DefaultBasePluginExtension")
-      else ->
-        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
-                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
-                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
-                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
-                               "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
-                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
-                               "javaToolchains" to "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService",
-                               "base" to "org.gradle.api.plugins.internal.DefaultBasePluginExtension",
-                               "testing" to "org.gradle.testing.base.internal.DefaultTestingExtension")
+    val actualExtensionMap = extensions.extensions.mapValues { entry -> entry.value.typeFqn }
+    val expectedExtensionMap = buildMap {
+      put("ext", "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension")
+      put("idea", "org.gradle.plugins.ide.idea.model.IdeaModel")
+      put("defaultArtifacts", "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet")
+      put("reporting", "org.gradle.api.reporting.ReportingExtension")
+      if (isGradleAtLeast("4.10")) {
+        put("sourceSets", "org.gradle.api.tasks.SourceSetContainer")
+        put("java", "org.gradle.api.plugins.internal.DefaultJavaPluginExtension")
+      }
+      if (isGradleAtLeast("5.2")) {
+        // Replaced ext Gradle extension
+        remove("ext", "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension")
+        put("ext", "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension")
+      }
+      if (isGradleAtLeast("6.2")) {
+        put("javaInstalls", "org.gradle.jvm.toolchain.internal.DefaultJavaInstallationRegistry")
+      }
+      if (isGradleAtLeast("6.8")) {
+        put("javaToolchains", "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService")
+      }
+      if (isGradleAtLeast("7.0")) {
+        // Removed javaInstalls Gradle extension
+        remove("javaInstalls", "org.gradle.jvm.toolchain.internal.DefaultJavaInstallationRegistry")
+      }
+      if (isGradleAtLeast("7.1")) {
+        put("base", "org.gradle.api.plugins.internal.DefaultBasePluginExtension")
+      }
+      if (isGradleAtLeast("7.4")) {
+        put("testing", "org.gradle.testing.base.internal.DefaultTestingExtension")
+      }
     }
 
-    assertThat(extensionsMap).containsExactlyInAnyOrderEntriesOf(expectedExtensions)
+    Assertions.assertThat(actualExtensionMap)
+      .containsExactlyInAnyOrderEntriesOf(expectedExtensionMap)
   }
 }

@@ -539,11 +539,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return GradleVersionUtil.isGradleNewerThan(getCurrentGradleBaseVersion(), ver);
   }
 
-  protected String getExtraPropertiesExtensionFqn() {
-    return isGradleOlderThan("5.2") ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
-                                    : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension";
-  }
-
   protected void enableGradleDebugWithSuspend() {
     GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
   }
