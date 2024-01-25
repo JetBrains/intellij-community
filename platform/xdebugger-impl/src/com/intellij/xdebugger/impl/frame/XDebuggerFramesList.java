@@ -250,7 +250,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         if (hasSeparator(value, index)) {
           setSeparatorFont(list.getFont());
         }
-        ((XDebuggerFrameListRenderer)getItemComponent()).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        var itemComponent = (XDebuggerFrameListRenderer)getItemComponent();
+        itemComponent.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        itemComponent.setOpaque(true); // For colored background, see IDEA-343961.
         return component;
       }
       else {
