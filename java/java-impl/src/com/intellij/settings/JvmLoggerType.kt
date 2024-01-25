@@ -3,11 +3,11 @@ package com.intellij.settings
 
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
-enum class JavaLoggerInfo(
+enum class JvmLoggerType(
   val loggerName : String,
   val factoryName : String,
   val methodName: String,
-  val classNamePattern: String
+  private val classNamePattern: String
 ) {
   JAVA_LOGGING(
     JavaLoggingUtils.JAVA_LOGGING,
@@ -67,12 +67,12 @@ enum class JavaLoggerInfo(
   companion object {
     const val LOGGER_IDENTIFIER = "LOGGER"
 
-    val allLoggers: List<JavaLoggerInfo> = listOf(
-      JAVA_LOGGING,
+    val allLoggers: List<JvmLoggerType> = listOf(
       SLF4J,
-      COMMONS_LOGGING,
+      LOG4J2,
       LOG4J,
-      LOG4J2
+      COMMONS_LOGGING,
+      JAVA_LOGGING,
     )
   }
 }

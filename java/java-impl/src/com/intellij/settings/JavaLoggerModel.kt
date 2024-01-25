@@ -4,20 +4,20 @@ package com.intellij.settings
 import javax.swing.AbstractListModel
 import javax.swing.ComboBoxModel
 
-class JavaLoggerModel(loggerList : List<JavaLoggerInfo>, initialLogger : JavaLoggerInfo) : AbstractListModel<JavaLoggerInfo>(), ComboBoxModel<JavaLoggerInfo> {
+class JavaLoggerModel(loggerList : List<JvmLoggerType>, initialLogger : JvmLoggerType) : AbstractListModel<JvmLoggerType>(), ComboBoxModel<JvmLoggerType> {
   private val loggers = loggerList
 
   private var currentLogger = initialLogger
 
   override fun setSelectedItem(anItem: Any) {
-    if (anItem !is JavaLoggerInfo) return
+    if (anItem !is JvmLoggerType) return
     if (currentLogger != anItem) {
       currentLogger = anItem
       fireContentsChanged(this, -1, -1)
     }
   }
 
-  override fun getSelectedItem(): JavaLoggerInfo {
+  override fun getSelectedItem(): JvmLoggerType {
     return currentLogger
   }
 
@@ -25,7 +25,7 @@ class JavaLoggerModel(loggerList : List<JavaLoggerInfo>, initialLogger : JavaLog
     return loggers.size
   }
 
-  override fun getElementAt(index: Int): JavaLoggerInfo {
+  override fun getElementAt(index: Int): JvmLoggerType {
     return loggers[index]
   }
 }

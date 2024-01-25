@@ -17,7 +17,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.suggested.endOffset
-import com.intellij.settings.JavaLoggerInfo
+import com.intellij.settings.JvmLoggerType
 import com.intellij.settings.JavaSettingsStorage
 import org.jetbrains.java.generate.GenerationUtil
 
@@ -65,11 +65,11 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     GenerateMembersUtil.insertMembersAtOffset(clazz, editor.caretModel.offset, listOf(PsiGenerationInfo(field)))
   }
 
-  private fun findSuitableLoggers(module: Module?): List<JavaLoggerInfo> = JavaLoggerInfo.allLoggers.filter {
+  private fun findSuitableLoggers(module: Module?): List<JvmLoggerType> = JvmLoggerType.allLoggers.filter {
     JavaLibraryUtil.hasLibraryClass(module, it.loggerName)
   }
 
-  private fun getSelectedLogger(project: Project, availableLoggers: List<JavaLoggerInfo>): JavaLoggerInfo? {
+  private fun getSelectedLogger(project: Project, availableLoggers: List<JvmLoggerType>): JvmLoggerType? {
     if (availableLoggers.isEmpty()) return null
     if (availableLoggers.size == 1) return availableLoggers.first()
 
@@ -112,11 +112,11 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
       for (psiField in psiClass.fields) {
         val typeName = psiField.type.canonicalText
 
-        for (logger in JavaLoggerInfo.allLoggers) {
+        for (logger in JvmLoggerType.allLoggers) {
           if (logger.loggerName == typeName) return false
         }
       }
-      return psiClass.findFieldByName(JavaLoggerInfo.LOGGER_IDENTIFIER, false) == null
+      return psiClass.findFieldByName(JvmLoggerType.LOGGER_IDENTIFIER, false) == null
     }
   }
 }

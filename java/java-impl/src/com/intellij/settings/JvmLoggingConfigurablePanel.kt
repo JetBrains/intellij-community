@@ -24,7 +24,7 @@ class JvmLoggingConfigurablePanel(
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
           label(JavaBundle.message("label.configurable.logger.type"))
-          comboBox(JavaLoggerModel(JavaLoggerInfo.allLoggers, settings.logger)).bindItem(settings::logger.toNullableProperty()).onChanged {
+          comboBox(JavaLoggerModel(JvmLoggerType.allLoggers, settings.logger)).bindItem(settings::logger.toNullableProperty()).onChanged {
             updateWarningRow(it.item.loggerName)
           }
         }
