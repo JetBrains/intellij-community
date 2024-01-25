@@ -40,17 +40,33 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
   }
 
   private fun resolveGradleJvmImpl(parentDisposable: Disposable): Sdk {
-    return findSdkInTable()
-           ?: findSdkHomePathOnDisk()
-             ?.let { createAndAddSdk(it, parentDisposable) }
-           ?: throwSdkNotFoundException()
+    val sdk = findSdkInTable()
+              ?: findSdkHomePathOnDisk()
+                ?.let { createAndAddSdk(it, parentDisposable) }
+              ?: throwSdkNotFoundException()
+    println("""
+      |
+      |Resolved Gradle JVM for the Gradle ${gradleVersion.version}
+      |Gradle JVM name: ${sdk.name}
+      |Gradle JVM version: ${sdk.versionString}
+      |Gradle JVM path: ${sdk.homePath}
+      |
+    """.trimMargin())
+    return sdk
   }
 
   private fun resolveGradleJvmHomePathImpl(): String {
-    return findSdkInTable()
-             ?.homePath
-           ?: findSdkHomePathOnDisk()
-           ?: throwSdkNotFoundException()
+    val homePath = findSdkInTable()?.homePath
+                   ?: findSdkHomePathOnDisk()
+                   ?: throwSdkNotFoundException()
+    println("""
+      |
+      |Resolved Gradle JVM for the Gradle ${gradleVersion.version}
+      |Gradle JVM version: ${sdkType.getVersionString(homePath)}
+      |Gradle JVM path: $homePath
+      |
+    """.trimMargin())
+    return homePath
   }
 
   private fun findSdkInTable(): Sdk? {

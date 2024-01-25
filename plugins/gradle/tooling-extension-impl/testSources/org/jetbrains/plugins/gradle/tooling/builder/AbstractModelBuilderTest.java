@@ -7,17 +7,14 @@ import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.JavaVersion;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
@@ -29,9 +26,7 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
-import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
@@ -39,6 +34,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.After;
@@ -70,15 +66,14 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Vladislav.Soroka
  */
-@RunWith(value = Parameterized.class)
+@RunWith(Parameterized.class)
 public abstract class AbstractModelBuilderTest {
 
-  public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
+  public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)]");
 
   private static File ourTempDir;
 
@@ -103,8 +98,9 @@ public abstract class AbstractModelBuilderTest {
 
   @Before
   public void setUp() throws Exception {
+    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
-    assumeGradleCompatibleWithJava(gradleVersion);
+    String gradleJvmHomePath = GradleJvmResolver.resolveGradleJvmHomePath(_gradleVersion);
 
     ensureTempDirCreated();
 
@@ -135,7 +131,6 @@ public abstract class AbstractModelBuilderTest {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     GradleConnector connector = GradleConnector.newConnector();
 
-    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
     final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
     connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
@@ -159,25 +154,10 @@ public abstract class AbstractModelBuilderTest {
       executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
 
       buildActionExecutor.withArguments(executionSettings.getArguments());
-      String jdkHome = IdeaTestUtil.requireRealJdkHome();
-      buildActionExecutor.setJavaHome(new File(jdkHome));
+      buildActionExecutor.setJavaHome(new File(gradleJvmHomePath));
       buildActionExecutor.setJvmArguments("-Xmx128m", "-XX:MaxPermSize=64m");
       allModels = buildActionExecutor.run();
       assertNotNull(allModels);
-    }
-  }
-
-  public static void assumeGradleCompatibleWithJava(@NotNull String gradleVersion) {
-    assumeTrue("Gradle [" + gradleVersion + "] cannot be execution on Java [" + JavaVersion.current() + "]",
-               GradleJvmSupportMatrix.isSupported(GradleVersion.version(gradleVersion), JavaVersion.current()));
-
-    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "4.8")) {
-      assumeThat(JavaVersion.current().feature, new CustomMatcher<Integer>("Java version older than 9") {
-        @Override
-        public boolean matches(Object item) {
-          return item instanceof Integer && ((Integer)item).compareTo(9) < 0;
-        }
-      });
     }
   }
 

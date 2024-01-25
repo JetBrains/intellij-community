@@ -29,9 +29,8 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
   @Test
   public void testScalaModel() {
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
-
+    assertEquals(1, ideaModules.size());
     List<ScalaModel> scalaModels = ContainerUtil.mapNotNull(ideaModules, module -> allModels.getModel(module, ScalaModel.class));
-
     assertEquals(1, scalaModels.size());
     ScalaModel scalaModel = scalaModels.get(0);
     ScalaCompileOptions scalaCompileOptions = scalaModel.getScalaCompileOptions();
