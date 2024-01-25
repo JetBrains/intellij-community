@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.ArrayUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -89,7 +89,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
 
     TelemetryManager.getInstance().getTracer(VcsScope)
       .spanBuilder(GitTelemetrySpan.Log.LoadingFullCommitDetails.name)
-      .useWithScopeBlocking { span ->
+      .use { span ->
         span.setAttribute("rootName", root.name)
 
         val handlerListener = GitLogOutputSplitter(handler, parser, converter)

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -598,7 +598,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
         patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher = moduleOutputPatcher, context = context)
       }
       launch {
-        spanBuilder("write patched app info").useWithScopeBlocking {
+        spanBuilder("write patched app info").use {
           val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
           val result = injectAppInfo(inFile = moduleOutDir.resolve(relativePath), newFieldValue = context.applicationInfo.appInfoXml)

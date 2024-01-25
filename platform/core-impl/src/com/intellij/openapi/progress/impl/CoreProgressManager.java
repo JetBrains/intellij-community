@@ -217,7 +217,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           process.run();
         }
         else {
-          TraceKt.useWithScopeBlocking(span, (Span __) -> {
+          TraceKt.use(span, (Span __) -> {
             process.run();
             return null;
           });

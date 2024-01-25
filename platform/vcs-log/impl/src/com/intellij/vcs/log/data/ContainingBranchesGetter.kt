@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
@@ -149,7 +149,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
     fun getContainingBranches(): List<String> {
       return TelemetryManager.getInstance().getTracer(VcsScope)
         .spanBuilder(LogData.GettingContainingBranches.getName())
-        .useWithScopeBlocking {
+        .use {
           try {
             getContainingBranches(myProvider, myRoot, myHash)
           }

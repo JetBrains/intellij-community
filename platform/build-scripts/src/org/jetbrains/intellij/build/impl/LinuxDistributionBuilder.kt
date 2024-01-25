@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -201,10 +201,10 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val snapDir = context.paths.buildOutputDir.resolve("dist.snap")
     spanBuilder("build Linux .snap package")
       .setAttribute("snapName", snapName)
-      .useWithScopeBlocking { span ->
+      .use { span ->
         if (SystemInfoRt.isWindows) {
           span.addEvent(".snap cannot be built on Windows, skipped")
-          return@useWithScopeBlocking
+          return@use
         }
         check(iconPngPath != null) { context.messages.error("'iconPngPath' not set") }
         check(!customizer.snapDescription.isNullOrBlank()) { context.messages.error("'snapDescription' not set") }

@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.vcsUtil.VcsUtil
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
@@ -38,7 +38,7 @@ class ShowFileAnnotationCommand(text: String, line: Int) : PerformanceCommandCor
 
     val annotation = annotationProvider.annotate(vcsFile)
     withContext(Dispatchers.EDT) {
-      PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScopeBlocking {
+      PerformanceTestSpan.TRACER.spanBuilder(NAME).use {
         AnnotateToggleAction.doAnnotate(editor[0], context.project, annotation, vcs)
       }
     }

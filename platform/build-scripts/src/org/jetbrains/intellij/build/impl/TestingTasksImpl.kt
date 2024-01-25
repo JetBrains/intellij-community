@@ -11,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
@@ -166,7 +166,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                                             systemProperties: MutableMap<String, String>,
                                             context: CompilationContext) {
     for (configuration in runConfigurations) {
-      spanBuilder("run '${configuration.name}' run configuration").useWithScopeBlocking {
+      spanBuilder("run '${configuration.name}' run configuration").use {
         runTestsFromRunConfiguration(configuration, additionalJvmOptions, systemProperties, context)
       }
     }
@@ -718,7 +718,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
         .setAttribute(AttributeKey.stringKey("pattern"), options.batchTestIncludes ?: "")
-        .useWithScopeBlocking {
+        .use {
           runInBatchMode(mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath)
         }
     }
@@ -740,7 +740,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         val spanNameSuffix = if (options.attemptCount > 1) " (attempt $attempt)" else ""
         val additionalJvmArgs: List<String> = if (attempt > 1) listOf("-Dintellij.build.test.ignoreFirstAndLastTests=true") else emptyList()
 
-        val exitCode5: Int = if (runJUnit5) spanBuilder("run junit 5 tests${spanNameSuffix}").useWithScopeBlocking {
+        val exitCode5: Int = if (runJUnit5) spanBuilder("run junit 5 tests${spanNameSuffix}").use {
           if (options.isDedicatedRuntimePerClassEnabled) {
             context.messages.info("Creation of a dedicated runtime for each class is enabled")
             val testClasses = getTestClassesForModule(mainModule = mainModule)
@@ -776,7 +776,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         }
         else 0
 
-        val exitCode3: Int = if (runJUnit3) spanBuilder("run junit 3 tests${spanNameSuffix}").useWithScopeBlocking {
+        val exitCode3: Int = if (runJUnit3) spanBuilder("run junit 3 tests${spanNameSuffix}").use {
           if (options.isDedicatedRuntimePerClassEnabled) {
             context.messages.info("Creation of a dedicated runtime for each class is enabled")
             val testClasses = getTestClassesForModule(mainModule = mainModule)

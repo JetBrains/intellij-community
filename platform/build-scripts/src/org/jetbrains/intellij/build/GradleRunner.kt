@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -47,7 +47,7 @@ class GradleRunner(
                                                                            tasks = tasks.asList())
 
   private fun runInner(title: String, buildFile: File?, force: Boolean, parallel: Boolean, tasks: List<String>): Boolean {
-    spanBuilder("gradle $tasks").setAttribute("title", title).useWithScopeBlocking { span ->
+    spanBuilder("gradle $tasks").setAttribute("title", title).use { span ->
       if (runInner(buildFile = buildFile, parallel = parallel, tasks = tasks)) {
         return true
       }

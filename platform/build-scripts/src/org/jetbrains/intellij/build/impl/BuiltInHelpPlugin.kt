@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -88,7 +88,7 @@ private fun pluginXml(buildContext: BuildContext, version: String): String {
 private val helpIndexerMutex = Mutex()
 
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
-  spanBuilder("index help topics").useWithScopeBlocking {
+  spanBuilder("index help topics").use {
     helpIndexerMutex.withLock {
       runIdea(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
               args = listOf(resourceRoot.resolve("search").toString(),

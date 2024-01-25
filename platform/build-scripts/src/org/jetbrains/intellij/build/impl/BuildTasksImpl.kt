@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
@@ -350,7 +350,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
 
   val ideaPropertyFileContent = createIdeaPropertyFile(context)
 
-  spanBuilder("Adjust executable permissions on common dist").useWithScopeBlocking {
+  spanBuilder("Adjust executable permissions on common dist").use {
     val matchers = SUPPORTED_DISTRIBUTIONS.mapNotNull {
       getOsDistributionBuilder(it.os, null, context)
     }.flatMap { builder ->
@@ -513,7 +513,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
 
     spanBuilder("pack")
       .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
-      .useWithScopeBlocking {
+      .use {
         zipWithCompression(targetFile = targetFile, dirs = zipFileMap)
       }
 

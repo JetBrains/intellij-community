@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.io.PosixFilePermissionsUtil
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -47,7 +47,7 @@ interface OsSpecificDistributionBuilder {
   }
 
   fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture) {
-    TraceManager.spanBuilder("Permissions check for ${distribution.name}").useWithScopeBlocking {
+    TraceManager.spanBuilder("Permissions check for ${distribution.name}").use {
       val patterns = generateExecutableFilesMatchers(includeRuntime, arch)
       val matchedFiles = when {
         patterns.isEmpty() -> return

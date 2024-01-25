@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -45,7 +45,7 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private fun downloadToFile(url: String, file: Path, spanName: String) {
-    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").useWithScopeBlocking {
+    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").use {
       Files.createDirectories(file.parent)
       retryWithExponentialBackOff {
         if (url.isS3()) {
@@ -134,7 +134,7 @@ internal class PortableCompilationCacheDownloader(
       TraceManager.spanBuilder("unpack jps cache")
         .setAttribute("archive", "$cacheArchive")
         .setAttribute("destination", "$cacheDestination")
-        .useWithScopeBlocking {
+        .use {
           Decompressor.Zip(cacheArchive).overwrite(true).extract(cacheDestination)
         }
     }
@@ -159,7 +159,7 @@ internal class PortableCompilationCacheDownloader(
       TraceManager.spanBuilder("unpack output")
         .setAttribute("archive", "$outputArchive")
         .setAttribute("destination", compilationOutput.path)
-        .useWithScopeBlocking {
+        .use {
           Decompressor.Zip(outputArchive).overwrite(true).extract(Path.of(compilationOutput.path))
         }
     }

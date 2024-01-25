@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -82,7 +82,7 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun uploadToS3() {
-    spanBuilder("aws s3 sync").useWithScopeBlocking {
+    spanBuilder("aws s3 sync").use {
       awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", "$s3Folder", "s3://intellij-jps-cache", returnStdOut = false)
     }
   }
@@ -102,7 +102,7 @@ internal class PortableCompilationCacheUploader(
 
   private fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
-    spanBuilder("upload metadata").setAttribute("path", metadataPath).useWithScopeBlocking {
+    spanBuilder("upload metadata").setAttribute("path", metadataPath).use {
       val sourceStateFile = sourcesStateProcessor.sourceStateFile
       uploader.upload(metadataPath, sourceStateFile)
       copyFile(sourceStateFile, s3Folder.resolve(metadataPath))
@@ -189,7 +189,7 @@ private class Uploader(serverUrl: String, val authHeader: String) {
 
   fun upload(path: String, file: Path) {
     val url = pathToUrl(path)
-    spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).useWithScopeBlocking {
+    spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).use {
       check(Files.exists(file)) {
         "The file $file does not exist"
       }
