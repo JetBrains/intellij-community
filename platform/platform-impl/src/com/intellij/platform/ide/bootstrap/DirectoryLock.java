@@ -221,7 +221,6 @@ final class DirectoryLock {
         socketChannel.finishConnect();
       }
       if (LOG.isDebugEnabled()) LOG.debug("connected to " + address);
-      SplashManagerKt.hideSplash();
       socketChannel.register(selector, SelectionKey.OP_READ);
 
       allowActivation();
