@@ -380,6 +380,19 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.util.Collections.emptyList") convertTo Method("kotlin.collections.emptyList") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.util.Collections.emptySet") convertTo Method("kotlin.collections.emptySet") withReplaceType REPLACE_WITH_QUALIFIER,
         Method("java.util.Collections.emptyMap") convertTo Method("kotlin.collections.emptyMap") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Map.forEach") convertTo Method("kotlin.collections.Map.forEach") withArgumentsProvider { arguments ->
+            val argument = arguments.arguments.single()::value.detached()
+            if (argument is JKLambdaExpression) {
+                val statement = argument.statement.detached(argument)
+                JKArgumentList(
+                    JKLambdaExpression(
+                        statement,
+                        argument.parameters.map { it.detached(argument) }).withFormattingFrom(argument)
+                )
+            } else {
+                JKArgumentList(argument)
+            }
+        }
     )
 
     private val enumConversions: List<Conversion> = listOf(

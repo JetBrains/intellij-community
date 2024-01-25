@@ -99,7 +99,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     RemoveExplicitPropertyTypeProcessing(),
     RemoveRedundantNullabilityProcessing(),
     inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
-    inspectionBasedProcessing(JavaMapForEachInspection()),
     inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false) {
         it.shouldBeTransformed()
     },
