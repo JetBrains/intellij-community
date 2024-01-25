@@ -11,7 +11,8 @@ import com.intellij.util.SmartList
 /**
  * A provider which delegates to older [DocumentationManager]/[com.intellij.lang.documentation.DocumentationProvider] API.
  */
-class CompatibilityInlineDocumentationProvider: InlineDocumentationProvider {
+internal class CompatibilityInlineDocumentationProvider: InlineDocumentationProvider {
+
   override fun inlineDocumentationItems(file: PsiFile): Collection<InlineDocumentation> {
     val result = SmartList<InlineDocumentation>()
     DocumentationManager.getProviderFromElement(file).collectDocComments(file) {
@@ -20,9 +21,9 @@ class CompatibilityInlineDocumentationProvider: InlineDocumentationProvider {
     return result
   }
 
-  override fun findInlineDocumentation(file: PsiFile,
-                                       textRange: TextRange): InlineDocumentation? {
-    val comment = DocumentationManager.getProviderFromElement(file).findDocComment(file, textRange) ?: return null
+  override fun findInlineDocumentation(file: PsiFile, textRange: TextRange): InlineDocumentation? {
+    val comment = DocumentationManager.getProviderFromElement(file).findDocComment(file, textRange)
+                  ?: return null
     return PsiCommentInlineDocumentation(comment)
   }
 }

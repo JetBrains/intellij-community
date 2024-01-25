@@ -4,7 +4,7 @@ package com.intellij.platform.backend.documentation;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +16,8 @@ import java.util.Collection;
  */
 @OverrideOnly
 public interface InlineDocumentationProvider {
-  @ApiStatus.Internal
+
+  @Internal
   ExtensionPointName<InlineDocumentationProvider> EP_NAME = ExtensionPointName.create(
     "com.intellij.platform.backend.documentation.inlineDocumentationProvider"
   );
@@ -24,14 +25,13 @@ public interface InlineDocumentationProvider {
   /**
    * This defines {@link InlineDocumentation} in file, which can be rendered in place.
    * HTML content to be displayed will be obtained using {@link InlineDocumentation#renderText()} method.
-   */  @NotNull
-  Collection<InlineDocumentation> inlineDocumentationItems(PsiFile file);
+   */
+  @NotNull Collection<@NotNull InlineDocumentation> inlineDocumentationItems(PsiFile file);
 
   /**
    * Returns {@link InlineDocumentation} corresponding to the provided text range in a file.
    *
    * @see #inlineDocumentationItems(PsiFile)
    */
-  @Nullable
-  InlineDocumentation findInlineDocumentation(PsiFile file, TextRange textRange);
+  @Nullable InlineDocumentation findInlineDocumentation(@NotNull PsiFile file, @NotNull TextRange textRange);
 }
