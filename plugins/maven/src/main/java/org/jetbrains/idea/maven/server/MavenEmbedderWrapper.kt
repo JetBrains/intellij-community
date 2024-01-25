@@ -62,16 +62,17 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     val transformer = if (fileToChecksum.isEmpty()) RemotePathTransformerFactory.Transformer.ID
     else RemotePathTransformerFactory.createForProject(project)
 
-    val mappedFileToChecksum = fileToChecksum.mapNotNull { (file, checkSum) ->
+    val pomHashMap = PomHashMap()
+    fileToChecksum.mapNotNull { (file, checkSum) ->
       transformer.toRemotePath(file.getPath())?.let {
-        File(it) to checkSum
+        pomHashMap.put(File(it), checkSum)
       }
-    }.toMap()
+    }
 
     val serverWorkspaceMap = convertWorkspaceMap(workspaceMap)
 
     val request = ProjectResolutionRequest(
-      mappedFileToChecksum,
+      pomHashMap,
       explicitProfiles.enabledProfiles,
       explicitProfiles.disabledProfiles,
       serverWorkspaceMap,

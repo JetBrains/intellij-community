@@ -82,7 +82,7 @@ public class Maven3XProjectResolver {
 
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
-                                                               @NotNull Map<File, String> fileToChecksum,
+                                                               @NotNull PomHashMap pomHashMap,
                                                                @NotNull List<String> activeProfiles,
                                                                @NotNull List<String> inactiveProfiles) {
     try {
@@ -90,7 +90,7 @@ public class Maven3XProjectResolver {
 
       Collection<Maven3ExecutionResult> results = doResolveProject(
         task,
-        fileToChecksum,
+        pomHashMap,
         activeProfiles,
         inactiveProfiles,
         Collections.singletonList(listener)
@@ -128,11 +128,11 @@ public class Maven3XProjectResolver {
 
   @NotNull
   private Collection<Maven3ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                             @NotNull Map<File, String> fileToChecksum,
+                                                             @NotNull PomHashMap pomHashMap,
                                                              @NotNull List<String> activeProfiles,
                                                              @NotNull List<String> inactiveProfiles,
                                                              List<ResolutionListener> listeners) {
-    Set<File> files = fileToChecksum.keySet();
+    Set<File> files = pomHashMap.keySet();
     File file = !files.isEmpty() ? files.iterator().next() : null;
     files.forEach(f -> MavenServerStatsCollector.fileRead(f));
     MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles, userProperties);
@@ -191,7 +191,7 @@ public class Maven3XProjectResolver {
             continue;
           }
 
-          String previousChecksum = fileToChecksum.get(pomFile);
+          String previousChecksum = pomHashMap.getDependencyHash(pomFile);
           String newChecksum = fileToNewChecksum.get(pomFile);
           if (null != previousChecksum && previousChecksum.equals(newChecksum)) {
             continue;

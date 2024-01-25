@@ -26,10 +26,7 @@ import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.LongRunningTask;
-import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
-import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
-import org.jetbrains.idea.maven.server.ParallelRunnerForServer;
+import org.jetbrains.idea.maven.server.*;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -67,13 +64,13 @@ public class Maven40ProjectResolver {
 
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
-                                                               @NotNull Map<File, String> fileToChecksum,
+                                                               @NotNull PomHashMap pomHashMap,
                                                                @NotNull List<String> activeProfiles,
                                                                @NotNull List<String> inactiveProfiles) {
     try {
       Collection<Maven40ExecutionResult> results = doResolveProject(
         task,
-        fileToChecksum,
+        pomHashMap,
         activeProfiles,
         inactiveProfiles
       );
@@ -108,10 +105,10 @@ public class Maven40ProjectResolver {
 
   @NotNull
   private Collection<Maven40ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                              @NotNull Map<File, String> fileToChecksum,
+                                                              @NotNull PomHashMap pomHashMap,
                                                               @NotNull List<String> activeProfiles,
                                                               @NotNull List<String> inactiveProfiles) {
-    Set<File> files = fileToChecksum.keySet();
+    Set<File> files = pomHashMap.keySet();
     File file = !files.isEmpty() ? files.iterator().next() : null;
     MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles, userProperties);
 
@@ -167,7 +164,7 @@ public class Maven40ProjectResolver {
             continue;
           }
 
-          String previousChecksum = fileToChecksum.get(buildingResult.getPomFile());
+          String previousChecksum = pomHashMap.getDependencyHash(buildingResult.getPomFile());
           String newChecksum = fileToNewChecksum.get(pomFile);
           if (null != previousChecksum && previousChecksum.equals(newChecksum)) {
             continue;
