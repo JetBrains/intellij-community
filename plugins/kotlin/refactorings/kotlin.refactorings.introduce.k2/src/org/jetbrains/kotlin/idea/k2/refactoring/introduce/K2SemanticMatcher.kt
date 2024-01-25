@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -132,18 +133,31 @@ object K2SemanticMatcher {
     context(KtAnalysisSession)
     private fun areReceiversMatching(targetReceiver: KtReceiverValue?, patternReceiver: KtReceiverValue?): Boolean {
         return when (targetReceiver) {
-            is KtImplicitReceiverValue,
+            is KtImplicitReceiverValue -> {
+                when (patternReceiver) {
+                    is KtImplicitReceiverValue -> targetReceiver.symbol == patternReceiver.symbol
+                    is KtExplicitReceiverValue -> targetReceiver.symbol == patternReceiver.getSymbolForThisExpressionOrNull()
+                    else -> false
+                }
+            }
+
             is KtSmartCastedReceiverValue -> false // TODO()
 
             is KtExplicitReceiverValue -> {
-                if (patternReceiver !is KtExplicitReceiverValue) return false // TODO()
-
-                targetReceiver.expression.isSemanticMatch(patternReceiver.expression)
+                when (patternReceiver) {
+                    is KtImplicitReceiverValue -> targetReceiver.getSymbolForThisExpressionOrNull() == patternReceiver.symbol
+                    is KtExplicitReceiverValue -> targetReceiver.expression.isSemanticMatch(patternReceiver.expression)
+                    else -> false
+                }
             }
 
             null -> patternReceiver == null
         }
     }
+
+    context(KtAnalysisSession)
+    private fun KtExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KtSymbol? =
+        (expression as? KtThisExpression)?.mainReference?.resolveToSymbol()
 
     context(KtAnalysisSession)
     private fun areReferencesMatchingByResolve(targetReference: KtReference, patternReference: KtReference): Boolean =

@@ -6,8 +6,8 @@ class A {
     fun with(a: A, lambda: A.() -> Unit) {}
 
     fun foo(other: A) {
-        <selection>bar()</selection>
-        this.bar()
+        bar()
+        <selection>this.bar()</selection>
         this@A.bar()
         (bar())
         (this).bar()

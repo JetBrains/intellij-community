@@ -159,7 +159,7 @@ class KotlinPsiUnifier(
                             null to null
                     }
 
-                val thisExpression = explicitReceiver?.expression as? KtThisExpression
+                val thisExpression = explicitReceiver?.expression?.unwrap() as? KtThisExpression
                 if (implicitReceiver == null || thisExpression == null) return false
 
                 return matchDescriptors(

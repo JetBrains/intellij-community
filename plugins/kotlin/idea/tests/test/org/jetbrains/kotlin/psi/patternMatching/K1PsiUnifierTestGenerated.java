@@ -290,6 +290,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     runTest("testData/unifier/equivalence/expressions/calls/callUnderSmartCast.kt");
                 }
 
+                @TestMetadata("explicitThis.kt")
+                public void testExplicitThis() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/calls/explicitThis.kt");
+                }
+
                 @TestMetadata("externalArgumentsRuntime.kt")
                 public void testExternalArgumentsRuntime() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/calls/externalArgumentsRuntime.kt");
