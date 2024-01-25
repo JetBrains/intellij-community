@@ -10,7 +10,9 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.util.JDOMUtil
@@ -19,7 +21,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
@@ -28,12 +29,15 @@ import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.HashingStrategy
+import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
 import java.nio.file.Path
@@ -43,21 +47,33 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
 import kotlin.io.path.invariantSeparatorsPathString
 
-internal class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
-  override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
-    return ProjectWithModulesSaveSessionProducerManager(project)
-  }
+@ApiStatus.Internal
+open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
+  final override suspend fun saveModules(
+    saveSessions: MutableList<SaveSession>,
+    saveResult: SaveResult,
+    forceSavingAllSettings: Boolean,
+    projectSessionManager: ProjectSaveSessionProducerManager
+  ) {
+    val projectSessionManager = projectSessionManager as ProjectWithModulesSaveSessionProducerManager
 
-  override fun saveModules(projectSaveSessionManager: SaveSessionProducerManager, store: IProjectStore) {
-    val writer = JpsStorageContentWriter(projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager, store, project)
+    val writer = JpsStorageContentWriter(projectSessionManager, this, project)
     JpsProjectModelSynchronizer.getInstance(project).saveChangedProjectEntities(writer)
+
+    for (module in ModuleManager.getInstance(project).modules) {
+      val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
+      val moduleSessionManager = moduleStore.createSaveSessionProducerManager()
+      moduleStore.commitComponents(forceSavingAllSettings, moduleSessionManager, saveResult)
+      projectSessionManager.commitComponents(moduleStore, moduleSessionManager)
+      moduleSessionManager.collectSaveSessions(saveSessions)
+    }
   }
 
-  override fun commitModuleComponents(projectSaveSessionManager: SaveSessionProducerManager,
-                                      moduleStore: ComponentStoreImpl,
-                                      moduleSaveSessionManager: SaveSessionProducerManager) {
-    (projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager).commitComponents(moduleStore, moduleSaveSessionManager)
-  }
+  final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager =
+    ProjectWithModulesSaveSessionProducerManager(project)
+
+  override fun createContentReader(): JpsFileContentReaderWithCache =
+    StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
 }
 
 private class JpsStorageContentWriter(private val session: ProjectWithModulesSaveSessionProducerManager,
@@ -99,9 +115,9 @@ private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMa
 private val NULL_ELEMENT = Element("null")
 
 private class ProjectWithModulesSaveSessionProducerManager(project: Project) : ProjectSaveSessionProducerManager(project) {
-  private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> = if (!SystemInfoRt.isFileSystemCaseSensitive)
-    ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive())
-  else ConcurrentCollectionFactory.createConcurrentMap()
+  private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> =
+    if (!SystemInfoRt.isFileSystemCaseSensitive) ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive())
+    else ConcurrentCollectionFactory.createConcurrentMap()
   private val externalModuleComponents = ConcurrentHashMap<String, ConcurrentHashMap<String, Element>>()
 
   fun setModuleComponentState(imlFilePath: String, componentName: String, componentTag: Element?) {

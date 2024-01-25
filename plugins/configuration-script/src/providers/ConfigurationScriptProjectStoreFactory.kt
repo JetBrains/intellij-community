@@ -13,7 +13,7 @@ import com.intellij.util.ReflectionUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryImpl() {
+private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryBase() {
   override fun createStore(project: Project) = MyProjectStore(project)
 }
 
