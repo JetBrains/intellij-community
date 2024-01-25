@@ -108,9 +108,7 @@ public class MavenProject {
   @ApiStatus.Internal
   public MavenProjectChanges updateFromReaderResult(@NotNull MavenProjectReaderResult readerResult,
                                                     @NotNull MavenGeneralSettings settings,
-                                                    boolean updateLastReadStamp,
-                                                    boolean keepPreviousArtifacts,
-                                                    boolean keepPreviousProfiles) {
+                                                    boolean keepPreviousArtifacts) {
     return updateFromReaderResult(
       readerResult.mavenModel,
       null,
@@ -119,9 +117,9 @@ public class MavenProject {
       Set.of(),
       readerResult.nativeModelMap,
       settings,
-      updateLastReadStamp,
+      true,
       keepPreviousArtifacts,
-      keepPreviousProfiles);
+      false);
   }
 
   @NotNull
