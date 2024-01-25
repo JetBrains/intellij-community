@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -19,6 +20,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,12 +38,20 @@ import java.util.concurrent.locks.Lock;
  *
  * @author gregsh
  */
+@Obsolete
 public final class ProgressIndicatorUtils {
   private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
 
   private static final int MAX_REJECTED_EXECUTIONS_BEFORE_CANCELLATION = 16;
 
 
+  /**
+   * @deprecated It does not make much sense to cancel a BG task,
+   * which does not hold a read lock, when a write action is pending.
+   * Use {@link CoroutinesKt#readAction} to run a read action,
+   * which is cancelled on write. Don't cancel arbitrary tasks on write.
+   */
+  @Deprecated
   public static @NotNull ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress,
                                                                     @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
@@ -55,10 +65,18 @@ public final class ProgressIndicatorUtils {
     return progress;
   }
 
+  /**
+   * @deprecated see {@link ReadTask}
+   */
+  @Deprecated
   public static void scheduleWithWriteActionPriority(@NotNull ReadTask task) {
     scheduleWithWriteActionPriority(new ProgressIndicatorBase(false, false), task);
   }
 
+  /**
+   * @deprecated see {@link ReadTask}
+   */
+  @Deprecated
   public static @NotNull CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator, @NotNull ReadTask readTask) {
     return scheduleWithWriteActionPriority(progressIndicator, AppExecutorUtil.getAppExecutorService(), readTask);
   }
@@ -67,7 +85,9 @@ public final class ProgressIndicatorUtils {
    * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicator}
    * instance, which can be used to cancel action externally.
    * @return true if action executed successfully, false if it was canceled by write action before or during execution
+   * @deprecated use {@link ReadAction#computeCancellable}
    */
+  @Deprecated
   public static boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator progressIndicator) {
     AtomicBoolean readActionAcquired = new AtomicBoolean();
     boolean executed = runWithWriteActionPriority(() -> readActionAcquired.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)),
@@ -89,14 +109,21 @@ public final class ProgressIndicatorUtils {
    * </ul>
    * If a caller needs to retry the invocation of this method in a loop, it should consider pausing between attempts, to avoid potential
    * 100% CPU usage. There is also alternative that implements the re-trying logic {@link com.intellij.openapi.application.NonBlockingReadAction}
+   * @deprecated use {@link ReadAction#computeCancellable}
    */
+  @Deprecated
   public static boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action) {
     return runInReadActionWithWriteActionPriority(action, null);
   }
 
   /**
    * @return true if action executed successfully, false if it was canceled by write action before or during execution
+   * @deprecated It does not make much sense to cancel a BG task,
+   * which does not hold a read lock, when a write action is pending.
+   * Use {@link CoroutinesKt#readAction} to run a read action,
+   * which is cancelled on write. Don't cancel arbitrary tasks on write.
    */
+  @Deprecated
   public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
     ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
     application.assertIsNonDispatchThread();
@@ -146,6 +173,10 @@ public final class ProgressIndicatorUtils {
     return application.isWriteActionPending() || application.isWriteActionInProgress();
   }
 
+  /**
+   * @deprecated see {@link ReadTask}
+   */
+  @Deprecated
   public static @NotNull CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator,
                                                                               @NotNull Executor executor,
                                                                               @NotNull ReadTask readTask) {
@@ -241,7 +272,11 @@ public final class ProgressIndicatorUtils {
   /**
    * Ensure the current EDT activity finishes in case it requires many write actions, with each being delayed a bit
    * by background thread read action (until its first checkCanceled call). Shouldn't be called from under read action.
+   *
+   * @deprecated It does not make much sense when not dealing with read actions.
+   * Non-blocking read actions already do this on their own.
    */
+  @Deprecated
   public static void yieldToPendingWriteActions(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
     if (application.isReadAccessAllowed()) {
@@ -253,7 +288,12 @@ public final class ProgressIndicatorUtils {
     awaitWithCheckCanceled(semaphore, indicator);
   }
 
-  /** @see ProgressIndicatorUtils#yieldToPendingWriteActions(ProgressIndicator) */
+  /**
+   * @see ProgressIndicatorUtils#yieldToPendingWriteActions(ProgressIndicator)
+   * @deprecated It does not make much sense when not dealing with read actions.
+   * Non-blocking read actions already do this on their own.
+   */
+  @Deprecated
   public static void yieldToPendingWriteActions() {
     yieldToPendingWriteActions(ProgressIndicatorProvider.getGlobalProgressIndicator());
   }
