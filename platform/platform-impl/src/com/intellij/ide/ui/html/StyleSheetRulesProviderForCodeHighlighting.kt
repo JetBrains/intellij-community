@@ -59,15 +59,16 @@ object StyleSheetRulesProviderForCodeHighlighting {
           && luminance > 0.5
           && abs(ColorUtil.getLuminance(preferredBackgroundColor) - luminance) > 0.1) {
         preferredBackgroundColor
-      } else {
-        val change = if (luminance < 0.028f)
-        // In case of a very dark theme, make background lighter
-          1.55f - luminance * 10f
-        else if (luminance < 0.15)
-        // In any other case make background darker
-          0.85f
-        else
-          0.96f
+      }
+      else {
+        val change = when {
+          // In case of a very dark theme, make background lighter
+          luminance < 0.028f -> 1.55f - luminance * 10f
+          // In any other case make background darker
+          luminance < 0.1 -> 0.89f
+          luminance < 0.15 -> 0.85f
+          else -> 0.96f
+        }
         ColorUtil.hackBrightness(it, 1, change)
       }
     })
