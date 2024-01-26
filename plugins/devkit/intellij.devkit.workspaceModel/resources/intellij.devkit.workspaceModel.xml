@@ -25,8 +25,8 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
                      runForWholeFile="true"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplAbsentInspection"
-                     key="inspection.workspace.absent.model.display.name"/>
+                     implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplGenerationInspection"
+                     key="inspection.workspace.impl.generation.display.name"/>
     <localInspection language="kotlin"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
