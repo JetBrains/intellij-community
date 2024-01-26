@@ -13,7 +13,9 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
@@ -46,7 +48,11 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   private final IntObjectMap<VirtualFile> myFilesToUpdate =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-  private final ConcurrentBitSet myDirtyFiles = ConcurrentBitSet.create(); // files from myEventMerger and myFilesToUpdate
+
+  // files from myEventMerger and myFilesToUpdate
+  private final List<Pair<String, ConcurrentBitSet>> myDirtyFiles = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final ConcurrentBitSet myDirtyFilesWithoutProject = ConcurrentBitSet.create();
+
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
   private final Phaser myWorkersFinishedSync = new Phaser() {
     @Override
@@ -94,13 +100,20 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
       VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", file);
       myFilesToUpdate.remove(fileId);
-      myDirtyFiles.clear(fileId);
+      removeFromDirtyFiles(fileId);
     }
   }
 
   public void removeFileIdFromFilesScheduledForUpdate(int fileId) {
     myFilesToUpdate.remove(fileId);
-    myDirtyFiles.clear(fileId);
+    removeFromDirtyFiles(fileId);
+  }
+
+  private void removeFromDirtyFiles(int fileId) {
+    myDirtyFilesWithoutProject.clear(fileId);
+    for (Pair<String, ConcurrentBitSet> pair : myDirtyFiles) {
+      pair.second.clear(fileId);
+    }
   }
 
   public boolean containsFileId(int fileId) {
@@ -119,8 +132,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   @NotNull
-  public ConcurrentBitSet getDirtyFiles() {
-    return myDirtyFiles;
+  public Pair<ConcurrentBitSet, List<Pair<String, ConcurrentBitSet>>> getDirtyFiles() {
+    return new Pair<>(myDirtyFilesWithoutProject, myDirtyFiles);
   }
 
   public void clearFilesToUpdate() {
@@ -142,7 +155,22 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   private void addToDirtyFiles(@NotNull VirtualFile fileOrDir) {
     if (!(fileOrDir instanceof VirtualFileWithId fileOrDirWithId)) return;
-    myDirtyFiles.set(fileOrDirWithId.getId());
+    Set<Project> projects = myFileBasedIndex.getContainingProjects(fileOrDir);
+    if (projects.isEmpty()) {
+      myDirtyFilesWithoutProject.set(fileOrDirWithId.getId());
+      return;
+    }
+    for (Project project : projects) {
+      Pair<String, ConcurrentBitSet> projectDirtyFiles = ContainerUtil.find(myDirtyFiles, p -> p.first.equals(project.getLocationHash()));
+      if (projectDirtyFiles != null) {
+        projectDirtyFiles.second.set(fileOrDirWithId.getId());
+      }
+      else {
+        assert false : "Project name: " + project.getName() + " hash: " + project.getLocationHash() +
+                       " was not found in myDirtyFiles. " +
+                       "Projects in myDirtyFiles: " + Strings.join(myDirtyFiles, p -> p.first, ", ");
+      }
+    }
   }
 
   @Override
@@ -180,6 +208,10 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
       checkNotIndexedByContentBasedIndexes(file, fileId);
     }
+  }
+
+  public void addProject(@NotNull Project project) {
+    myDirtyFiles.add(new Pair<>(project.getLocationHash(), ConcurrentBitSet.create()));
   }
 
   private static boolean memoryStorageCleaningNeeded(@NotNull VFileEvent event) {
@@ -264,7 +296,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         }
         finally {
           if (!myFilesToUpdate.containsKey(info.getFileId())) {
-            myDirtyFiles.clear(info.getFileId()); // vfs event was processed by files was not scheduled for indexing
+            removeFromDirtyFiles(info.getFileId()); // vfs event was processed by files was not scheduled for indexing
           }
         }
         return true;

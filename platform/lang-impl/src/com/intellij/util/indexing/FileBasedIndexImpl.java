@@ -602,16 +602,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
-        ConcurrentBitSet dirtyFilesSet = getChangedFilesCollector().getDirtyFiles();
-        IntSet dirtyFileIds = new IntOpenHashSet();
-        for (int fileId = 0; fileId < dirtyFilesSet.size(); fileId++) {
-          if (dirtyFilesSet.get(fileId)) {
-            PingProgress.interactWithEdtProgress();
-            dirtyFileIds.add(fileId);
-          }
+        Pair<ConcurrentBitSet, List<Pair<String, ConcurrentBitSet>>> pair = getChangedFilesCollector().getDirtyFiles();
+
+        IntSet allDirtyFileIds = new IntOpenHashSet();
+        for (Pair<String, ConcurrentBitSet> p : pair.second) {
+          IntSet dirtyFileIds = toIntSet(p.second);
+          allDirtyFileIds.addAll(dirtyFileIds);
+          PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(p.first), dirtyFileIds, vfsCreationStamp);
         }
+
+        ConcurrentBitSet dirtyFilesSet = pair.first;
+        IntSet dirtyFileIds = toIntSet(dirtyFilesSet);
         synchronized (myStaleIds) {
-          dirtyFileIds.addAll(myStaleIds);
+          allDirtyFileIds.addAll(dirtyFileIds);
+          allDirtyFileIds.addAll(myStaleIds);
           myStaleIds.clear();
         }
         PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), dirtyFileIds, vfsCreationStamp);
@@ -626,7 +630,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if (myIsUnitTestMode) {
           UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
           if (index != null) {
-            StaleIndexesChecker.checkIndexForStaleRecords(index, dirtyFileIds, false);
+            StaleIndexesChecker.checkIndexForStaleRecords(index, allDirtyFileIds, false);
           }
         }
 
@@ -663,6 +667,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
       LOG.info("Index dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
     }
+  }
+
+  @NotNull
+  private static IntSet toIntSet(@NotNull ConcurrentBitSet dirtyFilesSet) {
+    IntSet dirtyFileIds = new IntOpenHashSet();
+    for (int fileId = 0; fileId < dirtyFilesSet.size(); fileId++) {
+      if (dirtyFilesSet.get(fileId)) {
+        PingProgress.interactWithEdtProgress();
+        dirtyFileIds.add(fileId);
+      }
+    }
+    return dirtyFileIds;
   }
 
   public void removeDataFromIndicesForFile(int fileId, @NotNull VirtualFile file, @NotNull String cause) {
@@ -1922,6 +1938,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
     myIndexableSets.add(Pair.create(set, project));
+    getChangedFilesCollector().addProject(project);
   }
 
   public void removeIndexableSet(@NotNull IndexableFileSet set) {

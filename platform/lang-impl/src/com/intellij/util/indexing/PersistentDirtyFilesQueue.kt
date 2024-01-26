@@ -22,6 +22,9 @@ object PersistentDirtyFilesQueue {
     get() = application.isUnitTestMode
 
   @JvmStatic
+  fun getQueuesDir(): Path = PathManager.getIndexRoot() / "dirty-file-queues"
+
+  @JvmStatic
   fun getQueueFile(): Path = PathManager.getIndexRoot() / "dirty-file-ids"
 
   @JvmStatic
