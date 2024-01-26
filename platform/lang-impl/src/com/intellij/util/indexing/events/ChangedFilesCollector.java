@@ -24,6 +24,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.*;
@@ -45,6 +46,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   private final IntObjectMap<VirtualFile> myFilesToUpdate =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final ConcurrentBitSet myDirtyFiles = ConcurrentBitSet.create(); // files from myEventMerger and myFilesToUpdate
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
   private final Phaser myWorkersFinishedSync = new Phaser() {
     @Override
@@ -92,11 +94,13 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
       VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", file);
       myFilesToUpdate.remove(fileId);
+      myDirtyFiles.clear(fileId);
     }
   }
 
   public void removeFileIdFromFilesScheduledForUpdate(int fileId) {
     myFilesToUpdate.remove(fileId);
+    myDirtyFiles.clear(fileId);
   }
 
   public boolean containsFileId(int fileId) {
@@ -114,22 +118,31 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
            : Collections.unmodifiableCollection(myFilesToUpdate.values());
   }
 
-  // it's important here to don't load any extension here, so we don't check scopes.
-  public Collection<VirtualFile> getAllPossibleFilesToUpdate() {
-
-    ReadAction.run(() -> {
-      processFilesInReadAction(info -> {
-        myFilesToUpdate.put(info.getFileId(),
-                            info.isFileRemoved() ? new DeletedVirtualFileStub(((VirtualFileWithId)info.getFile())) : info.getFile());
-        return true;
-      });
-    });
-
-    return new ArrayList<>(myFilesToUpdate.values());
+  @NotNull
+  public ConcurrentBitSet getDirtyFiles() {
+    return myDirtyFiles;
   }
 
   public void clearFilesToUpdate() {
     myFilesToUpdate.clear();
+    myDirtyFiles.clear();
+  }
+
+  @Override
+  protected void recordFileEvent(@NotNull VirtualFile fileOrDir, boolean onlyContentDependent) {
+    addToDirtyFiles(fileOrDir);
+    super.recordFileEvent(fileOrDir, onlyContentDependent);
+  }
+
+  @Override
+  protected void recordFileRemovedEvent(@NotNull VirtualFile file) {
+    addToDirtyFiles(file);
+    super.recordFileRemovedEvent(file);
+  }
+
+  private void addToDirtyFiles(@NotNull VirtualFile fileOrDir) {
+    if (!(fileOrDir instanceof VirtualFileWithId fileOrDirWithId)) return;
+    myDirtyFiles.set(fileOrDirWithId.getId());
   }
 
   @Override
@@ -248,6 +261,11 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         catch (Throwable t) {
           if (LOG.isDebugEnabled()) LOG.debug("Exception while processing " + info, t);
           throw t;
+        }
+        finally {
+          if (!myFilesToUpdate.containsKey(info.getFileId())) {
+            myDirtyFiles.clear(info.getFileId()); // vfs event was processed by files was not scheduled for indexing
+          }
         }
         return true;
       }

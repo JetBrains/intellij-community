@@ -56,6 +56,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
@@ -601,11 +602,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
+        ConcurrentBitSet dirtyFilesSet = getChangedFilesCollector().getDirtyFiles();
         IntSet dirtyFileIds = new IntOpenHashSet();
-        for (VirtualFile file : getChangedFilesCollector().getAllPossibleFilesToUpdate()) {
-          PingProgress.interactWithEdtProgress();
-          int fileId = getFileId(file);
-          dirtyFileIds.add(fileId);
+        for (int fileId = 0; fileId < dirtyFilesSet.size(); fileId++) {
+          if (dirtyFilesSet.get(fileId)) {
+            PingProgress.interactWithEdtProgress();
+            dirtyFileIds.add(fileId);
+          }
         }
         synchronized (myStaleIds) {
           dirtyFileIds.addAll(myStaleIds);
