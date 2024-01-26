@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.project.structure.analysisExtensionFileCont
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.runReadAction
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
@@ -319,8 +320,8 @@ class ModuleInfoProvider(private val project: Project) {
                 return MappingIterator(iterator) { module ->
                     if (module.isDisposed) return@MappingIterator null
                     val projectFileIndex = ProjectFileIndex.getInstance(project)
-                    val rootType: JpsModuleSourceRootType<*>? = projectFileIndex.getRootType(virtualFile)
-                    module.asSourceInfo(rootType)?.let(Result.Companion::success)
+                    val sourceRootType: KotlinSourceRootType? = projectFileIndex.getKotlinSourceRootType(virtualFile)
+                    module.asSourceInfo(sourceRootType)?.let(Result.Companion::success)
                 }
             }
         })
