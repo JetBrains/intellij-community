@@ -13,6 +13,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.function.BiFunction
+import kotlin.collections.LinkedHashMap
 
 internal class UIThemeBean {
   @JvmField
@@ -389,7 +390,7 @@ private fun readTopLevelBoolean(parser: JsonParser, bean: UIThemeBean, value: Bo
 
 internal fun importFromParentTheme(theme: UIThemeBean, parentTheme: UIThemeBean) {
   theme.ui = importMapFromParentTheme(theme.ui, parentTheme.ui)
-  theme.icons = importMapFromParentTheme(theme.icons, parentTheme.icons)
+  theme.icons = importIconsFromParentTheme(theme.icons, parentTheme.icons)
   theme.background = importMapFromParentTheme(theme.background, parentTheme.background)
   theme.emptyFrameBackground = importMapFromParentTheme(theme.emptyFrameBackground, parentTheme.emptyFrameBackground)
   theme.colorMap.rawMap = importMapFromParentTheme(theme.colorMap.rawMap, parentTheme.colorMap.rawMap)
@@ -412,5 +413,21 @@ private fun <T : Any?> importMapFromParentTheme(map: Map<String, T>?, parentMap:
     }
   }
   result.putAll(map)
+  return result
+}
+
+private fun importIconsFromParentTheme(map: Map<String, Any?>?, parentMap: Map<String, Any?>?): Map<String, Any?>? {
+  val result = importMapFromParentTheme(map, parentMap)
+  val palette = map?.get("ColorPalette")
+  val parentPalette = parentMap?.get("ColorPalette")
+
+  if (result != null && palette is Map<*, *> && parentPalette is Map<*, *>) {
+    val unitedPalette = LinkedHashMap<Any, Any?>(parentPalette)
+    @Suppress("UNCHECKED_CAST")
+    unitedPalette.putAll(palette as Map<Any, Any?>)
+    val mutableMap = LinkedHashMap(result)
+    mutableMap["ColorPalette"] = unitedPalette
+    return mutableMap
+  }
   return result
 }
