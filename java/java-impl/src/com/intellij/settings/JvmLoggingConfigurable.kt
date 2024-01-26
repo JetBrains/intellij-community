@@ -3,8 +3,8 @@ package com.intellij.settings
 
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
-import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.logging.JvmLogger
+import com.intellij.logging.UnspecifiedLogger
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
@@ -28,7 +28,7 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
   override fun getId(): String = JavaBundle.message("jvm.logging.configurable.display.name")
 
   override fun createComponent(): JComponent {
-    val isOnlyOnStartup = JvmLogger.getAllLoggersNames(settings.loggerName == JvmLogger.UNSPECIFIED_LOGGER_NAME)
+    val isOnlyOnStartup = JvmLogger.getAllLoggersNames(settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
     panel = panel {
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
@@ -50,8 +50,7 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
 
   private fun updateWarningRow(loggerDisplayName: String?) {
     ReadAction.nonBlocking<Boolean> {
-      val logger = JvmLogger.getLoggerByName(loggerDisplayName) ?: return@nonBlocking false
-      !JavaLibraryUtil.hasLibraryClass(project, logger.loggerName)
+      JvmLogger.getLoggerByName(loggerDisplayName)?.isAvailable(project) == false
     }.finishOnUiThread(ModalityState.any()) { isVisible ->
       warningRow.visible(isVisible)
     }.submit(boundedExecutor)

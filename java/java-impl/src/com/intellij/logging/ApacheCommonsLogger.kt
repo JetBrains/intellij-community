@@ -3,11 +3,11 @@ package com.intellij.logging
 
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
-class ApacheCommonsLogger : JvmLogger(
-  JavaLoggingUtils.COMMONS_LOGGING,
+class ApacheCommonsLogger : JvmLogger by JvmLoggerFieldDelegate(
   JavaLoggingUtils.COMMONS_LOGGING_FACTORY,
   "getLog",
   "%s.class",
+  JavaLoggingUtils.COMMONS_LOGGING,
   20,
 ) {
   override fun toString(): String = "Apache Commons Logging"

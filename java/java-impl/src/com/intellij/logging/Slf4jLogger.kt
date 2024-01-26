@@ -3,11 +3,11 @@ package com.intellij.logging
 
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
-class Slf4jLogger : JvmLogger(
-  JavaLoggingUtils.SLF4J,
+class Slf4jLogger : JvmLogger by JvmLoggerFieldDelegate(
   JavaLoggingUtils.SLF4J_FACTORY,
   "getLogger",
   "%s.class",
+  JavaLoggingUtils.SLF4J,
   40,
 ) {
   override fun toString(): String = "Slf4j"

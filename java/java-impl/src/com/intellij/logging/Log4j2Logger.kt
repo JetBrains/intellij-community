@@ -3,11 +3,11 @@ package com.intellij.logging
 
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
-class Log4j2Logger : JvmLogger(
-  JavaLoggingUtils.LOG4J2,
+class Log4j2Logger : JvmLogger by JvmLoggerFieldDelegate(
   JavaLoggingUtils.LOG4J2_FACTORY,
   "getLogger",
   "%s.class",
+  JavaLoggingUtils.LOG4J2,
   30,
 ) {
   override fun toString(): String = "Log4j2"

@@ -3,8 +3,8 @@ package com.intellij.codeInsight.generation
 
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
-import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.logging.JvmLogger
+import com.intellij.logging.UnspecifiedLogger
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -33,7 +33,8 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
     CommandProcessor.getInstance().executeCommand(project, {
       try {
-        val appendedField = chosenLogger.insertLoggerAtClass(project, lastClass) as? PsiField ?: return@executeCommand // TODO: determine logger type
+        val appendedField = chosenLogger.insertLoggerAtClass(project, lastClass) as? PsiField
+                            ?: return@executeCommand // TODO: determine logger type
         val identifier = appendedField.nameIdentifier
         editor.caretModel.moveToOffset(identifier.endOffset)
         editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
@@ -75,7 +76,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
   private fun saveLoggerOnTheFirstTime(project: Project, logger: JvmLogger?) {
     if (logger == null) return
     val settings = project.service<JavaSettingsStorage>().state
-    if (settings.loggerName == JvmLogger.UNSPECIFIED_LOGGER_NAME) {
+    if (settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME) {
       settings.loggerName = logger.toString()
     }
   }
@@ -83,9 +84,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
   override fun startInWriteAction(): Boolean = false
 
   companion object {
-    fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.getAllLoggers(false).filter {
-      JavaLibraryUtil.hasLibraryClass(module, it.loggerName)
-    }
+    fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.getAllLoggers(false).filter { it.isAvailable(module) }
 
     fun getPossiblePlacesForLogger(element: PsiElement): List<PsiClass> = element.parentsOfType(PsiClass::class.java, false)
       .filter { clazz -> clazz !is PsiAnonymousClass && isPossibleToPlaceLogger(clazz) }
