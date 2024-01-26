@@ -8,8 +8,12 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
+import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.openapi.actionSystem.Constraints
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -18,6 +22,7 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -58,13 +63,25 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
         }.collectLatest { reviewVm ->
           reviewVm?.getViewModelFor(file)?.collectLatest { fileVm ->
             if (fileVm != null) {
-              val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
-              val syncedFlow = reviewVm.newChangesInReview.map { it?.getOrNull() != true }.distinctUntilChanged()
-              combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest { enabled ->
-                if (enabled) supervisorScope {
-                  setupReview(settings, fileVm, editor)
-                  awaitCancellation()
+              val toolbarActionGroup = DefaultActionGroup(
+                CodeReviewInEditorToolbarActionGroup(reviewVm),
+                Separator.getInstance()
+              )
+              val editorMarkupModel = editor.markupModel as? EditorMarkupModel
+              editorMarkupModel?.addInspectionWidgetAction(toolbarActionGroup, Constraints.FIRST)
+
+              try {
+                val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
+                val syncedFlow = reviewVm.updateRequired.map { !it }.distinctUntilChanged()
+                combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest { enabled ->
+                  if (enabled) supervisorScope {
+                    setupReview(settings, fileVm, editor)
+                    awaitCancellation()
+                  }
                 }
+              }
+              finally {
+                editorMarkupModel?.removeInspectionWidgetAction(toolbarActionGroup)
               }
             }
           }

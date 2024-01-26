@@ -4,9 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.computationState
-import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel
 import com.intellij.collaboration.util.*
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
@@ -27,11 +26,10 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewBranchStateSharedViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 
-interface GHPRReviewInEditorViewModel : CodeReviewDiscussionsViewModel {
-  val newChangesInReview: StateFlow<ComputedResult<Boolean>?>
-
+interface GHPRReviewInEditorViewModel : CodeReviewInEditorViewModel {
   fun getViewModelFor(file: VirtualFile): Flow<GHPRReviewFileEditorViewModel?>
 }
 
@@ -40,8 +38,10 @@ private val LOG = logger<GHPRReviewInEditorViewModelImpl>()
 internal class GHPRReviewInEditorViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
+  private val settings: GithubPullRequestsProjectUISettings,
   dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
+  private val sharedBranchVm: GHPRReviewBranchStateSharedViewModel,
   private val threadsVms: GHPRThreadsViewModels,
   private val showDiff: (ChangesSelection) -> Unit
 ) : GHPRReviewInEditorViewModel {
@@ -57,15 +57,15 @@ internal class GHPRReviewInEditorViewModelImpl(
 
   private val filesVmsMap = mutableMapOf<FilePath, StateFlow<GHPRReviewFileEditorViewModelImpl?>>()
 
-  override val newChangesInReview: StateFlow<ComputedResult<Boolean>?> =
-    dataProvider.changesData.newChangesInReviewRequest.computationState().stateInNow(cs, ComputedResult.loading())
-
-  private val reviewEnabledState = GithubPullRequestsProjectUISettings.getInstance(project).editorReviewEnabledState
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> =
-    reviewEnabledState.combineState(_discussionsViewOption) { enabled, viewOption ->
+    settings.editorReviewEnabledState.combineState(_discussionsViewOption) { enabled, viewOption ->
       if (!enabled) DiscussionsViewOption.DONT_SHOW else viewOption
     }
+
+  override val updateRequired: StateFlow<Boolean> = sharedBranchVm.updateRequired
+
+  override fun updateBranch() = sharedBranchVm.updateBranch()
 
   /**
    * A view model for [file] review
@@ -99,7 +99,13 @@ internal class GHPRReviewInEditorViewModelImpl(
   }
 
   override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
-    _discussionsViewOption.value = viewOption
+    if (viewOption == DiscussionsViewOption.DONT_SHOW) {
+      settings.editorReviewEnabled = false
+    }
+    else {
+      settings.editorReviewEnabled = true
+      _discussionsViewOption.value = viewOption
+    }
   }
 
   private fun showDiff(changeToShow: RefComparisonChange, lineIdx: Int?) {
