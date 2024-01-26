@@ -156,8 +156,12 @@ public final class AnnotationUtilEx {
         PsiElement target = ref.resolve();
         if (target instanceof PsiVariable var) {
           visitor.visitVariable(var);
-        } else if (target instanceof PsiMethod method) {
-          visitor.visitMethodReturnStatement(parent, method);
+        }
+      }
+      else if (templ.getProcessor() instanceof PsiCallExpression call && call != element) {
+        PsiMethod method = call.resolveMethod();
+        if (method != null) {
+          visitor.visitMethodReturnStatement(call, method);
         }
       }
     }

@@ -256,16 +256,19 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
 
       class Hello {
       	void test(@Subst("ClassName") String name, String message) {
-        	@Language("JAVA")
-          String s = STR.""${'"'}
+          String s = javaProcessor().""${'"'}
                 class \{name} {
                     void main() {
                       System.out.println("\{message}");
                     }
                 }""${'"'};
       	}
-      }
-    """.trimIndent())
+            
+        @Language("JAVA")
+        private static StringTemplate.Processor<String, RuntimeException> javaProcessor() {
+          return STR;
+        }
+    }""".trimIndent())
     myFixture.checkHighlighting()
     injectionTestFixture.assertInjectedContent("""
       class ClassName {
