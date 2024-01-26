@@ -1061,6 +1061,59 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
                                                          ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  // PY-48338
+  public void testNotAnnotatedDecoratorPreservesParametersOfOriginalFunction() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+                                                          new String[]{"input_a: int, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testNotAnnotatedDecoratorRetainsParametersOfOriginalFunctionEvenIfItChangesItsSignature() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+                                                          new String[]{"input_a: int, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testAnnotatedDecoratorPreservesParametersOfOriginalFunctionWithParamSpec() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("input_a: int, input_b: float",
+                                                          new String[]{"input_a: int, "},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testAnnotatedDecoratorAddsParametersToOriginalFunctionWithConcatenate() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("...: str, input_a: int, input_b: float",
+                                                          new String[]{"...: str, "},
+                                                          new String[]{""});
+  }
+
+  // TODO add a test on annotated
+  // PY-48338
+  public void testDecoratedDataClassParameters() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("bar: int",
+                                                          new String[]{"bar: int"},
+                                                          new String[]{""});
+  }
+
+  // PY-48338
+  public void testAnnotatedDecoratorReplacesParametersOfOriginalFunction() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("...: int",
+                                                          new String[]{"...: int"},
+                                                          new String[]{""});
+  }
+
   // PY-46053
   public void testLongTypeHintReplaceWithAnnotation() {
     final Map<String, PsiElement> test = loadTest(2);

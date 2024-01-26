@@ -148,7 +148,7 @@ public final class HtmlUtil {
     AUTO_CLOSE_BY_OPENING_TAG.put("option", Set.of("optgroup", "option"));
     AUTO_CLOSE_BY_OPENING_TAG.put("p", Set.of("address", "article", "aside", "blockquote", "center", "details", "div", "dl", "fieldset",
                                               "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header",
-                                              "hgroup", "hr", "main", "menu", "nav", "ol", "p", "pre", "section", "table", "ul"));
+                                              "hgroup", "hr", "main", "menu", "nav", "ol", "p", "pre", "search", "section", "table", "ul"));
     AUTO_CLOSE_BY_OPENING_TAG.put("rp", Set.of("rp", "rt"));
     AUTO_CLOSE_BY_OPENING_TAG.put("rt", Set.of("rp", "rt"));
     AUTO_CLOSE_BY_OPENING_TAG.put("tbody", Set.of("tbody", "tfoot"));

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization.outputs
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
+import org.jetbrains.plugins.notebooks.visualization.outputs.statistic.NotebookOutputKeyType
 
 /** Merely a marker for data that can be represented via some Swing component. */
 interface NotebookOutputDataKey {
@@ -10,6 +11,9 @@ interface NotebookOutputDataKey {
       Get content that can be used for building diff for outputs.
    */
   fun getContentForDiffing(): Any
+
+  val statisticKey: NotebookOutputKeyType
+    get() = NotebookOutputKeyType.UNKNOWN
 }
 
 interface NotebookOutputDataKeyExtractor {

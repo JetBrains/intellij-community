@@ -107,7 +107,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       ideMode?.let { event.data["ide_mode"] = ideMode }
       writer.log(it.validatedEvent)
       ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
-        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData)
+        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, false)
     }
     lastEvent = null
   }

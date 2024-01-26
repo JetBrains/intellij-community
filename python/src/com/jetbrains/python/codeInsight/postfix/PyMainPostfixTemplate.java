@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -18,7 +19,7 @@ import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyStatementSurrounder;
 import org.jetbrains.annotations.NotNull;
 
-public class PyMainPostfixTemplate extends SurroundPostfixTemplateBase {
+public class PyMainPostfixTemplate extends SurroundPostfixTemplateBase implements DumbAware {
 
   public static final @NlsSafe String DESCR = "if __name__ == '__main__': expr";
 

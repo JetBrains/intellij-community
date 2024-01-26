@@ -96,16 +96,6 @@
       },
       "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathsize</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/font-size\">font-size</a> of a MathML element.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Use CSS for styling MathML whenever possible. The <code>mathsize</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>font-size</code> property, if set.\n</div>"
     },
-    "mathvariant": {
-      "url": "$MDN_URL$/web/mathml/global_attributes/mathvariant",
-      "status": [
-        "StandardTrack"
-      ],
-      "compatibility": {
-        "Firefox": "70"
-      },
-      "doc": "The <strong><code>mathvariant</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> sets a logical class for textual elements, which is visually\ndistinguished by using special <a href=\"https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols\" class=\"external\" target=\"_blank\">Mathematical Alphanumeric Symbols</a>.\nExcept for <a href=\"$MDN_URL$/Web/MathML/Element/mi\"><code>mi</code></a> elements with a single character,\nwhich are by convention italic, no special classes are used by default.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> When possible, directly use <a href=\"https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols\" class=\"external\" target=\"_blank\">Mathematical Alphanumeric Symbols</a> instead of an explicit <code>mathvariant</code> attribute.\n</div>"
-    },
     "scriptlevel": {
       "url": "$MDN_URL$/web/mathml/global_attributes/scriptlevel",
       "status": [
@@ -241,7 +231,7 @@
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>&lt;mfenced&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element provides the possibility to add custom opening and closing parentheses (such as brackets) and separators (such as commas or semicolons) to an expression.\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> Historically, the <code>&lt;mfenced&gt;</code> element was defined as a shorthand for writing fenced expressions and equivalent to an expanded form involving <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code> elements. Nowadays, it is recommended to use that equivalent form instead.\n</div>",
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>&lt;mfenced&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element provides the possibility to add custom opening and closing brackets (such as parenthese) and separators (such as commas or semicolons) to an expression.\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> Historically, the <code>&lt;mfenced&gt;</code> element was defined as a shorthand for writing fenced expressions and equivalent to an expanded form involving <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code> elements. Nowadays, it is recommended to use that equivalent form instead.\n</div>",
       "attrs": {
         "close": {
           "url": "$MDN_URL$/web/mathml/element/mfenced#close",
@@ -327,7 +317,24 @@
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mi&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element indicates that the content should be rendered as an <strong>identifier</strong> such as function names, variables or symbolic constants. You can also have arbitrary text in it to mark up terms."
+      "doc": "The <strong><code>&lt;mi&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element indicates that the content should be rendered as an <strong>identifier</strong>, such as a function name, variable or symbolic constant.\n<p>By default <code>&lt;mi&gt;</code> elements that contain multiple characters are a rendered as normal text, while single character characters are rendered as italic: the same formatting behaviour as the <a href=\"$MDN_URL$/Web/CSS/text-transform\">CSS <code>text-transform</code></a> property with a value of <code>math-auto</code>.\nThe <code>mathvariant</code> attribute with a value of <code>normal</code> can be used to reset a single character to the normal font.\n<p>In order to use a particular form of a character such as bold/italic, serif, sans-serif, script/calligraphy, monospaced, double-struck, and so on, you should use the appropriate <a href=\"https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols\" class=\"external\" target=\"_blank\">Mathematical Alphanumeric Symbols</a>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> In a previous specification (MathML3), the <code>mathvariant</code> attribute was used to define logical classes that could apply the character formatting for mathematical alphanumeric symbols.\nThe associated values are now deprecated, and expected to be removed from browsers in future releases.\n</div>",
+      "attrs": {
+        "mathvariant": {
+          "url": "$MDN_URL$/web/mathml/element/mi#mathvariant",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "109",
+            "ChromeAndroid": "109",
+            "Edge": "109",
+            "Firefox": "70",
+            "Safari": "10",
+            "SafariIOS": "10"
+          },
+          "doc": "The only value allowed in the current specification is <code>normal</code> (case insensitive):\n<dl>\n<dt id=\"normal\"><a href=\"#normal\"><code>normal</code></a></dt>\n<dd>\n<p>Use default/normal rendering, removing automatic styling of single characters to italic.\n</dd>\n</dl>\n<p>Deprecated legacy values are:\n<dl>\n<dt id=\"bold\"><a href=\"#bold\"><code>bold</code></a> </dt>\n<dd>\n<p>Try and use bold characters e.g. \"𝐀\".\n</dd>\n<dt id=\"italic\"><a href=\"#italic\"><code>italic</code></a> </dt>\n<dd>\n<p>Try and use italic characters e.g. \"𝐴\".\n</dd>\n<dt id=\"bold-italic\"><a href=\"#bold-italic\"><code>bold-italic</code></a> </dt>\n<dd>\n<p>Try and use bold-italic characters e.g. \"𝑨\".\n</dd>\n<dt id=\"double-struck\"><a href=\"#double-struck\"><code>double-struck</code></a> </dt>\n<dd>\n<p>Try and use double-struck characters e.g. \"𝔸\".\n</dd>\n<dt id=\"bold-fraktur\"><a href=\"#bold-fraktur\"><code>bold-fraktur</code></a> </dt>\n<dd>\n<p>Try and use bold-fraktur characters e.g. \"𝕬\".\n</dd>\n<dt id=\"script\"><a href=\"#script\"><code>script</code></a> </dt>\n<dd>\n<p>Try and use script characters e.g. \"𝒜\".\n</dd>\n<dt id=\"bold-script\"><a href=\"#bold-script\"><code>bold-script</code></a> </dt>\n<dd>\n<p>Try and use bold-script characters e.g. \"𝓐\".\n</dd>\n<dt id=\"fraktur\"><a href=\"#fraktur\"><code>fraktur</code></a> </dt>\n<dd>\n<p>Try and use fraktur characters e.g. \"𝔄\".\n</dd>\n<dt id=\"sans-serif\"><a href=\"#sans-serif\"><code>sans-serif</code></a> </dt>\n<dd>\n<p>Try and use sans-serif characters e.g. \"𝖠\".\n</dd>\n<dt id=\"bold-sans-serif\"><a href=\"#bold-sans-serif\"><code>bold-sans-serif</code></a> </dt>\n<dd>\n<p>Try and use bold-sans-serif characters e.g. \"𝗔\".\n</dd>\n<dt id=\"sans-serif-italic\"><a href=\"#sans-serif-italic\"><code>sans-serif-italic</code></a> </dt>\n<dd>\n<p>Try and use sans-serif-italic characters e.g. \"𝘈\".\n</dd>\n<dt id=\"sans-serif-bold-italic\"><a href=\"#sans-serif-bold-italic\"><code>sans-serif-bold-italic</code></a> </dt>\n<dd>\n<p>Try and use sans-serif-bold-italic characters e.g. \"𝘼\".\n</dd>\n<dt id=\"monospace\"><a href=\"#monospace\"><code>monospace</code></a> </dt>\n<dd>\n<p>Try and use monospace characters e.g. \"𝙰\".\n</dd>\n<dt id=\"initial\"><a href=\"#initial\"><code>initial</code></a> </dt>\n<dd>\n<p>Try and use initial characters e.g. \"𞸢\".\n</dd>\n<dt id=\"tailed\"><a href=\"#tailed\"><code>tailed</code></a> </dt>\n<dd>\n<p>Try and use tailed characters e.g. \"𞹂\".\n</dd>\n<dt id=\"looped\"><a href=\"#looped\"><code>looped</code></a> </dt>\n<dd>\n<p>Try and use looped characters e.g. \"𞺂\".\n</dd>\n<dt id=\"stretched\"><a href=\"#stretched\"><code>stretched</code></a> </dt>\n<dd>\n<p>Try and use stretched characters e.g. \"𞹢\".\n</dd>\n</dl>"
+        }
+      }
     },
     "mmultiscripts": {
       "url": "$MDN_URL$/web/mathml/element/mmultiscripts",
@@ -343,7 +350,7 @@
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mmultiscripts&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach an arbitrary number of subscripts and superscripts to an expression at once, generalizing the <code><a href=\"$MDN_URL$/Web/MathML/Element/msubsup\" >&lt;msubsup&gt;</a></code> element. Scripts can be either prescripts (placed before the expression) or postscripts (placed after it).\n<p>MathML uses the syntax below, that is a base expression, followed by an arbitrary number of postsubscript-postsuperscript pairs (attached in the given order) optionally followed by an <code>&lt;mprescripts&gt;</code> and an arbitrary number of presubscript-presuperscript pairs (attached in the given order). In addition, empty <code>&lt;mrow&gt;</code> elements can be used to represent absent scripts.\n<div class=\"code-example\"><p class=\"example-header\"><span class=\"language-name\"><pre class=\"brush: html notranslate\"><code>&lt;mmultiscripts&gt;\n  base\n  postsubscript1 postsuperscript1\n  postsubscript2 postsuperscript2\n  postsubscript3 postsuperscript3\n  ...\n  postsubscriptN postsuperscriptN\n  &lt;mprescripts/&gt;                ⎫\n  presubscript1 presuperscript1 ⎪\n  presubscript2 presuperscript2 ⎬ Optional\n  presubscript3 presuperscript3 ⎪\n  ...                           ⎪\n  presubscriptM presuperscriptM ⎭\n&lt;/mmultiscripts&gt;\n</code></pre></span></div>",
+      "doc": "The <strong><code>&lt;mmultiscripts&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach an arbitrary number of subscripts and superscripts to an expression at once, generalizing the <code><a href=\"$MDN_URL$/Web/MathML/Element/msubsup\" >&lt;msubsup&gt;</a></code> element. Scripts can be either prescripts (placed before the expression) or postscripts (placed after it).\n<p>MathML uses the syntax below, that is a base expression, followed by an arbitrary number of postsubscript-postsuperscript pairs (attached in the given order) optionally followed by an <code>&lt;mprescripts&gt;</code> and an arbitrary number of presubscript-presuperscript pairs (attached in the given order). In addition, empty <code>&lt;mrow&gt;</code> elements can be used to represent absent scripts.\n<div class=\"code-example\"><pre class=\"brush: html notranslate\"><code>&lt;mmultiscripts&gt;\n  base\n  postsubscript1 postsuperscript1\n  postsubscript2 postsuperscript2\n  postsubscript3 postsuperscript3\n  ...\n  postsubscriptN postsuperscriptN\n  &lt;mprescripts/&gt;                ⎫\n  presubscript1 presuperscript1 ⎪\n  presubscript2 presuperscript2 ⎬ Optional\n  presubscript3 presuperscript3 ⎪\n  ...                           ⎪\n  presubscriptM presuperscriptM ⎭\n&lt;/mmultiscripts&gt;\n</code></pre></div>",
       "attrs": {
         "subscriptshift": {
           "url": "$MDN_URL$/web/mathml/element/mmultiscripts#subscriptshift",
@@ -408,11 +415,11 @@
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link1\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be treated as an accent when used as an <a href=\"$MDN_URL$/Web/MathML/Element/munder\">under</a>- or <a href=\"$MDN_URL$/Web/MathML/Element/mover\">overscript</a> (i.e. drawn bigger and closer to the base expression)."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be treated as an accent when used as an <a href=\"$MDN_URL$/Web/MathML/Element/munder\">under</a>- or <a href=\"$MDN_URL$/Web/MathML/Element/mover\">overscript</a> (i.e. drawn bigger and closer to the base expression)."
         },
         "fence": {
           "url": "$MDN_URL$/web/mathml/element/mo#fence",
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link2\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a fence (such as parentheses). There is no visual effect for this attribute."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a fence (such as parentheses). There is no visual effect for this attribute."
         },
         "form": {
           "url": "$MDN_URL$/web/mathml/element/mo#form",
@@ -443,7 +450,7 @@
             "Safari": "8",
             "SafariIOS": "8"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link3\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be drawn bigger when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>normal</code>."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be drawn bigger when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>normal</code>."
         },
         "lspace": {
           "url": "$MDN_URL$/web/mathml/element/mo#lspace",
@@ -495,7 +502,7 @@
         },
         "movablelimits": {
           "url": "$MDN_URL$/web/mathml/element/mo#movablelimits",
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link4\"><code>&lt;boolean&gt;</code></a> indicating whether attached under- and overscripts move to sub- and superscript positions when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>compact</code>."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether attached under- and overscripts move to sub- and superscript positions when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>compact</code>."
         },
         "moveablelimits": {
           "url": "$MDN_URL$/web/mathml/element/mo#moveablelimits",
@@ -530,7 +537,7 @@
         },
         "separator": {
           "url": "$MDN_URL$/web/mathml/element/mo#separator",
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link5\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a separator (such as commas). There is no visual effect for this attribute."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a separator (such as commas). There is no visual effect for this attribute."
         },
         "stretchy": {
           "url": "$MDN_URL$/web/mathml/element/mo#stretchy",
@@ -546,7 +553,7 @@
             "Safari": "5",
             "SafariIOS": "4.2"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link6\"><code>&lt;boolean&gt;</code></a> indicating whether the operator stretches to the size of the adjacent element."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator stretches to the size of the adjacent element."
         },
         "symmetric": {
           "url": "$MDN_URL$/web/mathml/element/mo#symmetric",
@@ -562,7 +569,7 @@
             "Safari": "8",
             "SafariIOS": "8"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link7\"><code>&lt;boolean&gt;</code></a> indicating whether a stretchy operator should be vertically symmetric around the imaginary math axis (centered fraction line)."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether a stretchy operator should be vertically symmetric around the imaginary math axis (centered fraction line)."
         }
       }
     },
@@ -596,7 +603,7 @@
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link1\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
         }
       }
     },
@@ -694,7 +701,7 @@
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the <code>&lt;mpadded&gt;</code> element."
+          "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired horizontal length of the <code>&lt;mpadded&gt;</code> element."
         }
       }
     },
@@ -1170,7 +1177,11 @@
             "StandardTrack"
           ],
           "compatibility": {
+            "Chrome": "117",
+            "ChromeAndroid": "117",
+            "Edge": "117",
             "Firefox": "",
+            "Opera": "103",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
@@ -1191,7 +1202,11 @@
             "StandardTrack"
           ],
           "compatibility": {
+            "Chrome": "117",
+            "ChromeAndroid": "117",
+            "Edge": "117",
             "Firefox": "",
+            "Opera": "103",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
@@ -1281,7 +1296,7 @@
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link1\"><code>&lt;boolean&gt;</code></a> indicating whether the under script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the under script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
         }
       }
     },
@@ -1315,7 +1330,7 @@
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link1\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
         },
         "accentunder": {
           "url": "$MDN_URL$/web/mathml/element/munderover#accentunder",
@@ -1331,7 +1346,7 @@
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\" data-flaw=\"link2\"><code>&lt;boolean&gt;</code></a> indicating whether the under script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the under script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
         }
       }
     },

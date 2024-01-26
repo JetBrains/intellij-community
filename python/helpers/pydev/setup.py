@@ -114,7 +114,6 @@ args = dict(
         '_pydev_runfiles',
         '_pydevd_bundle',
         '_pydevd_frame_eval',
-        '_pydevd_asyncio_util',
         'pydev_ipython',
         # 'pydev_sitecustomize', -- Not actually a package (not added)
         'pydevd_attach_to_process',

@@ -6,11 +6,11 @@ import pickle
 
 from _pydev_bundle.pydev_imports import quote
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES, IS_ASYNCIO_DEBUGGER_ENV
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
-from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression, eval_async_expression_in_context
+from _pydevd_bundle.pydevd_asyncio_provider import eval_async_expression
 
 try:
     from StringIO import StringIO
@@ -457,7 +457,7 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
     try:
         expression = str(expression.replace('@LINE@', '\n'))
 
-        if IS_ASYNCIO_DEBUGGER_ENV:
+        if eval_async_expression is not None:
             return eval_async_expression(expression, updated_globals, frame, doExec, get_eval_exception_msg)
 
         if doExec:

@@ -18,6 +18,12 @@ abstract class Wizard(createPlugins: PluginsCreator, servicesManager: ServicesMa
 
     val context = Context(createPlugins, servicesManager, isUnitTestMode, createComponents())
 
+    private var isCreatingNewProject = true
+
+    fun setIsCreatingNewProject(value: Boolean) {
+        isCreatingNewProject = value
+    }
+
     private fun checkAllRequiredSettingPresent(phases: Set<GenerationPhase>): TaskResult<Unit> = context.read {
         getUnspecifiedSettings(phases).let { unspecifiedSettings ->
             if (unspecifiedSettings.isEmpty()) UNIT_SUCCESS
@@ -78,8 +84,16 @@ abstract class Wizard(createPlugins: PluginsCreator, servicesManager: ServicesMa
         checkAllRequiredSettingPresent(phases).ensure()
         validate(phases) { validateOnProjectCreation }.toResult().ensure()
         saveSettingValues(phases)
-        val (tasksSorted) = context.sortTasks().map { tasks ->
-            tasks.groupBy { it.phase }.toList().sortedBy { it.first }.flatMap { it.second }
+
+        val (tasksSorted) = if (isCreatingNewProject) {
+            context.sortTasks().map { tasks ->
+                tasks.groupBy { it.phase }.toList().sortedBy { it.first }.flatMap { it.second }
+            }
+        } else {
+            context.sortTasks().map { tasks ->
+                tasks.filter { it.path != "inspections.createInspectionTasks" }.groupBy { it.phase }.toList().sortedBy { it.first }
+                    .flatMap { it.second }
+            }
         }
 
         context.withAdditionalServices(services).write {

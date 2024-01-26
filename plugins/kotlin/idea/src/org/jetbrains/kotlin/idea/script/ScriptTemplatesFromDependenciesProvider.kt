@@ -53,7 +53,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
 
             forceStartUpdate = false
             asyncRunUpdateScriptTemplates()
-            return emptySequence()
+            return _definitions?.asSequence() ?: emptySequence()
         }
 
     init {

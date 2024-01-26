@@ -1,15 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
@@ -31,6 +30,7 @@ import training.dsl.LessonUtil.restorePopupPosition
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.highlightToolWindowStripe
 import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -55,11 +55,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
   override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 30)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    task {
-      triggerAndBorderHighlight().component { stripe: ActionButton ->
-        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
-      }
-    }
+    highlightToolWindowStripe(ToolWindowId.VCS)
 
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it),

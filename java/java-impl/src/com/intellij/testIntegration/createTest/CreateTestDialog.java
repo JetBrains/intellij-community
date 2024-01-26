@@ -366,7 +366,9 @@ public class CreateTestDialog extends DialogWrapper {
     descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
     Set<String> frameworkSet = new HashSet<>();
     for (final TestFramework descriptor : descriptors) {
-      if (!TestFrameworks.isSuitableByLanguage(myTargetClass, descriptor)) continue;
+      if (!TestFrameworks.isSuitableByLanguage(myTargetClass, descriptor)
+          && ContainerUtil.count(descriptors, (e) -> e.getName().equals(descriptor.getName())) >= 2
+      ) continue;
       if (!frameworkSet.add(descriptor.getName())) continue;
 
       model.addElement(descriptor);

@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.junit.Assert
 import java.io.File
 import java.util.*
 import kotlin.test.assertEquals
@@ -71,21 +72,15 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     val fixture: JavaCodeInsightTestFixture get() = myFixture
 
     protected open fun doIntroduceVariableTest(unused: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(
-            dataFilePath(),
-            IgnoreTests.DIRECTIVES.IGNORE_K1,
-            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
-        ) {
-            doTest { file ->
-                file as KtFile
+        doTestIfNotDisabledByFileDirective { file ->
+            file as KtFile
 
-                KotlinIntroduceVariableHandler.invoke(
-                    fixture.project,
-                    fixture.editor,
-                    file,
-                    DataManager.getInstance().getDataContext(fixture.editor.component)
-                )
-            }
+            KotlinIntroduceVariableHandler.invoke(
+                fixture.project,
+                fixture.editor,
+                file,
+                DataManager.getInstance().getDataContext(fixture.editor.component)
+            )
         }
     }
 
@@ -139,7 +134,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     protected fun doIntroduceJavaParameterTest(unused: String) {
         // Copied from com.intellij.refactoring.IntroduceParameterTest.perform()
-        doTest(true) { file ->
+        doTest(checkAdditionalAfterdata = true) { file ->
             file as PsiJavaFile
 
             var elementToWorkOn: ElementToWorkOn? = null
@@ -324,7 +319,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     }
 
     protected fun doExtractSuperTest(unused: String, isInterface: Boolean) {
-        doTest(true) { file ->
+        doTest(checkAdditionalAfterdata = true) { file ->
             file as KtFile
 
             markMembersInfo(file)
@@ -357,7 +352,17 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     protected fun doExtractInterfaceTest(path: String) = doExtractSuperTest(path, true)
 
-    protected fun doTest(checkAdditionalAfterdata: Boolean = false, action: (PsiFile) -> Unit) {
+    protected fun doTestIfNotDisabledByFileDirective(action: (PsiFile) -> Unit) {
+        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else  IgnoreTests.DIRECTIVES.IGNORE_K1
+
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFilePath(),
+            disableTestDirective,
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) { isTestEnabled -> doTest(generateMissingFiles = isTestEnabled, action = action) }
+    }
+
+    protected fun doTest(checkAdditionalAfterdata: Boolean = false, generateMissingFiles: Boolean = true, action: (PsiFile) -> Unit) {
         val mainFile = File(testDataDirectory, fileName())
 
         PluginTestCaseBase.addJdk(myFixture.projectDisposable, IdeaTestUtil::getMockJdk18)
@@ -391,6 +396,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 checkExtract(
                     ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi, isFirPlugin),
                     checkAdditionalAfterdata,
+                    generateMissingFiles,
                     action,
                 )
             } finally {
@@ -427,7 +433,12 @@ private fun getAfterFile(path: String, isFirPlugin: Boolean): File {
     return file
 }
 
-fun checkExtract(files: ExtractTestFiles, checkAdditionalAfterdata: Boolean = false, action: (PsiFile) -> Unit) {
+fun checkExtract(
+    files: ExtractTestFiles,
+    checkAdditionalAfterdata: Boolean = false,
+    generateMissingFiles: Boolean = true,
+    action: (PsiFile) -> Unit
+) {
     val conflictFile = files.conflictFile
     val afterFile = files.afterFile
 
@@ -450,13 +461,20 @@ fun checkExtract(files: ExtractTestFiles, checkAdditionalAfterdata: Boolean = fa
         }
     } catch (e: ConflictsInTestsException) {
         val message = e.messages.sorted().joinToString(" ").replace("\n", " ")
-        KotlinTestUtils.assertEqualsToFile(conflictFile, message)
+        assertEqualsToFile(conflictFile, message, generateMissingFiles)
     } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
-        KotlinTestUtils.assertEqualsToFile(conflictFile, e.message!!)
+        assertEqualsToFile(conflictFile, e.message!!, generateMissingFiles)
     } catch (e: RuntimeException) { // RuntimeException is thrown by IDEA code in CodeInsightUtils.java
         if (e::class.java != RuntimeException::class.java) throw e
-        KotlinTestUtils.assertEqualsToFile(conflictFile, e.message!!)
+        assertEqualsToFile(conflictFile, e.message!!, generateMissingFiles)
     }
+}
+
+private fun assertEqualsToFile(expectedFile: File, actualText: String, generateMissingFiles: Boolean) {
+    if (!generateMissingFiles && !expectedFile.exists()) {
+        Assert.fail("Expected data file doesn't exist: $expectedFile")
+    }
+    KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
 }
 
 fun doExtractFunction(fixture: CodeInsightTestFixture, file: KtFile) {

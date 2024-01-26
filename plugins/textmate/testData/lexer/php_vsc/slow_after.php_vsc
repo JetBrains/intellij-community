@@ -1,7 +1,7 @@
 text.html.php;meta.embedded.block.php;punctuation.section.embedded.begin.php: [0, 5], {<?php}
 text.html.php;meta.embedded.block.php;source.php: [5, 6], {
 }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [6, 19], {session_start}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.session.php: [6, 19], {session_start}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [19, 20], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.end.bracket.round.php: [20, 21], {)}
 text.html.php;meta.embedded.block.php;source.php;punctuation.terminator.expression.php: [21, 22], {;}
@@ -40,7 +40,7 @@ text.html.php;meta.embedded.block.php;source.php: [116, 117], {
 text.html.php;meta.embedded.block.php;source.php;keyword.control.if.php: [117, 119], {if}
 text.html.php;meta.embedded.block.php;source.php: [119, 120], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [120, 121], {(}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [121, 126], {isset}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.construct.php: [121, 126], {isset}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [126, 127], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.safer.php;punctuation.definition.variable.php: [127, 128], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.safer.php: [128, 136], {_SESSION}
@@ -54,7 +54,7 @@ text.html.php;meta.embedded.block.php;source.php: [149, 150], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.logical.php: [150, 152], {&&}
 text.html.php;meta.embedded.block.php;source.php: [152, 153], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.logical.php: [153, 154], {!}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [154, 159], {empty}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.construct.php: [154, 159], {empty}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [159, 160], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.safer.php;punctuation.definition.variable.php: [160, 161], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.safer.php: [161, 169], {_SESSION}
@@ -203,7 +203,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [504, 518],
 text.html.php;meta.embedded.block.php;source.php: [518, 519], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [519, 520], {=}
 text.html.php;meta.embedded.block.php;source.php: [520, 521], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [521, 526], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [521, 526], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [526, 527], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.php;punctuation.definition.variable.php: [527, 528], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.php: [528, 533], {_POST}
@@ -222,7 +222,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [554, 568],
 text.html.php;meta.embedded.block.php;source.php: [568, 569], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [569, 570], {=}
 text.html.php;meta.embedded.block.php;source.php: [570, 571], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [571, 576], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [571, 576], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [576, 577], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.php;punctuation.definition.variable.php: [577, 578], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.php: [578, 583], {_POST}
@@ -366,7 +366,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [951, 969],
 text.html.php;meta.embedded.block.php;source.php: [969, 970], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [970, 971], {=}
 text.html.php;meta.embedded.block.php;source.php: [971, 972], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [972, 983], {json_decode}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.json.php: [972, 983], {json_decode}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [983, 984], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [984, 985], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [985, 1003], {quoteLetterAPIResp}
@@ -584,7 +584,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [1834, 1843
 text.html.php;meta.embedded.block.php;source.php: [1843, 1844], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [1844, 1845], {=}
 text.html.php;meta.embedded.block.php;source.php: [1845, 1846], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [1846, 1851], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [1846, 1851], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [1851, 1852], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [1852, 1853], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [1853, 1871], {quoteLetterAPIData}
@@ -600,7 +600,7 @@ text.html.php;meta.embedded.block.php;source.php: [1888, 1896], {        }
 text.html.php;meta.embedded.block.php;source.php;keyword.control.if.php: [1896, 1898], {if}
 text.html.php;meta.embedded.block.php;source.php: [1898, 1899], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [1899, 1900], {(}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [1900, 1905], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [1900, 1905], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [1905, 1906], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [1906, 1907], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [1907, 1925], {quoteLetterAPIData}
@@ -614,7 +614,7 @@ text.html.php;meta.embedded.block.php;source.php;constant.numeric.decimal.php: [
 text.html.php;meta.embedded.block.php;source.php: [1944, 1945], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.logical.php: [1945, 1947], {||}
 text.html.php;meta.embedded.block.php;source.php: [1947, 1948], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [1948, 1953], {isset}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.construct.php: [1948, 1953], {isset}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [1953, 1954], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.php;punctuation.definition.variable.php: [1954, 1955], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.global.php: [1955, 1960], {_POST}
@@ -798,7 +798,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [2601, 2602
 text.html.php;meta.embedded.block.php;source.php: [2602, 2603], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.comparison.php: [2603, 2604], {<}
 text.html.php;meta.embedded.block.php;source.php: [2604, 2605], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [2605, 2610], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [2605, 2610], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [2610, 2611], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [2611, 2612], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [2612, 2630], {quoteLetterAPIData}
@@ -827,7 +827,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.p
 text.html.php;meta.embedded.block.php;source.php: [2777, 2778], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [2778, 2779], {=}
 text.html.php;meta.embedded.block.php;source.php: [2779, 2780], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [2780, 2791], {str_replace}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.string.php: [2780, 2791], {str_replace}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [2791, 2792], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;string.quoted.double.php;punctuation.definition.string.begin.php: [2792, 2793], {"}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;string.quoted.double.php;constant.character.escape.php: [2793, 2795], {\r}
@@ -1017,7 +1017,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [3706, 3707
 text.html.php;meta.embedded.block.php;source.php: [3707, 3708], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.comparison.php: [3708, 3709], {<}
 text.html.php;meta.embedded.block.php;source.php: [3709, 3710], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [3710, 3715], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [3710, 3715], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [3715, 3716], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [3716, 3717], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [3717, 3729], {pagesAndSize}
@@ -1042,9 +1042,9 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.p
 text.html.php;meta.embedded.block.php;source.php: [3773, 3774], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [3774, 3775], {=}
 text.html.php;meta.embedded.block.php;source.php: [3775, 3776], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [3776, 3780], {trim}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.string.php: [3776, 3780], {trim}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [3780, 3781], {(}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;entity.name.function.php: [3781, 3793], {preg_replace}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;support.function.php_pcre.php: [3781, 3793], {preg_replace}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [3793, 3794], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;punctuation.definition.string.begin.php: [3794, 3796], {'/}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;constant.character.escape.php: [3796, 3798], {\s}
@@ -1078,7 +1078,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.p
 text.html.php;meta.embedded.block.php;source.php: [3862, 3863], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [3863, 3864], {=}
 text.html.php;meta.embedded.block.php;source.php: [3864, 3865], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [3865, 3881], {htmlspecialchars}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.string.php: [3865, 3881], {htmlspecialchars}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [3881, 3882], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [3882, 3883], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [3883, 3895], {pagesAndSize}
@@ -1116,7 +1116,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [3955, 3956
 text.html.php;meta.embedded.block.php;source.php: [3956, 3957], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.comparison.php: [3957, 3958], {<}
 text.html.php;meta.embedded.block.php;source.php: [3958, 3959], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [3959, 3964], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [3959, 3964], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [3964, 3965], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [3965, 3966], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [3966, 3979], {inkAndCoating}
@@ -1141,9 +1141,9 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.p
 text.html.php;meta.embedded.block.php;source.php: [4024, 4025], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [4025, 4026], {=}
 text.html.php;meta.embedded.block.php;source.php: [4026, 4027], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [4027, 4031], {trim}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.string.php: [4027, 4031], {trim}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4031, 4032], {(}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;entity.name.function.php: [4032, 4044], {preg_replace}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;support.function.php_pcre.php: [4032, 4044], {preg_replace}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4044, 4045], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;punctuation.definition.string.begin.php: [4045, 4047], {'/}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;constant.character.escape.php: [4047, 4049], {\s}
@@ -1188,7 +1188,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [4121, 4122
 text.html.php;meta.embedded.block.php;source.php: [4122, 4123], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.comparison.php: [4123, 4124], {<}
 text.html.php;meta.embedded.block.php;source.php: [4124, 4125], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [4125, 4130], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [4125, 4130], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4130, 4131], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [4131, 4132], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [4132, 4148], {stockInstruction}
@@ -1213,9 +1213,9 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.p
 text.html.php;meta.embedded.block.php;source.php: [4196, 4197], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [4197, 4198], {=}
 text.html.php;meta.embedded.block.php;source.php: [4198, 4199], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [4199, 4203], {trim}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.string.php: [4199, 4203], {trim}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4203, 4204], {(}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;entity.name.function.php: [4204, 4216], {preg_replace}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;support.function.php_pcre.php: [4204, 4216], {preg_replace}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4216, 4217], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;punctuation.definition.string.begin.php: [4217, 4219], {'/}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;constant.character.escape.php: [4219, 4221], {\s}
@@ -1260,7 +1260,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [4296, 4297
 text.html.php;meta.embedded.block.php;source.php: [4297, 4298], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.comparison.php: [4298, 4299], {<}
 text.html.php;meta.embedded.block.php;source.php: [4299, 4300], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [4300, 4305], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [4300, 4305], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4305, 4306], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [4306, 4307], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [4307, 4327], {finishingInstruction}
@@ -1285,9 +1285,9 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.p
 text.html.php;meta.embedded.block.php;source.php: [4379, 4380], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [4380, 4381], {=}
 text.html.php;meta.embedded.block.php;source.php: [4381, 4382], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [4382, 4386], {trim}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.string.php: [4382, 4386], {trim}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4386, 4387], {(}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;entity.name.function.php: [4387, 4399], {preg_replace}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;support.function.php_pcre.php: [4387, 4399], {preg_replace}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4399, 4400], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;punctuation.definition.string.begin.php: [4400, 4402], {'/}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;constant.character.escape.php: [4402, 4404], {\s}
@@ -1321,7 +1321,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.p
 text.html.php;meta.embedded.block.php;source.php: [4484, 4485], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [4485, 4486], {=}
 text.html.php;meta.embedded.block.php;source.php: [4486, 4487], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [4487, 4503], {htmlspecialchars}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.string.php: [4487, 4503], {htmlspecialchars}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4503, 4504], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [4504, 4505], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [4505, 4525], {finishingInstruction}
@@ -1357,7 +1357,7 @@ text.html.php;meta.embedded.block.php;source.php;variable.other.php: [4584, 4585
 text.html.php;meta.embedded.block.php;source.php: [4585, 4586], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.comparison.php: [4586, 4587], {<}
 text.html.php;meta.embedded.block.php;source.php: [4587, 4588], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [4588, 4593], {count}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.array.php: [4588, 4593], {count}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4593, 4594], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php;punctuation.definition.variable.php: [4594, 4595], {$}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;variable.other.php: [4595, 4613], {packingAndDelivery}
@@ -1382,9 +1382,9 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.p
 text.html.php;meta.embedded.block.php;source.php: [4663, 4664], { }
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.assignment.php: [4664, 4665], {=}
 text.html.php;meta.embedded.block.php;source.php: [4665, 4666], { }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [4666, 4670], {trim}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;support.function.string.php: [4666, 4670], {trim}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4670, 4671], {(}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;entity.name.function.php: [4671, 4683], {preg_replace}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;support.function.php_pcre.php: [4671, 4683], {preg_replace}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [4683, 4684], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;punctuation.definition.string.begin.php: [4684, 4686], {'/}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;meta.function-call.php;string.regexp.single-quoted.php;constant.character.escape.php: [4686, 4688], {\s}
@@ -1422,7 +1422,11 @@ text.html.php;meta.embedded.block.php;source.php: [4754, 4755], { }
 text.html.php;meta.embedded.block.php;source.php;meta.catch.php;keyword.control.exception.catch.php: [4755, 4760], {catch}
 text.html.php;meta.embedded.block.php;source.php;meta.catch.php: [4760, 4761], { }
 text.html.php;meta.embedded.block.php;source.php;meta.catch.php;punctuation.definition.parameters.begin.bracket.round.php: [4761, 4762], {(}
-text.html.php;meta.embedded.block.php;source.php;meta.catch.php: [4762, 4784], {\GuzzleHttp\Exception\}
+text.html.php;meta.embedded.block.php;source.php;meta.catch.php;support.other.namespace.php;punctuation.separator.inheritance.php: [4762, 4763], {\}
+text.html.php;meta.embedded.block.php;source.php;meta.catch.php;support.other.namespace.php: [4763, 4773], {GuzzleHttp}
+text.html.php;meta.embedded.block.php;source.php;meta.catch.php;support.other.namespace.php;punctuation.separator.inheritance.php: [4773, 4774], {\}
+text.html.php;meta.embedded.block.php;source.php;meta.catch.php;support.other.namespace.php: [4774, 4783], {Exception}
+text.html.php;meta.embedded.block.php;source.php;meta.catch.php;support.other.namespace.php;punctuation.separator.inheritance.php: [4783, 4784], {\}
 text.html.php;meta.embedded.block.php;source.php;meta.catch.php;support.class.exception.php: [4784, 4799], {GuzzleException}
 text.html.php;meta.embedded.block.php;source.php;meta.catch.php: [4799, 4800], { }
 text.html.php;meta.embedded.block.php;source.php;meta.catch.php;variable.other.php;punctuation.definition.variable.php: [4800, 4801], {$}

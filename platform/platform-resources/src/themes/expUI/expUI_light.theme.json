@@ -276,7 +276,8 @@
         "successBackground": "Green11",
         "successBorder": "Green8",
         "warningBackground": "Yellow9",
-        "warningBorder": "Yellow6"
+        "warningBorder": "Yellow6",
+        "selectionBackground": "Grey12"
       }
     },
 

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -109,6 +110,10 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
           readActionBlocking {
             daemonCodeAnalyzer.restart(psiManager.findFile(file) ?: return@readActionBlocking)
           }
+        }
+        val editor = editorSupplier()
+        span("editor languageSupplier set", Dispatchers.EDT) {
+          editor.settings.setLanguageSupplier { TextEditorImpl.getDocumentLanguage(editor) }
         }
       }
 

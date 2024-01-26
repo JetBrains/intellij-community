@@ -206,7 +206,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return answer == EXPLICIT_NULL ? null : answer;
   }
 
-  private @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
+  protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
     int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
     if (keyIndex == -1) return EXPLICIT_NULL; // newly created data key => no data provider => no value
     boolean rulesAllowed = rulesAllowedBase && keyIndex < myDataKeysCount;
@@ -383,10 +383,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      String injectedId = InjectedDataKeys.injectedId(dataId);
-      Object injected = injectedId != null ? super.getData(injectedId) : null;
-      return injected != null ? injected : super.getData(dataId);
+    protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
+      return InjectedDataKeys.getInjectedData(dataId, (key) -> super.getDataInner(key, rulesAllowedBase, ruleValuesAllowed));
     }
   }
 

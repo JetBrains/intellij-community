@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -202,6 +203,9 @@ class ModifiableRootModelBridgeImpl(
   override fun addContentEntry(url: String, useSourceOfModule: Boolean): ContentEntry {
     assertModelIsLive()
 
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Add content entry for url: $url, useSourceOfModule: $useSourceOfModule" }
+
     val finalSource = if (useSourceOfModule) moduleEntity.entitySource
     else getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
     return addEntityAndContentEntry(url, finalSource)
@@ -228,6 +232,9 @@ class ModifiableRootModelBridgeImpl(
 
   override fun removeContentEntry(entry: ContentEntry) {
     assertModelIsLive()
+
+    val e = if (LOG.isTraceEnabled) RuntimeException() else null
+    LOG.debug(e) { "Remove content entry for url: ${entry.url}" }
 
     val entryImpl = entry as ModifiableContentEntryBridge
     val contentEntryUrl = entryImpl.contentEntryUrl

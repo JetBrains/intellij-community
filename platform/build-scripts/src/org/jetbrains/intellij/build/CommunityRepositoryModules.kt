@@ -211,6 +211,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
     javaFXPlugin("intellij.javaFX.community"),
+    aeDatabasePlugin("intellij.ae.database.community"),
     plugin("intellij.terminal") { spec ->
       spec.withModule("intellij.terminal.completion")
       spec.withModule("intellij.terminal.sh")
@@ -819,6 +820,21 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.javaFX.common", "javaFX-common.jar")
       spec.withModule("intellij.javaFX.properties")
       spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
+    }
+  }
+
+  fun aeDatabasePlugin(mainModuleName: String, extraModules: List<String> = emptyList()): PluginLayout {
+    return plugin(mainModuleName) { spec ->
+      spec.directoryName = "ae-database"
+      spec.mainJarName = "ae-database.jar"
+      spec.withModules(listOf(
+        "intellij.ae.database.core",
+        "intellij.ae.database.counters.community"
+      ))
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.ALL
+      if (extraModules.isNotEmpty()) {
+        spec.withModules(extraModules)
+      }
     }
   }
 

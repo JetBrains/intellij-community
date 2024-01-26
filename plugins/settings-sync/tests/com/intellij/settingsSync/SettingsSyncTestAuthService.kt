@@ -17,6 +17,10 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
       else null
   }
 
+  override fun getAccountInfoService(): JBAccountInfoService? {
+    return null
+  }
+
   override fun login() {
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UndesirableClassUsage", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.platform.ide.bootstrap
 
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.Splash
 import com.intellij.ui.icons.HiDPIImage
@@ -27,6 +28,8 @@ import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import sun.awt.image.SunWritableRaster
 import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.RoundRectangle2D
@@ -122,6 +125,12 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
       try {
         ensureActive()
         SPLASH_WINDOW = splash
+        splash.addComponentListener(object : ComponentAdapter() {
+          override fun componentShown(e: ComponentEvent?) {
+            FUSProjectHotStartUpMeasurer.splashBecameVisible()
+            splash.removeComponentListener(this)
+          }
+        })
         span("splash set visible") {
           splash.isVisible = true
         }

@@ -99,7 +99,7 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
   }
 
   override val url: URL?
-    get() = classLoader.getResource(path)
+    get() = classLoader.getResource(normalizePath(path))
 
   override fun patch(transform: IconTransform): ImageDataLoader? {
     val isOriginal = original == null
@@ -131,7 +131,7 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
   }
 }
 
-private fun normalizePath(patchedPath: String): String = patchedPath.trimStart('/')
+internal fun normalizePath(patchedPath: String): String = patchedPath.trimStart('/')
 
 private val LOOKUP = MethodHandles.lookup()
 

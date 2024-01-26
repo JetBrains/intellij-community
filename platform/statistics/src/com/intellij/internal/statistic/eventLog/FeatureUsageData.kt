@@ -124,6 +124,10 @@ class FeatureUsageData(val recorderId: String) {
     return addLanguageInternal("lang", language)
   }
 
+  fun addLanguage(name: String, language: Language?): FeatureUsageData {
+    return addLanguageInternal(name, language)
+  }
+
   fun addCurrentFile(language: Language?): FeatureUsageData {
     return addLanguageInternal("current_file", language)
   }

@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.xml.dom.XmlDomReader;
 import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.Nls;
@@ -71,7 +72,10 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
         myCategories.addAll((List<EmojiCategory>)in.readObject());
       }
       try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(serializedIndexPath))) {
-        searchIndex = new SearchIndex((EmojiSearchIndex)in.readObject());
+        EmojiSearchIndex index = (EmojiSearchIndex) in.readObject();
+        // Empty emoji search index -> corrupted data, rebuild.
+        if (index.getTotalEmojiIndices() == 0) throw new CorruptedException(serializedIndexPath);
+        searchIndex = new SearchIndex(index);
       }
       try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(serializedNamesPath))) {
         emojiNames = (String[])in.readObject();
@@ -306,7 +310,8 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
     private void read(byte[] in, Locale locale, @Nls String[] names) {
       XmlElement document = XmlDomReader.readXmlAsModel(in);
-      Iterator<XmlElement> annotations = document.children("annotation").iterator();
+      XmlElement annotationsNode = document.getChild("annotations");
+      Iterator<XmlElement> annotations = (annotationsNode != null ? annotationsNode : document).children("annotation").iterator();
       while (annotations.hasNext()) {
         XmlElement node = annotations.next();
         @NonNls String emoji = node.getAttributeValue("cp");

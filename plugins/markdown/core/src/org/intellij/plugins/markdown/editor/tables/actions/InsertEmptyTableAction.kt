@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.actions
 
-import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -12,13 +10,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
@@ -28,6 +28,7 @@ import org.intellij.plugins.markdown.editor.tables.buildEmptyTable
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -51,7 +52,8 @@ import kotlin.math.floor
  * |     |
  * ```
  */
-internal class InsertEmptyTableAction: DumbAwareAction() {
+@ApiStatus.Internal
+class InsertEmptyTableAction: DumbAwareAction() {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
       MarkdownBundle.message("action.Markdown.InsertEmptyTable.insert.popup.text")
@@ -62,21 +64,12 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     val project = event.project ?: return
     val editor = event.getRequiredData(CommonDataKeys.EDITOR)
     val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
-    val hintComponent = TableGridComponent { rows, columns -> actuallyInsertTable(project, editor, file, rows, columns) }
-    val hint = LightweightHint(hintComponent)
-    hintComponent.parentHint = hint
-    hint.setForceShowAsPopup(true)
-    val hintManager = HintManagerImpl.getInstanceImpl()
-    val position = hintManager.getHintPosition(hint, editor, HintManager.DEFAULT)
-    hint.setFocusRequestor(hintComponent)
-    hintManager.showEditorHint(
-      hint,
-      editor,
-      position,
-      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING,
-      0,
-      true
-    )
+    val hintComponent = TableGridComponent(selectedCallback = { rows, columns ->
+      actuallyInsertTable(project, editor, file, rows, columns)
+    })
+    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(hintComponent, hintComponent).setRequestFocus(true).createPopup()
+    hintComponent.parentHint = popup
+    popup.showInBestPositionFor(editor)
   }
 
   override fun update(event: AnActionEvent) {
@@ -113,18 +106,23 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     }
   }
 
-  private class TableGridComponent(
+  @ApiStatus.Internal
+  class TableGridComponent(
     private var rows: Int = 4,
     private var columns: Int = 4,
     private val expandFactor: Int = 2,
-    private val selectedCallback: (Int, Int) -> Unit
+    private val selectedCallback: (Int, Int) -> Unit,
+    private val indicesUpdatedCallback: ((Int, Int) -> Unit)? = null
   ): JPanel(MigLayout("insets 8")) {
-    lateinit var parentHint: LightweightHint
+    internal var parentHint: JBPopup? = null
     private val cells = arrayListOf<ArrayList<Cell>>()
-    private var selectedCellRow = 0
-    private var selectedCellColumn = 0
+    var selectedCellRow: Int = 0
+      private set
 
-    private val gridPanel = JPanel(MigLayout("insets 0, gap 3"))
+    var selectedCellColumn: Int = 0
+      private set
+
+    private val gridPanel: JComponent = JPanel(MigLayout("insets 0, gap 3"))
     private val label = JBLabel()
 
     private val mouseListener = MyMouseListener()
@@ -152,11 +150,11 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     }
 
     private fun indicesSelected(selectedRow: Int, selectedColumn: Int) {
-      parentHint.hide()
+      parentHint?.closeOk(null)
       selectedCallback.invoke(selectedRow, selectedColumn + 1)
     }
 
-    private fun registerAction(key: Int, actionKey: String, action: Action) {
+    fun registerAction(key: Int, actionKey: String, action: Action) {
       val inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW)
       inputMap.put(KeyStroke.getKeyStroke(key, 0), actionKey)
       actionMap.put(actionKey, action)
@@ -193,9 +191,10 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       fillGrid()
     }
 
-    private fun updateSelection(selectedRow: Int, selectedColumn: Int) {
+    fun updateSelection(selectedRow: Int, selectedColumn: Int) {
       selectedCellRow = selectedRow
       selectedCellColumn = selectedColumn
+      indicesUpdatedCallback?.invoke(selectedCellRow, selectedCellColumn)
       label.text = "${selectedRow + 1}×${selectedColumn + 1}"
       for (row in 0 until rows) {
         for (column in 0 until columns) {
@@ -207,9 +206,10 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
       val shouldExpandColumns = columns < maxColumns && selectedColumn + 1 == columns
       if (shouldExpandRows || shouldExpandColumns) {
         expandGrid(expandRows = shouldExpandRows, expandColumns = shouldExpandColumns)
-        parentHint.pack()
-        parentHint.component.revalidate()
-        parentHint.component.repaint()
+        val hint = parentHint as? AbstractPopup ?: return
+        hint.pack(true, true)
+        hint.component.revalidate()
+        hint.component.repaint()
       }
     }
 

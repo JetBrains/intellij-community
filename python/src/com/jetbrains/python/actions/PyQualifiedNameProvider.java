@@ -18,8 +18,7 @@ package com.jetbrains.python.actions;
 import com.intellij.ide.actions.QualifiedNameProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -27,7 +26,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.List;
 
 
 public class PyQualifiedNameProvider implements QualifiedNameProvider {
@@ -52,22 +51,15 @@ public class PyQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
   @Override
   public PsiElement qualifiedNameToElement(@NotNull String fqn, @NotNull Project project) {
-    final PyClass aClass = PyClassNameIndex.findClass(fqn, project);
-    if (aClass != null) {
-      return aClass;
+    GlobalSearchScope entireProjectScope = GlobalSearchScope.allScope(project);
+    List<PyClass> classes = PyClassNameIndex.findByQualifiedName(fqn, project, entireProjectScope);
+    if (!classes.isEmpty()) {
+      return classes.get(0);
     }
-    final PyFunction func = findFunctionByQualifiedName(fqn, project);
-    if (func != null) {
-      return func;
+    List<PyFunction> functions = PyFunctionNameIndex.findByQualifiedName(fqn, project, entireProjectScope);
+    if (!functions.isEmpty()) {
+      return functions.get(0);
     }
     return null;
-  }
-
-  // TODO make it part of PyPsiFacade similarly to createClassByQName()
-  @Nullable
-  private static PyFunction findFunctionByQualifiedName(@NotNull String qname, @NotNull Project project) {
-    final QualifiedName qualifiedName = QualifiedName.fromDottedString(qname);
-    final Collection<PyFunction> shortNameMatches = PyFunctionNameIndex.find(qualifiedName.getLastComponent(), project);
-    return ContainerUtil.find(shortNameMatches, func -> qname.equals(func.getQualifiedName()));
   }
 }

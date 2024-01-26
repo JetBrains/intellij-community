@@ -18,7 +18,7 @@ object Html5TagAndAttributeNamesProvider {
    * Version of the information, should be used to calculate stub version,
    * if parser or lexer depends on the information from this object.
    */
-  const val VERSION = 1
+  const val VERSION = 2
 
   /**
    * Retrieves the set of all known HTML, SVG or MathML attributes of tags with a particular name.
@@ -208,7 +208,7 @@ object Html5TagAndAttributeNamesProvider {
         "html" to attrs(htmlAttrs, "manifest", "version"),
         "i" to attrs(htmlAttrs, "role"),
         "iframe" to attrs(htmlAttrs, "align", "allow", "allowfullscreen", "allowtransparency", "frameborder", "height", "hspace", "loading", "longdesc", "marginheight", "marginwidth", "name", "referrerpolicy", "role", "sandbox", "scrolling", "src", "srcdoc", "vspace", "width"),
-        "img" to attrs(htmlAttrs, "align", "alt", "border", "crossorigin", "decoding", "generator-unable-to-provide-required-alt", "height", "hspace", "ismap", "loading", "longdesc", "name", "referrerpolicy", "role", "sizes", "src", "srcset", "usemap", "vspace", "width"),
+        "img" to attrs(htmlAttrs, "align", "alt", "border", "crossorigin", "decoding", "fetchpriority", "generator-unable-to-provide-required-alt", "height", "hspace", "ismap", "loading", "longdesc", "name", "referrerpolicy", "role", "sizes", "src", "srcset", "usemap", "vspace", "width"),
         "input" to attrs(htmlAttrs, "accept", "align", "alt", "autocomplete", "capture", "checked", "datafld", "dataformatas", "datasrc", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "height", "hspace", "list", "max", "maxlength", "min", "minlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "role", "size", "src", "step", "type", "usemap", "value", "vspace", "width"),
         "ins" to attrs(htmlAttrs, "cite", "datetime", "role"),
         "kbd" to attrs(htmlAttrs, "role"),
@@ -245,6 +245,7 @@ object Html5TagAndAttributeNamesProvider {
         "s" to attrs(htmlAttrs, "role"),
         "samp" to attrs(htmlAttrs, "role"),
         "script" to attrs(htmlAttrs, "async", "blocking", "charset", "crossorigin", "defer", "event", "for", "integrity", "language", "nomodule", "referrerpolicy", "src", "type"),
+        "search" to attrs(htmlAttrs, "role"),
         "section" to attrs(htmlAttrs, "role"),
         "select" to attrs(htmlAttrs, "autocomplete", "datafld", "dataformatas", "datasrc", "disabled", "form", "multiple", "name", "required", "role", "size"),
         "slot" to attrs(htmlAttrs, "name", "role"),

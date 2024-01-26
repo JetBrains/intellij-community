@@ -81,6 +81,10 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 searchForKotlinStdlibAndShowDialogIfFoundSeveral(project)
             } else null
 
+            if (context.isCreatingNewProject) {
+                context.projectJdk = sdk
+            }
+
             KotlinNewProjectWizard.generateProject(
                 project = project,
                 projectPath = "$path/$name",
@@ -96,13 +100,18 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
         private fun searchForKotlinStdlibAndShowDialogIfFoundSeveral(project: Project): LibraryOrderEntry? {
             val libraries = findKotlinStdlibs(project)
-            val dialog = StdlibVersionChooserDialog(project, libraries)
-            val availableLibraries = dialog.availableLibraries
+
+            val availableLibraries: Map<String, LibraryOrderEntry> = libraries.mapNotNull {
+                val libraryName = it.library?.name
+                if (libraryName == null) return@mapNotNull null
+                libraryName to it
+            }.toMap()
 
             val kotlinStdlib = when (availableLibraries.size) {
                 0 -> null
                 1 -> availableLibraries.values.first()
                 else -> {
+                    val dialog = StdlibVersionChooserDialog(project, availableLibraries)
                     dialog.show()
                     if (!dialog.isOK) {
                         availableLibraries.values.first()

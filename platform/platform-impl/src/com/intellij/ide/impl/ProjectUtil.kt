@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.CommonBundle
@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -41,17 +40,16 @@ import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.project.stateStore
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.ModalityUiUtil
-import com.intellij.util.PathUtil
-import com.intellij.util.PlatformUtils
-import com.intellij.util.SystemProperties
+import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
 import kotlinx.coroutines.*
@@ -508,10 +506,15 @@ object ProjectUtil {
 
   suspend fun openOrImportFilesAsync(list: List<Path>, location: String, projectToClose: Project? = null): Project? {
     for (file in list) {
+      FUSProjectHotStartUpMeasurer.reportProjectPath(file)
       openOrImportAsync(file = file, options = OpenProjectTask {
         this.projectToClose = projectToClose
         forceOpenInNewFrame = true
-      })?.let { return it }
+      })?.also {
+        return it
+      }.alsoIfNull {
+        FUSProjectHotStartUpMeasurer.resetProjectPath()
+      }
     }
 
     var result: Project? = null
@@ -521,12 +524,18 @@ object ProjectUtil {
       }
 
       LOG.debug { "$location: open file $file" }
+      FUSProjectHotStartUpMeasurer.reportProjectPath(file)
       if (projectToClose == null) {
         val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
         if (processor != null) {
           val opened = processor.openProjectAndFile(file = file, tempProject = false)
-          if (opened != null && result == null) {
-            result = opened
+          if (opened != null) {
+            if (result == null) {
+              result = opened
+            }
+            else {
+              FUSProjectHotStartUpMeasurer.openingMultipleProjects()
+            }
           }
         }
       }

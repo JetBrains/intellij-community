@@ -15,8 +15,11 @@ class ToggleDiffAligningModeAction : DumbAwareToggleAction() {
 
   override fun update(e: AnActionEvent) {
     val viewer = e.getData(DIFF_VIEWER)
-    val available = e.project != null
+    val project = e.project
+
+    val available = project != null
                     && viewer is SimpleDiffViewer
+                    && viewer.isAligningViewModeSupported
                     && !DiffUtil.isUserDataFlagSet(ALIGNED_TWO_SIDED_DIFF, viewer.request)
     if (!available) {
       e.presentation.isEnabledAndVisible = false

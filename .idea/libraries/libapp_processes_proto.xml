@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="libapp-processes-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:libapp-processes-proto:231.0.1.4">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:libapp-processes-proto:231.0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libapp-processes-proto/231.0.1.4/libapp-processes-proto-231.0.1.4.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libapp-processes-proto/231.0.26.0/libapp-processes-proto-231.0.26.0.jar">
           <sha256sum>3faf2936c9d2f1da49ec915dc086b98981661084bf52e69b42bc8b0e94115f8e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libapp-processes-proto/231.0.1.4/libapp-processes-proto-231.0.1.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libapp-processes-proto/231.0.26.0/libapp-processes-proto-231.0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

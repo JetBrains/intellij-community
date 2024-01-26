@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.ide.IdeEventQueue
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -211,7 +212,7 @@ abstract class FloatingToolbar(
     }
     val elementAtStart = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionStart)
     val elementAtEnd = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionEnd)
-    return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd))
+    return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd)) && !AppMode.isRemoteDevHost()
   }
 
   /**

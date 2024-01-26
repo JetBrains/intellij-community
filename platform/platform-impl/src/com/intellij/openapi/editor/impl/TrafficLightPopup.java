@@ -2,10 +2,12 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.featureStatistics.fusCollectors.InspectionWidgetUsageCollector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
@@ -145,6 +147,7 @@ final class TrafficLightPopup {
                                                       owner.getHeight() + JBUIScale.scale(DELTA_Y)));
 
     myPopup.setSize(size);
+    InspectionWidgetUsageCollector.logPopupShown(myEditor.getProject());
     myPopup.show(point);
   }
 
@@ -341,6 +344,7 @@ final class TrafficLightPopup {
                               controller.getAvailableLevels(),
                               inspectionsLevel -> {
                                 controller.setHighLightLevel(new LanguageHighlightLevel(level.getLangID(), inspectionsLevel));
+                                InspectionWidgetUsageCollector.logHighlightLevelChangedFromPopup(myEditor.getProject(), Language.findLanguageByID(level.getLangID()), inspectionsLevel );
                                 myContent.revalidate();
 
                                 Dimension size = myContent.getPreferredSize();

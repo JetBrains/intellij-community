@@ -48,7 +48,7 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
              </html>""",
            "<div class='definition'><pre>dialog</pre></div>\n<div class='content'>" +
            "The <strong><code>&lt;dialog&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
-           "element represents a dialog box",
+           "element represents a modal",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/dialog"));
   }
 

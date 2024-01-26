@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="network_inspector_java_proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:network_inspector_java_proto:231.0.1.4">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:network_inspector_java_proto:231.0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/network_inspector_java_proto/231.0.1.4/network_inspector_java_proto-231.0.1.4.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/network_inspector_java_proto/231.0.26.0/network_inspector_java_proto-231.0.26.0.jar">
           <sha256sum>a0211d0d4cef5ee99e407f7be1fe65ee708f4188b7e0a9ad42af178a24752fa9</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/network_inspector_java_proto/231.0.1.4/network_inspector_java_proto-231.0.1.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/network_inspector_java_proto/231.0.26.0/network_inspector_java_proto-231.0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -6,13 +6,14 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.idea.AppMode
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.preferredHeight
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 internal object InlineCompletionTooltip {
@@ -25,7 +26,7 @@ internal object InlineCompletionTooltip {
       return
     }
 
-    if (AppMode.isRemoteDevHost() && !System.getProperty("inline.completion.tooltip.remote.dev").toBoolean()) {
+    if (!application.currentSession.isLocal && !System.getProperty("inline.completion.tooltip.remote.dev").toBoolean()) {
       return
     }
 

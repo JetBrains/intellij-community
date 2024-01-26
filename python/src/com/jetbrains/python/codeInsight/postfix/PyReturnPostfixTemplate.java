@@ -3,11 +3,12 @@ package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyReturnPostfixTemplate extends StringBasedPostfixTemplate {
+public class PyReturnPostfixTemplate extends StringBasedPostfixTemplate implements DumbAware {
   public PyReturnPostfixTemplate(PostfixTemplateProvider provider) {
     super("return", "return expr", PyPostfixUtils.selectorTopmost(), provider);
   }

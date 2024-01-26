@@ -44,6 +44,19 @@ public class SuperBuilderHandler extends BuilderHandler {
   }
 
   @Override
+  boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
+    if (isNotSupported(psiClass) || psiClass.isRecord()) {
+      builder.addErrorMessage("inspection.message.superbuilder.can.be.used.on.classes.only");
+      return false;
+    }
+    if(!psiClass.hasModifierProperty(PsiModifier.STATIC) && psiClass.getParent() instanceof PsiClass) {
+      builder.addErrorMessage("inspection.message.superbuilder.can.be.used.on.static.inner.classes.only");
+      return false;
+    }
+    return true;
+  }
+
+  @Override
   public boolean validateExistingBuilderClass(@NotNull String builderClassName,
                                               @NotNull PsiClass psiClass,
                                               @NotNull ProblemSink problemSink) {

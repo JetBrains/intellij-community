@@ -92,7 +92,7 @@ internal fun setupBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
 
     notification.addAction(NotificationAction.createSimple(message("python.sdk.installation.balloon.error.action")) {
         notification.expire()
-        HelpManager.getInstance().invokeHelp("reference.settings.project.interpreter")
+        HelpManager.getInstance().invokeHelp("create.python.interpreter")
       })
 
     NotificationsManager

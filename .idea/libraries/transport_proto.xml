@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="transport-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:transport_java_proto:231.0.1.4">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:transport_java_proto:231.0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/transport_java_proto/231.0.1.4/transport_java_proto-231.0.1.4.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/transport_java_proto/231.0.26.0/transport_java_proto-231.0.26.0.jar">
           <sha256sum>4f78940274cc13a8f2e2da3e6e0c99eb6f5090e2a69191aa8fdb0f8f877b8377</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/transport_java_proto/231.0.1.4/transport_java_proto-231.0.1.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/transport_java_proto/231.0.26.0/transport_java_proto-231.0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

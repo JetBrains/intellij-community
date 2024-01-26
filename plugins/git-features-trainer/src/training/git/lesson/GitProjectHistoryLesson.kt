@@ -3,12 +3,11 @@ package training.git.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
@@ -29,6 +28,7 @@ import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.highlightToolWindowStripe
 import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -46,11 +46,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
   override val testScriptProperties = TaskTestContext.TestScriptProperties(40)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    task {
-      triggerAndBorderHighlight().component { stripe: ActionButton ->
-        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
-      }
-    }
+    highlightToolWindowStripe(ToolWindowId.VCS)
 
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.project.history.open.git.window", action(it),

@@ -106,7 +106,7 @@
 	article.inner =
 		(	common.inner.flow
 		)
-		
+
 	common.elem.flow |= article.elem
 
 ## Tangential Aside: <aside>
@@ -125,6 +125,7 @@
 			|	common.attrs.aria.role.doc-dedication
 			|	common.attrs.aria.role.doc-example
 			|	common.attrs.aria.role.doc-footnote
+			|	common.attrs.aria.role.doc-glossary
 			|	common.attrs.aria.role.doc-pullquote
 			|	common.attrs.aria.role.doc-tip
 			)?
@@ -185,3 +186,16 @@
 		( common.inner.flow )
 
 	common.elem.flow |= main.elem
+
+## search content: <search>
+
+	search.elem =
+		element search { search.inner & search.attrs }
+	search.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	search.inner =
+		( common.inner.flow )
+
+	common.elem.flow |= search.elem

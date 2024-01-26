@@ -1,12 +1,12 @@
-<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
+<error descr="@Builder is only supported on classes, records, constructors, and methods.">@lombok.Builder</error>
 enum BuilderEnumError {
 }
 
-<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
+<error descr="@Builder is only supported on classes, records, constructors, and methods.">@lombok.Builder</error>
 interface BuilderInterfaceError {
 }
 
-<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
+<error descr="@Builder is only supported on classes, records, constructors, and methods.">@lombok.Builder</error>
 @interface BuilderAnnotationError {
 }
 
@@ -48,4 +48,20 @@ class BuilderWithPredefinedClassAnnotation {
     private int x;
   }
 
+}
+
+public class BuilderOnAnonymousClass {
+  interface HelloWorld {
+    void greet();
+  }
+
+  HelloWorld myWorld = new <error descr="'@lombok.Builder' not applicable to type use"><error descr="@Builder is only supported on classes, records, constructors, and methods.">@lombok.Builder</error></error> HelloWorld() {
+    public void greet() {
+      System.out.println("Hello World");
+    }
+
+  };
+
+  public static void main(String[] args) {
+  }
 }

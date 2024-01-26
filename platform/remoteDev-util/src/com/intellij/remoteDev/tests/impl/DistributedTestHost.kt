@@ -13,7 +13,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.intellij.openapi.ui.isFocusAncestor
@@ -32,6 +31,7 @@ import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
 import com.jetbrains.rd.util.threading.asRdScheduler
+import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -132,7 +132,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Tell test we are running it inside an agent
           val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
-          val queue = testClassObject.initAgent(agentInfo)
+          val map = testClassObject.initAgent(agentInfo)
 
           // Play test method
           val testMethod = testClass.getMethod(session.testMethodName)
@@ -140,9 +140,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           testMethod.invoke(testClassObject)
 
           // Advice for processing events
-          session.runNextAction.setSuspendPreserveClientId { _, _ ->
+          session.runNextAction.setSuspendPreserveClientId { _, actionTitle ->
+            val queue = map[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
-            val actionTitle = action.title
             val timeout = action.timeout
             val syncBeforeStart = action.syncBeforeStart
             try {
@@ -210,11 +210,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.shutdown.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
-          runBlockingCancellable {
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
-              LOG.info("Shutting down the application...")
-              app.exit(true, true, false)
-            }
+          lifetime.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
+            LOG.info("Shutting down the application...")
+            app.exit(true, true, false)
           }
         }
 

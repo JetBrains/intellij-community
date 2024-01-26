@@ -23,7 +23,7 @@ class MultiLaunchProfileState(
     val factory = configuration.factory ?: throw CantRunException("factory is null")
     executor ?: throw CantRunException("executor is null")
     project.lifetime.launchBackground {
-      val activity = RunConfigurationUsageTriggerCollector.trigger(project, factory, executor, configuration, checkRunning())
+      val activity = RunConfigurationUsageTriggerCollector.trigger(project, factory, executor, configuration, checkRunning(), false)
       ExecutionEngine.getInstance(project).execute(configuration, getExecutionMode(executor), activity)
       RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationUsageTriggerCollector.RunConfigurationFinishType.UNKNOWN)
     }

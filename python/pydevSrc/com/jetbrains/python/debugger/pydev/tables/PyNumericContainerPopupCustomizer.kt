@@ -7,14 +7,14 @@ import com.jetbrains.python.debugger.PyFrameAccessor
 
 interface PyNumericContainerPopupCustomizer {
   companion object {
-    private val EP_NAME: ExtensionPointName<PyNumericContainerPopupCustomizer> =
+    @JvmField
+    val EP_NAME: ExtensionPointName<PyNumericContainerPopupCustomizer> =
       ExtensionPointName.create("com.jetbrains.python.debugger.numericContainerPopupCustomizer")
-
-    val instance: PyNumericContainerPopupCustomizer
-      get() = EP_NAME.extensionList.first()
   }
 
-  fun showFullValuePopup(frameAccessor: PyFrameAccessor, debugValue: PyDebugValue) {
+  /** Returns true if the value could be processed. */
+  fun showFullValuePopup(frameAccessor: PyFrameAccessor, debugValue: PyDebugValue): Boolean {
     frameAccessor.showNumericContainer(debugValue)
+    return true
   }
 }

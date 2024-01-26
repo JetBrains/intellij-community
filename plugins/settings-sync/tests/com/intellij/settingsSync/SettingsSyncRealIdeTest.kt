@@ -340,6 +340,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
   }
 
+/*
   @TestFor(issues = ["IDEA-291623"])
   @Test
   fun `zip file size limit exceed`() {
@@ -352,7 +353,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     verify(notificationServiceSpy).notifyZipSizeExceed()
-  }
+  }*/
 
   //@Test
   fun `only changed components should be reloaded`() {

@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="studio-analytics-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:libstudio.proto:231.0.1.4">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:libstudio.proto:231.0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libstudio.proto/231.0.1.4/libstudio.proto-231.0.1.4.jar">
-          <sha256sum>60c3deb19b1cf40bf4771dbe26fd6b2aaf264b3b3828fd76d2f7457948917702</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libstudio.proto/231.0.26.0/libstudio.proto-231.0.26.0.jar">
+          <sha256sum>e18f6cad9b5ce8969202d568fa7acdb6a2470a2b6dbfb340cb7bacadbe7fabb2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libstudio.proto/231.0.1.4/libstudio.proto-231.0.1.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libstudio.proto/231.0.26.0/libstudio.proto-231.0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

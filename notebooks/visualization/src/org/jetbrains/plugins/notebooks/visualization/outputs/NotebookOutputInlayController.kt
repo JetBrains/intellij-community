@@ -6,12 +6,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorCustomElementRenderer
-import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
 import com.intellij.util.messages.Topic
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
@@ -252,6 +250,10 @@ class NotebookOutputInlayController private constructor(
     ): NotebookCellInlayController? {
       val interval = intervalIterator.next()
       if (interval.type != NotebookCellLines.CellType.CODE) return null
+      // temporarily disable for diff until it can be done properly, see PY-20132
+      if (!Registry.`is`("jupyter.diff.viewer.output")) {
+        if (editor.editorKind == EditorKind.DIFF) return null
+      }
 
       val outputDataKeys =
         NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()

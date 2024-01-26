@@ -430,7 +430,7 @@ public final class TextDiffViewerUtil {
 
     @Override
     public boolean isVisible() {
-      return mySettings.getContextRange() != -1;
+      return mySettings.getContextRange() != -1 && myFoldingSupport.isEnabled();
     }
 
     @Override

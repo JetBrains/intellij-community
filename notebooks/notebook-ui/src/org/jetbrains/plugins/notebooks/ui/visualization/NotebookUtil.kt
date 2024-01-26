@@ -26,18 +26,21 @@ inline fun paintNotebookCellBackgroundGutter(
   height: Int,
   crossinline actionBetweenBackgroundAndStripe: () -> Unit = {}
 ) {
+  val diffViewOffset = 6  // randomly picked a number that fits well
   val appearance = editor.notebookAppearance
   val stripe = appearance.getCellStripeColor(editor, lines)
   val stripeHover = appearance.getCellStripeHoverColor(editor, lines)
   val borderWidth = appearance.getLeftBorderWidth()
   val rectBorderCellX = r.width - borderWidth
+
   g.color = appearance.getCodeCellBackground(editor.colorsScheme)
+
   if (editor.editorKind == EditorKind.DIFF) {
-    g.fillRect(rectBorderCellX + 3, top, borderWidth - 3, height)
-  }
-  else {
+    g.fillRect(rectBorderCellX + diffViewOffset, top, borderWidth - diffViewOffset, height)
+  } else {
     g.fillRect(rectBorderCellX, top, borderWidth, height)
   }
+
   actionBetweenBackgroundAndStripe()
   if (editor.editorKind == EditorKind.DIFF) return
   if (stripe != null) {
@@ -62,7 +65,7 @@ fun paintCellStripe(
 }
 
 /**
- * Paints green or blue stripe depending on cell type
+ * Paints green or blue stripe depending on a cell type
  */
 fun paintCellGutter(inlayBounds: Rectangle,
                     lines: IntRange,
@@ -99,3 +102,5 @@ fun installNotebookEditorView(editor: Editor) {
     })
   }
 }
+
+fun getJupyterCellSpacing(editor: Editor): Int = editor.getLineHeight()

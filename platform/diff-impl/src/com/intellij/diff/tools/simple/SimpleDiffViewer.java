@@ -54,7 +54,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull protected final StatusPanel myStatusPanel;
 
-  @NotNull protected final SimpleDiffModel myModel = new SimpleDiffModel(this);
+  @NotNull protected SimpleDiffModel myModel = new SimpleDiffModel(this);
   @NotNull private final AlignedDiffModel myAlignedDiffModel;
 
   @NotNull private final MyFoldingModel myFoldingModel;
@@ -63,9 +63,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
   @NotNull protected final TwosideTextDiffProvider myTextDiffProvider;
 
+  protected boolean aligningViewModeSupported;
+
+
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
+    this.aligningViewModeSupported = true;
     mySyncScrollable = new MySyncScrollable();
     myAlignedDiffModel = new SimpleAlignedDiffModel(this);
 
@@ -94,6 +98,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
   protected void onDispose() {
     Disposer.dispose(myAlignedDiffModel);
     super.onDispose();
+  }
+
+  @ApiStatus.Internal
+  protected void setModel(@NotNull SimpleDiffModel model) {
+    this.myModel = model;
   }
 
   @NotNull
@@ -390,6 +399,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
   protected boolean isEditable(@NotNull Side side) {
     return DiffUtil.isEditable(getEditor(side));
+  }
+
+  public boolean isAligningViewModeSupported() {
+    return aligningViewModeSupported;
   }
 
   //

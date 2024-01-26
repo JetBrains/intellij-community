@@ -58,7 +58,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.InputEvent
-import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -394,9 +393,15 @@ private class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val defaultMinimumButtonSize = presentation.getClientProperty(CustomComponentAction.MINIMAL_DEMENTION_SUPPLIER)
-                                   ?: Supplier { ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE }
-    return ActionButton(this, presentation, ActionPlaces.NEW_UI_RUN_TOOLBAR, defaultMinimumButtonSize)
+    return object : ActionButton(this, presentation, ActionPlaces.NEW_UI_RUN_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      override fun addNotify() {
+        val toolbar = ActionToolbar.findToolbarBy(this)
+        if (toolbar is ActionToolbarImpl) {
+          setMinimumButtonSize(toolbar.minimumButtonSizeSupplier)
+        }
+        super.addNotify()
+      }
+    }
   }
 }
 

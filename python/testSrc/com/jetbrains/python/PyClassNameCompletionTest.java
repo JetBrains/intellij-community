@@ -5,10 +5,12 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -189,9 +191,12 @@ public class PyClassNameCompletionTest extends PyTestCase {
     LookupElement ndarray = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("ndarray"));
     assertNull(ndarray);
 
-    PyClass ndarrayUserSkeleton = PyClassNameIndex.findClass("numpy.core.multiarray.ndarray", myFixture.getProject());
+    Project project = myFixture.getProject();
+    PyClass ndarrayUserSkeleton = ContainerUtil.getFirstItem(PyClassNameIndex.findByQualifiedName("numpy.core.multiarray.ndarray",
+                                                                                                  project,
+                                                                                                  GlobalSearchScope.allScope(project)));
     if (ndarrayUserSkeleton == null) {
-      System.out.println("Dumb mode: " + DumbService.isDumb(myFixture.getProject()));
+      System.out.println("Dumb mode: " + DumbService.isDumb(project));
       dumpSdkRoots();
     }
     assertNotNull(ndarrayUserSkeleton);

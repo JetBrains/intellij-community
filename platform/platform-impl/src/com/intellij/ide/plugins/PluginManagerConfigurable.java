@@ -493,6 +493,7 @@ public final class PluginManagerConfigurable
                     applyUpdates(myMarketplaceSearchPanel.getPanel(), updates);
                   }
                   selectionListener.accept(myMarketplacePanel);
+                  selectionListener.accept(myMarketplaceSearchPanel.getPanel());
                 });
               }
             }, ModalityState.any());
@@ -848,6 +849,7 @@ public final class PluginManagerConfigurable
                       myPostFillGroupCallback = () -> {
                         applyUpdates(myPanel, updates);
                         selectionListener.accept(myMarketplacePanel);
+                        selectionListener.accept(myMarketplaceSearchPanel.getPanel());
                       };
                     }
                   }
@@ -1008,6 +1010,7 @@ public final class PluginManagerConfigurable
             }
             applyBundledUpdates(updates);
             selectionListener.accept(myInstalledPanel);
+            selectionListener.accept(myInstalledSearchPanel.getPanel());
           });
         }
         finally {
@@ -1249,6 +1252,7 @@ public final class PluginManagerConfigurable
                 myPostFillGroupCallback = () -> {
                   applyUpdates(myPanel, updates);
                   selectionListener.accept(myInstalledPanel);
+                  selectionListener.accept(myInstalledSearchPanel.getPanel());
                 };
               }
             }

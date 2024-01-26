@@ -397,10 +397,6 @@
     <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false"
                  description="Possibility to write await outside of function"/>
 
-    <!-- asyncio REPL for Python Console/Debugger -->
-    <registryKey key="python.debug.asyncio.repl" defaultValue="false" restartRequired="false"
-                 description="Possibility to write await outside of function"/>
-
     <registryKey defaultValue="true" description="Enables an experimental low impact monitoring API for Python 3.12"
                  restartRequired="false" key="python.debug.low.impact.monitoring.api"/>
 
@@ -424,7 +420,6 @@
     <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
     <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
 
-    <projectService serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
 
     <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
@@ -452,7 +447,7 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
-
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
@@ -673,6 +668,10 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.jetbrains.python.console.customizer"
                     interface="com.jetbrains.python.console.PyConsoleCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.pyDebugAsyncioCustomizer"
+                    interface="com.jetbrains.python.debugger.PyDebugAsyncioCustomizer"
                     dynamic="true"/>
 
     <!-- Experimental sdk EP, avoid using it -->
@@ -929,5 +928,6 @@
 
   <extensions defaultExtensionNs="com.jetbrains.python.debugger">
     <numericContainerPopupCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizerDefault"/>
+    <pyDebugAsyncioCustomizer implementation="com.jetbrains.python.debugger.PyDebugAsyncioCustomizerDefault"/>
   </extensions>
 </idea-plugin>

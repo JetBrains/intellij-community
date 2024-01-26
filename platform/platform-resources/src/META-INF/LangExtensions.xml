@@ -1415,6 +1415,13 @@
                             order="last"/>
     <statusBarWidgetFactory id="Memory" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory"
                             order="last"/>
+    <registryKey key="idea.memory.usage.tooltip.show.more"
+                 description="Show additional info in a memory-usage bar's tooltip"
+                 defaultValue="true"/>
+    <registryKey key="idea.memory.usage.show.total.memory.estimation"
+                 description="Show total memory usage estimation (instead of -Xmx) info in a memory-usage bar"
+                 defaultValue="true"/>
+
     <statusBarWidgetFactory id="settingsEntryPointWidget" implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager"
                             order="last"/>
     <statusBarWidgetFactory id="SmartModeIndicator" implementation="com.intellij.openapi.wm.impl.status.SmartModeIndicatorWidgetFactory"/>
@@ -1461,6 +1468,11 @@
       nameKey="settings.export.inspection.profile.xml"
       schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
       implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
+    <schemeImporter
+      nameBundle="messages.ApplicationBundle"
+      nameKey="settings.import.inspection.profile.xml"
+      schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
+      implementationClass="com.intellij.profile.codeInspection.ui.InspectionProfileImporter"/>
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>

@@ -1,0 +1,39 @@
+<idea-plugin package="com.intellij.ae.database.counters.community">
+  <extensions defaultExtensionNs="com.intellij.ae.database">
+    <fusEventCatcher implementation="com.intellij.ae.database.counters.community.AltEnterActionInvocation$Factory"/>
+
+    <fusEventCatcher implementation="com.intellij.ae.database.counters.community.PluginInstalledFusListener"/>
+    <fusEventCatcher implementation="com.intellij.ae.database.counters.community.PluginUninstalledFusListener"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <vfs.asyncListener implementation="com.intellij.ae.database.counters.community.TestFileCreationListener"/>
+    <editorFactoryListener implementation="com.intellij.ae.database.counters.community.CodingTimeUserActivityEditorFactoryListener"/>
+    <postStartupActivity implementation="com.intellij.ae.database.counters.community.BuildListenerProjectActivity"/>
+    <checkinHandlerFactory implementation="com.intellij.ae.database.counters.community.VcsListenerFactory"/>
+    <postStartupActivity implementation="com.intellij.ae.database.counters.community.ProjectOpenedTimeSpanUserActivityProjectOpenListener"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.ae.database.counters.community.IdeStartedUserActivityListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.ae.database.counters.community.CompletionCharactersSparedListener"
+              topic="com.intellij.featureStatistics.FeatureStatisticsUpdateListener"/>
+    <listener class="com.intellij.ae.database.counters.community.RunConfigurationListener"
+              topic="com.intellij.execution.ExecutionListener"/>
+    <listener class="com.intellij.ae.database.counters.community.ProjectOpenedTimeSpanUserActivityProjectCloseListener"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+    <listener class="com.intellij.ae.database.counters.community.CodingTimeUserActivityCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
+    <listener class="com.intellij.ae.database.counters.community.MyDynamicPluginListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
+
+  <incompatible-with>com.intellij.cwm.guest</incompatible-with>
+  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+  <incompatible-with>com.intellij.gateway</incompatible-with>
+
+  <dependencies>
+    <module name="intellij.ae.database.core"/>
+  </dependencies>
+</idea-plugin>

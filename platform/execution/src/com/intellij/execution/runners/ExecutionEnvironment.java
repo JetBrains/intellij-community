@@ -51,6 +51,12 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   private ProgramRunner.Callback callback;
   private boolean isHeadless = false;
 
+  /**
+   * {@code true} means that a special `Current File` item was selected in the Run Configurations combo box,
+   * so the run configuration was auto-created for the file, which was opened in the editor. (See IJP-1167)
+   */
+  private boolean myRunningCurrentFile;
+
   @TestOnly
   public ExecutionEnvironment() {
     myProject = null;
@@ -296,5 +302,13 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
    */
   public static long getNextUnusedExecutionId() {
     return myIdHolder.incrementAndGet();
+  }
+
+  public boolean isRunningCurrentFile() {
+    return myRunningCurrentFile;
+  }
+
+  public void setRunningCurrentFile(boolean runningCurrentFile) {
+    myRunningCurrentFile = runningCurrentFile;
   }
 }

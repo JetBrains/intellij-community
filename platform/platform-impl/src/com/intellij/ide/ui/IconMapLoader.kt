@@ -10,6 +10,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ResourceUtil
+import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -68,7 +69,7 @@ class IconMapLoader {
     }
       .mapNotNull { it.getCompleted() }
 
-    val result = IdentityHashMap<ClassLoader, MutableMap<String, String>>()
+    val result = CollectionFactory.createWeakIdentityMap<ClassLoader, MutableMap<String, String>>(50, 0.5f)
     for (pair in list) {
       result.computeIfAbsent(pair.first) { HashMap() }.putAll(pair.second)
     }

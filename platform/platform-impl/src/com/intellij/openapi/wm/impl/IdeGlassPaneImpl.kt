@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.ide.bootstrap.hasSplash
 import com.intellij.platform.ide.bootstrap.hideSplash
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.awaitCancellationAndInvoke
@@ -87,9 +88,11 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     else if (loadingState == null || loadingState.done.isCompleted) {
       isVisible = false
       hideSplash()
+      FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
     }
     else if (hasSplash()) {
       loadingState.done.invokeOnCompletion {
+        FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
         coroutineScope.launch(RawSwingDispatcher) {
           hideSplash()
         }
@@ -98,6 +101,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     else {
       hideSplash()
       loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, coroutineScope = coroutineScope) {
+        FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
         loadingIndicator = null
         applyActivationState()
       }

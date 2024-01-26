@@ -4,12 +4,13 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.DumbAware
 
 internal abstract class ChangePreviewLayoutAction(
   private val layout: TextEditorWithPreview.Layout
-): ToggleAction(layout.getName(), layout.getName(), layout.getIcon(null)), DumbAware, LightEditCompatible {
+): ToggleAction(layout.getName(), layout.getName(), layout.getIcon(null)), DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   override fun isSelected(event: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findSplitEditor(event)
     return editor?.layout == layout

@@ -183,13 +183,13 @@ public class BuildView extends CompositeView<ExecutionConsole>
     if (executionConsole != null) {
       executionConsole.getComponent(); //create editor to be able to add console editor actions
       if (myViewSettingsProvider.isExecutionViewHidden()) {
-        addViewAndShowIfNeeded(executionConsole, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
+        addViewAndShowIfNeeded(executionConsole, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault(), false);
         buildTree = false;
       }
       else if (isShowInDashboard()) {
         ExecutionConsole consoleView =
           executionConsole instanceof ConsoleView ? wrapWithToolbar((ConsoleView)executionConsole) : executionConsole;
-        addViewAndShowIfNeeded(consoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
+        addViewAndShowIfNeeded(consoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault(), false);
         if (executionConsole instanceof ConsoleViewImpl consoleViewImpl) {
           consoleViewImpl.getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
         }
@@ -204,7 +204,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
         String eventViewName = BuildTreeConsoleView.class.getName();
         eventView = new BuildTreeConsoleView(myProject, myBuildDescriptor, myExecutionConsole);
         addView(eventView, eventViewName);
-        showView(eventViewName);
+        showView(eventViewName, false);
       }
     }
 

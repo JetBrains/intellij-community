@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.migrations
 
+import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.DisabledPluginsState.Companion.loadDisabledPlugins
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginMigrationOptions
 import com.intellij.openapi.util.JDOMExternalizerUtil
@@ -10,16 +12,24 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.Constants
 import org.jdom.Attribute
 import org.jdom.Element
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.exists
 
 class PresentationAssistant233 {
   fun migratePlugin(options: PluginMigrationOptions) {
+    val pluginId = "org.nik.presentation-assistant"
     if (StringUtil.compareVersionNumbers(options.currentProductVersion, "233") >= 0) {
-      val pluginDescriptor = options.pluginsToMigrate.find { it.pluginId.idString == "org.nik.presentation-assistant" }
-      options.pluginsToMigrate.removeIf { it.pluginId.idString == "org.nik.presentation-assistant" }
+      val pluginDescriptor = options.pluginsToMigrate.find { it.pluginId.idString == pluginId }
+                             ?: options.pluginsToDownload.find { it.pluginId.idString == pluginId }
+      options.pluginsToMigrate.removeIf { it.pluginId.idString == pluginId }
+      options.pluginsToDownload.removeIf { it.pluginId.idString == pluginId }
       if (pluginDescriptor != null) {
         val pluginSettingsFile = options.oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY).resolve("presentation-assistant.xml")
-        if (!pluginSettingsFile.exists() && !pluginDescriptor.isEnabled) return
+        val disabledPluginsFile: Path = options.oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+        val isPluginEnabled = if (Files.exists(disabledPluginsFile)) pluginDescriptor.pluginId !in loadDisabledPlugins(disabledPluginsFile)
+        else true
+        if (!pluginSettingsFile.exists() && !isPluginEnabled) return
         var newSettingsFile = options.newConfigDir.resolve(PathManager.OPTIONS_DIRECTORY).resolve("presentation-assistant-ij.xml")
         if (!newSettingsFile.exists()) {
           newSettingsFile = newSettingsFile.findOrCreateFile()
@@ -31,6 +41,7 @@ class PresentationAssistant233 {
         }
         val applicationElement = JDOMUtil.load(newSettingsFile)
         val newComponent = applicationElement.getChild("component")
+        var showActionsEnabled = true
         if (pluginSettingsFile.exists()) {
           val component = JDOMUtil.load(pluginSettingsFile).getChild("component")
           val componentOptions = JDOMUtil.getChildren(component, Constants.OPTION)
@@ -67,11 +78,14 @@ class PresentationAssistant233 {
                     setOption(newComponent, "showAlternativeKeymap", "true")
                   }
                 }
+                "showActionDescriptions" -> {
+                  showActionsEnabled = getValue(option)?.toBoolean() ?: true
+                }
               }
             }
           }
         }
-        setOption(newComponent, "showActionDescriptions", pluginDescriptor.isEnabled.toString())
+        setOption(newComponent, "showActionDescriptions", (isPluginEnabled && showActionsEnabled).toString())
         JDOMUtil.write(applicationElement, newSettingsFile)
       }
     }

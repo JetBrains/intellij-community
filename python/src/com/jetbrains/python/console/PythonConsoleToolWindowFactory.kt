@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.jetbrains.python.PythonPluginDisposable
 import org.jetbrains.annotations.NonNls
 
-internal class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
+class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val isStartedFromRunner = toolWindow.component.getClientProperty(PydevConsoleRunnerImpl.STARTED_BY_RUNNER)
     // we need it to distinguish Console toolwindows started by Console Runner from ones started by toolwindow activation

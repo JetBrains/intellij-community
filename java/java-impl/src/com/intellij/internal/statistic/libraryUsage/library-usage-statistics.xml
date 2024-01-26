@@ -323,6 +323,7 @@
   <technology name="spring-security" root="org.springframework.security"/>
   <technology name="spring-security-oauth2" root="org.springframework.security.oauth2"/>
   <technology name="spring-session" root="org.springframework.session"/>
+  <technology name="spring-shell" root="org.springframework.shell"/>
   <technology name="spring-web" root="org.springframework.web"/>
   <technology name="spring-webflow" root="org.springframework.webflow"/>
   <technology name="spring-webflux" root="org.springframework.web.reactive"/>

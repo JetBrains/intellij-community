@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RemoveAttributeIntentionFix extends PsiElementBaseIntentionAction implements LocalQuickFix {
+public class RemoveAttributeIntentionFix extends PsiElementBaseIntentionAction implements LocalQuickFix, PriorityAction {
   private final String myLocalName;
 
   public RemoveAttributeIntentionFix(final String localName) {
@@ -45,6 +46,11 @@ public class RemoveAttributeIntentionFix extends PsiElementBaseIntentionAction i
   @NotNull
   public String getFamilyName() {
     return XmlAnalysisBundle.message("xml.quickfix.remove.attribute.family");
+  }
+
+  @Override
+  public @NotNull Priority getPriority() {
+    return myLocalName != null ? Priority.LOW : Priority.NORMAL;
   }
 
   @Override

@@ -106,7 +106,7 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
     return if (answer === CustomizedDataContext.EXPLICIT_NULL) null else answer
   }
 
-  private fun getDataInner(dataId: String, cacheable: Boolean): Any? {
+  protected open fun getDataInner(dataId: String, cacheable: Boolean): Any? {
     val component = SoftReference.dereference(ref)
     if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.`is`(dataId)) {
       return if (component == null) null else Utils.isModalContext(component)
@@ -193,10 +193,8 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
                                                                       userData = userData,
                                                                       dataManager = manager,
                                                                       eventCount = eventCount) {
-    override fun getData(dataId: String): Any? {
-      val injectedId = InjectedDataKeys.injectedId(dataId)
-      val injected = if (injectedId == null) null else super.getData(injectedId)
-      return injected ?: super.getData(dataId)
+    override fun getDataInner(dataId: String, cacheable: Boolean): Any? {
+      return InjectedDataKeys.getInjectedData(dataId) { key -> super.getDataInner(key, cacheable) }
     }
   }
 }

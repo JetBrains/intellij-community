@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="intellij.settingsRepository" />
     <orderEntry type="module" module-name="intellij.properties" />
     <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />

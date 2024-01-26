@@ -17,13 +17,8 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIB
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-internal class StdlibVersionChooserDialog(project: Project, libraries: Set<LibraryOrderEntry>) : DialogWrapper(project) {
-
-    val availableLibraries: Map<@NlsSafe String, LibraryOrderEntry> = libraries.mapNotNull {
-        val libraryName = it.library?.name
-        if (libraryName == null) return@mapNotNull null
-        libraryName to it
-    }.toMap()
+internal class StdlibVersionChooserDialog(project: Project, private val availableLibraries: Map<@NlsSafe String, LibraryOrderEntry>) :
+    DialogWrapper(project) {
 
     private val selectedLibrary = AtomicProperty(LibraryNameAndVersion())
 
@@ -44,6 +39,12 @@ internal class StdlibVersionChooserDialog(project: Project, libraries: Set<Libra
 
     override fun createCenterPanel(): JComponent {
         val librariesNamesAndVersions = getLibrariesNamesAndVersions()
+        val firstLibrary = if (librariesNamesAndVersions.isNotEmpty()) {
+            librariesNamesAndVersions.first()
+        } else {
+            LibraryNameAndVersion()
+        }
+        selectedLibrary.set(LibraryNameAndVersion(firstLibrary.libraryName, firstLibrary.version))
         return panel {
             row(KotlinNewProjectWizardUIBundle.message("dialog.choose.stdlib.available.libs")) {
                 comboBox(librariesNamesAndVersions, createRenderer()).bindItem(selectedLibrary)

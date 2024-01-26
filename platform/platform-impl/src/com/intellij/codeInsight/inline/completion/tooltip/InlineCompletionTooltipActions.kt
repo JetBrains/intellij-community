@@ -86,7 +86,7 @@ private class ChangeToCustomInlineCompletionAction : AnAction(
   }
 }
 
-class InlineCompletionPopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
+internal class InlineCompletionPopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
   init {
     isPopup = true
     templatePresentation.isPerformGroup = true

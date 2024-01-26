@@ -32,7 +32,7 @@ from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thre
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, \
     IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
     IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON, GOTO_HAS_RESPONSE, \
-    IS_ASYNCIO_DEBUGGER_ENV, USE_LOW_IMPACT_MONITORING
+    USE_LOW_IMPACT_MONITORING
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -1520,8 +1520,8 @@ class PyDB(object):
         if set_trace:
             self.enable_tracing()
 
-        if IS_ASYNCIO_DEBUGGER_ENV:
-            from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
+        from _pydevd_bundle.pydevd_asyncio_provider import apply
+        if apply is not None:
             apply()
 
         return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
@@ -1837,6 +1837,8 @@ def _locked_settrace(
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
+
+        pydev_log.debug("pydev debugger: process %d debugging initialization is finished\n" % os.getpid())
 
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break

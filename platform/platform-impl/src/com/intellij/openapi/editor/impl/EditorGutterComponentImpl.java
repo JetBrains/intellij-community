@@ -1301,10 +1301,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean isLineMarkerVisible(RangeHighlighter highlighter) {
     int startOffset = highlighter.getStartOffset();
     int endOffset = highlighter.getEndOffset();
-
     FoldRegion startFoldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+    if (startFoldRegion == null) return true; // Marker is visible if start of the region is not folded
+
     FoldRegion endFoldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(endOffset);
-    return startFoldRegion == null || !startFoldRegion.equals(endFoldRegion);
+    if (!startFoldRegion.equals(endFoldRegion)) return true; // Start and end are folded, but the middle highlighter part is visible
+
+    if (startOffset == endOffset) {
+      // Show highlighters at the edge of the folded area
+      return startFoldRegion.getStartOffset() == startOffset || startFoldRegion.getEndOffset() == startOffset;
+    }
+    return false; // Marker is folded
   }
 
   @Override

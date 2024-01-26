@@ -14,19 +14,19 @@ def get_type(table):
 
 # noinspection PyUnresolvedReferences
 def get_shape(table):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray]) -> str
+    # type: (Union[pd.DataFrame, pd.Series]) -> str
     return str(table.shape[0])
 
 
 # noinspection PyUnresolvedReferences
 def get_head(table):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray]) -> str
+    # type: (Union[pd.DataFrame, pd.Series]) -> str
     return repr(__convert_to_df(table).head().to_html(notebook=True, max_cols=None))
 
 
 # noinspection PyUnresolvedReferences
 def get_column_types(table):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray]) -> str
+    # type: (Union[pd.DataFrame, pd.Series]) -> str
     table = __convert_to_df(table)
     return str(table.index.dtype) + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
@@ -35,7 +35,32 @@ def get_column_types(table):
 # used by pydevd
 # noinspection PyUnresolvedReferences
 def get_data(table, start_index=None, end_index=None):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int) -> str
+    # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
+
+    def convert_data_to_html(data, max_cols):
+        return repr(__convert_to_df(data).to_html(notebook=True, max_cols=max_cols))
+
+    return _compute_sliced_data(table, convert_data_to_html, start_index, end_index)
+
+
+# used by DSTableCommands
+# noinspection PyUnresolvedReferences
+def display_data(table, start_index, end_index):
+    # type: (Union[pd.DataFrame, pd.Series], int, int) -> None
+    def ipython_display(data, max_cols):
+        from IPython.display import display
+        display(__convert_to_df(data))
+
+    _compute_sliced_data(table, ipython_display, start_index, end_index)
+
+
+def __get_data_slice(table, start, end):
+    return __convert_to_df(table).iloc[start:end]
+
+
+def _compute_sliced_data(table, fun, start_index=None, end_index=None):
+    # type: (Union[pd.DataFrame, pd.Series], function, int, int) -> str
+
     max_cols, max_colwidth = __get_tables_display_options()
 
     _jb_max_cols = pd.get_option('display.max_columns')
@@ -47,35 +72,12 @@ def get_data(table, start_index=None, end_index=None):
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
 
-    data = repr(__convert_to_df(table).to_html(notebook=True, max_cols=max_cols))
+    data = fun(table, max_cols)
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
 
     return data
-
-
-def __get_data_slice(table, start, end):
-    return __convert_to_df(table).iloc[start:end]
-
-
-# used by DSTableCommands
-# noinspection PyUnresolvedReferences
-def display_data(table, start, end):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int) -> None
-    from IPython.display import display
-    max_cols, max_colwidth = __get_tables_display_options()
-
-    _jb_max_cols = pd.get_option('display.max_columns')
-    _jb_max_colwidth = pd.get_option('display.max_colwidth')
-
-    pd.set_option('display.max_columns', max_cols)
-    pd.set_option('display.max_colwidth', max_colwidth)
-
-    display(__convert_to_df(table).iloc[start:end])
-
-    pd.set_option('display.max_columns', _jb_max_cols)
-    pd.set_option('display.max_colwidth', _jb_max_colwidth)
 
 
 def get_column_descriptions(table):
@@ -209,11 +211,9 @@ def add_custom_key_value_separator(pairs_list):
 
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray, pd.Categorical]) -> pd.DataFrame
+    # type: (Union[pd.DataFrame, pd.Series, pd.Categorical]) -> pd.DataFrame
     if type(table) is pd.Series:
         return __series_to_df(table)
-    if type(table) is np.ndarray:
-        return __array_to_df(table)
     if type(table) is pd.Categorical:
         return __categorical_to_df(table)
     return table
@@ -234,7 +234,6 @@ def __series_to_df(table):
 
 
 # numpy.array support
-# TODO: extract to a dedicated provider to fix DS-2086
 def __array_to_df(table):
     # type: (np.ndarray) -> pd.DataFrame
     return pd.DataFrame(table)
@@ -247,7 +246,7 @@ def __categorical_to_df(table):
 
 # In old versions of pandas max_colwidth accepted only Int-s
 def __get_tables_display_options():
-    # type: () -> Tuple[None, Union[int, None]
+    # type: () -> Tuple[None, Union[int, None]]
     import sys
     if sys.version_info < (3, 0):
         return None, MAX_COLWIDTH_PYTHON_2

@@ -24,6 +24,9 @@ class PyCharmExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
   override val youtrackProjectId: String
     get() = "PY"
 
+  override val useInIdeEvaluationFeedback: Boolean
+    get() = true
+
   override val youTubeChannelUrl: Url
     get() = Urls.newFromEncoded("https://www.youtube.com/playlist?list=PLCTHcU1KoD99eyuXqUJHZy90-9jU2H2Y2")
 }
