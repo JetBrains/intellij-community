@@ -7771,7 +7771,7 @@ com/intellij/lexer/HtmlLexer.class:lib/app.jar
 com/intellij/lexer/XHtmlLexer.class:lib/app.jar
 com/intellij/execution/CommandLineUtil.class:lib/util-8.jar
 com/intellij/xml/index/SchemaTypeInheritanceIndex.class:lib/app.jar
-com/intellij/configurationStore/ProjectStoreFactoryImpl.class:lib/app-client.jar
+com/intellij/configurationStore/ProjectStoreFactoryBase.class:lib/app-client.jar
 com/jetbrains/jsonSchema/impl/JsonSchemaFileValuesIndex.class:lib/app.jar
 com/intellij/configurationScript/providers/ConfigurationScriptProjectStoreFactory.class:plugins/configurationScript/lib/configurationScript.jar
 com/intellij/lexer/FlexAdapter.class:lib/util-8.jar
