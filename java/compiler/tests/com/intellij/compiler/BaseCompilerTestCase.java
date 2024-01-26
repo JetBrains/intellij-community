@@ -57,13 +57,6 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        //todo projectOpened isn't called in tests so we need to add this listener manually
-        forceFSRescan();
-      }
-    });
     CompilerTestUtil.enableExternalCompiler();
   }
 

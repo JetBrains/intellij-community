@@ -6,15 +6,16 @@ import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
+import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 public final class BuildProcessPreloadedStateClearer implements WorkspaceModelChangeListener, ModuleRootListener {
 
@@ -28,7 +29,15 @@ public final class BuildProcessPreloadedStateClearer implements WorkspaceModelCh
   public void changed(@NotNull VersionedStorageChange event) {
     boolean needFSRescan =
       processEntityChanges(event, SourceRootEntity.class, ChangeProcessor.anyChange(true, false)) ||
-      processEntityChanges(event, ModuleEntity.class, (before, after) -> before.getDependencies().equals(after.getDependencies()),
+      processEntityChanges(event, ModuleEntity.class, Predicates.alwaysTrue(), 
+                           (before, after) -> before.getDependencies().equals(after.getDependencies()),
+                           ChangeProcessor.anyChange(true, false)) ||
+      processEntityChanges(event, ContentRootEntity.class, Predicates.alwaysTrue(),
+                           (before, after) -> before.getExcludedPatterns().equals(after.getExcludedPatterns()),
+                           ChangeProcessor.anyChange(true, false)) ||
+      processEntityChanges(event, ExcludeUrlEntity.class, 
+                           entity -> RootsKt.getContentRoot(entity) != null,//skip changes in excluded roots of libraries
+                           (before, after) -> before.getUrl().equals(after.getUrl()), 
                            ChangeProcessor.anyChange(true, false)) ||
       processEntityChanges(event, JavaModuleSettingsEntity.class, ChangeProcessor.anyChange(true, false));
 
@@ -90,11 +99,12 @@ public final class BuildProcessPreloadedStateClearer implements WorkspaceModelCh
   private static <T extends WorkspaceEntity, R> R processEntityChanges(@NotNull VersionedStorageChange event,
                                                                        Class<T> entityClass,
                                                                        ChangeProcessor<T, R> proc) {
-    return processEntityChanges(event, entityClass, Object::equals, proc);
+    return processEntityChanges(event, entityClass, Predicates.alwaysTrue(), Object::equals, proc);
   }
 
   private static <T extends WorkspaceEntity, R> R processEntityChanges(@NotNull VersionedStorageChange event,
                                                                        Class<T> entityClass,
+                                                                       Predicate<T> filter,
                                                                        BiFunction<T, T, Boolean> equalsBy,
                                                                        ChangeProcessor<T, R> proc) {
     for (EntityChange<T> change : event.getChanges(entityClass)) {
@@ -103,15 +113,15 @@ public final class BuildProcessPreloadedStateClearer implements WorkspaceModelCh
       boolean shouldContinue = true;
       if (after != null) {
         if (before != null) {
-          if (!equalsBy.apply(before, after)) {
+          if ((filter.test(before) || filter.test(after)) && !equalsBy.apply(before, after)) {
             shouldContinue = proc.changed(before, after);
           }
         }
-        else {
+        else if (filter.test(after)) {
           shouldContinue = proc.added(after);
         }
       }
-      else if (before != null) {
+      else if (before != null && filter.test(before)) {
         shouldContinue = proc.removed(before);
       }
       if (!shouldContinue) {
