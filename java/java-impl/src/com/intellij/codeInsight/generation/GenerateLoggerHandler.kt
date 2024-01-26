@@ -64,35 +64,49 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     clazz.add(field) as? PsiField
   }
 
-  private fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.getAllLoggers(false).filter {
-    JavaLibraryUtil.hasLibraryClass(module, it.loggerName)
+  private fun getSelectedLogger(project: Project, availableLoggers: List<JvmLogger>): JvmLogger? {
+    val selectedLogger = when (availableLoggers.size) {
+      0 -> null
+      1 -> availableLoggers.first()
+      else -> {
+        val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.loggerName)
+
+        val chooseLoggerDialog = ChooseLoggerDialogWrapper(
+          availableLoggers.map { it.toString() },
+          (if (preferredLogger in availableLoggers) {
+            preferredLogger
+          }
+          else {
+            availableLoggers.first()
+          }).toString(),
+          project,
+        )
+
+        if (!chooseLoggerDialog.showAndGet()) return null
+
+        JvmLogger.getLoggerByName(chooseLoggerDialog.selectedLogger)
+      }
+    }
+    saveLoggerOnTheFirstTime(project, selectedLogger)
+
+    return selectedLogger
   }
 
-  private fun getSelectedLogger(project: Project, availableLoggers: List<JvmLogger>): JvmLogger? {
-    if (availableLoggers.isEmpty()) return null
-    if (availableLoggers.size == 1) return availableLoggers.first()
-
-    val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.loggerName)
-
-    val chooseLoggerDialog = ChooseLoggerDialogWrapper(
-      availableLoggers.map { it.toString() },
-      (if (preferredLogger in availableLoggers) {
-        preferredLogger
-      }
-      else {
-        availableLoggers.first()
-      }).toString(),
-      project,
-    )
-
-    if (!chooseLoggerDialog.showAndGet()) return null
-
-    return JvmLogger.getLoggerByName(chooseLoggerDialog.selectedLogger)
+  private fun saveLoggerOnTheFirstTime(project: Project, logger: JvmLogger?) {
+    if (logger == null) return
+    val settings = project.service<JavaSettingsStorage>().state
+    if (settings.loggerName == JvmLogger.UNSPECIFIED_LOGGER_NAME) {
+      settings.loggerName = logger.toString()
+    }
   }
 
   override fun startInWriteAction(): Boolean = false
 
   companion object {
+    fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.getAllLoggers(false).filter {
+      JavaLibraryUtil.hasLibraryClass(module, it.loggerName)
+    }
+
     fun getPossiblePlacesForLogger(element: PsiElement): List<PsiClass> = element.parentsOfType(PsiClass::class.java, false)
       .filter { clazz -> clazz !is PsiAnonymousClass && isPossibleToPlaceLogger(clazz) }
       .toList()
