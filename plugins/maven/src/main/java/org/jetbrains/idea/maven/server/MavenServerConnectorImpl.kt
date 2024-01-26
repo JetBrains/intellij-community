@@ -33,14 +33,14 @@ open class MavenServerConnectorImpl(project: Project,
   private var myPullingDownloadFuture: ScheduledFuture<*>? = null
 
 
-  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean {
+  override fun isCompatibleWith(anotherJdk: Sdk, otherVmOptions: String, distribution: MavenDistribution): Boolean {
     if (!mavenDistribution.compatibleWith(distribution)) {
       return false
     }
-    if (!StringUtil.equals(jdk.name, jdk.name)) {
+    if (!StringUtil.equals(jdk.name, anotherJdk.name)) {
       return false
     }
-    return StringUtil.equals(vmOptions, vmOptions)
+    return StringUtil.equals(vmOptions, otherVmOptions)
   }
 
   override fun newStartServerTask(): StartServerTask {
