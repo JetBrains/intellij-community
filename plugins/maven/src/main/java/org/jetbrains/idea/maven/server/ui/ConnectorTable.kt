@@ -56,7 +56,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
     val type = TableColumn(
       MavenConfigurableBundle.message("connector.ui.type")) { it.supportType }
     val columnInfos: Array<TableColumn> = arrayOf(project, dir, type, maven, state)
-    return ListTableModel<MavenServerConnector>(columnInfos, MavenServerManager.getInstance().allConnectors.toList(), 3,
+    return ListTableModel<MavenServerConnector>(columnInfos, MavenServerManager.getInstance().getAllConnectors().toList(), 3,
                                                 SortOrder.DESCENDING)
   }
 

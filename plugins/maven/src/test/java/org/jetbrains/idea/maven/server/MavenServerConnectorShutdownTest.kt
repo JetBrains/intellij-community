@@ -27,7 +27,7 @@ class MavenServerConnectorShutdownTest : MavenNewProjectWizardTestCase() {
         it.javaMavenData!!.sdk = mySdk
       }
     }.withProjectAsync {
-      val connectors = mavenServerManager.allConnectors.filter { it.project?.name == "project" }
+      val connectors = mavenServerManager.getAllConnectors().filter { it.project?.name == "project" }
       assertEquals(1, connectors.size)
       connectorRef.set(connectors[0])
     }.closeProjectAsync()
@@ -38,7 +38,7 @@ class MavenServerConnectorShutdownTest : MavenNewProjectWizardTestCase() {
     }
 
     // there are no other connectors for the closed project
-    val connectors = mavenServerManager.allConnectors.filter { it.project?.name == "project" }
+    val connectors = mavenServerManager.getAllConnectors().filter { it.project?.name == "project" }
     assertEquals(0, connectors.size)
   }
 }

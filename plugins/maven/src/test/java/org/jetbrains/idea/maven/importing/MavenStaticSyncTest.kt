@@ -565,7 +565,7 @@ class NoRealMavenServerManager : MavenServerManager {
     noRealMavenAllowed()
   }
 
-  override fun restartMavenConnectors(project: Project?, wait: Boolean, condition: Predicate<MavenServerConnector>?) {
+  override fun restartMavenConnectors(project: Project, wait: Boolean, condition: Predicate<MavenServerConnector>) {
     noRealMavenAllowed()
   }
 
@@ -573,7 +573,7 @@ class NoRealMavenServerManager : MavenServerManager {
     noRealMavenAllowed()
   }
 
-  override fun shutdownConnector(connector: MavenServerConnector?, wait: Boolean): Boolean {
+  override fun shutdownConnector(connector: MavenServerConnector, wait: Boolean): Boolean {
     noRealMavenAllowed()
   }
 
@@ -585,7 +585,7 @@ class NoRealMavenServerManager : MavenServerManager {
     noRealMavenAllowed()
   }
 
-  override fun createEmbedder(project: Project?, alwaysOnline: Boolean, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
+  override fun createEmbedder(project: Project, alwaysOnline: Boolean, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
     noRealMavenAllowed()
   }
 

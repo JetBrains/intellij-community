@@ -37,8 +37,8 @@ class MavenProjectReaderConnectorsTest : MavenProjectReaderTestCase() {
     val connector1 = withCompatibleConnector { mavenServerManager.getConnector(project, project.basePath + "/1") }
     val connector2 = mavenServerManager.getConnector(project, project.basePath + "/2")
     assertTrue(connector1 === connector2)
-    assertEquals(setOf(connector1), mavenServerManager.allConnectors.toSet())
+    assertEquals(setOf(connector1), mavenServerManager.getAllConnectors().toSet())
     mavenServerManager.shutdownConnector(connector1, false)
-    assertEquals(setOf<MavenServerConnector>(), mavenServerManager.allConnectors.toSet())
+    assertEquals(setOf<MavenServerConnector>(), mavenServerManager.getAllConnectors().toSet())
   }
 }

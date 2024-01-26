@@ -1,105 +1,81 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.server;
+package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.io.File
+import java.util.function.Predicate
 
-import java.io.File;
-import java.util.Collection;
-import java.util.function.Predicate;
+interface MavenServerManager : Disposable {
+  fun getAllConnectors(): Collection<MavenServerConnector>
 
-public interface MavenServerManager extends Disposable {
+  fun restartMavenConnectors(project: Project, wait: Boolean, condition: Predicate<MavenServerConnector>)
 
-  Collection<MavenServerConnector> getAllConnectors();
+  fun getConnector(project: Project, workingDirectory: String): MavenServerConnector
 
-  void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition);
-
-  MavenServerConnector getConnector(@NotNull Project project, @NotNull String workingDirectory);
-
-  boolean shutdownConnector(MavenServerConnector connector, boolean wait);
+  fun shutdownConnector(connector: MavenServerConnector, wait: Boolean): Boolean
 
   @TestOnly
-  void closeAllConnectorsAndWait();
+  fun closeAllConnectorsAndWait()
 
-  File getMavenEventListener();
+  fun getMavenEventListener(): File
 
-  /**
-   * @deprecated use {@link MavenServerManager#createEmbedder(Project, boolean, String)}
-   */
-  @Deprecated
-  @NotNull
-  default MavenEmbedderWrapper createEmbedder(Project project,
-                                              boolean alwaysOnline,
-                                              @Nullable String ignoredWorkingDirectory,
-                                              @NotNull String multiModuleProjectDirectory) {
-    return createEmbedder(project, alwaysOnline, multiModuleProjectDirectory);
+
+  @Deprecated("use {@link MavenServerManager#createEmbedder(Project, boolean, String)}",
+              ReplaceWith("createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)"))
+  fun createEmbedder(project: Project,
+                     alwaysOnline: Boolean,
+                     ignoredWorkingDirectory: String?,
+                     multiModuleProjectDirectory: String): MavenEmbedderWrapper {
+    return createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
   }
 
-  @NotNull
-  MavenEmbedderWrapper createEmbedder(Project project,
-                                      boolean alwaysOnline,
-                                      @NotNull String multiModuleProjectDirectory);
+  fun createEmbedder(project: Project,
+                     alwaysOnline: Boolean,
+                     multiModuleProjectDirectory: String): MavenEmbedderWrapper
 
-  /**
-   * @deprecated use createIndexer()
-   */
-  @Deprecated
-  MavenIndexerWrapper createIndexer(@NotNull Project project);
 
-  MavenIndexerWrapper createIndexer();
+  @Deprecated("use createIndexer()")
+  fun createIndexer(project: Project): MavenIndexerWrapper
 
-  static MavenServerManager getInstance() {
-    return ApplicationManager.getApplication().getService(MavenServerManager.class);
-  }
+  fun createIndexer(): MavenIndexerWrapper
 
-  @Nullable
-  static MavenServerManager getInstanceIfCreated() {
-    return ApplicationManager.getApplication().getServiceIfCreated(MavenServerManager.class);
-  }
 
-  /**
-   * @deprecated use {@link MavenGeneralSettings.mavenHome} and {@link MavenUtil.getMavenVersion}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  default String getCurrentMavenVersion() {
-    return null;
-  }
+  @Deprecated("use {@link MavenGeneralSettings.getMavenHome()} and {@link MavenUtil.getMavenVersion()}",
+                  ReplaceWith("MavenGeneralSettings.getMavenHome() or MavenUtil.getMavenVersion()"))
+  fun getCurrentMavenVersion(): String? = null
 
-  default boolean isUseMaven2() {
-    return false;
-  }
+  val isUseMaven2: Boolean
+    get() = false
 
   @ApiStatus.Internal
   interface MavenServerConnectorFactory {
-    @NotNull
-    MavenServerConnector create(@NotNull Project project,
-                                @NotNull Sdk jdk,
-                                @NotNull String vmOptions,
-                                @Nullable Integer debugPort,
-                                @NotNull MavenDistribution mavenDistribution,
-                                @NotNull String multimoduleDirectory);
+    fun create(project: Project,
+               jdk: Sdk,
+               vmOptions: String,
+               debugPort: Int?,
+               mavenDistribution: MavenDistribution,
+               multimoduleDirectory: String): MavenServerConnector
   }
 
   @ApiStatus.Internal
-  class MavenServerConnectorFactoryImpl implements MavenServerConnectorFactory {
-
-    @Override
-    public @NotNull MavenServerConnector create(@NotNull Project project,
-                                                @NotNull Sdk jdk,
-                                                @NotNull String vmOptions,
-                                                @Nullable Integer debugPort,
-                                                @NotNull MavenDistribution mavenDistribution,
-                                                @NotNull String multimoduleDirectory) {
-      return new MavenServerConnectorImpl(project, jdk, vmOptions, debugPort, mavenDistribution, multimoduleDirectory);
+  open class MavenServerConnectorFactoryImpl : MavenServerConnectorFactory {
+    override fun create(project: Project,
+                        jdk: Sdk,
+                        vmOptions: String,
+                        debugPort: Int?,
+                        mavenDistribution: MavenDistribution,
+                        multimoduleDirectory: String): MavenServerConnector {
+      return MavenServerConnectorImpl(project, jdk, vmOptions, debugPort, mavenDistribution, multimoduleDirectory)
     }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): MavenServerManager = ApplicationManager.getApplication().getService(MavenServerManager::class.java)
   }
 }

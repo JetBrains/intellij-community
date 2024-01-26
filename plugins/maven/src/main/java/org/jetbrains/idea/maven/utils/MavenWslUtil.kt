@@ -269,7 +269,7 @@ object MavenWslUtil : MavenUtil() {
           val projectWslDistr = tryGetWslDistribution(project)
           var needReset = false
 
-          MavenServerManager.getInstance().allConnectors.forEach {
+          MavenServerManager.getInstance().getAllConnectors().forEach {
             if (it.project == project) {
               val jdkWslDistr = tryGetWslDistributionForPath(it.jdk.homePath)
               if ((projectWslDistr != null && it.supportType != "WSL") || !sameDistributions(projectWslDistr, jdkWslDistr)) {

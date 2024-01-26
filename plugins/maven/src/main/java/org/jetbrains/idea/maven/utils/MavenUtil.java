@@ -1251,7 +1251,7 @@ public class MavenUtil {
    * @param wait      if true, then maven server(s) restarted synchronously
    * @param condition only connectors satisfied for this predicate will be restarted
    */
-  public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
+  public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<@NotNull MavenServerConnector> condition) {
     MavenServerManager.getInstance().restartMavenConnectors(project, wait, condition);
   }
 

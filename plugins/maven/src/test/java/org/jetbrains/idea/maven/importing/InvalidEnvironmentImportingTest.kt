@@ -42,7 +42,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
           .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK
         WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(project).projectSdk = null }
         createAndImportProject()
-        val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == project }
+        val connectors = MavenServerManager.getInstance().getAllConnectors().filter { it.project == project }
         assertNotEmpty(connectors)
         TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk)
       }

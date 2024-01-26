@@ -7,7 +7,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 
 class MavenKillallConnectors : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    MavenServerManager.getInstance().allConnectors.forEach {
+    MavenServerManager.getInstance().getAllConnectors().forEach {
       it.stop(false)
     }
   }

@@ -60,7 +60,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
       MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
     }
     assertModules("project1", "m1", "project2", "m2")
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
 
     assertUnorderedElementsAreEqual(
@@ -100,10 +100,10 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
     assertModules("project1", "m1", "project2", "m2")
 
-    assertEquals(2, MavenServerManager.getInstance().allConnectors.size)
+    assertEquals(2, MavenServerManager.getInstance().getAllConnectors().size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.map {
+      MavenServerManager.getInstance().getAllConnectors().map {
         FileUtil.getRelativePath(dir, File(it.multimoduleDirectories.first()))
       },
       listOf("project", "anotherProject")
@@ -142,10 +142,10 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
       MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
       assertModules("project1", "m1", "project2", "m2")
 
-      assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+      assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
 
       assertContainsElements(
-        MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
+        MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
           FileUtil.getRelativePath(dir, File(it))
         },
         listOf("project", "anotherProject")
@@ -176,10 +176,10 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     assertModules("project1", mn("project", "m1"))
 
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
+      MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
         FileUtil.getRelativePath(dir, File(it))
       }.map { it?.replace("\\", "/") },
       listOf("project/parent", "project/m1")
@@ -197,7 +197,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings")
     createProjectSubFile(".mvn/jvm.config", "-Dsomething=jvm")
     importProjectAsync()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=settings", mavenServerConnector.vmOptions)
@@ -212,7 +212,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     )
     createProjectSubFile(".mvn/jvm.config", "-Dsomething=something")
     importProjectAsync()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=something", mavenServerConnector.vmOptions)
@@ -228,7 +228,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(project)
     settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings")
     importProjectAsync()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=settings", mavenServerConnector.vmOptions)
@@ -243,7 +243,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     )
     createProjectSubFile(".mvn/jvm.config", "-Xms800m")
     importProjectAsync()
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
   }
 
   @Test

@@ -108,7 +108,7 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun setupMavenExtClassPath() {
-    val mavenEventListener = MavenServerManager.getInstance().mavenEventListener
+    val mavenEventListener = MavenServerManager.getInstance().getMavenEventListener()
     val uploadPath = Paths.get(toSystemDependentName(mavenEventListener.path))
     val uploadRoot = createUploadRoot(MavenRuntimeTypeConstants.MAVEN_EXT_CLASS_PATH_VOLUME, uploadPath.parent)
     request.uploadVolumes += uploadRoot

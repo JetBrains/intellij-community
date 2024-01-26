@@ -540,7 +540,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     """.trimIndent()
 
   private fun checkAllMavenConnectorsDisposed() {
-    val connectors = MavenServerManager.getInstance().allConnectors
+    val connectors = MavenServerManager.getInstance().getAllConnectors()
     if (!connectors.isEmpty()) {
       MavenLog.LOG.warn("Connectors not empty, printing thread dump")
       MavenLog.LOG.warn("===============================================")

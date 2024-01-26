@@ -74,7 +74,7 @@ class ReadStatisticsCollector {
     map.clear()
   }
 
-  private fun getDebugStatusFromMaven(clean: Boolean): List<MavenServerStatus> = MavenServerManager.getInstance().allConnectors
+  private fun getDebugStatusFromMaven(clean: Boolean): List<MavenServerStatus> = MavenServerManager.getInstance().getAllConnectors()
     .asSequence()
     .filter { !it.isDummy() }
     .mapSafe { it.getDebugStatus(clean) }
