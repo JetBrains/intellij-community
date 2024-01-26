@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
@@ -16,32 +14,33 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val excludedLibJars = java.util.Set.of("testFramework.jar", "junit.jar")
+private val excludedLibJars = setOf("testFramework.jar", "junit.jar")
 
-private fun getClassLoadingLog(): InputStream {
+private fun processClassReport(consumer: (String, String) -> Unit) {
   val osName = System.getProperty("os.name")
   val classifier = when {
     osName.startsWith("windows", ignoreCase = true) -> "windows"
     osName.startsWith("mac", ignoreCase = true) -> "mac"
     else -> "linux"
   }
-  return PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!
+  PackageIndexBuilder::class.java.classLoader.getResourceAsStream("${classifier}/class-report.txt")!!.bufferedReader().use {
+    it.forEachLine { line ->
+      val (classFilePath, libPath) = line.split(':', limit = 2)
+      consumer(classFilePath, libPath)
+    }
+  }
 }
 
 private val sourceToNames: Map<String, MutableList<String>> by lazy {
   val sourceToNames = LinkedHashMap<String, MutableList<String>>()
-  getClassLoadingLog().bufferedReader().forEachLine {
-    val data = it.split(':', limit = 2)
-    val sourcePath = data.get(1)
-    // the main jar is scrambled - doesn't make sense to reorder it
-    sourceToNames.computeIfAbsent(sourcePath) { mutableListOf() }.add(data.get(0))
+  processClassReport { classFilePath, jarPath ->
+    sourceToNames.computeIfAbsent(jarPath) { mutableListOf() }.add(classFilePath)
   }
   sourceToNames
 }
 
 fun reorderJar(relativePath: String, file: Path) {
-  val orderedNames = sourceToNames.get(relativePath) ?: return
+  val orderedNames = sourceToNames[relativePath] ?: return
   spanBuilder("reorder jar")
     .setAttribute("relativePath", relativePath)
     .setAttribute("file", file.toString())
@@ -64,9 +63,8 @@ fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
 private fun computeAppClassPath(homeDir: Path, libDir: Path): LinkedHashSet<Path> {
   val existing = HashSet<Path>()
   addJarsFromDir(libDir) { paths ->
-    paths.filterTo(existing) { !excludedLibJars.contains(it.fileName.toString()) }
+    paths.filterTo(existing) { it.fileName.toString() !in excludedLibJars }
   }
-
   return computeAppClassPath(libDir, existing, homeDir)
 }
 
@@ -81,18 +79,10 @@ fun computeAppClassPath(libDir: Path, existing: Set<Path>, homeDir: Path): Linke
 }
 
 private fun computeCoreSources(): Set<String> {
-  val osName = System.getProperty("os.name")
-  val classifier = when {
-    osName.startsWith("windows", ignoreCase = true) -> "windows"
-    osName.startsWith("mac", ignoreCase = true) -> "mac"
-    else -> "linux"
-  }
-
   val result = LinkedHashSet<String>()
-  PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!.bufferedReader().forEachLine {
-    val path = it.split(':', limit = 2).get(1)
-    if (path.startsWith("lib/")) {
-      result.add(path)
+  processClassReport { _, jarPath ->
+    if (jarPath.startsWith("lib/")) {
+      result.add(jarPath)
     }
   }
   return result
@@ -109,8 +99,8 @@ fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, 
   val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
   classLoadingLog.bufferedReader().forEachLine {
     val data = it.split(':', limit = 2)
-    val sourcePath = data.get(1)
-    sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data.get(0))
+    val sourcePath = data[1]
+    sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data[0])
   }
   return sourceToNames
 }
