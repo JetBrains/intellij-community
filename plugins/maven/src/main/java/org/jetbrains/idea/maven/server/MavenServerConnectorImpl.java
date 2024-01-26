@@ -45,13 +45,13 @@ public class MavenServerConnectorImpl extends MavenServerConnectorBase {
 
   @Override
   public boolean isCompatibleWith(Sdk jdk, String vmOptions, MavenDistribution distribution) {
-    if (!myDistribution.compatibleWith(distribution)) {
+    if (!getMavenDistribution().compatibleWith(distribution)) {
       return false;
     }
-    if (!StringUtil.equals(myJdk.getName(), jdk.getName())) {
+    if (!StringUtil.equals(getJdk().getName(), jdk.getName())) {
       return false;
     }
-    return StringUtil.equals(vmOptions, myVmOptions);
+    return StringUtil.equals(getVmOptions(), vmOptions);
   }
 
   @NotNull
@@ -104,8 +104,8 @@ public class MavenServerConnectorImpl extends MavenServerConnectorBase {
           //noinspection UseOfSystemOutOrSystemErr
           System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
         }
-        MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(myProject);
-        mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+        MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(getProject());
+        mySupport = factory.create(getJdk(), getVmOptions(), getMavenDistribution(), getProject(), myDebugPort);
         mySupport.onTerminate(e -> {
           MavenLog.LOG.debug("[connector] terminate " + MavenServerConnectorImpl.this);
           MavenServerManager mavenServerManager = ApplicationManager.getApplication().getServiceIfCreated(MavenServerManager.class);

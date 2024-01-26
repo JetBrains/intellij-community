@@ -1,161 +1,149 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.server;
+package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.idea.maven.utils.MavenLog;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport
+import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
+import org.jetbrains.idea.maven.utils.MavenLog
+import java.rmi.RemoteException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
-import java.rmi.RemoteException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+internal abstract class MavenServerConnectorBase(project: Project?,
+                                                 jdk: Sdk,
+                                                 vmOptions: String,
+                                                 mavenDistribution: MavenDistribution,
+                                                 multimoduleDirectory: String,
+                                                 @JvmField protected val myDebugPort: Int?) : AbstractMavenServerConnector(project, jdk,
+                                                                                                                           vmOptions,
+                                                                                                                           mavenDistribution,
+                                                                                                                           multimoduleDirectory) {
+  @JvmField
+  protected var mySupport: MavenRemoteProcessSupport? = null
 
-abstract class MavenServerConnectorBase extends AbstractMavenServerConnector {
-  protected final Integer myDebugPort;
-  protected MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
+  protected val myConnectStarted: AtomicBoolean = AtomicBoolean(false)
+  protected val myTerminated: AtomicBoolean = AtomicBoolean(false)
 
-  protected final AtomicBoolean myConnectStarted = new AtomicBoolean(false);
-  protected final AtomicBoolean myTerminated = new AtomicBoolean(false);
-  protected boolean throwExceptionIfProjectDisposed = true;
+  @JvmField
+  protected var throwExceptionIfProjectDisposed: Boolean = true
 
-  protected final AsyncPromise<@NotNull MavenServer> myServerPromise = new AsyncPromise<>() {
-    @Override
-    protected boolean shouldLogErrors() {
-      return false;
+  @JvmField
+  protected val myServerPromise: AsyncPromise<MavenServer?> = object : AsyncPromise<MavenServer?>() {
+    override fun shouldLogErrors(): Boolean {
+      return false
     }
-  };
-
-  MavenServerConnectorBase(@Nullable Project project,
-                           @NotNull Sdk jdk,
-                           @NotNull String vmOptions,
-                           @NotNull MavenDistribution mavenDistribution,
-                           @NotNull String multimoduleDirectory, @Nullable Integer debugPort) {
-    super(project, jdk, vmOptions, mavenDistribution, multimoduleDirectory);
-    myDebugPort = debugPort;
   }
 
-  @Override
-  public boolean isNew() {
-    return !myConnectStarted.get();
+  override fun isNew(): Boolean {
+    return !myConnectStarted.get()
   }
 
-  @NotNull
-  protected abstract Runnable newStartServerTask();
+  protected abstract fun newStartServerTask(): Runnable
 
-  @Override
-  public void connect() {
+  override fun connect() {
     if (!myConnectStarted.compareAndSet(false, true)) {
-      return;
+      return
     }
-    MavenLog.LOG.debug("connecting new maven server: " + this);
-    ApplicationManager.getApplication().executeOnPooledThread(newStartServerTask());
+    MavenLog.LOG.debug("connecting new maven server: $this")
+    ApplicationManager.getApplication().executeOnPooledThread(newStartServerTask())
   }
 
-  @Nullable
-  protected MavenServer waitForServer() {
-    while (!myServerPromise.isDone()) {
+  protected fun waitForServer(): MavenServer? {
+    while (!myServerPromise.isDone) {
       try {
-        myServerPromise.get(100, TimeUnit.MILLISECONDS);
+        myServerPromise[100, TimeUnit.MILLISECONDS]
       }
-      catch (Exception ignore) {
+      catch (ignore: Exception) {
       }
-      if (throwExceptionIfProjectDisposed && myProject.isDisposed()) {
-        throw new CannotStartServerException("Project already disposed");
+      if (throwExceptionIfProjectDisposed && project!!.isDisposed) {
+        throw CannotStartServerException("Project already disposed")
       }
-      ProgressManager.checkCanceled();
+      ProgressManager.checkCanceled()
     }
-    return myServerPromise.get();
+    return myServerPromise.get()
   }
 
-  @NotNull
-  @Override
-  protected MavenServer getServer() {
-    try {
-      MavenServer server = waitForServer();
-      if (server == null) {
-        throw new ProcessCanceledException();
-      }
-      return server;
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable e) {
+  override val server: MavenServer
+    get() {
       try {
-        MavenServerManager.getInstance().shutdownConnector(this, false);
+        val server = waitForServer()
+        if (server == null) {
+          throw ProcessCanceledException()
+        }
+        return server
       }
-      catch (Throwable ignored) {
+      catch (e: ProcessCanceledException) {
+        throw e
       }
-      throw e instanceof CannotStartServerException
-            ? (CannotStartServerException)e
-            : new CannotStartServerException(e);
+      catch (e: Throwable) {
+        try {
+          getInstance().shutdownConnector(this, false)
+        }
+        catch (ignored: Throwable) {
+        }
+        throw if (e is CannotStartServerException
+        ) e
+        else CannotStartServerException(e)
+      }
     }
-  }
 
   @ApiStatus.Internal
-  @Override
-  public void stop(boolean wait) {
-    MavenLog.LOG.debug("[connector] shutdown " + this + " " + (mySupport == null));
-    cleanUpFutures();
-    MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
-    if (support != null) {
-      support.stopAll(wait);
-    }
-    myTerminated.set(true);
+  override fun stop(wait: Boolean) {
+    MavenLog.LOG.debug("[connector] shutdown " + this + " " + (mySupport == null))
+    cleanUpFutures()
+    val support = mySupport
+    support?.stopAll(wait)
+    myTerminated.set(true)
   }
 
-  @Override
-  protected <R, E extends Exception> R perform(Retriable<R, E> r) throws E {
-    RemoteException last = null;
-    for (int i = 0; i < 2; i++) {
+  override fun <R> perform(r: () -> R): R {
+    var last: RemoteException? = null
+    for (i in 0..1) {
       try {
-        return r.execute();
+        return r()
       }
-      catch (RemoteException e) {
-        last = e;
+      catch (e: RemoteException) {
+        last = e
       }
     }
-    cleanUpFutures();
-    MavenServerManager.getInstance().shutdownConnector(this, false);
-    MavenLog.LOG.debug("[connector] perform error " + this);
-    throw new RuntimeException("Cannot reconnect.", last);
+    cleanUpFutures()
+    getInstance().shutdownConnector(this, false)
+    MavenLog.LOG.debug("[connector] perform error $this")
+    throw RuntimeException("Cannot reconnect.", last)
   }
 
-  protected abstract void cleanUpFutures();
+  protected abstract fun cleanUpFutures()
 
-  @Override
-  public State getState() {
-    return switch (myServerPromise.getState()) {
-      case SUCCEEDED -> myTerminated.get() ? State.STOPPED : State.RUNNING;
-      case REJECTED -> State.FAILED;
-      default -> State.STARTING;
-    };
+  override val state: MavenServerConnector.State
+    get() = when (myServerPromise.state) {
+      Promise.State.SUCCEEDED -> if (myTerminated.get()) MavenServerConnector.State.STOPPED else MavenServerConnector.State.RUNNING
+      Promise.State.REJECTED -> MavenServerConnector.State.FAILED
+      else -> MavenServerConnector.State.STARTING
+    }
+
+  override fun checkConnected(): Boolean {
+    val support = mySupport
+    return support != null && !support.activeConfigurations.isEmpty()
   }
 
-  @Override
-  public boolean checkConnected() {
-    MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
-    return support != null && !support.getActiveConfigurations().isEmpty();
-  }
-
-  @Override
-  public boolean ping() {
+  override fun ping(): Boolean {
     try {
-      boolean pinged = getServer().ping(MavenRemoteObjectWrapper.ourToken);
-      if (MavenLog.LOG.isTraceEnabled()) {
-        MavenLog.LOG.trace("maven server ping: " + pinged);
+      val pinged = server.ping(MavenRemoteObjectWrapper.ourToken)
+      if (MavenLog.LOG.isTraceEnabled) {
+        MavenLog.LOG.trace("maven server ping: $pinged")
       }
-      return pinged;
+      return pinged
     }
-    catch (RemoteException e) {
-      MavenLog.LOG.warn("maven server ping error", e);
-      return false;
+    catch (e: RemoteException) {
+      MavenLog.LOG.warn("maven server ping error", e)
+      return false
     }
   }
 }

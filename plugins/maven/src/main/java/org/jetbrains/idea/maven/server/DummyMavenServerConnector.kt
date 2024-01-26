@@ -33,9 +33,7 @@ class DummyMavenServerConnector(override val project: Project,
   override fun connect() {
   }
 
-  override fun getServer(): MavenServer {
-    return DummyMavenServer(project)
-  }
+  override val server: MavenServer get() = DummyMavenServer(project)
 
   override fun ping(): Boolean {
     return true
@@ -46,9 +44,9 @@ class DummyMavenServerConnector(override val project: Project,
 
   override fun checkConnected() = true
 
-  override fun <R, E : Exception?> perform(r: Retriable<R, E>): R {
+  override fun <R> perform(r: () -> R): R {
     return try {
-      r.execute()
+      r()
     }
     catch (e: RemoteException) {
       throw RuntimeException(e)

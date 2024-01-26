@@ -56,7 +56,7 @@ public class MavenIndexingConnectorImpl extends MavenServerConnectorBase {
           System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
         }
         MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forIndexer();
-        mySupport = factory.createIndexerSupport(myJdk, myVmOptions, myDistribution, myDebugPort);
+        mySupport = factory.createIndexerSupport(getJdk(), getVmOptions(), getMavenDistribution(), myDebugPort);
         mySupport.onTerminate(e -> {
           MavenLog.LOG.debug("[connector] terminate " + MavenIndexingConnectorImpl.this);
           MavenServerManager.getInstance().shutdownConnector(MavenIndexingConnectorImpl.this, false);
