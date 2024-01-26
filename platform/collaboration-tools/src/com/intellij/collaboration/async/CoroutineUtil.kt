@@ -68,7 +68,7 @@ fun CoroutineScope.nestedDisposable(): Disposable {
 fun CoroutineScope.cancelledWith(disposable: Disposable): CoroutineScope = apply {
   val job = coroutineContext[Job]
   requireNotNull(job) { "Coroutine scope without a parent job $this" }
-  job.cancelOnDispose(disposable)
+  job.cancelOnDispose(disposable, false)
 }
 
 fun CoroutineScope.launchNow(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
