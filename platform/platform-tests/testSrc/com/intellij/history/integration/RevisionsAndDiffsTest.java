@@ -404,8 +404,6 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     getVcs().endChangeSet("renamed and deleted file");
     VirtualFile restoredFile = createFile(newFileName);
 
-    List<Revision> revisions = getRevisionsFor(restoredFile);
-    System.err.println(revisions);
-    assertEquals(4, revisions.size());
+    assertEquals(4, getRevisionsFor(restoredFile).size());
   }
 }
