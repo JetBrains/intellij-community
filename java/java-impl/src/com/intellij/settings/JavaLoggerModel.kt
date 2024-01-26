@@ -11,7 +11,7 @@ class JavaLoggerModel(loggerList: List<String>,
   private var currentLogger = initialLogger ?: throw IllegalStateException()
 
   override fun setSelectedItem(anItem: Any) {
-    if (anItem !is String) return
+    if (anItem !is String || anItem !in loggers) return
     if (currentLogger != anItem) {
       currentLogger = anItem
       fireContentsChanged(this, -1, -1)

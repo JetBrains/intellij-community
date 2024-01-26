@@ -2,17 +2,28 @@
 package com.intellij.codeInsight.generation.ui
 
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.components.service
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.settings.JavaLoggerModel
+import com.intellij.settings.JavaSettingsStorage
+import com.intellij.settings.JvmLoggingConfigurable
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
-class ChooseLoggerDialogWrapper(private val availableLoggers: List<String>,
-                                selectedLogger: String,
-                                project: Project) : DialogWrapper(project, true) {
+class ChooseLoggerDialogWrapper(
+  private val project: Project,
+  private val availableLoggers: List<String>,
+  selectedLogger: String,
+) : DialogWrapper(project, true) {
   var selectedLogger: String = selectedLogger
     private set
+
+  private lateinit var comboBox: Cell<ComboBox<String>>
+  private val settings = project.service<JavaSettingsStorage>().state
 
   init {
     title = JavaBundle.message("dialog.title.choose.logger")
@@ -23,8 +34,15 @@ class ChooseLoggerDialogWrapper(private val availableLoggers: List<String>,
     return panel {
       row {
         label(JavaBundle.message("label.configurable.logger.type"))
-        comboBox(JavaLoggerModel(availableLoggers, selectedLogger)).onChanged {
+        comboBox = comboBox(JavaLoggerModel(availableLoggers, selectedLogger)).onChanged {
           selectedLogger = it.item
+        }
+      }
+      row {
+        text(JavaBundle.message("link.configurable.logger.generator.display.name")) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, JvmLoggingConfigurable::class.java)
+          val savedLoggerName = settings.loggerName
+          comboBox.component.item = savedLoggerName
         }
       }
     }

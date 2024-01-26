@@ -72,6 +72,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
         val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.loggerName)
 
         val chooseLoggerDialog = ChooseLoggerDialogWrapper(
+          project,
           availableLoggers.map { it.toString() },
           (if (preferredLogger in availableLoggers) {
             preferredLogger
@@ -79,7 +80,6 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
           else {
             availableLoggers.first()
           }).toString(),
-          project,
         )
 
         if (!chooseLoggerDialog.showAndGet()) return null
