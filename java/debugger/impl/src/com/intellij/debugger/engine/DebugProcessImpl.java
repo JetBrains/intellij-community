@@ -876,13 +876,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                      @NotNull SteppingBreakpoint breakpoint,
                                                      RequestHint hint,
                                                      boolean resetThreadFilter) {
+    prepareAndSetSteppingBreakpoint(context, breakpoint, hint, resetThreadFilter, -1);
+  }
+
+  public static void prepareAndSetSteppingBreakpoint(SuspendContextImpl context,
+                                                     @NotNull SteppingBreakpoint breakpoint,
+                                                     RequestHint hint,
+                                                     boolean resetThreadFilter,
+                                                     int explicitSuspendPolicy) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     if (resetThreadFilter) {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
       breakpointManager.removeThreadFilter(debugProcess); // clear the filter on resume
     }
+    int suspendPolicy;
+    if (explicitSuspendPolicy != -1) {
+      suspendPolicy = explicitSuspendPolicy;
+    }
+    else {
+      suspendPolicy = context.getSuspendPolicy();
+    }
     breakpoint.setSuspendPolicy(
-      context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
+      suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
     breakpoint.createRequest(debugProcess);
     breakpoint.setRequestHint(hint);
     debugProcess.setSteppingBreakpoint(breakpoint);
@@ -1852,8 +1867,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
-      applyThreadFilter(getThreadFilterFromContext(context));
-      prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false);
+      LightOrRealThreadInfo threadFilterFromContext = getThreadFilterFromContext(context);
+      applyThreadFilter(threadFilterFromContext);
+      int explicitSuspendPolicy;
+      if (threadFilterFromContext != null && threadFilterFromContext.getRealThread() == null) {
+        explicitSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
+      }
+      else {
+        explicitSuspendPolicy = -1;
+      }
+      prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false, explicitSuspendPolicy);
       final DebugProcessImpl debugProcess = context.getDebugProcess();
 
       if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
