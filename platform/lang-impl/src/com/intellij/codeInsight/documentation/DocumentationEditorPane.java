@@ -39,7 +39,7 @@ import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDo
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 
 @Internal
-public abstract class DocumentationEditorPane extends JEditorPane implements Disposable  {
+public abstract class DocumentationEditorPane extends JEditorPane implements Disposable {
   private static final Color BACKGROUND_COLOR = JBColor.lazy(() -> {
     ColorKey colorKey = DocumentationComponent.COLOR_KEY;
     EditorColorsScheme scheme = EditorColorsUtil.getColorSchemeForBackground(null);
@@ -59,8 +59,6 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   private final @NotNull DocumentationImageResolver myImageResolver;
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
   private StyleSheet myCurrentDefaultStyleSheet = null;
-  private final StyleSheet myPreTagWrapStyle;
-  private boolean myPreTagWrapEnabled;
 
   protected DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
@@ -86,9 +84,6 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
     updateDocumentationPaneDefaultCssRules(editorKit);
 
-    myPreTagWrapStyle = new StyleSheet();
-    myPreTagWrapStyle.addRule("pre  {white-space: pre-wrap}");
-
     addPropertyChangeListener(evt -> {
       var propertyName = evt.getPropertyName();
       if ("background".equals(propertyName) || "UI".equals(propertyName)) {
@@ -97,7 +92,6 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     });
 
     setEditorKit(editorKit);
-    setPreTagWrapEnable(true);
     setBorder(JBUI.Borders.empty());
   }
 
@@ -156,7 +150,8 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     }
   }
 
-  @NotNull Dimension getPackedSize(int minWidth, int maxWidth) {
+  @NotNull
+  Dimension getPackedSize(int minWidth, int maxWidth) {
     int width = Math.max(Math.max(definitionPreferredWidth(), getMinimumSize().width), minWidth);
     int height = getPreferredHeightByWidth(Math.min(width, maxWidth));
     return new Dimension(width, height);
@@ -168,18 +163,6 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     return getPreferredSize().height;
   }
 
-  private void setPreTagWrapEnable(boolean value) {
-    if (value == myPreTagWrapEnabled) return;
-    if (value) {
-      ((HTMLEditorKit)getEditorKit()).getStyleSheet().addStyleSheet(myPreTagWrapStyle);
-    }
-    else {
-      ((HTMLEditorKit)getEditorKit()).getStyleSheet().removeStyleSheet(myPreTagWrapStyle);
-    }
-    myPreTagWrapEnabled = value;
-    updateUI();
-  }
-
   int getPreferredWidth() {
     int definitionPreferredWidth = definitionPreferredWidth();
     return definitionPreferredWidth < 0 ? getPreferredSize().width
@@ -187,18 +170,13 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   }
 
   private int definitionPreferredWidth() {
-    setPreTagWrapEnable(false);
-    try {
-      int preferredDefinitionWidth = getPreferredSectionWidth("definition");
-      int preferredLocationWidth = Math.max(getPreferredSectionWidth("bottom-no-content"), getPreferredSectionWidth("bottom"));
-      if (preferredDefinitionWidth < 0) {
-        return -1;
-      }
-      int preferredContentWidth = getPreferredContentWidth(getDocument().getLength());
-      return Math.max(preferredContentWidth, Math.max(preferredDefinitionWidth, preferredLocationWidth));
-    } finally {
-      setPreTagWrapEnable(true);
+    int preferredDefinitionWidth = getPreferredSectionWidth("definition");
+    int preferredLocationWidth = Math.max(getPreferredSectionWidth("bottom-no-content"), getPreferredSectionWidth("bottom"));
+    if (preferredDefinitionWidth < 0) {
+      return -1;
     }
+    int preferredContentWidth = getPreferredContentWidth(getDocument().getLength());
+    return Math.max(preferredContentWidth, Math.max(preferredDefinitionWidth, preferredLocationWidth));
   }
 
   private int getPreferredSectionWidth(String sectionClassName) {
@@ -295,7 +273,8 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     }
   }
 
-  @Nullable String getLinkHref(int n) {
+  @Nullable
+  String getLinkHref(int n) {
     HTMLDocument.Iterator link = getLink(n);
     return link != null
            ? (String)link.getAttributes().getAttribute(HTML.Attribute.HREF)
