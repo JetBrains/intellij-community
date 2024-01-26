@@ -78,7 +78,10 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
 
   private fun processPromptStateUpdatedEvent(event: List<String>) {
     val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(1))
-    val state = TerminalPromptState(currentDirectory)
+    val gitBranch = Param.GIT_BRANCH.getDecodedValueOrNull(event.getOrNull(2))?.takeIf { it.isNotEmpty() }
+    val virtualEnv = Param.VIRTUAL_ENV.getDecodedValueOrNull(event.getOrNull(3))?.takeIf { it.isNotEmpty() }
+    val condaEnv = Param.CONDA_ENV.getDecodedValueOrNull(event.getOrNull(4))?.takeIf { it.isNotEmpty() }
+    val state = TerminalPromptState(currentDirectory, gitBranch, virtualEnv, condaEnv)
     firePromptStateUpdated(state)
   }
 
@@ -190,11 +193,14 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
   private enum class Param {
 
     EXIT_CODE,
-    CURRENT_DIRECTORY,
     COMMAND,
     HISTORY_STRING,
     REQUEST_ID,
-    RESULT;
+    RESULT,
+    CURRENT_DIRECTORY,
+    GIT_BRANCH,
+    VIRTUAL_ENV,
+    CONDA_ENV;
 
     private val paramNameWithSeparator: String = "${paramName()}="
 
