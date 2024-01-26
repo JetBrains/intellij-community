@@ -187,7 +187,7 @@ public interface ActionToolbar {
    * or {@code null} if it is not placed on any toolbar
    */
   static @Nullable ActionToolbar findToolbarBy(@Nullable Component component) {
-    return ComponentUtil.getParentOfType(ActionToolbar.class, component);
+    return ComponentUtil.getStrictParentOfType(ActionToolbar.class, component);
   }
 
   /**
