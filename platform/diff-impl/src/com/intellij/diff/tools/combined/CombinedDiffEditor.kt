@@ -10,27 +10,27 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
 
-class CombinedDiffEditor(file: CombinedDiffVirtualFile, val factory: CombinedDiffComponentProcessor) :
-  DiffEditorBase(file, factory.getMainComponent(), factory.ourDisposable), FileEditorWithTextEditors {
+class CombinedDiffEditor(file: CombinedDiffVirtualFile, val processor: CombinedDiffComponentProcessor) :
+  DiffEditorBase(file, processor.getMainComponent(), processor.ourDisposable), FileEditorWithTextEditors {
 
   override fun dispose() {
-    Disposer.dispose(factory.ourDisposable)
+    Disposer.dispose(processor.ourDisposable)
     super.dispose()
   }
 
   override fun getState(level: FileEditorStateLevel): FileEditorState {
     if (!Registry.`is`(DIFF_IN_NAVIGATION_HISTORY_KEY)) return FileEditorState.INSTANCE
 
-    return factory.getState(level)
+    return processor.getState(level)
   }
 
   override fun setState(state: FileEditorState) {
-    factory.setState(state)
+    processor.setState(state)
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? = factory.getPreferredFocusedComponent()
+  override fun getPreferredFocusedComponent(): JComponent? = processor.getPreferredFocusedComponent()
 
   override fun getEmbeddedEditors(): List<Editor> {
-    return factory.context.getUserData(COMBINED_DIFF_VIEWER_KEY)?.editors.orEmpty()
+    return processor.context.getUserData(COMBINED_DIFF_VIEWER_KEY)?.editors.orEmpty()
   }
 }

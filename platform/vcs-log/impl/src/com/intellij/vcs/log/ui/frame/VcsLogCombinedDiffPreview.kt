@@ -30,7 +30,7 @@ class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser)
   : CombinedDiffPreviewModel(browser.viewer.project, DiffPlaces.VCS_LOG_VIEW, browser) {
 
   init {
-    model.context.putUserData(DISABLE_LOADING_BLOCKS, true)
+    processor.context.putUserData(DISABLE_LOADING_BLOCKS, true)
   }
 
   override fun iterateSelectedChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {

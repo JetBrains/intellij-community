@@ -28,9 +28,9 @@ internal class DiffEditorProvider : DefaultPlatformFileEditorProvider, Structure
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     if (file is CombinedDiffVirtualFile) {
-      val factory = file.createModel()
-      val editor = CombinedDiffEditor(file, factory)
-      DiffRequestProcessorEditorCustomizer.customize(file, editor, factory.context)
+      val processor = file.createProcessor()
+      val editor = CombinedDiffEditor(file, processor)
+      DiffRequestProcessorEditorCustomizer.customize(file, editor, processor.context)
       return editor
     }
     else {

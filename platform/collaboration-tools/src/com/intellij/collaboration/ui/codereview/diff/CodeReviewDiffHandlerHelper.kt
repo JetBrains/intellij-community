@@ -57,30 +57,30 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
   fun <VM : ComputedDiffViewModel> createCombinedDiffModel(
     reviewDiffVm: Flow<VM?>, createContext: (VM) -> List<KeyValuePair<*>>
   ): CombinedDiffComponentProcessor {
-    val model = CombinedDiffManager.getInstance(project).createProcessor()
+    val processor = CombinedDiffManager.getInstance(project).createProcessor()
     cs.launchNow(CoroutineName("Code Review Combined Diff UI")) {
       reviewDiffVm.collectLatest { computedDiffVm ->
         if (computedDiffVm != null) {
           val context = createContext(computedDiffVm)
           try {
-            context.forEach { model.context.putData(it) }
-            handleChanges(computedDiffVm, model)
+            context.forEach { processor.context.putData(it) }
+            handleChanges(computedDiffVm, processor)
             awaitCancellation()
           }
           finally {
-            context.forEach(model.context::clearData)
-            model.cleanBlocks()
+            context.forEach(processor.context::clearData)
+            processor.cleanBlocks()
           }
         }
       }
-    }.cancelOnDispose(model.ourDisposable)
-    return model
+    }.cancelOnDispose(processor.ourDisposable)
+    return processor
   }
 
-  private suspend fun handleChanges(computedDiffVm: ComputedDiffViewModel, model: CombinedDiffComponentProcessor) {
+  private suspend fun handleChanges(computedDiffVm: ComputedDiffViewModel, processor: CombinedDiffComponentProcessor) {
     fun setBlocks(blocks: List<CombinedBlockProducer>?) {
-      model.cleanBlocks()
-      model.setBlocks(blocks.orEmpty())
+      processor.cleanBlocks()
+      processor.setBlocks(blocks.orEmpty())
     }
 
     computedDiffVm.diffVm.collectLatest { result ->
@@ -100,7 +100,7 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
         return@collectLatest
       }
 
-      model.installVm(diffVm)
+      processor.installVm(diffVm)
     }
   }
 

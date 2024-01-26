@@ -52,12 +52,12 @@ internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManage
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createModel(): CombinedDiffComponentProcessor {
-    val model = CombinedDiffManager.getInstance(project).createProcessor()
+  override fun createProcessor(): CombinedDiffComponentProcessor {
+    val processor = CombinedDiffManager.getInstance(project).createProcessor()
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel
-    diffModel.addAndInvokeRequestChainListener(model.ourDisposable) {
-      model.cleanBlocks()
+    diffModel.addAndInvokeRequestChainListener(processor.ourDisposable) {
+      processor.cleanBlocks()
       diffModel.requestChain?.let<DiffRequestChain, Unit> {
         val requests = mutableListOf<CombinedBlockProducer>()
         for (request in it.requests) {
@@ -66,10 +66,10 @@ internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManage
           val blockId = CombinedPathBlockId((change.afterRevision?.file ?: change.beforeRevision?.file)!!, change.fileStatus, null)
           requests += CombinedBlockProducer(blockId, request)
         }
-        model.setBlocks(requests)
+        processor.setBlocks(requests)
       }
     }
-    return model
+    return processor
   }
 
 }

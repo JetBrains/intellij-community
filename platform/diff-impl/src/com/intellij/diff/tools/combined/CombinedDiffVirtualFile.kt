@@ -6,12 +6,12 @@ import com.intellij.openapi.project.Project
 
 abstract class CombinedDiffVirtualFile(name: String, private val path: String = name) : DiffVirtualFileBase(name) {
   override fun getPath(): String = path
-  abstract fun createModel(): CombinedDiffComponentProcessor
+  abstract fun createProcessor(): CombinedDiffComponentProcessor
 }
 
 class CombinedDiffVirtualFileImpl(val project: Project, val producers: List<CombinedBlockProducer>, name: String, path: String = name)
   : CombinedDiffVirtualFile(name, path) {
-  override fun createModel(): CombinedDiffComponentProcessor {
+  override fun createProcessor(): CombinedDiffComponentProcessor {
     val processor = CombinedDiffManager.getInstance(project).createProcessor()
     processor.setBlocks(producers)
     return processor

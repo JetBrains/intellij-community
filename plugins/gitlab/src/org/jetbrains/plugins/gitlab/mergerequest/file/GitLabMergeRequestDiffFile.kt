@@ -66,8 +66,8 @@ internal data class GitLabMergeRequestCombinedDiffFile(
 
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
-  override fun createModel(): CombinedDiffComponentProcessor {
-    return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffModel(connectionId, mergeRequestIid)
+  override fun createProcessor(): CombinedDiffComponentProcessor {
+    return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
   }
 }
 
@@ -91,7 +91,7 @@ private class GitLabMergeRequestDiffService(private val project: Project, parent
     return base.createDiffRequestProcessor(vmFlow, ::createDiffContext)
   }
 
-  fun createGitLabCombinedDiffModel(connectionId: String, mergeRequestIid: String): CombinedDiffComponentProcessor {
+  fun createGitLabCombinedDiffProcessor(connectionId: String, mergeRequestIid: String): CombinedDiffComponentProcessor {
     val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
     return base.createCombinedDiffModel(vmFlow, ::createDiffContext)
   }

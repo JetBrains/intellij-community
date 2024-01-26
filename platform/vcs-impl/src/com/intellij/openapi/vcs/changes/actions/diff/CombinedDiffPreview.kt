@@ -34,7 +34,7 @@ abstract class CombinedDiffPreview(project: Project,
 
   override val previewFile: VirtualFile by lazy {
     object : CombinedDiffPreviewVirtualFile() {
-      override fun createModel(): CombinedDiffComponentProcessor = getOrCreatePreviewModel().model
+      override fun createProcessor(): CombinedDiffComponentProcessor = getOrCreatePreviewModel().processor
     }
   }
 
@@ -46,8 +46,8 @@ abstract class CombinedDiffPreview(project: Project,
   private fun getOrCreatePreviewModel(): CombinedDiffPreviewModel {
     previewModel?.let { return it }
     val newPreviewModel = createPreviewModel()
-    newPreviewModel.model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
-    Disposer.register(newPreviewModel.model.ourDisposable) { previewModel = null }
+    newPreviewModel.processor.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
+    Disposer.register(newPreviewModel.processor.ourDisposable) { previewModel = null }
     previewModel = newPreviewModel
     return newPreviewModel
   }
@@ -98,15 +98,15 @@ abstract class CombinedDiffPreviewModel(val project: Project,
                                         parentDisposable: Disposable
 ) : DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
 
-  val model: CombinedDiffComponentProcessor
+  val processor: CombinedDiffComponentProcessor
 
   init {
-    model = CombinedDiffManager.getInstance(project).createProcessor(diffPlace)
-    Disposer.register(parentDisposable, model.ourDisposable)
-    model.context.putUserData(COMBINED_DIFF_PREVIEW_MODEL, this)
+    processor = CombinedDiffManager.getInstance(project).createProcessor(diffPlace)
+    Disposer.register(parentDisposable, processor.ourDisposable)
+    processor.context.putUserData(COMBINED_DIFF_PREVIEW_MODEL, this)
   }
 
-  val requests: List<CombinedBlockProducer> get() = model.blocks
+  val requests: List<CombinedBlockProducer> get() = processor.blocks
 
   var selected by Delegates.equalVetoingObservable<Wrapper?>(null) { change ->
     if (change != null) {
@@ -150,19 +150,19 @@ abstract class CombinedDiffPreviewModel(val project: Project,
   }
 
   override fun clear() {
-    model.cleanBlocks()
+    processor.cleanBlocks()
   }
 
   override fun refresh(fromModelRefresh: Boolean) {
-    if (model.ourDisposable.isDisposed) return
+    if (processor.ourDisposable.isDisposed) return
 
     val selectedChanges = iterateSelectedOrAllChanges().toList()
 
     val selectedChange = selected?.let { prevSelected -> selectedChanges.find { it == prevSelected } }
 
     if (fromModelRefresh && selectedChange == null && selected != null &&
-        model.context.isWindowFocused &&
-        model.context.isFocusedInWindow) {
+        processor.context.isWindowFocused &&
+        processor.context.isFocusedInWindow) {
       // Do not automatically switch focused viewer
       if (selectedChanges.size == 1 && iterateAllChanges().any { it: Wrapper -> selected == it }) {
         selected?.run(::selectChangeInSourceComponent) // Restore selection if necessary
@@ -176,18 +176,20 @@ abstract class CombinedDiffPreviewModel(val project: Project,
       else -> selectedChange
     }
 
-    newSelected?.let { model.context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, CombinedPathBlockId(it.filePath, it.fileStatus, it.tag)) }
+    newSelected?.let {
+      processor.context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, CombinedPathBlockId(it.filePath, it.fileStatus, it.tag))
+    }
 
     selected = newSelected
   }
 
   fun updateBlocks() {
-    if (model.ourDisposable.isDisposed) return
-    model.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
+    if (processor.ourDisposable.isDisposed) return
+    processor.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
     val changes = iterateAllChanges().toList()
     if (changes.isNotEmpty()) {
       refresh(true)
-      model.setBlocks(prepareCombinedDiffModelRequests(project, changes))
+      processor.setBlocks(prepareCombinedDiffModelRequests(project, changes))
     }
   }
 
@@ -196,7 +198,7 @@ abstract class CombinedDiffPreviewModel(val project: Project,
   }
 
   private fun scrollToChange(change: Wrapper) {
-    model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    processor.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
       ?.scrollToFirstChange(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), false,
                             CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
   }

@@ -37,7 +37,7 @@ internal class GHPRDiffService(private val project: Project, parentCs: Coroutine
     return base.createDiffRequestProcessor(vm, ::createDiffContext)
   }
 
-  fun createCombinedDiffModel(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffComponentProcessor {
+  fun createCombinedDiffProcessor(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffComponentProcessor {
     val vm = findDiffVm(project, repository, pullRequest)
     return base.createCombinedDiffModel(vm, ::createDiffContext)
   }
