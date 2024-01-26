@@ -7,7 +7,7 @@ com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.Gr
 org.jetbrains.plugins.gradle.tooling.builder.AnnotationProcessingModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.WarModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.EarModelBuilderImpl
-org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl
+com.intellij.gradle.toolingExtension.impl.model.buildscriptClasspathModel.ModelBuildScriptClasspathBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ScalaModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ExternalTestsModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl
