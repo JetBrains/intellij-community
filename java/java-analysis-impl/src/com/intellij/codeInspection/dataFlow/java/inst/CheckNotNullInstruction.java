@@ -49,8 +49,8 @@ public class CheckNotNullInstruction extends Instruction {
       checkNotNullable(interpreter, stateBefore, stateBefore.peek(), problem);
     } else {
       DfaValue value = stateBefore.pop();
-      boolean isNull = interpreter instanceof StandardDataFlowInterpreter &&
-                       ((StandardDataFlowInterpreter)interpreter).stopOnNull() &&
+      boolean isNull = interpreter instanceof StandardDataFlowInterpreter standard &&
+                       standard.stopOnNull() &&
                        stateBefore.getDfType(value) == NULL;
       if (myTransferValue == null) {
         stateBefore.push(dereference(interpreter, stateBefore, value, problem));

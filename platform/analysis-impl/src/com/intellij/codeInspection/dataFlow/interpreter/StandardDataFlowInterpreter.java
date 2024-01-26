@@ -42,6 +42,7 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
   private final @NotNull PsiElement myPsiAnchor;
   private final @NotNull DfaValueFactory myValueFactory;
   private final boolean myStopOnNull;
+  private final boolean myStopOnCast;
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
 
@@ -52,12 +53,20 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
   public StandardDataFlowInterpreter(@NotNull ControlFlow flow,
                                      @NotNull DfaListener listener,
                                      boolean stopOnNull) {
+    this(flow, listener, stopOnNull, false);
+  }
+
+  public StandardDataFlowInterpreter(@NotNull ControlFlow flow,
+                                     @NotNull DfaListener listener,
+                                     boolean stopOnNull, 
+                                     boolean stopOnCast) {
     myFlow = flow;
     myInstructions = flow.getInstructions();
     myListener = listener;
     myPsiAnchor = flow.getPsiAnchor();
     myValueFactory = flow.getFactory();
     myStopOnNull = stopOnNull;
+    myStopOnCast = stopOnCast;
   }
 
   @Override
@@ -341,6 +350,14 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
    */
   public boolean stopOnNull() {
     return myStopOnNull;
+  }
+
+  /**
+   * @return true if analysis should stop when impossible cast happens
+   * If false, the analysis will be continued
+   */
+  public boolean stopOnCast() {
+    return myStopOnCast;
   }
 
   private void reportDfaProblem(@Nullable DfaInstructionState lastInstructionState, @NotNull Throwable e) {

@@ -74,7 +74,7 @@ public class DebuggerDfaRunner {
     DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
     int startingIndex = myStartingState.getInstruction().getIndex();
     DfaInstructionState startingState = new DfaInstructionState(myStartingState.getInstruction(), memoryState);
-    ReachabilityCountingInterpreter interpreter = new ReachabilityCountingInterpreter(myFlow, interceptor, true, startingIndex) {
+    ReachabilityCountingInterpreter interpreter = new ReachabilityCountingInterpreter(myFlow, interceptor, true, false, startingIndex) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         DfaInstructionState[] states = super.acceptInstruction(instructionState);

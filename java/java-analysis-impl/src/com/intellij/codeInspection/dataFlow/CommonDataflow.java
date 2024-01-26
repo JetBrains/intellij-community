@@ -232,7 +232,7 @@ public final class CommonDataflow {
     var runner = new StandardDataFlowRunner(block.getProject(), ThreeState.UNSURE) {
       @Override
       protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
-        return new ReachabilityCountingInterpreter(flow, listener, false, 0);
+        return new ReachabilityCountingInterpreter(flow, listener, false, true, 0);
       }
 
       @Override

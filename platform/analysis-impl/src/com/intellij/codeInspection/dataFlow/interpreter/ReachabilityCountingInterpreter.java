@@ -18,13 +18,15 @@ public class ReachabilityCountingInterpreter extends StandardDataFlowInterpreter
   protected final @NotNull BitSet myReached = new BitSet();
 
   /**
-   * @param flow control flow to interpret
-   * @param listener listener to use
-   * @param stopOnNull whether to stop interpretation on inevitable NullPointerException
+   * @param flow          control flow to interpret
+   * @param listener      listener to use
+   * @param stopOnNull    whether to stop interpretation on inevitable NullPointerException
+   * @param stopOnCast    whether to stop interpretation on inevitable ClassCastException
    * @param startingIndex starting instruction index (usually, 0)
    */
-  public ReachabilityCountingInterpreter(@NotNull ControlFlow flow, @NotNull DfaListener listener, boolean stopOnNull, int startingIndex) {
-    super(flow, listener, stopOnNull);
+  public ReachabilityCountingInterpreter(@NotNull ControlFlow flow, @NotNull DfaListener listener, boolean stopOnNull,
+                                         boolean stopOnCast, int startingIndex) {
+    super(flow, listener, stopOnNull, stopOnCast);
     myReached.set(0, startingIndex);
   }
 
