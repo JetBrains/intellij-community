@@ -1,7 +1,7 @@
 [
   {
-    "builtIn": true,
+    "vsCodeId": "rust-lang.rust-analyzer",
     "ideaName": "Rust Support",
-    "vsCodeId": "rust-lang.rust-analyzer"
+    "builtIn": "True"
   }
 ]

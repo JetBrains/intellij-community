@@ -1,7 +1,7 @@
 [
   {
+    "vsCodeId": "ms-python.python",
     "ideaName": "Python",
-    "ideaId": "com.intellij.python",
-    "vsCodeId": "ms-python.python"
+    "ideaId": "com.intellij.python"
   }
 ]

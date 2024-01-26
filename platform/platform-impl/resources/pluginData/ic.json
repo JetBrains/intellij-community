@@ -1,52 +1,52 @@
 [
   {
-    "builtIn": true,
+    "vsCodeId": "vscjava.vscode-java-pack",
     "ideaName": "Java",
-    "vsCodeId": "vscjava.vscode-java-pack"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "redhat.java",
     "ideaName": "Java",
-    "vsCodeId": "redhat.java"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "vscjava.vscode-maven",
     "ideaName": "Maven",
-    "vsCodeId": "vscjava.vscode-maven"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "vscjava.vscode-gradle",
     "ideaName": "Gradle",
-    "vsCodeId": "vscjava.vscode-gradle"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "vscjava.vscode-java-debug",
     "ideaName": "Debugger",
-    "vsCodeId": "vscjava.vscode-java-debug"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "donjayamanne.javadebugger",
     "ideaName": "Debugger",
-    "vsCodeId": "donjayamanne.javadebugger"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "mathiasfrohlich.Kotlin",
     "ideaName": "Kotlin",
-    "vsCodeId": "mathiasfrohlich.Kotlin"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "fwcd.kotlin",
     "ideaName": "Kotlin",
-    "vsCodeId": "fwcd.kotlin"
+    "builtIn": "True"
   },
   {
+    "vsCodeId": "scala-lang.scala",
     "ideaName": "Scala",
-    "ideaId": "org.intellij.scala",
-    "vsCodeId": "scala-lang.scala"
+    "ideaId": "org.intellij.scala"
   },
   {
+    "vsCodeId": "vscjava.vscode-lombok",
     "ideaName": "Lombok",
-    "ideaId": "Lombook Plugin",
-    "vsCodeId": "vscjava.vscode-lombok"
+    "ideaId": "Lombook Plugin"
   }
 ]

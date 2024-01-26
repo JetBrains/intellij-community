@@ -1,72 +1,72 @@
 [
   {
-    "builtIn": true,
+    "vsCodeId": "ms-dotnettools.csharp",
     "ideaName": "C#",
-    "vsCodeId": "ms-dotnettools.csharp"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "jchannon.csharpextensions",
     "ideaName": "C#",
-    "vsCodeId": "jchannon.csharpextensions"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "ms-dotnettools.csdevkit",
     "ideaName": "C#",
-    "vsCodeId": "ms-dotnettools.csdevkit"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "kreativ-software.csharpextensions",
     "ideaName": "C#",
-    "vsCodeId": "kreativ-software.csharpextensions"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "jmrog.vscode-nuget-package-manager",
     "ideaName": "NuGet",
-    "vsCodeId": "jmrog.vscode-nuget-package-manager"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "formulahendry.dotnet-test-explorer",
     "ideaName": "Test Explorer",
-    "vsCodeId": "formulahendry.dotnet-test-explorer"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "formulahendry.dotnet",
     "ideaName": "Run Configurations",
-    "vsCodeId": "formulahendry.dotnet"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "unity.unity-debug",
     "ideaName": "Unity",
-    "vsCodeId": "unity.unity-debug"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "tobiah.unity-tools",
     "ideaName": "Unity",
-    "vsCodeId": "tobiah.unity-tools"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "kleber-swf.unity-code-snippets",
     "ideaName": "Unity",
-    "vsCodeId": "kleber-swf.unity-code-snippets"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "jorgeserrano.vscode-csharp-snippets",
     "ideaName": "Live Templates",
-    "vsCodeId": "jorgeserrano.vscode-csharp-snippets"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "fudge.auto-using",
     "ideaName": "C#",
-    "vsCodeId": "fudge.auto-using"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "k--kato.docomment",
     "ideaName": "C#",
-    "vsCodeId": "k--kato.docomment"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "icsharpcode.ilspy-vscode",
     "ideaName": ".NET Decompiler",
-    "vsCodeId": "icsharpcode.ilspy-vscode"
+    "builtIn": "True"
   }
 ]

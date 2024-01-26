@@ -1,7 +1,7 @@
 [
   {
-    "builtIn": true,
+    "vsCodeId": "mtxr.sqltools",
     "ideaName": "Database Support",
-    "vsCodeId": "mtxr.sqltools"
+    "builtIn": "True"
   }
 ]

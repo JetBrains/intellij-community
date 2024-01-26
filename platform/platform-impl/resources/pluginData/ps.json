@@ -1,27 +1,27 @@
 [
   {
-    "builtIn": true,
+    "vsCodeId": "xdebug.php-debug",
     "ideaName": "PHP",
-    "vsCodeId": "xdebug.php-debug"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "bmewburn.vscode-intelephense-client",
     "ideaName": "PHP",
-    "vsCodeId": "bmewburn.vscode-intelephense-client"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "xdebug.php-pack",
     "ideaName": "PHP",
-    "vsCodeId": "xdebug.php-pack"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "zobo.php-intellisense",
     "ideaName": "PHP",
-    "vsCodeId": "zobo.php-intellisense"
+    "builtIn": "True"
   },
   {
-    "builtIn": true,
+    "vsCodeId": "DEVSENSE.phptools-vscode",
     "ideaName": "PHP",
-    "vsCodeId": "DEVSENSE.phptools-vscode"
+    "builtIn": "True"
   }
 ]
