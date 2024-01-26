@@ -50,8 +50,8 @@ public final class DfaUtil {
 
     List<PsiExpression> results = new ArrayList<>();
     for (PsiElement def : defs) {
-      if (def instanceof PsiLocalVariable) {
-        ContainerUtil.addIfNotNull(results, ((PsiLocalVariable)def).getInitializer());
+      if (def instanceof PsiLocalVariable var) {
+        ContainerUtil.addIfNotNull(results, var.getInitializer());
       }
       else if (def instanceof PsiReferenceExpression) {
         PsiAssignmentExpression assignment = tryCast(def.getParent(), PsiAssignmentExpression.class);
@@ -59,8 +59,8 @@ public final class DfaUtil {
           ContainerUtil.addIfNotNull(results, unrollConcatenation(assignment, variable, codeBlock));
         }
       }
-      else if (def instanceof PsiExpression) {
-        results.add((PsiExpression)def);
+      else if (def instanceof PsiExpression expr) {
+        results.add(expr);
       }
     }
     return results;
@@ -68,10 +68,10 @@ public final class DfaUtil {
 
   private static PsiElement getEnclosingCodeBlock(final PsiVariable variable, final PsiElement context) {
     PsiElement codeBlock;
-    if (variable instanceof PsiParameter) {
-      codeBlock = ((PsiParameter)variable).getDeclarationScope();
-      if (codeBlock instanceof PsiMethod) {
-        codeBlock = ((PsiMethod)codeBlock).getBody();
+    if (variable instanceof PsiParameter parameter) {
+      codeBlock = parameter.getDeclarationScope();
+      if (codeBlock instanceof PsiMethod method) {
+        codeBlock = method.getBody();
       }
     }
     else if (variable instanceof PsiLocalVariable) {
@@ -103,8 +103,8 @@ public final class DfaUtil {
       PsiElement[] previous = DefUseUtil.getDefs(block, variable, assignment);
       if (previous.length != 1) return null;
       PsiElement def = previous[0];
-      if (def instanceof PsiLocalVariable) {
-        PsiExpression initializer = ((PsiLocalVariable)def).getInitializer();
+      if (def instanceof PsiLocalVariable var) {
+        PsiExpression initializer = var.getInitializer();
         if (initializer == null) return null;
         operands.add(initializer);
         break;
@@ -123,22 +123,21 @@ public final class DfaUtil {
   }
 
   public static @NotNull Collection<PsiExpression> getPossibleInitializationElements(@NotNull PsiElement qualifierExpression) {
-    if (qualifierExpression instanceof PsiMethodCallExpression) {
-      return Collections.singletonList((PsiMethodCallExpression)qualifierExpression);
+    if (qualifierExpression instanceof PsiMethodCallExpression call) {
+      return Collections.singletonList(call);
     }
-    if (qualifierExpression instanceof PsiReferenceExpression) {
-      final PsiElement targetElement = ((PsiReferenceExpression)qualifierExpression).resolve();
-      if (!(targetElement instanceof PsiVariable)) {
+    if (qualifierExpression instanceof PsiReferenceExpression ref) {
+      if (!(ref.resolve() instanceof PsiVariable var)) {
         return Collections.emptyList();
       }
-      Collection<PsiExpression> variableValues = getVariableValues((PsiVariable)targetElement, qualifierExpression);
+      Collection<PsiExpression> variableValues = getVariableValues(var, qualifierExpression);
       if (variableValues.isEmpty()) {
-        return DfaPsiUtil.getVariableAssignmentsInFile((PsiVariable)targetElement, false, qualifierExpression);
+        return DfaPsiUtil.getVariableAssignmentsInFile(var, false, qualifierExpression);
       }
       return variableValues;
     }
-    if (qualifierExpression instanceof PsiLiteralExpression) {
-      return Collections.singletonList((PsiLiteralExpression)qualifierExpression);
+    if (qualifierExpression instanceof PsiLiteralExpression literal) {
+      return Collections.singletonList(literal);
     }
     return Collections.emptyList();
   }
@@ -238,8 +237,8 @@ public final class DfaUtil {
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null) return false;
     PsiElement superCtor = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(constructor, constructor.getProject(), superClass);
-    if (!(superCtor instanceof PsiMethod)) return false;
-    return !JavaMethodContractUtil.isPure((PsiMethod)superCtor);
+    if (!(superCtor instanceof PsiMethod method)) return false;
+    return !JavaMethodContractUtil.isPure(method);
   }
 
   /**
@@ -290,9 +289,9 @@ public final class DfaUtil {
         return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX, value);
       }
     }
-    if (type instanceof DfPrimitiveType) {
+    if (type instanceof DfPrimitiveType primitiveType) {
       if (value.getDfType() instanceof DfPrimitiveType valueType) {
-        PsiPrimitiveType psiType = ((DfPrimitiveType)type).getPsiType();
+        PsiPrimitiveType psiType = primitiveType.getPsiType();
         if (!valueType.getPsiType().equals(psiType)) {
           return value.getFactory().fromDfType(valueType.castTo(psiType));
         }
@@ -376,8 +375,8 @@ public final class DfaUtil {
    * @return the DfType of the value within this memory state
    */
   public static @NotNull DfType getUnboxedDfType(DfaMemoryState state, @NotNull DfaValue value) {
-    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
-      return state.getDfType(((DfaWrappedValue)value).getWrappedValue());
+    if (value instanceof DfaWrappedValue wrappedValue && wrappedValue.getSpecialField() == SpecialField.UNBOX) {
+      return state.getDfType(wrappedValue.getWrappedValue());
     }
     if (value instanceof DfaVariableValue && TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
       return state.getDfType(SpecialField.UNBOX.createValue(value.getFactory(), value));
