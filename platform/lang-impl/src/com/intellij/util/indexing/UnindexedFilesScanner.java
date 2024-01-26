@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -59,6 +60,9 @@ import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldS
 
 @ApiStatus.Internal
 public class UnindexedFilesScanner extends FilesScanningTaskBase {
+
+  private static final int DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0);
+
   @VisibleForTesting
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
 
@@ -541,6 +545,13 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
 
   protected @NotNull ProjectScanningHistory performScanningAndIndexing(@NotNull CheckCancelOnlyProgressIndicator indicator,
                                                                        @NotNull IndexingProgressReporter progressReporter) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && DELAY_IN_TESTS_MS > 0) {
+      // This is to ease discovering races, when a test needs indexes, but forgot to wait for smart mode (see IndexingTestUtil)
+      // It's better to install assert into FileBasedIndexImpl about access without explicit "wait" or "nowait" action, but this is
+      // not feasible at the moment. At the moment just keep things easy. Most tests cannot tolerate DELAY_IN_TESTS_MS delay.
+      // Test will run a bit slower, but behavior will be more stable
+      LockSupport.parkNanos(DELAY_IN_TESTS_MS * 1_000_000L);
+    }
     ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
