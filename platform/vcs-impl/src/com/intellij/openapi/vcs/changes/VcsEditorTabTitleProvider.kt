@@ -46,8 +46,7 @@ private class VcsEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
         }
         is CombinedDiffPreviewVirtualFile -> {
           val editor = ContainerUtil.findInstance(editors, CombinedDiffEditor::class.java)
-          val model = editor?.factory?.model
-          model?.context?.getUserData(COMBINED_DIFF_PREVIEW_TAB_NAME)?.invoke()
+          editor?.factory?.context?.getUserData(COMBINED_DIFF_PREVIEW_TAB_NAME)?.invoke()
         }
         else -> null
       }

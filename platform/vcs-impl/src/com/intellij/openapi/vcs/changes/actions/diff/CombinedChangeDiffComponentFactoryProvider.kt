@@ -8,9 +8,9 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.toListIfN
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 
 class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryProvider {
-  override fun create(model: CombinedDiffModel): CombinedDiffComponentFactory {
+  override fun create(model: CombinedDiffModel): CombinedDiffComponentProcessor {
     val goToChangePopupAction = MyGoToChangePopupAction(model)
-    return CombinedDiffComponentFactory(model, goToChangePopupAction)
+    return CombinedDiffComponentProcessorImpl(model, goToChangePopupAction)
   }
 }
 

@@ -11,7 +11,7 @@ import javax.swing.JComponent
 
 class CombinedDiffComponentEditor(
   private val file: VirtualFile,
-  val processor: CombinedDiffComponentFactory
+  val processor: CombinedDiffComponentProcessor
 ) : FileEditorBase() {
 
   init {

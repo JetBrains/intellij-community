@@ -33,7 +33,7 @@ internal class DiffEditorProvider : DefaultPlatformFileEditorProvider, Structure
       val combinedDiffModel = file.createModel()
       val factory = project.service<CombinedDiffComponentFactoryProvider>().create(combinedDiffModel)
       val editor = CombinedDiffEditor(file, factory)
-      DiffRequestProcessorEditorCustomizer.customize(file, editor, factory.model.context)
+      DiffRequestProcessorEditorCustomizer.customize(file, editor, factory.context)
       return editor
     }
     else {

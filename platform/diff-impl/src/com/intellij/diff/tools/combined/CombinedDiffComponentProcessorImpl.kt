@@ -14,20 +14,23 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.fileEditor.impl.text.TextEditorState
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Dimension
+import javax.swing.JComponent
 
-private val LOG = logger<CombinedDiffComponentFactory>()
+private val LOG = logger<CombinedDiffComponentProcessor>()
 
 interface CombinedDiffComponentFactoryProvider {
-  fun create(model: CombinedDiffModel): CombinedDiffComponentFactory
+  fun create(model: CombinedDiffModel): CombinedDiffComponentProcessor
 }
 
-class CombinedDiffComponentFactory(val model: CombinedDiffModel,
-                                   goToChangeAction: AnAction?) {
+class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
+                                         goToChangeAction: AnAction?) : CombinedDiffComponentProcessor {
 
-  internal val ourDisposable = Disposer.newCheckedDisposable()
+  override val ourDisposable = Disposer.newCheckedDisposable()
 
   private val mainUi: CombinedDiffMainUI
 
@@ -51,11 +54,15 @@ class CombinedDiffComponentFactory(val model: CombinedDiffModel,
     model.cleanBlocks()
   }
 
-  internal fun getPreferredFocusedComponent() = mainUi.getPreferredFocusedComponent()
+  override fun getPreferredFocusedComponent() = mainUi.getPreferredFocusedComponent()
+  override fun getMainComponent() = mainUi.getComponent()
 
-  internal fun getMainComponent() = mainUi.getComponent()
+  override val context: DiffContext get() = model.context
+  override val blocks: List<CombinedBlockProducer> get() = model.requests
+  override fun setBlocks(requests: List<CombinedBlockProducer>) = model.setBlocks(requests)
+  override fun cleanBlocks() = model.cleanBlocks()
 
-  internal fun getState(level: FileEditorStateLevel): FileEditorState {
+  override fun getState(level: FileEditorStateLevel): FileEditorState {
     val viewer = combinedViewer
     if (viewer == null) return FileEditorState.INSTANCE
 
@@ -67,7 +74,9 @@ class CombinedDiffComponentFactory(val model: CombinedDiffModel,
     )
   }
 
-  internal fun setState(state: CombinedDiffEditorState) {
+  override fun setState(state: FileEditorState) {
+    if (state !is CombinedDiffEditorState) return
+
     val viewer = combinedViewer ?: return
     if (model.requests.map { it.id }.toSet() != state.currentBlockIds) return
 
@@ -198,4 +207,36 @@ class CombinedDiffComponentFactory(val model: CombinedDiffModel,
       }
     }
   }
+}
+
+data class CombinedDiffEditorState(
+  val currentBlockIds: Set<CombinedBlockId>,
+  val activeBlockId: CombinedBlockId,
+  val activeEditorStates: List<TextEditorState>
+) : FileEditorState {
+  override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean {
+    return otherState is CombinedDiffEditorState &&
+           (currentBlockIds != otherState.currentBlockIds ||
+            (activeBlockId == otherState.activeBlockId &&
+             activeEditorStates.zip(otherState.activeEditorStates).all { (l, r) -> l.canBeMergedWith(r, level) }))
+  }
+}
+
+interface CombinedDiffComponentProcessor {
+  val context: DiffContext
+  val ourDisposable: CheckedDisposable
+
+  fun getMainComponent(): JComponent
+  fun getPreferredFocusedComponent(): JComponent?
+
+  fun getState(level: FileEditorStateLevel): FileEditorState = FileEditorState.INSTANCE
+  fun setState(state: FileEditorState) {}
+
+  val blocks: List<CombinedBlockProducer>
+
+  /**
+   * Updates current model with the new requests
+   */
+  fun setBlocks(requests: List<CombinedBlockProducer>)
+  fun cleanBlocks()
 }
