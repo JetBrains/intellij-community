@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
 import org.jetbrains.plugins.gradle.model.ExternalTask
 import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl
-import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl
+import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.BuildScriptClasspathModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.RepositoriesModelImpl
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator

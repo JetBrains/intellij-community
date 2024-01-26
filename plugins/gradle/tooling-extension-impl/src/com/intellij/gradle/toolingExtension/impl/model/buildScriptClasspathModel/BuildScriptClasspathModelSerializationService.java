@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.tooling.serialization;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
@@ -8,8 +8,9 @@ import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
-import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
+import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
+import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.SimpleObjectFactory;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
