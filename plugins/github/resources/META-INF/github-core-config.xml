@@ -206,6 +206,10 @@
               class="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$ShowAction"
               icon="AllIcons.Vcs.Vendors.Github">
       </action>
+      <action id="Github.Pull.Request.Branch.Update"
+              class="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$UpdateAction"
+              icon="org.jetbrains.plugins.github.GithubIcons.GithubWarning">
+      </action>
       <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
     </group>
   </actions>

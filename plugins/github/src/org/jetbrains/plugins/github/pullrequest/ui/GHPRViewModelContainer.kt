@@ -50,7 +50,7 @@ internal class GHPRViewModelContainer(
   val infoVm: GHPRInfoViewModel by lazyInfoVm
 
   val branchWidgetVm: GHPRBranchWidgetViewModel by lazy {
-    GHPRBranchWidgetViewModelImpl(cs, dataProvider, projectVm, pullRequestId)
+    GHPRBranchWidgetViewModelImpl(cs, dataContext, dataProvider, projectVm, pullRequestId)
   }
 
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)

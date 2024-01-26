@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -18,18 +19,17 @@ import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitCurrentBranchPresenter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
+import org.jetbrains.plugins.github.util.GithubNotifications
 
 @Service(Service.Level.PROJECT)
-class GHPROnCurrentBranchService(project: Project, parentCs: CoroutineScope) {
+class GHPROnCurrentBranchService(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(Dispatchers.Default)
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -44,8 +44,11 @@ class GHPROnCurrentBranchService(project: Project, parentCs: CoroutineScope) {
           if (prOnCurrentBranch != null) {
             Disposer.newDisposable().use {
               val vm = projectVm.acquireBranchWidgetModel(prOnCurrentBranch, it)
-              emit(vm)
-              awaitCancellation()
+              supervisorScope {
+                vm.showUpdateErrorsIn(this)
+                emit(vm)
+                awaitCancellation()
+              }
             }
           }
           else {
@@ -110,6 +113,31 @@ class GHPROnCurrentBranchService(project: Project, parentCs: CoroutineScope) {
 
     override fun actionPerformed(e: AnActionEvent) {
       e.project?.getCurrentVm()?.showPullRequest()
+    }
+  }
+
+  class UpdateAction : DumbAwareAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = e.project?.getCurrentVm()?.updateRequired?.value == true
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      e.project?.getCurrentVm()?.updateBranch()
+    }
+  }
+
+  private fun GHPRBranchWidgetViewModel.showUpdateErrorsIn(cs: CoroutineScope) {
+    cs.launchNow {
+      updateErrors.collect {
+        withContext(Dispatchers.Main) {
+          GithubNotifications.showError(project,
+                                        GithubNotificationIdsHolder.PULL_REQUEST_BRANCH_UPDATE_FAILED,
+                                        GithubBundle.message("pull.request.on.branch.update.failed.title"),
+                                        it)
+        }
+      }
     }
   }
 }
