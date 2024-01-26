@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -125,6 +126,20 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
 
     override fun actionPerformed(e: AnActionEvent) {
       e.project?.getCurrentVm()?.updateBranch()
+    }
+  }
+
+  class ToggleReviewAction : DumbAwareAction(), Toggleable {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      val vm = e.project?.getCurrentVm()
+      e.presentation.isEnabledAndVisible = vm?.updateRequired?.value == false
+      Toggleable.setSelected(e.presentation, vm?.editorReviewEnabled?.value ?: false)
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      e.project?.getCurrentVm()?.toggleEditorReview()
     }
   }
 

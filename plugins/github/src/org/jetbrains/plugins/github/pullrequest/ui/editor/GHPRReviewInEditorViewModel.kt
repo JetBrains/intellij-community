@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.classAsCoroutineName
+import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
@@ -22,6 +23,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
@@ -58,8 +60,12 @@ internal class GHPRReviewInEditorViewModelImpl(
   override val newChangesInReview: StateFlow<ComputedResult<Boolean>?> =
     dataProvider.changesData.newChangesInReviewRequest.computationState().stateInNow(cs, ComputedResult.loading())
 
+  private val reviewEnabledState = GithubPullRequestsProjectUISettings.getInstance(project).editorReviewEnabledState
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
-  override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
+  override val discussionsViewOption: StateFlow<DiscussionsViewOption> =
+    reviewEnabledState.combineState(_discussionsViewOption) { enabled, viewOption ->
+      if (!enabled) DiscussionsViewOption.DONT_SHOW else viewOption
+    }
 
   /**
    * A view model for [file] review

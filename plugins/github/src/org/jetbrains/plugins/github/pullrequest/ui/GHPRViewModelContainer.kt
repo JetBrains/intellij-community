@@ -13,6 +13,7 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -50,7 +51,8 @@ internal class GHPRViewModelContainer(
   val infoVm: GHPRInfoViewModel by lazyInfoVm
 
   val branchWidgetVm: GHPRBranchWidgetViewModel by lazy {
-    GHPRBranchWidgetViewModelImpl(cs, dataContext, dataProvider, projectVm, pullRequestId)
+    GHPRBranchWidgetViewModelImpl(cs, GithubPullRequestsProjectUISettings.getInstance(project),
+                                  dataContext, dataProvider, projectVm, pullRequestId)
   }
 
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)

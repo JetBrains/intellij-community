@@ -210,6 +210,9 @@
               class="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$UpdateAction"
               icon="org.jetbrains.plugins.github.GithubIcons.GithubWarning">
       </action>
+      <action id="Github.Pull.Request.Review.In.Editor.Toggle"
+              class="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$ToggleReviewAction">
+      </action>
       <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
     </group>
   </actions>

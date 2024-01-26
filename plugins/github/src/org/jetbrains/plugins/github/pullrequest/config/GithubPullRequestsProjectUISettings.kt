@@ -26,6 +26,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     val selectedUrlAndAccountId: UrlAndAccount? = null,
     val recentNewPullRequestHead: RepoCoordinatesHolder? = null,
     val reviewCommentPreferred: Boolean = true,
+    val editorReviewEnabled: Boolean = true,
     val highlightDiffLinesInEditor: Boolean = false
   )
 
@@ -53,6 +54,12 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
       it.copy(reviewCommentPreferred = value)
     }
 
+  var editorReviewEnabled: Boolean
+    get() = state.editorReviewEnabled
+    set(value) = updateAndSetState {
+      it.copy(editorReviewEnabled = value)
+    }
+
   var highlightDiffLinesInEditor: Boolean
     get() = state.highlightDiffLinesInEditor
     set(value) = updateAndSetState {
@@ -60,6 +67,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     }
 
   val reviewCommentsPreferredState: StateFlow<Boolean> = stateOfState.mapState { it.reviewCommentPreferred }
+  val editorReviewEnabledState: StateFlow<Boolean> = stateOfState.mapState { it.editorReviewEnabled }
   val highlightDiffLinesInEditorState: StateFlow<Boolean> = stateOfState.mapState { it.highlightDiffLinesInEditor }
 
   override fun loadState(state: SettingsState) {

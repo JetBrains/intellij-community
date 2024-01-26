@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -27,17 +28,20 @@ interface GHPRBranchWidgetViewModel {
 
   val updateRequired: StateFlow<Boolean>
   val dataLoadingState: StateFlow<ComputedResult<Any>>
+  val editorReviewEnabled: StateFlow<Boolean>
 
   val updateErrors: SharedFlow<Exception>
 
   fun showPullRequest()
   fun updateBranch()
+  fun toggleEditorReview()
 }
 
 private val LOG = logger<GHPRBranchWidgetViewModelImpl>()
 
 internal class GHPRBranchWidgetViewModelImpl(
   parentCs: CoroutineScope,
+  private val settings: GithubPullRequestsProjectUISettings,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   private val projectVm: GHPRToolWindowProjectViewModel,
@@ -54,6 +58,8 @@ internal class GHPRBranchWidgetViewModelImpl(
 
   override val dataLoadingState: StateFlow<ComputedResult<Any>> =
     dataProvider.changesData.changesRequestFlow().computationState().stateInNow(cs, ComputedResult.loading())
+
+  override val editorReviewEnabled: StateFlow<Boolean> = settings.editorReviewEnabledState
 
   private val _updateErrors = MutableSharedFlow<Exception>()
   override val updateErrors: SharedFlow<Exception> = _updateErrors.asSharedFlow()
@@ -89,5 +95,9 @@ internal class GHPRBranchWidgetViewModelImpl(
     val repository = dataContext.repositoryDataService.remoteCoordinates.repository
     val localPrefix = if (details.headRepository?.isFork == true) "fork" else null
     GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(repository, remoteDescriptor, details.headRefName, localPrefix)
+  }
+
+  override fun toggleEditorReview() {
+    settings.editorReviewEnabled = !settings.editorReviewEnabled
   }
 }
