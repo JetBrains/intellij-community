@@ -4893,7 +4893,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
-      myOwnAttributes.put(key, attributes);
+      if (TextAttributesKey.isTemp(key))
+        getDelegate().setAttributes(key, attributes);
+      else
+        myOwnAttributes.put(key, attributes);
     }
 
     @Override

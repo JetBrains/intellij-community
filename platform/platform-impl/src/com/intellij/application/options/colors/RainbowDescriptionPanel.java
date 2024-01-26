@@ -2,7 +2,9 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
@@ -14,6 +16,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Contract;
@@ -46,6 +49,7 @@ public final class RainbowDescriptionPanel extends JPanel implements OptionsPane
   private JBCheckBox myRainbow;
   private JTextPane myInheritanceLabel;
   private JBCheckBox myInheritAttributesBox;
+  private JPanel myOverwrittenPanel;
 
   public RainbowDescriptionPanel() {
     super(new BorderLayout());
@@ -72,12 +76,26 @@ public final class RainbowDescriptionPanel extends JPanel implements OptionsPane
                                           HtmlChunk.br(),
                                           HtmlChunk.text("(" + languageDefaultPageID + ")")).toString();
 
-    //noinspection HardCodedStringLiteral
     Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
     myInheritanceLabel.setText(checkRightArrow(inheritanceText));
     myInheritanceLabel.setToolTipText(checkRightArrow(inheritanceTooltip));
     myInheritanceLabel.addHyperlinkListener(e -> myDispatcher.getMulticaster().onHyperLinkClicked(e));
     myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
+  }
+
+  private void createOverwritePanel() {
+    myOverwrittenPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JLabel iconLabel = new JLabel();
+    iconLabel.setIcon(AllIcons.General.Warning);
+    myOverwrittenPanel.add(iconLabel);
+    myOverwrittenPanel.add(Box.createRigidArea(new JBDimension(5, 0)));
+    JLabel overwrittenLabel = new JLabel(ApplicationBundle.message("rainbow.option.panel.overwritten.by.host"));
+    myOverwrittenPanel.add(overwrittenLabel);
+    myOverwrittenPanel.setVisible(false);
+  }
+
+  private void createUIComponents() {
+    createOverwritePanel();
   }
 
   @Contract(pure = true)
@@ -122,6 +140,12 @@ public final class RainbowDescriptionPanel extends JPanel implements OptionsPane
     myInheritAttributesBox.setEnabled(isEnable);
     myInheritAttributesBox.setSelected(isInherited);
     myInheritAttributesBox.setVisible(!isDefaultLanguage);
+
+    if (descriptor.getLanguage() == Language.ANY) {
+      // host-driven markup state
+      myOverwrittenPanel.setVisible(true);
+      doLayout();
+    }
   }
 
   @Override
