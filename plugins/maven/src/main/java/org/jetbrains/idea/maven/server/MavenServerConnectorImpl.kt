@@ -1,187 +1,176 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.server;
+package org.jetbrains.idea.maven.server
 
-import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.utils.MavenLog;
+import com.intellij.concurrency.resetThreadContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.idea.maven.utils.MavenLog
+import java.io.File
+import java.rmi.RemoteException
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
 
-import java.io.File;
-import java.rmi.RemoteException;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+open class MavenServerConnectorImpl(project: Project,
+                                    jdk: Sdk,
+                                    vmOptions: String,
+                                    debugPort: Int?,
+                                    mavenDistribution: MavenDistribution,
+                                    multimoduleDirectory: String) : MavenServerConnectorBase(project, jdk, vmOptions, mavenDistribution,
+                                                                                             multimoduleDirectory, debugPort) {
+  private val myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("Maven connector pulling", 2)
+  private val myLoggerConnectFailedCount = AtomicInteger(0)
+  private val myDownloadConnectFailedCount = AtomicInteger(0)
 
-public class MavenServerConnectorImpl extends MavenServerConnectorBase {
-  public static final Logger LOG = Logger.getInstance(MavenServerConnectorImpl.class);
-
-  private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("Maven connector pulling", 2);
-  private final AtomicInteger myLoggerConnectFailedCount = new AtomicInteger(0);
-  private final AtomicInteger myDownloadConnectFailedCount = new AtomicInteger(0);
-
-  private ScheduledFuture<?> myPullingLoggerFuture = null;
-  private ScheduledFuture<?> myPullingDownloadFuture = null;
+  private var myPullingLoggerFuture: ScheduledFuture<*>? = null
+  private var myPullingDownloadFuture: ScheduledFuture<*>? = null
 
 
-  public MavenServerConnectorImpl(@NotNull Project project,
-                                  @NotNull Sdk jdk,
-                                  @NotNull String vmOptions,
-                                  @Nullable Integer debugPort,
-                                  @NotNull MavenDistribution mavenDistribution,
-                                  @NotNull String multimoduleDirectory) {
-    super(project, jdk, vmOptions, mavenDistribution, multimoduleDirectory, debugPort);
-  }
-
-  @Override
-  public boolean isCompatibleWith(Sdk jdk, String vmOptions, MavenDistribution distribution) {
-    if (!getMavenDistribution().compatibleWith(distribution)) {
-      return false;
+  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean {
+    if (!mavenDistribution.compatibleWith(distribution)) {
+      return false
     }
-    if (!StringUtil.equals(getJdk().getName(), jdk.getName())) {
-      return false;
+    if (!StringUtil.equals(jdk.name, jdk.name)) {
+      return false
     }
-    return StringUtil.equals(getVmOptions(), vmOptions);
+    return StringUtil.equals(vmOptions, vmOptions)
   }
 
-  @NotNull
-  @Override
-  protected StartServerTask newStartServerTask() {
-    return new StartServerTask();
+  override fun newStartServerTask(): StartServerTask {
+    return StartServerTask()
   }
 
-  @Override
-  protected void cleanUpFutures() {
+  override fun cleanUpFutures() {
     try {
-      cancelFuture(myPullingDownloadFuture);
-      cancelFuture(myPullingLoggerFuture);
-      if (!myExecutor.isShutdown()) {
-        myExecutor.shutdownNow();
+      cancelFuture(myPullingDownloadFuture)
+      cancelFuture(myPullingLoggerFuture)
+      if (!myExecutor.isShutdown) {
+        myExecutor.shutdownNow()
       }
-      int count = myLoggerConnectFailedCount.get();
-      if (count != 0) MavenLog.LOG.warn("Maven pulling logger failed: " + count + " times");
-      count = myDownloadConnectFailedCount.get();
-      if (count != 0) MavenLog.LOG.warn("Maven pulling download listener failed: " + count + " times");
+      var count = myLoggerConnectFailedCount.get()
+      if (count != 0) MavenLog.LOG.warn("Maven pulling logger failed: $count times")
+      count = myDownloadConnectFailedCount.get()
+      if (count != 0) MavenLog.LOG.warn("Maven pulling download listener failed: $count times")
     }
-    catch (IllegalStateException ignore) {
-    }
-  }
-
-  private static void cancelFuture(ScheduledFuture<?> future) {
-    if (future != null) {
-      try {
-        future.cancel(true);
-      }
-      catch (Throwable ignore) {
-      }
+    catch (ignore: IllegalStateException) {
     }
   }
 
-  @Override
-  public String getSupportType() {
-    MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
-    return support == null ? "???" : support.type();
-  }
+  override val supportType: String
+    get() {
+      val support = mySupport
+      return if (support == null) "???" else support.type()
+    }
 
-  private class StartServerTask implements Runnable {
-    @Override
-    public void run() {
-      ProgressIndicator indicator = new EmptyProgressIndicator();
-      String dirForLogs = myMultimoduleDirectories.iterator().next();
-      MavenLog.LOG.debug("Connecting maven connector in " + dirForLogs);
+  inner class StartServerTask : Runnable {
+    override fun run() {
+      val indicator: ProgressIndicator = EmptyProgressIndicator()
+      val dirForLogs = myMultimoduleDirectories.iterator().next()
+      MavenLog.LOG.debug("Connecting maven connector in $dirForLogs")
       try {
         if (myDebugPort != null) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
+          println("Listening for transport dt_socket at address: $myDebugPort")
         }
-        MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(getProject());
-        mySupport = factory.create(getJdk(), getVmOptions(), getMavenDistribution(), getProject(), myDebugPort);
-        mySupport.onTerminate(e -> {
-          MavenLog.LOG.debug("[connector] terminate " + MavenServerConnectorImpl.this);
-          MavenServerManager mavenServerManager = ApplicationManager.getApplication().getServiceIfCreated(MavenServerManager.class);
-          if (mavenServerManager != null) {
-            mavenServerManager.shutdownConnector(MavenServerConnectorImpl.this, false);
-          }
-        });
-        // Maven server's lifetime is bigger than the activity that spawned it, so we let it go untracked
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-          MavenServer server = mySupport.acquire(this, "", indicator);
-          startPullingDownloadListener(server);
-          startPullingLogger(server);
-          myServerPromise.setResult(server);
+        val factory = MavenRemoteProcessSupportFactory.forProject(project!!)
+        mySupport = factory.create(jdk, vmOptions, mavenDistribution, project, myDebugPort)
+        mySupport!!.onTerminate(Consumer {
+          MavenLog.LOG.debug("[connector] terminate " + this@MavenServerConnectorImpl)
+          val mavenServerManager = ApplicationManager.getApplication().getServiceIfCreated(
+            MavenServerManager::class.java)
+          mavenServerManager?.shutdownConnector(this@MavenServerConnectorImpl, false)
+        })
+        resetThreadContext().use {
+          val server = mySupport!!.acquire(this, "", indicator)
+          startPullingDownloadListener(server)
+          startPullingLogger(server)
+          myServerPromise.setResult(server)
         }
-        MavenLog.LOG.debug("[connector] in " + dirForLogs + " has been connected " + MavenServerConnectorImpl.this);
+        MavenLog.LOG.debug("[connector] in " + dirForLogs + " has been connected " + this@MavenServerConnectorImpl)
       }
-      catch (Throwable e) {
-        MavenLog.LOG.warn("[connector] cannot connect in " + dirForLogs, e);
-        myServerPromise.setError(e);
+      catch (e: Throwable) {
+        MavenLog.LOG.warn("[connector] cannot connect in $dirForLogs", e)
+        myServerPromise.setError(e)
       }
     }
   }
 
-  private void startPullingDownloadListener(MavenServer server) throws RemoteException {
-    MavenPullDownloadListener listener = server.createPullDownloadListener(MavenRemoteObjectWrapper.ourToken);
-    if (listener == null) return;
+  @Throws(RemoteException::class)
+  private fun startPullingDownloadListener(server: MavenServer) {
+    val listener = server.createPullDownloadListener(MavenRemoteObjectWrapper.ourToken)
+    if (listener == null) return
     myPullingDownloadFuture = myExecutor.scheduleWithFixedDelay(
-      () -> {
+      {
         try {
-          List<DownloadArtifactEvent> artifactEvents = listener.pull();
-          for (DownloadArtifactEvent e : artifactEvents) {
-            ApplicationManager.getApplication().getMessageBus().syncPublisher(DOWNLOAD_LISTENER_TOPIC).artifactDownloaded(new File(e.getFile()), e.getPath());
+          val artifactEvents = listener.pull()
+          for (e in artifactEvents) {
+            ApplicationManager.getApplication().messageBus.syncPublisher(MavenServerConnector.DOWNLOAD_LISTENER_TOPIC).artifactDownloaded(
+              File(e.file), e.path)
           }
-          myDownloadConnectFailedCount.set(0);
+          myDownloadConnectFailedCount.set(0)
         }
-        catch (RemoteException e) {
-          if (!Thread.currentThread().isInterrupted()) {
-            myDownloadConnectFailedCount.incrementAndGet();
+        catch (e: RemoteException) {
+          if (!Thread.currentThread().isInterrupted) {
+            myDownloadConnectFailedCount.incrementAndGet()
           }
-          MavenLog.LOG.warn("Maven pulling download listener stopped");
-          myPullingDownloadFuture.cancel(true);
+          MavenLog.LOG.warn("Maven pulling download listener stopped")
+          myPullingDownloadFuture!!.cancel(true)
         }
       },
       500,
       500,
-      TimeUnit.MILLISECONDS);
+      TimeUnit.MILLISECONDS)
   }
 
 
-  private void startPullingLogger(MavenServer server) throws RemoteException {
-    MavenPullServerLogger logger = server.createPullLogger(MavenRemoteObjectWrapper.ourToken);
-    if (logger == null) return;
+  @Throws(RemoteException::class)
+  private fun startPullingLogger(server: MavenServer) {
+    val logger = server.createPullLogger(MavenRemoteObjectWrapper.ourToken)
+    if (logger == null) return
     myPullingLoggerFuture = myExecutor.scheduleWithFixedDelay(
-      () -> {
+      {
         try {
-          List<ServerLogEvent> logEvents = logger.pull();
-          for (ServerLogEvent e : logEvents) {
-            switch (e.getType()) {
-              case DEBUG -> MavenLog.LOG.debug(e.getMessage());
-              case PRINT, INFO -> MavenLog.LOG.info(e.getMessage());
-              case WARN, ERROR -> MavenLog.LOG.warn(e.getMessage());
+          val logEvents = logger.pull()
+          for (e in logEvents) {
+            when (e.type) {
+              ServerLogEvent.Type.DEBUG -> MavenLog.LOG.debug(e.message)
+              ServerLogEvent.Type.PRINT, ServerLogEvent.Type.INFO -> MavenLog.LOG.info(e.message)
+              ServerLogEvent.Type.WARN, ServerLogEvent.Type.ERROR -> MavenLog.LOG.warn(e.message)
             }
           }
-          myLoggerConnectFailedCount.set(0);
+          myLoggerConnectFailedCount.set(0)
         }
-        catch (RemoteException e) {
-          if (!Thread.currentThread().isInterrupted()) {
-            myLoggerConnectFailedCount.incrementAndGet();
+        catch (e: RemoteException) {
+          if (!Thread.currentThread().isInterrupted) {
+            myLoggerConnectFailedCount.incrementAndGet()
           }
-          MavenLog.LOG.warn("Maven pulling logger stopped");
-          myPullingLoggerFuture.cancel(true);
+          MavenLog.LOG.warn("Maven pulling logger stopped")
+          myPullingLoggerFuture!!.cancel(true)
         }
       },
       0,
       100,
-      TimeUnit.MILLISECONDS);
+      TimeUnit.MILLISECONDS)
+  }
+
+  companion object {
+    val LOG: Logger = Logger.getInstance(MavenServerConnectorImpl::class.java)
+
+    private fun cancelFuture(future: ScheduledFuture<*>?) {
+      if (future != null) {
+        try {
+          future.cancel(true)
+        }
+        catch (ignore: Throwable) {
+        }
+      }
+    }
   }
 }
 

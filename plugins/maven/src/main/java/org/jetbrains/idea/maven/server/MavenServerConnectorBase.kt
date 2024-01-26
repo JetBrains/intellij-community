@@ -16,7 +16,7 @@ import java.rmi.RemoteException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal abstract class MavenServerConnectorBase(project: Project?,
+abstract class MavenServerConnectorBase(project: Project?,
                                                  jdk: Sdk,
                                                  vmOptions: String,
                                                  mavenDistribution: MavenDistribution,
