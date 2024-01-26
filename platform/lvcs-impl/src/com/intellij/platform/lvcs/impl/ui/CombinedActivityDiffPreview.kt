@@ -59,7 +59,7 @@ internal abstract class CombinedActivityDiffPreview(project: Project,
   }
 
   private inner class CombinedActivityDiffPreviewModel(project: Project, parentDisposable: Disposable) :
-    CombinedDiffPreviewModel(project, parentDisposable) {
+    CombinedDiffPreviewModel(project, null, parentDisposable) {
 
     override fun iterateAllChanges(): Iterable<Wrapper> {
       return diffData?.getPresentableChanges(project)?.takeIf { it.any() } ?: listOf(EmptyChangeWrapper(project, scope))

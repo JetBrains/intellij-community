@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelActi
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
 import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.tools.combined.CombinedDiffModelImpl
+import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
@@ -37,7 +37,7 @@ internal class GHPRDiffService(private val project: Project, parentCs: Coroutine
     return base.createDiffRequestProcessor(vm, ::createDiffContext)
   }
 
-  fun createCombinedDiffModel(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffModelImpl {
+  fun createCombinedDiffModel(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): CombinedDiffComponentProcessor {
     val vm = findDiffVm(project, repository, pullRequest)
     return base.createCombinedDiffModel(vm, ::createDiffContext)
   }

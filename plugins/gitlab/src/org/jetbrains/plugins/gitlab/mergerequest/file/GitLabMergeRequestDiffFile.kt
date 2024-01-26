@@ -6,8 +6,7 @@ import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
 import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.tools.combined.CombinedDiffModel
-import com.intellij.diff.tools.combined.CombinedDiffModelImpl
+import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
@@ -67,7 +66,7 @@ internal data class GitLabMergeRequestCombinedDiffFile(
 
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
-  override fun createModel(): CombinedDiffModel {
+  override fun createModel(): CombinedDiffComponentProcessor {
     return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffModel(connectionId, mergeRequestIid)
   }
 }
@@ -92,7 +91,7 @@ private class GitLabMergeRequestDiffService(private val project: Project, parent
     return base.createDiffRequestProcessor(vmFlow, ::createDiffContext)
   }
 
-  fun createGitLabCombinedDiffModel(connectionId: String, mergeRequestIid: String): CombinedDiffModelImpl {
+  fun createGitLabCombinedDiffModel(connectionId: String, mergeRequestIid: String): CombinedDiffComponentProcessor {
     val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
     return base.createCombinedDiffModel(vmFlow, ::createDiffContext)
   }

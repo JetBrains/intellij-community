@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.tools.combined.DISABLE_LOADING_BLOCKS
 import com.intellij.diff.util.DiffPlaces
-import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedTreeDiffPreview
@@ -28,11 +27,10 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
 }
 
 class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser)
-  : CombinedDiffPreviewModel(browser.viewer.project, browser) {
+  : CombinedDiffPreviewModel(browser.viewer.project, DiffPlaces.VCS_LOG_VIEW, browser) {
 
   init {
     model.context.putUserData(DISABLE_LOADING_BLOCKS, true)
-    model.context.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.VCS_LOG_VIEW)
   }
 
   override fun iterateSelectedChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {

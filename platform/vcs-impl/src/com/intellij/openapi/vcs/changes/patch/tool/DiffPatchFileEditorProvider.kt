@@ -45,11 +45,10 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
     val document = FileDocumentManager.getInstance().getDocument(file)!!
 
     if (CombinedDiffRegistry.isEnabled()) {
-      val model = CombinedDiffModelImpl(project)
+      val model = CombinedDiffManager.getInstance(project).createProcessor()
       model.setBlocks(buildCombinedDiffModel(document))
 
-      val factory = CombinedDiffManager.getInstance(project).create(model)
-      val editor = CombinedDiffComponentEditor(file, factory)
+      val editor = CombinedDiffComponentEditor(file, model)
       document.addDocumentListener(CombinedViewerPatchChangeListener(model), editor)
 
       return editor
@@ -97,7 +96,7 @@ private fun createDiffRequestProducers(document: Document): List<ChangeDiffReque
   }
 }
 
-private class CombinedViewerPatchChangeListener(val model: CombinedDiffModelImpl) : DocumentListener {
+private class CombinedViewerPatchChangeListener(val model: CombinedDiffComponentProcessor) : DocumentListener {
   override fun documentChanged(event: DocumentEvent) {
     model.setBlocks(buildCombinedDiffModel(event.document))
   }

@@ -2,7 +2,10 @@
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
-import com.intellij.diff.tools.combined.*
+import com.intellij.diff.tools.combined.CombinedBlockProducer
+import com.intellij.diff.tools.combined.CombinedDiffRegistry
+import com.intellij.diff.tools.combined.CombinedDiffVirtualFileImpl
+import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -43,9 +46,7 @@ class ShowCombinedDiffAction : DumbAwareAction() {
         CombinedBlockProducer(id, producer)
       }
 
-      val model = CombinedDiffModelImpl(project)
-      model.setBlocks(producers)
-      val allInOneDiffFile = CombinedDiffVirtualFileImpl(model, VcsBundle.message("changes.combined.diff"))
+      val allInOneDiffFile = CombinedDiffVirtualFileImpl(project, producers, VcsBundle.message("changes.combined.diff"))
 
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(allInOneDiffFile, true)
     }

@@ -2,7 +2,6 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.tools.combined.CombinedDiffEditor
-import com.intellij.diff.tools.combined.CombinedDiffManager
 import com.intellij.diff.tools.combined.CombinedDiffVirtualFile
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.fileEditor.FileEditor
@@ -29,8 +28,7 @@ internal class DiffEditorProvider : DefaultPlatformFileEditorProvider, Structure
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     if (file is CombinedDiffVirtualFile) {
-      val combinedDiffModel = file.createModel()
-      val factory = CombinedDiffManager.getInstance(project).create(combinedDiffModel)
+      val factory = file.createModel()
       val editor = CombinedDiffEditor(file, factory)
       DiffRequestProcessorEditorCustomizer.customize(file, editor, factory.context)
       return editor

@@ -26,7 +26,7 @@ import javax.swing.JComponent
 private val LOG = logger<CombinedDiffComponentProcessor>()
 
 interface CombinedDiffManager {
-  fun create(model: CombinedDiffModel): CombinedDiffComponentProcessor
+  fun createProcessor(diffPlace: String? = null): CombinedDiffComponentProcessor
 
   companion object {
     @JvmStatic
@@ -44,12 +44,7 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
   private var combinedViewer: CombinedDiffViewer?
 
   init {
-    if (model.haveParentDisposable) { // diff preview scenario?
-      Disposer.register(model.ourDisposable, ourDisposable)
-    }
-    else { // diff from action
-      Disposer.register(ourDisposable, model.ourDisposable)
-    }
+    Disposer.register(ourDisposable, model.ourDisposable)
     model.addListener(ModelListener(), ourDisposable)
 
     mainUi = CombinedDiffMainUI(model, goToChangeAction)

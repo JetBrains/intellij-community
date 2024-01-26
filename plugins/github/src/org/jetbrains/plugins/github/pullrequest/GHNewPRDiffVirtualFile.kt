@@ -6,8 +6,8 @@ import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.CombinedBlockProducer
-import com.intellij.diff.tools.combined.CombinedDiffModel
-import com.intellij.diff.tools.combined.CombinedDiffModelImpl
+import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+import com.intellij.diff.tools.combined.CombinedDiffManager
 import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
@@ -52,8 +52,8 @@ internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManage
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createModel(): CombinedDiffModel {
-    val model = CombinedDiffModelImpl(project)
+  override fun createModel(): CombinedDiffComponentProcessor {
+    val model = CombinedDiffManager.getInstance(project).createProcessor()
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel
     diffModel.addAndInvokeRequestChainListener(model.ourDisposable) {

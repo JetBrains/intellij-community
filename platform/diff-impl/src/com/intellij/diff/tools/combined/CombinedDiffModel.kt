@@ -10,7 +10,6 @@ import java.util.*
 
 
 interface CombinedDiffModel {
-  val haveParentDisposable: Boolean
   val ourDisposable: CheckedDisposable
   val context: DiffContext
   val requests: List<CombinedBlockProducer>

@@ -1,14 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.tools.combined.*
+import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.toListIfNotMany
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 
-class CombinedDiffManagerImpl : CombinedDiffManager {
-  override fun create(model: CombinedDiffModel): CombinedDiffComponentProcessor {
+class CombinedDiffManagerImpl(val project: Project) : CombinedDiffManager {
+  override fun createProcessor(diffPlace: String?): CombinedDiffComponentProcessor {
+    val model = CombinedDiffModelImpl(project)
+    model.context.putUserData(DiffUserDataKeys.PLACE, diffPlace)
     val goToChangePopupAction = MyGoToChangePopupAction(model)
     return CombinedDiffComponentProcessorImpl(model, goToChangePopupAction)
   }

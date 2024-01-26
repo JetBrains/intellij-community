@@ -34,7 +34,7 @@ abstract class CombinedDiffPreview(project: Project,
 
   override val previewFile: VirtualFile by lazy {
     object : CombinedDiffPreviewVirtualFile() {
-      override fun createModel(): CombinedDiffModel = getOrCreatePreviewModel().model
+      override fun createModel(): CombinedDiffComponentProcessor = getOrCreatePreviewModel().model
     }
   }
 
@@ -45,10 +45,11 @@ abstract class CombinedDiffPreview(project: Project,
 
   private fun getOrCreatePreviewModel(): CombinedDiffPreviewModel {
     previewModel?.let { return it }
-    previewModel = createPreviewModel().also {
-      it.model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
-    }
-    return previewModel!!
+    val newPreviewModel = createPreviewModel()
+    newPreviewModel.model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
+    Disposer.register(newPreviewModel.model.ourDisposable) { previewModel = null }
+    previewModel = newPreviewModel
+    return newPreviewModel
   }
 
   override fun updatePreview(fromModelRefresh: Boolean) {
@@ -93,17 +94,19 @@ abstract class CombinedDiffPreview(project: Project,
 }
 
 abstract class CombinedDiffPreviewModel(val project: Project,
+                                        diffPlace: String?,
                                         parentDisposable: Disposable
 ) : DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
 
-  val model: CombinedDiffModel = CombinedDiffModelImpl(project, true)
+  val model: CombinedDiffComponentProcessor
 
   init {
+    model = CombinedDiffManager.getInstance(project).createProcessor(diffPlace)
     Disposer.register(parentDisposable, model.ourDisposable)
     model.context.putUserData(COMBINED_DIFF_PREVIEW_MODEL, this)
   }
 
-  val requests: List<CombinedBlockProducer> get() = model.requests
+  val requests: List<CombinedBlockProducer> get() = model.blocks
 
   var selected by Delegates.equalVetoingObservable<Wrapper?>(null) { change ->
     if (change != null) {

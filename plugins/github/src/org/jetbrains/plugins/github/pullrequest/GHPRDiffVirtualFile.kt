@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.collaboration.file.codereview.CodeReviewCombinedDiffVirtualFile
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.tools.combined.CombinedDiffModel
+import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
@@ -50,7 +50,7 @@ internal data class GHPRCombinedDiffPreviewVirtualFile(private val fileManagerId
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createModel(): CombinedDiffModel {
+  override fun createModel(): CombinedDiffComponentProcessor {
     return project.service<GHPRDiffService>().createCombinedDiffModel(repository, pullRequest)
   }
 }
