@@ -58,7 +58,7 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     if (this != source) {
       setListLoaded(false);
       EditorColorsScheme selectedSchemeBackup = myOptions.getSelectedScheme();
-      resetSchemes(myOptions.getOrderedSchemes());
+      resetGroupedSchemes(myOptions.getOrderedSchemes());
       selectScheme(selectedSchemeBackup);
       setListLoaded(true);
       myDispatcher.getMulticaster().schemeChanged(this);

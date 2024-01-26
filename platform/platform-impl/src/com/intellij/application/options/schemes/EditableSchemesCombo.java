@@ -2,6 +2,7 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -187,6 +188,10 @@ public final class EditableSchemesCombo<T extends Scheme> {
 
   public void resetSchemes(@NotNull Collection<? extends T> schemes) {
     myComboBox.resetSchemes(schemes);
+  }
+
+  public void resetGroupedSchemes(@NotNull Groups<? extends T> schemeGroups) {
+    myComboBox.resetGroupedSchemes(schemeGroups);
   }
 
   public @Nullable T getSelectedScheme() {

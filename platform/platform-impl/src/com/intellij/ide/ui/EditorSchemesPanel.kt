@@ -53,6 +53,8 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions)
   override fun createActionLink(): ActionLink? = null
 
   override fun getContextHelpLabelText(): String? = null
+
+  override fun useBoldForNonRemovableSchemes(): Boolean = false
 }
 
 private class OpenEditorSchemeConfigurableAction(val component: Component) :

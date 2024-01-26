@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
+//import com.intellij.application.options.colors.GroupInfo;
+
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
@@ -9,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageType;
@@ -182,6 +185,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   
   public final void resetSchemes(@NotNull Collection<? extends T> schemes) {
     mySchemesCombo.resetSchemes(schemes);
+  }
+
+  public final void resetGroupedSchemes(@NotNull Groups<? extends T> schemeGroups) {
+    mySchemesCombo.resetGroupedSchemes(schemeGroups);
   }
   
   public void disposeUIResources() {

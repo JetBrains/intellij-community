@@ -51,6 +51,9 @@
     <applicationService serviceInterface="com.intellij.ide.ui.ThemeListProvider"
                         serviceImplementation="com.intellij.ide.ui.laf.ThemeListProviderImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorSchemesSorter"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesSorterImpl"/>
+
     <applicationService serviceInterface="com.intellij.ide.environment.EnvironmentService"
                         serviceImplementation="com.intellij.ide.environment.impl.DefaultEnvironmentService"
                         headlessImplementation="com.intellij.ide.environment.impl.HeadlessEnvironmentService"/>

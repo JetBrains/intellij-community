@@ -20,7 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
-import com.intellij.openapi.editor.colors.impl.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
+import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -227,10 +230,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return scheme instanceof  MyColorScheme && ((MyColorScheme)scheme).canBeDeleted();
   }
 
-  public @NotNull Collection<EditorColorsScheme> getOrderedSchemes() {
-    List<EditorColorsScheme> schemes = new ArrayList<>(mySchemes.values());
-    schemes.sort(EditorColorSchemesComparator.INSTANCE);
-    return schemes;
+  public @NotNull Groups<EditorColorsScheme> getOrderedSchemes() {
+    return EditorColorSchemesSorter.getInstance().getOrderedSchemes(mySchemes);
   }
 
   public @NotNull Collection<EditorColorsScheme> getSchemes() {
