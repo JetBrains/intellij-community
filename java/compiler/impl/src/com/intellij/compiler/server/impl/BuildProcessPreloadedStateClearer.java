@@ -4,6 +4,8 @@ package com.intellij.compiler.server.impl;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
@@ -14,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
 
-public final class BuildProcessPreloadedStateClearer implements WorkspaceModelChangeListener {
+public final class BuildProcessPreloadedStateClearer implements WorkspaceModelChangeListener, ModuleRootListener {
 
   private final Project myProject;
 
@@ -117,5 +119,16 @@ public final class BuildProcessPreloadedStateClearer implements WorkspaceModelCh
       }
     }
     return proc.getResult();
+  }
+
+  @Override
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
+    if (!event.isCausedByWorkspaceModelChangesOnly()) {
+      // only process events that are not covered by events from the workspace model
+      final Object source = event.getSource();
+      if (source instanceof Project) {
+        BuildManager.getInstance().clearState((Project)source);
+      }
+    }
   }
 }
