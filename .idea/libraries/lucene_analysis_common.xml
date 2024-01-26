@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-analysis-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-analysis-common:9.8.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-analysis-common:9.9.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.8.0/lucene-analysis-common-9.8.0.jar">
-          <sha256sum>722cff7ce85bbf6a487d8a1c0ad89c7f11d9781c88459cb0140e2c53e3ff5b02</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.9.1/lucene-analysis-common-9.9.1.jar">
+          <sha256sum>b25800d416ab405c8fd8b7c52d96c1bd69613052d3e76ec0250b856fe812c288</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.8.0/lucene-analysis-common-9.8.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.9.1/lucene-analysis-common-9.9.1.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.8.0/lucene-analysis-common-9.8.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.9.1/lucene-analysis-common-9.9.1-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.8.0/lucene-analysis-common-9.8.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9.9.1/lucene-analysis-common-9.9.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
