@@ -14,8 +14,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
+import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.ui.*
@@ -228,7 +228,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
       .installOn(this)
     HelpTooltip.setMasterPopupOpenCondition(this) { !((parent as? AbstractDroppableStripe)?.isDroppingButton() ?: false) }
 
-    setOrUpdateShowName(ToolWindowManagerEx.getInstanceEx(toolWindow.project).isShowNames())
+    setOrUpdateShowName(ResizeStripeManager.isShowNames())
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1

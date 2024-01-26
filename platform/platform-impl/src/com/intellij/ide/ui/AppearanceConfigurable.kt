@@ -45,6 +45,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY
 import com.intellij.openapi.wm.impl.isMergeMainMenuWithWindowTitleOverridden
+import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
@@ -78,6 +79,9 @@ private val lafManager: LafManager
 private val cdShowToolWindowBars
   get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"),
                              { !settings.hideToolStripes }, { settings.hideToolStripes = !it },
+                             groupName = windowOptionGroupName)
+private val cdShowToolWindowNames
+  get() = CheckboxDescriptor(message("checkbox.show.tool.window.names"), settings::showToolWindowsNames,
                              groupName = windowOptionGroupName)
 private val cdShowToolWindowNumbers
   get() = CheckboxDescriptor(message("checkbox.show.tool.window.numbers"), settings::showToolWindowsNumbers,
@@ -132,6 +136,7 @@ private val cdDifferentiateProjects
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
     cdShowToolWindowBars,
+    cdShowToolWindowNames,
     cdShowToolWindowNumbers,
     cdEnableMenuMnemonics,
     cdEnableControlsMnemonics,
@@ -500,27 +505,28 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
           }
         )
-        twoColumnsRow(
-          { checkBox(cdLeftToolWindowLayout) },
-          {
-            if (ExperimentalUI.isNewUI()) {
-              checkBox(cdRememberSizeForEachToolWindowNewUI)
-            }
-            else {
-              checkBox(cdRememberSizeForEachToolWindowOldUI)
-            }
-          },
-        )
         if (ExperimentalUI.isNewUI()) {
           twoColumnsRow(
-            { checkBox(cdRightToolWindowLayout) },
-            null,
+            {
+              checkBox(cdShowToolWindowNames).onApply {
+                ResizeStripeManager.applyShowNames()
+              }
+            },
+            { checkBox(cdLeftToolWindowLayout) }
+          )
+          twoColumnsRow(
+            { checkBox(cdRememberSizeForEachToolWindowNewUI) },
+            { checkBox(cdRightToolWindowLayout) }
           )
         }
         else {
           twoColumnsRow(
+            { checkBox(cdLeftToolWindowLayout) },
+            { checkBox(cdRememberSizeForEachToolWindowOldUI) }
+          )
+          twoColumnsRow(
             { checkBox(cdRightToolWindowLayout) },
-            { checkBox(cdShowToolWindowNumbers) },
+            { checkBox(cdShowToolWindowNumbers) }
           )
         }
       }

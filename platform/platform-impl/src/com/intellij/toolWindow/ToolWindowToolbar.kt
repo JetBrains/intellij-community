@@ -63,8 +63,8 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     }
   }
 
-  fun updateResizeState(project: Project, toolbar: ToolWindowToolbar?) {
-    myResizeManager.updateState(project, toolbar)
+  fun updateResizeState(toolbar: ToolWindowToolbar?) {
+    myResizeManager.updateState(toolbar)
   }
 
   open fun createBorder():Border = JBUI.Borders.empty()

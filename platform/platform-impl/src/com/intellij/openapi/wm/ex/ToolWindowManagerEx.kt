@@ -36,12 +36,8 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
   open fun setMoreButtonSide(side: ToolWindowAnchor) {
   }
 
-  open fun isShowNames(): Boolean = false
-
   open fun setShowNames(value: Boolean) {
   }
-
-  open fun getSideCustomWidth(side: ToolWindowAnchor): Int = 0
 
   open fun setSideCustomWidth(toolbar: ToolWindowToolbar, width: Int) {
   }

@@ -1527,26 +1527,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(MoreButtonUpdated)
   }
 
-  override fun isShowNames() = state.showNames
-
   override fun setShowNames(value: Boolean) {
-    state.showNames = value
-
     if (isNewUi) {
-      if (value) {
-        val defaultWidth = JBUI.scale(if (UISettings.Companion.getInstance().compactMode) 40 else 54)
-        state.sideCustomWidth[ToolWindowAnchor.LEFT] = defaultWidth
-        state.sideCustomWidth[ToolWindowAnchor.RIGHT] = defaultWidth
-      }
-      else {
-        state.sideCustomWidth.remove(ToolWindowAnchor.LEFT)
-        state.sideCustomWidth.remove(ToolWindowAnchor.RIGHT)
-      }
-
       for (pane in toolWindowPanes.values) {
         val buttonManager = pane.buttonManager
         if (buttonManager is ToolWindowPaneNewButtonManager) {
-          buttonManager.updateResizeState(project, null)
+          buttonManager.updateResizeState(null)
         }
       }
     }
@@ -1554,15 +1540,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     fireStateChanged(ShowNames)
   }
 
-  override fun getSideCustomWidth(side: ToolWindowAnchor) = state.sideCustomWidth[side] ?: 0
-
   override fun setSideCustomWidth(toolbar: ToolWindowToolbar, width: Int) {
-    state.sideCustomWidth[toolbar.anchor] = width
-
-    for (pane in toolWindowPanes.values) {
-      val buttonManager = pane.buttonManager
-      if (buttonManager is ToolWindowPaneNewButtonManager) {
-        buttonManager.updateResizeState(project, toolbar)
+    if (isNewUi) {
+      for (pane in toolWindowPanes.values) {
+        val buttonManager = pane.buttonManager
+        if (buttonManager is ToolWindowPaneNewButtonManager) {
+          buttonManager.updateResizeState(toolbar)
+        }
       }
     }
 

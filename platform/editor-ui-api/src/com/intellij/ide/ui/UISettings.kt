@@ -156,6 +156,24 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showToolWindowsNumbers = value
     }
 
+  var showToolWindowsNames: Boolean
+    get() = state.showToolWindowsNames
+    set(value) {
+      state.showToolWindowsNames = value
+    }
+
+  var toolWindowLeftSideCustomWidth: Int
+    get() = state.toolWindowLeftSideCustomWidth
+    set(value) {
+      state.toolWindowLeftSideCustomWidth = value
+    }
+
+  var toolWindowRightSideCustomWidth: Int
+    get() = state.toolWindowRightSideCustomWidth
+    set(value) {
+      state.toolWindowRightSideCustomWidth = value
+    }
+
   var showEditorToolTip: Boolean
     get() = state.showEditorToolTip
     set(value) {

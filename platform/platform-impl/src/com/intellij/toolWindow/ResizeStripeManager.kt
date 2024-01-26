@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -31,7 +31,6 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   private var myCalculateDelta = false
   private var myDelta = 0
   private var myCustomWidth = 0
-  private var myProject: Project? = null
 
   init {
     myComponent.addMouseListener(object : PopupHandler() {
@@ -73,13 +72,11 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     }
   }
 
-  fun updateState(project: Project, toolbar: ToolWindowToolbar?) {
+  fun updateState(toolbar: ToolWindowToolbar?) {
     if (toolbar == null) {
-      myProject = project
-      val manager = ToolWindowManagerEx.getInstanceEx(project)
-      val enabled = manager.isShowNames()
+      val enabled = isShowNames()
       if (enabled) {
-        myCustomWidth = manager.getSideCustomWidth(myComponent.anchor)
+        myCustomWidth = getSideCustomWidth(myComponent.anchor)
         myComponent.add(mySplitter)
       }
       else {
@@ -92,7 +89,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       return
     }
     else {
-      myCustomWidth = ToolWindowManagerEx.getInstanceEx(project).getSideCustomWidth(myComponent.anchor)
+      myCustomWidth = getSideCustomWidth(myComponent.anchor)
     }
     updateView()
   }
@@ -126,7 +123,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     }
 
     myCustomWidth = width
-    ToolWindowManagerEx.getInstanceEx(myProject ?: return).setSideCustomWidth(myComponent, width)
+    setSideCustomWidth(myComponent, width)
     updateView()
   }
 
@@ -163,5 +160,52 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   override fun setDragging(dragging: Boolean) {
     myCalculateDelta = dragging
     myDelta = 0
+  }
+
+  companion object {
+    fun isShowNames(): Boolean = UISettings.getInstance().showToolWindowsNames
+
+    fun setShowNames(value: Boolean) {
+      UISettings.getInstance().showToolWindowsNames = value
+      applyShowNames()
+    }
+
+    fun applyShowNames() {
+      val uiSettings = UISettings.getInstance()
+      val newValue = uiSettings.showToolWindowsNames
+      val defaultWidth = if (newValue) JBUI.scale(if (UISettings.Companion.getInstance().compactMode) 40 else 54) else 0
+
+      uiSettings.toolWindowLeftSideCustomWidth = defaultWidth
+      uiSettings.toolWindowRightSideCustomWidth = defaultWidth
+
+      for (project in ProjectManager.getInstance().openProjects) {
+        ToolWindowManagerEx.getInstanceEx(project).setShowNames(newValue)
+      }
+    }
+
+    fun getSideCustomWidth(side: ToolWindowAnchor): Int {
+      if (side == ToolWindowAnchor.LEFT) {
+        return UISettings.getInstance().toolWindowLeftSideCustomWidth
+      }
+      if (side == ToolWindowAnchor.RIGHT) {
+        return UISettings.getInstance().toolWindowRightSideCustomWidth
+      }
+      return 0
+    }
+
+    fun setSideCustomWidth(toolbar: ToolWindowToolbar, width: Int) {
+      when (toolbar.anchor) {
+        ToolWindowAnchor.LEFT -> {
+          UISettings.getInstance().toolWindowLeftSideCustomWidth = width
+        }
+        ToolWindowAnchor.RIGHT -> {
+          UISettings.getInstance().toolWindowRightSideCustomWidth = width
+        }
+      }
+
+      for (project in ProjectManager.getInstance().openProjects) {
+        ToolWindowManagerEx.getInstanceEx(project).setSideCustomWidth(toolbar, width)
+      }
+    }
   }
 }

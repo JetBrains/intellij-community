@@ -22,7 +22,7 @@ internal interface ToolWindowButtonManager {
 
   fun initMoreButton(project: Project) {}
 
-  fun updateResizeState(project: Project, toolbar: ToolWindowToolbar?) {}
+  fun updateResizeState(toolbar: ToolWindowToolbar?) {}
 
   fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean
 

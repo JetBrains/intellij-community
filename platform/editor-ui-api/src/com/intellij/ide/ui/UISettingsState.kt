@@ -51,6 +51,13 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS")
   var showToolWindowsNumbers: Boolean by property(false)
 
+  @get:OptionTag("SHOW_TOOL_WINDOW_NAMES")
+  var showToolWindowsNames: Boolean by property(false)
+  @get:OptionTag("TOOL_WINDOW_LEFT_SIDE_CUSTOM_WIDTH")
+  var toolWindowLeftSideCustomWidth: Int by property(0)
+  @get:OptionTag("TOOL_WINDOW_RIGHT_SIDE_CUSTOM_WIDTH")
+  var toolWindowRightSideCustomWidth: Int by property(0)
+
   @get:OptionTag("HIDE_TOOL_STRIPES")
   var hideToolStripes: Boolean by property(false)
 
