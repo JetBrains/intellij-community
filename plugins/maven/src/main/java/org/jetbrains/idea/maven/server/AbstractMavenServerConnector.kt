@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.ExceptionUtil
@@ -31,14 +30,13 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     return myMultimoduleDirectories.add(multimoduleDirectory)
   }
 
-  protected abstract val server: MavenServer
-    get
+  protected abstract fun getServer(): MavenServer
 
   @Throws(RemoteException::class)
   override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
     synchronized(embedderLock) {
       try {
-        return server.createEmbedder(settings, MavenRemoteObjectWrapper.ourToken)
+        return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken)
       }
       catch (e: Exception) {
         val cause = ExceptionUtil.findCause(e, MavenCoreInitializationException::class.java)
@@ -56,7 +54,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
   @Throws(RemoteException::class)
   override fun createIndexer(): MavenServerIndexer {
     synchronized(embedderLock) {
-      return server.createIndexer(MavenRemoteObjectWrapper.ourToken)
+      return getServer().createIndexer(MavenRemoteObjectWrapper.ourToken)
     }
   }
 
@@ -65,7 +63,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
         val transformer = RemotePathTransformerFactory.createForProject(project!!)
         val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
         val targetPomDir = File(transformer.toRemotePathOrSelf(pomDir.toString()))
-        val m = server.interpolateAndAlignModel(model, targetBasedir, targetPomDir, MavenRemoteObjectWrapper.ourToken)
+      val m = getServer().interpolateAndAlignModel(model, targetBasedir, targetPomDir, MavenRemoteObjectWrapper.ourToken)
         if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
           MavenBuildPathsChange({ s: String? -> transformer.toIdePath(s!!)!! }, { s: String? -> transformer.canBeRemotePath(s) }).perform(m)
         }
@@ -74,7 +72,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
   }
 
   override fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
-    return perform { server.assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken) }
+    return perform { getServer().assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken) }
   }
 
   override fun applyProfiles(model: MavenModel,
@@ -82,10 +80,9 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
                              explicitProfiles: MavenExplicitProfiles,
                              alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
     return perform {
-        val transformer = RemotePathTransformerFactory.createForProject(project!!)
-        val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
-        server.applyProfiles(model, targetBasedir, explicitProfiles, HashSet(alwaysOnProfiles),
-                             MavenRemoteObjectWrapper.ourToken)
+      val transformer = RemotePathTransformerFactory.createForProject(project!!)
+      val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
+      getServer().applyProfiles(model, targetBasedir, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
       }
   }
 
@@ -100,7 +97,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     get() = ArrayList(myMultimoduleDirectories)
 
   override fun getDebugStatus(clean: Boolean): MavenServerStatus {
-    return perform { server.getDebugStatus(clean) }
+    return perform { getServer().getDebugStatus(clean) }
   }
 
   override fun toString(): String {
@@ -111,11 +108,5 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
            ", myMultimoduleDirectories=" + myMultimoduleDirectories +
            ", myCreationTrace = " + ExceptionUtil.getThrowableText(myCreationTrace) +
            '}'
-  }
-
-  @FunctionalInterface
-  interface Retriable<T, E : Exception?> : RemoteObjectWrapper.Retriable<T, E>
-  companion object {
-    val LOG: Logger = Logger.getInstance(AbstractMavenServerConnector::class.java)
   }
 }

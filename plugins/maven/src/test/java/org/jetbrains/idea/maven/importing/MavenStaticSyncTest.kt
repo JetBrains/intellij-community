@@ -569,7 +569,11 @@ class NoRealMavenServerManager : MavenServerManager {
     noRealMavenAllowed()
   }
 
-  override fun getConnector(project: Project, workingDirectory: String): MavenServerConnector {
+  override fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector {
+    noRealMavenAllowed()
+  }
+
+  override suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector {
     noRealMavenAllowed()
   }
 

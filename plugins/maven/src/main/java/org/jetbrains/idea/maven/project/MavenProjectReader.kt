@@ -13,7 +13,6 @@ import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.server.ProfileApplicationResult
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
@@ -72,26 +71,39 @@ class MavenProjectReader(private val myProject: Project) {
                                          explicitProfiles: MavenExplicitProfiles,
                                          recursionGuard: MutableSet<VirtualFile>,
                                          locator: MavenProjectReaderProjectLocator): Pair<RawModelReadResult, MavenExplicitProfiles> {
-    var cachedModel = myCache[file]
-    if (cachedModel == null) {
-      cachedModel = doReadProjectModel(myProject, file, false)
-      myCache.put(file, cachedModel)
+    var cachedModelReadResult = myCache[file]
+    if (cachedModelReadResult == null) {
+      cachedModelReadResult = doReadProjectModel(myProject, file, false)
+      myCache.put(file, cachedModelReadResult)
     }
 
     // todo modifying cached model and problems here??????
-    var model = cachedModel.model
-    val alwaysOnProfiles = cachedModel.alwaysOnProfiles
-    val problems = cachedModel.problems
+    val modelFromCache = cachedModelReadResult.model
+    val alwaysOnProfiles = cachedModelReadResult.alwaysOnProfiles
+    val problems = cachedModelReadResult.problems
 
-    model = resolveInheritance(generalSettings, model, projectPomDir, file, explicitProfiles, recursionGuard, locator, problems)
-    addSettingsProfiles(generalSettings, model, alwaysOnProfiles, problems)
+    val modelWithInheritance = resolveInheritance(
+      generalSettings,
+      modelFromCache,
+      projectPomDir,
+      file,
+      explicitProfiles,
+      recursionGuard,
+      locator,
+      problems)
 
-    val applied = applyProfiles(model, projectPomDir, MavenUtil.getBaseDir(file), explicitProfiles, alwaysOnProfiles)
-    model = applied.model
+    addSettingsProfiles(generalSettings, modelWithInheritance, alwaysOnProfiles, problems)
 
-    repairModelBody(model)
+    val basedir = MavenUtil.getBaseDir(file)
 
-    return Pair.create(RawModelReadResult(model, problems, alwaysOnProfiles), applied.activatedProfiles)
+    val connector = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
+    val profileApplicationResult = connector.applyProfiles(modelWithInheritance, basedir, explicitProfiles, alwaysOnProfiles)
+
+    val modelWithProfiles = profileApplicationResult.model
+
+    repairModelBody(modelWithProfiles)
+
+    return Pair.create(RawModelReadResult(modelWithProfiles, problems, alwaysOnProfiles), profileApplicationResult.activatedProfiles)
   }
 
   private suspend fun addSettingsProfiles(generalSettings: MavenGeneralSettings,
@@ -123,15 +135,6 @@ class MavenProjectReader(private val myProject: Project) {
 
     problems.addAll(mySettingsProfilesCache!!.problems)
     alwaysOnProfiles.addAll(mySettingsProfilesCache!!.alwaysOnProfiles)
-  }
-
-  private fun applyProfiles(model: MavenModel,
-                            projectPomDir: Path,
-                            basedir: Path,
-                            explicitProfiles: MavenExplicitProfiles,
-                            alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
-    return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
-      .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles)
   }
 
   private suspend fun resolveInheritance(generalSettings: MavenGeneralSettings,

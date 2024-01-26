@@ -15,7 +15,9 @@ interface MavenServerManager : Disposable {
 
   fun restartMavenConnectors(project: Project, wait: Boolean, condition: Predicate<MavenServerConnector>)
 
-  fun getConnector(project: Project, workingDirectory: String): MavenServerConnector
+  fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector
+
+  suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector
 
   fun shutdownConnector(connector: MavenServerConnector, wait: Boolean): Boolean
 

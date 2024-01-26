@@ -151,7 +151,16 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return connector
   }
 
-  override fun getConnector(project: Project, workingDirectory: String): MavenServerConnector {
+  override fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector {
+    var connector = doGetConnector(project, workingDirectory)
+    if (!connector.ping()) {
+      shutdownConnector(connector, true)
+      connector = doGetConnector(project, workingDirectory)
+    }
+    return connector
+  }
+
+  override suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector {
     var connector = doGetConnector(project, workingDirectory)
     if (!connector.ping()) {
       shutdownConnector(connector, true)
@@ -338,7 +347,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
         val forceResolveDependenciesSequentially = Registry.`is`("maven.server.force.resolve.dependencies.sequentially")
         val useCustomDependenciesResolver = Registry.`is`("maven.server.use.custom.dependencies.resolver")
 
-        myConnector = this@MavenServerManagerImpl.getConnector(project, multiModuleProjectDirectory)
+        myConnector = this@MavenServerManagerImpl.getConnectorBlocking(project, multiModuleProjectDirectory)
         return myConnector!!.createEmbedder(MavenEmbedderSettings(
           settings,
           transformer.toRemotePath(multiModuleProjectDirectory),
@@ -476,7 +485,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
         }
         val workingDirectory = ObjectUtils.chooseNotNull<@SystemIndependent String?>(project.basePath,
                                                                                      SystemUtils.getUserHome().absolutePath)
-        return getConnector(project, workingDirectory!!).createIndexer()
+        return getConnectorBlocking(project, workingDirectory!!).createIndexer()
       }
     }
   }

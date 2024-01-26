@@ -28,8 +28,8 @@ abstract class MavenServerConnectorBase(project: Project?,
   @JvmField
   protected var mySupport: MavenRemoteProcessSupport? = null
 
-  protected val myConnectStarted: AtomicBoolean = AtomicBoolean(false)
-  protected val myTerminated: AtomicBoolean = AtomicBoolean(false)
+  private val myConnectStarted: AtomicBoolean = AtomicBoolean(false)
+  private val myTerminated: AtomicBoolean = AtomicBoolean(false)
 
   @JvmField
   protected var throwExceptionIfProjectDisposed: Boolean = true
@@ -55,7 +55,7 @@ abstract class MavenServerConnectorBase(project: Project?,
     ApplicationManager.getApplication().executeOnPooledThread(newStartServerTask())
   }
 
-  protected fun waitForServer(): MavenServer? {
+  private fun waitForServer(): MavenServer? {
     while (!myServerPromise.isDone) {
       try {
         myServerPromise[100, TimeUnit.MILLISECONDS]
@@ -70,29 +70,26 @@ abstract class MavenServerConnectorBase(project: Project?,
     return myServerPromise.get()
   }
 
-  override val server: MavenServer
-    get() {
-      try {
-        val server = waitForServer()
-        if (server == null) {
-          throw ProcessCanceledException()
-        }
-        return server
+  override fun getServer(): MavenServer {
+    try {
+      val server = waitForServer()
+      if (server == null) {
+        throw ProcessCanceledException()
       }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        try {
-          getInstance().shutdownConnector(this, false)
-        }
-        catch (ignored: Throwable) {
-        }
-        throw if (e is CannotStartServerException
-        ) e
-        else CannotStartServerException(e)
-      }
+      return server
     }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      try {
+        getInstance().shutdownConnector(this, false)
+      }
+      catch (ignored: Throwable) {
+      }
+      throw if (e is CannotStartServerException) e else CannotStartServerException(e)
+    }
+  }
 
   @ApiStatus.Internal
   override fun stop(wait: Boolean) {
@@ -135,7 +132,7 @@ abstract class MavenServerConnectorBase(project: Project?,
 
   override fun ping(): Boolean {
     try {
-      val pinged = server.ping(MavenRemoteObjectWrapper.ourToken)
+      val pinged = getServer().ping(MavenRemoteObjectWrapper.ourToken)
       if (MavenLog.LOG.isTraceEnabled) {
         MavenLog.LOG.trace("maven server ping: $pinged")
       }

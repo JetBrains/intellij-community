@@ -37,12 +37,12 @@ public class MavenServerManagerTest extends MavenTestCase {
 
   public void testInitializingDoesntTakeReadAction() throws Exception {
     //make sure all components are initialized to prevent deadlocks
-    ensureConnected(MavenServerManager.getInstance().getConnector(getProject(), getProjectRoot().getPath()));
+    ensureConnected(MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath()));
 
     Future result = ApplicationManager.getApplication().runWriteAction(
       (ThrowableComputable<Future, Exception>)() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MavenServerManager.getInstance().closeAllConnectorsAndWait();
-        ensureConnected(MavenServerManager.getInstance().getConnector(getProject(), getProjectRoot().getPath()));
+        ensureConnected(MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath()));
       }));
 
 
@@ -74,10 +74,10 @@ public class MavenServerManagerTest extends MavenTestCase {
     MavenWorkspaceSettingsComponent settingsComponent = MavenWorkspaceSettingsComponent.getInstance(getProject());
     String vmOptions = settingsComponent.getSettings().getImportingSettings().getVmOptionsForImporter();
     try {
-      MavenServerConnector connector = MavenServerManager.getInstance().getConnector(getProject(), getProjectRoot().getPath());
+      MavenServerConnector connector = MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath());
       ensureConnected(connector);
       settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter(vmOptions + " -DtestVm=test");
-      assertNotSame(connector, ensureConnected(MavenServerManager.getInstance().getConnector(getProject(), getProjectRoot().getPath())));
+      assertNotSame(connector, ensureConnected(MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath())));
     }
     finally {
       settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter(vmOptions);
@@ -85,10 +85,10 @@ public class MavenServerManagerTest extends MavenTestCase {
   }
 
   public void testShouldRestartConnectorAutomaticallyIfFailed() {
-    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(getProject(), getProjectRoot().getPath());
+    MavenServerConnector connector = MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath());
     ensureConnected(connector);
     kill(connector);
-    MavenServerConnector newConnector = MavenServerManager.getInstance().getConnector(getProject(), getProjectRoot().getPath());
+    MavenServerConnector newConnector = MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath());
     ensureConnected(newConnector);
     assertNotSame(connector, newConnector);
   }
@@ -96,7 +96,7 @@ public class MavenServerManagerTest extends MavenTestCase {
 
 
   public void testShouldStopPullingIfConnectorIsFailing() {
-    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(getProject(), getProjectRoot().getPath());
+    MavenServerConnector connector = MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath());
     ensureConnected(connector);
     ScheduledExecutorService executor =
       ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, ScheduledExecutorService.class, "myExecutor");
@@ -116,9 +116,9 @@ public class MavenServerManagerTest extends MavenTestCase {
     File second = new File(topDir, "second/.mvn");
     assertTrue(first.mkdirs());
     assertTrue(second.mkdirs());
-    MavenServerConnector connectorFirst = MavenServerManager.getInstance().getConnector(getProject(), first.getAbsolutePath());
+    MavenServerConnector connectorFirst = MavenServerManager.getInstance().getConnectorBlocking(getProject(), first.getAbsolutePath());
     ensureConnected(connectorFirst);
-    MavenServerConnector connectorSecond = MavenServerManager.getInstance().getConnector(getProject(), second.getAbsolutePath());
+    MavenServerConnector connectorSecond = MavenServerManager.getInstance().getConnectorBlocking(getProject(), second.getAbsolutePath());
     assertSame(connectorFirst, connectorSecond);
     MavenServerManager.getInstance().shutdownConnector(connectorFirst, true);
     assertEmpty(MavenServerManager.getInstance().getAllConnectors());
