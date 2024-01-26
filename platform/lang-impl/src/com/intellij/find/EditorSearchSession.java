@@ -224,12 +224,7 @@ public class EditorSearchSession implements SearchSession,
   }
 
   private static AnAction createFilterGroup() {
-    DefaultActionGroup group = new ShowFilterPopupGroup() {
-      @Override
-      protected boolean enableLiveIndicator(@NotNull FindModel model) {
-        return super.enableLiveIndicator(model) || !model.isGlobal();
-      }
-    };
+    DefaultActionGroup group = new ShowFilterPopupGroup();
 
     group.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
     group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_SEARCH_FILTER_RESULTS), Constraints.FIRST);
