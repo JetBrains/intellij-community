@@ -24,7 +24,8 @@ interface CombinedDiffComponentFactoryProvider {
   fun create(model: CombinedDiffModel): CombinedDiffComponentFactory
 }
 
-open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
+class CombinedDiffComponentFactory(val model: CombinedDiffModel,
+                                   goToChangeAction: AnAction?) {
 
   internal val ourDisposable = Disposer.newCheckedDisposable()
 
@@ -40,7 +41,10 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       Disposer.register(ourDisposable, model.ourDisposable)
     }
     model.addListener(ModelListener(), ourDisposable)
-    mainUi = createMainUI()
+
+    mainUi = CombinedDiffMainUI(model, goToChangeAction)
+    Disposer.register(ourDisposable, mainUi)
+    model.context.putUserData(COMBINED_DIFF_MAIN_UI, mainUi)
 
     combinedViewer = createCombinedViewer(true)
 
@@ -76,13 +80,6 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     viewer.scrollToCaret()
   }
 
-  private fun createMainUI(): CombinedDiffMainUI {
-    return CombinedDiffMainUI(model, createGoToChangeAction()).also { ui ->
-      Disposer.register(ourDisposable, ui)
-      model.context.putUserData(COMBINED_DIFF_MAIN_UI, ui)
-    }
-  }
-
   private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer? {
     val context = model.context
     val blocks = model.requests.toList()
@@ -98,8 +95,6 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       mainUi.setContent(viewer, blockState)
     }
   }
-
-  protected open fun createGoToChangeAction(): AnAction? = null
 
   private inner class ModelListener : CombinedDiffModelListener {
     override fun onModelReset() {

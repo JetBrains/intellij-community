@@ -3,16 +3,14 @@ package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.tools.combined.*
 import com.intellij.openapi.ListSelection
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.toListIfNotMany
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 
 class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryProvider {
-  override fun create(model: CombinedDiffModel): CombinedDiffComponentFactory = MyFactory(model)
-
-  private inner class MyFactory(model: CombinedDiffModel) : CombinedDiffComponentFactory(model) {
-    override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction(model)
+  override fun create(model: CombinedDiffModel): CombinedDiffComponentFactory {
+    val goToChangePopupAction = MyGoToChangePopupAction(model)
+    return CombinedDiffComponentFactory(model, goToChangePopupAction)
   }
 }
 
