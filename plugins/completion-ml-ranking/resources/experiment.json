@@ -113,19 +113,26 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 27,
+      "description": "Full Line - FIM and RAG",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
     {
       "id": "java",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 13, 22 ],
+      "includeGroups": [ 13, 22, 24 ],
       "shouldLogElementFeatures": true
     },
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [15, 26, 22, 24],
+      "includeGroups": [15, 27, 22, 24],
       "shouldLogElementFeatures": true
     },
     {
