@@ -88,12 +88,6 @@ class GradleSourceSetGroovyHelper {
       return result
     }
 
-    // ignore inherited source sets from parent project
-    def parentProjectSourceSets = project.parent == null ? null : JavaPluginUtil.getSourceSetContainer(project.parent)
-    if (parentProjectSourceSets && sourceSets.is(parentProjectSourceSets)) {
-      return result
-    }
-
     def (resourcesIncludes, resourcesExcludes, filterReaders) = GradleResourceFilterModelBuilder.getFilters(project, context, 'processResources')
     def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = GradleResourceFilterModelBuilder.getFilters(project, context, 'processTestResources')
     //def (javaIncludes, javaExcludes) = GradleResourceFilterModelBuilder.getFilters(project, 'compileJava')
