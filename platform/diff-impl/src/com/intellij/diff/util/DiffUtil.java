@@ -77,6 +77,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -122,7 +123,6 @@ import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
 import static com.intellij.diff.editor.DiffEditorTabFilesManagerKt.DIFF_OPENED_IN_NEW_WINDOW;
-
 import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -899,30 +899,57 @@ public final class DiffUtil {
 
   public static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
                                                                    @NotNull List<byte[]> byteContents,
-                                                                   @NotNull VirtualFile file,
+                                                                   @NotNull FilePath filePath,
                                                                    @Nullable ConflictType conflictType) {
-    ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator());
-    return getDocumentContentsForViewer(project, byteContents, file, conflictType, indicator);
+    return getDocumentContentsForViewer(project, byteContents, conflictType, new DiffContentFactoryEx.ContextProvider() {
+      @Override
+      public void passContext(@NotNull DiffContentFactoryEx.DocumentContentBuilder builder) {
+        builder.contextByFilePath(filePath);
+      }
+    });
   }
 
   public static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
                                                                    @NotNull List<byte[]> byteContents,
                                                                    @NotNull VirtualFile file,
-                                                                   @Nullable ConflictType conflictType,
-                                                                   @NotNull ProgressIndicator indicator) {
-    DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
-    DocumentContent current = contentFactory.createDocumentFromBytes(project, notNull(byteContents.get(0), EMPTY_BYTE_ARRAY), file);
-    DocumentContent last = contentFactory.createDocumentFromBytes(project, notNull(byteContents.get(2), EMPTY_BYTE_ARRAY), file);
-    DocumentContent original;
+                                                                   @Nullable ConflictType conflictType) {
+    return getDocumentContentsForViewer(project, byteContents, conflictType, new DiffContentFactoryEx.ContextProvider() {
+      @Override
+      public void passContext(@NotNull DiffContentFactoryEx.DocumentContentBuilder builder) {
+        builder.contextByHighlightFile(file);
+      }
+    });
+  }
 
+  private static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
+                                                                    @NotNull List<byte[]> byteContents,
+                                                                    @Nullable ConflictType conflictType,
+                                                                    @NotNull DiffContentFactoryEx.ContextProvider contextProvider) {
+    DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
+
+    DocumentContent current = contentFactory.documentContent(project, true)
+      .contextByProvider(contextProvider)
+      .buildFromBytes(notNull(byteContents.get(0), EMPTY_BYTE_ARRAY));
+    DocumentContent last = contentFactory.documentContent(project, true)
+      .contextByProvider(contextProvider)
+      .buildFromBytes(notNull(byteContents.get(2), EMPTY_BYTE_ARRAY));
+
+    DocumentContent original;
     if (conflictType == ConflictType.ADDED_ADDED) {
+      ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator());
+
       CharSequence currentContent = getDocumentCharSequence(current);
       CharSequence lastContent = getDocumentCharSequence(last);
-      String newContent = ComparisonManager.getInstance().mergeLinesAdditions(currentContent, lastContent, ComparisonPolicy.IGNORE_WHITESPACES, indicator);
-      original = contentFactory.create(project, newContent, file);
+      String newContent =
+        ComparisonManager.getInstance().mergeLinesAdditions(currentContent, lastContent, ComparisonPolicy.IGNORE_WHITESPACES, indicator);
+      original = contentFactory.documentContent(project, true)
+        .contextByProvider(contextProvider)
+        .buildFromText(newContent, false);
     }
     else {
-      original = contentFactory.createDocumentFromBytes(project, notNull(byteContents.get(1), EMPTY_BYTE_ARRAY), file);
+      original = contentFactory.documentContent(project, true)
+        .contextByProvider(contextProvider)
+        .buildFromBytes(notNull(byteContents.get(1), EMPTY_BYTE_ARRAY));
     }
     return Arrays.asList(current, original, last);
   }

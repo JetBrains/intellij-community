@@ -78,8 +78,8 @@ object MergeConflictResolveUtil {
 
         val mergeData = resolver.mergeData
         val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
-
         val request = DiffRequestFactory.getInstance().createMergeRequest(project, resolver.virtualFile, byteContents,
+                                                                          mergeData.CONFLICT_TYPE,
                                                                           resolver.windowTitle, resolver.contentTitles)
         resolver.titleCustomizerList.run {
           request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER,

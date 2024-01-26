@@ -12,6 +12,7 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -48,6 +49,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.Nls
 import java.io.IOException
+import java.util.*
 
 fun createTwoSidesDiffRequestProducer(project: Project,
                                       statusNode: GitFileStatusNode,
@@ -282,10 +284,9 @@ class MergedProducer(private val project: Project,
     val titles = listOf(ChangeDiffRequestProducer.getYourVersion(),
                         ChangeDiffRequestProducer.getBaseVersion(),
                         ChangeDiffRequestProducer.getServerVersion())
-    val contents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST).map {
-      DiffContentFactory.getInstance().createFromBytes(project, it, statusNode.filePath)
-    }
-    val request = SimpleDiffRequest(title, contents, titles)
+    val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
+    val contents = DiffUtil.getDocumentContentsForViewer(project, byteContents, filePath, mergeData.CONFLICT_TYPE)
+    val request = SimpleDiffRequest(title, contents.toList(), titles)
     putRevisionInfos(request, mergeData)
 
     return request

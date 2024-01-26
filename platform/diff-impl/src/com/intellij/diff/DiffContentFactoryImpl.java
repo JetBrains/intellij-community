@@ -591,6 +591,14 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     @Override
+    public @NotNull DocumentContentBuilder contextByProvider(@Nullable ContextProvider contextProvider) {
+      if (contextProvider != null) {
+        contextProvider.passContext(this);
+      }
+      return this;
+    }
+
+    @Override
     public @NotNull DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators) {
       FileType fileType = guessFileType();
       String lightFilePath = constructLightFilePath();

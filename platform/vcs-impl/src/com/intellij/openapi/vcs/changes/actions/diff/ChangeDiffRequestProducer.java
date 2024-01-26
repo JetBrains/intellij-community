@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -293,11 +290,10 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
       String title = DiffRequestFactory.getInstance().getTitle(file);
       List<String> titles = Arrays.asList(beforeRevisionTitle, getBaseVersion(), afterRevisionTitle);
 
-      List<? extends DiffContent> contents  =
-        DiffUtil.getDocumentContentsForViewer(project, Arrays.asList(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST), file,
-                                              mergeData.CONFLICT_TYPE, indicator);
+      List<byte[]> byteContents = Arrays.asList(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST);
+      List<DocumentContent> contents = DiffUtil.getDocumentContentsForViewer(project, byteContents, file, mergeData.CONFLICT_TYPE);
 
-      SimpleDiffRequest request = new SimpleDiffRequest(title, (List<DiffContent>)contents, titles);
+      SimpleDiffRequest request = new SimpleDiffRequest(title, new ArrayList<>(contents), titles);
       MergeUtils.putRevisionInfos(request, mergeData);
 
       return request;
