@@ -22,6 +22,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 
 inline fun <reified T> T.classAsCoroutineName() = CoroutineName(T::class.java.name)
+inline fun <reified T> classAsCoroutineName() = CoroutineName(T::class.java.name)
 
 /**
  * Prefer creating a service to supply a parent scope

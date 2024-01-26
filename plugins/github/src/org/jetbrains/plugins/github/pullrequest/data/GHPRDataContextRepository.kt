@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
@@ -48,10 +49,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
         val existing = cache[repository]
         if (existing != null) return@withLock existing
         try {
-          val contextScope = cs.childScope()
-          val context = withContext(contextScope.coroutineContext) {
-            loadContext(contextScope, account, requestExecutor, repository, remote)
-          }
+          val contextScope = cs.childScope(classAsCoroutineName<GHPRDataContext>())
+          val context = contextScope.getContextAsync(account, requestExecutor, repository, remote).await()
           cache[repository] = context
           context
         }
@@ -71,90 +70,95 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
   }
 
   @Throws(IOException::class)
-  private suspend fun loadContext(contextScope: CoroutineScope,
-                                  account: GithubAccount,
-                                  requestExecutor: GithubApiRequestExecutor,
-                                  parsedRepositoryCoordinates: GHRepositoryCoordinates,
-                                  remoteCoordinates: GitRemoteUrlCoordinates): GHPRDataContext {
-    val accountDetails = withContext(Dispatchers.IO) {
-      coroutineToIndicator {
-        val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-        GithubAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
-      }
-    }
-
-    val ghostUserDetails = requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))
-                           ?: error("Couldn't load ghost user details")
-
-    val repositoryInfo =
-      requestExecutor.executeSuspend(
-        GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server, parsedRepositoryCoordinates.repositoryPath))
-      )
-      ?: throw IllegalArgumentException(
-        "Repository ${parsedRepositoryCoordinates.repositoryPath} does not exist at ${account.server} or you don't have access.")
-
-    val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
-                             accountDetails.name)
-
-
-    // repository might have been renamed/moved
-    val apiRepositoryPath = repositoryInfo.path
-    val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
-
-    val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
-                                                  ghostUserDetails,
-                                                  account, currentUser,
-                                                  repositoryInfo)
-    val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-    val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), project, securityService,
-                                            requestExecutor, account.server, apiRepositoryPath)
-    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-    val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,
-                                                remoteCoordinates, apiRepositoryCoordinates)
-    val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, apiRepositoryCoordinates)
-    val filesService = GHPRFilesServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-
-    val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-    val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
-
-    val dataProviderRepository = GHPRDataProviderRepositoryImpl(project,
-                                                                detailsService,
-                                                                stateService,
-                                                                reviewService,
-                                                                filesService,
-                                                                commentService,
-                                                                changesService) { id ->
-      GHGQLPagedListLoader(ProgressManager.getInstance(),
-                           SimpleGHGQLPagesLoader(requestExecutor, { p ->
-                             GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner, apiRepositoryPath.repository,
-                                                                      id.number, p)
-                           }, true))
-    }
-
-    val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor,
-                                                        remoteCoordinates, apiRepositoryCoordinates,
-                                                        repositoryInfo.owner,
-                                                        repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
-
-    val iconsScope = contextScope.childScope(Dispatchers.Main)
-    val imageLoader = AsyncHtmlImageLoader { _, src ->
-      withContext(contextScope.coroutineContext + IMAGES_DISPATCHER) {
+  private fun CoroutineScope.getContextAsync(account: GithubAccount,
+                                             requestExecutor: GithubApiRequestExecutor,
+                                             parsedRepositoryCoordinates: GHRepositoryCoordinates,
+                                             remoteCoordinates: GitRemoteUrlCoordinates)
+    : Deferred<GHPRDataContext> {
+    val cs = this
+    return async {
+      val accountDetails = withContext(Dispatchers.IO) {
         coroutineToIndicator {
-          val bytes = requestExecutor.execute(ProgressManager.getInstance().progressIndicator, GithubApiRequests.getBytes(src))
-          Toolkit.getDefaultToolkit().createImage(bytes)
+          val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
+          GithubAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
         }
       }
-    }
-    val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
 
-    val filesManager = GHPRFilesManagerImpl(project, apiRepositoryCoordinates)
+      val ghostUserDetails = requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))
+                             ?: error("Couldn't load ghost user details")
+
+      val repositoryInfo =
+        requestExecutor.executeSuspend(
+          GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server, parsedRepositoryCoordinates.repositoryPath))
+        )
+        ?: throw IllegalArgumentException(
+          "Repository ${parsedRepositoryCoordinates.repositoryPath} does not exist at ${account.server} or you don't have access.")
+
+      val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
+                               accountDetails.name)
+
+
+      // repository might have been renamed/moved
+      val apiRepositoryPath = repositoryInfo.path
+      val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
+
+      val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
+                                                    ghostUserDetails,
+                                                    account, currentUser,
+                                                    repositoryInfo)
+      val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
+      val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), project, securityService,
+                                              requestExecutor, account.server, apiRepositoryPath)
+      val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
+      val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,
+                                                  remoteCoordinates, apiRepositoryCoordinates)
+      val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, apiRepositoryCoordinates)
+      val filesService = GHPRFilesServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
+
+      val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
+      val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
+
+      val dataProviderRepository = GHPRDataProviderRepositoryImpl(project,
+                                                                  detailsService,
+                                                                  stateService,
+                                                                  reviewService,
+                                                                  filesService,
+                                                                  commentService,
+                                                                  changesService) { id ->
+        GHGQLPagedListLoader(ProgressManager.getInstance(),
+                             SimpleGHGQLPagesLoader(requestExecutor, { p ->
+                               GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner,
+                                                                        apiRepositoryPath.repository,
+                                                                        id.number, p)
+                             }, true))
+      }
+
+      val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor,
+                                                          remoteCoordinates, apiRepositoryCoordinates,
+                                                          repositoryInfo.owner,
+                                                          repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
+
+      val iconsScope = cs.childScope(Dispatchers.Main)
+      val imageLoader = AsyncHtmlImageLoader { _, src ->
+        withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
+          coroutineToIndicator {
+            val bytes = requestExecutor.execute(ProgressManager.getInstance().progressIndicator, GithubApiRequests.getBytes(src))
+            Toolkit.getDefaultToolkit().createImage(bytes)
+          }
+        }
+      }
+      val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
+
+      val filesManager = GHPRFilesManagerImpl(project, apiRepositoryCoordinates)
     val interactionState = project.service<GHPRPersistentInteractionState>()
 
-    val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
-    return GHPRDataContext(contextScope, listLoader, listUpdatesChecker, dataProviderRepository,
-                           securityService, repoDataService, creationService, detailsService, imageLoader, avatarIconsProvider,
-                           filesManager, interactionState,
-                           GHPRDiffRequestModelImpl())
+      val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
+      ensureActive()
+      GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
+                      securityService, repoDataService, creationService, detailsService, imageLoader, avatarIconsProvider,
+                      filesManager, interactionState,
+                      GHPRDiffRequestModelImpl())
+    }
   }
 
   private class AvatarLoader(private val requestExecutor: GithubApiRequestExecutor)
