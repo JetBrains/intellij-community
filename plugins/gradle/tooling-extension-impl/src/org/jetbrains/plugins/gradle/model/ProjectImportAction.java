@@ -30,7 +30,10 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -126,15 +129,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
    * This method will be called only once, before the first invocation of the method.
    */
   private void onExecuteStart(@NotNull BuildController controller) {
-    long startTime = System.currentTimeMillis();
     myGradleBuild = getTelemetry().callWithSpan("GetBuildModel", __ -> controller.getBuildModel());
     AllModels allModels = new AllModels(myGradleBuild);
-    allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTime);
-    long startTimeBuildEnv = System.currentTimeMillis();
     BuildEnvironment buildEnvironment = getTelemetry().callWithSpan("GetBuildEnvironment",
                                                                     __ -> controller.findModel(BuildEnvironment.class));
     allModels.setBuildEnvironment(convert(buildEnvironment));
-    allModels.logPerformance("Get model BuildEnvironment", System.currentTimeMillis() - startTimeBuildEnv);
     myAllModels = allModels;
     myModelConverter = getToolingModelConverter(controller);
   }
@@ -167,10 +166,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       myIsPreviewMode,
       isProjectsLoadedAction
     );
-    long startTime = System.currentTimeMillis();
     modelFetchAction.execute(new DefaultBuildController(controller, myGradleBuild));
-    myAllModels.logPerformance("Execute GradleModelFetchAction", System.currentTimeMillis() - startTime);
-
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
 
@@ -249,7 +245,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   //       Performance logging related methods are thread safe.
   public static final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     @NotNull private final List<Build> includedBuilds = new ArrayList<>();
-    private final Map<String, Long> performanceTrace = new ConcurrentHashMap<>();
     private transient Map<String, String> myBuildsKeyPrefixesMapping;
     private byte[] openTelemetryTrace = ArrayUtilRt.EMPTY_BYTE_ARRAY;
 
@@ -294,14 +289,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       if (buildEnvironment != null) {
         addModel(buildEnvironment, BuildEnvironment.class);
       }
-    }
-
-    public void logPerformance(@NotNull final String description, long millis) {
-      performanceTrace.put(description, millis);
-    }
-
-    public Map<String, Long> getPerformanceTrace() {
-      return performanceTrace;
     }
 
     public byte[] getOpenTelemetryTrace() {

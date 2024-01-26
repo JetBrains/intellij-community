@@ -15,8 +15,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemOperationDescriptor;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.service.project.PerformanceTrace;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector;
 import com.intellij.openapi.externalSystem.statistics.Phase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
@@ -203,9 +203,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      @NotNull final GradleProjectResolverExtension projectResolverChain,
                                                      boolean isBuildSrcProject)
     throws IllegalArgumentException, IllegalStateException {
-    final long activityId = resolverCtx.getExternalSystemTaskId().getId();
-    final PerformanceTrace performanceTrace = new PerformanceTrace(activityId);
-    final GradleProjectResolverExtension tracedResolverChain = new TracedProjectResolverExtension(projectResolverChain, performanceTrace);
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
     if (buildEnvironment != null) {
@@ -228,7 +225,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     configureExecutionArgumentsAndVmOptions(executionSettings, resolverCtx, gradleVersion, isBuildSrcProject);
     final Set<Class<?>> toolingExtensionClasses = new HashSet<>();
-    for (GradleProjectResolverExtension resolverExtension = tracedResolverChain;
+    for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
          resolverExtension = resolverExtension.getNext()) {
       // inject ProjectResolverContext into gradle project resolver extensions
@@ -269,6 +266,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final long startTime = System.currentTimeMillis();
 
     syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
+    final long activityId = resolverCtx.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
 
     ProjectImportAction.AllModels allModels;
@@ -285,13 +283,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       allModels = buildActionRunner.fetchModels(
         models -> {
-          for (GradleProjectResolverExtension resolver = tracedResolverChain; resolver != null; resolver = resolver.getNext()) {
+          for (GradleProjectResolverExtension resolver = projectResolverChain; resolver != null; resolver = resolver.getNext()) {
             resolver.projectsLoaded(models);
           }
         },
         (exception) -> {
           try {
-            for (GradleProjectResolverExtension resolver = tracedResolverChain; resolver != null; resolver = resolver.getNext()) {
+            for (GradleProjectResolverExtension resolver = projectResolverChain; resolver != null; resolver = resolver.getNext()) {
               resolver.buildFinished(exception);
             }
           }
@@ -302,7 +300,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
       }
-      performanceTrace.addTrace(allModels.getPerformanceTrace());
     }
     catch (Throwable t) {
       buildFinishWaiter.countDown();
@@ -316,7 +313,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     finally {
       ProgressIndicatorUtils.awaitWithCheckCanceled(buildFinishWaiter);
       final long timeInMs = (System.currentTimeMillis() - startTime);
-      performanceTrace.logPerformance("Gradle data obtained", timeInMs);
       syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).end();
       ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.GRADLE_CALL, timeInMs, errorsCount);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
@@ -340,8 +336,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     try (GradleTargetPathsConverter pathsConverter = new GradleTargetPathsConverter(executionSettings);
          Scope ignore = projectDataProcessingSpan.makeCurrent()) {
       pathsConverter.mayBeApplyTo(allModels);
-      return convertData(allModels, executionSettings, resolverCtx, gradleVersion,
-                         tracedResolverChain, performanceTrace, isBuildSrcProject, useCustomSerialization);
+      return convertData(allModels, executionSettings, resolverCtx, gradleVersion, projectResolverChain, isBuildSrcProject,
+                         useCustomSerialization);
     }
     catch (Throwable t) {
       resolversErrorsCount += 1;
@@ -351,7 +347,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     finally {
       final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
-      performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
       LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
       projectDataProcessingSpan.end();
       syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name()).end();
@@ -366,7 +361,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             @NotNull DefaultProjectResolverContext resolverCtx,
                                             @Nullable GradleVersion gradleVersion,
                                             @NotNull GradleProjectResolverExtension tracedResolverChain,
-                                            @NotNull PerformanceTrace performanceTrace,
                                             boolean isBuildSrcProject,
                                             boolean useCustomSerialization) {
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
@@ -389,13 +383,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                 extension.accept(modifiableGradleProjectModel, modelsProvider, resolverCtx);
                                               });
       final long resolveTimeInMs = (System.currentTimeMillis() - starResolveTime);
-      performanceTrace.logPerformance("Project model contributed by " + modelContributorName, resolveTimeInMs);
       LOG.debug(String.format("Project model contributed by `" + modelContributorName + "` in %d ms", resolveTimeInMs));
     });
 
     DataNode<ProjectData> projectDataNode = modifiableGradleProjectModel.buildDataNodeGraph();
-    DataNode<PerformanceTrace> performanceTraceNode = new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, performanceTrace, projectDataNode);
-    projectDataNode.addChild(performanceTraceNode);
+    ExternalSystemOperationDescriptor externalSystemOperationDescriptor = new ExternalSystemOperationDescriptor(activityId);
+    DataNode<ExternalSystemOperationDescriptor> descriptorDataNode = new DataNode<>(ExternalSystemOperationDescriptor.OPERATION_DESCRIPTOR_KEY,
+                                                                                    externalSystemOperationDescriptor, projectDataNode);
+    projectDataNode.addChild(descriptorDataNode);
 
     Set<? extends IdeaModule> gradleModules = Collections.emptySet();
     IdeaProject ideaProject = allModels.getModel(IdeaProject.class);

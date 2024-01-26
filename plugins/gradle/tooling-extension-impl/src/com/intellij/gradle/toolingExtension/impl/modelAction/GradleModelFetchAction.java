@@ -190,24 +190,13 @@ public class GradleModelFetchAction {
     @NotNull BasicGradleProject gradleProject,
     @NotNull ProjectImportModelProvider modelProvider
   ) {
-    Set<String> obtainedModels = new HashSet<>();
-    long startTime = System.currentTimeMillis();
     myTelemetry.runWithSpan(modelProvider.getName(), span -> {
       modelProvider.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
         @Override
         public void consume(@NotNull Object object, @NotNull Class<?> clazz) {
-          obtainedModels.add(clazz.getName());
           addProjectModel(gradleProject, object, clazz);
         }
       });
-      span.setAttribute("models", obtainedModels.size());
-      myAllModels.logPerformance(
-        "Ran extension " + modelProvider.getName() +
-        " during " + modelProvider.getPhase() +
-        " for project " + gradleProject.getProjectIdentifier().getProjectPath() +
-        " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-        System.currentTimeMillis() - startTime
-      );
     });
   }
 
@@ -216,30 +205,19 @@ public class GradleModelFetchAction {
     @NotNull GradleBuild gradleBuild,
     @NotNull ProjectImportModelProvider modelProvider
   ) {
-    Set<String> obtainedModels = new HashSet<>();
-    long startTime = System.currentTimeMillis();
     myTelemetry.runWithSpan(modelProvider.getName(), span -> {
       modelProvider.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
         @Override
         public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
-          obtainedModels.add(clazz.getName());
           addProjectModel(projectModel, object, clazz);
         }
 
         @Override
         public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
-          obtainedModels.add(clazz.getName());
           addBuildModel(buildModel, object, clazz);
         }
       });
     });
-    myAllModels.logPerformance(
-      "Ran extension " + modelProvider.getName() +
-      " during " + modelProvider.getPhase() +
-      " for build " + gradleBuild.getBuildIdentifier().getRootDir().getPath() +
-      " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-      System.currentTimeMillis() - startTime
-    );
   }
 
   private void addProjectModel(@NotNull ProjectModel projectModel,
@@ -267,14 +245,5 @@ public class GradleModelFetchAction {
         });
         onConvertorEnd.accept(converted);
       });
-  }
-
-  @NotNull
-  private static String joinClassNamesToString(@NotNull Set<String> names) {
-    StringJoiner joiner = new StringJoiner(", ");
-    for (String name : names) {
-      joiner.add(name);
-    }
-    return joiner.toString();
   }
 }

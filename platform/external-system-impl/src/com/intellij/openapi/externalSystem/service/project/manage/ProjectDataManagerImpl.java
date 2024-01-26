@@ -130,13 +130,16 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     List<Runnable> onSuccessImportTasks = new SmartList<>();
     List<Runnable> onFailureImportTasks = new SmartList<>();
 
-    final Collection<DataNode<?>> traceNodes = grouped.getOrPut(PerformanceTrace.TRACE_NODE_KEY, () ->
-      new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, new PerformanceTrace(), null)
+    final Collection<DataNode<?>> operationDescriptorNodes =
+      grouped.getOrPut(ExternalSystemOperationDescriptor.OPERATION_DESCRIPTOR_KEY, () ->
+        new DataNode<>(ExternalSystemOperationDescriptor.OPERATION_DESCRIPTOR_KEY, new ExternalSystemOperationDescriptor(), null)
     );
-    final PerformanceTrace trace = (PerformanceTrace)ContainerUtil.getFirstItem(traceNodes).getData();
+    final ExternalSystemOperationDescriptor operationDescriptor =
+      (ExternalSystemOperationDescriptor)ContainerUtil.getFirstItem(operationDescriptorNodes)
+        .getData();
 
     long allStartTime = System.currentTimeMillis();
-    long activityId = trace.getId();
+    long activityId = operationDescriptor.getActivityId();
 
     syncMetrics.getOrStartSpan(Phase.DATA_SERVICES.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
     ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
@@ -172,10 +175,8 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
           indicator.setText(message);
           indicator.setFraction((double)count++ / size);
         }
-        long startTime = System.currentTimeMillis();
         doImportData(key, grouped.get(key), projectSystemId, projectData, project, modelsProvider,
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
-        trace.logPerformance("Data import by " + key, System.currentTimeMillis() - startTime);
       }
 
       ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "postImportTasks", span -> {
@@ -215,7 +216,6 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       }
 
       long timeMs = System.currentTimeMillis() - allStartTime;
-      trace.logPerformance("Data import total", timeMs);
       dataServicesSpan.end();
       syncMetrics.endSpan(Phase.DATA_SERVICES.name());
       ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
@@ -225,10 +225,6 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
         StartUpPerformanceService.Companion.getInstance().reportStatistics(project);
-      }
-
-      if (importSucceeded) {
-        trace.reportStatistics();
       }
     }
   }
