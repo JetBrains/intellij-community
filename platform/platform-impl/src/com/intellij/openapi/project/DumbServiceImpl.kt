@@ -140,6 +140,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myBalloon.dispose()
     scheduledTasksScope.cancel("On dispose of DumbService", ProcessCanceledException())
     myTaskQueue.disposePendingTasks()
+    mySyncDumbTaskRunner.disposePendingTasks()
   }
 
   override fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable) {

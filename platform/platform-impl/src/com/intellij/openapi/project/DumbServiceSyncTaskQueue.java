@@ -71,6 +71,10 @@ public final class DumbServiceSyncTaskQueue {
     }
   }
 
+  public void disposePendingTasks() {
+    myTaskQueue.disposePendingTasks();
+  }
+
   private static void doRunTaskSynchronously(@NotNull QueuedDumbModeTask task) {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     Logger.getInstance(DumbServiceSyncTaskQueue.class).assertTrue(indicator != null, "There should be global progress indicator");
@@ -91,12 +95,8 @@ public final class DumbServiceSyncTaskQueue {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
       @Override
       public void afterWriteActionFinished(@NotNull Object action) {
-        try {
-          processQueue();
-        }
-        finally {
-          Disposer.dispose(listenerDisposable);
-        }
+        Disposer.dispose(listenerDisposable);
+        processQueue();
       }
     }, listenerDisposable);
   }
