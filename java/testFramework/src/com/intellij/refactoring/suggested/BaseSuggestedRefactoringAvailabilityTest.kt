@@ -2,6 +2,7 @@
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.refactoring.RefactoringBundle
@@ -69,6 +70,8 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
       checkAvailability(expectedAvailabilityAfterResolve, afterResolve = true)
 
       provider._amendStateInBackgroundEnabled = true
+      
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
       checkAvailability(expectedAvailabilityAfterBackgroundAmend, afterResolve = true)
     }
