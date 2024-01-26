@@ -10,11 +10,13 @@ import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -23,8 +25,13 @@ import javax.swing.JComponent
 
 private val LOG = logger<CombinedDiffComponentProcessor>()
 
-interface CombinedDiffComponentFactoryProvider {
+interface CombinedDiffManager {
   fun create(model: CombinedDiffModel): CombinedDiffComponentProcessor
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): CombinedDiffManager = project.service()
+  }
 }
 
 class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,

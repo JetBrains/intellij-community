@@ -8,7 +8,6 @@ import com.intellij.diff.requests.MessageDiffRequest
 import com.intellij.diff.tools.combined.*
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.ListSelection
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.impl.patch.*
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -49,7 +48,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
       val model = CombinedDiffModelImpl(project)
       model.setBlocks(buildCombinedDiffModel(document))
 
-      val factory = project.service<CombinedDiffComponentFactoryProvider>().create(model)
+      val factory = CombinedDiffManager.getInstance(project).create(model)
       val editor = CombinedDiffComponentEditor(file, factory)
       document.addDocumentListener(CombinedViewerPatchChangeListener(model), editor)
 
