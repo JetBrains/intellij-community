@@ -226,7 +226,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   fun getEmbedder(): MavenServerEmbedder = getOrCreateWrappee()
 
   fun release() {
-    val w = wrappee ?: return
+    val w = myWrappee ?: return
     try {
       w.release(ourToken)
     }

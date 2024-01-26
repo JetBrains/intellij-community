@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import java.rmi.RemoteException
 
 abstract class RemoteObjectWrapper<T> protected constructor(private val myParent: RemoteObjectWrapper<*>?) {
-  private var myWrappee: T? = null
+  protected var myWrappee: T? = null
 
   protected val wrappee: T
     get() = myWrappee!!
