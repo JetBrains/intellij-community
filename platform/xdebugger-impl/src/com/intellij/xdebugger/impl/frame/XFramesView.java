@@ -139,7 +139,7 @@ public final class XFramesView extends XDebugView {
       }
     };
 
-    installSpeedSearch(myFramesList, session);
+    installSpeedSearch(myFramesList);
 
     myFrameSelectionHandler.install(myFramesList);
     EditSourceOnDoubleClickHandler.install(myFramesList);
@@ -230,17 +230,12 @@ public final class XFramesView extends XDebugView {
     addFramesNavigationAd(myMainPanel);
   }
 
-  private static void installSpeedSearch(XDebuggerFramesList framesList, @NotNull XDebugSessionImpl session) {
+  private static void installSpeedSearch(XDebuggerFramesList framesList) {
     //noinspection unchecked
-    TreeUIHelper.getInstance().installListSpeedSearch(framesList, obj -> {
+    ListSpeedSearch.installOn(framesList, obj -> {
+      //we have to use reflection because XDebuggerFramesList extends from JBList without generic parameter
       if (obj instanceof XStackFrame frame) {
-        // Get the exact text which is used for the UI node representing the frame
-        // NOTE: this logic is called only when user types in the frames list.
-        // So the performance of the default case is not affected, but when the user types in the speedsearch field,
-        // the nodes are effectively rendered twice: 1) for presentation in UI 2) for speedsearch
-        StringBuilderTextContainer builder = new StringBuilderTextContainer();
-        frame.customizePresentation(builder);
-        return builder.getText();
+        return getStackFramePresentableText(frame);
       }
       else {
         return null;
@@ -249,6 +244,26 @@ public final class XFramesView extends XDebugView {
   }
 
   /**
+   * Get the exact text which is used for the UI node representing the frame.
+   * <p/>
+   * NOTE 1: we can't rely on {@link XStackFrame#toString()} because it doesn't have any contract
+   * <p/>
+   * NOTE 2: this logic is called only when users type in the frames list.
+   * So the performance of the default case (when speed search is not used) is not affected.
+   * But when the user types in the speedsearch field the nodes are effectively rendered twice:
+   * 1) for presentation in UI
+   * 2) for speedsearch
+   */
+  @NotNull
+  private static String getStackFramePresentableText(XStackFrame frame) {
+    StringBuilderTextContainer builder = new StringBuilderTextContainer();
+    frame.customizePresentation(builder);
+    return builder.getText();
+  }
+
+  /**
+   * Text container, which collects all text fragments and ignores all text attributes
+   *
    * @implNote this class is not thread safe
    * @implNote this class could be extracted somewhere in `com.intellij.ui` package as it's quite simple.
    * Similar minimalistic implementations can be found in {@link SimpleColoredText} and {@link TextTransferable.ColoredStringBuilder}.
