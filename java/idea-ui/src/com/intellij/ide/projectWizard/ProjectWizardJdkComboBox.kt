@@ -156,7 +156,10 @@ class ProjectWizardJdkComboBox(
       }
 
       override fun customize(item: SimpleColoredComponent, value: ProjectWizardJdkIntent, index: Int, isSelected: Boolean, cellHasFocus: Boolean) {
-        item.icon = getIcon(value)
+        item.icon = when {
+          value is NoJdk && index == -1 -> null
+          else -> getIcon(value)
+        }
 
         when (value) {
           is NoJdk -> item.append(JavaUiBundle.message("jdk.missing.item"), SimpleTextAttributes.ERROR_ATTRIBUTES)
