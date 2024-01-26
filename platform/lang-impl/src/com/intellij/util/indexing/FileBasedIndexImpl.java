@@ -1783,12 +1783,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         removeSingleIndexValue(indexId, fileId);
       }
     }
-    if (!file.isDirectory()) {
-      // its data should be (lazily) wiped for every index
-      getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+    if (file.isDirectory()) {
+      getChangedFilesCollector().removeScheduledFileFromUpdate(file); // no need to update it anymore
     }
     else {
-      getChangedFilesCollector().removeScheduledFileFromUpdate(file); // no need to update it anymore
+      // its data should be (lazily) wiped for every index
+      getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
     }
   }
 
