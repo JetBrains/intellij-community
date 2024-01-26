@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.async.cancelledWith
+import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -13,6 +16,7 @@ import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.impl.VcsProjectLog
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
@@ -23,6 +27,8 @@ import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import java.util.*
 
 internal class GHPRDataProviderRepositoryImpl(private val project: Project,
+                                              parentCs: CoroutineScope,
+                                              private val repositoryDataService: GHPRRepositoryDataService,
                                               private val detailsService: GHPRDetailsService,
                                               private val stateService: GHPRStateService,
                                               private val reviewService: GHPRReviewService,
@@ -31,6 +37,7 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
                                               private val changesService: GHPRChangesService,
                                               private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>)
   : GHPRDataProviderRepository {
+  private val cs = parentCs.childScope(classAsCoroutineName())
 
   private var isDisposed = false
 
@@ -63,6 +70,9 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
   }
 
   private fun createDataProvider(parentDisposable: CheckedDisposable, id: GHPRIdentifier): GHPRDataProvider {
+    val providerCs = cs.childScope(classAsCoroutineName<GHPRDataProviderImpl>()).apply {
+      cancelledWith(parentDisposable)
+    }
     val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {
       override fun isDisposed() = parentDisposable.isDisposed
 
@@ -95,7 +105,7 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
     val stateData = GHPRStateDataProviderImpl(stateService, id, messageBus, detailsData).also {
       Disposer.register(parentDisposable, it)
     }
-    val changesData = GHPRChangesDataProviderImpl(changesService, id, detailsData).also {
+    val changesData = GHPRChangesDataProviderImpl(providerCs, repositoryDataService, changesService, id, detailsData).also {
       Disposer.register(parentDisposable, it)
     }
     val reviewData = GHPRReviewDataProviderImpl(reviewService, changesData, id, messageBus).also {

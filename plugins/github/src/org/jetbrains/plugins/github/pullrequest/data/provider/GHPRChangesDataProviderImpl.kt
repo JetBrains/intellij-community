@@ -2,21 +2,35 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.google.common.graph.Traverser
+import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.filePath
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.remote.hosting.infoFlow
+import git4idea.repo.GitRepository
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 
-class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService,
+class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
+                                  private val repositoryDataService: GHPRRepositoryDataService,
+                                  private val changesService: GHPRChangesService,
                                   private val pullRequestId: GHPRIdentifier,
                                   private val detailsData: GHPRDetailsDataProviderImpl)
   : GHPRChangesDataProvider, Disposable {
+  private val cs = parentCs.childScope(classAsCoroutineName())
 
   private var lastKnownBaseSha: String? = null
   private var lastKnownHeadSha: String? = null
@@ -63,6 +77,39 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
         }
       }
   }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val newChangesInReviewRequest: SharedFlow<Deferred<Boolean>> = run {
+    val repository = repositoryDataService.remoteCoordinates.repository
+    val currentRevFlow = repository.infoFlow().map { it.currentRevision }
+    val headRevFlow = detailsData.detailsRequestFlow().transformLatest {
+      runCatching { it.await() }.onSuccess { emit(it.headRefOid) }
+    }
+
+    // cant just do combineTransform bc it will not cancel previous computation
+    currentRevFlow.combine(headRevFlow) { currentRev, headRev ->
+      currentRev to headRev
+    }.distinctUntilChanged().transformLatest { (currentRev, headRev) ->
+      when (currentRev) {
+        null -> emit(CompletableDeferred(true))
+        headRev -> emit(CompletableDeferred(false))
+        else -> supervisorScope {
+          val request = async {
+            !isAncestor(repository, headRev, currentRev)
+          }
+          emit(request)
+        }
+      }
+    }.shareIn(cs, SharingStarted.Lazily, 1)
+  }
+
+  private suspend fun isAncestor(repository: GitRepository, potentialAncestorRev: String, rev: String): Boolean =
+    coroutineToIndicator {
+      val h = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_BASE)
+      h.setSilent(true)
+      h.addParameters("--is-ancestor", potentialAncestorRev, rev)
+      Git.getInstance().runCommand(h).success()
+    }
 
   override fun loadChanges() = changesProviderValue.value
 

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.computationState
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 import com.intellij.collaboration.util.*
@@ -14,10 +15,8 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
-import git4idea.remote.hosting.localCommitsSyncStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -29,7 +28,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 
 interface GHPRReviewInEditorViewModel : CodeReviewDiscussionsViewModel {
-  val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?>
+  val newChangesInReview: StateFlow<ComputedResult<Boolean>?>
 
   fun getViewModelFor(file: VirtualFile): Flow<GHPRReviewFileEditorViewModel?>
 }
@@ -56,18 +55,8 @@ internal class GHPRReviewInEditorViewModelImpl(
 
   private val filesVmsMap = mutableMapOf<FilePath, StateFlow<GHPRReviewFileEditorViewModelImpl?>>()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> =
-    changesComputationState.map {
-      it.getOrNull()?.commits?.map { it.sha }
-    }.distinctUntilChanged().transformLatest {
-      if (it == null) {
-        emit(null)
-      }
-      else {
-        flowOf(it).localCommitsSyncStatus(repository).collect(this)
-      }
-    }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+  override val newChangesInReview: StateFlow<ComputedResult<Boolean>?> =
+    dataProvider.changesData.newChangesInReviewRequest.computationState().stateInNow(cs, ComputedResult.loading())
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()

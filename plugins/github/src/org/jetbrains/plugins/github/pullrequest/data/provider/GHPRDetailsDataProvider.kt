@@ -1,14 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
-import com.intellij.collaboration.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
 interface GHPRDetailsDataProvider {
@@ -50,3 +59,25 @@ interface GHPRDetailsDataProvider {
   fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>)
     : CompletableFuture<Unit>
 }
+
+fun GHPRDetailsDataProvider.detailsRequestFlow(): Flow<Deferred<GHPullRequest>> =
+  channelFlow {
+    val listenerDisposable = Disposer.newDisposable()
+    val cs = childScope()
+    loadDetails(listenerDisposable) { request ->
+      cs.async {
+        try {
+          request.asDeferred().await()
+        }
+        catch (e: ProcessCanceledException) {
+          cancel()
+          awaitCancellation()
+        }
+      }.let {
+        trySend(it)
+      }
+    }
+    awaitClose {
+      Disposer.dispose(listenerDisposable)
+    }
+  }.flowOn(Dispatchers.Main)

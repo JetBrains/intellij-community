@@ -102,6 +102,10 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val apiRepositoryPath = repositoryInfo.path
       val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
 
+      val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor,
+                                                          remoteCoordinates, apiRepositoryCoordinates,
+                                                          repositoryInfo.owner,
+                                                          repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
       val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
                                                     ghostUserDetails,
                                                     account, currentUser,
@@ -119,6 +123,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
 
       val dataProviderRepository = GHPRDataProviderRepositoryImpl(project,
+                                                                  cs,
+                                                                  repoDataService,
                                                                   detailsService,
                                                                   stateService,
                                                                   reviewService,
@@ -132,11 +138,6 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                                         id.number, p)
                              }, true))
       }
-
-      val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor,
-                                                          remoteCoordinates, apiRepositoryCoordinates,
-                                                          repositoryInfo.owner,
-                                                          repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
 
       val iconsScope = cs.childScope(Dispatchers.Main)
       val imageLoader = AsyncHtmlImageLoader { _, src ->
