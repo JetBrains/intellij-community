@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class TrailingWhitespacesInTextBlockInspectionTest extends LightJavaInspectionTestCase {
 
+  public void testBadTextBlock() { doTest(); }
+  public void testBlankLine() { doTestAll(); }
   public void testEmptyLastLine() { doTestAll(); }
   public void testOneLineBlock() { doTestAll(); }
   public void testReplaceAtTheEnd() { doTestEscape(); }
@@ -17,8 +19,10 @@ public class TrailingWhitespacesInTextBlockInspectionTest extends LightJavaInspe
   public void testStringTemplate2Java21Preview() { doTestEscape(); }
   public void testStringTemplate3Java21Preview() { doTestEscape(); }
   public void testStringTemplate4Java21Preview() { doTestEscape(); }
+  public void testStringTemplate5() { doTest(); }
+  public void testStringTemplate6() { doTestAll(); }
   public void testTrailingSpaces() { doTestAll(); }
-  public void testTrailingTabs() { doTestAll(); }
+  public void testTrailingTabs() { doTestEscape(); }
   public void testWithBlankLines() { doTestAll(); }
   public void testWithEndQuotes() { doTestAll(); }
   public void testWithoutTrailingSpaces() { doTest(); }
