@@ -148,7 +148,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepInto() {
     runPythonTest(new PyDebuggerTask("/debug", "test3.py") {
