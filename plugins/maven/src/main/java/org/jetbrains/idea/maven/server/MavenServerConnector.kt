@@ -33,7 +33,10 @@ interface MavenServerConnector : Disposable {
   fun connect()
 
   @ApiStatus.Internal
-  fun ping(): Boolean
+  fun pingBlocking(): Boolean
+
+  @ApiStatus.Internal
+  suspend fun ping(): Boolean
 
   @ApiStatus.Internal
   fun stop(wait: Boolean)

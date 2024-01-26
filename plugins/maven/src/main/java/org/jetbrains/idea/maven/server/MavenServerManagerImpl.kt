@@ -153,7 +153,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
   override fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector {
     var connector = doGetConnector(project, workingDirectory)
-    if (!connector.ping()) {
+    if (!connector.pingBlocking()) {
       shutdownConnector(connector, true)
       connector = doGetConnector(project, workingDirectory)
     }

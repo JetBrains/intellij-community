@@ -116,7 +116,11 @@ private class CompatibleMavenServerConnector(override val project: Project) : Ma
     throw RuntimeException("not implemented")
   }
 
-  override fun ping(): Boolean {
+  override fun pingBlocking(): Boolean {
+    return true
+  }
+
+  override suspend fun ping(): Boolean {
     return true
   }
 
@@ -197,7 +201,11 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     throw ConnectException("Cannot reconnect")
   }
 
-  override fun ping(): Boolean {
+  override fun pingBlocking(): Boolean {
+    return false
+  }
+
+  override suspend fun ping(): Boolean {
     return false
   }
 

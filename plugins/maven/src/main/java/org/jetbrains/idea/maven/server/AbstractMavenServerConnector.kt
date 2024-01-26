@@ -30,13 +30,15 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     return myMultimoduleDirectories.add(multimoduleDirectory)
   }
 
-  protected abstract fun getServer(): MavenServer
+  protected abstract fun getServerBlocking(): MavenServer
+
+  protected abstract suspend fun getServer(): MavenServer
 
   @Throws(RemoteException::class)
   override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
     synchronized(embedderLock) {
       try {
-        return getServer().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken)
+        return getServerBlocking().createEmbedder(settings, MavenRemoteObjectWrapper.ourToken)
       }
       catch (e: Exception) {
         val cause = ExceptionUtil.findCause(e, MavenCoreInitializationException::class.java)
@@ -54,7 +56,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
   @Throws(RemoteException::class)
   override fun createIndexer(): MavenServerIndexer {
     synchronized(embedderLock) {
-      return getServer().createIndexer(MavenRemoteObjectWrapper.ourToken)
+      return getServerBlocking().createIndexer(MavenRemoteObjectWrapper.ourToken)
     }
   }
 
@@ -63,7 +65,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
         val transformer = RemotePathTransformerFactory.createForProject(project!!)
         val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
         val targetPomDir = File(transformer.toRemotePathOrSelf(pomDir.toString()))
-      val m = getServer().interpolateAndAlignModel(model, targetBasedir, targetPomDir, MavenRemoteObjectWrapper.ourToken)
+      val m = getServerBlocking().interpolateAndAlignModel(model, targetBasedir, targetPomDir, MavenRemoteObjectWrapper.ourToken)
         if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
           MavenBuildPathsChange({ s: String? -> transformer.toIdePath(s!!)!! }, { s: String? -> transformer.canBeRemotePath(s) }).perform(m)
         }
@@ -72,7 +74,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
   }
 
   override fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
-    return perform { getServer().assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken) }
+    return perform { getServerBlocking().assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken) }
   }
 
   override fun applyProfiles(model: MavenModel,
@@ -82,7 +84,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     return perform {
       val transformer = RemotePathTransformerFactory.createForProject(project!!)
       val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
-      getServer().applyProfiles(model, targetBasedir, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
+      getServerBlocking().applyProfiles(model, targetBasedir, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
       }
   }
 
@@ -97,7 +99,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     get() = ArrayList(myMultimoduleDirectories)
 
   override fun getDebugStatus(clean: Boolean): MavenServerStatus {
-    return perform { getServer().getDebugStatus(clean) }
+    return perform { getServerBlocking().getDebugStatus(clean) }
   }
 
   override fun toString(): String {

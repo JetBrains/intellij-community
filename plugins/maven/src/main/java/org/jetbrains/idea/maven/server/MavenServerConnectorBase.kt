@@ -4,8 +4,10 @@ package org.jetbrains.idea.maven.server
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -55,10 +57,10 @@ abstract class MavenServerConnectorBase(project: Project?,
     ApplicationManager.getApplication().executeOnPooledThread(newStartServerTask())
   }
 
-  private fun waitForServer(): MavenServer? {
+  private fun waitForServerBlocking(): MavenServer? {
     while (!myServerPromise.isDone) {
       try {
-        myServerPromise[100, TimeUnit.MILLISECONDS]
+        myServerPromise.get(100, TimeUnit.MILLISECONDS)
       }
       catch (ignore: Exception) {
       }
@@ -69,8 +71,40 @@ abstract class MavenServerConnectorBase(project: Project?,
     }
     return myServerPromise.get()
   }
+  
+  private suspend fun waitForServer(): MavenServer? {
+    while (!myServerPromise.isDone) {
+      delay(100)
+      if (throwExceptionIfProjectDisposed && project!!.isDisposed) {
+        throw CannotStartServerException("Project already disposed")
+      }
+      checkCancelled()
+    }
+    return myServerPromise.get()
+  }
 
-  override fun getServer(): MavenServer {
+  override fun getServerBlocking(): MavenServer {
+    try {
+      val server = waitForServerBlocking()
+      if (server == null) {
+        throw ProcessCanceledException()
+      }
+      return server
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      try {
+        getInstance().shutdownConnector(this, false)
+      }
+      catch (ignored: Throwable) {
+      }
+      throw if (e is CannotStartServerException) e else CannotStartServerException(e)
+    }
+  }
+  
+  override suspend fun getServer(): MavenServer {
     try {
       val server = waitForServer()
       if (server == null) {
@@ -130,7 +164,21 @@ abstract class MavenServerConnectorBase(project: Project?,
     return support != null && !support.activeConfigurations.isEmpty()
   }
 
-  override fun ping(): Boolean {
+  override fun pingBlocking(): Boolean {
+    try {
+      val pinged = getServerBlocking().ping(MavenRemoteObjectWrapper.ourToken)
+      if (MavenLog.LOG.isTraceEnabled) {
+        MavenLog.LOG.trace("maven server ping: $pinged")
+      }
+      return pinged
+    }
+    catch (e: RemoteException) {
+      MavenLog.LOG.warn("maven server ping error", e)
+      return false
+    }
+  }
+  
+  override suspend fun ping(): Boolean {
     try {
       val pinged = getServer().ping(MavenRemoteObjectWrapper.ourToken)
       if (MavenLog.LOG.isTraceEnabled) {

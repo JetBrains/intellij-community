@@ -33,9 +33,15 @@ class DummyMavenServerConnector(override val project: Project,
   override fun connect() {
   }
 
-  override fun getServer(): MavenServer = DummyMavenServer(project)
+  override fun getServerBlocking(): MavenServer = DummyMavenServer(project)
 
-  override fun ping(): Boolean {
+  override suspend fun getServer(): MavenServer = DummyMavenServer(project)
+
+  override fun pingBlocking(): Boolean {
+    return true
+  }
+
+  override suspend fun ping(): Boolean {
     return true
   }
 
