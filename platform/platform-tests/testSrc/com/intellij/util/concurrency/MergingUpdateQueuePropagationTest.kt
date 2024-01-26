@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 @ExtendWith(CancellationPropagationTest.Enabler::class)
@@ -157,5 +158,22 @@ class MergingUpdateQueuePropagationTest {
     assert(queue.isEmpty)
     assertFalse(firstExecuted) // eaten by the second
     assertTrue(secondExecuted) // not eaten and executed
+  }
+
+  @Test
+  fun `re-queueing same update instance`(): Unit = timeoutRunBlocking {
+    val queue = MergingUpdateQueue("test queue", 100, true, null)
+    val executed = AtomicInteger()
+    blockingContextScope {
+      queue.queue(object : Update("id") {
+        override fun run() {
+          if (executed.incrementAndGet() < 10) {
+            queue.queue(this)
+          }
+        }
+      })
+    }
+    assertTrue(queue.isEmpty)
+    assertEquals(10, executed.get())
   }
 }
