@@ -416,6 +416,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
                         serviceImplementation="com.intellij.platform.ide.impl.customization.LegacyExternalProductResourceUrls"/>
+    <applicationService serviceImplementation="com.intellij.application.options.colors.FontPreviewService"/>
 
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs"/>
 
