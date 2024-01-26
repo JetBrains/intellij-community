@@ -23,10 +23,11 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     session.controller.addCustomCommandListener(TerminalCustomCommandListener {
       try {
         when (it.getOrNull(0)) {
-          "initialized" -> processInitialized(it)
+          "initialized" -> processInitialized()
           "prompt_shown" -> firePromptShown()
           "command_started" -> processCommandStartedEvent(it)
           "command_finished" -> processCommandFinishedEvent(it)
+          "prompt_state_updated" -> processPromptStateUpdatedEvent(it)
           "command_history" -> processCommandHistoryEvent(it)
           "generator_finished" -> processGeneratorFinishedEvent(it)
           "clear_invoked" -> fireClearInvoked()
@@ -39,16 +40,15 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     })
   }
 
-  private fun processInitialized(event: List<String>) {
-    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValueOrNull(event.getOrNull(1))
+  private fun processInitialized() {
     if (session.commandBlockIntegration.commandEndMarker != null) {
       debug { "Received initialized event, waiting for command end marker" }
       ShellCommandEndMarkerListener(session) {
-        fireInitialized(currentDirectory)
+        fireInitialized()
       }
     }
     else {
-      fireInitialized(currentDirectory)
+      fireInitialized()
     }
   }
 
@@ -62,13 +62,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
 
   private fun processCommandFinishedEvent(event: List<String>) {
     val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(1))
-    val newCurrentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(2))
     val startedCommand = this.startedCommand
-    if (startedCommand != null) {
-      if (startedCommand.currentDirectory != newCurrentDirectory) {
-        fireDirectoryChanged(newCurrentDirectory)
-      }
-    }
     if (session.commandBlockIntegration.commandEndMarker != null) {
       debug { "Received command_finished event, waiting for command end marker" }
       ShellCommandEndMarkerListener(session) {
@@ -80,6 +74,12 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
       fireCommandFinished(startedCommand, exitCode)
       this.startedCommand = null
     }
+  }
+
+  private fun processPromptStateUpdatedEvent(event: List<String>) {
+    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(1))
+    val state = TerminalPromptState(currentDirectory)
+    firePromptStateUpdated(state)
   }
 
   private fun processCommandHistoryEvent(event: List<String>) {
@@ -101,10 +101,10 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     }
   }
 
-  private fun fireInitialized(currentDirectory: String?) {
+  private fun fireInitialized() {
     debug { "Shell event: initialized" }
     for (listener in listeners) {
-      listener.initialized(currentDirectory)
+      listener.initialized()
     }
   }
 
@@ -135,11 +135,11 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     }
   }
 
-  private fun fireDirectoryChanged(newDirectory: String) {
+  private fun firePromptStateUpdated(state: TerminalPromptState) {
     for (listener in listeners) {
-      listener.directoryChanged(newDirectory)
+      listener.promptStateUpdated(state)
     }
-    debug { "Current directory changed from '${startedCommand?.currentDirectory}' to '$newDirectory'" }
+    debug { "Prompt state updated: $state" }
   }
 
   private fun fireCommandHistoryReceived(history: String) {
@@ -220,11 +220,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
 }
 
 interface ShellCommandListener {
-  /**
-   * Fired before the first prompt is printed
-   * todo: make current directory notnull when all shell integrations adapt it
-   */
-  fun initialized(currentDirectory: String?) {}
+  fun initialized() {}
 
   /**
    * Fired each time when prompt is printed.
@@ -238,7 +234,7 @@ interface ShellCommandListener {
   /** Fired after command is executed and before prompt is printed */
   fun commandFinished(command: String?, exitCode: Int, duration: Long?) {}
 
-  fun directoryChanged(newDirectory: String) {}
+  fun promptStateUpdated(newState: TerminalPromptState) {}
 
   fun commandHistoryReceived(history: String) {}
 

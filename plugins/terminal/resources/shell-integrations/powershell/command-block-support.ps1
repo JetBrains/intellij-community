@@ -42,6 +42,7 @@ function Global:Prompt() {
 
   $Result = ""
   $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
+  $PromptStateOSC = Global:__JetBrainsIntellijCreatePromptStateOSC
   if ($__JetBrainsIntellijTerminalInitialized) {
     $ExitCode = "0"
     if ($LASTEXITCODE -ne $null) {
@@ -50,12 +51,11 @@ function Global:Prompt() {
     if (-not$Success -and $ExitCode -eq "0") {
       $ExitCode = "1"
     }
-    $CurrentDirectory = (Get-Location).Path
     if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
-      [Console]::WriteLine("command_finished exit_code=$ExitCode, current_directory=$CurrentDirectory")
+      [Console]::WriteLine("command_finished exit_code=$ExitCode")
     }
-    $CommandFinishedEvent = Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode;current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory)"
-    $Result = $CommandEndMarker + $CommandFinishedEvent
+    $CommandFinishedEvent = Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode"
+    $Result = $CommandEndMarker + $PromptStateOSC + $CommandFinishedEvent
   }
   else {
     # For some reason there is no error if I delete the history file, just an empty string returned.
@@ -68,9 +68,14 @@ function Global:Prompt() {
       [Console]::WriteLine("initialized")
     }
     $InitializedEvent = Global:__JetBrainsIntellijOSC "initialized"
-    $Result = $CommandEndMarker + $HistoryOSC + $InitializedEvent
+    $Result = $CommandEndMarker + $PromptStateOSC + $HistoryOSC + $InitializedEvent
   }
   return $Result
+}
+
+function Global:__JetBrainsIntellijCreatePromptStateOSC() {
+  $CurrentDirectory = (Get-Location).Path
+  return Global:__JetBrainsIntellijOSC "prompt_state_updated;current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory)"
 }
 
 function Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft() {
