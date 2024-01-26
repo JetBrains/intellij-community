@@ -6,6 +6,7 @@ class UnspecifiedLogger : JvmLogger() {
   override val factoryName: String = ""
   override val methodName: String = ""
   override val classNamePattern: String = ""
+  override val priority: Int = 100
 
   override fun isOnlyOnStartup() = true
 

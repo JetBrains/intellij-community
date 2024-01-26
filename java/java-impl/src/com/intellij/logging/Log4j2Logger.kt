@@ -8,6 +8,7 @@ class Log4j2Logger : JvmLogger() {
   override val factoryName: String = JavaLoggingUtils.LOG4J2_FACTORY
   override val methodName: String = "getLogger"
   override val classNamePattern: String = "%s.class"
+  override val priority: Int = 30
 
   override fun toString(): String = "Log4j2"
 }

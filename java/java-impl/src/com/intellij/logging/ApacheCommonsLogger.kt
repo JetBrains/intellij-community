@@ -12,5 +12,7 @@ class ApacheCommonsLogger : JvmLogger() {
 
   override val classNamePattern: String = "%s.class"
 
+  override val priority: Int = 20
+
   override fun toString(): String = "Apache Commons Logging"
 }

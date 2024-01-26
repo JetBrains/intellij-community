@@ -8,6 +8,7 @@ abstract class JvmLogger {
   protected abstract val factoryName: String
   protected abstract val methodName: String
   protected abstract val classNamePattern: String
+  protected abstract val priority: Int
 
   open fun isOnlyOnStartup() = false
 
@@ -43,14 +44,17 @@ abstract class JvmLogger {
 
     private val EP_NAME = ExtensionPointName<JvmLogger>("com.intellij.jvm.logging")
 
-    fun getAllLoggersNames(isOnlyOnSetup: Boolean): List<String> {
-      return getAllLoggers(isOnlyOnSetup).map { it.toString() }
+    fun getAllLoggersNames(isOnlyOnStartup: Boolean): List<String> {
+      return getAllLoggers(isOnlyOnStartup).map { it.toString() }
     }
 
-    fun getAllLoggers(isOnlyOnSetup: Boolean): List<JvmLogger> {
-      return EP_NAME.extensionList.filter { if (!isOnlyOnSetup) !it.isOnlyOnStartup() else true }
+    fun getAllLoggers(isOnlyOnStartup: Boolean): List<JvmLogger> {
+      return EP_NAME.extensionList.filter { if (!isOnlyOnStartup) !it.isOnlyOnStartup() else true }.sortedByDescending { it.priority }
     }
 
-    fun getLoggerByName(loggerName : String?) = EP_NAME.extensionList.find { it.toString() == loggerName }
+    fun getLoggerByName(loggerName: String?): JvmLogger? {
+      if (loggerName == UNSPECIFIED_LOGGER_NAME) return null
+      return EP_NAME.extensionList.find { it.toString() == loggerName }
+    }
   }
 }
