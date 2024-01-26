@@ -1,4 +1,4 @@
-// "Convert to a record" "true"
+// "Convert to record class" "true"
 interface IR1 {
     int first();
 }

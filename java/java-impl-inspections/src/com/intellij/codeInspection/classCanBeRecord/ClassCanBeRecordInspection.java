@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -57,13 +57,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new ClassCanBeRecordVisitor(myConversionStrategy != ConversionStrategy.DO_NOT_SUGGEST, suggestAccessorsRenaming,
-                                       myIgnoredAnnotations);
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS;
+    return new ClassCanBeRecordVisitor(myConversionStrategy, suggestAccessorsRenaming, myIgnoredAnnotations);
   }
 
   @Override
@@ -103,14 +97,14 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
   }
 
   private static class ClassCanBeRecordVisitor extends BaseInspectionVisitor {
-    private final boolean myRenameMembersThatBecomeMoreAccessible;
+    private final ConversionStrategy myConversionStrategy;
     private final boolean mySuggestAccessorsRenaming;
     private final List<String> myIgnoredAnnotations;
 
-    private ClassCanBeRecordVisitor(boolean renameMembersThatBecomeMoreAccessible,
+    private ClassCanBeRecordVisitor(ConversionStrategy conversionStrategy,
                                     boolean suggestAccessorsRenaming,
                                     @NotNull List<String> ignoredAnnotations) {
-      myRenameMembersThatBecomeMoreAccessible = renameMembersThatBecomeMoreAccessible;
+      myConversionStrategy = conversionStrategy;
       mySuggestAccessorsRenaming = suggestAccessorsRenaming;
       myIgnoredAnnotations = ignoredAnnotations;
     }
@@ -122,7 +116,10 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       if (classIdentifier == null) return;
       RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
-      if (!myRenameMembersThatBecomeMoreAccessible && !ConvertToRecordProcessor.findAffectedMembersUsages(recordCandidate).isEmpty()) return;
+      if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST || 
+          myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly()) {
+        if (!ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) return;
+      }
       registerError(classIdentifier, isOnTheFly(), aClass);
     }
   }

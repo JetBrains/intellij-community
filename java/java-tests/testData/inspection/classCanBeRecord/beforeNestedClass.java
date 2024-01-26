@@ -1,4 +1,4 @@
-// "Convert to a record" "true"
+// "Convert to record class" "true"
 class A {
     public static final class <caret>Nested { // convert to the record
         private final int j;
