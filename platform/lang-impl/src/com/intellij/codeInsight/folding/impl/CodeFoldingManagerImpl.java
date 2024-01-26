@@ -29,7 +29,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -43,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
@@ -56,7 +54,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   public CodeFoldingManagerImpl(Project project) {
     myProject = project;
     myFoldingGrave = project.getService(FoldingModelGrave.class);
-    myFoldingGrave.subscribeFileClosed();
+    myFoldingGrave.subscribeEditorClosed();
 
     LanguageFolding.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
@@ -141,20 +139,8 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       return null;
     }
 
-    VirtualFile vFile;
-    FoldingState fileFoldingState;
-    if (isIgnoredByFoldingPass(file)) {
-      // disable folding cache if there is no following folding pass IDEA-341064
-      vFile = null;
-      fileFoldingState = null;
-    }
-    else {
-      vFile = FileDocumentManager.getInstance().getFile(document);
-      fileFoldingState = myFoldingGrave.getFoldingState(vFile);
-    }
-    List<RegionInfo> regionInfos = fileFoldingState == null
-                                   ? FoldingUpdate.getFoldingsFor(file, true)
-                                   : Collections.emptyList();
+    FoldingState zombie = raiseZombie(document, file);
+    List<RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, true);
 
     boolean supportsDumbModeFolding = FoldingUpdate.supportsDumbModeFolding(file);
 
@@ -165,25 +151,25 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       if (!foldingModel.isFoldingEnabled()) return;
       if (isFoldingsInitializedInEditor(editor)) return;
       if (DumbService.isDumb(myProject) && !supportsDumbModeFolding) return;
-      if (fileFoldingState != null) {
-        fileFoldingState.applyState(document, foldingModel);
-        file.putUserData(CodeFoldingPass.BeforePass.KEY, new CodeFoldingPass.BeforePass() {
-          @Override
-          public List<RegionInfo> collectRegionInfo() {
-            return FoldingUpdate.getFoldingsFor(file, true);
-          }
-
-          @Override
-          public void applyRegionInfo(List<RegionInfo> regionInfos) {
-            updateAndInitFolding(editor, foldingModel, file, regionInfos);
-          }
-        });
+      if (zombie != null) {
+        boolean applied = zombie.applyState(document, foldingModel);
+        if (!applied) {
+          updateAndInitFolding(editor, foldingModel, file, regionInfos);
+        }
       }
       else {
         updateAndInitFolding(editor, foldingModel, file, regionInfos);
       }
-      myFoldingGrave.setFoldingModel(vFile, foldingModel);
     };
+  }
+
+  private @Nullable FoldingState raiseZombie(@NotNull Document document, @NotNull PsiFile file) {
+    if (file instanceof PsiCompiledFile) {
+      // disable folding cache if there is no following folding pass IDEA-341064
+      // com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighterKt.IGNORE_FOR_COMPILED
+      return null;
+    }
+    return myFoldingGrave.raise(FileDocumentManager.getInstance().getFile(document));
   }
 
   private void updateAndInitFolding(Editor editor, FoldingModelEx foldingModel, PsiFile file, List<RegionInfo> regionInfos) {
@@ -317,13 +303,5 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   private static boolean isFoldingsInitializedInEditor(@NotNull Editor editor) {
     return Boolean.TRUE.equals(editor.getUserData(FOLDING_STATE_KEY));
-  }
-
-  /**
-   * Returns true if the file is ignored by the folding pass.
-   * See {@link com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighterKt.IGNORE_FOR_COMPILED}
-   */
-  private static boolean isIgnoredByFoldingPass(PsiFile file) {
-    return file instanceof PsiCompiledFile;
   }
 }

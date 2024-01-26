@@ -50,6 +50,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   static final Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
 
   public static final Key<Boolean> ZOMBIE_REGION_KEY = Key.create("zombie fold region");
+  public static final Key<Boolean> ZOMBIE_BITTEN_KEY = Key.create("zombie bitten region");
 
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 

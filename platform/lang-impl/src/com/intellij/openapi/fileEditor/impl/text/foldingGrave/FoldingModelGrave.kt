@@ -1,16 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text.foldingGrave
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.ex.FoldingModelEx
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -19,73 +21,60 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentHashMap
 
-@ApiStatus.Internal
 @Service(Level.PROJECT)
-internal class FoldingModelGrave(private val project: Project, private val scope: CoroutineScope) : TextEditorCache<FoldingState>(project, scope) {
-  override fun namePrefix() = "persistent-folding"
-  override fun valueExternalizer() = FoldingState.FoldingStateExternalizer
-  override fun useHeapCache() = true
+internal class FoldingModelGrave(
+  project: Project,
+  private val scope: CoroutineScope
+) : TextEditorCache<FoldingState>(project, scope), Disposable {
 
-  private val fileToModel: MutableMap<Int, FoldingModelEx> = ConcurrentHashMap()
+  override fun namePrefix(): String = "persistent-folding"
+  override fun valueExternalizer(): FoldingState.FoldingStateExternalizer = FoldingState.FoldingStateExternalizer
+  override fun useHeapCache(): Boolean = true
 
   companion object {
     private val logger = Logger.getInstance(FoldingModelGrave::class.java)
   }
 
-  fun getFoldingState(file: VirtualFile?): FoldingState? {
-    if (!isEnabled() || file !is VirtualFileWithId) {
-      return null
+  fun raise(file: VirtualFile?): FoldingState? {
+    if (isEnabled() && file is VirtualFileWithId) {
+      return cache[file.id]
     }
-    return cache[file.id]
+    return null
   }
 
-  fun setFoldingModel(file: VirtualFile?, foldingModel: FoldingModelEx) {
-    if (!isEnabled() || file !is VirtualFileWithId) {
-      return
-    }
-    fileToModel[file.id] = foldingModel
-  }
-
-  fun subscribeFileClosed() {
-    project.getMessageBus().connect().subscribe<FileEditorManagerListener.Before>(
-      FileEditorManagerListener.Before.FILE_EDITOR_MANAGER,
-      object : FileEditorManagerListener.Before {
-        override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) = persistFoldingState(source, file)
-      }
+  fun subscribeEditorClosed() {
+    EditorFactory.getInstance().addEditorFactoryListener(
+      object : EditorFactoryListener {
+        override fun editorReleased(event: EditorFactoryEvent) {
+          if (isEnabled()) {
+            bury(event.editor)
+          }
+        }
+      },
+      this
     )
   }
 
-  private fun persistFoldingState(editorManager: FileEditorManager, file: VirtualFile) {
-    if (!isEnabled() || file !is VirtualFileWithId) {
-      return
+  private fun bury(editor: Editor) {
+    val file = editor.virtualFile
+    if (file is VirtualFileWithId && editor.editorKind == EditorKind.MAIN_EDITOR) {
+      val foldRegions = notZombieRegions(editor)
+      if (foldRegions.isNotEmpty()) {
+        val foldingState = FoldingState.create(editor.document.contentHash(), foldRegions)
+        scope.launch(Dispatchers.IO) {
+          cache[file.id] = foldingState
+          logger.debug { "stored folding state ${foldingState} for $file" }
+        }
+      }
     }
-    val fileEditor = editorManager.getSelectedEditor(file)
-    if (fileEditor !is TextEditor) {
-      return
-    }
-    if (fileEditor.getEditor().getEditorKind() != EditorKind.MAIN_EDITOR) {
-      return
-    }
-    val model = fileToModel.remove(file.id)
-    if (model == null) {
-      return
-    }
-    val document = FileDocumentManager.getInstance().getCachedDocument(file)
-    if (document == null) {
-      return
-    }
-    val foldRegions = model.allFoldRegions
-    if (foldRegions.isEmpty()) {
-      return
-    }
-    val foldingState = FoldingState.create(document.contentHash(), foldRegions)
-    scope.launch(Dispatchers.IO) {
-      cache[file.id] = foldingState
-      logger.debug { "stored folding state ${foldingState} for $file" }
-    }
+  }
+
+  private fun notZombieRegions(editor: Editor): List<FoldRegion> {
+    return editor.foldingModel.allFoldRegions.filter { it.getUserData(ZOMBIE_REGION_KEY) == null }
+  }
+
+  override fun dispose() {
   }
 
   private fun isEnabled(): Boolean {

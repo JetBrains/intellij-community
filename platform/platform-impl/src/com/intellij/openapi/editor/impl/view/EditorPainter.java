@@ -1563,6 +1563,7 @@ public final class EditorPainter implements TextDrawingCallback {
         return ObjectUtils.notNull(myEditor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES), getDefaultAttributes());
       }
       TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
+      foldAttributes = debugZombieFoldRegion(foldRegion, foldAttributes);
       return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
     }
 
@@ -1597,6 +1598,17 @@ public final class EditorPainter implements TextDrawingCallback {
                            primary.getFontType() == Font.PLAIN ? secondary.getFontType() : primary.getFontType());
 
       return TextAttributesEffectsBuilder.create(secondary).coverWith(primary).applyTo(result);
+    }
+
+    private static TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
+      if (Registry.is("cache.markup.debug") && region.getUserData(FoldingModelImpl.ZOMBIE_REGION_KEY) != null) {
+        TextAttributes zombieAttr = foldAttributes.clone();
+        zombieAttr.copyFrom(foldAttributes);
+        zombieAttr.setEffectType(EffectType.STRIKEOUT);
+        zombieAttr.setEffectColor(JBColor.DARK_GRAY);
+        return zombieAttr;
+      }
+      return foldAttributes;
     }
   }
 

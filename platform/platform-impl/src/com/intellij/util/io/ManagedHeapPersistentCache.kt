@@ -14,7 +14,7 @@ import kotlin.concurrent.withLock
 class ManagedHeapPersistentCache<K, V>(
   name: String,
   mapBuilder: PersistentMapBuilder<K, V>,
-  inMemoryCount: Int = 10,
+  inMemoryCount: Int = 5,
   closeAppOnShutdown: Boolean = true,
 ) : ManagedPersistentCache<K, V>(name, mapBuilder, closeAppOnShutdown) {
   private val inMemoryMap: LinkedHashMap<K, InMemoryValue<V>> = createInMemoryMap(inMemoryCount)

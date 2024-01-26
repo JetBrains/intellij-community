@@ -36,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_BITTEN_KEY;
+
 final class DocumentFoldingInfo implements CodeFoldingState {
   private static final Logger LOG = Logger.getInstance(DocumentFoldingInfo.class);
   private static final Key<FoldingInfo> FOLDING_INFO_KEY = Key.create("FOLDING_INFO");
@@ -112,7 +114,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
       TextRange range = descriptor.getRange();
       FoldRegion region = FoldingUtil.findFoldRegion(editor, range.getStartOffset(), range.getEndOffset());
-      if (region != null) {
+      if (region != null && region.getUserData(ZOMBIE_BITTEN_KEY) == null) {
         region.setExpanded(info.expanded);
       }
     }
