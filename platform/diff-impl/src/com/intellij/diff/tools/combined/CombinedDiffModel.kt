@@ -141,27 +141,26 @@ class CombinedDiffModel(val project: Project) {
       indicator.cancel()
     }
   }
+}
 
-  private inner class CombinedDiffContext(private val initialContext: UserDataHolder) : DiffContext() {
-    private val mainUi get() = getUserData(COMBINED_DIFF_MAIN_UI)
+private class CombinedDiffContext(private val project: Project) : DiffContext() {
+  private val mainUi get() = getUserData(COMBINED_DIFF_MAIN_UI)
 
-    private val ownContext: UserDataHolder = UserDataHolderBase()
+  private val ownContext: UserDataHolder = UserDataHolderBase()
 
-    override fun getProject() = this@CombinedDiffModel.project
-    override fun isFocusedInWindow(): Boolean = mainUi?.isFocusedInWindow() ?: false
-    override fun isWindowFocused(): Boolean = mainUi?.isWindowFocused() ?: false
-    override fun requestFocusInWindow() {
-      mainUi?.requestFocusInWindow()
-    }
+  override fun getProject() = project
+  override fun isFocusedInWindow(): Boolean = mainUi?.isFocusedInWindow() ?: false
+  override fun isWindowFocused(): Boolean = mainUi?.isWindowFocused() ?: false
+  override fun requestFocusInWindow() {
+    mainUi?.requestFocusInWindow()
+  }
 
-    override fun <T> getUserData(key: Key<T>): T? {
-      val data = ownContext.getUserData(key)
-      return data ?: initialContext.getUserData(key)
-    }
+  override fun <T> getUserData(key: Key<T>): T? {
+    return ownContext.getUserData(key)
+  }
 
-    override fun <T> putUserData(key: Key<T>, value: T?) {
-      ownContext.putUserData(key, value)
-    }
+  override fun <T> putUserData(key: Key<T>, value: T?) {
+    ownContext.putUserData(key, value)
   }
 }
 
