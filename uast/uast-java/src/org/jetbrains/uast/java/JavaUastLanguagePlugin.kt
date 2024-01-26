@@ -20,10 +20,8 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.java.JavaConverter.convertPsiElement
 import org.jetbrains.uast.java.declarations.JavaLazyParentUIdentifier
-import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
+import org.jetbrains.uast.java.expressions.*
 import org.jetbrains.uast.java.expressions.JavaUModuleReferenceExpression
-import org.jetbrains.uast.java.expressions.JavaUNamedExpression
-import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
@@ -319,6 +317,14 @@ internal object JavaConverter {
       override fun visitResourceList(resourceList: PsiResourceList) {
         result = true
       }
+
+      override fun visitDeconstructionList(deconstructionList: PsiDeconstructionList) {
+        result = true
+      }
+
+      override fun visitPatternVariable(variable: PsiPatternVariable) {
+        result = true
+      }
     }
 
     element.accept(visitor)
@@ -411,6 +417,19 @@ internal object JavaConverter {
       override fun visitComment(comment: PsiComment) {
         result = requiredType.el<UComment,PsiComment>(comment, givenParent, ::UComment)
       }
+
+      override fun visitTypeTestPattern(pattern: PsiTypeTestPattern) {
+        result = requiredType.expr<UPatternExpression, PsiTypeTestPattern>(pattern, givenParent, ::JavaUTypePatternExpression)
+      }
+
+      override fun visitUnnamedPattern(pattern: PsiUnnamedPattern) {
+        result = requiredType.expr<UPatternExpression, PsiUnnamedPattern>(pattern, givenParent, ::JavaUUnamedPatternExpression)
+      }
+
+      override fun visitDeconstructionPattern(deconstructionPattern: PsiDeconstructionPattern) {
+        result = requiredType.expr<UPatternExpression, PsiDeconstructionPattern>(deconstructionPattern, givenParent,
+                                                                                      ::JavaUDeconstructionPatternPattern)
+      }
     }
 
     el.accept(visitor)
@@ -464,8 +483,12 @@ internal object JavaConverter {
       }
 
       override fun visitInstanceOfExpression(expression: PsiInstanceOfExpression) {
-        result = requiredType.expr<UBinaryExpressionWithType, PsiInstanceOfExpression>(expression, givenParent,
-                                                                                       ::JavaUInstanceCheckExpression)
+        result = if (expression.pattern != null) {
+          requiredType.expr<UBinaryExpressionWithType, PsiInstanceOfExpression>(expression, givenParent,
+                                                                                ::JavaUInstanceWithPatternExpression)
+        } else {
+          requiredType.expr<UBinaryExpressionWithPattern, PsiInstanceOfExpression>(expression, givenParent, ::JavaUInstanceCheckExpression)
+        }
       }
 
       override fun visitLambdaExpression(expression: PsiLambdaExpression) {
