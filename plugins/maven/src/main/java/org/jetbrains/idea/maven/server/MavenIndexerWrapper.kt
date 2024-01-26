@@ -1,166 +1,154 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.server;
+package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenIndices;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenIndexId;
-import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.indices.MavenIndices
+import org.jetbrains.idea.maven.model.MavenArtifactInfo
+import org.jetbrains.idea.maven.model.MavenIndexId
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo
+import org.jetbrains.idea.maven.server.RemoteObjectWrapper.RetriableCancelable
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import java.io.File
+import java.rmi.RemoteException
+import java.rmi.server.UnicastRemoteObject
 
-import java.io.File;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
-
-public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
-
-
-  public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
-    super(parent);
-  }
-
-  public @Nullable MavenIndexUpdateState startIndexing(MavenRepositoryInfo info, File indexDir) {
+abstract class MavenIndexerWrapper(parent: RemoteObjectWrapper<*>?) : MavenRemoteObjectWrapper<MavenServerIndexer?>(parent) {
+  fun startIndexing(info: MavenRepositoryInfo?, indexDir: File?): MavenIndexUpdateState? {
     try {
-      MavenServerIndexer w = getOrCreateWrappee();
-      if (!(w instanceof AsyncMavenServerIndexer)) {
-        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?");
-        return null;
+      val w = getOrCreateWrappee()
+      if (w !is AsyncMavenServerIndexer) {
+        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?")
+        return null
       }
-      return ((AsyncMavenServerIndexer)w).startIndexing(info, indexDir, ourToken);
+      return w.startIndexing(info, indexDir, ourToken)
     }
-    catch (RemoteException e) {
-      handleRemoteError(e);
+    catch (e: RemoteException) {
+      handleRemoteError(e)
     }
-    return null;
+    return null
   }
 
-  public void stopIndexing(MavenRepositoryInfo info) {
+  fun stopIndexing(info: MavenRepositoryInfo?) {
     try {
-      MavenServerIndexer w = getOrCreateWrappee();
-      if (!(w instanceof AsyncMavenServerIndexer)) {
-        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?");
-        return;
+      val w = getOrCreateWrappee()
+      if (w !is AsyncMavenServerIndexer) {
+        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?")
+        return
       }
-      ((AsyncMavenServerIndexer)w).stopIndexing(info, ourToken);
+      w.stopIndexing(info, ourToken)
     }
-    catch (RemoteException e) {
-      handleRemoteError(e);
+    catch (e: RemoteException) {
+      handleRemoteError(e)
     }
   }
 
-  public List<MavenIndexUpdateState> status() {
-
+  fun status(): List<MavenIndexUpdateState> {
     try {
-      MavenServerIndexer w = getOrCreateWrappee();
-      if (!(w instanceof AsyncMavenServerIndexer)) {
-        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?");
-        return Collections.emptyList();
+      val w = getOrCreateWrappee()
+      if (w !is AsyncMavenServerIndexer) {
+        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?")
+        return emptyList()
       }
-      return ((AsyncMavenServerIndexer)w).status(ourToken);
+      return w.status(ourToken)
     }
-    catch (RemoteException e) {
-      handleRemoteError(e);
+    catch (e: RemoteException) {
+      handleRemoteError(e)
     }
-    return Collections.emptyList();
+    return emptyList()
   }
 
-  public void releaseIndex(MavenIndexId mavenIndexId) throws MavenServerIndexerException {
-    MavenLog.LOG.debug("releaseIndex " + mavenIndexId.indexId);
+  @Throws(MavenServerIndexerException::class)
+  fun releaseIndex(mavenIndexId: MavenIndexId) {
+    MavenLog.LOG.debug("releaseIndex " + mavenIndexId.indexId)
 
-    MavenServerIndexer w = getWrappee();
-    if (w == null) return;
+    val w = wrappee
+    if (w == null) return
 
     try {
-      w.releaseIndex(mavenIndexId, ourToken);
+      w.releaseIndex(mavenIndexId, ourToken)
     }
-    catch (RemoteException e) {
-      handleRemoteError(e);
+    catch (e: RemoteException) {
+      handleRemoteError(e)
     }
   }
 
-  public boolean indexExists(File dir) {
+  fun indexExists(dir: File?): Boolean {
     try {
-      return getOrCreateWrappee().indexExists(dir, ourToken);
+      return getOrCreateWrappee().indexExists(dir, ourToken)
     }
-    catch (RemoteException e) {
-      handleRemoteError(e);
+    catch (e: RemoteException) {
+      handleRemoteError(e)
     }
-    return false;
+    return false
   }
 
-  public int getIndexCount() {
-    return perform(() -> getOrCreateWrappee().getIndexCount(ourToken));
+  val indexCount: Int
+    get() = perform<Int, Exception> { getOrCreateWrappee().getIndexCount(ourToken) }
+
+  @Throws(MavenProcessCanceledException::class, MavenServerIndexerException::class)
+  fun updateIndex(mavenIndexId: MavenIndexId,
+                  indicator: MavenProgressIndicator,
+                  multithreaded: Boolean) {
+    performCancelable<Any, Exception>(
+      RetriableCancelable<Any, Exception> {
+        val indicatorWrapper = wrapAndExport(indicator)
+        try {
+          getOrCreateWrappee().updateIndex(mavenIndexId, indicatorWrapper, multithreaded, ourToken)
+        }
+        finally {
+          UnicastRemoteObject.unexportObject(indicatorWrapper, true)
+        }
+      })
   }
 
-  public void updateIndex(@NotNull final MavenIndexId mavenIndexId,
-                          @NotNull final MavenProgressIndicator indicator,
-                          boolean multithreaded) throws MavenProcessCanceledException,
-                                                        MavenServerIndexerException {
-    performCancelable(() -> {
-      MavenServerProgressIndicator indicatorWrapper = wrapAndExport(indicator);
+  @Throws(MavenServerIndexerException::class)
+  fun processArtifacts(mavenIndexId: MavenIndexId?, processor: MavenIndicesProcessor, progress: MavenProgressIndicator) {
+    perform<Any, Exception> {
       try {
-        getOrCreateWrappee().updateIndex(mavenIndexId, indicatorWrapper, multithreaded, ourToken);
-      }
-      finally {
-        UnicastRemoteObject.unexportObject(indicatorWrapper, true);
-      }
-      return null;
-    });
-  }
-
-  public void processArtifacts(final MavenIndexId mavenIndexId, final MavenIndicesProcessor processor, MavenProgressIndicator progress)
-    throws MavenServerIndexerException {
-    perform(() -> {
-      try {
-        int start = 0;
-        List<IndexedMavenId> list;
+        var start = 0
+        var list: List<IndexedMavenId?>?
         do {
-          if (progress.isCanceled()) return null;
-          MavenLog.LOG.debug("process artifacts: " + start);
-          list = getOrCreateWrappee().processArtifacts(mavenIndexId, start, ourToken);
+          if (progress.isCanceled) return@perform
+          MavenLog.LOG.debug("process artifacts: $start")
+          list = getOrCreateWrappee().processArtifacts(mavenIndexId, start, ourToken)
           if (list != null) {
-            processor.processArtifacts(list);
-            start += list.size();
+            processor.processArtifacts(list)
+            start += list.size
           }
         }
-        while (list != null);
-        return null;
+        while (list != null)
+        return@perform
       }
-      catch (Exception e) {
-        return null;
+      catch (e: Exception) {
+        return@perform
       }
-    });
+    }
   }
 
-  @NotNull
-  public List<AddArtifactResponse> addArtifacts(MavenIndexId mavenIndexId, Collection<? extends File> artifactFiles) {
-    return perform(() -> {
+  fun addArtifacts(mavenIndexId: MavenIndexId, artifactFiles: Collection<File>): List<AddArtifactResponse> {
+    return perform<List<AddArtifactResponse>, Exception> {
       try {
-        return getOrCreateWrappee().addArtifacts(mavenIndexId, new ArrayList<>(artifactFiles), ourToken);
+        return@perform getOrCreateWrappee().addArtifacts(mavenIndexId, ArrayList<File>(artifactFiles), ourToken)
       }
-      catch (Throwable ignore) {
-        return ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
+      catch (ignore: Throwable) {
+        return@perform artifactFiles.map { file: File? -> AddArtifactResponse(file, null) }
       }
-    });
+    }
   }
 
-  public Set<MavenArtifactInfo> search(final MavenIndexId mavenIndexId, final String pattern, final int maxResult)
-    throws MavenServerIndexerException {
-    return perform(() -> getOrCreateWrappee().search(mavenIndexId, pattern, maxResult, ourToken));
+  @Throws(MavenServerIndexerException::class)
+  fun search(mavenIndexId: MavenIndexId?, pattern: String?, maxResult: Int): Set<MavenArtifactInfo> {
+    return perform<HashSet<MavenArtifactInfo>, Exception> { getOrCreateWrappee().search(mavenIndexId, pattern, maxResult, ourToken) }
   }
 
   @ApiStatus.Internal
-  public MavenIndices getOrCreateIndices(Project project) {
-    return createMavenIndices(project);
+  fun getOrCreateIndices(project: Project): MavenIndices {
+    return createMavenIndices(project)
   }
 
-  protected abstract MavenIndices createMavenIndices(Project project);
+  protected abstract fun createMavenIndices(project: Project): MavenIndices
 }
 
