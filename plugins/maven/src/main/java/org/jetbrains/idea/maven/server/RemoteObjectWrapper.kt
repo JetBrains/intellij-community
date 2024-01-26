@@ -13,99 +13,95 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.server;
+package org.jetbrains.idea.maven.server
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import java.rmi.RemoteException
 
-import java.rmi.RemoteException;
+abstract class RemoteObjectWrapper<T> protected constructor(private val myParent: RemoteObjectWrapper<*>?) {
+  private var myWrappee: T? = null
 
-public abstract class RemoteObjectWrapper<T> {
-  @Nullable private final RemoteObjectWrapper<?> myParent;
-  @Nullable private T myWrappee;
+  protected val wrappee: T
+    get() = myWrappee!!
 
-  protected RemoteObjectWrapper(@Nullable RemoteObjectWrapper<?> parent) {
-    myParent = parent;
-  }
-
-  @Nullable
-  protected synchronized T getWrappee() {
-    return myWrappee;
-  }
-
-  @NotNull
-  protected synchronized T getOrCreateWrappee() throws RemoteException {
+  @Throws(RemoteException::class)
+  @Synchronized
+  open fun getOrCreateWrappee(): T {
     if (myWrappee == null) {
-      myWrappee = create();
-      onWrappeeCreated();
+      myWrappee = create()
+      onWrappeeCreated()
     }
-    onWrappeeAccessed();
-    return myWrappee;
+    onWrappeeAccessed()
+    return myWrappee!!
   }
 
-  @NotNull
-  protected abstract T create() throws RemoteException;
+  @Throws(RemoteException::class)
+  protected abstract fun create(): T
 
-  protected void onWrappeeCreated() throws RemoteException {
+  @Throws(RemoteException::class)
+  protected fun onWrappeeCreated() {
   }
 
-  protected void onWrappeeAccessed() {
-    if (myParent != null) myParent.onWrappeeAccessed();
+  protected fun onWrappeeAccessed() {
+    myParent?.onWrappeeAccessed()
   }
 
-  protected synchronized void handleRemoteError(RemoteException e) {
-    MavenLog.LOG.debug("[connector] Connection failed. Will be reconnected on the next request.", e);
-    onError();
+  @Synchronized
+  protected open fun handleRemoteError(e: RemoteException) {
+    MavenLog.LOG.debug("[connector] Connection failed. Will be reconnected on the next request.", e)
+    onError()
   }
 
-  protected synchronized void onError() {
-    cleanup();
-    if (myParent != null) myParent.onError();
+  @Synchronized
+  protected fun onError() {
+    cleanup()
+    myParent?.onError()
   }
 
-  protected synchronized void cleanup() {
-    myWrappee = null;
+  @Synchronized
+  protected open fun cleanup() {
+    myWrappee = null
   }
 
-  protected <R, E extends Exception> R perform(Retriable<R, E> r) throws E {
-    RemoteException last = null;
-    for (int i = 0; i < 2; i++) {
+  protected fun <R, E : Exception?> perform(r: Retriable<R, E>): R {
+    var last: RemoteException? = null
+    for (i in 0..1) {
       try {
-        return r.execute();
+        return r.execute()
       }
-      catch (RemoteException e) {
-        handleRemoteError(last = e);
+      catch (e: RemoteException) {
+        handleRemoteError(e.also { last = it })
       }
     }
-    throw new CannotStartServerException(SyncBundle.message("maven.cannot.reconnect"), last);
+    throw CannotStartServerException(SyncBundle.message("maven.cannot.reconnect"), last)
   }
 
-  protected <R, E extends Exception> R performCancelable(RetriableCancelable<R, E> r) throws MavenProcessCanceledException, E {
-    RemoteException last = null;
-    for (int i = 0; i < 2; i++) {
+  @Throws(MavenProcessCanceledException::class)
+  protected fun <R, E : Exception?> performCancelable(r: RetriableCancelable<R, E>): R {
+    var last: RemoteException? = null
+    for (i in 0..1) {
       try {
-        return r.execute();
+        return r.execute()
       }
-      catch (RemoteException e) {
-        handleRemoteError(last = e);
+      catch (e: RemoteException) {
+        handleRemoteError(e.also { last = it })
       }
-      catch (MavenServerProcessCanceledException e) {
-        throw new MavenProcessCanceledException();
+      catch (e: MavenServerProcessCanceledException) {
+        throw MavenProcessCanceledException()
       }
     }
-    throw new CannotStartServerException(SyncBundle.message("maven.cannot.reconnect"), last);
+    throw CannotStartServerException(SyncBundle.message("maven.cannot.reconnect"), last)
   }
 
-  @FunctionalInterface
-  protected interface Retriable<T, E extends Exception> {
-    T execute() throws RemoteException, E;
+  fun interface Retriable<T, E : Exception?> {
+    @Throws(RemoteException::class)
+    fun execute(): T
   }
 
-  @FunctionalInterface
-  protected interface RetriableCancelable<T, E extends Exception> {
-    T execute() throws RemoteException, MavenServerProcessCanceledException, E;
+  protected fun interface RetriableCancelable<T, E : Exception?> {
+    @Throws(RemoteException::class, MavenServerProcessCanceledException::class)
+    fun execute(): T
   }
 }

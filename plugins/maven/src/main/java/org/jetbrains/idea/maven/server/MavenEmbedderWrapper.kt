@@ -33,13 +33,13 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   override fun getOrCreateWrappee(): MavenServerEmbedder {
     var embedder = super.getOrCreateWrappee()
     try {
-      embedder.ping(ourToken)
+      embedder!!.ping(ourToken)
     }
     catch (e: RemoteException) {
       onError()
       embedder = super.getOrCreateWrappee()
     }
-    return embedder
+    return embedder!!
   }
 
   private fun convertWorkspaceMap(map: MavenWorkspaceMap?): MavenWorkspaceMap? {
@@ -98,7 +98,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   @Throws(MavenProcessCanceledException::class)
   fun evaluateEffectivePom(file: File, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
-    return performCancelable<String, RuntimeException> {
+    return performCancelable<String?, RuntimeException> {
       getOrCreateWrappee().evaluateEffectivePom(file, ArrayList(activeProfiles), ArrayList(inactiveProfiles), ourToken)
     }
   }
@@ -182,7 +182,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   @Throws(MavenProcessCanceledException::class)
   fun readModel(file: File?): MavenModel? {
-    return performCancelable<MavenModel, RuntimeException> { getOrCreateWrappee().readModel(file, ourToken) }
+    return performCancelable<MavenModel?, RuntimeException> { getOrCreateWrappee().readModel(file, ourToken) }
   }
 
   @Throws(MavenProcessCanceledException::class)
@@ -216,7 +216,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                                        version: String,
                                        repositories: List<MavenRemoteRepository>,
                                        url: String?): Map<String, String>? {
-    return perform<Map<String, String>, RuntimeException> {
+    return perform<Map<String, String>?, RuntimeException> {
       getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, ArrayList(repositories), url, ourToken)
     }
   }
