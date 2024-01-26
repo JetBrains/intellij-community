@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.logging.JvmLogger
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -14,8 +13,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentsOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.settings.JavaSettingsStorage
@@ -28,25 +25,15 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     val places = getPossiblePlacesForLogger(currentElement)
 
     val lastClass = places.lastOrNull() ?: return
-    val className = lastClass.name ?: return
-    val factory = JavaPsiFacade.getElementFactory(project)
-
     val module = ModuleUtil.findModuleForFile(file)
 
     val availableLoggers = findSuitableLoggers(module)
 
     val chosenLogger = getSelectedLogger(project, availableLoggers) ?: return
 
-    val fieldText = chosenLogger.createLoggerFieldText(className)
-    val field = factory.createFieldFromText(fieldText, lastClass).apply {
-      PsiUtil.setModifierProperty(this, PsiModifier.STATIC, true)
-      PsiUtil.setModifierProperty(this, PsiModifier.FINAL, true)
-      PsiUtil.setModifierProperty(this, PsiModifier.PRIVATE, true)
-    }
-
     CommandProcessor.getInstance().executeCommand(project, {
       try {
-        val appendedField = insertLogger(project, field, lastClass) ?: return@executeCommand
+        val appendedField = chosenLogger.insertLoggerAtClass(project, lastClass) as? PsiField ?: return@executeCommand // TODO: determine logger type
         val identifier = appendedField.nameIdentifier
         editor.caretModel.moveToOffset(identifier.endOffset)
         editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
@@ -55,13 +42,6 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
         GenerationUtil.handleException(project, e)
       }
     }, null, null)
-  }
-
-  private fun insertLogger(project: Project,
-                           field: PsiField,
-                           clazz: PsiClass): PsiField? = WriteAction.compute<PsiField?, Exception> {
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(field)
-    clazz.add(field) as? PsiField
   }
 
   private fun getSelectedLogger(project: Project, availableLoggers: List<JvmLogger>): JvmLogger? {
