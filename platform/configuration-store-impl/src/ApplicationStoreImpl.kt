@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJp
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.util.LineSeparator
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import kotlinx.coroutines.coroutineScope
@@ -114,11 +115,9 @@ class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null, sett
     get() = false
 
   override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
-    // IDEA-144052 When "Settings repository" is enabled changes in Path Variables'
-    // aren't saved to default path.macros.xml file causing errors in a build process
     if (storage.fileSpec == "path.macros.xml" || storage.fileSpec == "applicationLibraries.xml") {
       LOG.runAndLogException {
-        writer.writeTo(storage.file, null)
+        writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
       }
     }
   }

@@ -124,7 +124,7 @@ open class FileBasedStorage(file: Path,
           val file = storage.file
           LOG.debug { "Save $file" }
           try {
-            dataWriter.writeTo(file, this, lineSeparator)
+            dataWriter.writeTo(file, requestor = this, lineSeparator, storage.isUseXmlProlog)
           }
           catch (e: ReadOnlyModificationException) {
             throw e
