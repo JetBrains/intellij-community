@@ -39,6 +39,8 @@ class SettingsSyncPromotion : SettingsDialogListener {
       Disposer.dispose(gotItTooltip)
       return  // It was already shown once
     }
+    // mark it as shown, to not show it again, not depending on the way how it is closed
+    Disposer.register(gotItTooltip) { gotItTooltip.gotIt() }
 
     val settingsTree = settingsEditor.treeView.tree
     val settingsSyncPath = TreeUtil.treePathTraverser(settingsTree).find { path ->
