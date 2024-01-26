@@ -3,12 +3,12 @@ package com.intellij.logging
 
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
-class Log4jLogger : JvmLogger() {
-  override val loggerName: String =   JavaLoggingUtils.LOG4J
-  override val factoryName: String = JavaLoggingUtils.LOG4J_FACTORY
-  override val methodName: String = "getLogger"
-  override val classNamePattern: String = "%s.class"
-  override val priority: Int = 5
-
+class Log4jLogger : JvmLogger(
+  JavaLoggingUtils.LOG4J,
+  JavaLoggingUtils.LOG4J_FACTORY,
+  "getLogger",
+  "%s.class",
+  5,
+) {
   override fun toString(): String = "Log4j"
 }

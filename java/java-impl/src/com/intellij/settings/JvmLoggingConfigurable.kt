@@ -28,13 +28,13 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
   override fun getId(): String = JavaBundle.message("jvm.logging.configurable.display.name")
 
   override fun createComponent(): JComponent {
-    val isOnlyOnStartup = JvmLogger.getAllLoggersNames(settings.loggerId == JvmLogger.UNSPECIFIED_LOGGER_NAME)
+    val isOnlyOnStartup = JvmLogger.getAllLoggersNames(settings.loggerName == JvmLogger.UNSPECIFIED_LOGGER_NAME)
     panel = panel {
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
           label(JavaBundle.message("label.configurable.logger.type"))
-          comboBox(JavaLoggerModel(isOnlyOnStartup, settings.loggerId)).bindItem(
-            settings::loggerId.toNullableProperty()).onChanged {
+          comboBox(JavaLoggerModel(isOnlyOnStartup, settings.loggerName)).bindItem(
+            settings::loggerName.toNullableProperty()).onChanged {
             updateWarningRow(it.item)
           }
         }
@@ -44,7 +44,7 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
         }.visible(false)
       }
     }
-    updateWarningRow(settings.loggerId)
+    updateWarningRow(settings.loggerName)
     return panel
   }
 

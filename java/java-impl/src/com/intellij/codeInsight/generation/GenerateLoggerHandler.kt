@@ -72,7 +72,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     if (availableLoggers.isEmpty()) return null
     if (availableLoggers.size == 1) return availableLoggers.first()
 
-    val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.loggerId)
+    val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.loggerName)
 
     val chooseLoggerDialog = ChooseLoggerDialogWrapper(
       availableLoggers.map { it.toString() },

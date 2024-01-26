@@ -3,16 +3,12 @@ package com.intellij.logging
 
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
-class ApacheCommonsLogger : JvmLogger() {
-  override val loggerName: String = JavaLoggingUtils.COMMONS_LOGGING
-
-  override val factoryName: String = JavaLoggingUtils.COMMONS_LOGGING_FACTORY
-
-  override val methodName: String = "getLog"
-
-  override val classNamePattern: String = "%s.class"
-
-  override val priority: Int = 20
-
+class ApacheCommonsLogger : JvmLogger(
+  JavaLoggingUtils.COMMONS_LOGGING,
+  JavaLoggingUtils.COMMONS_LOGGING_FACTORY,
+  "getLog",
+  "%s.class",
+  20,
+) {
   override fun toString(): String = "Apache Commons Logging"
 }

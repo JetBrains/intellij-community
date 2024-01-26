@@ -9,7 +9,7 @@ import com.intellij.openapi.components.*
        storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class JavaSettingsStorage : SimplePersistentStateComponent<JavaSettingsStorage.State>(State()) {
   class State : BaseState() {
-    var loggerId : String? by string(JvmLogger.UNSPECIFIED_LOGGER_NAME)
+    var loggerName : String? by string(JvmLogger.UNSPECIFIED_LOGGER_NAME)
   }
 }
 
