@@ -218,7 +218,6 @@ public final class PatchApplier {
         finally {
           trigger.cleanup();
           action.finish();
-          LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.after.patch.label.text"));
         }
       });
       result = refStatus.get();
