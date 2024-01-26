@@ -534,7 +534,7 @@ private class MainToolbarLayoutStrategy(): ToolbarLayoutStrategy {
 
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
     val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    if (!ActionToolbarImpl.isSeparator(cmp)) {
+    if (!ActionToolbarImpl.isSeparator(cmp) && currRect.width != 0) {
       currRect.width = max(currRect.width, minButtonSize.width)
     }
     currRect.height = max(currRect.height, minButtonSize.height)
