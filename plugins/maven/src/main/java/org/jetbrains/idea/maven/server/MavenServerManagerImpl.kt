@@ -151,6 +151,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return connector
   }
 
+  @Deprecated("use suspend", ReplaceWith("getConnector"))
   override fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector {
     var connector = doGetConnector(project, workingDirectory)
     if (!connector.pingBlocking()) {

@@ -83,6 +83,7 @@ abstract class MavenServerConnectorBase(project: Project?,
     return myServerPromise.get()
   }
 
+  @Deprecated("use suspend", ReplaceWith("getServer"))
   override fun getServerBlocking(): MavenServer {
     try {
       val server = waitForServerBlocking()
