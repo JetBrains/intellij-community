@@ -69,11 +69,10 @@ internal open class DifferenceDiffRequestProducer(protected val project: Project
     if (scope != other.scope) return false
     if (leftItem != other.leftItem) return false
     if (rightItem != other.rightItem) return false
-    if (difference != other.difference) return false
     if (isOldContentUsed != other.isOldContentUsed) return false
 
     return true
   }
 
-  override fun hashCode(): Int = Objects.hash(scope, leftItem, rightItem, difference, isOldContentUsed)
+  override fun hashCode(): Int = Objects.hash(scope, leftItem, rightItem, isOldContentUsed)
 }
