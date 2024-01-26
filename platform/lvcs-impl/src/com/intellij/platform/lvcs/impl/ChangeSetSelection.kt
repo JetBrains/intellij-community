@@ -20,8 +20,8 @@ sealed interface ChangeSetSelection {
   }
 }
 
-val ChangeSetSelection.leftRevision: RevisionId get() = leftItem?.revisionId ?: RevisionId.Current
-val ChangeSetSelection.rightRevision: RevisionId get() = rightItem?.revisionId ?: RevisionId.Current
+val ChangeSetSelection.leftRevision: RevisionId get() = leftItem.revisionId
+val ChangeSetSelection.rightRevision: RevisionId get() = rightItem.revisionId
 
 fun ActivitySelection.toChangeSetSelection(): ChangeSetSelection? {
   if (selectedItems.isEmpty()) return null
