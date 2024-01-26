@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
+import com.intellij.diff.DiffContext;
+import com.intellij.diff.FrameDiffTool;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -134,4 +136,14 @@ public interface DiffUserDataKeys {
    * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
    */
   Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
+
+  /**
+   * Enable search in editor inside diff changes areas in additional to the editor selection for the current {@link DiffContext}
+   */
+  Key<Boolean> ENABLE_SEARCH_IN_CHANGES = Key.create("Diff.EnableSearchInChanges");
+
+  /**
+   * {@link FrameDiffTool.DiffViewer} reference accessible from particular {@link com.intellij.openapi.editor.Editor}
+   */
+  Key<FrameDiffTool.DiffViewer> DIFF_VIEWER = Key.create("Diff.FrameViewer");
 }

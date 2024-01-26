@@ -462,6 +462,10 @@
       <add-to-group group-id="Diff.KeymapGroup"/>
     </group>
 
+    <action id="Vcs.Diff.ToggleSearchInChanges" class="com.intellij.openapi.diff.impl.ToggleSearchInChangesAction">
+      <add-to-group group-id="Editor.Search.Filter.Results"/>
+    </action>
+
     <reference ref="Vcs.VcsClone">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </reference>
