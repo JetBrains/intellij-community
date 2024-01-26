@@ -12,7 +12,10 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector;
 import com.intellij.openapi.externalSystem.statistics.Phase;
-import com.intellij.openapi.externalSystem.util.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -472,35 +475,27 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
                              @Nullable Long activityId,
                              @Nullable ProjectSystemId projectSystemId) {
     Span parentSpan = Span.current();
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        syncMetrics.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
-        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "WorkspaceModelApply", parentSpan, (ignore) -> {
-          if (activityId != null) {
-            ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
-          }
-          final long startTime = System.currentTimeMillis();
-          modelsProvider.commit();
-          final long timeInMs = System.currentTimeMillis() - startTime;
-          if (activityId != null) {
-            syncMetrics.endSpan(Phase.WORKSPACE_MODEL_APPLY.name());
-            ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
-          }
-          LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
-        });
-      }
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, project, () -> {
+      syncMetrics.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
+      ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "WorkspaceModelApply", parentSpan, (ignore) -> {
+        if (activityId != null) {
+          ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
+        }
+        final long startTime = System.currentTimeMillis();
+        modelsProvider.commit();
+        final long timeInMs = System.currentTimeMillis() - startTime;
+        if (activityId != null) {
+          syncMetrics.endSpan(Phase.WORKSPACE_MODEL_APPLY.name());
+          ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
+        }
+        LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
+      });
     });
   }
 
   private static void dispose(@NotNull final IdeModifiableModelsProvider modelsProvider,
                               @NotNull Project project,
                               boolean synchronous) {
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        modelsProvider.dispose();
-      }
-    });
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, project, () -> modelsProvider.dispose());
   }
 }

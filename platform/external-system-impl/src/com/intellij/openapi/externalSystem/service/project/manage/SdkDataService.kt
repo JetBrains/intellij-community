@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectSdkData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.module.Module
@@ -28,11 +27,9 @@ internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData
     require(toImport.size == 1) { String.format("Expected to get a single project but got %d: %s", toImport.size, toImport) }
     if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)) return
     for (sdkDataNode in toImport) {
-      ExternalSystemApiUtil.executeProjectChangeAction(object : DisposeAwareProjectChange(project) {
-        override fun execute() {
-          importProjectSdk(project, sdkDataNode.data)
-        }
-      })
+      ExternalSystemApiUtil.executeProjectChangeAction(project) {
+        importProjectSdk(project, sdkDataNode.data)
+      }
     }
   }
 
