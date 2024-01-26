@@ -1,27 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.ui.uiDslTestAction
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.internal.ui.sandbox.dsl
 
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.openapi.Disposable
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
-import javax.swing.Action
+import com.intellij.util.ui.JBDimension
 import javax.swing.JComponent
 
-internal class LongTextsDialog : DialogWrapper(false) {
+internal class LongTextsPanel: UISandboxPanel {
 
-  init {
-    init()
-    title = "Long Texts"
-    setOKButtonText("Close")
-  }
+  override val title: String = "Long texts"
 
-  override fun createActions(): Array<Action> {
-    return arrayOf(okAction)
-  }
+  override val isScrollbarNeeded: Boolean = false
 
-  override fun createCenterPanel(): JComponent {
-    val times = 50
+  override fun createContent(disposable: Disposable): JComponent {
+    val times = 20
 
     return panel {
       row {
@@ -58,6 +53,9 @@ internal class LongTextsDialog : DialogWrapper(false) {
             .align(AlignX.RIGHT)
         }
       }
+    }.apply {
+      minimumSize = JBDimension(200, 100)
+      preferredSize = JBDimension(200, 100)
     }
   }
 }

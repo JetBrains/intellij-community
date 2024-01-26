@@ -1,57 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.ui.uiDslTestAction
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.internal.ui.sandbox.dsl
 
+import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.Alarm
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
 @Suppress("DialogTitleCapitalization")
-@ApiStatus.Internal
-internal class PlaceholderPanel(parentDisposable: Disposable) {
+internal class PlaceholderPanel : UISandboxPanel {
 
-  companion object {
-
-    private enum class PlaceholderComponent {
-      NONE,
-      LABEL,
-      CHECK_BOX,
-      TEXT_FIELD,
-      INT_TEXT_FIELD,
-
-      /**
-       * Custom validation is used
-       */
-      CUSTOM_TEXT_FIELD,
-
-      /**
-       * Used one instance. Check that
-       * - all listeners are removed after the component is removed from placeholder
-       * - no duplicate listeners in the instance after several installing into placeholder
-       */
-      INSTANCE_TEXT_FIELD,
-    }
-
-    private data class Model(
-      var simpleCheckbox: Boolean = false,
-      var placeholderCheckBox: Boolean = false,
-      var placeholderTextField: String = "placeholderTextField",
-      var placeholderIntTextField: Int = 0,
-      var placeholderCustomTextField: String = "placeholderCustomTextField",
-      var placeholderInstanceTextField: Int = 0,
-    )
-  }
-
-  lateinit var panel: DialogPanel
-    private set
+  override val title: String = "Placeholder"
 
   private val model = Model()
-  private val alarm = Alarm(parentDisposable)
 
   private val customTextEdit = panel {
     row {
@@ -67,10 +32,11 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
   private lateinit var lbValidation: JLabel
   private lateinit var lbModel: JLabel
 
-  init {
+  override fun createContent(disposable: Disposable): JComponent {
     lateinit var placeholder: Placeholder
+    lateinit var result: DialogPanel
 
-    panel = panel {
+    result = panel {
       row {
         text("Validation of placeholder. Select component and change values. Reset, Apply and isModified should work " +
              "as expected. Check also validation for int text field")
@@ -81,7 +47,7 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
           .bindSelected(model::simpleCheckbox)
       }
       row("Select Placeholder:") {
-        comboBox(PlaceholderComponent.values().toList())
+        comboBox(PlaceholderComponent.entries.toList())
           .onChanged {
             val type = it.item
             if (type == null) {
@@ -105,10 +71,10 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
       group("DialogPanel Control") {
         row {
           button("Reset") {
-            panel.reset()
+            result.reset()
           }
           button("Apply") {
-            panel.apply()
+            result.apply()
           }
           lbIsModified = label("").component
         }
@@ -121,14 +87,17 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
       }
     }
 
-    panel.registerValidators(parentDisposable)
+    result.registerValidators(disposable)
+    val alarm = Alarm(disposable)
 
     SwingUtilities.invokeLater {
-      initValidation()
+      initValidation(alarm, result)
     }
+
+    return result
   }
 
-  private fun initValidation() {
+  private fun initValidation(alarm: Alarm, panel: DialogPanel) {
     fun JComponent.bold(isBold: Boolean) {
       font = font.deriveFont(if (isBold) Font.BOLD else Font.PLAIN)
     }
@@ -143,7 +112,7 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
       lbValidation.bold(validationErrors.isNotEmpty())
       lbModel.text = "<html>$model"
 
-      initValidation()
+      initValidation(alarm, panel)
     }, 1000)
   }
 
@@ -173,3 +142,32 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
     }
   }
 }
+
+private enum class PlaceholderComponent {
+  NONE,
+  LABEL,
+  CHECK_BOX,
+  TEXT_FIELD,
+  INT_TEXT_FIELD,
+
+  /**
+   * Custom validation is used
+   */
+  CUSTOM_TEXT_FIELD,
+
+  /**
+   * Used one instance. Check that
+   * - all listeners are removed after the component is removed from placeholder
+   * - no duplicate listeners in the instance after several installing into placeholder
+   */
+  INSTANCE_TEXT_FIELD,
+}
+
+private data class Model(
+  var simpleCheckbox: Boolean = false,
+  var placeholderCheckBox: Boolean = false,
+  var placeholderTextField: String = "placeholderTextField",
+  var placeholderIntTextField: Int = 0,
+  var placeholderCustomTextField: String = "placeholderCustomTextField",
+  var placeholderInstanceTextField: Int = 0,
+)

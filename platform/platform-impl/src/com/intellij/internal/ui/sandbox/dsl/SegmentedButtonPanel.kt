@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.ui.uiDslTestAction
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.internal.ui.sandbox.dsl
 
 import com.intellij.icons.AllIcons
+import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -9,31 +10,23 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.text.nullize
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JTextField
 
 @Suppress("DialogTitleCapitalization")
-@ApiStatus.Internal
-internal class SegmentedButtonPanel(parentDisposable: Disposable) {
+internal class SegmentedButtonPanel : UISandboxPanel {
 
-  @Suppress("unused")
-  private enum class ItemIcon(val icon: Icon?) {
-    None(null),
-    Settings(AllIcons.General.Settings),
-    ExternalTools(AllIcons.General.ExternalTools),
-    OpenDisk(AllIcons.General.OpenDisk),
-  }
-
-  lateinit var panel: DialogPanel
+  override val title: String = "Segmented Button"
 
   private var rendererText: @Nls String? = null
   private var rendererToolTip: @Nls String? = null
   private var rendererIcon = ItemIcon.None
   private var rendererEnabled = true
 
-  init {
+  override fun createContent(disposable: Disposable): JComponent {
+    lateinit var result: DialogPanel
     lateinit var segmentedButton: SegmentedButton<String>
     val tfSelectedItem = JTextField()
     lateinit var tfText: JTextField
@@ -43,7 +36,7 @@ internal class SegmentedButtonPanel(parentDisposable: Disposable) {
     val taLogs = JBTextArea()
     val presentations = mutableMapOf<String, SegmentedButton.ItemPresentation>()
 
-    panel = panel {
+    result = panel {
       group("Segmented button test board") {
         val segmentedButtonRow = row("Segmented button:") {
           segmentedButton = segmentedButton(generateItems(3)) {
@@ -62,7 +55,7 @@ internal class SegmentedButtonPanel(parentDisposable: Disposable) {
             val presentation = presentations[it]!!
             tfText.text = presentation.text
             tfTooltip.text = presentation.toolTipText
-            cbIcon.selectedItem = ItemIcon.values().find { itemIcon ->  itemIcon.icon == presentation.icon } ?: ItemIcon.None
+            cbIcon.selectedItem = ItemIcon.entries.find { itemIcon -> itemIcon.icon == presentation.icon } ?: ItemIcon.None
             cbEnabled.isSelected = presentation.enabled
           }
         }.bottomGap(BottomGap.SMALL)
@@ -93,7 +86,7 @@ internal class SegmentedButtonPanel(parentDisposable: Disposable) {
                   .component
               }
               row("Icon:") {
-                cbIcon = comboBox(ItemIcon.values().toList())
+                cbIcon = comboBox(ItemIcon.entries.toList())
                   .component
               }
               row {
@@ -150,7 +143,7 @@ internal class SegmentedButtonPanel(parentDisposable: Disposable) {
 
               row {
                 button("Validate not empty") {
-                  panel.validateAll()
+                  result.validateAll()
                 }
               }
             }
@@ -174,10 +167,19 @@ internal class SegmentedButtonPanel(parentDisposable: Disposable) {
       }
     }
 
-    panel.registerValidators(parentDisposable)
+    result.registerValidators(disposable)
+    return result
   }
 
   private fun generateItems(count: Int): Collection<String> {
     return (1..count).map { "Item $it" }
   }
+}
+
+@Suppress("unused")
+private enum class ItemIcon(val icon: Icon?) {
+  None(null),
+  Settings(AllIcons.General.Settings),
+  ExternalTools(AllIcons.General.ExternalTools),
+  OpenDisk(AllIcons.General.OpenDisk),
 }

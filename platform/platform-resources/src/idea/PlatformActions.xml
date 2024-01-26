@@ -1280,7 +1280,6 @@
         </group>
         <group id="Internal.UI.KotlinUiDsl" popup="true">
           <action id="UiDslShowcaseAction" internal="true" class="com.intellij.internal.ui.uiDslShowcase.UiDslShowcaseAction"/>
-          <action id="UiDslTestAction" internal="true" class="com.intellij.internal.ui.uiDslTestAction.UiDslTestAction"/>
           <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"/>
         </group>
         <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>

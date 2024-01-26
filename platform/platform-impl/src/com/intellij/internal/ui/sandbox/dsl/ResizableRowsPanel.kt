@@ -12,6 +12,8 @@ internal class ResizableRowsPanel : UISandboxPanel {
 
   override val title: String = "Resizable Rows"
 
+  override val isScrollbarNeeded: Boolean = false
+
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
       for (rowLayout in RowLayout.entries) {

@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DialogTitleCapitalization")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.internal.ui.sandbox.dsl
 
-package com.intellij.internal.ui.uiDslTestAction
-
+import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -16,7 +15,10 @@ import java.awt.Font
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 
-class ValidationRefactoringPanel(parentDisposable: Disposable) {
+@Suppress("DialogTitleCapitalization")
+internal class ValidationRefactoringPanel : UISandboxPanel {
+
+  override val title: String = "Validation Refactoring API"
 
   companion object {
 
@@ -27,28 +29,17 @@ class ValidationRefactoringPanel(parentDisposable: Disposable) {
       var editOnInput: String = "editOnInput",
       var editOnInputNew: String = "editOnInputNew",
     )
-
-    private class CustomEdit : JPanel(BorderLayout()) {
-
-      val textField = JTextField()
-
-      init {
-        add(textField, BorderLayout.CENTER)
-      }
-    }
   }
 
-  lateinit var panel: DialogPanel
 
   private val model = Model()
-  private val alarm = Alarm(parentDisposable)
-
   private lateinit var lbIsModified: JLabel
   private lateinit var lbValidation: JLabel
   private lateinit var lbModel: JLabel
 
-  init {
-    panel = panel {
+  override fun createContent(disposable: Disposable): JComponent {
+    lateinit var result: DialogPanel
+    result = panel {
       row {
         label("Old Validation API").bold()
         label("New Validation API").bold()
@@ -113,10 +104,10 @@ class ValidationRefactoringPanel(parentDisposable: Disposable) {
       group("DialogPanel Control") {
         row {
           button("Reset") {
-            panel.reset()
+            result.reset()
           }
           button("Apply") {
-            panel.apply()
+            result.apply()
           }
           lbIsModified = label("").component
         }
@@ -129,11 +120,13 @@ class ValidationRefactoringPanel(parentDisposable: Disposable) {
       }
     }
 
-    panel.registerValidators(parentDisposable)
+    result.registerValidators(disposable)
+    val alarm = Alarm(disposable)
 
     SwingUtilities.invokeLater {
-      initValidation()
+      initValidation(alarm, result)
     }
+    return result
   }
 
   private fun Row.checkBoxValidation(validation: CellValidation<*>) {
@@ -151,7 +144,7 @@ class ValidationRefactoringPanel(parentDisposable: Disposable) {
     }
   }
 
-  private fun initValidation() {
+  private fun initValidation(alarm: Alarm, panel: DialogPanel) {
     fun JComponent.bold(isBold: Boolean) {
       font = font.deriveFont(if (isBold) Font.BOLD else Font.PLAIN)
     }
@@ -166,7 +159,16 @@ class ValidationRefactoringPanel(parentDisposable: Disposable) {
       lbValidation.bold(validationErrors.isNotEmpty())
       lbModel.text = "<html>$model"
 
-      initValidation()
+      initValidation(alarm, panel)
     }, 1000)
+  }
+}
+
+private class CustomEdit : JPanel(BorderLayout()) {
+
+  val textField = JTextField()
+
+  init {
+    add(textField, BorderLayout.CENTER)
   }
 }

@@ -6,11 +6,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBDimension
 import javax.swing.JComponent
 
 internal class TextMaxLinePanel : UISandboxPanel {
 
   override val title: String = "Text MaxLine"
+
+  override val isScrollbarNeeded: Boolean = false
 
   override fun createContent(disposable: Disposable): JComponent {
     val longLine = (1..4).joinToString { "A very long string with a <a>link</a>" }
@@ -34,6 +37,9 @@ internal class TextMaxLinePanel : UISandboxPanel {
       row("text(string, MAX_LINE_LENGTH_NO_WRAP):") {
         text(string, maxLineLength = MAX_LINE_LENGTH_NO_WRAP)
       }
+    }.apply {
+      minimumSize = JBDimension(200, 100)
+      preferredSize = JBDimension(200, 100)
     }
   }
 }
