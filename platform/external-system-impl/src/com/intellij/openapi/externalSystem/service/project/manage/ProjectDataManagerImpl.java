@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +152,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     Span dataServicesSpan = ExternalSystemTelemetryUtil.getTracer(projectSystemId)
       .spanBuilder("ProjectDataServices")
       .startSpan();
-    try (Scope tracingScope = dataServicesSpan.makeCurrent()) {
+    try (Scope ignore = dataServicesSpan.makeCurrent()) {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());
       ProjectDataService.EP_NAME.forEachExtensionSafe(dataService -> allKeys.add(dataService.getTargetDataKey()));
@@ -474,10 +475,9 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
                              @NotNull final String commitDesc,
                              @Nullable Long activityId,
                              @Nullable ProjectSystemId projectSystemId) {
-    Span parentSpan = Span.current();
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, project, () -> {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, project, Context.current().wrap(() -> {
       syncMetrics.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
-      ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "WorkspaceModelApply", parentSpan, (ignore) -> {
+      ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "WorkspaceModelApply", (ignore) -> {
         if (activityId != null) {
           ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
         }
@@ -490,7 +490,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         }
         LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
       });
-    });
+    }));
   }
 
   private static void dispose(@NotNull final IdeModifiableModelsProvider modelsProvider,

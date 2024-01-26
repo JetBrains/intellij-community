@@ -113,10 +113,6 @@ fun runWithSpan(tracer: Tracer, spanName: String, operation: Consumer<Span>) {
   tracer.spanBuilder(spanName).use(operation::accept)
 }
 
-fun runWithSpan(tracer: Tracer, spanName: String, parentSpan: Span, operation: Consumer<Span>) {
-  tracer.spanBuilder(spanName).setParent(Context.current().with(parentSpan)).use(operation::accept)
-}
-
 /**
  * Does not activate the span scope, so **new spans created inside will not be linked to the started span**.
  * Consider using [use] to also activate the scope.
