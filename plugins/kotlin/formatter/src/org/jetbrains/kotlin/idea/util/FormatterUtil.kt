@@ -61,12 +61,3 @@ fun PsiElement.containsLineBreakInChild(globalStartOffset: Int, globalEndOffset:
             .takeWhile { it.endOffset <= globalEndOffset }
             .any { it.textContains('\n') || it.textContains('\r') }
 
-fun applyKotlinCodeStyle(codeStyleId: String?, codeStyleSettings: CodeStyleSettings): Boolean {
-    when (codeStyleId) {
-        KotlinOfficialStyleGuide.CODE_STYLE_ID -> KotlinOfficialStyleGuide.apply(codeStyleSettings)
-        KotlinObsoleteStyleGuide.CODE_STYLE_ID -> KotlinObsoleteStyleGuide.apply(codeStyleSettings)
-        else -> return false
-    }
-
-    return true
-}
