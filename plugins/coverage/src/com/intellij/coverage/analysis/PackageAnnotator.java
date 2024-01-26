@@ -112,7 +112,7 @@ public final class PackageAnnotator {
 
   @Nullable
   private PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable File classFile,
-                                                                             @Nullable PsiClass psiClass,
+                                                                             @NotNull PsiClass psiClass,
                                                                              String className) {
     ClassData classData = myProjectData.getClassData(className);
     final boolean classExists = classData != null && classData.getLines() != null;
@@ -130,7 +130,7 @@ public final class PackageAnnotator {
   }
 
   @Nullable
-  private static ClassCoverageInfo getSummaryInfo(@Nullable PsiClass psiClass, @Nullable ClassData classData, boolean ignoreImplicitConstructor) {
+  private static ClassCoverageInfo getSummaryInfo(@NotNull PsiClass psiClass, @Nullable ClassData classData, boolean ignoreImplicitConstructor) {
     if (classData == null || classData.getLines() == null) return null;
     ClassCoverageInfo info = new ClassCoverageInfo();
     boolean isDefaultConstructorGenerated = false;
