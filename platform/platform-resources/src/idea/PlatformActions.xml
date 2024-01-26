@@ -1255,7 +1255,6 @@
           <action id="LabelSizeDemoAction" internal="true" class="com.intellij.internal.LabelSizeDemoAction" />
           <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.internal.ui.JEditorPaneDemoAction"/>
           <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
-          <action id="ComponentsTestAction" internal="true" class="com.intellij.internal.ui.componentsTestAction.ComponentsTestAction"/>
           <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
           <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
           <action id="TestTooltipsAction" internal="true" class="com.intellij.internal.TestTooltipsAction"/>
@@ -1291,6 +1290,7 @@
         <action id="WrapLayoutTestAction" internal="true" class="com.intellij.internal.ui.WrapLayoutTestAction"/>
         <action id="UIFreeze" internal="true" class="com.intellij.internal.UIFreezeAction"/>
         <separator/>
+        <action id="UISandboxAction" internal="true" class="com.intellij.internal.ui.sandbox.UISandboxAction"/>
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction">
           <abbreviation value="uii"/>
           <mouse-shortcut keymap="$default" keystroke="control alt button1"/>
