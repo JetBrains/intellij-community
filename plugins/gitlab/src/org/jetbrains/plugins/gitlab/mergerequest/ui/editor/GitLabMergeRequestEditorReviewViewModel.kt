@@ -13,7 +13,6 @@ import com.intellij.collaboration.util.withLocation
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -179,9 +178,5 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     data object Loading : ChangesState
     data object Error : ChangesState
     class Loaded(val changes: GitBranchComparisonResult) : ChangesState
-  }
-
-  companion object {
-    val KEY: Key<GitLabMergeRequestEditorReviewViewModel> = Key.create("GitLab.MergeRequest.Review.ViewModel")
   }
 }

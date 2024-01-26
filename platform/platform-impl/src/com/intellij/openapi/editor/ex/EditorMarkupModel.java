@@ -16,10 +16,14 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,4 +49,12 @@ public interface EditorMarkupModel extends MarkupModel {
   void setMinMarkHeight(int minMarkHeight);
 
   boolean isErrorStripeVisible();
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  void addInspectionWidgetAction(@NotNull AnAction action, @Nullable Constraints constraints);
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  void removeInspectionWidgetAction(@NotNull AnAction action);
 }

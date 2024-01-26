@@ -79,8 +79,6 @@
 
     <editorFactoryListener
       implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
-    <iw.actionProvider
-      implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestEditorReviewModeActionProvider"/>
 
     <registryKey key="vcs.gitlab.connect.silently"
                  description="Connect to GitLab repository without an explicit user action"

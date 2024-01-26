@@ -7,6 +7,9 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterCha
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.openapi.actionSystem.Constraints
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -15,6 +18,7 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -22,6 +26,7 @@ import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestEditorReviewToolbarActionGroup
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -52,7 +57,12 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
         }.collectLatest { reviewVm ->
           reviewVm?.getFileVm(file)?.collectLatest { fileVm ->
             if (fileVm != null) {
-              editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, reviewVm)
+              val toolbarActionGroup = DefaultActionGroup(
+                GitLabMergeRequestEditorReviewToolbarActionGroup(reviewVm),
+                Separator.getInstance()
+              )
+              val editorMarkupModel = editor.markupModel as? EditorMarkupModel
+              editorMarkupModel?.addInspectionWidgetAction(toolbarActionGroup, Constraints.FIRST)
               try {
                 val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
                 val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }.distinctUntilChanged()
@@ -75,7 +85,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                 }
               }
               finally {
-                editor.putUserData(GitLabMergeRequestEditorReviewViewModel.KEY, null)
+                editorMarkupModel?.removeInspectionWidgetAction(toolbarActionGroup)
               }
             }
           }
@@ -115,7 +125,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     }
 
   companion object {
-    fun isPotentialEditor(editor: Editor): Boolean = editor.editorKind == EditorKind.MAIN_EDITOR && editor.virtualFile != null
+    private fun isPotentialEditor(editor: Editor): Boolean = editor.editorKind == EditorKind.MAIN_EDITOR && editor.virtualFile != null
   }
 }
 
