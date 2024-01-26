@@ -47,6 +47,8 @@ interface UastTypedVisitor<in D, out R> {
   fun visitBinaryExpression(node: UBinaryExpression, data: D): R = visitPolyadicExpression(node, data)
 
   fun visitBinaryExpressionWithType(node: UBinaryExpressionWithType, data: D): R = visitExpression(node, data)
+  fun visitBinaryExpressionWithPattern(node: UBinaryExpressionWithPattern, data: D): R = visitExpression(node, data)
+  fun visitPatternExpression(node: UPatternExpression, data: D): R = visitExpression(node, data)
   fun visitParenthesizedExpression(node: UParenthesizedExpression, data: D): R = visitExpression(node, data)
   // Unary operations
   fun visitUnaryExpression(node: UUnaryExpression, data: D): R = visitExpression(node, data)
