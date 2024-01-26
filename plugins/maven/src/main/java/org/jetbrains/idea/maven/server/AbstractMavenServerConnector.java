@@ -20,9 +20,9 @@ public abstract class AbstractMavenServerConnector implements MavenServerConnect
 
   public static final Logger LOG = Logger.getInstance(AbstractMavenServerConnector.class);
 
-  protected final Project myProject;
+  protected final @Nullable Project myProject;
   protected @NotNull final MavenDistribution myDistribution;
-  protected final Sdk myJdk;
+  protected final @NotNull Sdk myJdk;
   protected final Set<String> myMultimoduleDirectories = ConcurrentHashMap.newKeySet();
   private final Object embedderLock = new Object();
   private final Exception myCreationTrace = new Exception();
@@ -130,7 +130,7 @@ public abstract class AbstractMavenServerConnector implements MavenServerConnect
   }
 
   @Override
-  public String getVMOptions() {
+  public String getVmOptions() {
     return myVmOptions;
   }
 

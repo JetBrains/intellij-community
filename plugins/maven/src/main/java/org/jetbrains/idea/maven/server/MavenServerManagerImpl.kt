@@ -134,7 +134,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     val jdk = getJdk(project, settings)
 
     var connector = doGetOrCreateConnector(project, multimoduleDirectory, jdk)
-    if (connector.isNew) {
+    if (connector.isNew()) {
       connector.connect()
     }
     else {

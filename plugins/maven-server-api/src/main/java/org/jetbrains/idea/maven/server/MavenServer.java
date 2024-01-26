@@ -51,5 +51,6 @@ public interface MavenServer extends Remote, IdeaWatchdogAware {
 
   boolean ping(MavenToken token) throws RemoteException;
 
+  @NotNull
   MavenServerStatus getDebugStatus(boolean clean) throws RemoteException;
 }

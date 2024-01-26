@@ -15,7 +15,7 @@ class MavenProjectModelServerModelReadHelper(private val myProject: Project) : M
     return MavenServerManager.getInstance().getConnector(myProject, basedir.toString()).interpolateAndAlignModel(model, basedir, pomDir)
   }
 
-  override fun assembleInheritance(projectPomDir: Path, parent: MavenModel?, model: MavenModel): MavenModel {
+  override fun assembleInheritance(projectPomDir: Path, parent: MavenModel, model: MavenModel): MavenModel {
     return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
       .assembleInheritance(model, parent)
   }

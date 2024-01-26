@@ -194,7 +194,6 @@ class MavenProjectReader(private val myProject: Project) {
 
       if (parentModelWithProblems == null) return model // no parent or parent not found;
 
-
       val parentModel = parentModelWithProblems.second!!.model
       if (!parentModelWithProblems.second!!.problems.isEmpty()) {
         problems.add(MavenProjectProblem.createProblem(

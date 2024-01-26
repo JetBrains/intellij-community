@@ -1,78 +1,78 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.server;
+package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.model.MavenModel;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenModel
+import java.nio.file.Path
+import java.rmi.RemoteException
 
-import java.nio.file.Path;
-import java.rmi.RemoteException;
-import java.util.Collection;
-import java.util.List;
+interface MavenServerConnector : Disposable {
+  val supportType: String
 
-public interface MavenServerConnector extends Disposable {
+  val state: State
 
-  @Topic.AppLevel
-  Topic<MavenServerDownloadListener> DOWNLOAD_LISTENER_TOPIC =
-    new Topic<>(MavenServerDownloadListener.class.getSimpleName(), MavenServerDownloadListener.class);
+  val jdk: Sdk
 
-  boolean isCompatibleWith(Sdk jdk, String vmOptions, MavenDistribution distribution);
+  val mavenDistribution: MavenDistribution
 
-  @ApiStatus.Internal
-  boolean isNew();
+  val vmOptions: String
 
-  @ApiStatus.Internal
-  void connect();
+  val project: Project?
 
-  boolean addMultimoduleDir(String multimoduleDirectory);
-
-  MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException;
-
-  MavenServerIndexer createIndexer() throws RemoteException;
-
-  @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull Path basedir, @NotNull Path pomDir);
-
-  MavenModel assembleInheritance(MavenModel model, MavenModel parentModel);
-
-  ProfileApplicationResult applyProfiles(MavenModel model,
-                                         Path basedir,
-                                         MavenExplicitProfiles explicitProfiles,
-                                         Collection<String> alwaysOnProfiles);
+  val multimoduleDirectories: List<String>
 
   @ApiStatus.Internal
-  boolean ping();
-
-  String getSupportType();
-
-  State getState();
-
-  boolean checkConnected();
+  fun isNew(): Boolean
 
   @ApiStatus.Internal
-  void stop(boolean wait);
+  fun connect()
 
-  @NotNull Sdk getJdk();
+  @ApiStatus.Internal
+  fun ping(): Boolean
 
-  @NotNull MavenDistribution getMavenDistribution();
+  @ApiStatus.Internal
+  fun stop(wait: Boolean)
 
-  String getVMOptions();
+  @ApiStatus.Internal
+  fun getDebugStatus(clean: Boolean): MavenServerStatus
 
-  @Nullable Project getProject();
+  fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution): Boolean
 
-  List<String> getMultimoduleDirectories();
+  fun addMultimoduleDir(multimoduleDirectory: String): Boolean
 
-  MavenServerStatus getDebugStatus(boolean clean);
+  @Throws(RemoteException::class)
+  fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder
 
-  enum State {
+  @Throws(RemoteException::class)
+  fun createIndexer(): MavenServerIndexer
+
+  fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel
+
+  fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel
+
+  fun applyProfiles(model: MavenModel,
+                    basedir: Path,
+                    explicitProfiles: MavenExplicitProfiles,
+                    alwaysOnProfiles: Collection<String>): ProfileApplicationResult
+
+  fun checkConnected(): Boolean
+
+  enum class State {
     STARTING,
     RUNNING,
     FAILED,
     STOPPED
+  }
+
+  companion object {
+    @JvmField
+    @Topic.AppLevel
+    val DOWNLOAD_LISTENER_TOPIC: Topic<MavenServerDownloadListener> =
+      Topic(MavenServerDownloadListener::class.java.simpleName, MavenServerDownloadListener::class.java)
   }
 }

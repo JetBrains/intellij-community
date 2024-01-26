@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 
-abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
+abstract class DummyEmbedder : MavenServerEmbedder {
   override fun evaluateEffectivePom(file: File,
                                     activeProfiles: ArrayList<String>,
                                     inactiveProfiles: ArrayList<String>,
@@ -78,7 +78,7 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun ping(token: MavenToken?) = true
 }
 
-class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
+class UntrustedDummyEmbedder(val myProject: Project) : DummyEmbedder() {
   override fun resolveProjects(longRunningTaskId: String,
                                request: ProjectResolutionRequest,
                                token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
@@ -89,11 +89,11 @@ class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
 
 }
 
-class MisconfiguredPlexusDummyEmbedder(myProject: Project,
+class MisconfiguredPlexusDummyEmbedder(private val myProject: Project,
                                        private val myExceptionMessage: String,
                                        private val myMultimoduleDirectories: MutableSet<String>,
                                        private val myMavenVersion: String?,
-                                       private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
+                                       private val myUnresolvedId: MavenId?) : DummyEmbedder() {
   override fun resolveProjects(longRunningTaskId: String,
                                request: ProjectResolutionRequest,
                                token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
