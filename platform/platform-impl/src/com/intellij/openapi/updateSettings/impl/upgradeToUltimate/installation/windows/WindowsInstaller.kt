@@ -84,6 +84,8 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
       add(basePath!!)
       this
     }
+    parameters.add(trialParameter)
+    
     val command = GeneralCommandLine("cmd", "/c", "start").withParameters(parameters)
 
     return runCommand(command)

@@ -89,8 +89,8 @@ class UltimateInstallationService(
             }
 
             val productData = UpdateChecker.loadProductData(null)
-            val build = productData?.channels?.firstOrNull { it.status == ChannelStatus.RELEASE }?.builds?.first()
-                        ?: return@withBackgroundProgress
+            val status = if (Registry.`is`("ide.try.ultimate.use.eap")) ChannelStatus.EAP else ChannelStatus.RELEASE
+            val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
 
             if (Registry.`is`("ide.try.ultimate.automatic.installation.use.toolbox")) {
               val result = tryToInstallViaToolbox(build)
@@ -228,6 +228,7 @@ internal abstract class UltimateInstaller(
   abstract val postfix: String
 
   protected val updateTempDirectory: Path = Path.of(PathManager.getTempPath(), "ultimate-upgrade")
+  protected val trialParameter = "-Drequest.trial=true"
 
   fun download(buildInfo: BuildInfo, indicator: ProgressIndicator, suggestedIde: SuggestedIde): DownloadResult {
     showHint(IdeBundle.message("plugins.advertiser.try.ultimate.download.started.balloon", suggestedIde.name))

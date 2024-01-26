@@ -59,7 +59,7 @@ internal class MacOsInstaller(scope: CoroutineScope, project: Project) : Ultimat
    val start = GeneralCommandLine(
       "/usr/bin/open", "-n",
       installationResult.appPath.pathString,
-      "--args", project.basePath
+      "--args", project.basePath, trialParameter
     )
 
     return runCommand(start)
