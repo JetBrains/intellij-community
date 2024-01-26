@@ -204,6 +204,9 @@ public class EditorSearchSession implements SearchSession,
       };
     }
     else {
+      ShowFilterPopupGroup filterPopupGroup = new ShowFilterPopupGroup();
+      filterPopupGroup.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
+      filterPopupGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_SEARCH_FILTER_RESULTS), Constraints.FIRST);
       return new AnAction[]{
         new StatusTextAction(),
         new PrevOccurrenceAction(),
@@ -215,7 +218,7 @@ public class EditorSearchSession implements SearchSession,
         new SelectAllAction(),
         new Separator(),
         new ToggleSelectionOnlyAction(),
-        new ShowFilterPopupGroup()
+        filterPopupGroup
       };
     }
   }
@@ -229,6 +232,7 @@ public class EditorSearchSession implements SearchSession,
     };
 
     group.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
+    group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_SEARCH_FILTER_RESULTS), Constraints.FIRST);
     group.add(new ToggleSelectionOnlyAction(), Constraints.FIRST);
     return group;
   }
