@@ -133,8 +133,18 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Deprecated
   public abstract boolean isShowWhatsNewOnUpdate();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getKeyboardShortcutsPdfUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract @Nullable String getWinKeymapUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getKeyboardShortcutsPdfUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract @Nullable String getMacKeymapUrl();
 
   public interface UpdateUrls {
