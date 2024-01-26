@@ -23,9 +23,12 @@ import java.util.*
 internal open class DifferenceDiffRequestProducer(protected val project: Project?,
                                                   protected val gateway: IdeaGateway,
                                                   protected open val scope: ActivityScope,
-                                                  protected val selection: ChangeSetSelection,
+                                                  selection: ChangeSetSelection,
                                                   protected val difference: Difference,
                                                   private val isOldContentUsed: Boolean) : DiffRequestProducer {
+  protected val leftItem = selection.leftItem
+  protected val rightItem = selection.rightItem
+
   override fun getName(): String {
     val entry = difference.left ?: difference.right
     if (entry == null) return scope.presentableName
@@ -33,11 +36,11 @@ internal open class DifferenceDiffRequestProducer(protected val project: Project
   }
 
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-    val leftContent = createContent(difference.left, selection.leftRevision is RevisionId.Current)
-    val rightContent = createContent(difference.right, selection.rightRevision is RevisionId.Current)
+    val leftContent = createContent(difference.left, leftItem.revisionId is RevisionId.Current)
+    val rightContent = createContent(difference.right, rightItem.revisionId is RevisionId.Current)
 
-    val leftContentTitle = getTitle(selection.leftItem)
-    val rightContentTitle = getTitle(selection.rightItem)
+    val leftContentTitle = getTitle(leftItem)
+    val rightContentTitle = getTitle(rightItem)
 
     return SimpleDiffRequest(name, leftContent, rightContent, leftContentTitle, rightContentTitle)
   }
@@ -64,12 +67,13 @@ internal open class DifferenceDiffRequestProducer(protected val project: Project
     if (!super.equals(other)) return false
 
     if (scope != other.scope) return false
-    if (selection != other.selection) return false
+    if (leftItem != other.leftItem) return false
+    if (rightItem != other.rightItem) return false
     if (difference != other.difference) return false
     if (isOldContentUsed != other.isOldContentUsed) return false
 
     return true
   }
 
-  override fun hashCode(): Int = Objects.hash(scope, selection, difference, isOldContentUsed)
+  override fun hashCode(): Int = Objects.hash(scope, leftItem, rightItem, difference, isOldContentUsed)
 }

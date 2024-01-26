@@ -5,7 +5,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class ActivityData(val items: List<ActivityItem>): UserDataHolderBase() {
+data class ActivityData(val items: List<ActivityItem>): UserDataHolderBase() {
   companion object {
     val EMPTY = ActivityData(emptyList())
   }

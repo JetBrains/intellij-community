@@ -8,7 +8,7 @@ import com.intellij.history.integration.IdeaGateway
 import com.intellij.platform.lvcs.impl.RevisionId
 
 abstract class SelectionCalculator(private val gateway: IdeaGateway,
-                                   private val revisions: List<RevisionId>,
+                                   internal val revisions: List<RevisionId>,
                                    private val fromLine: Int,
                                    private val toLine: Int) {
   private val cache = ConcurrentCollectionFactory.createConcurrentIntObjectMap<Block>()

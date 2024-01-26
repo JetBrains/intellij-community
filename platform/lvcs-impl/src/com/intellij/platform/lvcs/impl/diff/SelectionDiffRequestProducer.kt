@@ -13,7 +13,10 @@ import com.intellij.history.integration.ui.views.RevisionProcessingProgressAdapt
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.ActivityScope
+import com.intellij.platform.lvcs.impl.ChangeSetSelection
+import com.intellij.platform.lvcs.impl.RevisionId
+import com.intellij.platform.lvcs.impl.revisionId
 
 internal class SelectionDiffRequestProducer(project: Project?,
                                             gateway: IdeaGateway,
@@ -25,11 +28,11 @@ internal class SelectionDiffRequestProducer(project: Project?,
   : DifferenceDiffRequestProducer(project, gateway, scope, selection, difference, isOldContentUsed) {
 
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-    val leftContent = createContent(difference.left, selection.leftRevision, indicator)
-    val rightContent = createContent(difference.right, selection.rightRevision, indicator)
+    val leftContent = createContent(difference.left, leftItem.revisionId, indicator)
+    val rightContent = createContent(difference.right, rightItem.revisionId, indicator)
 
-    val leftContentTitle = getTitle(selection.leftItem)
-    val rightContentTitle = getTitle(selection.rightItem)
+    val leftContentTitle = getTitle(leftItem)
+    val rightContentTitle = getTitle(rightItem)
 
     return SimpleDiffRequest(name, leftContent, rightContent, leftContentTitle, rightContentTitle)
   }
@@ -39,5 +42,21 @@ internal class SelectionDiffRequestProducer(project: Project?,
     if (revision is RevisionId.ChangeSet) return createDiffContent(gateway, entry, revision.id, selectionCalculator,
                                                                    RevisionProcessingProgressAdapter(indicator))
     return createCurrentDiffContent(project, gateway, entry.path, scope.from, scope.to)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SelectionDiffRequestProducer) return false
+    if (!super.equals(other)) return false
+
+    if (selectionCalculator.revisions != other.selectionCalculator.revisions) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + selectionCalculator.revisions.hashCode()
+    return result
   }
 }
