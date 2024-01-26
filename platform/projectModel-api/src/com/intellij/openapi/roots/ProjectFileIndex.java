@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Provides information about files contained in a project. Should be used from a read action.
@@ -127,8 +128,12 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**
-   * Returns true if {@code fileOrDir} is a file or directory from production/test sources of some module or sources of some library which is included into dependencies
-   * of some module.
+   * Returns true if {@code fileOrDir} is a file or directory from production/test source root of some module or sources of some library,
+   * which is included in dependencies of some module.
+   * <br>
+   * Note that this method doesn't take the exact type of the containing source root into account. 
+   * If you're interested if the file is located under a root of a specific type (e.g., if you want to distinguish Java source and Java 
+   * resource files), use {@link #isUnderSourceRootOfType(VirtualFile, Set)} instead.
    */
   @RequiresReadLock
   boolean isInSource(@NotNull VirtualFile fileOrDir);
