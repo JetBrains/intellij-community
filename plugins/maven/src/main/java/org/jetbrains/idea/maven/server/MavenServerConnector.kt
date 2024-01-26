@@ -58,10 +58,10 @@ interface MavenServerConnector : Disposable {
 
   fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel
 
-  fun applyProfiles(model: MavenModel,
-                    basedir: Path,
-                    explicitProfiles: MavenExplicitProfiles,
-                    alwaysOnProfiles: Collection<String>): ProfileApplicationResult
+  suspend fun applyProfiles(model: MavenModel,
+                            basedir: Path,
+                            explicitProfiles: MavenExplicitProfiles,
+                            alwaysOnProfiles: Collection<String>): ProfileApplicationResult
 
   fun checkConnected(): Boolean
 

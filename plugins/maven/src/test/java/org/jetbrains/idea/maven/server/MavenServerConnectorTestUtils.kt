@@ -109,10 +109,10 @@ private class CompatibleMavenServerConnector(override val project: Project) : Ma
     throw RuntimeException("not implemented")
   }
 
-  override fun applyProfiles(model: MavenModel,
-                             basedir: Path,
-                             explicitProfiles: MavenExplicitProfiles,
-                             alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
+    override suspend fun applyProfiles(model: MavenModel,
+                                       basedir: Path,
+                                       explicitProfiles: MavenExplicitProfiles,
+                                       alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
     throw RuntimeException("not implemented")
   }
 
@@ -194,10 +194,10 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     throw RuntimeException("not implemented")
   }
 
-  override fun applyProfiles(model: MavenModel,
-                             basedir: Path,
-                             explicitProfiles: MavenExplicitProfiles,
-                             alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
+  override suspend fun applyProfiles(model: MavenModel,
+                                     basedir: Path,
+                                     explicitProfiles: MavenExplicitProfiles,
+                                     alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
     throw ConnectException("Cannot reconnect")
   }
 

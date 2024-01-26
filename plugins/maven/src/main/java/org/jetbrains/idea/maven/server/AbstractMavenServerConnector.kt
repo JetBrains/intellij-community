@@ -77,15 +77,13 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     return perform { getServerBlocking().assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken) }
   }
 
-  override fun applyProfiles(model: MavenModel,
-                             basedir: Path,
-                             explicitProfiles: MavenExplicitProfiles,
-                             alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
-    return perform {
-      val transformer = RemotePathTransformerFactory.createForProject(project!!)
-      val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
-      getServerBlocking().applyProfiles(model, targetBasedir, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
-      }
+  override suspend fun applyProfiles(model: MavenModel,
+                                     basedir: Path,
+                                     explicitProfiles: MavenExplicitProfiles,
+                                     alwaysOnProfiles: Collection<String>): ProfileApplicationResult {
+    val transformer = RemotePathTransformerFactory.createForProject(project!!)
+    val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
+    return getServer().applyProfiles(model, targetBasedir, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
   }
 
   protected abstract fun <R> perform(r: () -> R): R
