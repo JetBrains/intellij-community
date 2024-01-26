@@ -1,5 +1,6 @@
 fragment issueCommentInfo on IssueComment {
     ...comment
+    ...reactions
     viewerCanUpdate
     viewerCanDelete
 }

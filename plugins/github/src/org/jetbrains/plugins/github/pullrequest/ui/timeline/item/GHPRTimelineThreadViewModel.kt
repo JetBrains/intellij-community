@@ -235,7 +235,7 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
 
   private fun CoroutineScope.createComment(comment: IndexedValue<GHPullRequestReviewComment>): UpdateableGHPRReviewThreadCommentViewModel =
     UpdateableGHPRReviewThreadCommentViewModel(project, this, dataContext, dataProvider,
-                                                 this@UpdateableGHPRTimelineThreadViewModel, comment)
+                                               this@UpdateableGHPRTimelineThreadViewModel, comment)
 
   private fun Collection<RefComparisonChange>.findByFilePath(path: String): RefComparisonChange? {
     val repoRoot = dataContext.repositoryDataService.remoteCoordinates.repository.root

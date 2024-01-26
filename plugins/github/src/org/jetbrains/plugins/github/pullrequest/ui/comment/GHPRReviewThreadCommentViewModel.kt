@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -18,11 +19,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.GHReaction
+import org.jetbrains.plugins.github.api.data.GHReactionContent
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyViewModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.util.*
 
@@ -43,6 +49,8 @@ interface GHPRReviewThreadCommentViewModel {
   fun editBody()
   val editVm: StateFlow<CodeReviewTextEditingViewModel?>
 
+  val reactionsVm: GHReactionsViewModel
+
   val canDelete: Boolean
   fun delete()
 }
@@ -58,7 +66,10 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
   private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Thread Comment View Model"))
   private val reviewData = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)
+
+  private val currentUser: GHUser = dataContext.securityService.currentUser
   override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
+  private val reactionIconsProvider: IconsProvider<GHReactionContent> = dataContext.reactionIconsProvider
 
   private val initialData = initialDataWithIndex.value
   private val dataState = MutableStateFlow(initialDataWithIndex)
@@ -82,6 +93,11 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
 
   private val _editVm = MutableStateFlow<EditViewModel?>(null)
   override val editVm: StateFlow<CodeReviewTextEditingViewModel?> = _editVm.asStateFlow()
+
+  private val reactions: StateFlow<List<GHReaction>> = dataState.mapState { it.value.reactions.nodes }
+  override val reactionsVm: GHReactionsViewModel = GHReactionViewModelImpl(
+    cs, reactions.value, currentUser, reactionIconsProvider
+  )
 
   override fun editBody() {
     val currentText = dataState.value.value.body

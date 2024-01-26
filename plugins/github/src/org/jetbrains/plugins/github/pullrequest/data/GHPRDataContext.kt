@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModel
 import org.jetbrains.plugins.github.pullrequest.data.service.*
@@ -22,6 +24,7 @@ internal class GHPRDataContext(val scope: CoroutineScope,
                                val detailsService: GHPRDetailsService,
                                val htmlImageLoader: AsyncHtmlImageLoader,
                                val avatarIconsProvider: GHAvatarIconsProvider,
+                               val reactionIconsProvider: IconsProvider<GHReactionContent>,
                                val filesManager: GHPRFilesManager,
                                val interactionState: GHPRPersistentInteractionState,
                                val newPRDiffModel: GHPRDiffRequestModel) {

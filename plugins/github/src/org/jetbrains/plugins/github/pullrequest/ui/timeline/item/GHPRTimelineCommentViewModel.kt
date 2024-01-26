@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -13,10 +15,12 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.github.api.data.GHActor
-import org.jetbrains.plugins.github.api.data.GHIssueComment
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
 import java.util.*
 
 interface GHPRTimelineCommentViewModel {
@@ -31,21 +35,26 @@ interface GHPRTimelineCommentViewModel {
 
   val canEdit: Boolean
   val editVm: StateFlow<CodeReviewTextEditingViewModel?>
+  val reactionsVm: GHReactionsViewModel
 
   fun editBody()
 
   fun delete()
 }
 
-class UpdateableGHPRTimelineCommentViewModel(
+internal class UpdateableGHPRTimelineCommentViewModel(
   private val project: Project,
   parentCs: CoroutineScope,
+  dataContext: GHPRDataContext,
   private val commentsData: GHPRCommentsDataProvider,
-  initialData: GHIssueComment,
-  ghostUser: GHActor
+  initialData: GHIssueComment
 ) : GHPRTimelineCommentViewModel, GHPRTimelineItem.Comment {
   private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Timeline Comment View Model"))
   private val taskLauncher = SingleCoroutineLauncher(cs)
+
+  private val currentUser: GHUser = dataContext.securityService.currentUser
+  private val ghostUser: GHUser = dataContext.securityService.ghostUser
+  private val reactionIconsProvider: IconsProvider<GHReactionContent> = dataContext.reactionIconsProvider
 
   private val dataState = MutableStateFlow(initialData)
 
@@ -64,6 +73,11 @@ class UpdateableGHPRTimelineCommentViewModel(
 
   private val _editVm = MutableStateFlow<EditViewModel?>(null)
   override val editVm: StateFlow<CodeReviewTextEditingViewModel?> = _editVm.asStateFlow()
+
+  private val reactions: StateFlow<List<GHReaction>> = dataState.mapState { it.reactions.nodes }
+  override val reactionsVm: GHReactionsViewModel = GHReactionViewModelImpl(
+    cs, reactions.value, currentUser, reactionIconsProvider
+  )
 
   override fun editBody() {
     val currentText = dataState.value.body

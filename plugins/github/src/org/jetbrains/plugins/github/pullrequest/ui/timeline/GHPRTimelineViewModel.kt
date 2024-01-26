@@ -77,7 +77,7 @@ internal class GHPRTimelineViewModelImpl(
   private val cs = parentCs.childScope(Dispatchers.Main + CoroutineName("GitHub Pull Request Timeline View Model"))
 
   private val securityService = dataContext.securityService
-  private val repositoryDataService = dataContext.repositoryDataService
+
   private val detailsData = dataProvider.detailsData
   private val reviewData = dataProvider.reviewData
   private val commentsData = dataProvider.commentsData
@@ -183,7 +183,7 @@ internal class GHPRTimelineViewModelImpl(
   private fun CoroutineScope.createItemFromDTO(data: GHPRTimelineItemDTO): GHPRTimelineItem =
     when (data) {
       is GHIssueComment -> {
-        UpdateableGHPRTimelineCommentViewModel(project, this, dataProvider.commentsData, data, securityService.ghostUser)
+        UpdateableGHPRTimelineCommentViewModel(project, this, dataContext, dataProvider.commentsData, data)
       }
       is GHPullRequestReview -> {
         UpdateableGHPRTimelineReviewViewModel(project, this, dataContext, dataProvider, data).also {

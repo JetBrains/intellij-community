@@ -7,6 +7,9 @@ object CodeReviewReactionsUIUtil {
 
   const val HORIZONTAL_GAP: Int = 8
 
+  const val ICON_SIZE: Int = 16
+  const val ICON_BORDER_SIZE: Int = 2
+
   object Picker {
     const val WIDTH: Int = 358
     const val HEIGHT: Int = 415

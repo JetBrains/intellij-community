@@ -5,6 +5,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.EditableComponentFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
@@ -15,6 +16,7 @@ import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
 import javax.swing.JComponent
 
 internal object GHPRReviewThreadCommentComponentFactory {
@@ -66,7 +68,10 @@ internal object GHPRReviewThreadCommentComponentFactory {
           .wrapWithLimitedSize(pane, DimensionRestrictions.ScalingConstant(width = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH))
       }
     }
-    return editableText
+    return VerticalListPanel(CodeReviewTimelineUIUtil.VERTICAL_GAP).apply {
+      add(editableText)
+      add(GHReactionsComponentFactory.create(cs, vm.reactionsVm))
+    }
   }
 
   private fun CoroutineScope.createCommentActions(vm: GHPRReviewThreadCommentViewModel): JComponent {

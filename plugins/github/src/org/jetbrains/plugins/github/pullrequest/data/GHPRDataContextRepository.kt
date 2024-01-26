@@ -97,6 +97,19 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
                                accountDetails.name)
 
+      // Image loaders
+      val iconsScope = cs.childScope(Dispatchers.Main)
+      val imageLoader = AsyncHtmlImageLoader { _, src ->
+        withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
+          coroutineToIndicator {
+            val bytes = requestExecutor.execute(ProgressManager.getInstance().progressIndicator, GithubApiRequests.getBytes(src))
+            Toolkit.getDefaultToolkit().createImage(bytes)
+          }
+        }
+      }
+      val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
+      val reactionIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, GHReactionImageLoader(cs, requestExecutor)))
+
 
       // repository might have been renamed/moved
       val apiRepositoryPath = repositoryInfo.path
@@ -139,24 +152,13 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                              }, true))
       }
 
-      val iconsScope = cs.childScope(Dispatchers.Main)
-      val imageLoader = AsyncHtmlImageLoader { _, src ->
-        withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
-          coroutineToIndicator {
-            val bytes = requestExecutor.execute(ProgressManager.getInstance().progressIndicator, GithubApiRequests.getBytes(src))
-            Toolkit.getDefaultToolkit().createImage(bytes)
-          }
-        }
-      }
-      val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
-
       val filesManager = GHPRFilesManagerImpl(project, apiRepositoryCoordinates)
-    val interactionState = project.service<GHPRPersistentInteractionState>()
+      val interactionState = project.service<GHPRPersistentInteractionState>()
 
       val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
       ensureActive()
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
-                      securityService, repoDataService, creationService, detailsService, imageLoader, avatarIconsProvider,
+                      securityService, repoDataService, creationService, detailsService, imageLoader, avatarIconsProvider, reactionIconsProvider,
                       filesManager, interactionState,
                       GHPRDiffRequestModelImpl())
     }

@@ -1,0 +1,17 @@
+fragment reactions on Reactable {
+  reactions(first: 25) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...reaction
+    }
+  }
+}
+
+fragment reaction on Reaction {
+  content
+  user {
+    ...userInfo
+  }
+}
