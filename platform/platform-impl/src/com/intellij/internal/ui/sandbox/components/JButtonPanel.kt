@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.sandbox.components
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
@@ -23,9 +24,28 @@ internal class JButtonPanel : UISandboxPanel {
         }
       }
       row {
+        button("Enabled") {}.applyToComponent {
+          icon = AllIcons.General.GearPlain
+        }
+        button("Enabled, default") {}.applyToComponent {
+          icon = AllIcons.General.GearPlain
+          putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+        }
+      }
+      row {
         button("Disabled") {}.enabled(false)
         button("Disabled, default") {}.enabled(false)
           .applyToComponent {
+            putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+          }
+      }
+      row {
+        button("Disabled") {}.applyToComponent {
+          icon = AllIcons.General.GearPlain
+        }.enabled(false)
+        button("Disabled, default") {}.enabled(false)
+          .applyToComponent {
+            icon = AllIcons.General.GearPlain
             putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
           }
       }
