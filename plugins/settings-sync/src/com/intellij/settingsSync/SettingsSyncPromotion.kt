@@ -10,6 +10,7 @@ import com.intellij.openapi.options.newEditor.SettingsTreeView
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.PromotionInSettingsEvent
 import com.intellij.ui.GotItTooltip
@@ -26,6 +27,7 @@ class SettingsSyncPromotion : SettingsDialogListener {
   override fun afterApply(settingsEditor: AbstractEditor) {
     if (settingsEditor !is SettingsEditor
         || SettingsSyncSettings.getInstance().syncEnabled
+        || SettingsSyncAuthService.getInstance().isLoggedIn()
         || !Registry.`is`("settingsSync.promotion.in.settings", false)) {
       return
     }
