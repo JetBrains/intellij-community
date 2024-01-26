@@ -19,13 +19,15 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
-class CombinedDiffModelImpl(val project: Project) : CombinedDiffModel {
-  override val ourDisposable = Disposer.newCheckedDisposable()
+class CombinedDiffModel(val project: Project) {
+  val ourDisposable = Disposer.newCheckedDisposable()
 
   private val modelListeners = EventDispatcher.create(CombinedDiffModelListener::class.java)
 
@@ -38,11 +40,11 @@ class CombinedDiffModelImpl(val project: Project) : CombinedDiffModel {
 
   private val loadedRequests = mutableMapOf<CombinedBlockId, DiffRequest>()
 
-  override val requests: List<CombinedBlockProducer> get() = _requests.values.toList()
+  val requests: List<CombinedBlockProducer> get() = _requests.values.toList()
 
-  override val context: DiffContext = CombinedDiffContext(project)
+  val context: DiffContext = CombinedDiffContext(project)
 
-  override fun cleanBlocks() {
+  fun cleanBlocks() {
     cleanLoadedRequests()
   }
 
@@ -51,7 +53,7 @@ class CombinedDiffModelImpl(val project: Project) : CombinedDiffModel {
     loadedRequests.clear()
   }
 
-  override fun reload() {
+  fun reload() {
     val previouslyLoaded = loadedRequests.toMap()
     cleanLoadedRequests()
     if (previouslyLoaded.isNotEmpty()) {
@@ -59,26 +61,26 @@ class CombinedDiffModelImpl(val project: Project) : CombinedDiffModel {
     }
   }
 
-  override fun setBlocks(requests: List<CombinedBlockProducer>) {
+  fun setBlocks(requests: List<CombinedBlockProducer>) {
     cleanLoadedRequests()
     _requests = requests.associateBy { it.id }
     modelListeners.multicaster.onModelReset()
   }
 
-  override fun getLoadedRequest(blockId: CombinedBlockId): DiffRequest? {
+  fun getLoadedRequest(blockId: CombinedBlockId): DiffRequest? {
     return loadedRequests[blockId]
   }
 
-  override fun getLoadedRequests(): List<DiffRequest> = loadedRequests.values.toList()
+  fun getLoadedRequests(): List<DiffRequest> = loadedRequests.values.toList()
 
-  override fun loadRequestContents(blockIds: Collection<CombinedBlockId>) {
+  fun loadRequestContents(blockIds: Collection<CombinedBlockId>) {
     val notLoadedBlockIds = blockIds.filter { it !in loadedRequests }
     if (notLoadedBlockIds.isNotEmpty()) {
       contentLoadingQueue.queue(LoadContentRequest(notLoadedBlockIds))
     }
   }
 
-  override fun unloadRequestContents(blockIds: Collection<CombinedBlockId>) {
+  fun unloadRequestContents(blockIds: Collection<CombinedBlockId>) {
     val unloadedRequests = mutableMapOf<CombinedBlockId, DiffRequest>()
     val loadedRequestsLimit = CombinedDiffRegistry.getMaxBlockCountInMemory()
 
@@ -93,7 +95,7 @@ class CombinedDiffModelImpl(val project: Project) : CombinedDiffModel {
     }
   }
 
-  override fun addListener(listener: CombinedDiffModelListener, disposable: Disposable) =
+  fun addListener(listener: CombinedDiffModelListener, disposable: Disposable) =
     modelListeners.addListener(listener, disposable)
 
   @RequiresBackgroundThread
@@ -146,10 +148,10 @@ class CombinedDiffModelImpl(val project: Project) : CombinedDiffModel {
     private val ownContext: UserDataHolder = UserDataHolderBase()
 
     init {
-      ownContext.putUserData(COMBINED_DIFF_MODEL, this@CombinedDiffModelImpl)
+      ownContext.putUserData(COMBINED_DIFF_MODEL, this@CombinedDiffModel)
     }
 
-    override fun getProject() = this@CombinedDiffModelImpl.project
+    override fun getProject() = this@CombinedDiffModel.project
     override fun isFocusedInWindow(): Boolean = mainUi?.isFocusedInWindow() ?: false
     override fun isWindowFocused(): Boolean = mainUi?.isWindowFocused() ?: false
     override fun requestFocusInWindow() {
@@ -165,4 +167,14 @@ class CombinedDiffModelImpl(val project: Project) : CombinedDiffModel {
       ownContext.putUserData(key, value)
     }
   }
+}
+
+interface CombinedDiffModelListener : EventListener {
+  fun onModelReset()
+
+  @RequiresEdt
+  fun onRequestsLoaded(blockId: CombinedBlockId, request: DiffRequest)
+
+  @RequiresEdt
+  fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>)
 }

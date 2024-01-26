@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.ui.PresentableChange
 
 class CombinedDiffManagerImpl(val project: Project) : CombinedDiffManager {
   override fun createProcessor(diffPlace: String?): CombinedDiffComponentProcessor {
-    val model = CombinedDiffModelImpl(project)
+    val model = CombinedDiffModel(project)
     model.context.putUserData(DiffUserDataKeys.PLACE, diffPlace)
     val goToChangePopupAction = MyGoToChangePopupAction(model)
     return CombinedDiffComponentProcessorImpl(model, goToChangePopupAction)
