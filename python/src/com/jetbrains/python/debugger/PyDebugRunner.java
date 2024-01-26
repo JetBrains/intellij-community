@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
@@ -22,6 +23,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -166,6 +168,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                                               @NotNull final ExecutionEnvironment environment) {
     PythonCommandLineState pyState = (PythonCommandLineState)state;
     RunProfile profile = environment.getRunProfile();
+    var clientId = ClientId.getCurrentOrNull();
     return Promises
       .runAsync(() -> {
         int serverLocalPort = findAvailableSocketPort();
@@ -186,9 +189,11 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         }
       })
       .thenAsync(pair -> AppUIExecutor.onUiThread().submit(() -> {
-        ServerSocket serverSocket = pair.getFirst();
-        ExecutionResult result = pair.getSecond();
-        return createXDebugSession(environment, pyState, serverSocket, result);
+        try (AccessToken ignored = ClientId.withClientId(clientId)) {
+          ServerSocket serverSocket = pair.getFirst();
+          ExecutionResult result = pair.getSecond();
+          return createXDebugSession(environment, pyState, serverSocket, result);
+        }
       }));
   }
 
