@@ -120,14 +120,27 @@ public class YAMLMappingModificationTest extends BasePlatformTestCase {
                   - bla""");
   }
 
-  public void testSetValueCompoundSequence() {
+  public void testGenerateValueCompoundSequence() {
     YAMLElementGenerator yamlGenerator = YAMLElementGenerator.getInstance(getProject());
     YAMLKeyValue sequence = yamlGenerator.createYamlKeyValueWithSequence(
       "someKey",
       Map.of("abl", "1", "blah", "2", "acl", "3")
     );
-    doValueTest(sequence.getText());
+    assertEquals("""
+                         someKey:
+                           abl: 1
+                           acl: 3
+                           blah: 2""", sequence.getText());
   }
+
+  public void testSetValueCompoundSequence() {
+    doValueTest("""
+                         someKey:
+                           abl: 1
+                           acl: 3
+                           blah: 2""");
+  }
+
 
   private void doValueTest(final String valueText) {
     myFixture.configureByFile(getTestName(true) + ".yml");
