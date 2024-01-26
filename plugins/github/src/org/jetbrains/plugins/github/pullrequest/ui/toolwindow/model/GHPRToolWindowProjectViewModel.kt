@@ -31,8 +31,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -123,6 +122,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
   fun acquireEditorReviewViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRReviewInEditorViewModel =
     pullRequestsVms[id].acquireValue(disposable).editorVm
 
+  fun acquireBranchWidgetModel(id: GHPRIdentifier, disposable: Disposable): GHPRBranchWidgetViewModel =
+    pullRequestsVms[id].acquireValue(disposable).branchWidgetVm
+
   fun acquireDiffViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRDiffViewModel =
     pullRequestsVms[id].acquireValue(disposable).diffVm
 
@@ -151,9 +153,6 @@ class GHPRToolWindowProjectViewModel internal constructor(
           }
         }
       }.stateIn(cs, SharingStarted.Lazily, null)
-
-  internal fun createPrOnCurrentBranchVmIn(cs: CoroutineScope, pullRequest: GHPRIdentifier): GHPROnCurrentBranchViewModel =
-    GHPROnCurrentBranchViewModelImpl(this, pullRequest)
 
   suspend fun isExistingPullRequest(pushResult: GitPushRepoResult): Boolean? {
     val creationService = dataContext.creationService

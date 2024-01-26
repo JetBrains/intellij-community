@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
-import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,7 +9,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.use
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
@@ -19,8 +21,11 @@ import git4idea.ui.branch.GitCurrentBranchPresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 @Service(Service.Level.PROJECT)
@@ -28,15 +33,24 @@ class GHPROnCurrentBranchService(project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(Dispatchers.Default)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  internal val vmState: StateFlow<GHPROnCurrentBranchViewModel?> by lazy {
+  internal val vmState: StateFlow<GHPRBranchWidgetViewModel?> by lazy {
     val toolWindowVm = project.service<GHPRToolWindowViewModel>()
     toolWindowVm.projectVm.flatMapLatest { projectVm ->
       projectVm?.prOnCurrentBranch
         ?.mapNotNull { it?.result } // we're not interested in intermittent loading/canceled state
         ?.map { it.getOrNull() }
         ?.distinctUntilChanged()
-        ?.mapScoped { prOnCurrentBranch ->
-          prOnCurrentBranch?.let { projectVm.createPrOnCurrentBranchVmIn(this, it) }
+        ?.transformLatest<GHPRIdentifier?, GHPRBranchWidgetViewModel?> { prOnCurrentBranch ->
+          if (prOnCurrentBranch != null) {
+            Disposer.newDisposable().use {
+              val vm = projectVm.acquireBranchWidgetModel(prOnCurrentBranch, it)
+              emit(vm)
+              awaitCancellation()
+            }
+          }
+          else {
+            emit(null)
+          }
         }
       ?: flowOf(null)
     }.onStart {
@@ -50,11 +64,40 @@ class GHPROnCurrentBranchService(project: Project, parentCs: CoroutineScope) {
       val currentBranchName = StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
-      return GitCurrentBranchPresenter.Presentation(
-        AllIcons.Vcs.Vendors.Github,
-        GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
-        GithubBundle.message("pull.request.on.branch.description", vm.id.number, currentBranchName)
-      ).copy(syncStatus = GitBranchSyncStatus.calcForCurrentBranch(repository))
+
+      val syncStatus = GitBranchSyncStatus.calcForCurrentBranch(repository)
+      if (vm.updateRequired.value) {
+        return GitCurrentBranchPresenter.Presentation(
+          GithubIcons.GithubWarning,
+          GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
+          GithubBundle.message("pull.request.on.branch.out.of.sync", vm.id.number, currentBranchName),
+          syncStatus
+        )
+      }
+
+      return when (val changesResult = vm.dataLoadingState.value.result) {
+        null -> GitCurrentBranchPresenter.Presentation(
+          CollaborationToolsUIUtil.animatedLoadingIcon,
+          GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
+          GithubBundle.message("pull.request.on.branch.loading", vm.id.number, currentBranchName)
+        )
+        else -> changesResult.fold(
+          onSuccess = {
+            GitCurrentBranchPresenter.Presentation(
+              AllIcons.Vcs.Vendors.Github,
+              GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
+              GithubBundle.message("pull.request.on.branch.description", vm.id.number, currentBranchName)
+            )
+          },
+          onFailure = {
+            GitCurrentBranchPresenter.Presentation(
+              AllIcons.Vcs.Vendors.Github,
+              GithubBundle.message("pull.request.on.branch", vm.id.number, currentBranchName),
+              GithubBundle.message("pull.request.on.branch.error", vm.id.number, currentBranchName)
+            )
+          }
+        )
+      }.copy(syncStatus = syncStatus)
     }
   }
 

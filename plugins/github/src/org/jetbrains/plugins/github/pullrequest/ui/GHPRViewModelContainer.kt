@@ -21,6 +21,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewModelImpl
@@ -46,6 +48,10 @@ internal class GHPRViewModelContainer(
     GHPRInfoViewModel(project, cs, dataContext, dataProvider)
   }
   val infoVm: GHPRInfoViewModel by lazyInfoVm
+
+  val branchWidgetVm: GHPRBranchWidgetViewModel by lazy {
+    GHPRBranchWidgetViewModelImpl(cs, dataProvider, projectVm, pullRequestId)
+  }
 
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
   private val threadsVms = GHPRThreadsViewModels(project, cs, dataContext, dataProvider)
