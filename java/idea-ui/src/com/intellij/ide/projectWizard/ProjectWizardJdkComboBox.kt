@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderBase
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequestInfo
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
@@ -260,7 +261,7 @@ class ProjectWizardJdkComboBox(
       .maxByOrNull { it.jdkMajorVersion }
       ?.let {
         val jdkInstaller = JdkInstaller.getInstance()
-        val request = jdkInstaller.prepareJdkInstallation(it, jdkInstaller.defaultInstallDir(it))
+        val request = JdkInstallRequestInfo(it, jdkInstaller.defaultInstallDir(it))
         val task = JdkDownloaderBase.newDownloadTask(it, request, null)
         insertItemAt(DownloadJdk(task), 1)
         if (selectedItem is NoJdk) selectedIndex = 1
