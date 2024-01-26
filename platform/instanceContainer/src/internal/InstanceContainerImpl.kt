@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
 import com.intellij.openapi.diagnostic.trace
@@ -30,15 +30,17 @@ class InstanceContainerImpl(
   }
 
   /**
-   * InstanceHolders | Throwable
+   * InstanceContainerState | Throwable
    */
-  private var _state: Any = if (ordered) persistentMapOf<String, InstanceHolder>() else persistentHashMapOf()
+  private var _state: Any = InstanceContainerState(
+    holders = if (ordered) persistentMapOf() else persistentHashMapOf(),
+  )
 
-  private fun state(): InstanceHolders {
+  private fun state(): InstanceContainerState {
     return state(stateHandle.getVolatile(this))
   }
 
-  private inline fun updateState(update: (state: InstanceHolders) -> InstanceHolders) {
+  private inline fun updateState(update: (state: InstanceContainerState) -> InstanceContainerState) {
     var state = state()
     while (true) {
       val updatedState = update(state)
@@ -50,10 +52,9 @@ class InstanceContainerImpl(
     }
   }
 
-  private fun state(state: Any): InstanceHolders {
-    if (state is PersistentMap<*, *>) {
-      @Suppress("UNCHECKED_CAST")
-      return state as InstanceHolders
+  private fun state(state: Any): InstanceContainerState {
+    if (state is InstanceContainerState) {
+      return state
     }
     else {
       throw ContainerDisposedException(containerName, state as DisposalTrace)
@@ -75,21 +76,25 @@ class InstanceContainerImpl(
   }
 
   override fun instanceHoldersAndKeys(): Map<String, InstanceHolder> {
-    return state()
+    return state().holders
   }
 
   override fun instanceHolders(): Collection<InstanceHolder> {
-    return state().values
+    return instanceHoldersAndKeys().values
   }
 
   override fun getInstanceHolder(keyClassName: String): InstanceHolder? {
-    return state()[keyClassName]
+    return state().getByName(keyClassName)
+  }
+
+  override fun getInstanceHolder(keyClass: Class<*>): InstanceHolder? {
+    return state().getByClass(keyClass)
   }
 
   override fun getInstanceHolder(keyClass: Class<*>, registerDynamic: Boolean): InstanceHolder? {
     lateinit var holder: InstanceHolder
-    updateState { state: InstanceHolders ->
-      state[keyClass.name]?.let {
+    updateState { state: InstanceContainerState ->
+      state.getByClass(keyClass)?.let {
         return it
       }
       if (!registerDynamic || dynamicInstanceSupport == null) {
@@ -102,7 +107,7 @@ class InstanceContainerImpl(
       val parentScope = scopeHolder.intersectScope(dynamicInstanceInitializer.registrationScope)
       val initializer = dynamicInstanceInitializer.initializer
       holder = DynamicInstanceHolder(parentScope, initializer)
-      state.put(keyClass.name, holder)
+      state.replaceByClass(keyClass, holder)
     }
     // the following can only execute in case `holder` was initialized and committed into `state`
     dynamicInstanceSupport!!.dynamicInstanceRegistered(holder)
@@ -117,7 +122,7 @@ class InstanceContainerImpl(
     }
     val debugString = if (scopeName == null) containerName else "($containerName x $scopeName)"
     LOG.trace { "$debugString : registration start" }
-    val existingKeys = state().keys
+    val existingKeys = state().holders.keys
     return InstanceRegistrarImpl(debugString, existingKeys) { actions ->
       register(debugString, registrationScope, actions)
     }
@@ -143,25 +148,25 @@ class InstanceContainerImpl(
     val preparedHolders = prepareHolders(parentScope, actions)
     val (holders, _, keysToRemove) = preparedHolders
     lateinit var handle: UnregisterHandle
-    updateState { state: InstanceHolders ->
+    updateState { state: InstanceContainerState ->
       // key -> holder to add/replace; key -> null to remove
       val restorationMap = LinkedHashMap<String, InstanceHolder?>()
-      val builder = state.builder()
+      val builder = state.holders.builder()
       for (key in keysToRemove) {
         val previous = builder.remove(key)
-        checkExistingRegistration(state, preparedHolders, keyClassName = key, existing = previous, new = null)
+        checkExistingRegistration(state.holders, preparedHolders, keyClassName = key, existing = previous, new = null)
         restorationMap[key] = previous
       }
       for ((key, value) in holders) {
         val previous = builder.put(key, value)
-        checkExistingRegistration(state, preparedHolders, keyClassName = key, existing = previous, new = value)
+        checkExistingRegistration(state.holders, preparedHolders, keyClassName = key, existing = previous, new = value)
         restorationMap[key] = previous
       }
       handle = UnregisterHandle {
         unregister(restorationMap)
         return@UnregisterHandle holders
       }
-      builder.build()
+      InstanceContainerState(builder.build())
     }
     return handle
   }
@@ -176,8 +181,8 @@ class InstanceContainerImpl(
     //  ```
     //  restorationTwo should be finished before restorationOne,
     //  or, in other words, two should be fully nested into one
-    updateState { state: InstanceHolders ->
-      val builder = state.builder()
+    updateState { state: InstanceContainerState ->
+      val builder = state.holders.builder()
       for ((key, value) in restoration) {
         if (value == null) {
           builder.remove(key)
@@ -186,19 +191,19 @@ class InstanceContainerImpl(
           builder[key] = value
         }
       }
-      builder.build()
+      InstanceContainerState(builder.build())
     }
   }
 
   override fun <T : Any> registerInstance(keyClass: Class<T>, instance: T) {
     val keyClassName = keyClass.name
     val holder = InitializedInstanceHolder(instance)
-    updateState { state: InstanceHolders ->
-      val existingHolder = state[keyClassName]
+    updateState { state: InstanceContainerState ->
+      val existingHolder = state.getByName(keyClassName)
       if (existingHolder != null) {
         throw InstanceAlreadyRegisteredException(keyClassName)
       }
-      state.put(keyClassName, holder)
+      state.replaceByClass(keyClass, holder)
     }
   }
 
@@ -206,28 +211,23 @@ class InstanceContainerImpl(
     val keyClassName = keyClass.name
     val holder = InitializedInstanceHolder(instance)
     lateinit var handle: UnregisterHandle
-    updateState { state: InstanceHolders ->
-      val existingHolder = state[keyClassName]
+    updateState { state: InstanceContainerState ->
+      val existingHolder = state.getByName(keyClassName)
       handle = UnregisterHandle {
         undoReplaceInstance(keyClassName, instance, previousHolder = existingHolder)
         return@UnregisterHandle mapOf(keyClassName to holder)
       }
-      state.put(keyClassName, holder)
+      state.replaceByClass(keyClass, holder)
     }
     return handle
   }
 
   private fun undoReplaceInstance(keyClassName: String, instance: Any, previousHolder: InstanceHolder?) {
-    updateState { state: InstanceHolders ->
-      check(state[keyClassName].let {
+    updateState { state: InstanceContainerState ->
+      check(state.getByName(keyClassName).let {
         it is InitializedInstanceHolder && it.instance === instance
       })
-      if (previousHolder == null) {
-        state.remove(keyClassName)
-      }
-      else {
-        state.put(keyClassName, previousHolder)
-      }
+      state.replaceByName(keyClassName, previousHolder)
     }
   }
 
@@ -235,20 +235,20 @@ class InstanceContainerImpl(
     val keyClassName = keyClass.name
     val holder = InitializedInstanceHolder(instance)
     var existingHolder: InstanceHolder? = null
-    updateState { state: InstanceHolders ->
-      existingHolder = state[keyClassName]
-      state.put(keyClassName, holder)
+    updateState { state: InstanceContainerState ->
+      existingHolder = state.getByName(keyClassName)
+      state.replaceByClass(keyClass, holder)
     }
     return existingHolder
   }
 
   override fun unregister(keyClassName: String, unregisterDynamic: Boolean): InstanceHolder? {
     lateinit var existingHolder: InstanceHolder
-    updateState { state: InstanceHolders ->
-      existingHolder = state[keyClassName]?.takeUnless {
+    updateState { state: InstanceContainerState ->
+      existingHolder = state.getByName(keyClassName)?.takeUnless {
         it is DynamicInstanceHolder && !unregisterDynamic
       } ?: return null
-      state.remove(keyClassName)
+      state.replaceByName(keyClassName, null)
     }
     return existingHolder
   }
