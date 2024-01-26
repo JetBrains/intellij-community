@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
+import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
 import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.Constraints
@@ -26,7 +27,6 @@ import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action.GitLabMergeRequestEditorReviewToolbarActionGroup
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -58,7 +58,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
           reviewVm?.getFileVm(file)?.collectLatest { fileVm ->
             if (fileVm != null) {
               val toolbarActionGroup = DefaultActionGroup(
-                GitLabMergeRequestEditorReviewToolbarActionGroup(reviewVm),
+                CodeReviewInEditorToolbarActionGroup(reviewVm),
                 Separator.getInstance()
               )
               val editorMarkupModel = editor.markupModel as? EditorMarkupModel

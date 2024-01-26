@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.editor.action
+package com.intellij.collaboration.ui.codereview.editor.action
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.util.getOrNull
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.lang.annotation.HighlightSeverity
@@ -12,22 +13,22 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
-import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-internal class GitLabMergeRequestEditorReviewToolbarActionGroup(private val vm: GitLabMergeRequestEditorReviewViewModel) : ActionGroup(), DumbAware {
+@ApiStatus.Internal
+class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorViewModel) : ActionGroup(), DumbAware {
   private val updateAction = UpdateAction()
 
   private val disableReviewAction =
     ViewOptionToggleAction(DiscussionsViewOption.DONT_SHOW,
-                           GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Disable.text"))
+                           CollaborationToolsBundle.message("review.editor.action.disable.text"))
   private val hideResolvedAction =
     ViewOptionToggleAction(DiscussionsViewOption.UNRESOLVED_ONLY,
-                           GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Show.Unresolved.text"))
+                           CollaborationToolsBundle.message("review.editor.action.show.unresolved.text"))
   private val showAllAction =
     ViewOptionToggleAction(DiscussionsViewOption.ALL,
-                           GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Show.All.text"))
+                           CollaborationToolsBundle.message("review.editor.action.show.all.text"))
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -42,20 +43,20 @@ internal class GitLabMergeRequestEditorReviewToolbarActionGroup(private val vm: 
     with(templatePresentation) {
       isPopupGroup = true
       putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-      description = GitLabBundle.message("merge.request.review.mode.description.title")
+      description = CollaborationToolsBundle.message("review.editor.mode.description.title")
       val tooltip = HelpTooltip()
-        .setTitle(GitLabBundle.message("merge.request.review.mode.description.title"))
-        .setDescription(GitLabBundle.message("merge.request.review.mode.description"))
+        .setTitle(CollaborationToolsBundle.message("review.editor.mode.description.title"))
+        .setDescription(CollaborationToolsBundle.message("review.editor.mode.description"))
       putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
     }
   }
 
   override fun update(e: AnActionEvent) {
     val shown = vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW
-    val synced = vm.localRepositorySyncStatus.value?.getOrNull()?.incoming?.not() ?: true
+    val synced = !vm.updateRequired.value
     with(e.presentation) {
       if (shown) {
-        text = GitLabBundle.message("merge.request.review.mode.title")
+        text = CollaborationToolsBundle.message("review.editor.mode.title")
         icon = if (synced) null else getWarningIcon()
       }
       else {
@@ -68,12 +69,12 @@ internal class GitLabMergeRequestEditorReviewToolbarActionGroup(private val vm: 
   private fun getWarningIcon(): Icon = HighlightDisplayLevel.find(HighlightSeverity.WARNING)?.icon ?: AllIcons.General.Warning
 
   private inner class UpdateAction
-    : DumbAwareAction(GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Update.text"), null, AllIcons.Actions.CheckOut) {
+    : DumbAwareAction(CollaborationToolsBundle.message("review.editor.action.update.text"), null, AllIcons.Actions.CheckOut) {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = vm.localRepositorySyncStatus.value?.getOrNull()?.incoming == true
+      e.presentation.isEnabledAndVisible = vm.updateRequired.value
     }
 
     override fun actionPerformed(e: AnActionEvent) = vm.updateBranch()

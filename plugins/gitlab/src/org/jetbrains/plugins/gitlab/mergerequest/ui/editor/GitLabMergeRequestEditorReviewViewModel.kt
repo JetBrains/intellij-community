@@ -3,13 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapNullableScoped
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.util.ChangesSelection
-import com.intellij.collaboration.util.ComputedResult
-import com.intellij.collaboration.util.selectedChange
-import com.intellij.collaboration.util.withLocation
+import com.intellij.collaboration.util.*
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -49,7 +48,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
 ) : GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope(CoroutineName("GitLab Merge Request Editor Review VM")),
   currentUser, mergeRequest
-) {
+), CodeReviewInEditorViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
 
   val mergeRequestIid: String = mergeRequest.iid
@@ -70,6 +69,10 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
       if (it == null) emit(null)
       else flowOf(it).localCommitsSyncStatus(repository).collect(this)
     }.stateIn(cs, SharingStarted.Lazily, null)
+  }
+
+  override val updateRequired: StateFlow<Boolean> = localRepositorySyncStatus.mapState {
+    it?.getOrNull()?.incoming == true
   }
 
   init {
@@ -104,7 +107,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     projectVm.twVm.activate()
   }
 
-  fun updateBranch() {
+  override fun updateBranch() {
     cs.launch {
       val details = mergeRequest.refreshDataNow()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(projectMapping, details)
