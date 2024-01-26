@@ -103,7 +103,9 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
         }
       }
 
-      result.add(nextState(interpreter, stateBefore));
+      if (castPossible) {
+        result.add(nextState(interpreter, stateBefore));
+      }
       pushResult(interpreter, stateBefore, stateBefore.pop());
     }
     UnsatisfiedConditionProblem problem = getConditionProblem();
