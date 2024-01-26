@@ -68,6 +68,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                 val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }.distinctUntilChanged()
                 combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest { enabled ->
                   if (enabled) supervisorScope {
+                    val cs = this
                     val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
                     val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm, editor.document)
                     editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)
