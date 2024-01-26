@@ -109,6 +109,7 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     activeScheme = schemePane
     activeScheme.active = true
 
+    service.updateScheme(schemePane.scheme.id)
   }
 
   override val content: JComponent = contentPage
