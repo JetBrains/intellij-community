@@ -28,7 +28,7 @@ import javax.swing.JComponent
 import javax.swing.border.Border
 
 @ApiStatus.Internal
-abstract class ToolWindowToolbar(private val isPrimary: Boolean, anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>() {
+abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
   internal abstract val bottomStripe: StripeV2
@@ -36,10 +36,10 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, anchor: ToolWin
 
   internal abstract val moreButton: MoreSquareStripeButton
 
-  private val myResizeManager = if (isPrimary) ResizeStripeManager(this, anchor) else null
+  private val myResizeManager = ResizeStripeManager(this)
 
   protected fun init() {
-    layout = myResizeManager?.createLayout() ?: BorderLayout()
+    layout = myResizeManager.createLayout()
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
 
@@ -63,8 +63,8 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, anchor: ToolWin
     }
   }
 
-  fun updateResizeState(project: Project) {
-    myResizeManager?.updateState(project)
+  fun updateResizeState(project: Project, toolbar: ToolWindowToolbar?) {
+    myResizeManager.updateState(project, toolbar)
   }
 
   open fun createBorder():Border = JBUI.Borders.empty()

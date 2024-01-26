@@ -21,7 +21,7 @@ import kotlin.math.max
 /**
  * @author Alexander Lobas
  */
-class ResizeStripeManager(private val myComponent: ToolWindowToolbar, private val myAnchor: ToolWindowAnchor) : Splittable {
+class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittable {
   private val mySplitter = object : OnePixelDivider(false, this) {
     override fun paint(g: Graphics) {
     }
@@ -55,9 +55,9 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar, private va
         }
       }
 
-      override fun preferredLayoutSize(target: Container?): Dimension {
+      override fun preferredLayoutSize(target: Container): Dimension {
         val size = super.preferredLayoutSize(target)
-        if (myCustomWidth != 0) {
+        if (myCustomWidth != 0 && (!myComponent.topStripe.getButtons().isEmpty() || !myComponent.bottomStripe.getButtons().isEmpty())) {
           size.width = myCustomWidth
         }
         return size
@@ -67,25 +67,33 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar, private va
         super.layoutContainer(target)
         if (mySplitter.parent === target) {
           val width = JBUI.scale(1)
-          mySplitter.setBounds(if (myAnchor == ToolWindowAnchor.LEFT) target.width - width else 0, 0, width, target.height)
+          mySplitter.setBounds(if (myComponent.anchor == ToolWindowAnchor.LEFT) target.width - width else 0, 0, width, target.height)
         }
       }
     }
   }
 
-  fun updateState(project: Project) {
-    myProject = project
-    val manager = ToolWindowManagerEx.getInstanceEx(project)
-    val enabled = manager.isShowNames()
-    if (enabled) {
-      myCustomWidth = manager.getSideCustomWidth(myAnchor)
-      myComponent.add(mySplitter)
+  fun updateState(project: Project, toolbar: ToolWindowToolbar?) {
+    if (toolbar == null) {
+      myProject = project
+      val manager = ToolWindowManagerEx.getInstanceEx(project)
+      val enabled = manager.isShowNames()
+      if (enabled) {
+        myCustomWidth = manager.getSideCustomWidth(myComponent.anchor)
+        myComponent.add(mySplitter)
+      }
+      else {
+        myCustomWidth = 0
+        myComponent.remove(mySplitter)
+      }
+      mySplitter.setResizeEnabled(enabled)
+    }
+    else if (toolbar === myComponent || toolbar.anchor != myComponent.anchor) {
+      return
     }
     else {
-      myCustomWidth = 0
-      myComponent.remove(mySplitter)
+      myCustomWidth = ToolWindowManagerEx.getInstanceEx(project).getSideCustomWidth(myComponent.anchor)
     }
-    mySplitter.setResizeEnabled(enabled)
     updateView()
   }
 
@@ -98,7 +106,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar, private va
 
     val fullWidth = myComponent.parent.width
     var width = (fullWidth * proportion).toInt()
-    if (myAnchor == ToolWindowAnchor.RIGHT) {
+    if (myComponent.anchor == ToolWindowAnchor.RIGHT) {
       width = fullWidth - width
     }
     if (myCalculateDelta) {
@@ -118,7 +126,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar, private va
     }
 
     myCustomWidth = width
-    ToolWindowManagerEx.getInstanceEx(myProject ?: return).setSideCustomWidth(myAnchor, width)
+    ToolWindowManagerEx.getInstanceEx(myProject ?: return).setSideCustomWidth(myComponent, width)
     updateView()
   }
 

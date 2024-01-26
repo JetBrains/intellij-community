@@ -110,7 +110,7 @@ internal class DockWindow(
       buttonManager = ToolWindowPaneNewButtonManager(paneId, false)
       buttonManager.add(dockContentUiContainer)
       buttonManager.initMoreButton(dockManager.project)
-      buttonManager.updateResizeState(dockManager.project)
+      buttonManager.updateResizeState(dockManager.project, null)
     }
     else {
       buttonManager = ToolWindowPaneOldButtonManager(paneId)

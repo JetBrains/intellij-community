@@ -1546,7 +1546,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       for (pane in toolWindowPanes.values) {
         val buttonManager = pane.buttonManager
         if (buttonManager is ToolWindowPaneNewButtonManager) {
-          buttonManager.updateResizeState(project)
+          buttonManager.updateResizeState(project, null)
         }
       }
     }
@@ -1556,8 +1556,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   override fun getSideCustomWidth(side: ToolWindowAnchor) = state.sideCustomWidth[side] ?: 0
 
-  override fun setSideCustomWidth(side: ToolWindowAnchor, width: Int) {
-    state.sideCustomWidth[side] = width
+  override fun setSideCustomWidth(toolbar: ToolWindowToolbar, width: Int) {
+    state.sideCustomWidth[toolbar.anchor] = width
+
+    for (pane in toolWindowPanes.values) {
+      val buttonManager = pane.buttonManager
+      if (buttonManager is ToolWindowPaneNewButtonManager) {
+        buttonManager.updateResizeState(project, toolbar)
+      }
+    }
+
     fireStateChanged(SideCustomWidth)
   }
 
