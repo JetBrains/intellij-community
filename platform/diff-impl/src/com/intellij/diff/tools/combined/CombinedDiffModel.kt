@@ -147,10 +147,6 @@ class CombinedDiffModel(val project: Project) {
 
     private val ownContext: UserDataHolder = UserDataHolderBase()
 
-    init {
-      ownContext.putUserData(COMBINED_DIFF_MODEL, this@CombinedDiffModel)
-    }
-
     override fun getProject() = this@CombinedDiffModel.project
     override fun isFocusedInWindow(): Boolean = mainUi?.isFocusedInWindow() ?: false
     override fun isWindowFocused(): Boolean = mainUi?.isWindowFocused() ?: false
