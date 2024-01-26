@@ -77,9 +77,11 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   }
 
   suspend fun saveGlobalEntities() = jpsSaveGlobalEntitiesMs.addMeasuredTimeMillis {
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
+    setVirtualFileUrlManager(globalWorkspaceModel.getVirtualFileUrlManager())
+    val entityStorage = globalWorkspaceModel.entityStorage.current
     val serializers = createSerializers()
     val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
-    val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
     serializers.forEach { serializer ->
       serializeEntities(entityStorage, serializer, contentWriter)
     }
