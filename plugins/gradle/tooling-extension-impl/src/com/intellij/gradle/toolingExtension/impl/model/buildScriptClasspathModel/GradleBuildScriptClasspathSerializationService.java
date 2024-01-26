@@ -6,7 +6,7 @@ import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
@@ -27,12 +27,12 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 /**
  * @author Vladislav.Soroka
  */
-public final class BuildScriptClasspathModelSerializationService implements SerializationService<BuildScriptClasspathModel> {
+public final class GradleBuildScriptClasspathSerializationService implements SerializationService<GradleBuildScriptClasspathModel> {
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
 
   @Override
-  public byte[] write(BuildScriptClasspathModel classpathModel, Class<? extends BuildScriptClasspathModel> modelClazz) throws IOException {
+  public byte[] write(GradleBuildScriptClasspathModel classpathModel, Class<? extends GradleBuildScriptClasspathModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
       write(writer, myWriteContext, classpathModel);
@@ -41,19 +41,19 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
   }
 
   @Override
-  public BuildScriptClasspathModel read(byte[] object, Class<? extends BuildScriptClasspathModel> modelClazz) throws IOException {
+  public GradleBuildScriptClasspathModel read(byte[] object, Class<? extends GradleBuildScriptClasspathModel> modelClazz) throws IOException {
     try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
     }
   }
 
   @Override
-  public Class<? extends BuildScriptClasspathModel> getModelClass() {
-    return BuildScriptClasspathModel.class;
+  public Class<? extends GradleBuildScriptClasspathModel> getModelClass() {
+    return GradleBuildScriptClasspathModel.class;
   }
 
 
-  private static void write(final IonWriter writer, final WriteContext context, final BuildScriptClasspathModel model) throws IOException {
+  private static void write(final IonWriter writer, final WriteContext context, final GradleBuildScriptClasspathModel model) throws IOException {
     context.objectCollector.add(model, new ObjectCollector.Processor<IOException>() {
       @Override
       public void process(boolean isAdded, int objectId) throws IOException {
@@ -91,15 +91,15 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
   }
 
   @Nullable
-  private static BuildScriptClasspathModel read(final IonReader reader, final ReadContext context) {
+  private static GradleBuildScriptClasspathModel read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
-    BuildScriptClasspathModelImpl model =
-      context.objectMap.computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new SimpleObjectFactory<BuildScriptClasspathModelImpl>() {
+    DefaultGradleBuildScriptClasspathModel model =
+      context.objectMap.computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new SimpleObjectFactory<DefaultGradleBuildScriptClasspathModel>() {
         @Override
-        public BuildScriptClasspathModelImpl create() {
-          BuildScriptClasspathModelImpl classpathModel = new BuildScriptClasspathModelImpl();
+        public DefaultGradleBuildScriptClasspathModel create() {
+          DefaultGradleBuildScriptClasspathModel classpathModel = new DefaultGradleBuildScriptClasspathModel();
           if (!context.isFirstModelRead) {
             context.isFirstModelRead = true;
             context.gradleVersion = assertNotNull(readString(reader, "gradleVersion"));
@@ -146,12 +146,12 @@ public final class BuildScriptClasspathModelSerializationService implements Seri
     private boolean isFirstModelRead;
     private File gradleHomeDir;
     private String gradleVersion;
-    private final IntObjectMap<BuildScriptClasspathModelImpl> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultGradleBuildScriptClasspathModel> objectMap = new IntObjectMap<>();
   }
 
   private static class WriteContext {
     private boolean isFirstModelWritten;
-    private final ObjectCollector<BuildScriptClasspathModel, IOException> objectCollector =
+    private final ObjectCollector<GradleBuildScriptClasspathModel, IOException> objectCollector =
       new ObjectCollector<>();
   }
 }

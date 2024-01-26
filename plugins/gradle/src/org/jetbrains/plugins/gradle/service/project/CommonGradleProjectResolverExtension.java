@@ -753,7 +753,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Override
   public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
     return ContainerUtil.newLinkedHashSet(
-      BuildScriptClasspathModel.class,
+      GradleBuildScriptClasspathModel.class,
       GradleExtensions.class,
       ExternalTestsModel.class,
       IntelliJProjectSettings.class,

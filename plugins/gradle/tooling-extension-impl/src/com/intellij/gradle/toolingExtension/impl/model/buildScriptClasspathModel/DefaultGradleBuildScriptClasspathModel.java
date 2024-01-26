@@ -5,7 +5,7 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 
 import java.io.File;
@@ -16,14 +16,14 @@ import java.util.Objects;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel {
+public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScriptClasspathModel {
 
   private final List<ClasspathEntryModel> myClasspathEntries;
   @Nullable
   private File gradleHomeDir;
   private String myGradleVersion;
 
-  public BuildScriptClasspathModelImpl() {
+  public DefaultGradleBuildScriptClasspathModel() {
     myClasspathEntries = new ArrayList<>(0);
   }
 
@@ -61,7 +61,7 @@ public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel 
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    BuildScriptClasspathModelImpl other = (BuildScriptClasspathModelImpl)o;
+    DefaultGradleBuildScriptClasspathModel other = (DefaultGradleBuildScriptClasspathModel)o;
 
     if (!myClasspathEntries.equals(other.myClasspathEntries)) return false;
     if (gradleHomeDir == null && other.gradleHomeDir != null ||

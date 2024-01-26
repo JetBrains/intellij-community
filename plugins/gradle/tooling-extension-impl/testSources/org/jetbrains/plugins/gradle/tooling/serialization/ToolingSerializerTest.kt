@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
 import org.jetbrains.plugins.gradle.model.ExternalTask
 import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl
-import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.BuildScriptClasspathModelImpl
+import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.DefaultGradleBuildScriptClasspathModel
 import org.jetbrains.plugins.gradle.tooling.internal.RepositoriesModelImpl
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
@@ -76,7 +76,8 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `build script classpath serialization test`() {
-    doTest(BuildScriptClasspathModelImpl::class.java)
+    doTest(
+      DefaultGradleBuildScriptClasspathModel::class.java)
   }
 
   @Test

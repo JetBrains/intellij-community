@@ -6,7 +6,7 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.junit.Test;
 
 import java.io.File;
@@ -19,9 +19,9 @@ import static org.junit.Assert.*;
 /**
  * @author Vladislav.Soroka
  */
-public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuilderTest {
+public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBuilderTest {
 
-  public ModelBuildScriptClasspathBuilderImplTest(@NotNull String gradleVersion) {
+  public GradleBuildScriptClasspathModelBuilderTest(@NotNull String gradleVersion) {
     super(gradleVersion);
   }
 
@@ -30,9 +30,9 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
-    List<BuildScriptClasspathModel> ideaModule =
+    List<GradleBuildScriptClasspathModel> ideaModule =
       ContainerUtil.mapNotNull(ideaModules, module -> {
-        BuildScriptClasspathModel classpathModel = allModels.getModel(module, BuildScriptClasspathModel.class);
+        GradleBuildScriptClasspathModel classpathModel = allModels.getModel(module, GradleBuildScriptClasspathModel.class);
 
         if (module.getName().equals("moduleWithAdditionalClasspath")) {
           assertNotNull(classpathModel);
@@ -72,6 +72,6 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
 
   @Override
   protected Set<Class<?>> getModels() {
-    return Collections.singleton(BuildScriptClasspathModel.class);
+    return Collections.singleton(GradleBuildScriptClasspathModel.class);
   }
 }

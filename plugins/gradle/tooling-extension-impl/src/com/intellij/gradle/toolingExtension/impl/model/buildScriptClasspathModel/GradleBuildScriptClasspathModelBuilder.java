@@ -27,23 +27,23 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Vladislav.Soroka
  */
-public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderService {
+public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilderService {
 
   private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
-  private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<>();
+  private final Map<String, DefaultGradleBuildScriptClasspathModel> cache = new ConcurrentHashMap<>();
 
   @Override
   public boolean canBuild(String modelName) {
-    return BuildScriptClasspathModel.class.getName().equals(modelName);
+    return GradleBuildScriptClasspathModel.class.getName().equals(modelName);
   }
 
   @Nullable
   @Override
   public Object buildAll(@NotNull final String modelName, @NotNull final Project project, @NotNull ModelBuilderContext context) {
-    BuildScriptClasspathModelImpl buildScriptClasspath = cache.get(project.getPath());
+    DefaultGradleBuildScriptClasspathModel buildScriptClasspath = cache.get(project.getPath());
     if (buildScriptClasspath != null) return buildScriptClasspath;
 
-    buildScriptClasspath = new BuildScriptClasspathModelImpl();
+    buildScriptClasspath = new DefaultGradleBuildScriptClasspathModel();
     final File gradleHomeDir = project.getGradle().getGradleHomeDir();
     buildScriptClasspath.setGradleHomeDir(gradleHomeDir);
     buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());
@@ -53,7 +53,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
 
     Project parent = project.getParent();
     if (parent != null) {
-      BuildScriptClasspathModelImpl parentBuildScriptClasspath = (BuildScriptClasspathModelImpl)buildAll(modelName, parent, context);
+      DefaultGradleBuildScriptClasspathModel
+        parentBuildScriptClasspath = (DefaultGradleBuildScriptClasspathModel)buildAll(modelName, parent, context);
       if (parentBuildScriptClasspath != null) {
         for (ClasspathEntryModel classpathEntryModel : parentBuildScriptClasspath.getClasspath()) {
           buildScriptClasspath.add(classpathEntryModel);
