@@ -25,7 +25,9 @@ class MavenProjectsManagerInitializationTest : MavenMultiVersionImportingTestCas
           activated.set(true)
         }
       }, disposable)
-      projectsManager.addManagedFiles(listOf(m1))
+      waitForImportWithinTimeout {
+        projectsManager.addManagedFiles(listOf(m1))
+      }
     }
     assertTrue("activated() wasn't called on listener", activated.get())
   }
