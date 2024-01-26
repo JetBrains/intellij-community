@@ -60,21 +60,19 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     }
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
-    return perform {
-        val transformer = RemotePathTransformerFactory.createForProject(project!!)
-        val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
-        val targetPomDir = File(transformer.toRemotePathOrSelf(pomDir.toString()))
-      val m = getServerBlocking().interpolateAndAlignModel(model, targetBasedir, targetPomDir, MavenRemoteObjectWrapper.ourToken)
-        if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
-          MavenBuildPathsChange({ s: String? -> transformer.toIdePath(s!!)!! }, { s: String? -> transformer.canBeRemotePath(s) }).perform(m)
-        }
-        m
-      }
+  override suspend fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
+    val transformer = RemotePathTransformerFactory.createForProject(project!!)
+    val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
+    val targetPomDir = File(transformer.toRemotePathOrSelf(pomDir.toString()))
+    val m = getServer().interpolateAndAlignModel(model, targetBasedir, targetPomDir, MavenRemoteObjectWrapper.ourToken)
+    if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
+      MavenBuildPathsChange({ s: String? -> transformer.toIdePath(s!!)!! }, { s: String? -> transformer.canBeRemotePath(s) }).perform(m)
+    }
+    return m
   }
 
-  override fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
-    return perform { getServerBlocking().assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken) }
+  override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
+    return getServer().assembleInheritance(model, parentModel, MavenRemoteObjectWrapper.ourToken)
   }
 
   override suspend fun applyProfiles(model: MavenModel,

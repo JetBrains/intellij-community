@@ -54,9 +54,9 @@ interface MavenServerConnector : Disposable {
   @Throws(RemoteException::class)
   fun createIndexer(): MavenServerIndexer
 
-  fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel
+  suspend fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel
 
-  fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel
+  suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel
 
   suspend fun applyProfiles(model: MavenModel,
                             basedir: Path,

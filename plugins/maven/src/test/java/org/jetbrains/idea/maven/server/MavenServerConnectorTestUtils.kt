@@ -101,11 +101,11 @@ private class CompatibleMavenServerConnector(override val project: Project) : Ma
     throw RuntimeException("not implemented")
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
+  override suspend fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
     throw RuntimeException("not implemented")
   }
 
-  override fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
+  override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
     throw RuntimeException("not implemented")
   }
 
@@ -163,11 +163,11 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     throw RuntimeException("not implemented")
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
+  override suspend fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
     throw ConnectException("Cannot reconnect")
   }
 
-  override fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
+  override suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel {
     throw ConnectException("Cannot reconnect")
   }
 
