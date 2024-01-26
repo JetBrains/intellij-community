@@ -73,6 +73,12 @@ class SettingsSyncPromotion : SettingsDialogListener {
     SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.SHOWN)
 
     SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
+      override fun loginStateChanged() {
+        if (SettingsSyncAuthService.getInstance().isLoggedIn()) {
+          SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.LOGGED_IN)
+        }
+      }
+
       override fun enabledStateChanged(syncEnabled: Boolean) {
         if (syncEnabled) {
           SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.ENABLED)
