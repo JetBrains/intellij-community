@@ -133,7 +133,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
           } \s""";
 
-    final PsiFile file = myFixture.addFileToProject("aaa.java", text);
+    final PsiFile file = myFixture.addFileToProject("reparseAfterReformat.java", text);
     final int[] added = {0};
     final int[] removed = {0};
     final int[] replacedWhite = {0};
