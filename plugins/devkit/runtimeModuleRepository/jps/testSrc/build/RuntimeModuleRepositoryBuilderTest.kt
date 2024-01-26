@@ -1,10 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
-import com.intellij.platform.runtime.repository.RuntimeModuleId
-import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -16,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsModule
 class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
   override fun setUp() {
     super.setUp()
-    addModule(MARKER_MODULE, withTests = false)
+    addModule(RUNTIME_REPOSITORY_MARKER_MODULE, withTests = false)
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = getUrl("out")
   }
 
@@ -123,12 +119,6 @@ class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
     }
   }
 
-  private fun buildRepository(): Map<String, RawRuntimeModuleDescriptor> {
-    doBuild(CompileScopeTestBuilder.make().targetTypes(RuntimeModuleRepositoryTarget)).assertSuccessful()
-    val zipPath = orCreateProjectDir.toPath().resolve("out/${JAR_REPOSITORY_FILE_NAME}")
-    return RuntimeModuleRepositorySerialization.loadFromJar(zipPath)
-  }
-
   private fun addModule(name: String, vararg dependencies: JpsModule, withTests: Boolean, withSources: Boolean = true): JpsModule {
     val module = addModule(name, emptyArray(), null, null, jdk)
     if (withSources) {
@@ -142,35 +132,11 @@ class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
     }
     return module
   }
-  
+
   private fun buildAndCheck(expected: RawDescriptorListBuilder.() -> Unit) {
-    val actual = buildRepository().filterKeys { it != MARKER_MODULE && it != "${MARKER_MODULE}${RuntimeModuleId.TESTS_NAME_SUFFIX}" }
-    val builder = RawDescriptorListBuilder()
-    builder.expected()
-    assertSameElements(actual.keys, builder.descriptors.map { it.id })
-    for (expectedDescriptor in builder.descriptors) {
-      assertEquals("Different data for '${expectedDescriptor.id}'.", expectedDescriptor, actual[expectedDescriptor.id]!!)
-    }
-  }
-  
-  private class RawDescriptorListBuilder {
-    val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
-    
-    fun descriptor(id: String, vararg dependencies: String, resourceDirName: String? = id) {
-      val resources = if (resourceDirName != null) listOf("production/$resourceDirName") else emptyList()
-      descriptor(id, resources, dependencies.asList())
-    }
-
-    fun testDescriptor(id: String, vararg dependencies: String, resourceDirName: String = id.removeSuffix(RuntimeModuleId.TESTS_NAME_SUFFIX)) {
-      if (RuntimeModuleRepositoryBuilder.GENERATE_DESCRIPTORS_FOR_TEST_MODULES) {
-        descriptor(id, listOf("test/$resourceDirName"), dependencies.asList())
-      }
-    }
-
-    fun descriptor(id: String, resources: List<String>, dependencies: List<String>) {
-      descriptors.add(RawRuntimeModuleDescriptor(id, resources, dependencies))
-    }
+    doBuild(CompileScopeTestBuilder.make().targetTypes(RuntimeModuleRepositoryTarget)).assertSuccessful()
+    val outputDir = orCreateProjectDir.toPath().resolve("out")
+    checkRuntimeModuleRepository(outputDir, expected)
   }
 }
 
-private const val MARKER_MODULE = "intellij.idea.community.main"
