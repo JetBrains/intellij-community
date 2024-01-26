@@ -47,7 +47,7 @@ class KeymapPane(val keymap: Keymap) {
 
     add(JLabel(keymap.name).apply {
       font = JBFont.label().asBold()
-      border = JBUI.Borders.empty(11, 0, 13, 0)
+      border = JBUI.Borders.empty(13, 0)
       horizontalAlignment = SwingConstants.CENTER
       minimumSize = Dimension(0, 0)
     })

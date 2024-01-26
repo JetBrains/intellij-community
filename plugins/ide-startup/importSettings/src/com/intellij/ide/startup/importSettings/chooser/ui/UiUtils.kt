@@ -3,10 +3,15 @@ package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 
 object UiUtils {
   const val DEFAULT_BUTTON_WIDTH: Int = 280
   const val DEFAULT_BUTTON_HEIGHT: Int = 40
   val POPUP = Key<Boolean>("ImportSetting_OtherOptions_POPUP")
   val DESCRIPTION = Key<@NlsSafe String>("ImportSetting_ProductDescription")
+  val HEADER_FONT: JBFont =  JBFont.label().biggerOn(7f)
+  val HEADER_BORDER = JBUI.Borders.empty(18, 0, 17, 0)
+  val CARD_BORDER = JBUI.Borders.empty(0, 19, 13, 19)
 }
