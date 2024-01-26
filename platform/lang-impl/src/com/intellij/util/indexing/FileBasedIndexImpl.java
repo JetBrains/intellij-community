@@ -1321,7 +1321,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private boolean isPendingDeletionFileAppearedInIndexableFilter(int fileId, @NotNull VirtualFile file) {
     if (file instanceof DeletedVirtualFileStub deletedFileStub) {
       if (deletedFileStub.isOriginalValid() &&
-          ensureFileBelongsToIndexableFilter(fileId, deletedFileStub.getOriginalFile())) {
+          ensureFileBelongsToIndexableFilter(fileId, deletedFileStub.getOriginalFile()) != null) {
         return true;
       }
     }
@@ -1793,14 +1793,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean onlyContentChanged) {
-    if (!ensureFileBelongsToIndexableFilter(fileId, file)) {
-      doInvalidateIndicesForFile(fileId, file);
-      return;
-    }
-
-    Project projectForFile = findProjectForFileId(fileId);
+    Project projectForFile = ensureFileBelongsToIndexableFilter(fileId, file);
     if (projectForFile == null) {
-      LOG.error("ensureFileBelongsToIndexableFilter returned ADDED or PRESENT, but findProjectForFileId returned null for file: " + file);
       doInvalidateIndicesForFile(fileId, file);
       return;
     }
@@ -1882,7 +1876,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myIndexableFilesFilterHolder.findProjectForFile(fileId);
   }
 
-  private boolean ensureFileBelongsToIndexableFilter(int fileId, @NotNull VirtualFile file) {
+  @Nullable
+  private Project ensureFileBelongsToIndexableFilter(int fileId, @NotNull VirtualFile file) {
     return myIndexableFilesFilterHolder.ensureFileIdPresent(fileId, () -> getContainingProjects(file));
   }
 

@@ -24,7 +24,7 @@ internal sealed class ProjectIndexableFilesFilterHolder {
   /**
    * @returns true if fileId already contained in or was added to one of project filters
    */
-  abstract fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Boolean
+  abstract fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Project?
 
   abstract fun addFileId(fileId: Int, project: Project)
 
@@ -67,15 +67,16 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     else IncrementalProjectIndexableFilesFilter()
   }
 
-  override fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Boolean {
+  override fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Project? {
     val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }
-    val statuses = myProjectFilters.map { (p, filter) ->
-      filter.ensureFileIdPresent(fileId) {
+    val actualProjects = myProjectFilters.mapNotNull { (p, filter) ->
+      val fileIsInProject = filter.ensureFileIdPresent(fileId) {
         matchedProjects.contains(p)
       }
+      if (fileIsInProject) p else null
     }
 
-    return statuses.any { it }
+    return actualProjects.firstOrNull()
   }
 
   override fun addFileId(fileId: Int, project: Project) {
