@@ -4,6 +4,7 @@ package com.intellij.internal.ui.sandbox
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.internal.ui.sandbox.components.*
+import com.intellij.internal.ui.sandbox.dsl.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -42,7 +43,23 @@ internal class UISandboxDialog(project: Project?) : DialogWrapper(project, null,
       JRadioButtonPanel(),
       JSpinnerPanel(),
       JTextFieldPanel(),
-      ThreeStateCheckBoxPanel()))
+      ThreeStateCheckBoxPanel())),
+
+    Group("Kotlin UI DSL", children = listOf(
+      CellsWithSubPanelsPanel(),
+      CheckBoxRadioButtonPanel(),
+      CommentsPanel(),
+      DeprecatedApiPanel(),
+      GroupsPanel(),
+      LabelsPanel(),
+      ListCellRendererPanel(),
+      OthersPanel(),
+      ResizableRowsPanel(),
+      TextFieldsPanel(),
+      TextMaxLinePanel(),
+      ValidationPanel(),
+      VisibleEnabledPanel()
+    ))
   )
 
   private val splitter = JBSplitter(false, "UISandboxDialog.splitter.proportion", 0.2f)

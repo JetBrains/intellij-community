@@ -1,21 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.ui.uiDslTestAction
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.internal.ui.sandbox.dsl
 
+import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.selected
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
+import javax.swing.JComponent
 
-@Suppress("DialogTitleCapitalization")
-@ApiStatus.Internal
-internal class ValidationPanel(parentDisposable: Disposable) {
+internal class ValidationPanel : UISandboxPanel {
 
-  lateinit var panel: DialogPanel
+  override val title: String = "Validation API"
 
-  init {
+  override fun createContent(disposable: Disposable): JComponent {
+    lateinit var panel: DialogPanel
     panel = panel {
       lateinit var cbValidationEnabled: JCheckBox
 
@@ -52,6 +52,7 @@ internal class ValidationPanel(parentDisposable: Disposable) {
       }
     }
 
-    panel.registerValidators(parentDisposable)
+    panel.registerValidators(disposable)
+    return panel
   }
 }
