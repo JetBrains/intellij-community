@@ -3,6 +3,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.codeInsight.AnnotationTargetUtil
+import com.intellij.openapi.project.DumbService
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
@@ -39,8 +40,10 @@ open class JavaUMethod(
 
   override val uAnnotations: List<UAnnotation>
     get() = uAnnotationsPart.getOrBuild {
+      val isDumb = DumbService.isDumb(javaPsi.project)
       javaPsi.annotations.mapNotNull {
-        if (AnnotationTargetUtil.findAnnotationTarget(it, PsiAnnotation.TargetType.METHOD) == null) return@mapNotNull null
+        if (!isDumb && AnnotationTargetUtil.findAnnotationTarget(it, PsiAnnotation.TargetType.METHOD) == null) return@mapNotNull null
+
         JavaUAnnotation(it, this)
       }
     }
