@@ -1,25 +1,25 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.inspections.collections
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
-import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Util.invertSelectorFunction
-import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
-import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
-import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
@@ -34,21 +34,21 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
 
+    context(KtAnalysisSession)
     override fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
         expression: KtQualifiedExpression,
         calleeExpression: KtExpression,
-        context: BindingContext,
         conversion: Conversion
     ) {
         val newName = conversion.replacementName
 
         val safeExpression = expression as? KtSafeQualifiedExpression
-        val notNullType = expression.receiverExpression.isNotNullType(context)
+        val notNullType = expression.receiverExpression.isDefinitelyNotNull()
         val defaultRange =
             TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
         if (newName != null && (notNullType || safeExpression != null)) {
             val fixes = listOfNotNull(
-                createRenameUselessCallFix(expression, newName, context),
+                createRenameUselessCallFix(expression, newName),
                 safeExpression?.let { IntentionWrapper(ReplaceWithDotCallFix(safeExpression)) }
             )
             val descriptor = holder.manager.createProblemDescriptor(
@@ -80,32 +80,30 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         }
     }
 
-    private fun KtExpression.isNotNullType(context: BindingContext): Boolean {
-        val type = getType(context) ?: return false
-        val dataFlowValueFactory = getResolutionFacade().dataFlowValueFactory
-        val dataFlowValue = dataFlowValueFactory.createDataFlowValue(this, type, context, findModuleDescriptor())
-        val stableNullability = context.getDataFlowInfoBefore(this).getStableNullability(dataFlowValue)
-        return !stableNullability.canBeNull()
-    }
-
+    context(KtAnalysisSession)
     private fun createRenameUselessCallFix(
         expression: KtQualifiedExpression,
-        newFunctionName: String,
-        context: BindingContext
+        newFunctionName: String
     ): RenameUselessCallFix {
+        val nonInvertedFix = RenameUselessCallFix(newFunctionName, invert = false)
         if (expression.parent.safeAs<KtPrefixExpression>()?.operationToken != KtTokens.EXCL) {
-            return RenameUselessCallFix(newFunctionName, invert = false)
+            return nonInvertedFix
         }
-
-        val copy = expression.copy().safeAs<KtQualifiedExpression>()?.apply {
+        // Here we create a copy of the file and attempt to change the expression to the inverted function
+        val copiedFile = expression.containingFile.copy() as? PsiFile ?: return nonInvertedFix
+        val copiedExpression = PsiTreeUtil.findSameElementInCopy(expression, copiedFile) ?: return nonInvertedFix
+        val changedCopy = copiedExpression.apply {
             callExpression?.calleeExpression?.replace(KtPsiFactory(expression.project).createExpression(newFunctionName))
         }
-        val newContext = copy?.analyzeAsReplacement(expression, context)
-        val invertedName = copy?.invertSelectorFunction(newContext)?.callExpression?.calleeExpression?.text
-        return if (invertedName != null) {
-            RenameUselessCallFix(invertedName, invert = true)
-        } else {
-            RenameUselessCallFix(newFunctionName, invert = false)
+        return analyzeCopy(changedCopy, DanglingFileResolutionMode.PREFER_SELF) {
+            // After changing to the inverted name, we make sure that if the function is inverted, we are calling the correct function.
+            // (Relevant if for example a different List.isEmpty() is already defined in the same scope, we do not want to use it)
+            val invertedName = changedCopy.invertSelectorFunction()?.callExpression?.calleeExpression?.text
+            if (invertedName != null) {
+                RenameUselessCallFix(invertedName, invert = true)
+            } else {
+                nonInvertedFix
+            }
         }
     }
 }

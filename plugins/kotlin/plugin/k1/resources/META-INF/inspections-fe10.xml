@@ -1688,14 +1688,6 @@
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.redundant.spread.operator.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.UselessCallOnNotNullInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.useless.call.on.not.null.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantExplicitTypeInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
@@ -1703,14 +1695,6 @@
                      level="WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.explicit.type.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.UselessCallOnCollectionInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.useless.call.on.collection.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.SimplifiableCallChainInspection"
                      groupPath="Kotlin"
