@@ -911,6 +911,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       myTabs.removeTab(myTabs.findInfo(grid));
       myMinimizedButtonsPlaceholder.remove(grid);
       myCommonActionsPlaceholder.remove(grid);
+      myContextActions.remove(grid);
       Disposer.dispose(grid);
     }
   }
