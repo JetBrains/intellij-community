@@ -49,7 +49,6 @@ import static git4idea.GitUtil.*;
 import static git4idea.branch.GitSmartOperationDialog.Choice.FORCE;
 import static git4idea.branch.GitSmartOperationDialog.Choice.SMART;
 import static git4idea.telemetry.GitTelemetrySpan.Operation;
-import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -322,11 +321,11 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected @NotNull String getSuccessMessage() {
     if (myNewBranch == null) {
       return GitBundle.message("checkout.operation.checked.out",
-                               bold(code(myStartPointReference)));
+                               code(myStartPointReference));
     }
     return GitBundle.message("checkout.operation.checked.out.new.branch.from",
-                             bold(code(myNewBranch)),
-                             bold(code(getRefPresentation(myStartPointReference))));
+                             code(myNewBranch),
+                             code(getRefPresentation(myStartPointReference)));
   }
 
   private static @NotNull String getRefPresentation(@NotNull String reference) {

@@ -24,7 +24,6 @@ import git4idea.commands.Git
 import git4idea.commands.GitCompoundResult
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.util.GitUIUtil.bold
 import git4idea.util.GitUIUtil.code
 import org.jetbrains.annotations.Nls
 
@@ -81,7 +80,7 @@ internal class GitCreateBranchOperation(
   }
 
   override fun getSuccessMessage(): String = GitBundle.message("create.branch.operation.branch.created",
-                                                               bold(code(branchName)))
+                                                               code(branchName))
 
   override fun getRollbackProposal(): String =
     HtmlBuilder()

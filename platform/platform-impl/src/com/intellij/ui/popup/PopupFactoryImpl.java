@@ -676,7 +676,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
       fillColor = MessageType.INFO.getPopupBackground();
     }
 
-    JEditorPane text = IdeTooltipManager.initPane(html, new HintHint().setTextFg(textColor).setAwtTooltip(true), null, true);
+    JEditorPane text = IdeTooltipManager.initPane(
+      html, new HintHint().setTextFg(textColor).setTextBg(fillColor).setAwtTooltip(true),
+      null, true);
 
     if (listener != null) {
       text.addHyperlinkListener(listener);

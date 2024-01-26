@@ -35,7 +35,6 @@ import static git4idea.GitNotificationIdsHolder.DELETE_BRANCH_ON_MERGE;
 import static git4idea.GitNotificationIdsHolder.MERGE_ROLLBACK_ERROR;
 import static git4idea.GitUtil.getHead;
 import static git4idea.GitUtil.updateAndRefreshChangedVfs;
-import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
 class GitMergeOperation extends GitBranchOperation {
@@ -322,7 +321,7 @@ class GitMergeOperation extends GitBranchOperation {
   @Override
   protected @NotNull String getSuccessMessage() {
     return GitBundle
-      .message("merge.operation.merged.to", bold(code(myBranchToMerge)), bold(code(stringifyBranchesByRepos(myCurrentHeads))));
+      .message("merge.operation.merged.to", code(myBranchToMerge), code(stringifyBranchesByRepos(myCurrentHeads)));
   }
 
   @Override

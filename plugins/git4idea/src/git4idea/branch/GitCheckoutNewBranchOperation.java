@@ -18,7 +18,6 @@ import java.util.Collection;
 
 import static git4idea.GitNotificationIdsHolder.CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_ERROR;
 import static git4idea.GitNotificationIdsHolder.CHECKOUT_NEW_BRANCH_OPERATION_ROLLBACK_SUCCESSFUL;
-import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -70,7 +69,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
   @Override
   protected @NotNull String getSuccessMessage() {
-    return GitBundle.message("checkout.new.branch.operation.branch.was.created", bold(code(myNewBranchName)));
+    return GitBundle.message("checkout.new.branch.operation.branch.was.created", code(myNewBranchName));
   }
 
   @Override

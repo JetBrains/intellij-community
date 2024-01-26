@@ -29,7 +29,6 @@ import java.util.Map;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.GitNotificationIdsHolder.TAG_DELETION_ROLLBACK_ERROR;
-import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -137,7 +136,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
     }
     else {
       myNotifier.notifyError(TAG_DELETION_ROLLBACK_ERROR,
-                             GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
+                             GitBundle.message("delete.tag.operation.could.not.restore.tag", code(myTagName)),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
