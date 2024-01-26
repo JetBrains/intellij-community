@@ -66,6 +66,51 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
     assertInjectedLangAtCaret(null)
   }
 
+  fun testAnnotationInjectionStringTemplate() {
+    myFixture.configureByText("Foo.java", """
+      public class Hello {
+          void test(String name, String message) {
+              String s = STR.""${'"'}
+                      <caret>class \{name} {
+                          void main() {
+                              System.out.println("\{message}");
+                          }
+                      }""${'"'};
+          }
+      }""".trimIndent())
+
+    StoringFixPresenter().apply {
+      InjectLanguageAction.invokeImpl(project,
+                                      myFixture.editor,
+                                      myFixture.file,
+                                      Injectable.fromLanguage(Language.findLanguageByID("JAVA")),
+                                      this
+      )
+    }.process()
+
+    assertInjectedLangAtCaret("JAVA")
+
+    myFixture.checkResult("""
+      import org.intellij.lang.annotations.Language;
+
+      public class Hello {
+          void test(String name, String message) {
+              @Language("JAVA") String s = STR.""${'"'}
+                      class \{name} {
+                          void main() {
+                              System.out.println("\{message}");
+                          }
+                      }""${'"'};
+          }
+      }
+      """.trimIndent())
+
+    assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
+    UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
+
+    assertInjectedLangAtCaret(null)
+  }
+
   fun testTemplateLanguageInjection() {
     myFixture.configureByText("Foo.java", """
       class Foo {
@@ -196,12 +241,12 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
       import org.intellij.lang.annotations.Language;
 
       class Hello {
-      	@Language("JAVA")
-      	private static final StringTemplate.Processor<String, RuntimeException> JAVA = STR;
+        @Language("JAVA")
+        private static final StringTemplate.Processor<String, RuntimeException> JAVA = STR;
 
-      	void test() {
-      		String plainString = JAVA."class Test {\n  void main() {\n    System.out.println(\"Hello world\");\n  }\n}";
-      	}
+        void test() {
+          String plainString = JAVA."class Test {\n  void main() {\n    System.out.println(\"Hello world\");\n  }\n}";
+        }
       }
     """.trimIndent())
     myFixture.checkHighlighting()
@@ -213,17 +258,17 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
       import org.intellij.lang.annotations.Language;
 
       class Hello {
-      	@Language("JAVA")
-      	private static final StringTemplate.Processor<String, RuntimeException> JAVA = STR;
+        @Language("JAVA")
+        private static final StringTemplate.Processor<String, RuntimeException> JAVA = STR;
 
-      	void test() {
+        void test() {
           String plainTextBlock = JAVA.""${'"'}
               class Test {
                 void main() {
                   System.out.println("Hello world");
                 }
               }""${'"'};
-      	}
+        }
       }
     """.trimIndent())
     myFixture.checkHighlighting()
@@ -240,10 +285,10 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
       import org.intellij.lang.annotations.Language;
 
       class Hello {
-      	void test(String name, String message) {
-        	@Language("JAVA")
+        void test(String name, String message) {
+          @Language("JAVA")
           String s = STR."class \{name} { void main() { System.out.println(\"\{message}\") }  }";
-      	}
+        }
       }
     """.trimIndent())
     myFixture.checkHighlighting()
@@ -255,14 +300,14 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
       import org.intellij.lang.annotations.*;
 
       class Hello {
-      	void test(@Subst("ClassName") String name, String message) {
+        void test(@Subst("ClassName") String name, String message) {
           String s = javaProcessor().""${'"'}
                 class \{name} {
                     void main() {
                       System.out.println("\{message}");
                     }
                 }""${'"'};
-      	}
+        }
             
         @Language("JAVA")
         private static StringTemplate.Processor<String, RuntimeException> javaProcessor() {
@@ -283,7 +328,7 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
       import org.intellij.lang.annotations.*;
 
       class Hello {
-      	void test(@Subst("ClassName") String name, String message) {
+        void test(@Subst("ClassName") String name, String message) {
           String s = javaProcessor().""${'"'}
                 class \{name} {
                     void main() {
@@ -291,7 +336,7 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
                 println("\{message}");
                     }
                 }""${'"'};
-      	}
+        }
             
         @Language("JAVA")
         private static StringTemplate.Processor<String, RuntimeException> javaProcessor() {
