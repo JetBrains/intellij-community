@@ -278,6 +278,35 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
       }""".trimIndent())
   }
   
+  fun testTemplateBlockWithVarsAndTrailingSlash() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.*;
+
+      class Hello {
+      	void test(@Subst("ClassName") String name, String message) {
+          String s = javaProcessor().""${'"'}
+                class \{name} {
+                    void main() {
+                      System.out.\
+                println("\{message}");
+                    }
+                }""${'"'};
+      	}
+            
+        @Language("JAVA")
+        private static StringTemplate.Processor<String, RuntimeException> javaProcessor() {
+          return STR;
+        }
+    }""".trimIndent())
+    myFixture.checkHighlighting()
+    injectionTestFixture.assertInjectedContent("""
+      class ClassName {
+          void main() {
+            System.out.println("missingValue");
+          }
+      }""".trimIndent())
+  }
+  
   fun testRegexJsonNotSingle() {
     Configuration.getInstance().withInjections(listOf(jsonToPrintlnInjection().apply { 
       setValuePattern("""\((.*?)\)""")

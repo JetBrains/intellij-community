@@ -434,8 +434,13 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
       int endOffset = text.indexOf('\n', startOffset);
       final List<TextRange> result = new SmartList<>();
       while (endOffset > 0) {
+        int lastCharPos = StringUtil.skipWhitespaceBackward(text, endOffset);
         endOffset++;
-        result.add(new TextRange(startOffset, endOffset));
+        if (lastCharPos > 0 && text.charAt(lastCharPos - 1) == '\\') {
+          result.add(new TextRange(startOffset, lastCharPos));
+        } else {
+          result.add(new TextRange(startOffset, endOffset));
+        }
         int newEndOffset = text.indexOf('\n', endOffset);
         startOffset = Math.min(endOffset + indent, newEndOffset == -1 ? Integer.MAX_VALUE : newEndOffset);
         endOffset = newEndOffset;
