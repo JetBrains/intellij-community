@@ -958,8 +958,12 @@ public abstract class UsefulTestCase extends TestCase {
       fileText = FileUtil.loadFile(file, StandardCharsets.UTF_8);
     }
     catch (FileNotFoundException e) {
-      VfsTestUtil.overwriteTestData(filePath, actualText);
-      throw new AssertionFailedError("No output text found. File " + filePath + " created.");
+      String message = "No output text found.";
+      if (!IS_UNDER_TEAMCITY) {
+        VfsTestUtil.overwriteTestData(filePath, actualText);
+        message += " File " + filePath + " created.";
+      }
+      throw new AssertionFailedError(message);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
