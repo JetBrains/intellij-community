@@ -385,6 +385,58 @@ public class SnippetMarkupTest {
                   // @end region=main
                   """, null, true, "..\n");
   }
+  
+  @Test
+  public void highlightRegion() {
+    String input = """
+      Objects.requireNonNull(channel, "channel is null");
+      final var buffer = ByteBuffer.allocate(BYTES);
+      put(buffer);
+      buffer.flip();
+      while (buffer.hasRemaining()) { // @highlight region
+          final var written = channel.write(buffer);
+          assert written >= 0; // why?
+      } // @end
+      return channel;
+      """;
+    testParsing(input, """
+      PlainText[range=(0,52), content=Objects.requireNonNull(channel, "channel is null");
+      ]
+      PlainText[range=(52,99), content=final var buffer = ByteBuffer.allocate(BYTES);
+      ]
+      PlainText[range=(99,112), content=put(buffer);
+      ]
+      PlainText[range=(112,127), content=buffer.flip();
+      ]
+      Highlight[range=(162,179), selector=WholeLine[], region=, type=HIGHLIGHTED]
+      PlainText[range=(127,159), content=while (buffer.hasRemaining()) {\s
+      ]
+      PlainText[range=(180,227), content=    final var written = channel.write(buffer);
+      ]
+      PlainText[range=(227,260), content=    assert written >= 0; // why?
+      ]
+      PlainText[range=(260,262), content=}\s
+      ]
+      EndRegion[range=(265,269), region=null]
+      PlainText[range=(270,286), content=return channel;
+      ]
+      PlainText[range=(286,286), content=]""");
+    testVisitor(input, null, true, """
+                  Objects.requireNonNull(channel, "channel is null");
+                  final var buffer = ByteBuffer.allocate(BYTES);
+                  put(buffer);
+                  buffer.flip();
+                  // [Highlight[range=(162,179), selector=WholeLine[], region=, type=HIGHLIGHTED]]
+                  while (buffer.hasRemaining()) {\s
+                  // [Highlight[range=(162,179), selector=WholeLine[], region=, type=HIGHLIGHTED]]
+                      final var written = channel.write(buffer);
+                  // [Highlight[range=(162,179), selector=WholeLine[], region=, type=HIGHLIGHTED]]
+                      assert written >= 0; // why?
+                  // [Highlight[range=(162,179), selector=WholeLine[], region=, type=HIGHLIGHTED]]
+                  }\s
+                  return channel;
+                  """);
+  }
 
   private static void testParsing(@NotNull String input, @NotNull String expected) {
     assertEquals(expected, SnippetMarkup.parse(input).toString());

@@ -134,6 +134,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInlineTagSnippet() { doTestClass(); }
   public void testInlineTagSnippetNoMarkup() { doTestClass(); }
   public void testInlineTagSnippetWithoutBody() { doTestClass(); }
+  public void testInlineTagSnippetHighlightSeveralLines() { doTestClass(); }
   public void testExternalSnippetRegion() {
     createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("Region");
