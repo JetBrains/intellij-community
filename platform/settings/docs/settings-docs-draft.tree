@@ -9,4 +9,5 @@
     <toc-element topic="overview.md"/>
     <toc-element topic="setting-descriptor.md"/>
     <toc-element topic="setting-types.md"/>
+    <toc-element topic="bridge-to-old-api.md"/>
 </instance-profile>
