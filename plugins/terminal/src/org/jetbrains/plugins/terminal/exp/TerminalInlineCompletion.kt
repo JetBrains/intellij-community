@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 
 @Service(Service.Level.PROJECT)
 class TerminalInlineCompletion(private val scope: CoroutineScope) {
@@ -61,6 +63,10 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
     if (!isAtTheEnd) return null
 
     val lookup = LookupManager.getActiveLookup(editor) ?: return null
+    if (lookup.isTerminalCommandHistory || lookup.isTerminalCommandSearch) {
+      return null
+    }
+
     val item = lookup.currentItem ?: return null
     val itemPrefix = lookup.itemPattern(item)
     if (SystemInfo.isFileSystemCaseSensitive && !item.lookupString.startsWith(itemPrefix)) {

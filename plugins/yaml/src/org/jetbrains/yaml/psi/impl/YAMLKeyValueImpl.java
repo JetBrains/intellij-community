@@ -140,24 +140,20 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   }
 
   private void adjustWhitespaceToContentType(boolean isScalar) {
-    assert getKey() != null;
-    PsiElement key = getKey();
+    PsiElement colon = findChildByType(YAMLTokenTypes.COLON);
+    assert colon != null;
 
-    if (key.getNextSibling() != null && key.getNextSibling().getNode().getElementType() == YAMLTokenTypes.COLON) {
-      key = key.getNextSibling();
-    }
-
-    while (key.getNextSibling() != null && !(key.getNextSibling() instanceof YAMLValue)) {
-      key.getNextSibling().delete();
+    while (colon.getNextSibling() != null && !(colon.getNextSibling() instanceof YAMLValue)) {
+      colon.getNextSibling().delete();
     }
     final YAMLElementGenerator generator = YAMLElementGenerator.getInstance(getProject());
     if (isScalar) {
-      addAfter(generator.createSpace(), key);
+      addAfter(generator.createSpace(), colon);
     }
     else {
       final int indent = YAMLUtil.getIndentToThisElement(this);
-      addAfter(generator.createIndent(indent + 2), key);
-      addAfter(generator.createEol(), key);
+      addAfter(generator.createIndent(indent + 2), colon);
+      addAfter(generator.createEol(), colon);
     }
   }
 

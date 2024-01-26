@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render
 
 import com.intellij.openapi.editor.Editor
@@ -27,7 +27,9 @@ internal fun inlineDocumentationItems(file: PsiFile): List<InlineDocumentation> 
 @RequiresReadLock
 @RequiresBackgroundThread
 internal fun findInlineDocumentation(file: PsiFile, textRange: TextRange): InlineDocumentation? {
-  return EP_NAME.extensionList.mapNotNull { it.findInlineDocumentation(file, textRange) }.firstOrNull()
+  return EP_NAME.extensionList.firstNotNullOfOrNull {
+    it.findInlineDocumentation(file, textRange)
+  }
 }
 
 @NlsSafe

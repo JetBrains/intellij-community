@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.CompilationContext
@@ -13,7 +13,7 @@ import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     resolveProjectDependencies()
-    spanBuilder("compile modules").useWithScopeBlocking {
+    spanBuilder("compile modules").use {
       CompiledClasses.reuseOrCompile(context, moduleNames, includingTestsInModules)
     }
   }
@@ -40,7 +40,7 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
       Span.current().addEvent("project dependencies are already resolved")
     }
     else {
-      spanBuilder("resolve project dependencies").useWithScopeBlocking {
+      spanBuilder("resolve project dependencies").use {
         JpsCompilationRunner(context).resolveProjectDependencies()
       }
     }
@@ -51,7 +51,7 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
       Span.current().addEvent("runtime module repository is already generated")
     }
     else {
-      spanBuilder("generate runtime module repository").useWithScopeBlocking {
+      spanBuilder("generate runtime module repository").use {
         JpsCompilationRunner(context).generateRuntimeModuleRepository()
       }
     }

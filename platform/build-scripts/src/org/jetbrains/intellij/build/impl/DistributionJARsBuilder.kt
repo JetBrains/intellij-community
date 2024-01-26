@@ -7,7 +7,7 @@ import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -74,8 +74,6 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
 
     val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.bundledPluginModules,
                                                          productLayout = context.productProperties.productLayout)
-    val antDir = if (context.productProperties.isAntRequired) context.paths.distAllDir.resolve("lib/ant") else null
-    val antTargetFile = antDir?.resolve("lib/ant.jar")
     val moduleOutputPatcher = ModuleOutputPatcher()
     val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext) {
       spanBuilder("build platform lib").useWithScope {
@@ -90,7 +88,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
           persistentListOf(PLATFORM_LOADER_JAR)
         }
         else {
-          generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
+          generateClasspath(homeDir = distAllDir, libDir = libDir)
         }
         result
       }
@@ -108,7 +106,6 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
         val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
         buildNonBundledPlugins(state.pluginsToPublish, compressPluginArchive, buildPlatformJob, state, context)
       },
-      if (antDir == null) null else async(Dispatchers.IO) { copyAnt(antDir, antTargetFile!!, context) }
     )
   }.flatMap { it.getCompleted() }
 
@@ -598,7 +595,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
         patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher = moduleOutputPatcher, context = context)
       }
       launch {
-        spanBuilder("write patched app info").useWithScopeBlocking {
+        spanBuilder("write patched app info").use {
           val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
           val result = injectAppInfo(inFile = moduleOutDir.resolve(relativePath), newFieldValue = context.applicationInfo.appInfoXml)
@@ -723,7 +720,7 @@ private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
+suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
   return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope {
     val sources = ArrayList<ZipSource>()
     val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED, reason = "ant")

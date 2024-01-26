@@ -4,6 +4,7 @@
     <!-- Supports Java -->
     <plugin id="com.intellij.java"/>
     <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.plugin.impl"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

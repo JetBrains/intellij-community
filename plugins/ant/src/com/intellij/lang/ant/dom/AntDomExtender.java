@@ -15,8 +15,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.types.Reference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,7 +191,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
               }
               AntDomElement.Role role = AntDomElement.Role.DATA_TYPE;
               if (coreTaskDefs != null && coreTaskDefs.containsKey(nestedElementName) ||
-                  type != null && isAssignableFrom(Task.class.getName(), type)) {
+                  type != null && isAssignableFrom("org.apache.tools.ant.Task", type)) {
                 role = AntDomElement.Role.TASK;
               }
               extension.putUserData(AntDomElement.ROLE, role);
@@ -229,7 +227,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
               type = Boolean.class;
               converterClass = AntBooleanConverter.class;
             }
-            else if (isAssignableFrom(Reference.class.getName(), attributeType)) {
+            else if (isAssignableFrom("org.apache.tools.ant.types.Reference", attributeType)) {
               converterClass = AntDomRefIdConverter.class;
             }
           }
@@ -304,7 +302,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
     try {
       return AntIntrospector.getInstance(c);
     }
-    catch (Throwable ignored) {
+    catch (Throwable e) {
+      LOG.warn("Unable to get Ant introspector", e);
     }
     return null;
   }

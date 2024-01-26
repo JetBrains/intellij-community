@@ -19,9 +19,7 @@
 apply plugin: 'scala'
 
 repositories {
-  maven {
-    url 'https://maven.labs.intellij.net/repo1'
-  }
+  mavenCentral()
 }
 
 Closure compilerPlugins = {
@@ -31,7 +29,7 @@ Closure compilerPlugins = {
   ]
 }
 dependencies {
-    <<compile>> 'org.scala-lang:scala-library:2.11.0'
+  implementation 'org.scala-lang:scala-library:2.11.0'
 }
 compileScala compilerPlugins
 compileTestScala compilerPlugins

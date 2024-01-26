@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.*
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.GradleJvmTestFixture
 
 internal class GradleTestFixtureFactoryImpl : GradleTestFixtureFactory {
 

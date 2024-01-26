@@ -187,7 +187,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             try (Scope ignored = span.makeCurrent()) {
-              TraceKt.use(span, (Span __) -> {
+              TraceKt.useWithoutActiveScope(span, (Span __) -> {
                 indicator.setIndeterminate(true);
                 resetState();
                 readCurrentUser();

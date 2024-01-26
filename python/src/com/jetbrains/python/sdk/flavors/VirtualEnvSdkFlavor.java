@@ -54,7 +54,7 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
       final VirtualFile baseDirFromModule = module == null ? null : BasePySdkExtKt.getBaseDir(module);
       final Path baseDirFromContext = context == null ? null : context.getUserData(PySdkExtKt.getBASE_DIR());
 
-      var reader = new VirtualEnvReader();
+      var reader = VirtualEnvReader.getInstance();
       if (baseDirFromModule != null) {
         candidates.addAll(reader.findLocalInterpreters(baseDirFromModule.toNioPath(), NAMES, PATTERN));
       } else if (baseDirFromContext != null) {
@@ -74,7 +74,7 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   }
 
   public static Path getDefaultLocation() {
-    return new VirtualEnvReader().getVEnvRootDir();
+    return VirtualEnvReader.getInstance().getVEnvRootDir();
   }
 
   @Override

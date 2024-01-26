@@ -125,6 +125,8 @@
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiDocTagValueManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.PsiLiteralExpression"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.PsiFragment"
+                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.FragmentManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl"
                              implementationClass="com.intellij.psi.impl.source.javadoc.SnippetDocTagManipulator"/>
     <methodImplementor implementation="com.intellij.codeInsight.javadoc.SnippetDocTagMethodImplementor"/>

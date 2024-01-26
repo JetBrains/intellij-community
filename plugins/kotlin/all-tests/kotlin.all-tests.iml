@@ -68,5 +68,6 @@
     <orderEntry type="module" module-name="kotlin.base.indices.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.onboarding" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared.tests" scope="RUNTIME" />
   </component>
 </module>

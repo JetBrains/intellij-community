@@ -71,8 +71,3 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
      */
     override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
 }
-
-class KotlinVetoRenameCondition : Condition<PsiElement> {
-    override fun value(t: PsiElement?): Boolean =
-        t is KtElement && t is PsiNameIdentifierOwner && t.nameIdentifier == null && t !is KtConstructor<*>
-}

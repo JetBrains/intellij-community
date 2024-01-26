@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
@@ -20,7 +19,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
@@ -28,16 +26,11 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtil
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
-import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.KotlinExtractFunctionDialog
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
-import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
-import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
-import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.nonBlocking
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -46,9 +39,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ExtractKotlinFunctionHandler(
-    private val allContainersEnabled: Boolean = false,
+    val allContainersEnabled: Boolean = false,
     private val helper: ExtractionEngineHelper = getDefaultHelper(allContainersEnabled)
-) : RefactoringActionHandler {
+) : AbstractExtractKotlinFunctionHandler() {
 
     companion object {
         private val isInplaceRefactoringEnabled: Boolean
@@ -194,7 +187,7 @@ class ExtractKotlinFunctionHandler(
         }
     }
 
-    fun doInvoke(
+    override fun doInvoke(
         editor: Editor,
         file: KtFile,
         elements: List<PsiElement>,
@@ -207,30 +200,4 @@ class ExtractKotlinFunctionHandler(
             ExtractionEngine(helper).run(editor, extractionData)
         }
     }
-
-    fun selectElements(editor: Editor, file: KtFile, continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit) {
-        selectElementsWithTargetSibling(
-            EXTRACT_FUNCTION,
-            editor,
-            file,
-            KotlinBundle.message("title.select.target.code.block"),
-            listOf(ElementKind.EXPRESSION),
-            ::validateExpressionElements,
-            { elements, parent -> parent.getExtractionContainers(elements.size == 1, allContainersEnabled) },
-            continuation
-        )
-    }
-
-    override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
-        if (file !is KtFile) return
-        selectElements(editor, file) { elements, targetSibling -> doInvoke(editor, file, elements, targetSibling) }
-    }
-
-    override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-        throw AssertionError("Extract Function can only be invoked from editor")
-    }
 }
-
-val EXTRACT_FUNCTION: String
-    @Nls
-    get() = KotlinBundle.message("extract.function")

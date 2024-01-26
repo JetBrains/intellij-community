@@ -15,7 +15,8 @@
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GHAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
-                         instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+                         instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"
+                         key="settings.configurable.display.name"/>
     <statistics.applicationUsagesCollector
       implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
     <statistics.counterUsagesCollector

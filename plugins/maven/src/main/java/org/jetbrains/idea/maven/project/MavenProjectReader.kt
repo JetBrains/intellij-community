@@ -65,9 +65,7 @@ class MavenProjectReader(private val myProject: Project) {
     return MavenProjectReaderResult(model,
                                     modelMap,
                                     readResult.second,
-                                    null,
-                                    readResult.first.problems,
-                                    HashSet())
+                                    readResult.first.problems)
   }
 
   private suspend fun doReadProjectModel(generalSettings: MavenGeneralSettings,
@@ -565,7 +563,7 @@ class MavenProjectReader(private val myProject: Project) {
                      explicitProfiles: MavenExplicitProfiles,
                      locator: MavenProjectReaderProjectLocator): Collection<MavenProjectReaderResult> {
     val reporter = object : RawProgressReporter {}
-    return MavenProjectResolver(myProject).resolveProjectSync(
+    val resolverResult = MavenProjectResolver(myProject).resolveProjectSync(
       this,
       generalSettings,
       embedder,
@@ -576,5 +574,13 @@ class MavenProjectReader(private val myProject: Project) {
       MavenLogEventHandler,
       null,
       false)
+    return resolverResult.map {
+      MavenProjectReaderResult(
+        it.mavenModel,
+        it.nativeModelMap,
+        it.activatedProfiles,
+        it.readingProblems,
+      )
+    }
   }
 }

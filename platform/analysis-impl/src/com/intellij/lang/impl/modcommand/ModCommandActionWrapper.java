@@ -34,6 +34,11 @@ import java.util.Objects;
 
   ModCommandActionWrapper(@NotNull ModCommandAction action) { this.myAction = action; }
 
+  ModCommandActionWrapper(@NotNull ModCommandAction action, @Nullable Presentation presentation) {
+    this.myAction = action;
+    this.myPresentation = presentation;
+  }
+
   @Override
   public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return null;

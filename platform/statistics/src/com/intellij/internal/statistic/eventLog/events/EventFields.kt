@@ -445,6 +445,8 @@ object EventFields {
 
   @JvmField
   val AnonymizedPath = object : PrimitiveEventField<String?>() {
+    override val shouldBeAnonymized: Boolean = true
+
     override val validationRule: List<String>
       get() = listOf("{regexp#hash}")
 
@@ -456,6 +458,8 @@ object EventFields {
 
   @JvmField
   val AnonymizedId = object : PrimitiveEventField<String?>() {
+    override val shouldBeAnonymized: Boolean = true
+
     override val validationRule: List<String>
       get() = listOf("{regexp#hash}")
 
@@ -500,6 +504,8 @@ object EventFields {
 
   @JvmField
   val CodeWithMeClientId = object : PrimitiveEventField<String?>() {
+    override val shouldBeAnonymized: Boolean = true
+
     override val validationRule: List<String>
       get() = listOf("{regexp#hash}")
 

@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.themeChooser
 
-import com.intellij.ide.startup.importSettings.chooser.ui.FilledRoundedBorder
 import com.intellij.ide.startup.importSettings.chooser.ui.RoundedPanel
 import com.intellij.ide.startup.importSettings.data.WizardScheme
-import com.intellij.ide.startup.importSettings.wizard.keymapChooser.KeymapPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -12,14 +10,12 @@ import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import java.awt.font.TextAttribute
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 class SchemePane(val scheme: WizardScheme) {
-  private val RADIUS = 15
-  private val thickness = 2
+  private val backgroundColor = scheme.backgroundColor
 
   var active: Boolean = false
     set(value) {
@@ -29,19 +25,16 @@ class SchemePane(val scheme: WizardScheme) {
       update()
     }
 
-  private val activeBorder = FilledRoundedBorder(KeymapPane.SELECTED_BORDER_COLOR, RADIUS, thickness, false)
-  private val border = FilledRoundedBorder(KeymapPane.BORDER_COLOR, RADIUS, thickness, false)
-
   private fun update() {
     pane.border = if (active) activeBorder else border
   }
 
-  val pane: JPanel = RoundedPanel(RADIUS).apply {
+  private val roundedPanel = RoundedPanel.createRoundedPane().apply {
     contentPanel.apply {
 
       layout = GridBagLayout()
 
-      background = scheme.backgroundColor
+      background = backgroundColor
       preferredSize = Dimension(preferredSize.width, 0)
       minimumSize = Dimension(0, 0)
 
@@ -53,9 +46,7 @@ class SchemePane(val scheme: WizardScheme) {
       gbc.fill = GridBagConstraints.CENTER
 
       add(JLabel(scheme.name).apply {
-        font = JBFont.h4().deriveFont(mapOf(
-          TextAttribute.WEIGHT to TextAttribute.WEIGHT_SEMIBOLD
-        ))
+        font = JBFont.label().asBold()
         border = JBUI.Borders.empty(10, 0)
       }, gbc)
 
@@ -73,7 +64,15 @@ class SchemePane(val scheme: WizardScheme) {
 
       }, gbc)
     }
+  }.apply {
+    isFocusable = true
   }
+
+  val pane: JPanel = roundedPanel
+
+  private val activeBorder = roundedPanel.createBorder(RoundedPanel.SELECTED_BORDER_COLOR)
+  private val border = roundedPanel.createBorder(RoundedPanel.BORDER_COLOR)
+
 
   init {
     update()

@@ -44,7 +44,6 @@ object StyleSheetRulesProviderForCodeHighlighting {
 
     result.addAllIfNotNull(
       "tt, code, pre, .pre { font-family:\"${EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER}\"; font-size:$contentCodeFontSizePercent%; }",
-      "pre {white-space: pre-wrap}",  // supported by JetBrains Runtime
     )
     if (largeCodeFontSizeSelectors.isNotEmpty()) {
       result.add("${largeCodeFontSizeSelectors.joinToString(", ")} { font-size: $definitionCodeFontSizePercent% }")

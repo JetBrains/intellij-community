@@ -31,7 +31,8 @@ public class Maven3ExecutionResult {
   private final List<Exception> myExceptions;
   private final List<ModelProblem> myModelProblems;
   private final DependencyResolutionResult myDependencyResolutionResult;
-  private String checksum;
+  private String dependencyHash;
+  private boolean dependencyResolutionSkipped;
 
   public Maven3ExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
     this(mavenProject, null, exceptions, Collections.emptyList());
@@ -41,8 +42,8 @@ public class Maven3ExecutionResult {
     this(null, null, exceptions, Collections.emptyList());
   }
 
-  public Maven3ExecutionResult(@Nullable File pomFile, List<Exception> exceptions) {
-    this(null, null, exceptions, Collections.emptyList());
+  public Maven3ExecutionResult(@Nullable File pomFile, @NotNull List<ModelProblem> modelProblems) {
+    this(null, null, Collections.emptyList(), modelProblems);
     myPomFile = pomFile;
   }
 
@@ -90,11 +91,19 @@ public class Maven3ExecutionResult {
     return myMavenProject != null ? myMavenProject.getFile() : myPomFile;
   }
 
-  public String getChecksum() {
-    return checksum;
+  public String getDependencyHash() {
+    return dependencyHash;
   }
 
-  public void setChecksum(String checksum) {
-    this.checksum = checksum;
+  public void setDependencyHash(String dependencyHash) {
+    this.dependencyHash = dependencyHash;
+  }
+
+  public boolean isDependencyResolutionSkipped() {
+    return dependencyResolutionSkipped;
+  }
+
+  public void setDependencyResolutionSkipped(boolean dependencyResolutionSkipped) {
+    this.dependencyResolutionSkipped = dependencyResolutionSkipped;
   }
 }

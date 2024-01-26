@@ -66,39 +66,44 @@ public final class ContextComputationProcessor {
   }
 
   public void collectOperands(PsiElement expression, List<Object> result, Ref<? super Boolean> unparsable) {
-    if (expression instanceof PsiParenthesizedExpression) {
-      collectOperands(((PsiParenthesizedExpression)expression).getExpression(), result, unparsable);
+    if (expression instanceof PsiParenthesizedExpression parenthesized) {
+      collectOperands(parenthesized.getExpression(), result, unparsable);
     }
-    else if (expression instanceof PsiTypeCastExpression) {
-      collectOperands(((PsiTypeCastExpression)expression).getOperand(), result, unparsable);
+    else if (expression instanceof PsiTypeCastExpression cast) {
+      collectOperands(cast.getOperand(), result, unparsable);
     }
-    else if (expression instanceof PsiConditionalExpression) {
+    else if (expression instanceof PsiConditionalExpression conditional) {
       unparsable.set(Boolean.TRUE);
-      collectOperands(((PsiConditionalExpression)expression).getThenExpression(), result, unparsable);
+      collectOperands(conditional.getThenExpression(), result, unparsable);
       addStringFragment(" ", result); // do not glue branches together
-      collectOperands(((PsiConditionalExpression)expression).getElseExpression(), result, unparsable);
+      collectOperands(conditional.getElseExpression(), result, unparsable);
     }
     else if (expression instanceof PsiPolyadicExpression binaryExpression &&
-             ((PsiPolyadicExpression)expression).getOperationTokenType() == JavaTokenType.PLUS) {
+             binaryExpression.getOperationTokenType() == JavaTokenType.PLUS) {
       for (PsiExpression operand : binaryExpression.getOperands()) {
         collectOperands(operand, result, unparsable);
       }
     }
     else if (expression instanceof PsiAssignmentExpression assignmentExpression &&
-             ((PsiAssignmentExpression)expression).getOperationTokenType() == JavaTokenType.PLUSEQ) {
+             assignmentExpression.getOperationTokenType() == JavaTokenType.PLUSEQ) {
       unparsable.set(Boolean.TRUE);
       collectOperands(assignmentExpression.getLExpression(), result, unparsable);
       collectOperands(assignmentExpression.getRExpression(), result, unparsable);
     }
-    else if (PsiUtilEx.isStringOrCharacterLiteral(expression)) {
+    else if (expression instanceof PsiTemplate template) {
+      for (PsiElement child : template.getChildren()) {
+        collectOperands(child, result, unparsable);
+      }
+    }
+    else if (PsiUtilEx.isStringOrCharacterLiteral(expression) || expression instanceof PsiFragment) {
       result.add(expression);
     }
     else if (expression instanceof PsiExpression) {
       SmartList<PsiExpression> uncomputables = new SmartList<>();
       Object o = myEvaluationHelper.computeExpression((PsiExpression)expression, uncomputables);
       // in many languages 'null' is a reserved word
-      addStringFragment(o == null? "missingValue" : String.valueOf(o), result);
-      if (uncomputables.size() > 0) {
+      addStringFragment(o == null ? "missingValue" : String.valueOf(o), result);
+      if (!uncomputables.isEmpty()) {
         unparsable.set(Boolean.TRUE);
       }
     }
@@ -113,6 +118,7 @@ public final class ContextComputationProcessor {
     PsiElement target = host;
     PsiElement parent = target.getParent();
     for (; parent != null; target = parent, parent = target.getParent()) {
+      if (parent instanceof PsiTemplate) continue;
       if (parent instanceof PsiPolyadicExpression) continue;
       if (parent instanceof PsiParenthesizedExpression) continue;
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != target) continue;

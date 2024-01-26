@@ -29,6 +29,10 @@ public class PomHashMap implements Serializable {
     return null == data ? null : data.getDependencyHash();
   }
 
+  public boolean isEmpty() {
+    return pomMap.isEmpty();
+  }
+
   public int size() {
     return pomMap.size();
   }

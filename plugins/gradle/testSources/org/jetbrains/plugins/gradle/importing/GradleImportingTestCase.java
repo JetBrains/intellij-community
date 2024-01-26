@@ -58,7 +58,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.GradleJvmResolver;
+import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -537,11 +537,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean isGradleNewerThan(@NotNull String ver) {
     return GradleVersionUtil.isGradleNewerThan(getCurrentGradleBaseVersion(), ver);
-  }
-
-  protected String getExtraPropertiesExtensionFqn() {
-    return isGradleOlderThan("5.2") ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
-                                    : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension";
   }
 
   protected void enableGradleDebugWithSuspend() {

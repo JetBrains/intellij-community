@@ -264,6 +264,16 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
+    Project project = config.getConfiguration().getProject();
+    CoverageRunner runner = JavaCoverageOptionsProvider.getInstance(project).getCoverageRunner();
+    if (runner == null) return null;
+    // set here for correct createFileProvider call
+    config.setCoverageRunner(runner);
+    return createCoverageSuite(runner, config.createSuiteName(), config.createFileProvider(), config);
+  }
+
+  @Override
   public CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
                                            @NotNull String name,
                                            @NotNull CoverageFileProvider coverageDataFileProvider,
@@ -271,7 +281,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
       Project project = config.getConfiguration().getProject();
       JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
-      return createSuite(optionsProvider.getCoverageRunner(),
+      return createSuite(covRunner,
                          name, coverageDataFileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),

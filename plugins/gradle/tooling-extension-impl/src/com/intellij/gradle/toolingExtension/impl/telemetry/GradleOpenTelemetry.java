@@ -62,10 +62,6 @@ public final class GradleOpenTelemetry {
     }, fn);
   }
 
-  public <T> T callWithSpan(@NotNull String spanName, @NotNull Span parentSpan, @NotNull Function<Span, T> fn) {
-    return callWithSpan(spanName, builder -> builder.setParent(Context.current().with(parentSpan)), fn);
-  }
-
   public <T> T callWithSpan(@NotNull String spanName,
                             @NotNull Consumer<SpanBuilder> configurator,
                             @NotNull Function<Span, T> fn) {

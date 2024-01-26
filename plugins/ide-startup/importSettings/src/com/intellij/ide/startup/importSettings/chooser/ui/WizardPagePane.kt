@@ -38,12 +38,7 @@ class WizardPagePane(centralPane: JComponent, buttons: List<JButton>, leftCompon
     gbc.weighty = 0.0
     add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL), gbc)
 
-    val buttonPane = object : JPanel(BorderLayout()) {
-      override fun getPreferredSize(): Dimension {
-        val preferredSize = super.getPreferredSize()
-        return Dimension(preferredSize.width, JBUI.scale(57))
-      }
-    }.apply {
+    val buttonPane = JPanel(BorderLayout()).apply {
       leftComponent?.let {
         add(leftComponent, BorderLayout.CENTER)
       }

@@ -101,8 +101,8 @@ object QuickDocHighlightingHelper {
    */
   @JvmStatic
   @RequiresReadLock
-  fun getStyledInlineCodeFragment(project: Project, language: Language, @NlsSafe code: String): @NlsSafe String =
-    StringBuilder().apply { appendStyledInlineCodeFragment(project, language, code) }.toString()
+  fun getStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): @NlsSafe String =
+    StringBuilder().apply { appendStyledCodeFragment(project, language, code) }.toString()
 
   /**
    * Appends an HTML fragment containing [code] highlighted with [language].
@@ -112,7 +112,7 @@ object QuickDocHighlightingHelper {
    */
   @JvmStatic
   @RequiresReadLock
-  fun StringBuilder.appendStyledInlineCodeFragment(project: Project, language: Language, @NlsSafe code: String): StringBuilder =
+  fun StringBuilder.appendStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): StringBuilder =
     appendHighlightedCode(project, language, true, code, false)
 
   /**
@@ -160,6 +160,18 @@ object QuickDocHighlightingHelper {
   fun StringBuilder.appendStyledSignatureFragment(contents: String, textAttributesKey: TextAttributesKey): StringBuilder =
     appendStyledSpan(DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), textAttributesKey,
                      contents, false)
+  /**
+   * This method should be used when generating Quick Doc element signatures.
+   * Any special HTML characters, like `<` or `>` are escaped.
+   *
+   * Returns an HTML fragment containing [code] highlighted with [language]
+   * if [DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled] is `true`.
+   */
+  @JvmStatic
+  @RequiresReadLock
+  fun getStyledSignatureFragment(project: Project, language: Language?, code: String): @NlsSafe String =
+    StringBuilder().apply { appendStyledSignatureFragment(project, language, code)}
+      .toString()
 
   /**
    * This method should be used when generating Quick Doc element signatures.
@@ -170,7 +182,7 @@ object QuickDocHighlightingHelper {
    */
   @JvmStatic
   @RequiresReadLock
-  fun StringBuilder.appendStyledSignatureFragment(project: Project, language: Language, code: String): StringBuilder =
+  fun StringBuilder.appendStyledSignatureFragment(project: Project, language: Language?, code: String): StringBuilder =
     appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), code, false)
 
   /**

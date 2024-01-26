@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.java
 
+import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
@@ -37,7 +38,12 @@ open class JavaUMethod(
     }
 
   override val uAnnotations: List<UAnnotation>
-    get() = uAnnotationsPart.getOrBuild { javaPsi.annotations.map { JavaUAnnotation(it, this) } }
+    get() = uAnnotationsPart.getOrBuild {
+      javaPsi.annotations.mapNotNull {
+        if (AnnotationTargetUtil.findAnnotationTarget(it, PsiAnnotation.TargetType.METHOD) == null) return@mapNotNull null
+        JavaUAnnotation(it, this)
+      }
+    }
 
   override val uastParameters: List<UParameter>
     get() = uastParametersPart.getOrBuild {

@@ -77,7 +77,7 @@ public class LanguageMismatch extends LocalInspectionTool {
 
   void checkExpression(PsiExpression expression, ProblemsHolder holder, Pair<String, ? extends Set<String>> annotationName) {
     final PsiType type = expression.getType();
-    if (type == null || !PsiUtilEx.isStringOrStringArray(type)) {
+    if (type == null || !PsiUtilEx.isInjectionTargetType(type)) {
       return;
     }
 

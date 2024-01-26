@@ -98,6 +98,7 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     } ?: listOf(continueAction)
 
     contentPage = WizardPagePane(centralPane, buttons)
+    continueAction.requestFocus()
 
   }
 

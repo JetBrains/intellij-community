@@ -54,6 +54,7 @@ public final class DocumentationHtmlUtil {
     // When updating styles here, consider updating styles in DocRenderer#getStyleSheet
     var result = ContainerUtil.newLinkedList(
       "html { padding-bottom: 8px; }",
+      ".content pre  {white-space: pre-wrap}" +  // supported by JetBrains Runtime
       "h5, h6 { margin-top: 8px; margin-bottom: 0 }",
       "h4 { margin-top: 8px; margin-bottom: 0; font-size: " + fontSize + "}",
       "h3 { margin-top: 8px; margin-bottom: 0; font-size: " + (fontSize + 3) + "}",

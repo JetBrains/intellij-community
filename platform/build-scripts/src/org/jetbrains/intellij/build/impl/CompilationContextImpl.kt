@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
@@ -424,7 +424,7 @@ internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = Comp
       addAll(compilationState)
     }
   }
-  spanBuilder("clean output").use { span ->
+  spanBuilder("clean output").useWithoutActiveScope { span ->
     val outDir = paths.buildOutputDir
     outputDirectoriesToKeep.forEach {
       val path = it.relativeToOrNull(outDir) ?: it

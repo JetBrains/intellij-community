@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PythonDocumentationHighlightingServiceImpl : PythonDocumentationHighlightingService() {
   override fun highlightedCodeSnippet(project: Project, codeSnippet: String): String {
-    return QuickDocHighlightingHelper.getStyledInlineCodeFragment(project, PythonLanguage.INSTANCE, codeSnippet)
+    return QuickDocHighlightingHelper.getStyledCodeFragment(project, PythonLanguage.INSTANCE, codeSnippet)
   }
 
   override fun styledSpan(textAttributeKey: TextAttributesKey, text: String): String {

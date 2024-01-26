@@ -91,7 +91,9 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           findLafReference(appInfo.defaultDarkLaf ?: "Dark")?.let { lafReference ->
             themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.DarkTheme, ExpUiIcons.MeetNewUi.DarkThemeSelected)
           }
-          themes += Theme(null, true, ExpUiIcons.MeetNewUi.SystemTheme, ExpUiIcons.MeetNewUi.SystemThemeSelected)
+          if (LafManager.getInstance().autodetectSupported) {
+            themes += Theme(null, true, ExpUiIcons.MeetNewUi.SystemTheme, ExpUiIcons.MeetNewUi.SystemThemeSelected)
+          }
 
           val gap = JBUI.scale(8)
           val themesPanel = JPanel(WrapLayout(FlowLayout.LEADING, gap, gap))

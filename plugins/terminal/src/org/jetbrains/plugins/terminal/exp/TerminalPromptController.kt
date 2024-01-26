@@ -17,6 +17,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDI
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryManager
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
@@ -109,6 +110,11 @@ class TerminalPromptController(
     listeners.forEach { it.commandHistoryStateChanged(showing = false) }
   }
 
+  @RequiresEdt
+  fun showCommandSearch() {
+    listeners.forEach { it.commandSearchRequested() }
+  }
+
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
     if (disposable != null) {
       editor.document.addDocumentListener(listener, disposable)
@@ -119,6 +125,7 @@ class TerminalPromptController(
   interface PromptStateListener {
     fun promptLabelChanged(newText: @NlsSafe String) {}
     fun commandHistoryStateChanged(showing: Boolean) {}
+    fun commandSearchRequested() {}
     fun promptVisibilityChanged(visible: Boolean) {}
   }
 

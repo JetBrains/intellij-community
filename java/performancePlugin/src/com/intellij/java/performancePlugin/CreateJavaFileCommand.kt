@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.findDirectory
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.impl.file.PsiJavaDirectoryFactory
 import com.jetbrains.performancePlugin.PerformanceTestSpan
@@ -50,7 +50,7 @@ class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCorouti
     VcsTestUtil.provisionVcsAddFileConfirmation(context.project, VcsTestUtil.VcsAddFileConfirmation.DO_NOTHING)
 
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
-      PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScopeBlocking {
+      PerformanceTestSpan.TRACER.spanBuilder(NAME).use {
         JavaDirectoryService.getInstance().createClass(directory, fileName, templateName, true)
       }
     }))

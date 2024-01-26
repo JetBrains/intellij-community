@@ -26,8 +26,8 @@ import kotlin.coroutines.EmptyCoroutineContext
  *
  * See [span concept](https://opentelemetry.io/docs/concepts/signals/traces/#spans) for more details on span nesting.
  */
-inline fun <T> SpanBuilder.useWithScopeBlocking(operation: (Span) -> T): T {
-  return startSpan().use { span ->
+inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
+  return startSpan().useWithoutActiveScope { span ->
     span.makeCurrent().use {
       operation(span)
     }
@@ -40,8 +40,8 @@ inline fun <T> SpanBuilder.useWithScopeBlocking(operation: (Span) -> T): T {
  *
  * See [span concept](https://opentelemetry.io/docs/concepts/signals/traces/#spans) for more details on span nesting.
  */
-inline fun <T> Span.useWithScopeBlocking(operation: (Span) -> T): T {
-  return use {
+inline fun <T> Span.use(operation: (Span) -> T): T {
+  return useWithoutActiveScope {
     makeCurrent().use {
       operation(this)
     }
@@ -75,7 +75,7 @@ fun <T> computeWithSpanAttribute(tracer: IJTracer,
                                  attributeName: String,
                                  attributeValue: (T) -> String,
                                  operation: () -> T): T {
-  return tracer.spanBuilder(spanName).useWithScopeBlocking { span ->
+  return tracer.spanBuilder(spanName).use { span ->
     val result = operation.invoke()
     span.setAttribute(attributeName, attributeValue.invoke(result))
     result
@@ -86,7 +86,7 @@ fun <T> computeWithSpanAttributes(tracer: IJTracer,
                                   spanName: String,
                                   attributeGenerator: (T) -> Map<String, String>,
                                   operation: () -> T): T {
-  return tracer.spanBuilder(spanName).useWithScopeBlocking { span ->
+  return tracer.spanBuilder(spanName).use { span ->
     val result = operation.invoke()
     attributeGenerator.invoke(result).forEach { (attributeName, attributeValue) ->
       span.setAttribute(attributeName, attributeValue)
@@ -96,38 +96,36 @@ fun <T> computeWithSpanAttributes(tracer: IJTracer,
 }
 
 inline fun <T> computeWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> T): T {
-  return tracer.spanBuilder(spanName).useWithScopeBlocking(operation)
+  return tracer.spanBuilder(spanName).use(operation)
 }
 
 internal fun <T> computeWithSpanIgnoreThrows(tracer: Tracer,
                                              spanName: String,
                                              operation: ThrowableNotNullFunction<Span, T, out Throwable>): T {
-  return tracer.spanBuilder(spanName).useWithScopeBlocking(operation::`fun`)
+  return tracer.spanBuilder(spanName).use(operation::`fun`)
 }
 
 internal fun runWithSpanIgnoreThrows(tracer: Tracer, spanName: String, operation: ThrowableConsumer<Span, out Throwable>) {
-  tracer.spanBuilder(spanName).useWithScopeBlocking(operation::consume)
+  tracer.spanBuilder(spanName).use(operation::consume)
 }
 
 fun runWithSpan(tracer: Tracer, spanName: String, operation: Consumer<Span>) {
-  tracer.spanBuilder(spanName).useWithScopeBlocking(operation::accept)
-}
-
-fun runWithSpan(tracer: Tracer, spanName: String, parentSpan: Span, operation: Consumer<Span>) {
-  tracer.spanBuilder(spanName).setParent(Context.current().with(parentSpan)).useWithScopeBlocking(operation::accept)
+  tracer.spanBuilder(spanName).use(operation::accept)
 }
 
 /**
- * Consider using [useWithScopeBlocking] instead
+ * Does not activate the span scope, so **new spans created inside will not be linked to the started span**.
+ * Consider using [use] to also activate the scope.
  */
-inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
-  return startSpan().use(operation)
+inline fun <T> SpanBuilder.useWithoutActiveScope(operation: (Span) -> T): T {
+  return startSpan().useWithoutActiveScope(operation)
 }
 
 /**
- * Consider using [useWithScopeBlocking] instead
+ * Does not activate the span scope, so **new spans created inside will not be linked to [this] span**.
+ * Consider using [use] to also activate the scope.
  */
-inline fun <T> Span.use(operation: (Span) -> T): T {
+inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
   try {
     return operation(this)
   }

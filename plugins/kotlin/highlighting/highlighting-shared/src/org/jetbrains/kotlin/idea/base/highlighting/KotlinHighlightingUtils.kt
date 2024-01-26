@@ -9,6 +9,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
@@ -68,7 +69,9 @@ private fun KtFile.computeIfAbsent(vararg dependencies: Any, compute: KtFile.() 
 private fun isIndexingInProgress(project: Project) = runReadAction { DumbService.getInstance(project).isDumb }
 
 private fun KtFile.shouldDefinitelyHighlight(): Boolean =
-    this is KtCodeFragment && context != null || OutsidersPsiFileSupport.isOutsiderFile(virtualFile)
+    (this is KtCodeFragment && context != null) ||
+            OutsidersPsiFileSupport.isOutsiderFile(virtualFile) ||
+            (this !is KtCodeFragment && virtualFile?.fileSystem is NonPhysicalFileSystem)
 
 private fun KtFile.calculateShouldHighlightFile(): Boolean =
     shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && moduleInfo !is NotUnderContentRootModuleInfo

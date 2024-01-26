@@ -4,7 +4,6 @@ package com.intellij.codeInsight.actions.onSave;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -149,8 +148,12 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
   }
 
   /**
-   * File type may be selected in the popup on the 'Actions on Save' page even if the main 'Run this action on save' checkbox is not selected.
-   * Most of the callers should first check {@link #isRunOnSaveEnabled()}.
+   * Returns {@code true} if either the root `All file types` check box is checked
+   * or the root check box is unchecked but the specific `fileType` check box is checked.
+   * <br><br>
+   * Note that most of the callers should first call {@link #isRunOnSaveEnabled()}.
+   * The fact that `All file types` or a specific file type is checked
+   * doesn't automatically mean that the feature itself ('Run this action on save') is enabled.
    */
   public boolean isFileTypeSelected(@NotNull FileType fileType) {
     return myState.myAllFileTypesSelected || myState.mySelectedFileTypes.contains(fileType.getName());

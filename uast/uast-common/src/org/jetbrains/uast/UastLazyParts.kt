@@ -28,7 +28,7 @@ class UastLazyPart<T> {
 
 @ApiStatus.Internal
 @Suppress("UNCHECKED_CAST")
-inline fun <T> UastLazyPart<T>.getOrBuild(crossinline initializer: () -> T): T {
+inline fun <T> UastLazyPart<T>.getOrBuild(initializer: () -> T): T {
   var current = value
   if (current == UNINITIALIZED_UAST_PART) {
     current = initializer.invoke()

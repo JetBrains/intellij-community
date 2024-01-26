@@ -711,12 +711,15 @@ public final class XFramesView extends XDebugView {
     }
   }
 
-  private static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor {
+  private static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor,
+                                                                            XDebuggerFramesList.ItemWithSeparatorAbove {
 
     private final int hiddenFrameCount;
+    private final @NotNull XStackFrame firstHiddenFrame;
 
-    public HiddenStackFramesItem(int count) {
-      hiddenFrameCount = count;
+    private HiddenStackFramesItem(int hiddenFrameCount, @NotNull XStackFrame firstHiddenFrame) {
+      this.hiddenFrameCount = hiddenFrameCount;
+      this.firstHiddenFrame = firstHiddenFrame;
     }
 
     @Override
@@ -729,11 +732,27 @@ public final class XFramesView extends XDebugView {
     public @Nullable Color getBackgroundColor() {
       return null;
     }
+
+    @Override
+    public boolean hasSeparatorAbove() {
+      if (firstHiddenFrame instanceof XDebuggerFramesList.ItemWithSeparatorAbove item) {
+        return item.hasSeparatorAbove();
+      }
+      return false;
+    }
+
+    @Override
+    public String getCaptionAboveOf() {
+      if (firstHiddenFrame instanceof XDebuggerFramesList.ItemWithSeparatorAbove item) {
+        return item.getCaptionAboveOf();
+      }
+      return null;
+    }
   }
 
-  public static List<XStackFrame> createHiddenFramePlaceholder(int hiddenFrameCount) {
+  public static List<XStackFrame> createHiddenFramePlaceholder(int hiddenFrameCount, @NotNull XStackFrame firstHiddenFrame) {
     return Registry.is("debugger.hidden.frames.placeholder")
-           ? Collections.singletonList(new HiddenStackFramesItem(hiddenFrameCount))
+           ? Collections.singletonList(new HiddenStackFramesItem(hiddenFrameCount, firstHiddenFrame))
            : Collections.emptyList();
   }
 

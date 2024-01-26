@@ -118,7 +118,19 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
                   "isClassIncluded", MethodType.methodType(boolean.class, String.class));
     return new PostDiscoveryFilter() {
+      record LastCheckResult(String className, FilterResult result) {
+      }
+
+      private LastCheckResult myLastResult = null;
+
       private FilterResult isIncluded(String className) {
+        if (myLastResult == null || !myLastResult.className.equals(className)) {
+          myLastResult = new LastCheckResult(className, isIncludedImpl(className));
+        }
+        return myLastResult.result;
+      }
+
+      private FilterResult isIncludedImpl(String className) {
         try {
           if ((boolean)included.invokeExact(className)) {
             return FilterResult.included(null);

@@ -27,7 +27,8 @@ elif IS_PY36_OR_GREATER:
     from _pydevd_bundle.smart_step_into.pydevd_smart_step_into_36_310 import (
         get_stepping_variants)
 elif IS_PY2:
-    pass
+    from _pydevd_bundle.smart_step_into.pydevd_smart_step_into_27 import (
+        get_stepping_variants)
 
 
 _Variant = namedtuple('Variant', ['name', 'is_visited'])

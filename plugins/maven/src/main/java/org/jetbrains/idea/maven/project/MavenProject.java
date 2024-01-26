@@ -106,25 +106,77 @@ public class MavenProject {
 
   @NotNull
   @ApiStatus.Internal
-  public MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
-                                 @NotNull MavenGeneralSettings settings,
-                                 boolean updateLastReadStamp,
-                                 boolean resetArtifacts,
-                                 boolean resetProfiles) {
+  public MavenProjectChanges updateFromReaderResult(@NotNull MavenProjectReaderResult readerResult,
+                                                    @NotNull MavenGeneralSettings settings,
+                                                    boolean keepPreviousArtifacts) {
     State newState = myState.clone();
 
-    if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
+    newState.myLastReadStamp = myState.myLastReadStamp + 1;
 
-    newState.myReadingProblems = readerResult.readingProblems;
+    boolean keepPreviousPlugins = keepPreviousArtifacts;
+
+    doUpdateState(newState,
+                  readerResult.mavenModel,
+                  readerResult.readingProblems,
+                  readerResult.activatedProfiles,
+                  Set.of(),
+                  readerResult.nativeModelMap,
+                  settings,
+                  keepPreviousArtifacts,
+                  false,
+                  keepPreviousPlugins
+    );
+
+    return setState(newState);
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public MavenProjectChanges updateState(@NotNull MavenModel model,
+                                         @Nullable String dependencyHash,
+                                         @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
+                                         @NotNull MavenExplicitProfiles activatedProfiles,
+                                         @NotNull Set<MavenId> unresolvedArtifactIds,
+                                         @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
+                                         @NotNull MavenGeneralSettings settings,
+                                         boolean keepPreviousArtifacts,
+                                         boolean keepPreviousPlugins) {
+    State newState = myState.clone();
+
+    if (null != dependencyHash) {
+      newState.myDependencyHash = dependencyHash;
+    }
+
+    doUpdateState(newState,
+                  model,
+                  readingProblems,
+                  activatedProfiles,
+                  unresolvedArtifactIds,
+                  nativeModelMap,
+                  settings,
+                  keepPreviousArtifacts,
+                  true,
+                  keepPreviousPlugins
+    );
+
+    return setState(newState);
+  }
+
+  private void doUpdateState(State newState,
+                             @NotNull MavenModel model,
+                             @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
+                             @NotNull MavenExplicitProfiles activatedProfiles,
+                             @NotNull Set<MavenId> unresolvedArtifactIds,
+                             @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
+                             @NotNull MavenGeneralSettings settings,
+                             boolean keepPreviousArtifacts,
+                             boolean keepPreviousProfiles,
+                             boolean keepPreviousPlugins) {
+    newState.myReadingProblems = readingProblems;
     newState.myLocalRepository = MavenUtil.resolveLocalRepository(settings.getLocalRepository(),
                                                                   staticOrBundled(settings.getMavenHomeType()),
                                                                   settings.getUserSettingsFile());
-    newState.myActivatedProfilesIds = readerResult.activatedProfiles;
-    if (null != readerResult.pomChecksum) {
-      newState.myPomChecksum = readerResult.pomChecksum;
-    }
-
-    MavenModel model = readerResult.mavenModel;
+    newState.myActivatedProfilesIds = activatedProfiles;
 
     newState.myMavenId = model.getMavenId();
     if (model.getParent() != null) {
@@ -141,29 +193,27 @@ public class MavenProject {
     newState.myOutputDirectory = model.getBuild().getOutputDirectory();
     newState.myTestOutputDirectory = model.getBuild().getTestOutputDirectory();
 
-    doSetFolders(newState, readerResult.mavenModel.getBuild());
+    doSetFolders(newState, model.getBuild());
 
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
 
-    doSetResolvedAttributes(newState, readerResult, resetArtifacts);
+    doSetResolvedAttributes(newState, model, unresolvedArtifactIds, keepPreviousArtifacts, keepPreviousPlugins);
 
     MavenModelPropertiesPatcher.patch(newState.myProperties, newState.myPlugins);
 
     newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory());
     Collection<String> newProfiles = collectProfilesIds(model.getProfiles());
-    if (resetProfiles || newState.myProfilesIds == null) {
-      newState.myProfilesIds = newProfiles;
-    }
-    else {
+    if (keepPreviousProfiles && newState.myProfilesIds != null) {
       Set<String> mergedProfiles = new HashSet<>(newState.myProfilesIds);
       mergedProfiles.addAll(newProfiles);
       newState.myProfilesIds = new ArrayList<>(mergedProfiles);
     }
+    else {
+      newState.myProfilesIds = newProfiles;
+    }
 
-    newState.myModelMap = readerResult.nativeModelMap;
-
-    return setState(newState);
+    newState.myModelMap = nativeModelMap;
   }
 
   private MavenProjectChanges setState(State newState) {
@@ -195,10 +245,10 @@ public class MavenProject {
   }
 
   private static void doSetResolvedAttributes(State state,
-                                              MavenProjectReaderResult readerResult,
-                                              boolean reset) {
-    MavenModel model = readerResult.mavenModel;
-
+                                              MavenModel model,
+                                              Set<MavenId> unresolvedArtifactIds,
+                                              boolean keepPreviousArtifacts,
+                                              boolean keepPreviousPlugins) {
     Set<MavenId> newUnresolvedArtifacts = new HashSet<>();
     LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<>();
@@ -207,17 +257,20 @@ public class MavenProject {
     LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifact> newAnnotationProcessors = new LinkedHashSet<>();
 
-    if (!reset) {
+    if (keepPreviousArtifacts) {
       if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
       if (state.myRemoteRepositories != null) newRepositories.addAll(state.myRemoteRepositories);
       if (state.myDependencies != null) newDependencies.addAll(state.myDependencies);
       if (state.myDependencyTree != null) newDependencyTree.addAll(state.myDependencyTree);
-      if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
       if (state.myExtensions != null) newExtensions.addAll(state.myExtensions);
       if (state.myAnnotationProcessors != null) newAnnotationProcessors.addAll(state.myAnnotationProcessors);
     }
 
-    newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
+    if (keepPreviousPlugins) {
+      if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
+    }
+
+    newUnresolvedArtifacts.addAll(unresolvedArtifactIds);
     newRepositories.addAll(model.getRemoteRepositories());
     newDependencyTree.addAll(model.getDependencyTree());
     newDependencies.addAll(model.getDependencies());
@@ -847,8 +900,8 @@ public class MavenProject {
     return myState.myActivatedProfilesIds;
   }
 
-  public @Nullable String getPomChecksum() {
-    return myState.myPomChecksum;
+  public @Nullable String getDependencyHash() {
+    return myState.myDependencyHash;
   }
 
   public @NotNull List<MavenArtifact> getDependencies() {
@@ -1204,7 +1257,7 @@ public class MavenProject {
 
     Collection<String> myProfilesIds;
     MavenExplicitProfiles myActivatedProfilesIds;
-    String myPomChecksum;
+    String myDependencyHash;
 
     Collection<MavenProjectProblem> myReadingProblems;
     Set<MavenId> myUnresolvedArtifactIds;

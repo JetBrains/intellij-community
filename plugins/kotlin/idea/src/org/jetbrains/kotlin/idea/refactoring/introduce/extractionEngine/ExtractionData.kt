@@ -38,18 +38,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 
-data class ExtractionOptions(
-    val inferUnitTypeForUnusedValues: Boolean = true,
-    val enableListBoxing: Boolean = false,
-    val extractAsProperty: Boolean = false,
-    val captureLocalFunctions: Boolean = false,
-    val canWrapInWith: Boolean = false
-) {
-    companion object {
-        val DEFAULT = ExtractionOptions()
-    }
-}
-
 data class ResolveResult(
     val originalRefExpr: KtSimpleNameExpression,
     val declaration: PsiElement,

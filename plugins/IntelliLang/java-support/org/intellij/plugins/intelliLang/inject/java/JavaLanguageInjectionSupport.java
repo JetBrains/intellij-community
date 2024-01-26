@@ -60,7 +60,7 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
   @NonNls public static final String JAVA_SUPPORT_ID = "java";
 
   private static boolean isMine(final PsiLanguageInjectionHost psiElement) {
-    return PsiUtilEx.isStringOrCharacterLiteral(psiElement);
+    return PsiUtilEx.isStringOrCharacterLiteral(psiElement) || psiElement instanceof PsiFragment;
   }
 
   @Override
@@ -81,7 +81,7 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
 
   @Override
   public boolean isApplicableTo(PsiLanguageInjectionHost host) {
-    return host instanceof PsiLiteralExpression;
+    return host instanceof PsiLiteralExpression || host instanceof PsiFragment;
   }
 
   @Nullable

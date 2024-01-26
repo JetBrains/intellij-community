@@ -39,7 +39,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     PsiFile psiFile = context.getFile();
     YamlOffsetContext offsetContext = new YamlOffsetContext(psiFile, startOffset);
     @SuppressWarnings("DataFlowIssue")
-    YAMLValue oldValue = (offsetContext.holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
+    YAMLValue oldValue = (offsetContext.holdingDocument.getTopLevelValue() instanceof YAMLCompoundValue) ?
                          deleteLookupTextAndRetrieveOldValue(context, offsetContext.currentElement) :
                          null; // Inheritors must handle lookup text removal since otherwise holdingDocument may become invalid.
     if (oldValue instanceof YAMLSequence) {

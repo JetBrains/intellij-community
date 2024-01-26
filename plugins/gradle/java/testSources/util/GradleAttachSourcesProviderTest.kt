@@ -19,8 +19,8 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -111,22 +111,17 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   @Test
   fun `test download sources from gradle sub module repository`() {
     createSettingsFile("include 'projectA', 'projectB' ")
-    importProject(
-      createBuildScriptBuilder()
-        .project(":projectA") { it: TestGradleBuildScriptBuilder ->
-          it
-            .withJavaPlugin()
-            .withIdeaPlugin()
-            .addPrefix("idea.module.downloadSources = false")
-            .withMavenCentral()
-            .addTestImplementationDependency(DEPENDENCY)
-        }
-        .project(":projectB") { it: TestGradleBuildScriptBuilder ->
-          it
-            .withJavaPlugin()
-        }
-        .generate()
-    )
+    createBuildFile("projectA") {
+      withJavaPlugin()
+      withIdeaPlugin()
+      addPrefix("idea.module.downloadSources = false")
+      withMavenCentral()
+      addTestImplementationDependency(DEPENDENCY)
+    }
+    createBuildFile("projectB") {
+      withJavaPlugin()
+    }
+    importProject()
     assertModules(
       "project",
       "project.projectA", "project.projectA.main", "project.projectA.test",

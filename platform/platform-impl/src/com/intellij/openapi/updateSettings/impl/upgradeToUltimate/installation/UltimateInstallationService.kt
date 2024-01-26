@@ -268,7 +268,7 @@ internal abstract class UltimateInstaller(
             val started = startUltimate(installationResult)
             if (started) {
               openActivity.finished()
-              blockingContext { runInEdt { ApplicationManager.getApplication().exit() } }
+              blockingContext { runInEdt { ApplicationManager.getApplication().exit(true, true, false) } }
             }
           }
         }

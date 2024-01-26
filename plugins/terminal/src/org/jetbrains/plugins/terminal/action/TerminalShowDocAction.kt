@@ -7,10 +7,11 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.terminal.exp.CommandHistoryPresenter.Companion.IS_COMMAND_HISTORY_LOOKUP_KEY
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.documentation.TerminalDocumentationManager
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 
 class TerminalShowDocAction : DumbAwareAction(), HintManagerImpl.ActionToIgnore {
   override fun actionPerformed(e: AnActionEvent) {
@@ -25,12 +26,13 @@ class TerminalShowDocAction : DumbAwareAction(), HintManagerImpl.ActionToIgnore 
 
   override fun update(e: AnActionEvent) {
     val editor = e.editor
-    val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
+    val lookup = LookupManager.getActiveLookup(editor)
     // enable this action only in the terminal command completion popup
     e.presentation.isEnabledAndVisible = e.project != null
                                          && editor?.isPromptEditor == true
                                          && lookup != null
-                                         && lookup.getUserData(IS_COMMAND_HISTORY_LOOKUP_KEY) != true
+                                         && !lookup.isTerminalCommandHistory
+                                         && !lookup.isTerminalCommandSearch
                                          && lookup.currentItem != null
   }
 

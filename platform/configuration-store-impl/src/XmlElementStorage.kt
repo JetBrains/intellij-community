@@ -421,10 +421,7 @@ interface DataWriter {
   fun hasData(filter: DataWriterFilter): Boolean
 }
 
-internal fun DataWriter?.writeTo(file: Path,
-                                 requestor: Any?,
-                                 lineSeparator: LineSeparator = LineSeparator.LF,
-                                 useXmlProlog: Boolean = false) {
+internal fun DataWriter?.writeTo(file: Path, requestor: Any?, lineSeparator: LineSeparator, useXmlProlog: Boolean) {
   if (this == null) {
     file.delete()
   }

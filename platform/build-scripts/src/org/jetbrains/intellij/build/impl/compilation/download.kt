@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.ZstdDirectBufferDecompressingStreamNoFinalizer
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -37,7 +37,7 @@ internal fun downloadCompilationCache(serverUrl: String,
                                       saveHash: Boolean): List<Throwable> {
   var urlWithPrefix = "$serverUrl/$prefix/"
   // first let's check for initial redirect (mirror selection)
-  spanBuilder("mirror selection").useWithScopeBlocking { span ->
+  spanBuilder("mirror selection").use { span ->
     client.newCall(Request.Builder()
                      .url(urlWithPrefix)
                      .head()
@@ -80,7 +80,7 @@ internal fun downloadCompilationCache(serverUrl: String,
             response.body.contentLength()
           }
         })
-        spanBuilder("unpack").setAttribute("name", item.name).useWithScopeBlocking {
+        spanBuilder("unpack").setAttribute("name", item.name).use {
           unpackArchive(item, saveHash)
         }
       }
@@ -92,7 +92,7 @@ internal fun downloadCompilationCache(serverUrl: String,
 }
 
 private fun onDownloadException(attempt: Int, e: Exception) {
-  spanBuilder("Retrying download with exponential back off").useWithScopeBlocking { span ->
+  spanBuilder("Retrying download with exponential back off").use { span ->
     if (e is HashMismatchException) {
       e.eventLogger.invoke(span, attempt)
     }

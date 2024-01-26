@@ -83,7 +83,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     val bundle = loadJaCoCoSuite()
     val consumer = PackageAnnotationConsumer()
     JavaCoverageReportEnumerator.collectSummaryInReport(bundle, myProject, consumer)
-    assertHits(consumer)
+    assertHits(consumer, JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
 
@@ -218,7 +218,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) {
     val consumer = PackageAnnotationConsumer()
     JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
-    assertHits(consumer, ignoreBranches = ignoreBranches)
+    assertHits(consumer, JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors, ignoreBranches)
     assertEquals(2, consumer.myDirectoryCoverage.size)
   }
 }
@@ -242,7 +242,7 @@ private class PackageAnnotationConsumer : CoverageInfoCollector {
   }
 }
 
-private fun assertHits(consumer: PackageAnnotationConsumer, ignoreConstructor: Boolean = true, ignoreBranches: Boolean = false) {
+private fun assertHits(consumer: PackageAnnotationConsumer, ignoreConstructor: Boolean, ignoreBranches: Boolean = false) {
   assertHits(consumer, barHits(ignoreConstructor), uncoveredHits(ignoreConstructor), fooHits(ignoreConstructor), ignoreBranches)
 }
 

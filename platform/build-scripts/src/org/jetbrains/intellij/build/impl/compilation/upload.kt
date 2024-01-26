@@ -5,7 +5,7 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.Zstd
 import com.github.luben.zstd.ZstdDirectBufferCompressingStreamNoFinalizer
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -48,7 +48,7 @@ internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -
   var fallbackToHeads = false
   val alreadyUploaded: Set<String> = try {
     if (config.checkFiles) {
-      spanBuilder("fetch info about already uploaded files").use {
+      spanBuilder("fetch info about already uploaded files").useWithoutActiveScope {
         HashSet(getFoundAndMissingFiles(metadataJson, config.serverUrl, httpClient).found)
       }
     }

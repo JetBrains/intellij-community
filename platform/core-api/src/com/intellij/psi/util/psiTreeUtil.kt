@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.reflect.KClass
 
-fun PsiElement.validOrNull() = if (isValid) this else null
+fun PsiElement.validOrNull(): PsiElement? = if (isValid) this else null
 
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
 
@@ -95,16 +95,16 @@ private fun parentWithoutWalkingDirectories(element: PsiElement): PsiElement? {
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
+@Deprecated("Use PsiElement.parents(withSelf: Boolean) function", ReplaceWith("parents(true)"))
 fun PsiElement.parents(): Sequence<PsiElement> = parents(true)
 
 @get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
+@get:Deprecated("Use PsiElement.parents(withSelf: Boolean) function", ReplaceWith("parents(true)"))
 val PsiElement.parentsWithSelf: Sequence<PsiElement>
   get() = parents(true)
 
 @get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(false)"))
+@get:Deprecated("Use PsiElement.parents(withSelf: Boolean) function", ReplaceWith("parents(false)"))
 val PsiElement.parents: Sequence<PsiElement>
   get() = parents(false)
 

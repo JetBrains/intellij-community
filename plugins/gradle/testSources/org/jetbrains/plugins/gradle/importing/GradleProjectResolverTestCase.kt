@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertS
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.graldeJvm.GradleJvmResolver
+import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleProjectReload

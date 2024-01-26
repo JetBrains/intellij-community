@@ -12,33 +12,11 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 @ApiStatus.Internal
 public final class MavenResolveResultProblemProcessor {
-
-  private static final String BLOCKED_MIRROR_FOR_REPOSITORIES = "Blocked mirror for repositories:";
-
-  public static void notifySyncForProblem(@NotNull Project project,
-                                          @NotNull MavenResolveProblemHolder problem) {
-    if (problem.isEmpty()) return;
-
-    MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
-    for (MavenProjectProblem projectProblem : problem.repositoryBlockedProblems) {
-      if (projectProblem.getDescription() == null) continue;
-      BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, projectProblem.getDescription());
-      syncConsole.showBuildIssue(buildIssue);
-    }
-
-    for (MavenProjectProblem projectProblem : problem.unresolvedArtifactProblems) {
-      if (projectProblem.getMavenArtifact() == null || projectProblem.getDescription() == null) continue;
-      syncConsole.showArtifactBuildIssue(MavenServerConsoleIndicator.ResolveType.DEPENDENCY,
-                                         projectProblem.getMavenArtifact().getMavenId().getKey(),
-                                         projectProblem.getDescription());
-    }
-  }
+  public static final String BLOCKED_MIRROR_FOR_REPOSITORIES = "Blocked mirror for repositories:";
 
   public static void notifySyncForProblem(@NotNull Project project, @NotNull MavenProjectProblem problem) {
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
@@ -67,35 +45,6 @@ public final class MavenResolveResultProblemProcessor {
         syncConsole.showProblem(problem);
       }
     }
-  }
-
-  @NotNull
-  public static MavenResolveProblemHolder getProblems(@NotNull Collection<MavenProjectReaderResult> results) {
-    Set<MavenProjectProblem> repositoryBlockedProblems = new HashSet<>();
-    Set<MavenProjectProblem> unresolvedArtifactProblems = new HashSet<>();
-    Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();
-
-    boolean hasProblem = false;
-    for (MavenProjectReaderResult result : results) {
-      for (MavenProjectProblem problem : result.readingProblems) {
-        if (!hasProblem) hasProblem = true;
-        if (problem.getMavenArtifact() != null) {
-          if (unresolvedArtifacts.add(problem.getMavenArtifact())) {
-            unresolvedArtifactProblems.add(problem);
-          }
-        }
-        String message = problem.getDescription();
-        if (message != null && message.contains(BLOCKED_MIRROR_FOR_REPOSITORIES)) {
-          repositoryBlockedProblems.add(problem);
-        }
-      }
-      for (MavenProjectProblem problem : result.unresolvedProblems) {
-        if (unresolvedArtifacts.add(problem.getMavenArtifact())) {
-          unresolvedArtifactProblems.add(problem);
-        }
-      }
-    }
-    return new MavenResolveProblemHolder(repositoryBlockedProblems, unresolvedArtifactProblems, unresolvedArtifacts);
   }
 
   public static class MavenResolveProblemHolder {

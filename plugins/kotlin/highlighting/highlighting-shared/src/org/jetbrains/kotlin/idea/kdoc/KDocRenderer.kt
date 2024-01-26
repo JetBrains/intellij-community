@@ -10,7 +10,7 @@ import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeBlock
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledFragment
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledInlineCode
-import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledInlineCodeFragment
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeFragment
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledLinkFragment
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -632,7 +632,7 @@ object KDocRenderer {
             }
 
             override fun StringBuilder.appendCodeSnippetHighlightedByLexer(codeSnippet: String) {
-                appendStyledInlineCodeFragment(project, KotlinLanguage.INSTANCE, codeSnippet)
+                appendStyledCodeFragment(project, KotlinLanguage.INSTANCE, codeSnippet)
             }
 
             private fun resolveKey(key: TextAttributesKey): TextAttributesAdapter {

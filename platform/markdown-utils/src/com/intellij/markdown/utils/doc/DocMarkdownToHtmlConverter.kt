@@ -84,7 +84,7 @@ object DocMarkdownToHtmlConverter {
   @JvmStatic
   @RequiresReadLock
   @JvmOverloads
-  fun convert(project: Project, markdownText: String, defaultLanguage: Language? = null): String {
+  fun convert(project: Project, @Nls markdownText: String, defaultLanguage: Language? = null): @Nls String {
     val lines = SPLIT_BY_LINE_PATTERN.split(markdownText.trimIndent())
     val processedLines = ArrayList<String>(lines.size)
     var isInCode = false
@@ -215,7 +215,7 @@ object DocMarkdownToHtmlConverter {
     }
   }
 
-  private fun replaceProhibitedTags(line: String, skipRanges: List<TextRange>): String {
+  private fun replaceProhibitedTags(line: String, skipRanges: List<TextRange>): @NlsSafe String {
     val matcher = TAG_START_OR_CLOSE_PATTERN.matcher(line)
     val builder = StringBuilder(line)
 

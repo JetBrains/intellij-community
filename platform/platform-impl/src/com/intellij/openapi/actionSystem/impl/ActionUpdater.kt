@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SlowOperations
@@ -184,7 +184,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         edtCallsCount++
         edtWaitNanos += start - start0
         currentEDTWaitMillis = TimeUnit.NANOSECONDS.toMillis(start - start0)
-        Utils.getTracer(true).spanBuilder(operationName).useWithScopeBlocking { span: Span ->
+        Utils.getTracer(true).spanBuilder(operationName).use { span: Span ->
           val prevStack = ourInEDTActionOperationStack
           val prevNoRules = isNoRulesInEDTSection
           var traceCookie: ThreadDumpService.Cookie? = null
@@ -370,7 +370,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       return retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
         blockingContext { // no data-context hence no RA, just blockingContext
           val spanBuilder = Utils.getTracer(true).spanBuilder(operationName)
-          spanBuilder.useWithScopeBlocking {
+          spanBuilder.use {
             group.postProcessVisibleChildren(result, updateSession)
           }
         }

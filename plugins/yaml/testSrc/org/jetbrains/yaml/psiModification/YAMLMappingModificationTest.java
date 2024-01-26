@@ -108,7 +108,11 @@ public class YAMLMappingModificationTest extends BasePlatformTestCase {
   public void testSetValueScalar() {
     doValueTest("newValue");
   }
-  
+
+  public void testSetValueScalarWithSpaceBeforeColon() {
+    doValueTest("newValue");
+  }
+
   public void testSetValueCompound() {
     doValueTest("""
                   someKey:

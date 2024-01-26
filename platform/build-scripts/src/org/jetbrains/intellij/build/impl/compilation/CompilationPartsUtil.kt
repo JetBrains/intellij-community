@@ -3,8 +3,8 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -91,13 +91,13 @@ fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: Com
     }
   }
   else {
-    spanBuilder("pack classes").useWithScopeBlocking {
+    spanBuilder("pack classes").use {
       packCompilationResult(context, zipDir)
     }
   }
 
   createBufferPool().use { bufferPool ->
-    spanBuilder("upload packed classes").use {
+    spanBuilder("upload packed classes").useWithoutActiveScope {
       upload(config = config, zipDir = zipDir, messages = context.messages, items = items, bufferPool = bufferPool)
     }
   }
@@ -120,7 +120,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
   Files.createDirectories(zipDir)
 
   val items = ArrayList<PackAndUploadItem>(2048)
-  spanBuilder("compute module list to pack").use { span ->
+  spanBuilder("compute module list to pack").useWithoutActiveScope { span ->
     // production, test
     for (subRoot in Files.newDirectoryStream(context.classesOutputDirectory).use(DirectoryStream<Path>::toList)) {
       if (!Files.isDirectory(subRoot)) {
@@ -159,11 +159,11 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
     }
   }
 
-  spanBuilder("build zip archives").useWithScopeBlocking {
+  spanBuilder("build zip archives").use {
     val traceContext = Context.current()
     ForkJoinTask.invokeAll(items.map { item ->
       ForkJoinTask.adapt(Callable {
-        spanBuilder("pack").setParent(traceContext).setAttribute("name", item.name).use {
+        spanBuilder("pack").setParent(traceContext).setAttribute("name", item.name).useWithoutActiveScope {
           // we compress the whole file using ZSTD
           zip(
             targetFile = item.archive,
@@ -173,7 +173,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
             addDirEntriesMode = addDirEntriesMode
           )
         }
-        spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).use {
+        spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).useWithoutActiveScope {
           item.hash = computeHash(item.archive)
         }
       })
@@ -224,7 +224,7 @@ private fun upload(config: CompilationCacheUploadConfiguration,
   }
 
   spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"),
-                                              items.map(PackAndUploadItem::name)).useWithScopeBlocking {
+                                              items.map(PackAndUploadItem::name)).use {
     uploadArchives(reportStatisticValue = messages::reportStatisticValue,
                    config = config,
                    metadataJson = metadataJson,
@@ -255,7 +255,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
 
     var verifyTime = 0L
     val upToDate = ContainerUtil.newConcurrentSet<String>()
-    spanBuilder("check previously unpacked directories").useWithScopeBlocking { span ->
+    spanBuilder("check previously unpacked directories").use { span ->
       verifyTime += checkPreviouslyUnpackedDirectories(items = items,
                                                        span = span,
                                                        upToDate = upToDate,
@@ -265,7 +265,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
     reportStatisticValue("compile-parts:up-to-date:count", upToDate.size.toString())
 
     val toUnpack = LinkedHashSet<FetchAndUnpackItem>(items.size)
-    val toDownload = spanBuilder("check previously downloaded archives").useWithScopeBlocking { span ->
+    val toDownload = spanBuilder("check previously downloaded archives").use { span ->
       val start = System.nanoTime()
       val result = ForkJoinTask.invokeAll(items.mapNotNull { item ->
         if (upToDate.contains(item.name)) {
@@ -550,7 +550,7 @@ inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: (Sp
       .setParent(context)
       .setAttribute(THREAD_NAME, thread.name)
       .setAttribute(THREAD_ID, thread.id)
-      .useWithScopeBlocking { span ->
+      .use { span ->
         operation(span)
       }
   })

@@ -18,7 +18,6 @@ def find_last_func_call_order(frame, start_line):
     :return: call order or -1 if we fail to find the call order for some
       reason.
     :rtype: int
-    :raise: :py:class:`RuntimeError` if failed to parse the bytecode.
     """
     code = frame.f_code
     lasti = frame.f_lasti
@@ -42,7 +41,6 @@ def find_last_call_name(frame):
     :type frame: :py:class:`types.FrameType`
     :return: The name of a function or method that has been called last.
     :rtype: str
-    :raise: :py:class:`RuntimeError` if failed to parse the bytecode.
     """
     last_call_name = None
     code = frame.f_code

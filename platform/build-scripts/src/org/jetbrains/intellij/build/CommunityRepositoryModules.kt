@@ -5,12 +5,9 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.impl.BundledMavenDownloader
-import org.jetbrains.intellij.build.impl.LibraryPackMode
-import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
-import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -22,13 +19,20 @@ import java.util.*
 
 object CommunityRepositoryModules {
   /**
-   * Specifies non-trivial layout for all plugins which sources are located in 'community' and 'contrib' repositories
+   * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
    */
-  @Suppress("SpellCheckingInspection")
   val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
     plugin("intellij.ant") { spec ->
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
+
+      spec.withGeneratedResources { path, buildContext ->
+        val antDir = path.resolve("dist")
+        Files.createDirectories(antDir)
+
+        val antTargetFile = antDir.resolve("ant.jar")
+        copyAnt(antDir, antTargetFile, buildContext)
+      }
     },
     plugin("intellij.laf.macos") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)

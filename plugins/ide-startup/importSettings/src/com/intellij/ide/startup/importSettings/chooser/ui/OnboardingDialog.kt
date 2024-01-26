@@ -24,7 +24,7 @@ class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, nul
 
   private val pane = JPanel(BorderLayout()).apply {
     border = JBUI.Borders.empty()
-    preferredSize = JBDimension(640, 457)
+    preferredSize = JBDimension(640, 467)
   }
 
   private var currentPage: OnboardingPage = object  : OnboardingPage {

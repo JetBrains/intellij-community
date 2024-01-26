@@ -72,7 +72,7 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   }
 
   public static void collectPyenvPythons(@NotNull Collection<Path> candidates) {
-    candidates.addAll(new VirtualEnvReader().findPyenvInterpreters(NAMES, PYTHON_3_RE));
+    candidates.addAll(VirtualEnvReader.getInstance().findPyenvInterpreters(NAMES, PYTHON_3_RE));
   }
 
   private static boolean looksLikePythonBinary(@NotNull Path path) {

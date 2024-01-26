@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -106,7 +106,7 @@ public class TestAll implements Test {
   }
 
   public TestAll(String rootPackage, List<? extends Path> classesRoots) throws ClassNotFoundException {
-    myTestCaseLoader = new TestCaseLoader(COMMON_TEST_GROUPS_RESOURCE_NAME);
+    myTestCaseLoader = Builder.fromDefaults().build();
     if (shouldAddFirstAndLastTests()) {
       myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
       myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));

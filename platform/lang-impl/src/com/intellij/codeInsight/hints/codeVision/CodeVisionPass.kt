@@ -17,7 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
@@ -64,10 +64,10 @@ class CodeVisionPass(
                         providerIdToLenses: ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>,
                         providers: List<DaemonBoundCodeVisionProvider>) {
       val modificationTracker = PsiModificationTracker.getInstance(editor.project)
-      tracer.spanBuilder("codeVision").useWithScopeBlocking { span ->
+      tracer.spanBuilder("codeVision").use { span ->
         span.setAttribute("file", file.name)
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
-          tracer.spanBuilder(provider.javaClass.simpleName).useWithScopeBlocking {
+          tracer.spanBuilder(provider.javaClass.simpleName).use {
             val results: List<Pair<TextRange, CodeVisionEntry>>
             val duration = measureTimeMillis {
               results = provider.computeForEditor(editor, file)

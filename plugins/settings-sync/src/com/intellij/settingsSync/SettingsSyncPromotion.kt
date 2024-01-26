@@ -10,6 +10,7 @@ import com.intellij.openapi.options.newEditor.SettingsTreeView
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.PromotionInSettingsEvent
 import com.intellij.ui.GotItTooltip
@@ -26,6 +27,7 @@ class SettingsSyncPromotion : SettingsDialogListener {
   override fun afterApply(settingsEditor: AbstractEditor) {
     if (settingsEditor !is SettingsEditor
         || SettingsSyncSettings.getInstance().syncEnabled
+        || SettingsSyncAuthService.getInstance().isLoggedIn()
         || !Registry.`is`("settingsSync.promotion.in.settings", false)) {
       return
     }
@@ -37,6 +39,8 @@ class SettingsSyncPromotion : SettingsDialogListener {
       Disposer.dispose(gotItTooltip)
       return  // It was already shown once
     }
+    // mark it as shown, to not show it again, not depending on the way how it is closed
+    Disposer.register(gotItTooltip) { gotItTooltip.gotIt() }
 
     val settingsTree = settingsEditor.treeView.tree
     val settingsSyncPath = TreeUtil.treePathTraverser(settingsTree).find { path ->
@@ -69,6 +73,12 @@ class SettingsSyncPromotion : SettingsDialogListener {
     SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.SHOWN)
 
     SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
+      override fun loginStateChanged() {
+        if (SettingsSyncAuthService.getInstance().isLoggedIn()) {
+          SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.LOGGED_IN)
+        }
+      }
+
       override fun enabledStateChanged(syncEnabled: Boolean) {
         if (syncEnabled) {
           SettingsSyncEventsStatistics.PROMOTION_IN_SETTINGS.log(PromotionInSettingsEvent.ENABLED)

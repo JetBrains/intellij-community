@@ -84,6 +84,7 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
       else listOf(continueAction, backAction)
 
     contentPage = WizardPagePane(centralPane, buttons)
+    continueAction.requestFocus()
   }
 
   private fun activePane(keymap: KeymapPane)  {
