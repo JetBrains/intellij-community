@@ -49,6 +49,7 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
         .toString()
         .loadLocalImages(origin, url2ImageMap)
       return DocumentationResult.documentation(contents).images(url2ImageMap).externalUrl(doc.docUrl)
+        .definitionDetails(doc.definitionDetails)
     }
 
     private fun StringBuilder.appendDefinition(doc: WebSymbolDocumentation, url2ImageMap: MutableMap<String, Image>): StringBuilder =
