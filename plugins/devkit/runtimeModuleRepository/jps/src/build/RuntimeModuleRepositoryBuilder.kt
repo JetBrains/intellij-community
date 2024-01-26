@@ -53,6 +53,11 @@ internal class RuntimeModuleRepositoryBuilder
                      holder: DirtyFilesHolder<BuildRootDescriptor, RuntimeModuleRepositoryTarget>,
                      outputConsumer: BuildOutputConsumer,
                      context: CompileContext) {
+    if (!holder.hasDirtyFiles() && !holder.hasRemovedFiles()) {
+      LOG.debug("Runtime module repository is up to date")
+      return
+    }
+    
     val project = target.project
     val descriptors: List<RawRuntimeModuleDescriptor>
     context.processMessage(ProgressMessage(DevkitRuntimeModuleRepositoryJpsBundle.message("progress.message.generating.intellij.modules.repository"), BuildTargetChunk(setOf(target))))
@@ -78,6 +83,8 @@ internal class RuntimeModuleRepositoryBuilder
         context.reportError(DevkitRuntimeModuleRepositoryJpsBundle.message("error.message.failed.to.save.jar.file.0", e.message ?: ""))
       }
     }
+    val modulesXml = RuntimeModuleRepositoryTarget.getModulesXmlFile(project) ?: error("Project was not loaded from .idea")
+    outputConsumer.registerOutputFile(outputPath.toFile(), listOf(modulesXml.absolutePath))
     LOG.info("${descriptors.size} descriptors are saved in ${timeToSaveDescriptors}ms")
   }
 

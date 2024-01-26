@@ -1,21 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
-import org.jetbrains.jps.builders.CompileScopeTestBuilder
-import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsModule
 
-class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
-  override fun setUp() {
-    super.setUp()
-    addModule(RUNTIME_REPOSITORY_MARKER_MODULE, withTests = false)
-    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = getUrl("out")
-  }
-
+class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
   fun `test module with tests`() {
     addModule("a", withTests = true)
     buildAndCheck { 
@@ -117,26 +107,6 @@ class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
       descriptor("a")
       testDescriptor("a.tests", "a", resourceDirName = "a.tests")
     }
-  }
-
-  private fun addModule(name: String, vararg dependencies: JpsModule, withTests: Boolean, withSources: Boolean = true): JpsModule {
-    val module = addModule(name, emptyArray(), null, null, jdk)
-    if (withSources) {
-      module.addSourceRoot(getUrl("$name/src"), JavaSourceRootType.SOURCE)
-    }
-    if (withTests) {
-      module.addSourceRoot(getUrl("$name/testSrc"), JavaSourceRootType.TEST_SOURCE)
-    }
-    for (dependency in dependencies) {
-      module.dependenciesList.addModuleDependency(dependency)
-    }
-    return module
-  }
-
-  private fun buildAndCheck(expected: RawDescriptorListBuilder.() -> Unit) {
-    doBuild(CompileScopeTestBuilder.make().targetTypes(RuntimeModuleRepositoryTarget)).assertSuccessful()
-    val outputDir = orCreateProjectDir.toPath().resolve("out")
-    checkRuntimeModuleRepository(outputDir, expected)
   }
 }
 
