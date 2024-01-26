@@ -1,141 +1,127 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.idea.maven.server;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.server
 
-import com.intellij.execution.rmi.RemoteProcessSupport;
-import com.intellij.maven.testFramework.MavenTestCase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.common.ThreadUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.WaitFor;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
+import com.intellij.execution.rmi.RemoteProcessSupport
+import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.ThreadUtil
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.WaitFor
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.server.MavenServerConnectorImpl
+import java.io.File
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicReference
 
-import java.io.File;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
-
-public class MavenServerManagerTest extends MavenTestCase {
-
-  public void testInitializingDoesntTakeReadAction() throws Exception {
+class MavenServerManagerTest : MavenTestCase() {
+  fun testInitializingDoesntTakeReadAction() = runBlocking {
     //make sure all components are initialized to prevent deadlocks
-    ensureConnected(MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath()));
+    ensureConnected(MavenServerManager.getInstance().getConnector(project, projectRoot.path))
 
-    Future result = ApplicationManager.getApplication().runWriteAction(
-      (ThrowableComputable<Future, Exception>)() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        MavenServerManager.getInstance().closeAllConnectorsAndWait();
-        ensureConnected(MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath()));
-      }));
+    val result = ApplicationManager.getApplication().runWriteAction(
+      ThrowableComputable<Future<*>, Exception?> {
+        ApplicationManager.getApplication().executeOnPooledThread {
+          MavenServerManager.getInstance().closeAllConnectorsAndWait()
+          runBlockingMaybeCancellable {
+            ensureConnected(MavenServerManager.getInstance().getConnector(project, projectRoot.path))
+          }
+        }
+      })
 
-
-    long start = System.currentTimeMillis();
-    long end = TimeUnit.SECONDS.toMillis(10) + start;
-    boolean ok = false;
+    val start = System.currentTimeMillis()
+    val end = TimeUnit.SECONDS.toMillis(10) + start
+    var ok = false
     while (System.currentTimeMillis() < end && !ok) {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-      });
+      runInEdtAndWait {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+      }
       try {
-        result.get(0, TimeUnit.MILLISECONDS);
-        ok = true;
+        result.get(0, TimeUnit.MILLISECONDS)
+        ok = true
       }
-      catch (InterruptedException | java.util.concurrent.ExecutionException e) {
-        throw new RuntimeException(e);
+      catch (e: InterruptedException) {
+        throw RuntimeException(e)
       }
-      catch (TimeoutException ignore) {
+      catch (e: ExecutionException) {
+        throw RuntimeException(e)
+      }
+      catch (ignore: TimeoutException) {
       }
     }
     if (!ok) {
-      ThreadUtil.printThreadDump();
-      fail();
+      ThreadUtil.printThreadDump()
+      fail()
     }
-    result.cancel(true);
+    result.cancel(true)
+    Unit
   }
 
-  public void testConnectorRestartAfterVMChanged() {
-    MavenWorkspaceSettingsComponent settingsComponent = MavenWorkspaceSettingsComponent.getInstance(getProject());
-    String vmOptions = settingsComponent.getSettings().getImportingSettings().getVmOptionsForImporter();
+  fun testConnectorRestartAfterVMChanged() = runBlocking {
+    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(project)
+    val vmOptions = settingsComponent.settings.importingSettings.vmOptionsForImporter
     try {
-      MavenServerConnector connector = MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath());
-      ensureConnected(connector);
-      settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter(vmOptions + " -DtestVm=test");
-      assertNotSame(connector, ensureConnected(MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath())));
+      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+      ensureConnected(connector)
+      settingsComponent.settings.importingSettings.vmOptionsForImporter = "$vmOptions -DtestVm=test"
+      assertNotSame(connector, ensureConnected(MavenServerManager.getInstance().getConnector(project, projectRoot.path)))
     }
     finally {
-      settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter(vmOptions);
+      settingsComponent.settings.importingSettings.vmOptionsForImporter = vmOptions
     }
   }
 
-  public void testShouldRestartConnectorAutomaticallyIfFailed() {
-    MavenServerConnector connector = MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath());
-    ensureConnected(connector);
-    kill(connector);
-    MavenServerConnector newConnector = MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath());
-    ensureConnected(newConnector);
-    assertNotSame(connector, newConnector);
+  fun testShouldRestartConnectorAutomaticallyIfFailed() = runBlocking {
+    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+    ensureConnected(connector)
+    kill(connector)
+    val newConnector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+    ensureConnected(newConnector)
+    assertNotSame(connector, newConnector)
   }
 
 
-
-  public void testShouldStopPullingIfConnectorIsFailing() {
-    MavenServerConnector connector = MavenServerManager.getInstance().getConnectorBlocking(getProject(), getProjectRoot().getPath());
-    ensureConnected(connector);
-    ScheduledExecutorService executor =
-      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, ScheduledExecutorService.class, "myExecutor");
-    kill(connector);
-    new WaitFor(1_000) {
-      @Override
-      protected boolean condition() {
-        return executor.isShutdown();
+  fun testShouldStopPullingIfConnectorIsFailing() = runBlocking {
+    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+    ensureConnected(connector)
+    val executor = ReflectionUtil.getField(
+      MavenServerConnectorImpl::class.java, connector, ScheduledExecutorService::class.java, "myExecutor")
+    kill(connector)
+    object : WaitFor(1000) {
+      override fun condition(): Boolean {
+        return executor.isShutdown
       }
-    };
-    assertTrue(executor.isShutdown());
+    }
+    assertTrue(executor.isShutdown)
   }
 
-  public void testShouldDropConnectorForMultiplyDirs() {
-    File topDir = getProjectRoot().toNioPath().toFile();
-    File first = new File(topDir, "first/.mvn");
-    File second = new File(topDir, "second/.mvn");
-    assertTrue(first.mkdirs());
-    assertTrue(second.mkdirs());
-    MavenServerConnector connectorFirst = MavenServerManager.getInstance().getConnectorBlocking(getProject(), first.getAbsolutePath());
-    ensureConnected(connectorFirst);
-    MavenServerConnector connectorSecond = MavenServerManager.getInstance().getConnectorBlocking(getProject(), second.getAbsolutePath());
-    assertSame(connectorFirst, connectorSecond);
-    MavenServerManager.getInstance().shutdownConnector(connectorFirst, true);
-    assertEmpty(MavenServerManager.getInstance().getAllConnectors());
+  fun testShouldDropConnectorForMultiplyDirs() = runBlocking {
+    val topDir = projectRoot.toNioPath().toFile()
+    val first = File(topDir, "first/.mvn")
+    val second = File(topDir, "second/.mvn")
+    assertTrue(first.mkdirs())
+    assertTrue(second.mkdirs())
+    val connectorFirst = MavenServerManager.getInstance().getConnector(project, first.absolutePath)
+    ensureConnected(connectorFirst)
+    val connectorSecond = MavenServerManager.getInstance().getConnector(project, second.absolutePath)
+    assertSame(connectorFirst, connectorSecond)
+    MavenServerManager.getInstance().shutdownConnector(connectorFirst, true)
+    assertEmpty(MavenServerManager.getInstance().getAllConnectors())
   }
 
-  private static void kill(MavenServerConnector connector) {
-    RemoteProcessSupport support =
-      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, RemoteProcessSupport.class, "mySupport");
-    AtomicReference<RemoteProcessSupport.Heartbeat> heartbeat =
-      ReflectionUtil.getField(RemoteProcessSupport.class, support, AtomicReference.class, "myHeartbeatRef");
-    heartbeat.get().kill(1);
-    new WaitFor(10_000) {
-      @Override
-      protected boolean condition() {
-        return !connector.checkConnected();
+  private fun kill(connector: MavenServerConnector) {
+    val support = ReflectionUtil.getField(MavenServerConnectorImpl::class.java, connector, RemoteProcessSupport::class.java, "mySupport")
+    val heartbeat = ReflectionUtil.getField(RemoteProcessSupport::class.java, support, AtomicReference::class.java, "myHeartbeatRef")
+    (heartbeat.get() as RemoteProcessSupport.Heartbeat).kill(1)
+    object : WaitFor(10000) {
+      override fun condition(): Boolean {
+        return !connector.checkConnected()
       }
-    };
-    assertFalse(connector.checkConnected());
+    }
+    assertFalse(connector.checkConnected())
   }
 }
