@@ -1,9 +1,8 @@
-package bar
+package baz
 
 import foo.A
 import foo.O
 import foo.O.objectExtensionMember2
-import foo.X
 import foo.classExtension
 import foo.companionExtension
 import foo.objectExtension
@@ -38,13 +37,7 @@ fun test() {
     foo.J()::javaClassMember
     foo.J::javaClassMember
     foo.J::javaClassStaticMember
-    ::topLevel
-    ::X
-    ::XConstr
-    X::XX
-    ::J
-    ::JConstr
-    J::JJ
+    //::topLevel // not usable without import
 
     with(A()) {
         classMember()

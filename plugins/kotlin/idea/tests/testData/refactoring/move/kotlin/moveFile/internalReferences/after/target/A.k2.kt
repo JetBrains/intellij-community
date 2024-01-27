@@ -9,8 +9,13 @@ public class A: B() {
         foo()
         this.bar()
         this.foo()
-        B().foo().bar()
-        library.B().foo().bar()
-        B().bar().foo()
     }
+}
+
+public fun test(a: A) {
+    a.bar()
+    a.foo()
+    B().foo().bar()
+    B().foo().bar()
+    B().bar().foo()
 }

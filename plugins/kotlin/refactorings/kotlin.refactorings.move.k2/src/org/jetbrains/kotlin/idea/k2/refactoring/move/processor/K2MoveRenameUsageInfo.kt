@@ -15,11 +15,11 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -199,7 +199,7 @@ sealed class K2MoveRenameUsageInfo(
                     val ref = refExpr.mainReference
                     val declSymbol = ref.resolveToSymbol() as? KtDeclarationSymbol? ?: return@forEachDescendantOfType
                     val declPsi = declSymbol.psi as? KtNamedDeclaration ?: return@forEachDescendantOfType
-                    if ((refExpr.isUnqualifiable() || refExpr.isFirstInQualifiedChain()) && declPsi.needsReferenceUpdate) {
+                    if (declPsi.needsReferenceUpdate) {
                         val usageInfo = ref.createKotlinUsageInfo(declPsi, isInternal = true)
                         usages.add(usageInfo)
                         refExpr.internalUsageInfo = usageInfo
@@ -247,14 +247,6 @@ sealed class K2MoveRenameUsageInfo(
             }
 
             return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
-        }
-
-        private fun KtSimpleNameExpression.isFirstInQualifiedChain(): Boolean {
-            val baseExpression = (parent as? KtCallExpression) ?: this
-            val parent = baseExpression.parent
-            if (parent !is KtDotQualifiedExpression) return true
-            val receiver = parent.receiverExpression
-            return this == receiver // if current ref is first in qualified chain the ref can be imported
         }
 
         private fun KtSimpleNameReference.createKotlinUsageInfo(declaration: KtNamedDeclaration, isInternal: Boolean): K2MoveRenameUsageInfo {

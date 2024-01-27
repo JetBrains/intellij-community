@@ -3,37 +3,37 @@ package foo
 import foo.O.objectExtensionMember2
 
 fun test() {
-    foo.A().classMember()
-    foo.A().classExtension()
-    foo.O.objectMember1()
-    foo.O.objectMember2()
-    foo.O.objectExtension()
-    foo.A.companionMember()
-    foo.A.companionExtension()
+    A().classMember()
+    A().classExtension()
+    O.objectMember1()
+    O.objectMember2()
+    O.objectExtension()
+    A.companionMember()
+    A.companionExtension()
     foo.J().javaClassMember()
     foo.J.javaClassStaticMember()
-    foo.topLevel()
-    with(foo.O) { 1.objectExtensionMember1() }
+    topLevel()
+    with(O) { 1.objectExtensionMember1() }
     1.objectExtensionMember2()
-    with(foo.A) { 1.companionExtensionMember() }
+    with(A) { 1.companionExtensionMember() }
 
-    foo.A()::classMember
-    foo.A::classMember
-    foo.A()::classExtension
-    foo.A::classExtension
-    foo.O::objectMember1
-    foo.O::objectMember2
-    foo.O::objectExtension
-    foo.A.Companion::companionMember
-    (foo.A)::companionMember
-    foo.A.Companion::companionExtension
-    (foo.A)::companionExtension
+    A()::classMember
+    A::classMember
+    A()::classExtension
+    A::classExtension
+    O::objectMember1
+    O::objectMember2
+    O::objectExtension
+    A.Companion::companionMember
+    (A)::companionMember
+    A.Companion::companionExtension
+    (A)::companionExtension
     foo.J()::javaClassMember
     foo.J::javaClassMember
     foo.J::javaClassStaticMember
     //::topLevel // not usable without import
 
-    with(foo.A()) {
+    with(A()) {
         classMember()
         this.classMember()
         classExtension()
