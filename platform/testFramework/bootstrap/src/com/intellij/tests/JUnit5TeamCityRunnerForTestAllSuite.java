@@ -108,7 +108,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
     private static final int MAX_STACKTRACE_MESSAGE_LENGTH =
-      Integer.getInteger("intellij.build.test.stacktrace.max.length", 10 * 1024 * 1024);
+      Integer.getInteger("intellij.build.test.stacktrace.max.length", 1024 * 1024);
 
     public TCExecutionListener() {
       myPrintStream = System.out;
