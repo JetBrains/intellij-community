@@ -7,10 +7,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public interface BatchingFileSystem {
-  @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Collection<String> childrenNames);
+  /**
+   * Returns a list of files in a directory along with their attributes.
+   * When the {@code childrenNames} set is {@code null}, all files should be returned.
+   */
+  @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames);
 }
