@@ -246,10 +246,10 @@ class MavenProjectReader(private val myProject: Project) {
     return readMavenProjectModel(file, headerOnly, problems, alwaysOnProfiles, isAutomaticVersionFeatureEnabled(file, project))
   }
 
-  private fun readProjectModelUsingMavenServer(project: Project,
-                                               file: VirtualFile,
-                                               problems: MutableCollection<MavenProjectProblem>,
-                                               alwaysOnProfiles: MutableSet<String>): RawModelReadResult {
+  private suspend fun readProjectModelUsingMavenServer(project: Project,
+                                                       file: VirtualFile,
+                                                       problems: MutableCollection<MavenProjectProblem>,
+                                                       alwaysOnProfiles: MutableSet<String>): RawModelReadResult {
     var result: MavenModel? = null
     val basedir = MavenUtil.getBaseDir(file).toString()
     val manager = MavenProjectsManager.getInstance(project).embeddersManager

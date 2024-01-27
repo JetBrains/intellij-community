@@ -26,17 +26,30 @@ abstract class RemoteObjectWrapper<T> protected constructor() {
   protected val wrappee: T
     get() = myWrappee!!
 
+  @Deprecated("use suspend", ReplaceWith("create"))
   @Throws(RemoteException::class)
   @Synchronized
-  protected open fun getOrCreateWrappee(): T {
+  protected open fun getOrCreateWrappeeBlocking(): T {
+    if (myWrappee == null) {
+      myWrappee = createBlocking()
+    }
+    return myWrappee!!
+  }
+
+  @Throws(RemoteException::class)
+  protected open suspend fun getOrCreateWrappee(): T {
     if (myWrappee == null) {
       myWrappee = create()
     }
     return myWrappee!!
   }
 
+  @Deprecated("use suspend", ReplaceWith("create"))
   @Throws(RemoteException::class)
-  protected abstract fun create(): T
+  protected abstract fun createBlocking(): T
+
+  @Throws(RemoteException::class)
+  protected abstract suspend fun create(): T
 
   @Synchronized
   protected open fun handleRemoteError(e: RemoteException) {

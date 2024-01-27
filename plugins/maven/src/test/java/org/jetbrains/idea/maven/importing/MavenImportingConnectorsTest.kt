@@ -275,7 +275,9 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                                        }, testRootDisposable)
     MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
     assertThrows(UnsupportedOperationException::class.java) {
-      MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.path).getEmbedder()
+      runBlockingMaybeCancellable {
+        MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.path).getEmbedder()
+      }
     }
     TestCase.assertNotNull(settingsRef.get())
     val path = MavenServerManager.getInstance().getConnector(project, projectRoot.path).mavenDistribution.mavenHome

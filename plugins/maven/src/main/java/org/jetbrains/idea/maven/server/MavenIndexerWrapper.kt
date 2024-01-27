@@ -18,7 +18,7 @@ import java.rmi.server.UnicastRemoteObject
 abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer>() {
   fun startIndexing(info: MavenRepositoryInfo?, indexDir: File?): MavenIndexUpdateState? {
     try {
-      val w = getOrCreateWrappee()
+      val w = getOrCreateWrappeeBlocking()
       if (w !is AsyncMavenServerIndexer) {
         MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?")
         return null
@@ -33,7 +33,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
 
   fun stopIndexing(info: MavenRepositoryInfo?) {
     try {
-      val w = getOrCreateWrappee()
+      val w = getOrCreateWrappeeBlocking()
       if (w !is AsyncMavenServerIndexer) {
         MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?")
         return
@@ -47,7 +47,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
 
   fun status(): List<MavenIndexUpdateState> {
     try {
-      val w = getOrCreateWrappee()
+      val w = getOrCreateWrappeeBlocking()
       if (w !is AsyncMavenServerIndexer) {
         MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?")
         return emptyList()
@@ -77,7 +77,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
 
   fun indexExists(dir: File?): Boolean {
     try {
-      return getOrCreateWrappee().indexExists(dir, ourToken)
+      return getOrCreateWrappeeBlocking().indexExists(dir, ourToken)
     }
     catch (e: RemoteException) {
       handleRemoteError(e)
@@ -86,7 +86,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
   }
 
   val indexCount: Int
-    get() = perform<Int, Exception> { getOrCreateWrappee().getIndexCount(ourToken) }
+    get() = perform<Int, Exception> { getOrCreateWrappeeBlocking().getIndexCount(ourToken) }
 
   @Throws(MavenProcessCanceledException::class, MavenServerIndexerException::class)
   fun updateIndex(mavenIndexId: MavenIndexId,
@@ -96,7 +96,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
       RetriableCancelable<Any, Exception> {
         val indicatorWrapper = wrapAndExport(indicator)
         try {
-          getOrCreateWrappee().updateIndex(mavenIndexId, indicatorWrapper, multithreaded, ourToken)
+          getOrCreateWrappeeBlocking().updateIndex(mavenIndexId, indicatorWrapper, multithreaded, ourToken)
         }
         finally {
           UnicastRemoteObject.unexportObject(indicatorWrapper, true)
@@ -113,7 +113,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
         do {
           if (progress.isCanceled) return@perform
           MavenLog.LOG.debug("process artifacts: $start")
-          list = getOrCreateWrappee().processArtifacts(mavenIndexId, start, ourToken)
+          list = getOrCreateWrappeeBlocking().processArtifacts(mavenIndexId, start, ourToken)
           if (list != null) {
             processor.processArtifacts(list)
             start += list.size
@@ -131,7 +131,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
   fun addArtifacts(mavenIndexId: MavenIndexId, artifactFiles: Collection<File>): List<AddArtifactResponse> {
     return perform<List<AddArtifactResponse>, Exception> {
       try {
-        return@perform getOrCreateWrappee().addArtifacts(mavenIndexId, ArrayList<File>(artifactFiles), ourToken)
+        return@perform getOrCreateWrappeeBlocking().addArtifacts(mavenIndexId, ArrayList<File>(artifactFiles), ourToken)
       }
       catch (ignore: Throwable) {
         return@perform artifactFiles.map { file: File? -> AddArtifactResponse(file, null) }
@@ -141,7 +141,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
 
   @Throws(MavenServerIndexerException::class)
   fun search(mavenIndexId: MavenIndexId?, pattern: String?, maxResult: Int): Set<MavenArtifactInfo> {
-    return perform<HashSet<MavenArtifactInfo>, Exception> { getOrCreateWrappee().search(mavenIndexId, pattern, maxResult, ourToken) }
+    return perform<HashSet<MavenArtifactInfo>, Exception> { getOrCreateWrappeeBlocking().search(mavenIndexId, pattern, maxResult, ourToken) }
   }
 
   @ApiStatus.Internal

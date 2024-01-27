@@ -28,9 +28,15 @@ import java.util.*
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>() {
 
+  @Deprecated("use suspend", replaceWith = ReplaceWith("create"))
   @Synchronized
   @Throws(RemoteException::class)
-  override fun getOrCreateWrappee(): MavenServerEmbedder {
+  override fun getOrCreateWrappeeBlocking(): MavenServerEmbedder {
+    throw NotImplementedError("use suspend method")
+  }
+
+  @Throws(RemoteException::class)
+  override suspend fun getOrCreateWrappee(): MavenServerEmbedder {
     var embedder = super.getOrCreateWrappee()
     try {
       embedder!!.ping(ourToken)
@@ -93,14 +99,14 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   @Throws(MavenProcessCanceledException::class)
   fun evaluateEffectivePom(file: VirtualFile, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
-    return evaluateEffectivePom(File(file.getPath()), ArrayList(activeProfiles), ArrayList(inactiveProfiles))
+    return runBlockingMaybeCancellable {
+      evaluateEffectivePom(File(file.getPath()), ArrayList(activeProfiles), ArrayList(inactiveProfiles))
+    }
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun evaluateEffectivePom(file: File, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
-    return performCancelable<String?, RuntimeException> {
-      getOrCreateWrappee().evaluateEffectivePom(file, ArrayList(activeProfiles), ArrayList(inactiveProfiles), ourToken)
-    }
+  suspend fun evaluateEffectivePom(file: File, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
+    return getOrCreateWrappee().evaluateEffectivePom(file, ArrayList(activeProfiles), ArrayList(inactiveProfiles), ourToken)
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts()}")
@@ -132,7 +138,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}")
   @Throws(MavenProcessCanceledException::class)
   fun resolveTransitively(artifacts: List<MavenArtifactInfo>, remoteRepositories: List<MavenRemoteRepository>): List<MavenArtifact> {
-    return performCancelable<MavenArtifactResolveResult, RuntimeException> {
+    return runBlockingMaybeCancellable {
       getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
     }.mavenResolvedArtifacts
   }
@@ -140,7 +146,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   fun resolveArtifactTransitively(artifacts: List<MavenArtifactInfo>,
                                   remoteRepositories: List<MavenRemoteRepository>): MavenArtifactResolveResult {
-    return performCancelable<MavenArtifactResolveResult, RuntimeException> {
+    return runBlockingMaybeCancellable {
       getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
     }
   }
@@ -181,8 +187,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun readModel(file: File?): MavenModel? {
-    return performCancelable<MavenModel?, RuntimeException> { getOrCreateWrappee().readModel(file, ourToken) }
+  suspend fun readModel(file: File?): MavenModel? {
+    return getOrCreateWrappee().readModel(file, ourToken)
   }
 
   @Throws(MavenProcessCanceledException::class)
@@ -196,19 +202,19 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {
-    return perform<Set<MavenRemoteRepository>, RuntimeException> {
+    return runBlockingMaybeCancellable {
       getOrCreateWrappee().resolveRepositories(ArrayList(repositories), ourToken)
     }
   }
 
   fun getInnerArchetypes(catalogPath: Path): Collection<MavenArchetype> {
-    return perform<Collection<MavenArchetype>, RuntimeException> {
+    return runBlockingMaybeCancellable {
       getOrCreateWrappee().getLocalArchetypes(ourToken, catalogPath.toString())
     }
   }
 
   fun getRemoteArchetypes(url: String): Collection<MavenArchetype> {
-    return perform<Collection<MavenArchetype>, RuntimeException> { getOrCreateWrappee().getRemoteArchetypes(ourToken, url) }
+    return runBlockingMaybeCancellable { getOrCreateWrappee().getRemoteArchetypes(ourToken, url) }
   }
 
   fun resolveAndGetArchetypeDescriptor(groupId: String,
@@ -216,14 +222,14 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                                        version: String,
                                        repositories: List<MavenRemoteRepository>,
                                        url: String?): Map<String, String>? {
-    return perform<Map<String, String>?, RuntimeException> {
+    return runBlockingMaybeCancellable {
       getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, ArrayList(repositories), url, ourToken)
     }
   }
 
   @Throws(RemoteException::class)
   @TestOnly
-  fun getEmbedder(): MavenServerEmbedder = getOrCreateWrappee()
+  suspend fun getEmbedder(): MavenServerEmbedder = getOrCreateWrappee()
 
   fun release() {
     val w = myWrappee ?: return

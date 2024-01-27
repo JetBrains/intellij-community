@@ -20,6 +20,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.net.NetUtils
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.apache.commons.lang3.SystemUtils
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
@@ -327,9 +329,20 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return object : MavenEmbedderWrapper(project) {
       private var myConnector: MavenServerConnector? = null
 
-      @Synchronized
+      @Deprecated("use suspend", replaceWith = ReplaceWith("create"))
       @Throws(RemoteException::class)
-      override fun create(): MavenServerEmbedder {
+      override fun createBlocking(): MavenServerEmbedder {
+        throw NotImplementedError("use suspend method")
+      }
+
+      val createMutex = Mutex()
+      @Throws(RemoteException::class)
+      override suspend fun create(): MavenServerEmbedder {
+        return createMutex.withLock { doCreate() }
+      }
+
+      @Throws(RemoteException::class)
+      private suspend fun doCreate(): MavenServerEmbedder {
         var settings =
           convertSettings(project, MavenProjectsManager.getInstance(project).generalSettings, multiModuleProjectDirectory)
         if (alwaysOnline && settings.isOffline) {
@@ -347,7 +360,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
         val forceResolveDependenciesSequentially = Registry.`is`("maven.server.force.resolve.dependencies.sequentially")
         val useCustomDependenciesResolver = Registry.`is`("maven.server.use.custom.dependencies.resolver")
 
-        myConnector = this@MavenServerManagerImpl.getConnectorBlocking(project, multiModuleProjectDirectory)
+        myConnector = this@MavenServerManagerImpl.getConnector(project, multiModuleProjectDirectory)
         return myConnector!!.createEmbedder(MavenEmbedderSettings(
           settings,
           transformer.toRemotePath(multiModuleProjectDirectory),
@@ -393,7 +406,13 @@ internal class MavenServerManagerImpl : MavenServerManager {
           }
 
           @Throws(RemoteException::class)
-          override fun create(): MavenServerIndexer {
+          override fun createBlocking(): MavenServerIndexer {
+            val indexingConnector = indexingConnector
+            return indexingConnector!!.createIndexer()
+          }
+
+          @Throws(RemoteException::class)
+          override suspend fun create(): MavenServerIndexer {
             val indexingConnector = indexingConnector
             return indexingConnector!!.createIndexer()
           }
@@ -454,7 +473,11 @@ internal class MavenServerManagerImpl : MavenServerManager {
           return indices
         }
 
-        override fun create(): MavenServerIndexer {
+        override fun createBlocking(): MavenServerIndexer {
+          return DummyIndexer()
+        }
+
+        override suspend fun create(): MavenServerIndexer {
           return DummyIndexer()
         }
       }
@@ -467,7 +490,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
       }
 
       @Throws(RemoteException::class)
-      override fun create(): MavenServerIndexer {
+      override fun createBlocking(): MavenServerIndexer {
         var connector: MavenServerConnector?
         synchronized(myMultimoduleDirToConnectorMap) {
           connector = myMultimoduleDirToConnectorMap.values.find { c: MavenServerConnector ->
@@ -482,6 +505,24 @@ internal class MavenServerManagerImpl : MavenServerManager {
         val workingDirectory = ObjectUtils.chooseNotNull<@SystemIndependent String?>(project.basePath,
                                                                                      SystemUtils.getUserHome().absolutePath)
         return getConnectorBlocking(project, workingDirectory!!).createIndexer()
+      }
+
+      @Throws(RemoteException::class)
+      override suspend fun create(): MavenServerIndexer {
+        var connector: MavenServerConnector?
+        synchronized(myMultimoduleDirToConnectorMap) {
+          connector = myMultimoduleDirToConnectorMap.values.find { c: MavenServerConnector ->
+            c.multimoduleDirectories.find { mDir: String? ->
+              FileUtil.isAncestor(finalPath!!, mDir!!, false)
+            } != null
+          }
+        }
+        if (connector != null) {
+          return connector!!.createIndexer()
+        }
+        val workingDirectory = ObjectUtils.chooseNotNull<@SystemIndependent String?>(project.basePath,
+                                                                                     SystemUtils.getUserHome().absolutePath)
+        return getConnector(project, workingDirectory!!).createIndexer()
       }
     }
   }
