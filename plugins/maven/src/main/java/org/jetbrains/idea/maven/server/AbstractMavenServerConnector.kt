@@ -30,6 +30,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     return myMultimoduleDirectories.add(multimoduleDirectory)
   }
 
+  @Deprecated("use suspend", ReplaceWith("getServer"))
   protected abstract fun getServerBlocking(): MavenServer
 
   protected abstract suspend fun getServer(): MavenServer
