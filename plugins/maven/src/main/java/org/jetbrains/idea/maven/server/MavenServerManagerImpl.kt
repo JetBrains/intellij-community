@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.net.NetUtils
 import org.apache.commons.lang3.SystemUtils
 import org.jetbrains.annotations.SystemIndependent
@@ -471,13 +470,9 @@ internal class MavenServerManagerImpl : MavenServerManager {
       override fun create(): MavenServerIndexer {
         var connector: MavenServerConnector?
         synchronized(myMultimoduleDirToConnectorMap) {
-          connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values
-          ) { c: MavenServerConnector ->
-            ContainerUtil.find(
-              c.multimoduleDirectories
-            ) { mDir: String? ->
-              FileUtil
-                .isAncestor(finalPath!!, mDir!!, false)
+          connector = myMultimoduleDirToConnectorMap.values.find { c: MavenServerConnector ->
+            c.multimoduleDirectories.find { mDir: String? ->
+              FileUtil.isAncestor(finalPath!!, mDir!!, false)
             } != null
           }
         }

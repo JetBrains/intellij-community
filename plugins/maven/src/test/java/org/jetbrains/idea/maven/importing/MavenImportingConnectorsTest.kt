@@ -278,7 +278,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
       MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.path).getEmbedder()
     }
     TestCase.assertNotNull(settingsRef.get())
-    val path = MavenServerManager.getInstance().getConnectorBlocking(project, projectRoot.path).mavenDistribution.mavenHome
+    val path = MavenServerManager.getInstance().getConnector(project, projectRoot.path).mavenDistribution.mavenHome
 
     TestCase.assertEquals(path.resolve("conf/settings.xml").toString(), settingsRef.get().settings.globalSettingsPath)
   }

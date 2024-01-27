@@ -159,8 +159,8 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   }
 
 
-  private fun assertCorrectVersion() {
-    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnectorBlocking(project, projectRoot.path).mavenDistribution.version)
+  private suspend fun assertCorrectVersion() {
+    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(project, projectRoot.path).mavenDistribution.version)
   }
 
   @Test

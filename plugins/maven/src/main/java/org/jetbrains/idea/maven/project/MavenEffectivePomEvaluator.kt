@@ -14,8 +14,7 @@ class MavenEffectivePomEvaluator {
   companion object {
     @JvmStatic
     suspend fun evaluateEffectivePom(project: Project, mavenProject: MavenProject): String? {
-      return withBackgroundProgress(
-        project, MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"), true) {
+      return withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"), true) {
         val baseDir = MavenUtil.getBaseDir(mavenProject.directoryFile).toString()
         val embeddersManager = MavenProjectsManager.getInstance(project).embeddersManager
         val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir)

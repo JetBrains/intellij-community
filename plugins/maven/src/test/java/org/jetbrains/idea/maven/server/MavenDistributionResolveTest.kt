@@ -44,7 +44,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     createWrapperProperties("distributionUrl=http://example.org/repo/maven.bin.zip")
     MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
     importProjectAsync()
-    val connector = MavenServerManager.getInstance().getConnectorBlocking(project, projectRoot.path)
+    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
       MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
     assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.message == "Cannot install wrapped maven, set Bundled Maven" }
@@ -58,14 +58,14 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     createWrapperProperties("distributionUrl=http://example.org/repo/maven.bin.zip")
     MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
     importProjectAsync()
-    val connector = MavenServerManager.getInstance().getConnectorBlocking(project, projectRoot.path)
+    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
       MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>2</version>")
     importProjectAsync()
-    assertSame(connector, MavenServerManager.getInstance().getConnectorBlocking(project, projectRoot.path))
+    assertSame(connector, MavenServerManager.getInstance().getConnector(project, projectRoot.path))
   }
 
   @Throws(IOException::class)
@@ -77,7 +77,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
       createWrapperProperties("distributionUrl=$url")
       MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
       importProjectAsync()
-      val connector = MavenServerManager.getInstance().getConnectorBlocking(project, projectRoot.path)
+      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
       assertTrue(connector.mavenDistribution.mavenHome.absolutePathString().contains("wrapper"))
       assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.message == "HTTP used to download maven distribution" }
     }
@@ -92,7 +92,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
       createWrapperProperties("distributionUrl=$url")
       MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = BundledMaven3
       importProjectAsync()
-      val connector = MavenServerManager.getInstance().getConnectorBlocking(project, projectRoot.path)
+      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
       assertFalse(connector.mavenDistribution.mavenHome.toFile().absolutePath.contains(".wrapper"))
       assertNotContains<BuildEvent> {  it.message == "Running maven wrapper" }
     }
@@ -106,7 +106,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenInSpecificPath(
       "path/to/unexisted/maven/home")
     importProjectAsync()
-    val connector = MavenServerManager.getInstance().getConnectorBlocking(project, projectRoot.path)
+    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
       MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
     //assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }

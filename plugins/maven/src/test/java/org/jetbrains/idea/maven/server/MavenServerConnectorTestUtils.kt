@@ -51,7 +51,7 @@ suspend fun <R> withStoppedConnectorOnce(action: suspend () -> R): R {
   }
 }
 
-fun <R> withCompatibleConnector(action: () -> R): R {
+suspend fun <R> withCompatibleConnector(action: suspend () -> R): R {
   Disposer.newDisposable().use { disposable ->
     val factory = object : MavenServerManager.MavenServerConnectorFactoryImpl() {
       override fun create(project: Project,
