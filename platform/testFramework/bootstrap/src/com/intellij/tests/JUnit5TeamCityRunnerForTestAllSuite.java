@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
@@ -53,6 +53,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       }
     }
     catch (Throwable x) {
+      //noinspection CallToPrintStackTrace
       x.printStackTrace();
     }
     finally {
@@ -106,6 +107,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     private TestPlan myTestPlan;
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
+    private static final int MAX_STACKTRACE_MESSAGE_LENGTH =
+      Integer.getInteger("intellij.build.test.stacktrace.max.length", 10 * 1024 * 1024);
 
     public TCExecutionListener() {
       myPrintStream = System.out;
@@ -327,7 +330,11 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       final StringWriter stringWriter = new StringWriter();
       final PrintWriter writer = new PrintWriter(stringWriter);
       ex.printStackTrace(writer);
-      return stringWriter.toString();
+      StringBuffer buffer = stringWriter.getBuffer();
+      if (buffer.length() > MAX_STACKTRACE_MESSAGE_LENGTH) {
+        return buffer.substring(0, MAX_STACKTRACE_MESSAGE_LENGTH);
+      }
+      return buffer.toString();
     }
 
     private static String getId(TestIdentifier identifier) {
