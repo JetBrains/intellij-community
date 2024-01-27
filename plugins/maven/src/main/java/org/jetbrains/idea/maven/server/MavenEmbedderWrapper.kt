@@ -28,13 +28,6 @@ import java.util.*
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>() {
 
-  @Deprecated("use suspend", replaceWith = ReplaceWith("create"))
-  @Synchronized
-  @Throws(RemoteException::class)
-  override fun getOrCreateWrappeeBlocking(): MavenServerEmbedder {
-    throw NotImplementedError("use suspend method")
-  }
-
   @Throws(RemoteException::class)
   override suspend fun getOrCreateWrappee(): MavenServerEmbedder {
     var embedder = super.getOrCreateWrappee()

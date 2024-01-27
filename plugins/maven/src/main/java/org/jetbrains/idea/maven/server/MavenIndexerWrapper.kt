@@ -16,6 +16,20 @@ import java.rmi.RemoteException
 import java.rmi.server.UnicastRemoteObject
 
 abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer>() {
+  @Deprecated("use suspend", ReplaceWith("create"))
+  @Throws(RemoteException::class)
+  protected abstract fun createBlocking(): MavenServerIndexer
+
+  @Deprecated("use suspend", ReplaceWith("create"))
+  @Throws(RemoteException::class)
+  @Synchronized
+  protected open fun getOrCreateWrappeeBlocking(): MavenServerIndexer {
+    if (myWrappee == null) {
+      myWrappee = createBlocking()
+    }
+    return myWrappee!!
+  }
+
   fun startIndexing(info: MavenRepositoryInfo?, indexDir: File?): MavenIndexUpdateState? {
     try {
       val w = getOrCreateWrappeeBlocking()

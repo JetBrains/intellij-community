@@ -329,12 +329,6 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return object : MavenEmbedderWrapper(project) {
       private var myConnector: MavenServerConnector? = null
 
-      @Deprecated("use suspend", replaceWith = ReplaceWith("create"))
-      @Throws(RemoteException::class)
-      override fun createBlocking(): MavenServerEmbedder {
-        throw NotImplementedError("use suspend method")
-      }
-
       val createMutex = Mutex()
       @Throws(RemoteException::class)
       override suspend fun create(): MavenServerEmbedder {
