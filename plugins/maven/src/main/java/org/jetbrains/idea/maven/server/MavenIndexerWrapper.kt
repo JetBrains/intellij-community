@@ -15,7 +15,7 @@ import java.io.File
 import java.rmi.RemoteException
 import java.rmi.server.UnicastRemoteObject
 
-abstract class MavenIndexerWrapper(parent: RemoteObjectWrapper<*>?) : MavenRemoteObjectWrapper<MavenServerIndexer>(parent) {
+abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer>() {
   fun startIndexing(info: MavenRepositoryInfo?, indexDir: File?): MavenIndexUpdateState? {
     try {
       val w = getOrCreateWrappee()

@@ -8,7 +8,7 @@ import java.io.IOException
 import java.rmi.server.UnicastRemoteObject
 import java.util.*
 
-abstract class MavenRemoteObjectWrapper<T> protected constructor(parent: RemoteObjectWrapper<*>?) : RemoteObjectWrapper<T>(parent) {
+abstract class MavenRemoteObjectWrapper<T> protected constructor() : RemoteObjectWrapper<T>() {
   private class RemoteMavenServerProgressIndicator(private val myProcess: MavenProgressIndicator) : MavenRemoteObject(), MavenServerProgressIndicator {
     override fun setText(text: @NlsContexts.ProgressText String?) {
       myProcess.setText(text)

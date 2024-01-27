@@ -385,7 +385,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
       if (myIndexerWrapper != null) return myIndexerWrapper
       val workingDir = SystemUtils.getUserHome().absolutePath
       myIndexerWrapper =
-        object : MavenIndexerWrapper(null) {
+        object : MavenIndexerWrapper() {
           override fun createMavenIndices(project: Project): MavenIndices {
             val indices = MavenIndices(this, getInstance().getIndicesDir().toFile(), project)
             Disposer.register(MavenDisposable.getInstance(project), indices)
@@ -447,7 +447,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     }
     val finalPath = path
     if (tryGetWslDistributionForPath(path) != null) {
-      return object : MavenIndexerWrapper(null) {
+      return object : MavenIndexerWrapper() {
         override fun createMavenIndices(project: Project): MavenIndices {
           val indices = MavenIndices(this, getInstance().getIndicesDir().toFile(), project)
           Disposer.register(MavenDisposable.getInstance(project), indices)
@@ -459,7 +459,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
         }
       }
     }
-    return object : MavenIndexerWrapper(null) {
+    return object : MavenIndexerWrapper() {
       override fun createMavenIndices(project: Project): MavenIndices {
         val indices = MavenIndices(this, getInstance().getIndicesDir().toFile(), project)
         Disposer.register(MavenDisposable.getInstance(project), indices)

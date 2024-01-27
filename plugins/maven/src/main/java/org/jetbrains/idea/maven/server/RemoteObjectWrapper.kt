@@ -20,7 +20,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import java.rmi.RemoteException
 
-abstract class RemoteObjectWrapper<T> protected constructor(private val myParent: RemoteObjectWrapper<*>?) {
+abstract class RemoteObjectWrapper<T> protected constructor() {
   protected var myWrappee: T? = null
 
   protected val wrappee: T
@@ -28,25 +28,15 @@ abstract class RemoteObjectWrapper<T> protected constructor(private val myParent
 
   @Throws(RemoteException::class)
   @Synchronized
-  open fun getOrCreateWrappee(): T {
+  protected open fun getOrCreateWrappee(): T {
     if (myWrappee == null) {
       myWrappee = create()
-      onWrappeeCreated()
     }
-    onWrappeeAccessed()
     return myWrappee!!
   }
 
   @Throws(RemoteException::class)
   protected abstract fun create(): T
-
-  @Throws(RemoteException::class)
-  protected fun onWrappeeCreated() {
-  }
-
-  protected fun onWrappeeAccessed() {
-    myParent?.onWrappeeAccessed()
-  }
 
   @Synchronized
   protected open fun handleRemoteError(e: RemoteException) {
@@ -57,7 +47,6 @@ abstract class RemoteObjectWrapper<T> protected constructor(private val myParent
   @Synchronized
   protected fun onError() {
     cleanup()
-    myParent?.onError()
   }
 
   @Synchronized

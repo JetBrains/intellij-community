@@ -26,7 +26,7 @@ import java.rmi.RemoteException
 import java.util.*
 
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
-  MavenRemoteObjectWrapper<MavenServerEmbedder?>(null) {
+  MavenRemoteObjectWrapper<MavenServerEmbedder?>() {
 
   @Synchronized
   @Throws(RemoteException::class)
