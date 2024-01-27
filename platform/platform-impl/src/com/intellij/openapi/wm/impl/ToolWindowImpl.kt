@@ -17,10 +17,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.ActionToolbarAppListener
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -38,7 +35,7 @@ import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProperty
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ComponentTreeWatcher
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.Content
@@ -49,6 +46,7 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.content.tabs.TabbedContentAction
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ArrayUtil
 import com.intellij.util.Consumer
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
@@ -204,18 +202,14 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
         onMovedOrResized()
       }
     })
-
-    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(
-      ActionToolbarImpl.TOPIC,
-      object : ActionToolbarAppListener {
-        override fun toolbarAdded(toolbar: ActionToolbar) {
-          // Check if it's our toolbar to avoid traversing the whole hierarchy every time a toolbar is added somewhere.
-          if (ComponentUtil.getParentOfType(InternalDecoratorImpl::class.java, toolbar.component) == decorator) {
-            updateToolbarsVisibility()
-          }
+    object : ComponentTreeWatcher(ArrayUtil.EMPTY_CLASS_ARRAY) {
+      override fun processComponent(component: Component) {
+        if (component is ActionToolbar) {
+          updateToolbarsVisibility()
         }
       }
-    )
+      override fun unprocessComponent(component: Component) = Unit
+    }.register(decorator)
 
     toolWindowFocusWatcher = ToolWindowFocusWatcher(toolWindow = this, component = decorator)
     contentManager.addContentManagerListener(object : ContentManagerListener {
