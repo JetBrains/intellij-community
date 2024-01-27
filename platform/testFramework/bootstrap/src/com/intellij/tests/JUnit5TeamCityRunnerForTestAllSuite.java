@@ -108,7 +108,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
     private static final int MAX_STACKTRACE_MESSAGE_LENGTH =
-      Integer.getInteger("intellij.build.test.stacktrace.max.length", 1024 * 1024);
+      Integer.getInteger("intellij.build.test.stacktrace.max.length", 100 * 1024);
 
     public TCExecutionListener() {
       myPrintStream = System.out;
@@ -275,7 +275,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           attrs.put("duration", Long.toString(duration));
         }
         if (reason != null) {
-          attrs.put("message", reason);
+          attrs.put("message", limit(reason));
         }
         if (ex != null) {
           attrs.put("details", getTrace(ex));
@@ -289,8 +289,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           else if (ex instanceof AssertionFailedError &&
                    ((AssertionFailedError)ex).isActualDefined() &&
                    ((AssertionFailedError)ex).isExpectedDefined()) {
-            attrs.put("expected", ((AssertionFailedError)ex).getExpected().getStringRepresentation());
-            attrs.put("actual", ((AssertionFailedError)ex).getActual().getStringRepresentation());
+            attrs.put("expected", limit(((AssertionFailedError)ex).getExpected().getStringRepresentation()));
+            attrs.put("actual", limit(((AssertionFailedError)ex).getActual().getStringRepresentation()));
             attrs.put("type", "comparisonFailure");
           }
           else {
@@ -300,8 +300,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
                 String expected = (String)aClass.getMethod("getExpected").invoke(ex);
                 String actual = (String)aClass.getMethod("getActual").invoke(ex);
 
-                attrs.put("expected", expected);
-                attrs.put("actual", actual);
+                attrs.put("expected", limit(expected));
+                attrs.put("actual", limit(actual));
                 attrs.put("type", "comparisonFailure");
               }
               catch (Throwable e) {
@@ -324,6 +324,14 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
         return true;
       }
       return isComparisonFailure(aClass.getSuperclass());
+    }
+
+    private static String limit(String string) {
+      if (string == null) return null;
+      if (string.length() > MAX_STACKTRACE_MESSAGE_LENGTH) {
+        return string.substring(0, MAX_STACKTRACE_MESSAGE_LENGTH);
+      }
+      return string;
     }
 
     protected String getTrace(Throwable ex) {
