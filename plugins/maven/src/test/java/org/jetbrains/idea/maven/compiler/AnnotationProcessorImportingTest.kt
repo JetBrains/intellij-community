@@ -23,7 +23,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfigurator
+import org.jetbrains.idea.maven.importing.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE
+import org.jetbrains.idea.maven.importing.MAVEN_DEFAULT_ANNOTATION_PROFILE
+import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getModuleProfileName
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.junit.Assert
@@ -132,21 +134,16 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
     assertEquals(
-      compilerConfiguration.findModuleProcessorProfile(
-        MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE)?.moduleNames,
+      compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)?.moduleNames,
       setOf("module1", "module4"))
-    assertNull(compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE))
 
-    val projectProfile = compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))
+    val projectProfile = compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
     assertEquals(projectProfile!!.moduleNames, setOf("module2"))
     assertEquals(projectProfile.processors, setOf("com.test.SourceCodeGeneratingAnnotationProcessor2"))
-    assertNull(compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("module3")))
-    assertNull(compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("module3_1")))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("module3")))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("module3_1")))
     assertEquals(compilerConfiguration.moduleProcessorProfiles.size, 2)
   }
 
@@ -172,10 +169,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
-    assertNull(compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE))
-    val profile = compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE))
+    val profile = compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(profile)
     assertTrue(profile!!.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("out/generated"))
   }
@@ -209,11 +204,9 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
-    assertNull(compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE))
     val processorOptions =
-      compilerConfiguration.findModuleProcessorProfile(
-        MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))?.processorOptions
+      compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))?.processorOptions
     assertEquals(processorOptions, mapOf("opt1" to "111", "opt2" to "222", "opt3" to "333", "opt4" to "444", "justKey" to ""))
   }
 
@@ -271,10 +264,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
-    assertNull(compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE))
-    val profile = compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE))
+    val profile = compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(profile)
     assertTrue(profile!!.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel"))
     assertTrue(profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest"))
@@ -333,10 +324,8 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
-    assertNull(compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE))
-    val profile = compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE))
+    val profile = compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(profile)
     assertTrue(profile!!.getGeneratedSourcesDirectoryName(false).replace('\\', '/').endsWith("target/metamodel"))
     assertTrue(profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest"))
@@ -385,8 +374,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
     TestCase.assertEquals(
-      compilerConfiguration.findModuleProcessorProfile(
-        MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))?.processors,
+      compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))?.processors,
       hashSetOf("com.test.SourceCodeGeneratingAnnotationProcessor2", "com.mysema.query.apt.jpa.JPAAnnotationProcessor"))
   }
 
@@ -422,8 +410,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     assertTrue(annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger" == it.artifactId && "2.2" == it.version })
 
     val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
-    val projectProfile = config.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))
+    val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
     val path = projectProfile!!.processorPath
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")))
@@ -463,8 +450,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
     val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
-    val projectProfile = config.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))
+    val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
     val path = projectProfile!!.processorPath
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")))
@@ -525,13 +511,11 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
     val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
-    val defaultProfile = config.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE)
+    val defaultProfile = config.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
     assertNotNull(defaultProfile)
     UsefulTestCase.assertSameElements(defaultProfile!!.moduleNames, "m1")
 
-    val projectProfile = config.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.getModuleProfileName("project"))
+    val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
     UsefulTestCase.assertSameElements(projectProfile!!.moduleNames, "m2")
     val path = projectProfile.processorPath
@@ -548,24 +532,20 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   """.trimIndent())
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
-    var profile = compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE)
+    var profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
     Assert.assertNotNull(profile)
     Assert.assertTrue(profile!!.isEnabled)
 
     WriteAction.runAndWait<RuntimeException> {
-      val p = compilerConfiguration.findModuleProcessorProfile(
-        MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE)
+      val p = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
       p!!.isEnabled = false
     }
-    profile = compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE)
+    profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
     Assert.assertNotNull(profile)
     Assert.assertFalse(profile!!.isEnabled)
 
     importProjectAsync()
-    profile = compilerConfiguration.findModuleProcessorProfile(
-      MavenAnnotationProcessorConfigurator.MAVEN_DEFAULT_ANNOTATION_PROFILE)
+    profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
     Assert.assertNotNull(profile)
     Assert.assertFalse(profile!!.isEnabled)
   }
@@ -591,7 +571,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testRemoveEmptyInnerProfile() = runBlocking {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
-    val profileName = MavenAnnotationProcessorConfigurator.getModuleProfileName("test-profile")
+    val profileName =getModuleProfileName("test-profile")
     WriteAction.runAndWait<RuntimeException> {
       val moduleProfile: ProcessorConfigProfile = ProcessorConfigProfileImpl(profileName)
       moduleProfile.isEnabled = true
