@@ -5,6 +5,8 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.daemon.MarkupGraveSuppressor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -19,6 +21,10 @@ internal class StickyLinesPassFactory : TextEditorHighlightingPassFactoryRegistr
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     val project = editor.project ?: return null
     val virtualFile = editor.virtualFile ?: return null
+
+    // temporally solution to avoid dropping sticky lines highlighters in dotnet languages
+    if (project.service<MarkupGraveSuppressor>().shouldSuppress(virtualFile, editor.document)) return null
+
     if (editor.settings.areStickyLinesShown()) {
       return StickyLinesPass(project, editor.document, virtualFile, psiFile)
     }
