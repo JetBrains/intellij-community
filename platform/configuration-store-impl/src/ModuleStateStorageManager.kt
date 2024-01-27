@@ -36,7 +36,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
   override fun rename(newName: String) {
     storageLock.write {
       val storage = getOrCreateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT) as FileBasedStorage
-      val file = storage.getVirtualFile(StateStorageOperation.WRITE)
+      val file = storage.getVirtualFile()
       try {
         if (file != null) {
           file.rename(storage, newName)

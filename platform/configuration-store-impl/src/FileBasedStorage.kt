@@ -7,7 +7,6 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -16,11 +15,11 @@ import com.intellij.openapi.util.SafeStAXStreamBuilder
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.io.readCharSequence
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -106,7 +105,7 @@ open class FileBasedStorage(file: Path,
       }
 
       val isUseVfs = storage.configuration.isUseVfsForWrite
-      val virtualFile = if (isUseVfs) storage.getVirtualFile(StateStorageOperation.WRITE) else null
+      val virtualFile = if (isUseVfs) storage.getVirtualFile() else null
       when {
         dataWriter == null -> {
           if (isUseVfs && virtualFile == null) {
@@ -136,11 +135,15 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  fun getVirtualFile(reasonOperation: StateStorageOperation): VirtualFile? {
+  fun getVirtualFile(): VirtualFile? {
     var result = cachedVirtualFile
     if (result == null) {
-      result = configuration.resolveVirtualFile(file.systemIndependentPath, reasonOperation)
-      cachedVirtualFile = result
+      result = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+      if (result != null && result.isValid) {
+        // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
+        result.setCharset(Charsets.UTF_8, null, false)
+        cachedVirtualFile = result
+      }
     }
     return result
   }

@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
@@ -146,7 +145,7 @@ class ModuleStoreRenameTest {
     saveProjectState()
     val storage = module.storage
     val oldFile = storage.file
-    val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
+    val parentVirtualDir = storage.getVirtualFile()!!.parent
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
         parentVirtualDir.rename(null, Ksuid.generate())
@@ -165,7 +164,7 @@ class ModuleStoreRenameTest {
   fun `rename module source root`() = runBlocking<Unit>(Dispatchers.EDT) {
     saveProjectState()
     val storage = module.storage
-    val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
+    val parentVirtualDir = storage.getVirtualFile()!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
     writeAction {
       PsiTestUtil.addSourceContentToRoots(module, src, false)
