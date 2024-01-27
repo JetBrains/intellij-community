@@ -88,9 +88,6 @@ open class ApplicationStoreImpl(private val app: Application)
 }
 
 internal val appFileBasedStorageConfiguration = object: FileBasedStorageConfiguration {
-  override val isUseVfsForRead: Boolean
-    get() = false
-
   override val isUseVfsForWrite: Boolean
     get() = false
 }

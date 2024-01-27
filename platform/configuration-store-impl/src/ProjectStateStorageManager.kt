@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroSubstitutor
@@ -19,20 +19,9 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
     const val ROOT_TAG_NAME = "project"
   }
 
-  private val fileBasedStorageConfiguration = object : FileBasedStorageConfiguration {
-    override val isUseVfsForRead: Boolean
-      get() = false
-
-    override val isUseVfsForWrite: Boolean
-      get() = true
-  }
-
-  override fun getFileBasedStorageConfiguration(fileSpec: String): FileBasedStorageConfiguration {
-    return when {
-      isSpecialStorage(fileSpec) -> appFileBasedStorageConfiguration
-      else -> fileBasedStorageConfiguration
-    }
-  }
+  override fun getFileBasedStorageConfiguration(fileSpec: String): FileBasedStorageConfiguration =
+    if (isSpecialStorage(fileSpec)) appFileBasedStorageConfiguration
+    else defaultFileBasedStorageConfiguration
 
   override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
 
