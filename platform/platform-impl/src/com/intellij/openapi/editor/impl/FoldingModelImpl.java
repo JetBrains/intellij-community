@@ -627,7 +627,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public TextAttributes getPlaceholderAttributes() {
+  public @Nullable TextAttributes getPlaceholderAttributes() {
     return myFoldTextAttributes;
   }
 

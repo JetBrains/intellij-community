@@ -1563,7 +1563,9 @@ public final class EditorPainter implements TextDrawingCallback {
         return ObjectUtils.notNull(myEditor.getUserData(FocusModeModel.FOCUS_MODE_ATTRIBUTES), getDefaultAttributes());
       }
       TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
-      foldAttributes = debugZombieFoldRegion(foldRegion, foldAttributes);
+      if (foldAttributes != null) {
+        foldAttributes = debugZombieFoldRegion(foldRegion, foldAttributes);
+      }
       return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
     }
 
