@@ -6,7 +6,6 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.configurationStore.LOG
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.StoreReloadManagerImpl
-import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.Project
@@ -87,7 +86,7 @@ internal class SchemeFileTracker<T : Scheme, M : T>(private val schemeManager: S
       return
     }
     LOG.debug { "DIR DELETED ${file.path}" }
-    if (file == schemeManager.getVirtualDirectory(StateStorageOperation.READ)) {
+    if (file == schemeManager.getVirtualDirectory()) {
       list.add(RemoveAllSchemes())
     }
   }
@@ -97,7 +96,7 @@ internal class SchemeFileTracker<T : Scheme, M : T>(private val schemeManager: S
       return
     }
 
-    val dir = schemeManager.getVirtualDirectory(StateStorageOperation.READ)
+    val dir = schemeManager.getVirtualDirectory()
     val virtualFile = event.file
     if (virtualFile != dir) {
       return

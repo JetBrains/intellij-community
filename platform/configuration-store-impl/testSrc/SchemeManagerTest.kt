@@ -4,7 +4,6 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.PathUtil
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.xmlb.annotations.Tag
 import org.assertj.core.api.Assertions.assertThat
@@ -558,26 +556,6 @@ class SchemeManagerTest {
     finally {
       Disposer.dispose(busDisposable)
     }
-  }
-
-  @Test
-  fun `VFS - vf resolver`() {
-    val dir = tempDirManager.newPath()
-    val requestedPaths = linkedSetOf<String>()
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = null, virtualFileResolver = object: VirtualFileResolver {
-      override fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation): VirtualFile? {
-        requestedPaths.add(PathUtil.getFileName(path))
-        return defaultFileBasedStorageConfiguration.resolveVirtualFile(path, reasonOperation)
-      }
-    })
-
-    val a = TestScheme("a", "a")
-    val b = TestScheme("b", "b")
-    schemeManager.setSchemes(listOf(a, b))
-    runInEdtAndWait { schemeManager.save() }
-
-    schemeManager.reload()
-    assertThat(requestedPaths).containsExactly(dir.fileName.toString())
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {

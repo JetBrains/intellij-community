@@ -36,8 +36,6 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open fun createFileChangeSubscriber(): FileChangeSubscriber? = null
 
-  protected open fun getVirtualFileResolver(): VirtualFileResolver? = null
-
   final override fun <T: Scheme, MutableT : T> create(
     directoryName: String,
     processor: SchemeProcessor<T, MutableT>,
@@ -62,7 +60,6 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     presentableName = presentableName,
                                     schemeNameToFileName = schemeNameToFileName,
                                     fileChangeSubscriber = fileChangeSubscriber,
-                                    virtualFileResolver = getVirtualFileResolver(),
                                     settingsCategory = settingsCategory)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
@@ -163,8 +160,6 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   @Suppress("unused")
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
-
-    override fun getVirtualFileResolver() = project as? VirtualFileResolver?
 
     private fun <T : Scheme, M:T>addVfsListener(schemeManager: SchemeManagerImpl<T, M>) {
       project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
