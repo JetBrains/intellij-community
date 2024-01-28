@@ -81,6 +81,29 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighterMetaInfo/focusMode")
+    public static class FocusMode extends AbstractK1HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/highlighterMetaInfo/focusMode/script.kts");
+        }
+
+        @TestMetadata("SimpleClass.kt")
+        public void testSimpleClass() throws Exception {
+            runTest("testData/highlighterMetaInfo/focusMode/SimpleClass.kt");
+        }
+
+        @TestMetadata("SimpleClassInFunction.kt")
+        public void testSimpleClassInFunction() throws Exception {
+            runTest("testData/highlighterMetaInfo/focusMode/SimpleClassInFunction.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/smartCasts")
     public static class SmartCasts extends AbstractK1HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {

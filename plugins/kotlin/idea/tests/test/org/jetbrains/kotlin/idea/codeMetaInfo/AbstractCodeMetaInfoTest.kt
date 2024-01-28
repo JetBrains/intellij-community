@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -65,6 +66,7 @@ class CodeMetaInfoTestCase(
     val codeMetaInfoTypes: Collection<AbstractCodeMetaInfoRenderConfiguration>,
     val checkNoDiagnosticError: Boolean = false,
     val dumbMode: Boolean = false,
+    val focusMode: Boolean = false,
     private val filterMetaInfo: (CodeMetaInfo) -> Boolean = { true },
 ) : DaemonAnalyzerTestCase() {
 
@@ -173,6 +175,8 @@ class CodeMetaInfoTestCase(
                 }
             }
         }
+
+        EditorSettingsExternalizable.getInstance().isFocusMode = focusMode
 
         if (dumbMode) {
             val disposable = Disposer.newCheckedDisposable("mustWaitForSmartMode")

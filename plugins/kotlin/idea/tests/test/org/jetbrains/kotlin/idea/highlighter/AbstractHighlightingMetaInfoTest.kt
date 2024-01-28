@@ -46,7 +46,8 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
                 allowErrorHighlighting = ALLOW_ERRORS in globalDirectives,
                 highlightWarnings = HIGHLIGHT_WARNINGS in globalDirectives,
             ),
-            dumbMode = DUMB_MODE in globalDirectives
+            dumbMode = DUMB_MODE in globalDirectives,
+            focusMode = expectedHighlightingFile.parentFile.name == "focusMode"
         )
 
         codeMetaInfoTestCase.checkFile(file.virtualFile, expectedHighlightingFile, project)

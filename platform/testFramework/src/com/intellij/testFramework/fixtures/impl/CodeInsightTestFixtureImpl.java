@@ -79,6 +79,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -297,10 +298,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
           IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
           UIUtil.dispatchAllInvocationEvents();
-          infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
+          Segment focusModeRange = (editor instanceof EditorImpl) ? ((EditorImpl)editor).getFocusModeRange() : null;
+          int startOffset = focusModeRange != null ? focusModeRange.getStartOffset() : 0;
+          int endOffset = focusModeRange != null ? focusModeRange.getEndOffset() : editor.getDocument().getTextLength();
+          DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset,
+                                                 Processors.cancelableCollectProcessor(infos));
           if (readEditorMarkupModel) {
             MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-            DaemonCodeAnalyzerEx.processHighlights(markupModel, project, null, 0, editor.getDocument().getTextLength(),
+            DaemonCodeAnalyzerEx.processHighlights(markupModel, project, null, startOffset, endOffset,
                                                    Processors.cancelableCollectProcessor(infos));
           }
         });
