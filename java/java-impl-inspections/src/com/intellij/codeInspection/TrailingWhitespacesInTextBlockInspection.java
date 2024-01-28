@@ -200,13 +200,13 @@ public final class TrailingWhitespacesInTextBlockInspection extends AbstractBase
           if (suffix.equals("\\{")) return result.append(line).toString();
           line = line.substring(0, line.length() - suffix.length());
         }
-        String transformed = lineTransformation.apply(line);
+        String transformed = line.isEmpty() ? line : lineTransformation.apply(line);
         if (transformed == null) return null;
         if (last && hasUnescapedLastQuote(transformed)) {
           result.append(transformed, 0, transformed.length() - 1).append("\\\"");
         }
         else if (transformed.isEmpty()) {
-          result.append((line.length() < indent) ? line : " ".repeat(indent));
+          result.append((line.length() < indent) ? line : line.substring(0, indent));
         } else {
           result.append(transformed);
         }

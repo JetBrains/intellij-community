@@ -28,5 +28,10 @@ class Foo {
                 <error descr="Illegal escape character in string literal">\u005C</error> "<warning descr="Trailing whitespace characters inside text block"> </warning>""";
     String text14 = """
                 \u005C\u005C\u005C\u005C"<warning descr="Trailing whitespace characters inside text block"> </warning>""";
+    String text15 = STR."""
+      "scary"\{}<warning descr="Trailing whitespace characters inside text block"> </warning>
+      "scary"\{} 
+      "scary" \{} 
+      """;
   }
 }

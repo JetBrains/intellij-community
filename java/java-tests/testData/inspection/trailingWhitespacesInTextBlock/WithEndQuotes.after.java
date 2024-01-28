@@ -28,5 +28,10 @@ class Foo {
                 \u005C \"""";
     String text14 = """
                 \u005C\u005C\u005C\u005C\"""";
+    String text15 = STR."""
+      "scary"\{}
+      "scary"\{}
+      "scary" \{}
+      """;
   }
 }
