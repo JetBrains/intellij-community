@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.build.events.MessageEvent
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -42,6 +43,13 @@ class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
                                  @JvmField val readingProblems: MutableCollection<MavenProjectProblem>,
                                  @JvmField val unresolvedArtifactIds: MutableSet<MavenId>,
                                  val unresolvedProblems: Collection<MavenProjectProblem>)
+
+private val EP_NAME = ExtensionPointName.create<MavenProjectResolutionContributor>("org.jetbrains.idea.maven.projectResolutionContributor")
+
+@ApiStatus.Internal
+interface MavenProjectResolutionContributor {
+  suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, embedder: MavenEmbedderWrapper)
+}
 
 @ApiStatus.Internal
 class MavenProjectResolver(private val myProject: Project) {
@@ -277,12 +285,12 @@ class MavenProjectResolver(private val myProject: Project) {
     return null
   }
 
-  private fun collectProjectWithUnresolvedPlugins(result: MavenProjectResolverResult,
-                                                  artifactIdToMavenProjects: Map<String, List<MavenProject>>,
-                                                  generalSettings: MavenGeneralSettings,
-                                                  embedder: MavenEmbedderWrapper,
-                                                  tree: MavenProjectsTree,
-                                                  projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
+    private suspend fun collectProjectWithUnresolvedPlugins(result: MavenProjectResolverResult,
+                                                            artifactIdToMavenProjects: Map<String, List<MavenProject>>,
+                                                            generalSettings: MavenGeneralSettings,
+                                                            embedder: MavenEmbedderWrapper,
+                                                            tree: MavenProjectsTree,
+                                                            projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
     val mavenId = result.mavenModel.mavenId
     val artifactId = mavenId.artifactId
     val mavenProjects = artifactIdToMavenProjects[artifactId]
@@ -324,8 +332,8 @@ class MavenProjectResolver(private val myProject: Project) {
 
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
-      for (eachImporter in MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
-        eachImporter.resolve(myProject, mavenProjectCandidate, nativeMavenProject, embedder)
+      for (contributor in EP_NAME.extensionList) {
+        contributor.onMavenProjectResolved(myProject, mavenProjectCandidate, embedder)
       }
     }
     else {

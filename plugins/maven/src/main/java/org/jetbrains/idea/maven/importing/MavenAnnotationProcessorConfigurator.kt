@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
@@ -312,33 +313,6 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     return Pair.pair(moduleProfile, isDefault)
   }
 
-  private fun getProcessorArtifactInfos(config: Element): List<MavenArtifactInfo> {
-    val artifacts: MutableList<MavenArtifactInfo> = ArrayList()
-    val addToArtifacts = Consumer { path: Element ->
-      val groupId = path.getChildTextTrim("groupId")
-      val artifactId = path.getChildTextTrim("artifactId")
-      val version = path.getChildTextTrim("version")
-
-      val classifier = path.getChildTextTrim("classifier")
-
-      //String type = path.getChildTextTrim("type");
-      artifacts.add(MavenArtifactInfo(groupId, artifactId, version, "jar", classifier))
-    }
-
-    for (path in config.getChildren("path")) {
-      addToArtifacts.consume(path)
-    }
-
-    for (dependency in config.getChildren("dependency")) {
-      addToArtifacts.consume(dependency)
-    }
-
-    for (annotationProcessorPath in config.getChildren("annotationProcessorPath")) {
-      addToArtifacts.consume(annotationProcessorPath)
-    }
-    return artifacts
-  }
-
   private fun getModuleProfile(module: Module,
                                mavenProject: MavenProject,
                                compilerConfiguration: CompilerConfigurationImpl,
@@ -498,5 +472,32 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
 object MavenAnnotationProcessorConfiguratorUtil {
   fun getModuleProfileName(moduleName: @NlsSafe String): String {
     return PROFILE_PREFIX + moduleName
+  }
+
+  fun getProcessorArtifactInfos(config: Element): List<MavenArtifactInfo> {
+    val artifacts: MutableList<MavenArtifactInfo> = ArrayList()
+    val addToArtifacts = Consumer { path: Element ->
+      val groupId = path.getChildTextTrim("groupId")
+      val artifactId = path.getChildTextTrim("artifactId")
+      val version = path.getChildTextTrim("version")
+
+      val classifier = path.getChildTextTrim("classifier")
+
+      //String type = path.getChildTextTrim("type");
+      artifacts.add(MavenArtifactInfo(groupId, artifactId, version, "jar", classifier))
+    }
+
+    for (path in config.getChildren("path")) {
+      addToArtifacts.consume(path)
+    }
+
+    for (dependency in config.getChildren("dependency")) {
+      addToArtifacts.consume(dependency)
+    }
+
+    for (annotationProcessorPath in config.getChildren("annotationProcessorPath")) {
+      addToArtifacts.consume(annotationProcessorPath)
+    }
+    return artifacts
   }
 }

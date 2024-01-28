@@ -26,6 +26,8 @@
                     dynamic="true"/>
     <extensionPoint name="importing.afterImportConfigurator" interface="org.jetbrains.idea.maven.importing.MavenAfterImportConfigurator"
                     dynamic="true"/>
+    <extensionPoint name="projectResolutionContributor" interface="org.jetbrains.idea.maven.project.MavenProjectResolutionContributor"
+                    dynamic="true"/>
     <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
     <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
     <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"
@@ -570,6 +572,8 @@
 
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadePluginConfigurator"/>
     <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetPostTaskConfigurator"/>
+
+    <projectResolutionContributor implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorContributor"/>
 
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
