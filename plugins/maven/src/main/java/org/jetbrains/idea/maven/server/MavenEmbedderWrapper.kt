@@ -128,20 +128,18 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       progressReporter, eventHandler)
   }
 
-  @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}")
-  @Throws(MavenProcessCanceledException::class)
-  fun resolveTransitively(artifacts: List<MavenArtifactInfo>, remoteRepositories: List<MavenRemoteRepository>): List<MavenArtifact> {
-    return runBlockingMaybeCancellable {
-      getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
-    }.mavenResolvedArtifacts
-  }
-
+  @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifactsTransitively()}")
   @Throws(MavenProcessCanceledException::class)
   fun resolveArtifactTransitively(artifacts: List<MavenArtifactInfo>,
                                   remoteRepositories: List<MavenRemoteRepository>): MavenArtifactResolveResult {
     return runBlockingMaybeCancellable {
       getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
     }
+  }
+
+  suspend fun resolveArtifactsTransitively(artifacts: List<MavenArtifactInfo>,
+                                           remoteRepositories: List<MavenRemoteRepository>): MavenArtifactResolveResult {
+    return getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
   }
 
   @Throws(MavenProcessCanceledException::class)
