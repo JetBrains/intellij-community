@@ -69,6 +69,7 @@ private val presignedLibNames = java.util.Set.of(
 )
 
 private val notImportantKotlinLibs = java.util.Set.of(
+  "kotlinx-collections-immutable",
   "kotlinx-coroutines-guava",
   "kotlinx-datetime-jvm",
   "kotlinx-html-jvm",

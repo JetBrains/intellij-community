@@ -1,8 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
-
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 
 fun <C> findCycle(current: C, callers: (C) -> List<C>): List<C>? {
   for (path in traverseCallers(current, callers)) {
@@ -13,18 +10,20 @@ fun <C> findCycle(current: C, callers: (C) -> List<C>): List<C>? {
   return null
 }
 
-private fun <C> traverseCallers(current: C, callers: (C) -> List<C>): Sequence<PersistentList<C>> = sequence {
-  for (caller in callers(current)) {
-    traverseCallersInner(persistentListOf(), caller, callers)
+private fun <C> traverseCallers(current: C, callers: (C) -> List<C>): Sequence<List<C>> {
+  return sequence {
+    for (caller in callers(current)) {
+      traverseCallersInner(emptyList(), caller, callers)
+    }
   }
 }
 
-private suspend fun <C> SequenceScope<PersistentList<C>>.traverseCallersInner(
-  pathBeforeCurrent: PersistentList<C>,
+private suspend fun <C> SequenceScope<List<C>>.traverseCallersInner(
+  pathBeforeCurrent: List<C>,
   current: C,
   callers: (C) -> List<C>,
 ) {
-  val pathToCurrent = pathBeforeCurrent.add(current)
+  val pathToCurrent = if (pathBeforeCurrent.isEmpty()) listOf(current) else pathBeforeCurrent + current
   yield(pathToCurrent)
   for (caller in callers(current)) {
     traverseCallersInner(pathToCurrent, caller, callers)

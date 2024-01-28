@@ -91,7 +91,6 @@
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
-    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
