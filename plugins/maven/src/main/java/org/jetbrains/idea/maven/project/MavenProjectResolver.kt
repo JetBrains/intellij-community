@@ -288,12 +288,12 @@ class MavenProjectResolver(private val myProject: Project) {
     return null
   }
 
-    private suspend fun collectProjectWithUnresolvedPlugins(result: MavenProjectResolverResult,
-                                                            artifactIdToMavenProjects: Map<String, List<MavenProject>>,
-                                                            generalSettings: MavenGeneralSettings,
-                                                            embedder: MavenEmbedderWrapper,
-                                                            tree: MavenProjectsTree,
-                                                            projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
+  private suspend fun collectProjectWithUnresolvedPlugins(result: MavenProjectResolverResult,
+                                                          artifactIdToMavenProjects: Map<String, List<MavenProject>>,
+                                                          generalSettings: MavenGeneralSettings,
+                                                          embedder: MavenEmbedderWrapper,
+                                                          tree: MavenProjectsTree,
+                                                          projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
     val mavenId = result.mavenModel.mavenId
     val artifactId = mavenId.artifactId
     val mavenProjects = artifactIdToMavenProjects[artifactId]
