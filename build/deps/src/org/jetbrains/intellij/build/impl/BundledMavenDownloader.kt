@@ -78,31 +78,39 @@ object BundledMavenDownloader {
   private suspend fun downloadMavenLibs(communityRoot: BuildDependenciesCommunityRoot, path: String, libs: List<String>): Path {
     val root = communityRoot.communityRoot.resolve(path)
     Files.createDirectories(root)
+    val targetFileToUris = libs.associate { coordinates ->
+      val split = coordinates.split(':')
+      check(split.size == 3) {
+        "Expected exactly 3 coordinates: $coordinates"
+      }
+      val file = root.resolve("${split[1]}-${split[2]}.jar")
+      val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
+        mavenRepository = BuildDependenciesConstants.MAVEN_CENTRAL_URL,
+        groupId = split[0],
+        artifactId = split[1],
+        version = split[2],
+        packaging = "jar"
+      )
+      file to uri
+    }
+
+    root.listDirectoryEntries().forEach { file ->
+      if (!targetFileToUris.containsKey(file)) {
+        BuildDependenciesUtil.deleteFileOrFolder(file)
+      }
+    }
+
+    val toDownload = targetFileToUris.filter { !Files.exists(it.key) }
+
+    if (toDownload.isEmpty()) return root
+
     val targetToSourceFiles = coroutineScope {
-      libs.map { coordinates ->
+      toDownload.map { (targetFile, uri) ->
         async {
-          val split = coordinates.split(':')
-          check(split.size == 3) {
-            "Expected exactly 3 coordinates: $coordinates"
-          }
-          val targetFile = root.resolve("${split[1]}-${split[2]}.jar")
-          val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
-            mavenRepository = BuildDependenciesConstants.MAVEN_CENTRAL_URL,
-            groupId = split[0],
-            artifactId = split[1],
-            version = split[2],
-            packaging = "jar"
-          )
           targetFile to downloadFileToCacheLocation(uri.toString(), communityRoot)
         }
       }
     }.asSequence().map { it.getCompleted() }.toMap()
-
-    root.listDirectoryEntries().forEach {  file ->
-      if (!targetToSourceFiles.containsKey(file)) {
-        BuildDependenciesUtil.deleteFileOrFolder(file)
-      }
-    }
 
     withContext(Dispatchers.IO) {
       for (targetFile in targetToSourceFiles.keys) {
