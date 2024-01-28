@@ -26,19 +26,19 @@
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
     <orderEntry type="module-library">
       <library name="grpc-inprocess" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-inprocess:1.59.0">
+        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-inprocess:1.61.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.59.0/grpc-inprocess-1.59.0.jar">
-              <sha256sum>07309340c43ac0cc404421aea2bba6c51cfe7e2b43b52f6928620676f70fa1e7</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.61.0/grpc-inprocess-1.61.0.jar">
+              <sha256sum>2e12b260d8ef51bd0bd1ce6034b832dae8d93fdafb34788a404a3a2da495111c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.59.0/grpc-inprocess-1.59.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.61.0/grpc-inprocess-1.61.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.59.0/grpc-inprocess-1.59.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.61.0/grpc-inprocess-1.61.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
