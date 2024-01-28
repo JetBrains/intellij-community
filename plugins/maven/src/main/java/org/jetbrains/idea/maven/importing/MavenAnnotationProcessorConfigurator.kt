@@ -182,10 +182,10 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
                                                  val processorModuleNames: List<String>)
 
   @Throws(MavenProcessCanceledException::class)
-  override fun resolve(project: Project,
-                       mavenProject: MavenProject,
-                       nativeMavenProject: NativeMavenProjectHolder,
-                       embedder: MavenEmbedderWrapper) {
+  fun resolve(project: Project,
+              mavenProject: MavenProject,
+              nativeMavenProject: NativeMavenProjectHolder,
+              embedder: MavenEmbedderWrapper) {
     val config = getConfig(mavenProject, "annotationProcessorPaths")
     if (config == null) return
 

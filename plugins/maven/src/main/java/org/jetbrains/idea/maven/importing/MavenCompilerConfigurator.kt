@@ -48,10 +48,10 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
   }
 
   @Throws(MavenProcessCanceledException::class)
-  override fun resolve(project: Project,
-                       mavenProject: MavenProject,
-                       nativeMavenProject: NativeMavenProjectHolder,
-                       embedder: MavenEmbedderWrapper) {
+  fun resolve(project: Project,
+              mavenProject: MavenProject,
+              nativeMavenProject: NativeMavenProjectHolder,
+              embedder: MavenEmbedderWrapper) {
     if (!super.isApplicable(mavenProject)) return
     if (!Registry.`is`("maven.import.compiler.arguments", true) ||  !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return
 
