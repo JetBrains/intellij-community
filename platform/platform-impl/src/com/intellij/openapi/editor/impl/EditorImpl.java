@@ -345,6 +345,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myScrollingToCaret;
 
+  private boolean myIsStickyLinePainting;
+  private boolean myIsStickyLineHovered;
+
   EditorImpl(@NotNull Document document,
              boolean viewer,
              @Nullable Project project,
@@ -1959,6 +1962,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
     if (rect.isEmpty()) return;
+    if (myStickyLinesPanel != null) {
+      myStickyLinesPanel.startDumb();
+    }
     // The LCD text loop is enabled only for opaque images
     BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
     Graphics imageGraphics = image.createGraphics();
@@ -5632,11 +5638,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   /**
    * There is no point to show the editor fragment hint if the sticky panel shows the same line.
    */
+  @ApiStatus.Internal
   public boolean shouldSuppressEditorFragmentHint(int hintStartLogicalLine) {
     if (myStickyLinesPanel != null) {
       return myStickyLinesPanel.suppressHintForLine(hintStartLogicalLine);
     }
     return false;
+  }
+
+  /**
+   * If true, the editor is in special "clean" mode when editor's content is rendering on sticky lines panel.
+   * This allows suppressing visual elements like caret row background, vertical indent lines, right margin line, etc.
+   */
+  @ApiStatus.Internal
+  public boolean isStickyLinePainting() {
+    return myIsStickyLinePainting;
+  }
+
+  @ApiStatus.Internal
+  public void setStickyLinePainting(boolean stickyLinePainting) {
+    myIsStickyLinePainting = stickyLinePainting;
+  }
+
+  @ApiStatus.Internal
+  public boolean isStickyLineHovered() {
+    return myIsStickyLineHovered;
+  }
+
+  @ApiStatus.Internal
+  public void setStickyLineHovered(boolean stickyLineHovered) {
+    myIsStickyLineHovered = stickyLineHovered;
   }
 
   private @Nullable StickyLinesPanel createStickyLinesPanel() {

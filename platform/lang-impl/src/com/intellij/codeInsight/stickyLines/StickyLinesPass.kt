@@ -18,8 +18,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private val CACHED_LINES_KEY: Key<CachedValue<Runnable>> = Key.create("editor.sticky.lines.cached")
 
-internal class StickyLinesPass(project: Project, document: Document, private val vFile: VirtualFile, private val psiFile: PsiFile)
-  : TextEditorHighlightingPass(project, document), DumbAware {
+internal class StickyLinesPass(
+  project: Project,
+  document: Document,
+  private val vFile: VirtualFile,
+  private val psiFile: PsiFile,
+) : TextEditorHighlightingPass(project, document), DumbAware {
 
   private var updater: Runnable? = null
 
@@ -50,7 +54,7 @@ internal class StickyLinesPass(project: Project, document: Document, private val
       project: Project,
       document: Document,
       vFile: VirtualFile,
-      dependency: Any
+      dependency: Any,
     ): CachedValueProvider<Runnable> {
       return CachedValueProvider {
         val collector = StickyLinesCollector(project, document)

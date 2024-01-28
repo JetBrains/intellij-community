@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.stickyLines
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -100,6 +99,15 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
     return false
   }
 
+  fun startDumb() {
+    for (lineComp: StickyLineComponent in stickyLinesComp) {
+      if (lineComp.isEmpty()) {
+        break
+      }
+      lineComp.startDumb()
+    }
+  }
+
   // ------------------------------------------- Impl -------------------------------------------
 
   private fun repaintLinesImpl() {
@@ -130,7 +138,12 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
       val primaryVisual: VisualPosition = toVisualPos(stickyLine.primaryLine())
       val scopeVisual: VisualPosition = toVisualPos(stickyLine.scopeLine())
       if (isScopeNotNarrow(primaryVisual, scopeVisual) && isLineNotDuplicate(compIndex, primaryVisual)) {
-        stickyLinesComp[compIndex].setLine(primaryVisual, scopeVisual, stickyLine.navigateOffset())
+        stickyLinesComp[compIndex].setLine(
+          primaryVisual,
+          scopeVisual,
+          stickyLine.navigateOffset(),
+          stickyLine.debugText(),
+        )
         compIndex++
         if (compIndex == lineLimit) {
           break
@@ -153,6 +166,9 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
       } else {
         val addedHeight: Int = placeComponentOnPanel(lineComp, panelWidth, panelHeight, lineHeight)
         // 0 <= addedHeight <= lineHeight
+        if (addedHeight == 0) {
+          lineComp.isVisible = false
+        }
         panelHeight += addedHeight
       }
     }
@@ -243,8 +259,8 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
         if (borderColor != null) {
           return borderColor
         }
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        return scheme.getColor(EditorColors.TEARLINE_COLOR) ?: scheme.defaultBackground
+        val scheme = editor.getColorsScheme()
+        return scheme.getColor(EditorColors.RIGHT_MARGIN_COLOR) ?: scheme.defaultBackground
       }
     }
   }

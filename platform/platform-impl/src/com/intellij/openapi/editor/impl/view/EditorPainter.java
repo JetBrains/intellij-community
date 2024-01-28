@@ -238,6 +238,10 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintRightMargin() {
+      if (myEditor.isStickyLinePainting()) {
+        // suppress hard wrap and visual guides vertical lines on sticky lines panel
+        return;
+      }
       if (myEditor.getSettings().isRightMarginShown()) {
         Color visualGuidesColor = myEditor.getColorsScheme().getColor(EditorColors.VISUAL_INDENT_GUIDE_COLOR);
         if (visualGuidesColor != null) {
@@ -1292,6 +1296,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private void paintCaret() {
       if (myEditor.isPurePaintingMode()) return;
+      if (myEditor.isStickyLinePainting()) return; // suppress caret painting on sticky lines panel
       EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(true);
       if (locations == null) return;
 

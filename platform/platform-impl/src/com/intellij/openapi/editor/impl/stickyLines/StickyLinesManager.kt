@@ -41,7 +41,12 @@ internal class StickyLinesManager(
     if (editor.settings.areStickyLinesShown() && isAreaChanged(event)) {
       activeEditorY = event.newRectangle.y
       activeEditorH = event.newRectangle.height
-      if (event.oldRectangle == null || isLineChanged(event)) {
+      if (activeEditorY <3) {
+        // special case when the document starts with a sticky line
+        // small visual jump is better than stickied line for good
+        activeVisualLine = -1
+        stickyPanel.repaintLines(activeEditorY, activeEditorH, emptyList())
+      } else if (event.oldRectangle == null || isLineChanged(event)) {
         // recalculate sticky lines and repaint
         stickyPanel.repaintLines(activeEditorY, activeEditorH, getStickyLines(activeEditorY))
       } else if (isYChanged(event) || isSizeChanged(event)) {
@@ -97,16 +102,10 @@ internal class StickyLinesManager(
   }
 
   private fun getStickyLines(editorY: Int): List<StickyLine> {
-    return if (editorY <3) {
-      // special case when the document starts with a sticky line
-      // small visual jump is better than stickied line for good
-      emptyList()
-    } else {
-      val activeY: Int = activeY(editorY)
-      val activeLogicalLine: Int = editor.xyToLogicalPosition(Point(0, activeY)).line
-      val activeOffset: Int = editor.document.getLineEndOffset(activeLogicalLine)
-      collectStickyLines(activeOffset, activeLogicalLine)
-    }
+    val activeY: Int = activeY(editorY)
+    val activeLogicalLine: Int = editor.xyToLogicalPosition(Point(0, activeY)).line
+    val activeOffset: Int = editor.document.getLineEndOffset(activeLogicalLine)
+    return collectStickyLines(activeOffset, activeLogicalLine)
   }
 
   private fun collectStickyLines(activeOffset: Int, activeLogicalLine: Int): List<StickyLine> {

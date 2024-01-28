@@ -368,22 +368,21 @@ final class HighlightingMarkupGrave {
       if (markupModel == null) {
         return Collections.emptyList();
       }
-      // for stable XML
-      Comparator<HighlighterState> comparator = (h1, h2) -> h1.equals(h2) ? 0 : h1.start() != h2.start() ? Integer.compare(h1.start(), h2.start()) : h1.end() != h2.end() ? Integer.compare(h1.end(), h2.end()) : Integer.compare(h1.hashCode(), h2.hashCode());
-
       return Arrays.stream(markupModel.getAllHighlighters())
         .filter(h -> {
-          LineMarkerInfo<?> lm;
-          HighlightInfo info = HighlightInfo.fromRangeHighlighter(h);
-          return info != null &&
-                 (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
-                  || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY
-                 )
-                 || (lm = LineMarkersUtil.getLineMarkerInfo(h)) != null && lm.getIcon() != null; // or a line marker with a gutter icon
+          if (h.getTextAttributesKey() != null && h.getTextAttributesKey().getExternalName().equals("STICKY_LINE_MARKER")) {
+            return true;
           }
-        )
+          HighlightInfo info = HighlightInfo.fromRangeHighlighter(h);
+          if (info != null &&
+              (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
+               || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY)) {
+            return true;
+          }
+          LineMarkerInfo<?> lm = LineMarkersUtil.getLineMarkerInfo(h);
+          return lm != null && lm.getIcon() != null; // or a line marker with a gutter icon
+        })
         .map(h -> new HighlighterState(h, colorsScheme))
-        .sorted(comparator)
         .toList();
     }
   }

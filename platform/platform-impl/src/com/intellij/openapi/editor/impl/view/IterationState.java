@@ -557,8 +557,8 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
 
-    TextAttributes selection = isInSelection ? mySelectionAttributes : null;
-    TextAttributes caret = isInCaretRow ? myCaretRowAttributes : null;
+    TextAttributes selection = getSelectionAttributes(isInSelection);
+    TextAttributes caret = getCaretRowAttributes(isInCaretRow);
     TextAttributes fold = myCurrentFold != null ? myFoldTextAttributes : null;
     TextAttributes guard = isInGuardedBlock
                            ? new TextAttributes(null, myReadOnlyColor, null, EffectType.BOXED, Font.PLAIN)
@@ -663,6 +663,26 @@ public final class IterationState {
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
     return myStartOffset > myCaretData.caretRowStart && myStartOffset < myCaretData.caretRowEnd ||
            includeLineStart && myStartOffset == myCaretData.caretRowStart || includeLineEnd && myStartOffset == myCaretData.caretRowEnd;
+  }
+
+  private @Nullable TextAttributes getSelectionAttributes(boolean isInSelection) {
+    if (myEditor instanceof EditorImpl editor) {
+      if (editor.isStickyLinePainting()) {
+        // suppress caret selection on sticky lines panel
+        return null;
+      }
+    }
+    return isInSelection ? mySelectionAttributes : null;
+  }
+
+  private @Nullable TextAttributes getCaretRowAttributes(boolean isInCaretRow) {
+    if (myEditor instanceof EditorImpl editor) {
+      if (editor.isStickyLinePainting()) {
+        // suppress caret row background if not hovered on sticky lines panel
+        return editor.isStickyLineHovered() ? myCaretRowAttributes : null;
+      }
+    }
+    return isInCaretRow ? myCaretRowAttributes : null;
   }
 
   public boolean atEnd() {

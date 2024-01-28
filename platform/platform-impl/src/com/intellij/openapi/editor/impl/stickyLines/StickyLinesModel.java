@@ -28,6 +28,7 @@ import static org.jetbrains.annotations.ApiStatus.Internal;
 @Internal
 final class StickyLinesModel {
 
+  private static final Key<Boolean> STICKY_LINES_FIRST_PASS_KEY = Key.create("editor.sticky.lines.first.pass");
   private static final Key<StickyLinesModel> STICKY_LINES_MODEL_KEY = Key.create("editor.sticky.lines.model");
   private static final Key<StickyLineImpl> STICKY_LINE_IMPL_KEY = Key.create("editor.sticky.line.impl");
   private static final TextAttributesKey STICKY_LINE_ATTRIBUTE = TextAttributesKey.createTextAttributesKey(
@@ -56,6 +57,14 @@ final class StickyLinesModel {
   private StickyLinesModel(MarkupModelEx markupModel) {
     myMarkupModel = markupModel;
     myListeners = new ArrayList<>();
+  }
+
+  boolean isFirstUpdate() {
+    boolean isFirstTime = myMarkupModel.getUserData(STICKY_LINES_FIRST_PASS_KEY) == null;
+    if (isFirstTime) {
+      myMarkupModel.putUserData(STICKY_LINES_FIRST_PASS_KEY, false);
+    }
+    return isFirstTime;
   }
 
   void addStickyLine(int textOffset, int endOffset, @Nullable String debugText) {
@@ -89,7 +98,7 @@ final class StickyLinesModel {
       0,
       endOffset,
       highlighter -> {
-        if (highlighter.getTextAttributesKey() == STICKY_LINE_ATTRIBUTE) {
+        if (STICKY_LINE_ATTRIBUTE.equals(highlighter.getTextAttributesKey())) {
           StickyLineImpl stickyLine = highlighter.getUserData(STICKY_LINE_IMPL_KEY);
           if (stickyLine == null) {
             stickyLine = new StickyLineImpl(highlighter.getDocument(), highlighter, null);

@@ -5,10 +5,12 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
@@ -162,7 +164,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
           highlighter.setGutterIconRenderer(createGutterIconRenderer());
           highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
-          highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+          highlighter.setEditorFilter(XLineBreakpointImpl::isHighlighterAvailableIn);
           myHighlighter = highlighter;
 
           redrawInlineInlays();
@@ -405,6 +407,14 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       icon = isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon();
     }
     setIcon(icon);
+  }
+
+  private static boolean isHighlighterAvailableIn(Editor editor) {
+    if (editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting()) {
+      // suppress breakpoints on sticky lines panel
+      return false;
+    }
+    return !DiffUtil.isDiffEditor(editor);
   }
 
   @Override

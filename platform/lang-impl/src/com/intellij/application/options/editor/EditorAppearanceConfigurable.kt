@@ -92,11 +92,10 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       row {
         val cbShowSticky = checkBox(mbCbShowStickyLines)
           .gap(RightGap.SMALL)
-        intTextField(UINumericRange(5, 1, 30).asRange())
+        intTextField(UINumericRange(5, 1, 15).asRange())
           .bindIntText(model::getStickyLineLimit, model::setStickyLineLimit)
           .columns(4)
           .enabledIf(cbShowSticky.selected)
-        comment(ApplicationBundle.message("editbox.sticky.lines.limit"))
       }
       row {
         checkBox(myCbShowMethodSeparators)

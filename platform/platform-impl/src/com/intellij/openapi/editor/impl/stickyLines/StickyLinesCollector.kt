@@ -44,7 +44,10 @@ class StickyLinesCollector(private val project: Project, private val document: D
   fun applyLines(linesToAdd: MutableSet<StickyLineInfo>) {
     ThreadingAssertions.assertEventDispatchThread()
     val stickyModel: StickyLinesModel = StickyLinesModel.getModel(project, document) ?: return
-    val outdatedLines: List<StickyLine> = findOutdatedLines(stickyModel, linesToAdd) // mutates linesToAdd
+    // markup model could contain raised zombies on the first pass.
+    // we should burn them all here, otherwise an empty panel will appear
+    val removeExisting: Boolean = stickyModel.isFirstUpdate()
+    val outdatedLines: List<StickyLine> = findOutdatedLines(stickyModel, linesToAdd, removeExisting) // mutates linesToAdd
     for (toRemove: StickyLine in outdatedLines) {
       stickyModel.removeStickyLine(toRemove)
     }
@@ -54,13 +57,23 @@ class StickyLinesCollector(private val project: Project, private val document: D
     stickyModel.notifyListeners()
   }
 
-  private fun findOutdatedLines(stickyModel: StickyLinesModel, linesToAdd: MutableSet<StickyLineInfo>): List<StickyLine> {
+  private fun findOutdatedLines(
+    stickyModel: StickyLinesModel,
+    linesToAdd: MutableSet<StickyLineInfo>,
+    removeExisting: Boolean,
+  ): List<StickyLine> {
     val outdatedLines: MutableList<StickyLine> = mutableListOf()
-    stickyModel.processStickyLines { line: StickyLine ->
-      val existingLine = StickyLineInfo(line.textRange())
-      val keepExisting = linesToAdd.remove(existingLine)
-      if (!keepExisting) {
-        outdatedLines.add(line)
+    stickyModel.processStickyLines { existingLine: StickyLine ->
+      if (removeExisting) {
+        // remove all existing
+        outdatedLines.add(existingLine)
+      } else {
+        // merge with existing
+        val existing = StickyLineInfo(existingLine.textRange())
+        val keepExisting = linesToAdd.remove(existing)
+        if (!keepExisting) {
+          outdatedLines.add(existingLine)
+        }
       }
       true
     }

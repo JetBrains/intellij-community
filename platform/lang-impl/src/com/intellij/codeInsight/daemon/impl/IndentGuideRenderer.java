@@ -85,6 +85,10 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         }
 
         boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
+        if (!selected && editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting()) {
+          // suppress indent vertical lines on sticky lines panel
+          return;
+        }
         Color color = getIndentColor(editor, startOffset, selected);
 
         int lineHeight = editor.getLineHeight();

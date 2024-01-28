@@ -436,7 +436,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           g.setClip(clip.x, startY, clip.width, endY - startY);
         }
 
-        paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
+        if (!myEditor.isStickyLinePainting()) { // suppress gutter line markers on sticky lines panel
+          paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
+        }
 
         g.setClip(clip);
 
@@ -446,8 +448,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         paintCurrentAccessibleLine(g);
 
         if (ExperimentalUI.isNewUI() && myPaintBackground && !DistractionFreeModeController.shouldMinimizeCustomHeader()) {
-          g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-          LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
+          if (!myEditor.isStickyLinePainting()) { // suppress vertical line between gutter and editor on sticky lines panel
+            g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
+            LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
+          }
         }
       }
       finally {
@@ -659,6 +663,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (!Registry.is("highlight.caret.line.at.custom.fold") && isCaretAtCustomFolding()) {
       return null;
     }
+    if (myEditor.isStickyLinePainting()) {
+      // suppress gutter caret row background on sticky lines panel
+      return null;
+    }
     return myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
   }
 
@@ -764,7 +772,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
             }
 
             if (colorUnderCaretRow != null && caretLogicalLine == logicalLine) {
-              g.setColor(colorUnderCaretRow);
+              if (!myEditor.isStickyLinePainting()) { // suppress gutter line number under caret on sticky lines panel
+                g.setColor(colorUnderCaretRow);
+              }
             }
 
             Icon iconOnTheLine = null;
@@ -785,6 +795,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                   hoverIcon = (Icon)activeIcon;
                 }
               }
+            }
+            if (myEditor.isStickyLinePainting()) {
+              // suppress breakpoint icon to print line number on sticky lines panel
+              iconOnTheLine = null;
             }
 
             if (iconOnTheLine == null && hoverIcon == null) {
