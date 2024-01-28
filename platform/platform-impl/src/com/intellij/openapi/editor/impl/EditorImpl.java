@@ -3571,7 +3571,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   public int getStickyLinesPanelWidth() {
-    return myPanel.getWidth() - myVerticalScrollBar.getWidth();
+    return myPanel.getWidth(); //- myVerticalScrollBar.getWidth();
   }
 
   @MouseSelectionState
@@ -5494,6 +5494,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         repaint();
       }
     }
+
+    @Override
+    protected Layout createLayout() {
+      return new MyScrollPaneLayout();
+    }
+  }
+
+  private static final class MyScrollPaneLayout extends JBScrollPane.Layout {
+    void setVerticalScrollBar(JScrollBar vsb) {
+      // allows layout manager to supervise vertical scroll bar placed on layered pane
+      this.vsb = vsb;
+    }
   }
 
   public void adjustGlobalFontSize(float size) {
@@ -5617,8 +5629,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           Dimension d = c.getPreferredSize();
           int rightInsets = getVerticalScrollBar().getWidth() + (isMirrored() ? myGutterComponent.getWidth() : 0);
           c.setBounds(r.width - d.width - rightInsets - 20, 20, d.width, d.height);
+        } else if (c instanceof JScrollBar) {
+          // Vertical scroll bar: JScrollBar
+          // do nothing here, MyScrollPaneLayout manages vsb
         } else if (!(c instanceof StickyLinesPanel)) {
-          // Status component
+          // Status component: NonOpaquePanel
           Dimension d = c.getPreferredSize();
           c.setBounds(r.width - d.width, 0, d.width, d.height);
         }
@@ -5674,6 +5689,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myProject != null && myKind == EditorKind.MAIN_EDITOR && !isMirrored()) {
       StickyLinesManager stickyManager = new StickyLinesManager(this, myDocumentMarkupModel, myDisposable);
       myLayeredPane.add(stickyManager.getStickyPanel(), Integer.valueOf(200));
+      myLayeredPane.add(myVerticalScrollBar, Integer.valueOf(250));
+      ((MyScrollPaneLayout) myScrollPane.getLayout()).setVerticalScrollBar(myVerticalScrollBar);
       return stickyManager.getStickyPanel();
     } else {
       return null;
