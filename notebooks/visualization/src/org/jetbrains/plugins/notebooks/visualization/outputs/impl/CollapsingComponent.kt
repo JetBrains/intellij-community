@@ -14,7 +14,10 @@ import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.hoveredCollapsingComponentRect
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ResizeController
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
-import java.awt.*
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.Graphics
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -64,7 +67,7 @@ internal class CollapsingComponent(
   init {
     add(child)
     add(StubComponent(editor))
-    border = ResizeHandlebarUpdater.invisibleResizeBorder
+    border = if (resizable) ResizeHandlebarUpdater.invisibleResizeBorder else null
     isSeen = true
   }
 
@@ -158,7 +161,7 @@ internal class CollapsingComponent(
 
   private class StubComponent(private val editor: EditorImpl) : JLabel("...") {
     init {
-      border = IdeBorderFactory.createEmptyBorder(Insets(7, 0, 7, 0))
+      border = IdeBorderFactory.createEmptyBorder(JBUI.insets(7, 0))
       updateUIFromEditor()
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
