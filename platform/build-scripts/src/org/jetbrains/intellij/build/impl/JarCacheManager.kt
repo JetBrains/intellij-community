@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -23,6 +23,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
 import java.time.Instant
+import kotlin.time.Duration.Companion.days
 
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
@@ -46,6 +47,8 @@ internal sealed interface JarCacheManager {
                               producer: SourceBuilder): Path
 
   fun validateHash(source: Source)
+
+  fun cleanup()
 }
 
 internal data object NonCachingJarCacheManager : JarCacheManager {
@@ -59,6 +62,9 @@ internal data object NonCachingJarCacheManager : JarCacheManager {
   }
 
   override fun validateHash(source: Source) {
+  }
+
+  override fun cleanup() {
   }
 }
 
@@ -75,7 +81,10 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path,
                                         private val classOutDirectory: Path) : JarCacheManager {
   init {
     Files.createDirectories(cacheDir)
-    CacheDirCleanup(cacheDir).runCleanupIfRequired()
+  }
+
+  override fun cleanup() {
+    CacheDirCleanup(cacheDir = cacheDir, maxAccessTimeAge = 2.days).runCleanupIfRequired()
   }
 
   override suspend fun computeIfAbsent(sources: List<Source>,

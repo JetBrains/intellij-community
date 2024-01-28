@@ -174,6 +174,12 @@ class JarPackager private constructor(private val outputDir: Path,
       }
 
       val cacheManager = if (dryRun || context !is BuildContextImpl) NonCachingJarCacheManager else context.jarCacheManager
+      if (isRootDir) {
+        withContext(Dispatchers.IO) {
+          cacheManager.cleanup()
+        }
+      }
+
       val nativeFiles = buildJars(descriptors = packager.jarDescriptors.values,
                                   layout = layout,
                                   cache = cacheManager,

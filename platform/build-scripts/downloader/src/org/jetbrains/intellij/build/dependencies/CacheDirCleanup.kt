@@ -1,19 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
-import com.google.common.io.MoreFiles
-import com.google.common.io.RecursiveDeleteOption
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.NotDirectoryException
-import java.nio.file.Path
-import java.time.Duration
+import java.nio.file.*
 import java.time.LocalDateTime
 import java.util.*
 import java.util.logging.Logger
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+
+private val LOG = Logger.getLogger(CacheDirCleanup::class.java.name)
+private val CLEANUP_EVERY_DURATION = 1.days
+private const val MARKED_FOR_CLEANUP_SUFFIX = ".marked.for.cleanup"
 
 /**
  * Clean-up local download cache in two stages:
@@ -24,14 +26,9 @@ import java.util.logging.Logger
  * Older downloaded files will be marked for deletion, and then some of them will be used again.
  * Without the marking, they would be removed and re-downloaded again, which we do not want.
  */
-class CacheDirCleanup(private val cacheDir: Path) {
+class CacheDirCleanup(private val cacheDir: Path, private val maxAccessTimeAge: Duration = 22.days) {
   companion object {
     const val LAST_CLEANUP_MARKER_FILE_NAME: String = ".last.cleanup.marker"
-
-    private val LOG = Logger.getLogger(CacheDirCleanup::class.java.name)
-    private val MAXIMUM_ACCESS_TIME_AGE = Duration.ofDays(22)
-    private val CLEANUP_EVERY_DURATION = Duration.ofDays(1)
-    private const val MARKED_FOR_CLEANUP_SUFFIX = ".marked.for.cleanup"
   }
 
   private val lastCleanupMarkerFile: Path = cacheDir.resolve(LAST_CLEANUP_MARKER_FILE_NAME)
@@ -43,16 +40,17 @@ class CacheDirCleanup(private val cacheDir: Path) {
     }
 
     // update file timestamp mostly
-    Files.writeString(lastCleanupMarkerFile, LocalDateTime.now().toString())
     cleanupCacheDir()
+    Files.writeString(lastCleanupMarkerFile, LocalDateTime.now().toString())
     return true
   }
 
   private fun isTimeForCleanup(): Boolean {
     return Files.notExists(lastCleanupMarkerFile) ||
-           Files.getLastModifiedTime(lastCleanupMarkerFile).toMillis() < (System.currentTimeMillis() - CLEANUP_EVERY_DURATION.toMillis())
+           Files.getLastModifiedTime(lastCleanupMarkerFile).toMillis() < (System.currentTimeMillis() - CLEANUP_EVERY_DURATION.inWholeMilliseconds)
   }
 
+  @OptIn(ExperimentalPathApi::class)
   @Throws(IOException::class)
   private fun cleanupCacheDir() {
     val cacheFiles = try {
@@ -68,7 +66,7 @@ class CacheDirCleanup(private val cacheDir: Path) {
       throw IllegalStateException("Cache directory '$cacheDir' is not a directory")
     }
 
-    val maxTimeMs = MAXIMUM_ACCESS_TIME_AGE.toMillis()
+    val maxTimeMs = maxAccessTimeAge.inWholeMilliseconds
     val currentTime = System.currentTimeMillis()
     for (file in cacheFiles) {
       val fileName = file.fileName.toString()
@@ -99,21 +97,21 @@ class CacheDirCleanup(private val cacheDir: Path) {
         val toRemove = cacheDir.resolve("$fileName.toRemove.${UUID.randomUUID()}")
         try {
           Files.move(file, toRemove)
-          MoreFiles.deleteRecursively(toRemove, RecursiveDeleteOption.ALLOW_INSECURE)
+          toRemove.deleteRecursively()
         }
-        catch (t: Throwable) {
+        catch (e: Throwable) {
           val writer = StringWriter()
-          t.printStackTrace(PrintWriter(writer))
+          e.printStackTrace(PrintWriter(writer))
           LOG.warning("""
-  Unable to delete file '$file': ${t.message}
+  Unable to delete file '$file': ${e.message}
   $writer
   """.trimIndent())
         }
-        Files.delete(markFile)
+        Files.deleteIfExists(markFile)
       }
       else {
         LOG.info("CACHE-CLEANUP: Marking File '$file' for deletion, it'll be removed on the next cleanup run")
-        Files.writeString(markFile, "")
+        Files.newByteChannel(markFile, EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)).close()
       }
     }
   }
