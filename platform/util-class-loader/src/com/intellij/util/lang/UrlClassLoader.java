@@ -47,8 +47,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   private final boolean isBootstrapResourcesAllowed;
   private final boolean isSystemClassLoader;
 
-  private final boolean enableCoroutineDump;
-
   protected final @NotNull ClassPath.ClassDataConsumer classDataConsumer =
     ClassPath.recordLoadingTime ? new ClassPath.MeasuringClassDataConsumer(this) : this;
 
@@ -148,7 +146,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     isSystemClassLoader = builder.isSystemClassLoader;
 
-    enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump.using.classloader", "false"));
     classPath = new ClassPath(builder.files, builder, resourceFileFactory, mimicJarUrlConnection);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
@@ -162,7 +159,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     isBootstrapResourcesAllowed = false;
     isSystemClassLoader = false;
     classLoadingLocks = new ClassLoadingLocks();
-    enableCoroutineDump = false;
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
@@ -225,20 +221,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     Class<?> clazz;
     try {
-      if (enableCoroutineDump &&
-          packageNameHash == -3930079881136890558L &&
-          name.equals("kotlin.coroutines.jvm.internal.DebugProbesKt")) {
-        String resourceName = "DebugProbesKt.bin";
-        Resource resource = classPath.findResource(resourceName);
-        if (resource == null) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.err.println("Cannot find " + resourceName);
-        }
-        else {
-          return classDataConsumer.consumeClassData(name, resource.getByteBuffer());
-        }
-      }
-
       clazz = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
     }
     catch (IOException e) {
