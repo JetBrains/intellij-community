@@ -16,13 +16,20 @@ import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
 import java.awt.*
-import kotlin.math.max
+import java.awt.event.MouseEvent
 
 /**
  * @author Alexander Lobas
  */
 class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittable {
   private val mySplitter = object : OnePixelDivider(false, this) {
+    override fun noDeepestComponent(e: MouseEvent, deepestComponentAt: Component?): Boolean {
+      if (e.id == MouseEvent.MOUSE_DRAGGED && myDragging) {
+        return false
+      }
+      return super.noDeepestComponent(e, deepestComponentAt)
+    }
+
     override fun paint(g: Graphics) {
     }
   }
@@ -108,7 +115,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     }
     if (myCalculateDelta) {
       myCalculateDelta = false
-      myDelta = max(myCustomWidth - width, 4)
+      myDelta = myCustomWidth - width
     }
     width += myDelta
 
