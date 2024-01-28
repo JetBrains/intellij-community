@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -36,6 +37,9 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.RepositoryTestLibrary
+import org.jetbrains.plugins.groovy.TestLibrary
 
 import java.nio.file.Files
 
@@ -51,6 +55,13 @@ abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     super.setUp()
     Logger.getInstance(GroovyCompilerTest.class).info(testStartMessage)
     addGroovyLibrary(module)
+  }
+
+  protected abstract TestLibrary getGroovyLibrary()
+
+  @Override
+  protected final void addGroovyLibrary(Module to) {
+    groovyLibrary.addTo(to)
   }
 
   void testPlainGroovy() throws Throwable {
@@ -950,7 +961,18 @@ class AppTest {
 
   void "test extend groovy classes with additional dependencies"() {
     PsiTestUtil.addProjectLibrary(module, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-    myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
+    def library = getGroovyLibrary()
+    def coordinate = (library as RepositoryTestLibrary).coordinates.first()
+    if (!coordinate.contains(":groovy-all:")) {
+      def testLibrary = new RepositoryTestLibrary(coordinate.replace(":groovy:", ":groovy-test:"))
+      testLibrary.addTo(module)
+    }
+    if (coordinate.contains(":2.")) {
+      myFixture.addFileToProject("a.groovy", "class Foo extends groovy.util.GroovyTestCase {}")
+    }
+    else {
+      myFixture.addFileToProject("a.groovy", "class Foo extends groovy.test.GroovyTestCase {}")
+    }
     assertEmpty(make())
   }
 
@@ -1026,23 +1048,33 @@ class BuildContextImpl extends BuildContext {
   }
 
   void "test honor bytecode version"() {
-    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_8)
-    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(module, '1.8')
+    Trinity<LanguageLevel, String, Integer> base
+    Trinity<LanguageLevel, String, Integer> old
+    if (getGroovyLibrary() == GroovyProjectDescriptors.LIB_GROOVY_2_4) {
+      base = [LanguageLevel.JDK_1_8, '1.8', Opcodes.V1_8]
+      old = [LanguageLevel.JDK_1_6, '1.6', Opcodes.V1_6]
+    }
+    else {
+      base = [LanguageLevel.JDK_11, '11', Opcodes.V11]
+      old = [LanguageLevel.JDK_1_8, '1.8', Opcodes.V1_8]
+    }
+    IdeaTestUtil.setModuleLanguageLevel(module, base.first)
+    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(module, base.second)
 
     myFixture.addFileToProject('a.groovy', 'class Foo { }')
     assertEmpty make()
-    assert getClassFileVersion('Foo') == Opcodes.V1_8
+    assert getClassFileVersion('Foo') == base.third
 
-    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_6)
-    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(module, '1.6')
+    IdeaTestUtil.setModuleLanguageLevel(module, old.first)
+    CompilerConfiguration.getInstance(project).setBytecodeTargetLevel(module, old.second)
     assertEmpty rebuild()
-    assert getClassFileVersion('Foo') == Opcodes.V1_6
+    assert getClassFileVersion('Foo') == old.third
   }
 
   private int getClassFileVersion(String className) {
     def classFile = findClassFile(className)
     int version = -1
-    new ClassReader(FileUtil.loadFileBytes(classFile)).accept(new ClassVisitor(Opcodes.ASM6) {
+    new ClassReader(FileUtil.loadFileBytes(classFile)).accept(new ClassVisitor(Opcodes.ASM9) {
       @Override
       void visit(int v, int access, String name, String signature, String superName, String[] interfaces) {
         version = v
