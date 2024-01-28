@@ -5619,8 +5619,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           c.setBounds(r.width - d.width - rightInsets - 20, 20, d.width, d.height);
         } else if (!(c instanceof StickyLinesPanel)) {
           // Status component
-          int statusComponentX = myPanel.getWidth() - c.getWidth();
-          c.setLocation(statusComponentX, 0);
+          Dimension d = c.getPreferredSize();
+          c.setBounds(r.width - d.width, 0, d.width, d.height);
         }
       }
     }
