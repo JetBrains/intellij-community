@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.PingProgress;
@@ -82,6 +83,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1_000 /*ms*/);
 
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
@@ -472,6 +474,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return vfsPeer.storeUnlinkedContent(bytes);
   }
 
+  @SuppressWarnings("removal")
   @Override
   public int getModificationCount(@NotNull VirtualFile file) {
     return vfsPeer.getModCount(getFileId(file));
@@ -826,8 +829,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return contentStream.readNBytes((int)length);
     }
     catch (IOException e) {
-      vfsPeer.handleError(e);
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
+      throw vfsPeer.handleError(e);
     }
   }
 
@@ -1741,7 +1743,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     if (missedRootUrlRef.isNull()) {
-      LOG.warn("Can't find root[#" + rootId + "]");
+      THROTTLED_LOG.warn("Can't find root[#" + rootId + "]");
       return;
     }
 
@@ -2408,7 +2410,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @TestOnly
-  @NotNull Iterable<? extends VirtualFileSystemEntry> getDirCache() {
+  @NotNull
+  Iterable<? extends VirtualFileSystemEntry> getDirCache() {
     return myIdToDirCache.getCachedDirs();
   }
 
