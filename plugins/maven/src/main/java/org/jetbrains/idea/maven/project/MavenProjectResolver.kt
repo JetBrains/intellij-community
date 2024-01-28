@@ -48,7 +48,10 @@ private val EP_NAME = ExtensionPointName.create<MavenProjectResolutionContributo
 
 @ApiStatus.Internal
 interface MavenProjectResolutionContributor {
-  suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, embedder: MavenEmbedderWrapper)
+  suspend fun onMavenProjectResolved(project: Project,
+                                     mavenProject: MavenProject,
+                                     nativeMavenProject: NativeMavenProjectHolder,
+                                     embedder: MavenEmbedderWrapper)
 }
 
 @ApiStatus.Internal
@@ -333,7 +336,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
       for (contributor in EP_NAME.extensionList) {
-        contributor.onMavenProjectResolved(myProject, mavenProjectCandidate, embedder)
+        contributor.onMavenProjectResolved(myProject, mavenProjectCandidate, nativeMavenProject, embedder)
       }
     }
     else {

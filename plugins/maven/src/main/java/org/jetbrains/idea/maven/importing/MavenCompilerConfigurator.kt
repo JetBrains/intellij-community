@@ -25,8 +25,8 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
 private val ALL_PROJECTS_COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
-private val DEFAULT_COMPILER_EXTENSION = Key.create<MavenCompilerExtension>("default.compiler")
-private val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
+internal val DEFAULT_COMPILER_EXTENSION = Key.create<MavenCompilerExtension>("default.compiler")
+internal val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
 private const val JAVAC_ID = "javac"
 private const val MAVEN_COMPILER_PARAMETERS = "maven.compiler.parameters"
 

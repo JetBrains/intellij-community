@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.http.annotation.Obsolete;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -121,6 +122,8 @@ public abstract class MavenImporter {
     return null;
   }
 
+  @Obsolete
+  // see MavenProjectResolutionContributor
   public void resolve(Project project,
                       MavenProject mavenProject,
                       NativeMavenProjectHolder nativeMavenProject,
