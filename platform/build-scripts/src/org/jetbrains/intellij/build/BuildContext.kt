@@ -1,10 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentMap
@@ -12,8 +9,6 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
@@ -128,19 +123,6 @@ interface BuildContext : CompilationContext {
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean = true): BuildContext
 
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
-}
-
-@Obsolete
-fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, step: Runnable): Boolean {
-  if (context.isStepSkipped(stepId)) {
-    Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
-  }
-  else {
-    spanBuilder(stepMessage).startSpan().useWithoutActiveScope {
-      step.run()
-    }
-  }
-  return true
 }
 
 suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
