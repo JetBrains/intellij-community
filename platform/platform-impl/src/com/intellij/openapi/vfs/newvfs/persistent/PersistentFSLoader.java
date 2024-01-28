@@ -893,10 +893,21 @@ public final class PersistentFSLoader {
   public void problemsWereRecovered(@NotNull List<VFSInitException> recovered) {
     problemsDuringLoad.removeAll(recovered);
     problemsRecovered.addAll(recovered);
+
+    String recoveredProblemsList = recovered.stream()
+      .map(VFSInitException::category)
+      .map(Object::toString)
+      .collect(joining());
+    String remainingProblemsList = problemsDuringLoad.isEmpty() ?
+                                   "no problems" :
+                                   problemsDuringLoad.stream()
+                                     .map(VFSInitException::category)
+                                     .map(Object::toString)
+                                     .collect(joining());
+
     LOG.warn("[VFS load problem]: " +
-             recovered.stream().map(VFSInitException::category).map(Object::toString).collect(joining()) + " recovered, " +
-             problemsDuringLoad.stream() + " remain"
-    );
+             recoveredProblemsList + " recovered, " +
+             remainingProblemsList + " remain");
   }
 
   public void problemsRecoveryFailed(@NotNull List<VFSInitException> triedToRecover,
