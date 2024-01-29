@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -14,9 +15,9 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
 import io.opentelemetry.api.metrics.Meter
@@ -168,7 +169,12 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
         runCatchingXmlIssues {
           val entitySource = createEntitySource(artifactElement) ?: return@mapNotNull null
           val state = XmlSerializer.deserialize(artifactElement, ArtifactState::class.java)
-          val outputUrl = state.outputPath?.let { path -> if (path.isNotEmpty()) path.toVirtualFileUrl(virtualFileManager)  else null }
+          val outputUrl = state.outputPath?.let { path ->
+            if (path.isNotEmpty()) {
+              virtualFileManager.getOrCreateFromUri(path.toPathWithScheme())
+            }
+            else null
+          }
           val rootElement = loadPackagingElement(state.rootElement, entitySource)
           val artifactEntity = ArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, entitySource) {
             this.outputUrl = outputUrl
@@ -227,7 +233,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
-    fun getPathAttribute(name: String) = element.getAttributeValue(name)!!.let { it.toVirtualFileUrl(virtualFileManager) }
+    fun getPathAttribute(name: String) = element.getAttributeValue(name)!!.let { virtualFileManager.getOrCreateFromUri(it.toPathWithScheme()) }
     return when (val typeId = getAttribute("id")) {
       "root" -> ArtifactRootElementEntity(source) {
         this.children = loadElementChildren()
@@ -425,5 +431,9 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     init {
       setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
     }
+  }
+
+  private fun String.toPathWithScheme(): String {
+    return URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(this)
   }
 }
