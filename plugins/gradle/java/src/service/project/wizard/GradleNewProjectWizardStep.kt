@@ -389,9 +389,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun getJdkVersion(): JavaVersion? {
-    val jdk = sdk ?: return null
-    val versionString = jdk.versionString ?: return null
-    return JavaVersion.tryParse(versionString)
+    val versionString = sdk?.versionString
+    val plannedVersion = sdkDownloadTask?.plannedVersion
+    return JavaVersion.tryParse(versionString ?: plannedVersion)
   }
 
   private fun suggestDistributionType(): DistributionTypeItem {
