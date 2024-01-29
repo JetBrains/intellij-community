@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(a: Array<Int>) {
     <selection>a[0]</selection>
     a[1]

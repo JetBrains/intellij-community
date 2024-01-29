@@ -305,6 +305,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     runTest("testData/unifier/equivalence/expressions/calls/extraArguments.kt");
                 }
 
+                @TestMetadata("extraNullArguments.kt")
+                public void testExtraNullArguments() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/calls/extraNullArguments.kt");
+                }
+
                 @TestMetadata("implicitReceiverArgument.kt")
                 public void testImplicitReceiverArgument() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/calls/implicitReceiverArgument.kt");
@@ -313,6 +318,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @TestMetadata("implicitThis.kt")
                 public void testImplicitThis() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/calls/implicitThis.kt");
+                }
+
+                @TestMetadata("missingArguments.kt")
+                public void testMissingArguments() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/calls/missingArguments.kt");
                 }
 
                 @TestMetadata("safeCall.kt")
@@ -328,6 +338,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @TestMetadata("varargs.kt")
                 public void testVarargs() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/calls/varargs.kt");
+                }
+
+                @TestMetadata("withNamedArguments.kt")
+                public void testWithNamedArguments() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/calls/withNamedArguments.kt");
                 }
             }
 

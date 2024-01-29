@@ -1,15 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.getArgumentOrIndexExpressions
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.mapArgumentsToParameterIndices
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.addToStdlib.zipWithNulls
 
 object K2SemanticMatcher {
     context(KtAnalysisSession)
@@ -33,6 +37,12 @@ object K2SemanticMatcher {
 
     context(KtAnalysisSession)
     fun KtElement.isSemanticMatch(patternElement: KtElement): Boolean = accept(VisitingMatcher(this@KtAnalysisSession), patternElement)
+
+    context(KtAnalysisSession)
+    private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?): Boolean {
+        if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
+        return targetElement.isSemanticMatch(patternElement)
+    }
 
     private class VisitingMatcher(private val analysisSession: KtAnalysisSession) : KtVisitor<Boolean, KtElement>() {
         override fun visitKtElement(element: KtElement, data: KtElement): Boolean = false
@@ -115,6 +125,8 @@ object K2SemanticMatcher {
         val targetCall = targetExpression.resolveCall()?.calls?.singleOrNull() ?: return false
         val patternCall = patternExpression.resolveCall()?.calls?.singleOrNull() ?: return false
 
+        if (targetCall.javaClass != patternCall.javaClass) return false
+
         if (targetCall is KtCallableMemberCall<*, *> && patternCall is KtCallableMemberCall<*, *>) {
             val targetAppliedSymbol = targetCall.partiallyAppliedSymbol
             val patternAppliedSymbol = patternCall.partiallyAppliedSymbol
@@ -123,11 +135,31 @@ object K2SemanticMatcher {
 
             if (!areReceiversMatching(targetAppliedSymbol.dispatchReceiver, patternAppliedSymbol.dispatchReceiver)) return false
             if (!areReceiversMatching(targetAppliedSymbol.extensionReceiver, patternAppliedSymbol.extensionReceiver)) return false
-
-            return true
         }
 
-        return false
+        val targetArguments = targetExpression.getArgumentsAndSortThemIfCallIsPresent(targetCall as? KtFunctionCall<*>)
+        val patternArguments = patternExpression.getArgumentsAndSortThemIfCallIsPresent(patternCall as? KtFunctionCall<*>)
+
+        for ((targetArgument, patternArgument) in targetArguments.zipWithNulls(patternArguments)) {
+            if (!elementsMatchOrBothAreNull(targetArgument, patternArgument)) return false
+        }
+
+        return true
+    }
+
+    context(KtAnalysisSession)
+    private fun KtExpression.getArgumentsAndSortThemIfCallIsPresent(call: KtFunctionCall<*>?): List<KtExpression?> {
+        val allArguments = getArgumentOrIndexExpressions(sourceElement = this)
+
+        if (call == null) return allArguments
+
+        val signature = call.partiallyAppliedSymbol.signature
+        val mappedArguments = mapArgumentsToParameterIndices(sourceElement = this, signature, call.argumentMapping)
+        val sortedMappedArguments = mappedArguments.toList()
+            .sortedWith(compareBy({ (_, parameterIndex) -> parameterIndex }, { (argument, _) -> argument.startOffset }))
+            .map { (argument, _) -> argument }
+
+        return sortedMappedArguments + allArguments.filterNot { it in mappedArguments }
     }
 
     context(KtAnalysisSession)
