@@ -14,7 +14,6 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.observable.util.whenTextChangedFromUi
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptor
@@ -178,20 +177,22 @@ internal class ProjectTypeList(
 
   private fun showInstallPluginDialog(configure: PluginManagerConfigurable.() -> Unit) {
     val configurable = PluginManagerConfigurable()
-    configurable.configure()
-    val dialogBuilder = DialogBuilder(component)
-    dialogBuilder.title(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.title"))
-    dialogBuilder.centerPanel(
-      JBUI.Panels.simplePanel(configurable.createComponent()!!.apply {
-        border = JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1)
-      }).addToTop(configurable.topComponent.apply {
-        preferredSize = JBDimension(preferredSize.width, 40)
-      })
-    )
-    dialogBuilder.addOkAction()
-    dialogBuilder.addCancelAction()
-    if (dialogBuilder.showAndGet()) {
-      configurable.apply()
+    AutoCloseable(configurable::disposeUIResources).use {
+      configurable.configure()
+      val dialogBuilder = DialogBuilder(component)
+      dialogBuilder.title(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.title"))
+      dialogBuilder.centerPanel(
+        JBUI.Panels.simplePanel(configurable.createComponent()!!.apply {
+          border = JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1)
+        }).addToTop(configurable.topComponent.apply {
+          preferredSize = JBDimension(preferredSize.width, 40)
+        })
+      )
+      dialogBuilder.addOkAction()
+      dialogBuilder.addCancelAction()
+      if (dialogBuilder.showAndGet() && configurable.isModified) {
+        configurable.apply()
+      }
     }
   }
 
@@ -238,9 +239,7 @@ internal class ProjectTypeList(
 
     list.emptyText.setText(IdeBundle.message("plugins.configurable.nothing.found"))
     list.emptyText.appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"), LINK_PLAIN_ATTRIBUTES) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(context.project, PluginManagerConfigurable::class.java) { configurable ->
-        configurable.openMarketplaceTab(searchTextField.text)
-      }
+      showInstallPluginDialog()
     }
 
     val scrollPane = JBScrollPane(list)
