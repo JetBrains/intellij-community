@@ -31,7 +31,7 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
   private var panelH: Int = 0
 
   // settings
-  private val scopeThreshold: Int = 3
+  private val scopeThreshold: Int = 5
   private val lineLimit: Int get() = editor.settings.stickyLinesLimit
   private val isStickyEnabled: Boolean get() = editor.settings.areStickyLinesShown()
 
