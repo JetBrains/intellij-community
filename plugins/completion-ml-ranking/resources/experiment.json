@@ -127,7 +127,7 @@
       "id": "java",
       "experimentBucketsCount": 4,
       "includeGroups": [ 13, 22, 24 ],
-      "shouldLogElementFeatures": true
+      "shouldLogElementFeatures": false
     },
     {
       "id": "python",
