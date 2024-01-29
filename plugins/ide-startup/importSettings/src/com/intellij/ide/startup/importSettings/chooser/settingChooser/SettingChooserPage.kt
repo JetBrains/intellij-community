@@ -114,6 +114,10 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
           horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
           minimumSize = Dimension(0, 0)
           background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
+
+          SwingUtilities.invokeLater {
+            this.requestFocus()
+          }
         })
 
       }, BorderLayout.CENTER)

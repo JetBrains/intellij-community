@@ -19,10 +19,7 @@ import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import javax.swing.*
 
 class ProductChooserPage(val controller: ImportSettingsController) : OnboardingPage {
 
@@ -78,6 +75,10 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
     act.targetComponent = pane
 
     pane.add(act.component)
+
+    SwingUtilities.invokeLater {
+      act.component.requestFocus()
+    }
   }
 
   private val south = JPanel(BorderLayout()).apply {

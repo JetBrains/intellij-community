@@ -87,6 +87,10 @@ class WizardPluginsPage(val controller: WizardController) : OnboardingPage {
           horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
           border = JBUI.Borders.empty()
           minimumSize = Dimension(0, 0)
+
+          SwingUtilities.invokeLater {
+            this.requestFocus()
+          }
         })
       })
   }
