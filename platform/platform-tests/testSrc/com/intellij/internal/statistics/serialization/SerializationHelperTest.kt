@@ -17,17 +17,14 @@ import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 import java.io.BufferedReader
 import java.io.File
 import java.io.StringReader
 import java.io.StringWriter
 
-@Suppress("JUnitMixedFramework")
 internal class SerializationHelperTest : BasePlatformTestCase() {
   private fun getTestDataRoot() = PlatformTestUtil.getPlatformTestDataPath() + "fus/serialization/"
 
-  @org.junit.Test
   fun testSerializationGroupRemoteRule() {
     val enums = mapOf("__event_id1" to setOf("loading.config.failed", "logs.send", "metadata.loaded"),
                       "__event_id2" to setOf("metadata.updated", "metadata.load.failed", "metadata.update.failed"))
@@ -54,7 +51,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(realText, serializationText)
   }
 
-  @org.junit.Test
   fun testDeserializationGroupRemoteRule() {
     val validationRule = File(getTestDataRoot() + "SerializationGroupRemoteRule.json").readText(Charsets.UTF_8)
 
@@ -64,7 +60,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(validationRule, serializationText)
   }
 
-  @org.junit.Test
   fun testSerializationGroupDescriptor() {
     val filedDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"))
     val eventSchemeDescriptor = EventDescriptor("testEvent", setOf(filedDescriptor, filedDescriptor))
@@ -76,7 +71,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(realText, serializationText)
   }
 
-  @org.junit.Test
   fun testDeserializationGroupDescriptor() {
     val groupDescriptor = File(getTestDataRoot() + "SerializationGroupDescriptor.json").readText(Charsets.UTF_8)
 
@@ -86,7 +80,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(groupDescriptor, serializationText)
   }
 
-  @org.junit.Test
   fun testSerializationFeatureUsageData() {
     val data = FeatureUsageData("FUS")
     data.addData("durationMs", 1)
@@ -99,7 +92,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(realText, serializationText)
   }
 
-  @Test
   fun testSerializationEventLogExternalSettings() {
     val eventLogMajorVersionBorders = EventLogMajorVersionBorders()
     eventLogMajorVersionBorders.from = "2019.2"
@@ -126,7 +118,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(realText, serializationText)
   }
 
-  @Test
   fun testDeserializationEventLogExternalSettings() {
     val config = File(getTestDataRoot() + "SerializationEventLogExternalSettings.json").readText(Charsets.UTF_8)
     val reader = BufferedReader(StringReader(config))
@@ -136,7 +127,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(serializationText, config)
   }
 
-  @Test
   fun testSerializationEventGroupRemoteDescriptors() {
     val eventGroupRemoteDescriptors = EventGroupRemoteDescriptors()
 
@@ -172,7 +162,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(realText, serializationText.toString())
   }
 
-  @Test
   fun testDeserializationEventGroupRemoteDescriptors() {
     val eventGroupRemoteDescriptors = File(getTestDataRoot() + "SerializationEventGroupRemoteDescriptors.json").readText(Charsets.UTF_8)
 
@@ -182,7 +171,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(eventGroupRemoteDescriptors, serializationText)
   }
 
-  @Test
   fun testCustomSerializationLogEvent() {
     val logEvent = LogEvent("session", "build", "bucket", 1L, LogEventGroup("id", "version"),
                             "recorderVersion", LogEventAction("id", true, mutableMapOf("string" to "any"), 2))
@@ -192,7 +180,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(serializationText, realText)
   }
 
-  @Test
   fun testCustomDeserializationLogEvent() {
     val logEvent = File(getTestDataRoot() + "CustomSerializationLogEvent.json").readText(Charsets.UTF_8)
 
@@ -202,7 +189,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(logEvent, serializationText)
   }
 
-  @Test
   fun testSerializationLogEventRecordRequest() {
     val logEvent = LogEvent("session", "build", "bucket", 1L, LogEventGroup("id", "version"),
                             "recorderVersion", LogEventAction("id", true, mutableMapOf("string" to "any"), 2))
@@ -215,7 +201,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(serializationText, realText)
   }
 
-  @Test
   fun testDeserializationLogEventRecordRequest() {
     val logEventRecordRequest = File(getTestDataRoot() + "SerializationLogEventRecordRequest.json").readText(Charsets.UTF_8)
 
@@ -225,7 +210,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(logEventRecordRequest, serializationText)
   }
 
-  @Test
   fun testSerializationEventsSchemePrimitive() {
     val filedDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"))
     val eventSchemeDescriptor = EventDescriptor("testEvent", setOf(filedDescriptor, filedDescriptor))
@@ -239,7 +223,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(realText, serializationText)
   }
 
-  @Test
   fun testDeserializationEventsSchemePrimitive() {
     val eventsScheme = File(getTestDataRoot() + "SerializationEventsSchemePrimitive.json").readText(Charsets.UTF_8)
 
@@ -249,9 +232,8 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(eventsScheme, serializationText)
   }
 
-  @Test
   fun testSerializationEventsSchemeArray() {
-    val filedDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"), FieldDataType.ARRAY)
+    val filedDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"), dataType = FieldDataType.ARRAY)
     val eventSchemeDescriptor = EventDescriptor("testEvent", setOf(filedDescriptor, filedDescriptor))
     val groupDescriptor = GroupDescriptor("testId", "counter", 1, setOf(eventSchemeDescriptor, eventSchemeDescriptor),
                                           "classNameTest", "recorderTest", PluginSchemeDescriptor("pluginIdTest"))
@@ -263,7 +245,20 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     Assertions.assertEquals(realText, serializationText)
   }
 
-  @Test
+  fun testSerializationAnonymizedField() {
+    val anonymizedField = FieldDescriptor("test_id", setOf("{regexp#hash}"), shouldBeAnonymized = true)
+    val anonymizedArray = FieldDescriptor("test_id_array", setOf("{regexp#hash}"), shouldBeAnonymized = true, dataType = FieldDataType.ARRAY)
+    val eventSchemeDescriptor = EventDescriptor("testEvent", setOf(anonymizedArray, anonymizedField))
+    val groupDescriptor = GroupDescriptor("testId", "counter", 1, setOf(eventSchemeDescriptor),
+                                          "classNameTest", "recorderTest", PluginSchemeDescriptor("pluginIdTest"))
+    val eventsScheme = EventsScheme("commitHash", "buildNumber", listOf(groupDescriptor))
+
+    val serializationText = SerializationHelper.serialize(eventsScheme)
+    val realText = File(getTestDataRoot() + "SerializationAnonymizedField.json").readText(Charsets.UTF_8)
+
+    Assertions.assertEquals(realText, serializationText)
+  }
+
   fun testDeserializationEventsSchemeArray() {
     val eventsScheme = File(getTestDataRoot() + "SerializationEventsSchemeArray.json").readText(Charsets.UTF_8)
 

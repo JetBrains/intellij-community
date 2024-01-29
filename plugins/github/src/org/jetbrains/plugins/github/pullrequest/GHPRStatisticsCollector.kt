@@ -23,7 +23,7 @@ import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
 import java.util.*
 
 internal object GHPRStatisticsCollector: CounterUsagesCollector() {
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 6)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 7)
 
   override fun getGroup() = COUNTERS_GROUP
 

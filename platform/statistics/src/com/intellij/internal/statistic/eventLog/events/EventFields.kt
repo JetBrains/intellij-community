@@ -481,6 +481,12 @@ object EventFields {
 
   /**
    * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
+   * */
+  @JvmStatic
+  fun AnonymizedList(@NonNls @EventFieldName name: String): AnonymizedListEventField = AnonymizedListEventField(name)
+
+  /**
+   * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
    *
    * Intended for ids which are unique inside some context (during one IDE run, during some process)
    *

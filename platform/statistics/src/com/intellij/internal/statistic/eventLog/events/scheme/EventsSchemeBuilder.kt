@@ -11,9 +11,9 @@ import java.util.regex.Pattern
 object EventsSchemeBuilder {
 
   val pluginInfoFields = setOf(
-    FieldDescriptor("plugin", setOf("{util#plugin}")),
-    FieldDescriptor("plugin_type", setOf("{util#plugin_type}")),
-    FieldDescriptor("plugin_version", setOf("{util#plugin_version}"))
+    FieldDescriptor("plugin", setOf("{util#plugin}"), false),
+    FieldDescriptor("plugin_type", setOf("{util#plugin_type}"), false),
+    FieldDescriptor("plugin_version", setOf("{util#plugin_version}"), false)
   )
 
   private val classValidationRuleNames = setOf("class_name", "dialog_class", "quick_fix_class_name",
@@ -38,7 +38,7 @@ object EventsSchemeBuilder {
         if (field is StringListEventField.ValidatedByInlineRegexp) {
           validateRegexp(field.regexp)
         }
-        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.ARRAY)
+        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.ARRAY, field.shouldBeAnonymized)
       }
       is PrimitiveEventField -> {
         if (field is StringEventField.ValidatedByInlineRegexp) {
@@ -48,13 +48,16 @@ object EventsSchemeBuilder {
           validateRegexp(field.regexp)
         }
 
-        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.PRIMITIVE)
+        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.PRIMITIVE, field.shouldBeAnonymized)
       }
     }
   }
 
-  private fun buildFieldDescriptors(fieldName: String, validationRules: List<String>, fieldDataType: FieldDataType): Set<FieldDescriptor> {
-    val fields = mutableSetOf(FieldDescriptor(fieldName, validationRules.toSet(), fieldDataType))
+  private fun buildFieldDescriptors(fieldName: String,
+                                    validationRules: List<String>,
+                                    fieldDataType: FieldDataType,
+                                    shouldBeAnonymized: Boolean): Set<FieldDescriptor> {
+    val fields = mutableSetOf(FieldDescriptor(fieldName, validationRules.toSet(), shouldBeAnonymized, fieldDataType))
     if (validationRules.any { it in classValidationRules }) {
       fields.addAll(pluginInfoFields)
     }
@@ -163,9 +166,19 @@ object EventsSchemeBuilder {
       .groupBy { it.path }
       .map { (name, values) ->
         val type = defineDataType(values, name, eventName, groupId)
-        FieldDescriptor(name, values.flatMap { it.value }.toSet(), type)
+        val shouldBeAnonymized = defineShouldBeAnonymized(values, name, eventName, groupId)
+        FieldDescriptor(name, values.flatMap { it.value }.toSet(), shouldBeAnonymized, type)
       }
       .toSet()
+  }
+
+  private fun defineShouldBeAnonymized(values: List<FieldDescriptor>, name: String, eventName: String, groupId: String): Boolean {
+    val shouldBeAnonymized = values.first().shouldBeAnonymized
+    return if (values.any { it.shouldBeAnonymized != shouldBeAnonymized })
+      throw IllegalMetadataSchemeStateException("Field couldn't be defined twice with different shouldBeAnonymized value (group=$groupId, event=$eventName, field=$name)")
+    else {
+      shouldBeAnonymized
+    }
   }
 
   private fun defineDataType(values: List<FieldDescriptor>, name: String, eventName: String, groupId: String): FieldDataType {

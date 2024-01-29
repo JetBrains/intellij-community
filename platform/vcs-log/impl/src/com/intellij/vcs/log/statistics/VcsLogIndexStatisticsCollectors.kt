@@ -52,7 +52,7 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
 }
 
 internal class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("vcs.log.index.project", 4)
+  private val GROUP = EventLogGroup("vcs.log.index.project", 5)
   private val INDEXING_TIME = GROUP.registerEvent("indexing.time.minutes", EventFields.Count)
   private val IS_PAUSED = EventFields.Boolean("is_paused")
   private val INDEXING_TIME_BY_ROOT = GROUP.registerEvent("indexing.time.by.root",

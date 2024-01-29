@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 
 internal object FileNavigationLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("file.prediction", 14)
+  private val GROUP = EventLogGroup("file.prediction", 15)
 
   private var session: IntEventField = EventFields.Int("session")
   private var performance: LongListEventField = EventFields.LongList("performance")

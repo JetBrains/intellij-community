@@ -17,7 +17,7 @@ object KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     // Collector ID
-    private val GROUP = EventLogGroup("kotlin.ide.inspections", 2)
+    private val GROUP = EventLogGroup("kotlin.ide.inspections", 3)
 
     val inspectionTypeField = EventFields.Enum<KotlinLanguageFeatureInspectionType>("inspection_type") { it.name.lowercase() }
     val kotlinLanguageVersionField = EventFields.StringValidatedByRegexpReference("kotlin_language_version", "version_lang_api")

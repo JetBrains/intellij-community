@@ -16,8 +16,11 @@ class FieldDataTypeIncludeFilter {
     return other is FieldDataType && FieldDataType.PRIMITIVE == other
   }
 }
+
 data class FieldDescriptor(val path: String,
                            val value: Set<String>,
+                           @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+                           val shouldBeAnonymized: Boolean = false,
                            @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = FieldDataTypeIncludeFilter::class)
                            val dataType: FieldDataType = FieldDataType.PRIMITIVE)
 

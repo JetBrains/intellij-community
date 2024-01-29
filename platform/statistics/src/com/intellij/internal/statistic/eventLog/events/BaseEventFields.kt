@@ -251,6 +251,15 @@ data class AnonymizedEventField(@NonNls @EventFieldName override val name: Strin
   }
 }
 
+data class AnonymizedListEventField(@NonNls @EventFieldName  override val name: String) : StringListEventField(name) {
+  override val shouldBeAnonymized: Boolean
+    get() = true
+
+  override val validationRule: List<String>
+    get() = listOf("{regexp#hash}")
+}
+
+
 internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<String?>() {
   override val shouldBeAnonymized: Boolean = true
 

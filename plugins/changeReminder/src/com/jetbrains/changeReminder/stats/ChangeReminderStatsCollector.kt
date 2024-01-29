@@ -40,12 +40,12 @@ internal fun getPredictionData(predictionData: PredictionData): List<EventPair<*
 object ChangeReminderStatsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  internal val GROUP = EventLogGroup("vcs.change.reminder", 3)
-  internal val COMMITTED_FILES = EventFields.StringListValidatedByRegexp("committed_files", "hash")
-  internal val DISPLAYED_PREDICTION = EventFields.StringListValidatedByRegexp("displayed_prediction", "hash")
-  internal val CUR_MODIFIED_FILES = EventFields.StringListValidatedByRegexp("cur_modified_files", "hash")
-  internal val PREV_MODIFIED_FILES = EventFields.StringListValidatedByRegexp("prev_modified_files", "hash")
-  internal val PREDICTION_FOR_FILES = EventFields.StringListValidatedByRegexp("prediction_for_files", "hash")
+  internal val GROUP = EventLogGroup("vcs.change.reminder", 4)
+  internal val COMMITTED_FILES = EventFields.AnonymizedList("committed_files")
+  internal val DISPLAYED_PREDICTION = EventFields.AnonymizedList("displayed_prediction")
+  internal val CUR_MODIFIED_FILES = EventFields.AnonymizedList("cur_modified_files")
+  internal val PREV_MODIFIED_FILES = EventFields.AnonymizedList("prev_modified_files")
+  internal val PREDICTION_FOR_FILES = EventFields.AnonymizedList("prediction_for_files")
   internal val EMPTY_REASON = EventFields.Enum<PredictionData.EmptyPredictionReason>("empty_reason") {
     it.name.lowercase(Locale.ENGLISH)
   }
