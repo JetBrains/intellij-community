@@ -8,7 +8,6 @@ import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.LanguageNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard.Companion.getLanguageGeneratorId
-import com.intellij.ui.UIBundle
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -26,9 +25,6 @@ class LegacyLanguageGeneratorNewProjectWizard(
   override val icon: Icon = EmptyIcon.ICON_16
 
   override val ordinal: Int = wizard.ordinal
-
-  override val description: String =
-    UIBundle.message("label.project.wizard.project.generator.description", context.isCreatingNewProjectInt, wizard.name)
 
   override fun isEnabled(): Boolean = wizard.isEnabled(context)
 

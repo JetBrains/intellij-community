@@ -16,7 +16,6 @@ import javax.swing.Icon
 class EmptyProjectGeneratorNewProjectWizard : GeneratorNewProjectWizard {
   override val id: String = NewProjectWizardConstants.Generators.EMPTY_PROJECT
   override val name: String = UIBundle.message("label.project.wizard.empty.project.generator.name")
-  override val description: String = UIBundle.message("label.project.wizard.empty.project.generator.description")
   override val icon: Icon = AllIcons.Nodes.Module
 
   override fun createStep(context: WizardContext): NewProjectWizardStep =
