@@ -1,16 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
-import com.intellij.DynamicBundle;
+import com.intellij.CommonBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +28,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "unused"})
 public class Menu extends MenuItem {
@@ -74,24 +77,61 @@ public class Menu extends MenuItem {
     return ourAppMenu;
   }
 
-  public static void renameAppMenuItems(@Nullable DynamicBundle replacements) {
-    if (replacements == null) {
-      return;
-    }
+  private static String removeMnemonic(@Nls String src) {
+    if (src == null)
+      return "";
 
-    Set<String> keySet = replacements.getResourceBundle().keySet();
+    TextWithMnemonic txt = TextWithMnemonic.parse(src);
+    return txt == null ? "" : txt.getText();
+  }
 
-    List<String> replace = new ArrayList<>(keySet.size() * 2);
-    for (String title : keySet) {
-      replace.add(title);
-      replace.add(replacements.getMessage(title));
-    }
+  public static void renameAppMenuItems() {
+    // NOTE: Application menu (i.e. first menu item with text = app name) for java application is loaded from
+    // system framework 'JavaVM' (see NSApplicationAWT::finishLaunching). After execution of [NSBundle loadNibFile...]
+    // we will have loaded app menu with hardcoded english (not internationalized) strings:
+    // About %@
+    // Preferences...
+    // Services
+    // Hide %@
+    // Hide Others
+    // Show All
+    // Quit %@
+    // And then %@ is replaced with $CFBundleName. Since strings are constant we will find menu item just by it's title.
+
+    List<String> replace = new ArrayList<>(7);
+    ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
+    String ide = names.getProductName();
+
+    replace.add("About.*");
+    replace.add(removeMnemonic(ActionsBundle.message("action.About.text")) + " " + ide);
+
+    // NOTE: Check For Updates is installed via Foundation from MacAppProvider
+    replace.add("Check for Updates...");
+    replace.add(removeMnemonic(ActionsBundle.message("action.CheckForUpdate.text")));
 
     //macOS 13.0 Ventura uses Settings instead of Preferences. See IDEA-300314
-    if (SystemInfo.isMacOSVentura) {
-      replace.add("Prefer.*");
-      replace.add("Settings...");
-    }
+    String replacement = SystemInfo.isMacOSVentura ?
+      removeMnemonic(CommonBundle.message("action.settings.macOS.ventura")):
+      removeMnemonic(CommonBundle.message("action.settings.mac"));
+    replace.add("Preferences.*"); // this replacement will be applied only on old OSX systems
+    replace.add(replacement);
+    replace.add("Settings.*");  // this replacement will be applied only on last OSX systems
+    replace.add(replacement);
+
+    replace.add("Services");
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.services")));
+
+    replace.add("Hide " + ide);
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.hide_ide") + " " + ide));
+
+    replace.add("Hide Others");
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.hide_others")));
+
+    replace.add("Show All");
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.show_all")));
+
+    replace.add("Quit.*");
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.quit") + " " + ide));
 
     nativeRenameAppMenuItems(ArrayUtilRt.toStringArray(replace));
   }
