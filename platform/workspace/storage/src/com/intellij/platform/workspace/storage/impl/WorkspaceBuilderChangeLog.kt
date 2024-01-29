@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.containers.with
 
 internal typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
 
@@ -42,7 +43,7 @@ internal class WorkspaceBuilderChangeLog {
    * This function adds replace event that represents changes in references between entities (without change of data)
    * Use [addReplaceDataEvent] to record changes in data inside the entity
    */
-  internal fun addReplaceReferencesEvent(
+  private fun addReplaceReferencesEvent(
     entityId: EntityId,
     addedChildren: Set<Pair<ConnectionId, ChildEntityId>> = emptySet(),
     removedChildren: Set<Pair<ConnectionId, ChildEntityId>> = emptySet(),
@@ -97,21 +98,21 @@ internal class WorkspaceBuilderChangeLog {
       else emptyMap()
 
       if (replaceEntity.references != null) {
-        if (replaceEntity.references.newChildren.isEmpty() && replaceEntity.references.removedChildren.isEmpty() && newAddedParents.isEmpty() && newRemovedParents.isEmpty()) {
+        if (replaceEntity.references.newChildren.isEmpty() && replaceEntity.references.removedChildren.isEmpty() && replaceEntity.references.childrenOrdering.isEmpty() && newAddedParents.isEmpty() && newRemovedParents.isEmpty()) {
           if (replaceEntity.data == null) null else replaceEntity.copy(references = null)
         }
         else replaceEntity.copy(
           references = replaceEntity.references.copy(newParents = newAddedParents, removedParents = newRemovedParents))
       }
       else {
-        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), newAddedParents, newRemovedParents))
+        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), newAddedParents, newRemovedParents))
       }
     }
 
     if (existingChange == null) {
       changeLog[entityId] = ChangeEntry.ReplaceEntity(
         null,
-        ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), mapOf(newConnectionId to newParentId), emptyMap())
+        ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), mapOf(newConnectionId to newParentId), emptyMap())
       )
     }
     else {
@@ -163,21 +164,21 @@ internal class WorkspaceBuilderChangeLog {
       else emptyMap()
 
       if (replaceEntity.references != null) {
-        if (replaceEntity.references.newChildren.isEmpty() && replaceEntity.references.removedChildren.isEmpty() && newAddedParents.isEmpty() && newRemovedParents.isEmpty()) {
+        if (replaceEntity.references.newChildren.isEmpty() && replaceEntity.references.removedChildren.isEmpty() && replaceEntity.references.childrenOrdering.isEmpty() && newAddedParents.isEmpty() && newRemovedParents.isEmpty()) {
           if (replaceEntity.data == null) null else replaceEntity.copy(references = null)
         }
         else replaceEntity.copy(
           references = replaceEntity.references.copy(newParents = newAddedParents, removedParents = newRemovedParents))
       }
       else {
-        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), newAddedParents, newRemovedParents))
+        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), newAddedParents, newRemovedParents))
       }
     }
 
     if (existingChange == null) {
       changeLog[entityId] = ChangeEntry.ReplaceEntity(
         null,
-        ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), mapOf(removedConnectionId to removedParentId))
+        ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), emptyMap(), mapOf(removedConnectionId to removedParentId))
       )
     }
     else {
@@ -231,21 +232,40 @@ internal class WorkspaceBuilderChangeLog {
       }
       else emptySet()
 
+      val newOrder = if (replaceEntity.references != null) {
+        val prevSet = replaceEntity.references.childrenOrdering.getOrElse(addedChildConnectionId) { LinkedHashSet() }
+        val set = LinkedHashSet(prevSet)
+        set.add(addedChildId)
+        set
+      } else {
+        LinkedHashSet<ChildEntityId?>().also { it.add(addedChildId) }
+      }
+
       if (replaceEntity.references != null) {
-        if (newAddedChildren.isEmpty() && newRemovedChildren.isEmpty() && replaceEntity.references.newParents.isEmpty() && replaceEntity.references.removedParents.isEmpty()) {
+        if (newAddedChildren.isEmpty() && newRemovedChildren.isEmpty() && newOrder.isEmpty() && replaceEntity.references.newParents.isEmpty() && replaceEntity.references.removedParents.isEmpty()) {
           if (replaceEntity.data == null) null else replaceEntity.copy(references = null)
         }
-        else replaceEntity.copy(references = replaceEntity.references.copy(newChildren = newAddedChildren, removedChildren = newRemovedChildren))
+        else {
+          val ordering = replaceEntity.references.childrenOrdering.with(addedChildConnectionId, newOrder)
+          replaceEntity.copy(
+            references = replaceEntity.references.copy(newChildren = newAddedChildren, removedChildren = newRemovedChildren,
+                                                       childrenOrdering = ordering))
+        }
       }
       else {
-        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, emptyMap(), emptyMap()))
+        val ordering = mapOf(addedChildConnectionId to newOrder)
+        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren,
+                                                                             ordering,
+                                                                             emptyMap(), emptyMap()))
       }
     }
 
     if (existingChange == null) {
+      val ordering = mapOf(addedChildConnectionId to LinkedHashSet<ChildEntityId>().also { it.add(addedChildId) })
       changeLog[entityId] = ChangeEntry.ReplaceEntity(
         null,
-        ChangeEntry.ReplaceEntity.References(setOf(addedChildConnectionId to addedChildId), emptySet(), emptyMap(), emptyMap())
+        ChangeEntry.ReplaceEntity.References(setOf(addedChildConnectionId to addedChildId), emptySet(),
+                                             ordering, emptyMap(), emptyMap())
       )
     }
     else {
@@ -299,21 +319,40 @@ internal class WorkspaceBuilderChangeLog {
       }
       else emptySet()
 
+      val newOrder = if (replaceEntity.references != null) {
+        val prevSet = replaceEntity.references.childrenOrdering.getOrElse(removedChildConnectionId) { LinkedHashSet() }
+        val set = LinkedHashSet(prevSet)
+        set.remove(removedChildId)
+        set
+      } else {
+        LinkedHashSet<ChildEntityId?>()
+      }
+
       if (replaceEntity.references != null) {
-        if (newAddedChildren.isEmpty() && newRemovedChildren.isEmpty() && replaceEntity.references.newParents.isEmpty() && replaceEntity.references.removedParents.isEmpty()) {
+        if (newAddedChildren.isEmpty() && newRemovedChildren.isEmpty() && newOrder.isEmpty() && replaceEntity.references.newParents.isEmpty() && replaceEntity.references.removedParents.isEmpty()) {
           if (replaceEntity.data == null) null else replaceEntity.copy(references = null)
         }
-        else replaceEntity.copy(references = replaceEntity.references.copy(newChildren = newAddedChildren, removedChildren = newRemovedChildren))
+        else {
+          val ordering = replaceEntity.references.childrenOrdering.with(removedChildConnectionId, newOrder)
+          replaceEntity.copy(references = replaceEntity.references.copy(
+            newChildren = newAddedChildren,
+            removedChildren = newRemovedChildren,
+            childrenOrdering = ordering,
+          ))
+        }
       }
       else {
-        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, emptyMap(), emptyMap()))
+        val ordering = mapOf(removedChildConnectionId to newOrder)
+        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, ordering, emptyMap(), emptyMap()))
       }
     }
 
     if (existingChange == null) {
+      val ordering = mapOf(removedChildConnectionId to LinkedHashSet<ChildEntityId>())
       changeLog[entityId] = ChangeEntry.ReplaceEntity(
         null,
-        ChangeEntry.ReplaceEntity.References(emptySet(), setOf(removedChildConnectionId to removedChildId), emptyMap(), emptyMap())
+        ChangeEntry.ReplaceEntity.References(emptySet(), setOf(removedChildConnectionId to removedChildId), ordering, emptyMap(),
+                                             emptyMap())
       )
     }
     else {
@@ -467,9 +506,18 @@ internal sealed class ChangeEntry {
     data class References(
       val newChildren: Set<Pair<ConnectionId, ChildEntityId>>,
       val removedChildren: Set<Pair<ConnectionId, ChildEntityId>>,
+      val childrenOrdering: Map<ConnectionId, LinkedHashSet<ChildEntityId>>,
       val newParents: Map<ConnectionId, ParentEntityId>,
       val removedParents: Map<ConnectionId, ParentEntityId>,
-    )
+    ) {
+      fun isEmpty(): Boolean {
+        return newChildren.isEmpty()
+               && removedChildren.isEmpty()
+               && childrenOrdering.isEmpty()
+               && newParents.isEmpty()
+               && removedParents.isEmpty()
+      }
+    }
   }
 }
 

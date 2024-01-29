@@ -258,13 +258,13 @@ internal class MutableRefsTable(
     return listOf(Modification.Remove(parentId.id, childId.id))
   }
 
-  internal fun replaceChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, newChildrenIds: Collection<ChildEntityId>): List<Modification> {
-    if (newChildrenIds !is Set<ChildEntityId> && newChildrenIds.size != newChildrenIds.toSet().size) {
+  internal fun replaceChildrenOfParent(connectionId: ConnectionId, parentId: ParentEntityId, newChildrenIds: List<ChildEntityId>): List<Modification> {
+    if (newChildrenIds.size != newChildrenIds.toSet().size) {
       error("Children have duplicates: $newChildrenIds")
     }
     return when (connectionId.connectionType) {
       ConnectionType.ONE_TO_MANY -> {
-        replaceOneToManyChildrenOfParent(connectionId, parentId.id, newChildrenIds.toList())
+        replaceOneToManyChildrenOfParent(connectionId, parentId.id, newChildrenIds)
       }
       ConnectionType.ONE_TO_ONE -> {
         val copiedMap = getOneToOneMutableMap(connectionId)

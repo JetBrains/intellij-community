@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.impl
 
 import com.intellij.platform.workspace.storage.ExternalMappingKey
@@ -440,7 +440,8 @@ class WorkspaceBuilderChangeLogTest {
     }
 
     val log = builder.changeLog.changeLog
-    assertEquals(0, log.size)
+    assertEquals(1, log.size)
+    log.values.single().assertReplaceEntity()
   }
 
   @Test
@@ -538,7 +539,7 @@ class WorkspaceBuilderChangeLogTest {
     }
 
     val log = builder.changeLog.changeLog
-    assertEquals(0, log.size)
+    assertEquals(1, log.size)
   }
 
   @Test
@@ -564,7 +565,8 @@ class WorkspaceBuilderChangeLogTest {
     }
 
     val log = builder.changeLog.changeLog
-    assertEquals(0, log.size)
+    assertEquals(1, log.size)
+    log.values.single().assertReplaceEntity()
   }
 
   @Test
@@ -900,10 +902,12 @@ class WorkspaceBuilderChangeLogTest {
     assertNull(replaceEvent.data)
   }
 
-  private fun ChangeEntry?.assertReplaceEntity(removedChildren: Int = 0,
-                                               newChildren: Int = 0,
-                                               newParents: Int = 0,
-                                               removedParents: Int = 0): ChangeEntry.ReplaceEntity {
+  private fun ChangeEntry?.assertReplaceEntity(
+    removedChildren: Int = 0,
+    newChildren: Int = 0,
+    newParents: Int = 0,
+    removedParents: Int = 0,
+  ): ChangeEntry.ReplaceEntity {
     assertTrue(this is ChangeEntry.ReplaceEntity)
     assertAll(
       { assertEquals(removedChildren, references!!.removedChildren.size) },

@@ -855,7 +855,7 @@ class ApplyChangesFromTest {
   }
 
   @RepeatedTest(10)
-  fun `the orde2r of children is not changed`() {
+  fun `the order of children is not changed with new children`() {
     val parent = target addEntity ParentMultipleEntity("info", MySource) {
       this.children = listOf(
         ChildMultipleEntity("data1", MySource),

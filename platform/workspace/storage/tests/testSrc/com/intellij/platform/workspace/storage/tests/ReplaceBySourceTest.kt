@@ -13,6 +13,7 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
+import org.junit.jupiter.api.assertAll
 import java.util.*
 import kotlin.test.*
 
@@ -1488,7 +1489,7 @@ class ReplaceBySourceTest {
   }
 
   @RepeatedTest(10)
-  fun `replace same entities should produce no events`() {
+  fun `replace same entities should produce no events except ordering`() {
     builder add NamedEntity("name", MySource) {
       children = listOf(
         NamedChildEntity("info1", MySource),
@@ -1868,5 +1869,21 @@ class ReplaceBySourceTest {
   private infix fun <T : WorkspaceEntity> MutableEntityStorage.add(entity: T): T {
     this.addEntity(entity)
     return entity
+  }
+
+  private fun ChangeEntry?.assertReplaceEntity(
+    removedChildren: Int = 0,
+    newChildren: Int = 0,
+    newParents: Int = 0,
+    removedParents: Int = 0,
+  ): ChangeEntry.ReplaceEntity {
+    assertTrue(this is ChangeEntry.ReplaceEntity)
+    assertAll(
+      { assertEquals(removedChildren, references!!.removedChildren.size) },
+      { assertEquals(newChildren, references!!.newChildren.size) },
+      { assertEquals(newParents, references!!.newParents.size) },
+      { assertEquals(removedParents, references!!.removedParents.size) },
+    )
+    return this
   }
 }

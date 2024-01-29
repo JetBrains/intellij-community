@@ -137,7 +137,7 @@ private class ApplyChangesFromCheckChangelog(val preBuilder: MutableEntityStorag
       //   storage. We change ids in place, so this is a destructive operation for [another] builder.
       val updatedChangelog = updateWithReplaceMap(applyChangesFromEngineStolen!!.replaceMap, another.changeLog.changeLog.let { HashMap(it) })
 
-      assertEquals(updatedChangelog, actualChangelog)
+      assertEntries(updatedChangelog, actualChangelog)
 
       env.logMessage("applyChangesFrom finished")
       env.logMessage("---------------------------")
@@ -145,6 +145,24 @@ private class ApplyChangesFromCheckChangelog(val preBuilder: MutableEntityStorag
     catch (e: ApplyChangesFromException) {
       env.logMessage("Cannot perform applyChangesFrom: ${e.message}.")
     }
+  }
+
+  private fun assertEntries(updatedChangelog: Map<EntityId, ChangeEntry>, actualChangelog: Map<EntityId, ChangeEntry>) {
+    val left = updatedChangelog.mapValues { (k, v) ->
+      if (v is ChangeEntry.ReplaceEntity) {
+        val newRefs = v.references?.copy(childrenOrdering = emptyMap()).takeUnless { it?.isEmpty() == true }
+        v.copy(references = newRefs).takeUnless { it.data == null && it.references == null }
+      }
+      else v
+    }.filterValues { it != null }
+    val right = actualChangelog.mapValues { (k, v) ->
+      if (v is ChangeEntry.ReplaceEntity) {
+        val references = v.references?.copy(childrenOrdering = emptyMap()).takeUnless { it?.isEmpty() == true }
+        v.copy(references = references).takeUnless { it.data == null && it.references == null }
+      }
+      else v
+    }.filterValues { it != null }
+    assertEquals(left, right)
   }
 
   private fun updateWithReplaceMap(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,

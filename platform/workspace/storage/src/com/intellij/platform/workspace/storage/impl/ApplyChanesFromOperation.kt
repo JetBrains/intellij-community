@@ -209,7 +209,9 @@ internal class ApplyChanesFromOperation(val target: MutableEntityStorageImpl, va
     val removedChildrenMap = HashMap<ConnectionId, MutableList<ChildEntityId>>()
     change.references?.removedChildren?.forEach { removedChildrenMap.getOrPut(it.first) { ArrayList() }.add(it.second) }
 
-    replaceRestoreChildren(sourceEntityId.id.asParent(), newEntityId.asParent(), addedChildrenMap, removedChildrenMap)
+    val childrenOrdering = change.references?.childrenOrdering
+
+    replaceRestoreChildren(sourceEntityId.id.asParent(), newEntityId.asParent(), addedChildrenMap, removedChildrenMap, childrenOrdering)
 
     replaceRestoreParents(change, newEntityId)
 
@@ -221,6 +223,7 @@ internal class ApplyChanesFromOperation(val target: MutableEntityStorageImpl, va
     newEntityId: ParentEntityId,
     addedChildrenMap: MutableMap<ConnectionId, MutableList<ChildEntityId>>,
     removedChildrenMap: MutableMap<ConnectionId, MutableList<ChildEntityId>>,
+    childrenOrdering: Map<ConnectionId, LinkedHashSet<ChildEntityId>>?,
   ) {
     // Children from target store with connectionIds of affected references
     val existingChildrenOfAffectedIds: MutableMap<ConnectionId, List<ChildEntityId>> = HashMap()
@@ -229,6 +232,10 @@ internal class ApplyChanesFromOperation(val target: MutableEntityStorageImpl, va
       existingChildrenOfAffectedIds[connectionId] = existingChildren
     }
     removedChildrenMap.keys.forEach { connectionId ->
+      val existingChildren = target.refs.getChildrenByParent(connectionId, newEntityId)
+      existingChildrenOfAffectedIds[connectionId] = existingChildren
+    }
+    childrenOrdering?.keys?.forEach { connectionId ->
       val existingChildren = target.refs.getChildrenByParent(connectionId, newEntityId)
       existingChildrenOfAffectedIds[connectionId] = existingChildren
     }
@@ -267,9 +274,16 @@ internal class ApplyChanesFromOperation(val target: MutableEntityStorageImpl, va
           mutableChildren.remove(childrenMapper(removedChild))
         }
 
+        val newChildrenToSet = if (childrenOrdering != null) {
+          val ordering = childrenOrdering[connectionId]
+          if (ordering != null) {
+            val mappedOrderedChildren = ordering.mapNotNull { childrenMapper(it) }
+            mutableChildren.orderByPatternAndDestroySource(mappedOrderedChildren)
+          } else mutableChildren.toList() // Looking forward to the ordered collections
+        } else mutableChildren.toList()
         // .... Update if something changed
-        if (children.toSet() != mutableChildren) {
-          val modifications = target.refs.replaceChildrenOfParent(connectionId, newEntityId, mutableChildren)
+        if (children != newChildrenToSet) {
+          val modifications = target.refs.replaceChildrenOfParent(connectionId, newEntityId, newChildrenToSet)
           target.createReplaceEventsForUpdates(modifications, connectionId)
         }
       }
@@ -286,6 +300,26 @@ internal class ApplyChanesFromOperation(val target: MutableEntityStorageImpl, va
       val modifications = target.refs.replaceChildrenOfParent(connectionId, newEntityId, updatedChildren)
       target.createReplaceEventsForUpdates(modifications, connectionId)
     }
+  }
+
+  // All elements from the pattern must exist in set
+  // All elements that are not found in pattern are pushed to the end of list
+  private fun LinkedHashSet<ChildEntityId>.orderByPatternAndDestroySource(pattern: List<ChildEntityId>): List<ChildEntityId> {
+    val mutableChildrenToOrder = this
+    val result = ArrayList<ChildEntityId>(this.size)
+    val sorted = ArrayList<ChildEntityId>()
+    for (patternItem in pattern) {
+      if (patternItem in mutableChildrenToOrder) {
+        sorted.add(patternItem)
+      }
+    }
+    mutableChildrenToOrder.removeAll(pattern)
+    result.addAll(mutableChildrenToOrder)
+    // We add sorted items at the end because the children can be updated in two ways: update children or update parent
+    // If we update children, we generate ordering for all children. If we update parent, we generate ordering for a single child and
+    //  it's always at the end
+    result.addAll(sorted)
+    return result
   }
 
   private fun childrenMapper(child: ChildEntityId): ChildEntityId? {
