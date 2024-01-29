@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.IndexingTestUtil
 import java.io.File
 
 fun HeavyPlatformTestCase.projectLibrary(
@@ -34,6 +35,8 @@ fun HeavyPlatformTestCase.projectLibrary(
             commit()
         }
         library
+    }.also {
+        IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     }
 }
 
@@ -59,6 +62,8 @@ fun moduleLibrary(
         }
 
         library
+    }.also {
+        IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     }
 }
 

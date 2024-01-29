@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -52,6 +53,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             val action = actionHint.findAndCheck(actions) { "Test file: ${projectPath.relativize(mainFilePath).pathString}" }
             if (action != null) {
                 action.invoke(myProject, null, ktFile)
+                IndexingTestUtil.waitUntilIndexesAreReady(myProject)
                 val expected = LocalFileSystem.getInstance().findFileByIoFile(afterDirectory)?.apply {
                     refreshRecursively(this)
                 } ?: error("Expected directory is not found")

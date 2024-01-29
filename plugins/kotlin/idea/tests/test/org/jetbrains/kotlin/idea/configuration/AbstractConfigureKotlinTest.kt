@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import junit.framework.TestCase
 
@@ -14,6 +15,7 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
     protected fun doTestConfigureModulesWithNonDefaultSetup(configurator: KotlinWithLibraryConfigurator<*>) {
         modules.forEach { assertNotConfigured(it, configurator) }
         configurator.configure(myProject, emptyList())
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
         modules.forEach { assertProperlyConfigured(it, configurator) }
     }
 
@@ -66,6 +68,7 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
               writeAction.invoke()
             }
         }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
         collector.showNotification()
     }
 
