@@ -13,7 +13,7 @@ open class CodeFragment(val offset: Int, val length: Int) {
   fun getChildren(): List<CodeElement> = children.sortedBy { it.offset }
 
   fun addChild(token: CodeElement) {
-    if (children.any { it.offset == token.offset }) return
+    if (children.any { it.offset == token.offset && it.text.length == token.text.length }) return
     children.add(token)
   }
 }
