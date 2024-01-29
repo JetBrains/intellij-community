@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
@@ -208,6 +209,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }.onReset {
             colorAndFontsOptions.reset()
           }
+        }
+
+        disposable?.whenDisposed {
+          colorAndFontsOptions.disposeUIResources()
         }
       }
 

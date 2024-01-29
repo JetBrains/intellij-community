@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -43,6 +44,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -86,6 +88,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private final Disposable myDisposable = Disposer.newDisposable();
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
+
+  private MessageBusConnection myEditorColorSchemeConnection;
 
   public void addListener(@NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
@@ -553,6 +557,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
     mySelectedScheme = mySchemes.get(globalScheme.getName());
 
+    if (myEditorColorSchemeConnection == null) {
+      myEditorColorSchemeConnection = ApplicationManager.getApplication().getMessageBus().connect(myDisposable);
+      myEditorColorSchemeConnection.subscribe(EditorColorsManager.TOPIC, scheme -> editorColorSchemeChanged(scheme));
+    }
+
     assert mySelectedScheme != null : globalScheme.getName() + "; myschemes=" + mySchemes;
   }
 
@@ -660,6 +669,23 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       String toolTip = holder.getDisplayName() + (value==null ? "" : ": "+ value.getText());
       descriptions.add(new SchemeTextAttributesDescription(namedScope.getPresentableName(), getScopesGroup(), textAttributesKey, scheme, holder.getIcon(), toolTip));
     }
+  }
+
+  private void editorColorSchemeChanged(@Nullable EditorColorsScheme scheme) {
+    if (mySelectedScheme == null || scheme == null) return;
+    if (mySelectedScheme.getName().equals(scheme.getName())) return;
+
+    String selectedName = mySelectedScheme.getName();
+    if (selectedName.startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
+      selectedName = selectedName.substring(Scheme.EDITABLE_COPY_PREFIX.length());
+    }
+    else {
+      selectedName = Scheme.EDITABLE_COPY_PREFIX + selectedName;
+    }
+
+    if (selectedName.equals(scheme.getName())) return;
+
+    reset();
   }
 
   private void revertChanges(){
