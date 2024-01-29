@@ -573,6 +573,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     val isSmart: Boolean get() = !isDumb
   }
 
+  @TestOnly
+  suspend fun waitUntilFinished() {
+    myGuiDumbTaskRunner.waitUntilFinished()
+  }
+
+  @TestOnly
+  val isRunning = myGuiDumbTaskRunner.isRunning
+
   companion object {
     @JvmField
     val REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY: ExtensionPointName<RequiredForSmartMode> = ExtensionPointName(
