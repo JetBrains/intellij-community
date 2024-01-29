@@ -16,6 +16,7 @@ public abstract class JavaProjectTestCase extends HeavyPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(getProjectLanguageLevel());
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
   }
 

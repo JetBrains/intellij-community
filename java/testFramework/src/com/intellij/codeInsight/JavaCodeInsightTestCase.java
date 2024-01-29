@@ -187,6 +187,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   /**
@@ -253,6 +254,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
         return null;
       }
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
 
     if (editorInfos != null) {
       List<Editor> list = openEditors(editorInfos);
@@ -272,6 +274,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
   protected void doCommitModel(@NotNull ModifiableRootModel rootModel) {
     rootModel.commit();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   protected void sourceRootAdded(final VirtualFile dir) {

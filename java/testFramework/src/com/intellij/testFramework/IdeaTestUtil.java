@@ -57,22 +57,29 @@ public final class IdeaTestUtil {
     try {
       projectExt.setLanguageLevel(level);
       setModuleLanguageLevel(module, level);
+      IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
       r.run();
     }
     finally {
       setModuleLanguageLevel(module, moduleLevel);
       projectExt.setLanguageLevel(projectLevel);
+      IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     }
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @Nullable LanguageLevel level) {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level, @NotNull Disposable parentDisposable) {
     LanguageLevel prev = LanguageLevelUtil.getCustomLanguageLevel(module);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     setModuleLanguageLevel(module, level);
-    Disposer.register(parentDisposable, () -> setModuleLanguageLevel(module, prev));
+    Disposer.register(parentDisposable, () -> {
+      setModuleLanguageLevel(module, prev);
+      IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
+    });
   }
 
   public static @NotNull Sdk getMockJdk(@NotNull JavaVersion version) {
@@ -248,11 +255,13 @@ public final class IdeaTestUtil {
 
   public static void addWebJarsToModule(@NotNull Module module) {
     ModuleRootModificationUtil.updateModel(module, IdeaTestUtil::addWebJarsToModule);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void addWebJarsToModule(@NotNull ModifiableRootModel model) {
     MavenDependencyUtil.addFromMaven(model, "javax.servlet.jsp:javax.servlet.jsp-api:2.3.3");
     MavenDependencyUtil.addFromMaven(model, "javax.servlet:javax.servlet-api:3.1.0");
+    IndexingTestUtil.waitUntilIndexesAreReady(model.getProject());
   }
 
   public static void setTestVersion(@NotNull JavaSdkVersion testVersion, @NotNull Module module, @NotNull Disposable parentDisposable) {
@@ -261,10 +270,12 @@ public final class IdeaTestUtil {
     String oldVersionString = sdk.getVersionString();
 
     setSdkVersion(sdk, testVersion.getDescription());
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
 
     Assert.assertSame(testVersion, JavaSdk.getInstance().getVersion(sdk));
     Disposer.register(parentDisposable, () -> {
       setSdkVersion(sdk, oldVersionString);
+      IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     });
   }
 

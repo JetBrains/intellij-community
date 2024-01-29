@@ -70,12 +70,14 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
   protected @NotNull Module createModule(@NotNull Path moduleFile, @NotNull ModuleType<?> moduleType) {
     Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(moduleFile, moduleType.getId()));
     myModulesToDispose.add(module);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return module;
   }
 
   protected @NotNull Module createModule(@NotNull String path, @NotNull ModuleType<?> moduleType) {
     Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(path, moduleType.getId()));
     myModulesToDispose.add(module);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return module;
   }
 
@@ -97,6 +99,7 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
     }
 
     myModulesToDispose.add(module);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return module;
   }
 
@@ -123,7 +126,9 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
       }
     });
 
-    return result.get();
+    Module module = result.get();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    return module;
   }
 
   protected final @NotNull Module createModuleFromTestData(@NotNull String dirInTestData,

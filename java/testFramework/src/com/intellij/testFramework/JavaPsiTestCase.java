@@ -86,6 +86,7 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
       VfsUtil.saveText(vFile, text);
       return vFile;
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
     return Objects.requireNonNull(myPsiManager.findFile(virtualFile));
   }
 
