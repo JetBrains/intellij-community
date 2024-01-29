@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
@@ -156,6 +157,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
       VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
       ModuleRootModificationUtil.addModuleLibrary(module, jarRoot.getUrl());
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   protected static ArtifactRepositoryManager getRepoManager() {

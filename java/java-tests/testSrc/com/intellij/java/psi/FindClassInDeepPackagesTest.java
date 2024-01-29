@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 
 import java.io.File;
@@ -42,6 +43,7 @@ public class FindClassInDeepPackagesTest extends JavaPsiTestCase {
     });
     assertNotNull(classesRoot);
     ModuleRootModificationUtil.addModuleLibrary(myModule, classesRoot.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   public void testSRC() {

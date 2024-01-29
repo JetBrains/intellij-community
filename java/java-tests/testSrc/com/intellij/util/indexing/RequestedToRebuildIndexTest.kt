@@ -12,6 +12,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
@@ -87,15 +88,18 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     assertEquals("File was not reindexed after indexing on creation", 0, countingIndex.counter.get())
 
     UnindexedFilesScanner(myFixture.project).queue()
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
     assertEquals("File was not reindexed after full project reindex request", 0, countingIndex.counter.get())
 
     fileBasedIndex.requestRebuild(countingIndex.name)
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
     assertCountingIndexBehavesCorrectlyAfterRebuildRequest(countingIndex, fileA, fileB)
 
     partialReindex.accept(fileA)
     assertCountingIndexBehavesCorrectlyAfterRebuildRequest(countingIndex, fileA, fileB)
 
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
     assertTrue("File was reindexed on requesting index rebuild", countingIndex.counter.get() > 1)
     assertEquals("File data is available after full reindex", countingIndex.getDefaultValue(),
                  fileBasedIndex.getFileData(countingIndex.name, fileA, myFixture.project))

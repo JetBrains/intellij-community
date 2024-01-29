@@ -25,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.FindClassUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -97,6 +98,7 @@ public class FindClassTest extends JavaPsiTestCase {
       content.removeExcludeFolder(content.getExcludeFolders()[0]);
       rootModel.commit();
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
     assertNotNull(psiClass);
@@ -198,6 +200,7 @@ public class FindClassTest extends JavaPsiTestCase {
       newModules.add(modifiableModel.newModule("b.iml", StdModuleTypes.JAVA.getId()));
       modifiableModel.commit();
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return newModules;
   }
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.project.IntelliJProjectConfiguration;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,9 +94,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
 
   protected static void addModuleLibrary(final Module module, final VirtualFile jar) {
     ModuleRootModificationUtil.addModuleLibrary(module, jar.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   protected static void addModuleDependency(final Module module, final Module dependency) {
     ModuleRootModificationUtil.addDependency(module, dependency);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 }

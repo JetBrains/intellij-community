@@ -21,6 +21,7 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -71,6 +72,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
       ModuleRootModificationUtil.addModuleLibrary(myModule, myClsDir1.getUrl());
       PsiTestUtil.addSourceRoot(myModule, mySrcDir3);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   public void testCreateFile() {

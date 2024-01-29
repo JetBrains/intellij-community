@@ -34,6 +34,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -97,6 +98,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.updateModel(myJava3Module, model -> model.addContentEntry(java3Root).addSourceFolder(java3Root, false));
     ModuleRootModificationUtil.updateModel(myJava7Module, model -> model.addContentEntry(java7Root).addSourceFolder(java7Root, false));
     ModuleRootModificationUtil.updateModel(myJava8Module, model -> model.addContentEntry(java8Root).addSourceFolder(java8Root, false));
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
   }
 
   private void addDependencies_37_78() {

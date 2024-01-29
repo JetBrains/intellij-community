@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
@@ -40,6 +41,7 @@ class ResolveInLibraries2Test : JavaCodeInsightFixtureTestCase() {
 
     ModuleRootModificationUtil.addModuleLibrary(module, "nano1", getJarRootUrls("${libsDir.path}/foo.jar"), getJarRootUrls("${libsDir.path}/foo-src.zip"))
     ModuleRootModificationUtil.addModuleLibrary(module, "nano2", getJarRootUrls(jarCopy.path), getJarRootUrls(srcCopy.path))
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     val parsers = JavaPsiFacade.getInstance(project).findClasses("foo.Foo", GlobalSearchScope.allScope(project))
     assertEquals(2, parsers.size)

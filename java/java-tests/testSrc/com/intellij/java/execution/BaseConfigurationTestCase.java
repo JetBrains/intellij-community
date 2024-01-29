@@ -91,6 +91,7 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
     Module missingModule = createTempModule();
     addDependency(module, missingModule);
     ModuleManager.getInstance(myProject).disposeModule(missingModule);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   protected @NotNull Module createEmptyModule() {
@@ -108,6 +109,7 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     Module result = WriteAction.compute(() -> moduleManager.newModule(tempPath, StdModuleTypes.JAVA.getId()));
     PlatformTestUtil.saveProject(project);
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
     return result;
   }
 

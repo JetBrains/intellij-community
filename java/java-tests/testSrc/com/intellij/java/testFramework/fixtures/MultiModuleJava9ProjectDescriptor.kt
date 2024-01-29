@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -106,6 +107,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       ModuleRootModificationUtil.addModuleLibrary(m6, "${libDir}/lib-named-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(m8, "lib-with-module-info", listOf("${libDir}/lib-with-module-info.jar!/"), listOf("${libDir}/lib-with-module-info-sources.zip!/src"))
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   private fun makeModule(project: Project, descriptor: ModuleDescriptor): Module {

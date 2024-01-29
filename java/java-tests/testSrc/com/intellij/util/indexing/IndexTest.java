@@ -1290,6 +1290,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     final ExactFileNameMatcher matcher = new ExactFileNameMatcher("Foo.groovy");
     try {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> FileTypeManager.getInstance().associate(JavaFileType.INSTANCE, matcher));
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
       assertEquals(JavaFileType.INSTANCE, FileTypeIndex.getIndexedFileType(virtualFile, getProject()));
       stub = StubTreeLoader.getInstance().readFromVFile(getProject(), virtualFile);

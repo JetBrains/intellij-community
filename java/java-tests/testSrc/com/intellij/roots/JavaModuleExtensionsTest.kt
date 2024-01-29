@@ -3,6 +3,7 @@ package com.intellij.roots
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
@@ -29,15 +31,25 @@ class JavaModuleExtensionsTest {
   @get:Rule
   val projectModel = ProjectModelRule()
 
+  private fun setLanguageLevel(module: Module, newLevel: LanguageLevel) {
+    IdeaTestUtil.setModuleLanguageLevel(module, newLevel)
+    IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
+  }
+
+  private fun setLanguageLevel(project: Project, newLevel: LanguageLevel) {
+    LanguageLevelProjectExtension.getInstance(project).languageLevel = newLevel
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+  }
+
   @Test
   fun `change custom language level`() {
     val module = projectModel.createModule()
-    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_8)
+    setLanguageLevel(module, LanguageLevel.JDK_1_8)
     assertThat(LanguageLevelUtil.getCustomLanguageLevel(module)).isEqualTo(LanguageLevel.JDK_1_8)
 
     val listener = MyLanguageLevelListener()
     listener.subscribe(projectModel.project)
-    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_11)
+    setLanguageLevel(module, LanguageLevel.JDK_11)
     assertThat(LanguageLevelUtil.getCustomLanguageLevel(module)).isEqualTo(LanguageLevel.JDK_11)
     listener.assertInvoked()
   }
@@ -46,7 +58,7 @@ class JavaModuleExtensionsTest {
   fun `change project language level`() {
     val module = projectModel.createModule()
     runWriteActionAndWait {
-      LanguageLevelProjectExtension.getInstance(projectModel.project).languageLevel = LanguageLevel.JDK_1_8
+      setLanguageLevel(projectModel.project, LanguageLevel.JDK_1_8)
       assertThat(LanguageLevelUtil.getCustomLanguageLevel(module)).isNull()
       assertThat(LanguageLevelUtil.getEffectiveLanguageLevel(module)).isEqualTo(LanguageLevel.JDK_1_8)
     }
@@ -54,7 +66,7 @@ class JavaModuleExtensionsTest {
     val listener = MyLanguageLevelListener()
     listener.subscribe(projectModel.project)
     runWriteActionAndWait {
-      LanguageLevelProjectExtension.getInstance(projectModel.project).languageLevel = LanguageLevel.JDK_11
+      setLanguageLevel(projectModel.project, LanguageLevel.JDK_11)
       assertThat(LanguageLevelUtil.getEffectiveLanguageLevel(module)).isEqualTo(LanguageLevel.JDK_11)
     }
     listener.assertInvoked()
