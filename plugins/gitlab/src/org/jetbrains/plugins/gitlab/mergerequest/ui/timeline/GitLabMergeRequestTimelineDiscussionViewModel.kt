@@ -104,7 +104,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
     discussion.notes
-      .flatMapLatest { it.first().position }
+      .flatMapLatest { it.firstOrNull()?.position ?: flowOf() }
       .distinctUntilChanged()
       .mapScoped { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(this, mr, it) } }
       .modelFlow(cs, LOG)
