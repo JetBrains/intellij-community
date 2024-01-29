@@ -791,7 +791,7 @@ public class IdeTooltipManager implements Disposable {
     Ref<StyleSheet> currentDefaultStyleSheet = new Ref<>();
     updateHintPaneDefaultCssRules(pane, kit, currentDefaultStyleSheet);
     // Remove <style> rule for <code> added by prepareHintText() call above
-    text = text.replaceFirst("code \\{[^]]*;}", "");
+    text = text.replaceFirst("code \\{font-size:[0-9.]*pt;}", "");
     pane.addPropertyChangeListener(evt -> {
       var propertyName = evt.getPropertyName();
       if ("background".equals(propertyName) || "UI".equals(propertyName)) {
