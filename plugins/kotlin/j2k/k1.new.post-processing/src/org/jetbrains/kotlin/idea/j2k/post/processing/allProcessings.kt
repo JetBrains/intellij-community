@@ -72,7 +72,6 @@ private val addOrRemoveModifiersProcessingGroup = InspectionLikeProcessingGroup(
     runSingleTime = true,
     processings = listOf(
         RemoveRedundantVisibilityModifierProcessing(),
-        RemoveRedundantModalityModifierProcessing(),
     )
 )
 

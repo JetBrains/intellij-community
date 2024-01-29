@@ -538,7 +538,7 @@ private class ClassConverter(
 
         fun removeRealAccessors() {
             if (realGetter != null) {
-                if (realGetter.function.isAbstract()) {
+                if (realGetter.function.isAbstract() && !klass.isInterfaceClass()) {
                     ktProperty.addModifier(ABSTRACT_KEYWORD)
                 }
                 if (ktGetter.isRedundantGetter()) {

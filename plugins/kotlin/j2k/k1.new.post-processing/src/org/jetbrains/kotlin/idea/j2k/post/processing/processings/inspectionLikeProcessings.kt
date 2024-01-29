@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
-import org.jetbrains.kotlin.idea.core.implicitModality
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.inspections.ExplicitThisInspection.Util.thisAsReceiverOrNull
 import org.jetbrains.kotlin.idea.inspections.LiftReturnOrAssignmentInspection.Util.LiftType.LIFT_ASSIGNMENT_OUT
@@ -38,7 +37,6 @@ import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -289,20 +287,6 @@ internal class RemoveForExpressionLoopParameterTypeProcessing :
 
     override fun apply(element: KtForExpression) {
         element.loopParameter?.typeReference = null
-    }
-}
-
-internal class RemoveRedundantModalityModifierProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
-    override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean {
-        if (element.hasModifier(KtTokens.FINAL_KEYWORD)) {
-            return !element.hasModifier(KtTokens.OVERRIDE_KEYWORD)
-        }
-        val modalityModifierType = element.modalityModifierType() ?: return false
-        return modalityModifierType == element.implicitModality()
-    }
-
-    override fun apply(element: KtDeclaration) {
-        element.removeModifier(element.modalityModifierType() ?: return)
     }
 }
 

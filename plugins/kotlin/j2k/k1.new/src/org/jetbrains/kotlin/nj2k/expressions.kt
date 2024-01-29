@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedMethod
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.INTERFACE
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 import org.jetbrains.kotlin.nj2k.types.JKType
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -360,6 +361,9 @@ internal fun JKInheritanceInfo.supertypeCount(): Int =
 
 internal fun JKClass.isLocalClass(): Boolean =
     parent !is JKClassBody && parent !is JKFile && parent !is JKTreeRoot
+
+internal fun JKClass.isInterface(): Boolean =
+    classKind == INTERFACE
 
 internal fun JKMethod.isTopLevel(): Boolean =
     parent is JKFile || parent is JKTreeRoot
