@@ -8,12 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
-import com.intellij.testFramework.closeProjectAsync
+import com.intellij.testFramework.*
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
-import com.intellij.testFramework.openProjectAsync
-import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
@@ -63,6 +60,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
     installGradleProjectReloadWatcher()
 
     _project = runBlocking { openProjectAsync(fileFixture.root) }
+    IndexingTestUtil.waitUntilIndexesAreReady(_project)
   }
 
   override fun tearDown() {
