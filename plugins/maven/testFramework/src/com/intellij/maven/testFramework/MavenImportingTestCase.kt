@@ -33,6 +33,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.CodeStyleSettingsTracker
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
@@ -388,7 +389,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
     }
 
-
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
   }
 
   protected fun importProjectWithProfiles(vararg profiles: String) {
