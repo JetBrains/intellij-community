@@ -7,12 +7,10 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -27,9 +25,9 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
 
   @Test
   public void testModelBuildScriptClasspathBuilder() {
+    ProjectImportAction.AllModels allModels = fetchAllModels(new GradleBuildScriptClasspathModelProvider());
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
-
     assertEquals(5, ideaModules.size());
 
     for (IdeaModule module : ideaModules) {
@@ -38,16 +36,16 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
 
       if (module.getName().equals("moduleWithAdditionalClasspath")) {
         assertEquals("Wrong build classpath for module: " + module.getName(), 3, classpathModel.getClasspath().size());
-
-        assertEquals("junit-4.11.jar", new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
-        assertEquals("hamcrest-core-1.3.jar",
+        assertEquals("Wrong build classpath for module: " + module.getName(), "junit-4.11.jar",
+                     new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
+        assertEquals("Wrong build classpath for module: " + module.getName(), "hamcrest-core-1.3.jar",
                      new File(classpathModel.getClasspath().getAt(1).getClasses().iterator().next()).getName());
-        assertEquals("someDep.jar", new File(classpathModel.getClasspath().getAt(2).getClasses().iterator().next()).getName());
+        assertEquals("Wrong build classpath for module: " + module.getName(), "someDep.jar",
+                     new File(classpathModel.getClasspath().getAt(2).getClasses().iterator().next()).getName());
       }
       else if (module.getName().equals("baseModule") ||
                module.getName().equals("moduleWithInheritedClasspath")) {
         assertEquals("Wrong build classpath for module: " + module.getName(), 3, classpathModel.getClasspath().size());
-
         assertEquals("Wrong build classpath for module: " + module.getName(), "junit-4.11.jar",
                      new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
         assertEquals("Wrong build classpath for module: " + module.getName(), "hamcrest-core-1.3.jar",
@@ -58,15 +56,14 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
       else if (module.getName().equals("moduleWithoutAdditionalClasspath") ||
                module.getName().equals("testModelBuildScriptClasspathBuilder")) {
         assertEquals("Wrong build classpath for module: " + module.getName(), 2, classpathModel.getClasspath().size());
+        assertEquals("Wrong build classpath for module: " + module.getName(), "junit-4.11.jar",
+                     new File(classpathModel.getClasspath().getAt(0).getClasses().iterator().next()).getName());
+        assertEquals("Wrong build classpath for module: " + module.getName(), "hamcrest-core-1.3.jar",
+                     new File(classpathModel.getClasspath().getAt(1).getClasses().iterator().next()).getName());
       }
       else {
         fail("Unexpected module found: " + module.getName());
       }
     }
-  }
-
-  @Override
-  protected Set<ProjectImportModelProvider> getModelProviders() {
-    return Collections.singleton(new GradleBuildScriptClasspathModelProvider());
   }
 }
