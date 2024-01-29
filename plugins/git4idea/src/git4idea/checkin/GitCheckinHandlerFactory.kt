@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -49,6 +50,12 @@ class GitUserNameCheckinHandlerFactory : GitCheckinHandlerFactory() {
 class GitCRLFCheckinHandlerFactory : GitCheckinHandlerFactory() {
   override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return GitCRLFCheckinHandler(panel.project)
+  }
+}
+
+class GitLargeFileCheckinHandlerFactory : GitCheckinHandlerFactory() {
+  override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return GitLargeFileCheckinHandler(panel.project)
   }
 }
 
@@ -134,6 +141,39 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
     override fun showModalSolution(project: Project, commitInfo: CommitInfo): ReturnResult {
       return ReturnResult.CANCEL // dialog was already shown
     }
+  }
+}
+
+private class GitLargeFileCheckinHandler(project: Project) : GitCheckinHandler(project) {
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
+
+  override fun isEnabled(): Boolean = true
+
+  override suspend fun runGitCheck(commitInfo: CommitInfo, committedChanges: List<Change>): CommitProblem? {
+    val maxFileSize = Registry.intValue("git.pre.commit.check.max.file.size.mb") * 1024 * 1024
+    if (maxFileSize <= 0) return null
+
+    val files = committedChanges.mapNotNull { it.virtualFile }
+    val largeFiles = files.filter { it.length > maxFileSize }
+    if (largeFiles.isEmpty()) return null
+
+    val git = GitVcs.getInstance(project)
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+
+    val filesByRoot = largeFiles.groupBy { vcsManager.getVcsRootObjectFor(it) }
+    val affectedRoots = filesByRoot.keys.filterNotNull()
+      .distinct()
+      .filter { root -> root.vcs == git }
+      .filter { root -> GitConfigUtil.getValue(project, root.path, "lfs.repositoryformatversion") == null }
+    if (affectedRoots.isEmpty()) return null
+
+    val affectedFiles = affectedRoots.flatMap { root -> filesByRoot[root].orEmpty() }
+    return GitLargeFileCommitProblem(affectedFiles.size, affectedFiles.sumOf { it.length })
+  }
+
+  private class GitLargeFileCommitProblem(val fileCount: Int, val totalSizeBytes: Long) : CommitProblem {
+    override val text: String
+      get() = GitBundle.message("commit.check.warning.title.large.file", fileCount, totalSizeBytes / 1024 / 1024)
   }
 }
 
