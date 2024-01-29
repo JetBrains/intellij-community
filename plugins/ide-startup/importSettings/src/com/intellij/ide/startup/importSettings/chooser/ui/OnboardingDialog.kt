@@ -56,7 +56,7 @@ class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, nul
 
   fun changePage(page: OnboardingPage) {
     overlay.clearNotifications()
-    pane.remove(currentPage.content)
+    pane.removeAll()
     Disposer.dispose(currentPage)
 
     tracker.onLeave()

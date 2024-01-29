@@ -5,15 +5,13 @@ import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.JBColor
-import com.intellij.ui.SeparatorComponent
-import com.intellij.ui.SeparatorOrientation
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignY
@@ -21,11 +19,11 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import java.awt.*
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.ScrollPaneConstants
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import javax.swing.*
 
 abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
                                   val product: SettingsContributor,
@@ -54,7 +52,7 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
 
   override fun confirmExit(parentComponent: Component?): Boolean {
     return MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
-                               ApplicationBundle.message("exit.confirm.prompt"))
+                                      ApplicationBundle.message("exit.confirm.prompt"))
       .yesText(ApplicationBundle.message("command.exit"))
       .noText(CommonBundle.getCancelButtonText())
       .ask(parentComponent)
@@ -104,53 +102,28 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
       }
     }
     add(
-      JBScrollPane(listPane).apply {
-        viewport.isOpaque = false
-        isOpaque = true
-        background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
-        horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+      JPanel().apply {
+        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+        preferredSize = Dimension(preferredSize.width, 0)
         border = JBUI.Borders.empty(16, 0, 12, 0)
-      }, BorderLayout.CENTER
-    )
-  }.apply {
-//    maximumSize = preferredSize
-    minimumSize = Dimension(0, 0)
+        background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
+
+        add(JBScrollPane(listPane).apply {
+          border = JBUI.Borders.empty()
+          viewport.isOpaque = false
+          horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+          minimumSize = Dimension(0, 0)
+          background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
+        })
+
+      }, BorderLayout.CENTER)
   }
 
   private var contentPage: JComponent? = null
 
   override val content: JComponent
     get() {
-      val page = contentPage ?: JPanel(GridBagLayout()).apply {
-        val gbc = GridBagConstraints()
-        gbc.gridx = 0
-        gbc.gridy = 0
-        gbc.weightx = 1.0
-        gbc.weighty = 0.0
-        gbc.fill = GridBagConstraints.HORIZONTAL
-        isOpaque = false
-
-        add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL), gbc)
-
-        gbc.fill = GridBagConstraints.BOTH
-        gbc.gridy = 1
-        gbc.weighty = 3.0
-        add(pane, gbc)
-
-        gbc.fill = GridBagConstraints.HORIZONTAL
-        gbc.gridy = 2
-        gbc.weighty = 0.0
-        add(SeparatorComponent(JBColor.namedColor("Borders.color", JBColor.BLACK), SeparatorOrientation.HORIZONTAL), gbc)
-        gbc.gridy = 3
-        gbc.weighty = 0.0
-        val buttonPane = JPanel(FlowLayout(FlowLayout.RIGHT)).apply {
-          add(DialogWrapper.layoutButtonsPanel(buttons))
-          border = JBUI.Borders.empty(3, 0, 3, 15)
-        }
-        add(buttonPane, gbc)
-        border = JBUI.Borders.empty()
-        contentPage = this
-      }
+      val page = contentPage ?: WizardPagePane(pane, buttons)
 
       return page
     }
