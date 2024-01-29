@@ -23,6 +23,7 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.win32.StdCallLibrary;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import static com.intellij.updater.Runner.LOG;
+import static com.sun.jna.platform.win32.WinError.ERROR_MORE_DATA;
 
 /**
  * <p>A utility class to find processes that hold a lock to a file. This relies on a Windows API called
@@ -42,6 +44,7 @@ import static com.intellij.updater.Runner.LOG;
  */
 public final class NativeFileManager {
   private static final int MAX_PROCESSES = 10;
+  private static final int MAX_RETRIES = 5;
 
   private static boolean ourFailed = !Utils.IS_WINDOWS;
 
@@ -73,7 +76,8 @@ public final class NativeFileManager {
     }
   }
 
-  public static List<Process> getProcessesUsing(File file) {
+  @ApiStatus.Internal
+  public static List<Process> getProcessesUsing(File file, int initialBufferSize) {
     // If the DLL was not present (XP or other OS), do not try to find it again.
     if (!ourFailed) {
       try {
@@ -91,21 +95,29 @@ public final class NativeFileManager {
               LOG.warning("RmRegisterResources('" + file + "'): " + error);
             }
             else {
-              IntByReference procInfoNeeded = new IntByReference();
-              Win32RestartManager.RmProcessInfo info = new Win32RestartManager.RmProcessInfo();
-              Win32RestartManager.RmProcessInfo[] infos = (Win32RestartManager.RmProcessInfo[])info.toArray(MAX_PROCESSES);
-              IntByReference procInfo = new IntByReference(infos.length);
-              error = Win32RestartManager.INSTANCE.RmGetList(session.getValue(), procInfoNeeded, procInfo, info, new LongByReference());
-              if (error != 0) {
-                LOG.warning("RmGetList('" + file + "'): " + error);
-              }
-              else {
-                int n = procInfo.getValue();
-                List<Process> processes = new ArrayList<>(n);
-                for (int i = 0; i < n; i++) {
-                  processes.add(new Process(infos[i].Process.dwProcessId, new String(infos[i].strAppName).trim()));
+              int arraySize = initialBufferSize;
+              for (int retry = 0; retry < MAX_RETRIES; ++retry) {
+                IntByReference procInfoNeeded = new IntByReference();
+                Win32RestartManager.RmProcessInfo info = new Win32RestartManager.RmProcessInfo();
+                Win32RestartManager.RmProcessInfo[] infos = (Win32RestartManager.RmProcessInfo[])info.toArray(arraySize);
+                IntByReference procInfo = new IntByReference(infos.length);
+                error = Win32RestartManager.INSTANCE.RmGetList(session.getValue(), procInfoNeeded, procInfo, info, new LongByReference());
+                if (error == ERROR_MORE_DATA) {
+                  arraySize = procInfoNeeded.getValue();
+                  continue;
                 }
-                return processes;
+
+                if (error != 0) {
+                  LOG.warning("RmGetList('" + file + "'): " + error);
+                }
+                else {
+                  int n = procInfo.getValue();
+                  List<Process> processes = new ArrayList<>(n);
+                  for (int i = 0; i < n; i++) {
+                    processes.add(new Process(infos[i].Process.dwProcessId, new String(infos[i].strAppName).trim()));
+                  }
+                  return processes;
+                }
               }
             }
           }
@@ -122,6 +134,10 @@ public final class NativeFileManager {
     }
 
     return List.of();
+  }
+
+  public static List<Process> getProcessesUsing(File file) {
+    return getProcessesUsing(file, MAX_PROCESSES);
   }
 
   @SuppressWarnings({"SpellCheckingInspection", "unused", "UnusedReturnValue"})
