@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.DocumentUtil
 import java.awt.Point
 import java.awt.Rectangle
 
@@ -104,8 +105,13 @@ internal class StickyLinesManager(
   private fun getStickyLines(editorY: Int): List<StickyLine> {
     val activeY: Int = activeY(editorY)
     val activeLogicalLine: Int = editor.xyToLogicalPosition(Point(0, activeY)).line
-    val activeOffset: Int = editor.document.getLineEndOffset(activeLogicalLine)
-    return collectStickyLines(activeOffset, activeLogicalLine)
+    if (DocumentUtil.isValidLine(activeLogicalLine, editor.document)) {
+      val activeOffset: Int = editor.document.getLineEndOffset(activeLogicalLine)
+      return collectStickyLines(activeOffset, activeLogicalLine)
+    } else {
+      activeVisualLine = -1
+      return emptyList()
+    }
   }
 
   private fun collectStickyLines(activeOffset: Int, activeLogicalLine: Int): List<StickyLine> {
