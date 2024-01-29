@@ -10,7 +10,6 @@ import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectMode
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,12 +39,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -89,7 +83,6 @@ public abstract class AbstractModelBuilderTest {
 
     setUpGradleJvmHomePath();
     setUpTemporaryTestDirectory();
-    setUpProjectFromTestResources();
   }
 
   @After
@@ -128,18 +121,10 @@ public abstract class AbstractModelBuilderTest {
     }
   }
 
-  private void setUpProjectFromTestResources() {
+  public void createProjectFile(@NotNull String relativePath, @NotNull String content) {
     try {
-      String methodName = getTestMethodName();
-      try (InputStream buildScriptStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.DEFAULT_SCRIPT_NAME)) {
-        String text = StreamUtil.readText(new InputStreamReader(buildScriptStream, StandardCharsets.UTF_8));
-        FileUtil.writeToFile(new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME), text, StandardCharsets.UTF_8);
-      }
-      try (InputStream settingsStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.SETTINGS_FILE_NAME)) {
-        if (settingsStream != null) {
-          Files.copy(settingsStream, new File(testDir, GradleConstants.SETTINGS_FILE_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
-      }
+      File file = testDir.toPath().resolve(relativePath).toFile();
+      FileUtil.writeToFile(file, content);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -164,7 +149,7 @@ public abstract class AbstractModelBuilderTest {
     ExternalSystemExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, mainInitScript.toString())
-      .withVmOptions("-Xmx128m", "-XX:MaxPermSize=64m");
+      .withVmOptions("-Xmx128m", "-XX:MaxPermSize=64m", "-Dorg.gradle.warning.mode=fail");
 
     GradleConnector connector = GradleConnector.newConnector()
       .useDistribution(GradleUtil.getWrapperDistributionUri(gradleVersion))

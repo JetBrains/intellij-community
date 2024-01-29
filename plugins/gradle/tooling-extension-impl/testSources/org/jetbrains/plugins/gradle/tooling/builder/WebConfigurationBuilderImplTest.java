@@ -7,6 +7,8 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels;
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
 import org.junit.Test;
@@ -28,6 +30,28 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
 
   @Test
   public void testDefaultWarModel() {
+    createProjectFile("settings.gradle", GradleSettingScriptBuilder.create(false)
+      .include("project")
+      .generate()
+    );
+    createProjectFile("project/build.gradle", "");
+    createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
+      .applyPlugin("war")
+      .addPostfix(
+        "configurations { moreLibs }\n" +
+        "war {\n" +
+        "  from('src/rootContent') { into 'bar' }\n" +
+        "  webInf { from 'src/additionalWebInf' } // adds a file-set to the WEB-INF dir.\n" +
+        "  exclude 'excl'\n" +
+        "  classpath fileTree('additionalLibs') // adds a file-set to the WEB-INF/lib dir.\n" +
+        "  classpath configurations.moreLibs // adds a configuration to the WEB-INF/lib dir.\n" +
+        "  webXml = file('src/someWeb.xml') // copies a file to WEB-INF/web.xml\n" +
+        "  classpath file('src/bbb')\n" +
+        "}"
+      )
+      .generate()
+    );
+
     AllModels allModels = fetchAllModels(WebConfiguration.class);
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();

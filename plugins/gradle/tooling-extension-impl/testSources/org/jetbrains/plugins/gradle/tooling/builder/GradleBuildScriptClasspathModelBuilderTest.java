@@ -6,6 +6,8 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.junit.Test;
@@ -25,6 +27,45 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
 
   @Test
   public void testModelBuildScriptClasspathBuilder() {
+    createProjectFile("settings.gradle", GradleSettingScriptBuilder.create(false)
+      .include("moduleWithoutAdditionalClasspath")
+      .include("moduleWithAdditionalClasspath")
+      .include("baseModule")
+      .include("baseModule:moduleWithInheritedClasspath")
+      .generate()
+    );
+    createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
+      .withBuildScriptMavenCentral()
+      .addBuildScriptClasspath("junit:junit:4.11")
+      .addPostfix(
+        "allprojects {\n" +
+        "  configurations.all {\n" +
+        "    // check for configuration which is not in unresolved state - https://youtrack.jetbrains.com/issue/IDEA-124839\n" +
+        "    exclude group: 'some-group'\n" +
+        "    // check for the usage of custom resolutionStrategy - https://youtrack.jetbrains.com/issue/IDEA-125592\n" +
+        "    resolutionStrategy.eachDependency { DependencyResolveDetails details ->\n" +
+        "      println details.target\n" +
+        "    }\n" +
+        "  }\n" +
+        "}"
+      )
+      .generate()
+    );
+    createProjectFile("moduleWithoutAdditionalClasspath/build.gradle", "");
+    createProjectFile("baseModule/moduleWithInheritedClasspath/build.gradle", "");
+    createProjectFile("moduleWithAdditionalClasspath/build.gradle",
+                      "buildscript {\n" +
+                      "  dependencies {\n" +
+                      "    classpath files(\"lib/someDep.jar\")\n" +
+                      "  }\n" +
+                      "}");
+    createProjectFile("baseModule/build.gradle",
+                      "buildscript {\n" +
+                      "  dependencies {\n" +
+                      "    classpath files(\"lib/inheritedDep.jar\")\n" +
+                      "  }\n" +
+                      "}");
+
     ProjectImportAction.AllModels allModels = fetchAllModels(new GradleBuildScriptClasspathModelProvider());
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();

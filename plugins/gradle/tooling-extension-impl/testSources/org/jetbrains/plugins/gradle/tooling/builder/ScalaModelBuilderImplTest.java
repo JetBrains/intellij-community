@@ -5,6 +5,7 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels;
 import org.jetbrains.plugins.gradle.model.scala.ScalaCompileOptions;
 import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
@@ -24,6 +25,23 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
 
   @Test
   public void testScalaModel() {
+    createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
+      .applyPlugin("scala")
+      .withMavenCentral()
+      .addImplementationDependency("org.scala-lang:scala-library:2.11.0")
+      .addPostfix(
+        "Closure compilerPlugins = {\n" +
+        "  String parjar = \"opt\"\n" +
+        "  scalaCompileOptions.additionalParameters = [\n" +
+        "    \"-opt:$parjar\"\n" +
+        "  ]\n" +
+        "}\n" +
+        "compileScala compilerPlugins\n" +
+        "compileTestScala compilerPlugins"
+      )
+      .generate()
+    );
+
     AllModels allModels = fetchAllModels(ScalaModel.class);
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
