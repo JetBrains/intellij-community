@@ -18,6 +18,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -85,11 +86,11 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         }
 
         boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
-        if (!selected && editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting()) {
-          // suppress indent vertical lines on sticky lines panel
+        boolean stickyPainting = editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting();
+        Color color = getIndentColor(editor, startOffset, selected, stickyPainting);
+        if (color == null) {
           return;
         }
-        Color color = getIndentColor(editor, startOffset, selected);
 
         int lineHeight = editor.getLineHeight();
         Point start = editor.visualPositionToXY(lineStartPosition);
@@ -162,7 +163,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
 
     }
 
-  private static Color getIndentColor(Editor editor, int startOffset, boolean selected) {
+  private static @Nullable Color getIndentColor(Editor editor, int startOffset, boolean selected, boolean stickyPainting) {
     EditorColorsScheme scheme = editor.getColorsScheme();
     if (ExperimentalUI.isNewUI()) {
       List<RangeHighlighter> highlighters = ContainerUtil.filter(editor.getMarkupModel().getAllHighlighters(),
@@ -178,6 +179,10 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
           }
         }
       }
+    }
+    if (!selected && stickyPainting) {
+      // suppress indent vertical lines on sticky lines panel
+      return null;
     }
     return scheme.getColor(selected ? EditorColors.SELECTED_INDENT_GUIDE_COLOR : EditorColors.INDENT_GUIDE_COLOR);
   }

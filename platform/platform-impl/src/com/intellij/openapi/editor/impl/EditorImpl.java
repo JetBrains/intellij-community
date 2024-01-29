@@ -5662,7 +5662,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   /**
-   * If true, the editor is in special "clean" mode when editor's content is rendering on sticky lines panel.
+   * If true, the editor is in special "clean" mode when editor's content is being rendered on sticky lines panel.
    * This allows suppressing visual elements like caret row background, vertical indent lines, right margin line, etc.
    */
   @ApiStatus.Internal
