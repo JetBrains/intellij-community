@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +32,7 @@ import static org.jetbrains.annotations.ApiStatus.Internal;
 public final class StickyLinesModel {
 
   private static final Key<Boolean> STICKY_LINES_FIRST_PASS_KEY = Key.create("editor.sticky.lines.first.pass");
+  public static final Key<String> STICKY_LINE_SOURCE = Key.create("editor.sticky.lines.source");
   private static final Key<StickyLinesModel> STICKY_LINES_MODEL_KEY = Key.create("editor.sticky.lines.model");
   private static final Key<StickyLineImpl> STICKY_LINE_IMPL_KEY = Key.create("editor.sticky.line.impl");
   private static final TextAttributesKey STICKY_LINE_ATTRIBUTE = TextAttributesKey.createTextAttributesKey(
@@ -68,7 +71,7 @@ public final class StickyLinesModel {
     return isFirstTime;
   }
 
-  void addStickyLine(int textOffset, int endOffset, @Nullable String debugText) {
+  void addStickyLine(int textOffset, int endOffset, @NotNull String source, @Nullable String debugText) {
     if (textOffset >= endOffset) {
       throw new IllegalArgumentException(String.format(
         "sticky line endOffset %s should be less than textOffset %s", textOffset, endOffset
@@ -83,6 +86,7 @@ public final class StickyLinesModel {
     );
     StickyLineImpl stickyLine = new StickyLineImpl(highlighter.getDocument(), highlighter, debugText);
     highlighter.putUserData(STICKY_LINE_IMPL_KEY, stickyLine);
+    highlighter.putUserData(STICKY_LINE_SOURCE, source);
   }
 
   void removeStickyLine(@NotNull StickyLine stickyLine) {
@@ -90,16 +94,20 @@ public final class StickyLinesModel {
     myMarkupModel.removeHighlighter((RangeHighlighter) rangeMarker);
   }
 
-  void processStickyLines(@NotNull Processor<? super StickyLine> processor) {
-    processStickyLines(myMarkupModel.getDocument().getTextLength(), processor);
+  void processStickyLines(int endOffset, @NotNull Processor<? super StickyLine> processor) {
+    processStickyLines(endOffset, null, processor);
   }
 
-  void processStickyLines(int endOffset, @NotNull Processor<? super StickyLine> processor) {
+  void processStickyLines(@Nullable String source, @NotNull Processor<? super StickyLine> processor) {
+    processStickyLines(myMarkupModel.getDocument().getTextLength(), source, processor);
+  }
+
+  void processStickyLines(int endOffset, @Nullable String source, @NotNull Processor<? super StickyLine> processor) {
     myMarkupModel.processRangeHighlightersOverlappingWith(
       0,
       endOffset,
       highlighter -> {
-        if (STICKY_LINE_ATTRIBUTE.equals(highlighter.getTextAttributesKey())) {
+        if (STICKY_LINE_ATTRIBUTE.equals(highlighter.getTextAttributesKey()) && isSuitableSource(highlighter, source)) {
           StickyLineImpl stickyLine = highlighter.getUserData(STICKY_LINE_IMPL_KEY);
           if (stickyLine == null) {
             stickyLine = new StickyLineImpl(highlighter.getDocument(), highlighter, null);
@@ -110,6 +118,12 @@ public final class StickyLinesModel {
         }
       }
     );
+  }
+
+  private static Boolean isSuitableSource(RangeHighlighterEx highlighter, @Nullable String source){
+    if (source == null) return true;
+
+    return Strings.areSameInstance(highlighter.getUserData(STICKY_LINE_SOURCE), source);
   }
 
   interface Listener {

@@ -63,7 +63,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
     removeExisting: Boolean,
   ): List<StickyLine> {
     val outdatedLines: MutableList<StickyLine> = mutableListOf()
-    stickyModel.processStickyLines { existingLine: StickyLine ->
+    stickyModel.processStickyLines(STICKY_LINE_SOURCE) { existingLine: StickyLine ->
       if (removeExisting) {
         // remove all existing
         outdatedLines.add(existingLine)
@@ -105,5 +105,9 @@ class StickyLinesCollector(private val project: Project, private val document: D
       }
     }
     return false
+  }
+
+  companion object {
+    private const val STICKY_LINE_SOURCE = "StickyLinesCollectorSource"
   }
 }
