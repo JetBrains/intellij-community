@@ -8,7 +8,6 @@ import com.intellij.BundleBase
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.*
-import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.*
 import com.intellij.jna.JnaLoader
@@ -72,7 +71,6 @@ internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunct
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
-private const val DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY = "idea.disable.automatic.wil.on.dirty.ui"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
 private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
@@ -176,12 +174,6 @@ fun CoroutineScope.startApplication(args: List<String>,
       JBR.getWindowDecorations()
       if (SystemInfoRt.isMac) {
         Menu.isJbScreenMenuEnabled()
-      }
-    }
-
-    if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
-      span("Write Intent Lock UI class transformer loading") {
-        WriteIntentLockInstrumenter.instrument()
       }
     }
   }
@@ -400,9 +392,6 @@ fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<Stri
 @get:Internal
 val isImplicitReadOnEDTDisabled: Boolean
   get() = "false" != System.getProperty(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
-
-internal val isAutomaticIWLOnDirtyUIDisabled: Boolean
-  get() = "false" != System.getProperty(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
 
 @Internal
 // called by the app after startup
