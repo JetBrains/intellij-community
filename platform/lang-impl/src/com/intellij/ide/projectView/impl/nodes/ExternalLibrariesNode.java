@@ -36,6 +36,11 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   }
 
   @Override
+  public boolean isIncludedInExpandAll() {
+    return false;
+  }
+
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     Project project = Objects.requireNonNull(getProject());
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
