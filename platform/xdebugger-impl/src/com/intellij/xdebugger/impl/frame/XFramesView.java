@@ -765,7 +765,7 @@ public final class XFramesView extends XDebugView {
   }
 
   public static List<XStackFrame> createHiddenFramePlaceholder(int hiddenFrameCount, @NotNull XStackFrame firstHiddenFrame) {
-    return Registry.is("debugger.hidden.frames.placeholder")
+    return Registry.is("debugger.library.frames.fold.instead.of.hide")
            ? Collections.singletonList(new HiddenStackFramesItem(hiddenFrameCount, firstHiddenFrame))
            : Collections.emptyList();
   }
