@@ -2,6 +2,8 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
@@ -71,9 +73,9 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
     }
 
-    val fileEditor = FileEditorManagerEx.getInstanceEx(project).openFile(file = file,
-                                                        options = FileEditorOpenOptions(requestFocus = true))
-    if(myOptions!=null && !myOptions.disableCodeAnalysis) {
+    val fileEditor = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
+      .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
+    if (myOptions != null && !myOptions.disableCodeAnalysis) {
       fileEditor.waitForFullyLoaded()
     }
 
@@ -82,7 +84,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     }
     job.withErrorMessage("Timeout on open file ${file.path} more than $timeout seconds")
 
-    if(myOptions!=null && !myOptions.disableCodeAnalysis) {
+    if (myOptions != null && !myOptions.disableCodeAnalysis) {
       job.waitForComplete()
     }
   }
