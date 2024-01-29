@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.util.Pair;
@@ -118,6 +118,11 @@ public final class Utils {
   public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {
     // return only those direct supertypes that exist in the graph as Nodes
     return unique(flat(map(getNodes(classId, JvmClass.class), cl -> flat(map(cl.getSuperTypes(), st -> map(getNodes(new JvmNodeReferenceID(st), JvmClass.class), JvmClass::getReferenceID))))));
+  }
+
+  public Iterable<JvmClass> allDirectSupertypes(JvmClass cls) {
+    // return only those direct supertypes that exist in the graph as Nodes
+    return flat(map(cls.getSuperTypes(), st -> getNodes(new JvmNodeReferenceID(st), JvmClass.class)));
   }
 
   public Iterable<JvmNodeReferenceID> allSupertypes(JvmNodeReferenceID classId) {

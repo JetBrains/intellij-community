@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
 import com.intellij.util.SmartList;
+import kotlinx.metadata.Attributes;
+import kotlinx.metadata.KmClass;
+import kotlinx.metadata.Modality;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DifferentiateContext;
@@ -19,11 +22,42 @@ import static org.jetbrains.jps.javac.Iterators.*;
 public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
 
   @Override
+  public boolean processAddedClass(DifferentiateContext context, JvmClass addedClass, Utils future, Utils present) {
+    for (JvmClass superClass : filter(future.allDirectSupertypes(addedClass), KotlinAwareJavaDifferentiateStrategy::isSealed)) {
+      affectNodeSources(context, superClass.getReferenceID(), "Subclass of a sealed class was added, affecting ");
+    }
+    return super.processAddedClass(context, addedClass, future, present);
+  }
+
+  @Override
+  public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
+    for (JvmClass superClass : filter(future.allDirectSupertypes(removedClass), KotlinAwareJavaDifferentiateStrategy::isSealed)) {
+      affectNodeSources(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ");
+    }
+    return super.processRemovedClass(context, removedClass, future, present);
+  }
+
+  @Override
   public boolean processChangedClass(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
     JvmClass changedClass = change.getPast();
-    Iterable<JvmMethod> removedMethods = change.getDiff().methods().removed();
-    Iterable<JvmField> addedNonPrivateFields = filter(change.getDiff().fields().added(), f -> !f.isPrivate());
-    Iterable<JvmField> exposedFields = filter(map(change.getDiff().fields().changed(), ch -> ch.getDiff().accessExpanded()? ch.getPast() : null), Objects::nonNull);
+    JvmClass.Diff diff = change.getDiff();
+    Iterable<JvmMethod> removedMethods = diff.methods().removed();
+    Iterable<JvmField> addedNonPrivateFields = filter(diff.fields().added(), f -> !f.isPrivate());
+    Iterable<JvmField> exposedFields = filter(map(diff.fields().changed(), ch -> ch.getDiff().accessExpanded()? ch.getPast() : null), Objects::nonNull);
+
+    if (diff.superClassChanged() || !diff.interfaces().unchanged()) {
+      Difference.Specifier<JvmNodeReferenceID, ?> sealedDiff = Difference.diff(
+        map(filter(present.allDirectSupertypes(change.getPast()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID),
+        map(filter(future.allDirectSupertypes(change.getNow()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID)
+      );
+      for (JvmNodeReferenceID id : sealedDiff.added()) {
+        affectNodeSources(context, id, "Subclass of a sealed class was added, affecting ");
+      }
+      for (JvmNodeReferenceID id : sealedDiff.removed()) {
+        affectNodeSources(context, id, "Subclass of a sealed class was removed, affecting ");
+      }
+    }
+
     if (!isEmpty(removedMethods) || !isEmpty(addedNonPrivateFields) || !isEmpty(exposedFields)) {
       for (PropertyDescriptor property : findProperties(changedClass)) {
 
@@ -64,6 +98,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     }
 
     return true;
+  }
+
+  private static boolean isSealed(JvmClass cls) {
+    KmClass kmClass = getKmClass(cls);
+    return kmClass != null && Attributes.getModality(kmClass) == Modality.SEALED;
   }
 
   @Override
@@ -207,4 +246,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     }
     return !iterator.hasNext();
   }
+
+  @Nullable
+  private static KmClass getKmClass(JvmClass cls) {
+    KotlinMeta meta = (KotlinMeta)find(cls.getMetadata(), mt -> mt instanceof KotlinMeta);
+    return meta != null? meta.getKmClass() : null;
+  }
+
 }
