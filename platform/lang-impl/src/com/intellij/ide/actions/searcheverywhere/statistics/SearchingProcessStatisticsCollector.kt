@@ -10,7 +10,7 @@ private const val GROUP_ID = "search.everywhere.process"
 class SearchingProcessStatisticsCollector : CounterUsagesCollector() {
 
   companion object {
-    private val group = EventLogGroup(GROUP_ID, 1)
+    private val group = EventLogGroup(GROUP_ID, 2)
 
     private val searchStartedEvent = group.registerEvent("contributor.search.started", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
     private val elementFoundEvent = group.registerEvent("first.element.found", SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)
