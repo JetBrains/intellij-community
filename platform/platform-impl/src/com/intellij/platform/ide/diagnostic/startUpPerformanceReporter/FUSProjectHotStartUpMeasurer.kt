@@ -7,6 +7,7 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.idea.IdeStarter
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields.createDurationField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -237,24 +238,23 @@ object FUSProjectHotStartUpMeasurer {
     if (!afterSplash && splashBecameVisibleEvent != null &&
         (frameBecameVisibleEvent == null || splashBecameVisibleEvent.time <= frameBecameVisibleEvent.time)) {
       val durationFromStart = getDurationFromStart(splashBecameVisibleEvent.time, lastHandledEvent)
-      FIRST_UI_SHOWN_EVENT.log(durationFromStart.getValueForFUS(), UIResponseType.Splash)
+      FIRST_UI_SHOWN_EVENT.log(durationFromStart, UIResponseType.Splash)
       return LastHandledEvent(splashBecameVisibleEvent, durationFromStart)
     }
 
     if (frameBecameVisibleEvent != null) {
       if (ideStarterStartedEvent == null) throw CancellationException()
       val durationFromStart = getDurationFromStart(frameBecameVisibleEvent.time, lastHandledEvent)
-      val durationForFUS = durationFromStart.getValueForFUS()
       if (!afterSplash) {
-        FIRST_UI_SHOWN_EVENT.log(durationForFUS, UIResponseType.Frame)
+        FIRST_UI_SHOWN_EVENT.log(durationFromStart, UIResponseType.Frame)
       }
       val projectsType = projectTypeReportEvent?.projectsType ?: ProjectsType.Unknown
       val settingsExist = projectPathReportEvent?.hasSettings
       if (settingsExist == null) {
-        FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationForFUS), PROJECTS_TYPE.with(projectsType))
+        FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationFromStart), PROJECTS_TYPE.with(projectsType))
       }
       else {
-        FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationForFUS), PROJECTS_TYPE.with(projectsType),
+        FRAME_BECAME_VISIBLE_EVENT.log(DURATION.with(durationFromStart), PROJECTS_TYPE.with(projectsType),
                                        HAS_SETTINGS.with(settingsExist))
       }
       return LastHandledEvent(frameBecameVisibleEvent, durationFromStart)
@@ -268,7 +268,7 @@ object FUSProjectHotStartUpMeasurer {
     ideStarterStartedEvent: Event.IdeStarterStartedEvent?,
     lastHandledEvent: LastHandledEvent?,
   ): Nothing {
-    val duration = getDurationFromStart(time, lastHandledEvent).getValueForFUS()
+    val duration = getDurationFromStart(time, lastHandledEvent)
     if ((lastHandledEvent == null || lastHandledEvent.event is Event.SplashBecameVisibleEvent) && (ideStarterStartedEvent != null)) {
       if (lastHandledEvent == null) {
         FIRST_UI_SHOWN_EVENT.log(duration, UIResponseType.Frame)
@@ -284,7 +284,7 @@ object FUSProjectHotStartUpMeasurer {
   ): LastHandledEvent? {
     if (frameBecameInteractiveEvent != null) {
       val durationFromStart = getDurationFromStart(frameBecameInteractiveEvent.time, lastHandledEvent)
-      FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart.getValueForFUS())
+      FRAME_BECAME_INTERACTIVE_EVENT.log(durationFromStart)
       return LastHandledEvent(frameBecameInteractiveEvent, durationFromStart)
     }
     return null
@@ -313,7 +313,7 @@ object FUSProjectHotStartUpMeasurer {
       val hasLoadedMarkup = file is VirtualFileWithId && markupResurrectedFileIds.contains(file.id)
       val fileType = readAction { file.fileType }
       ContainerUtil.addAll(data,
-                           DURATION.with(getDurationFromStart(firstEditorEvent.time, lastHandledEvent).getValueForFUS()),
+                           DURATION.with(getDurationFromStart(firstEditorEvent.time, lastHandledEvent)),
                            EventFields.FileType.with(fileType),
                            LOADED_CACHED_MARKUP_FIELD.with(hasLoadedMarkup),
                            NO_EDITORS_TO_OPEN_FIELD.with(false),
@@ -322,7 +322,7 @@ object FUSProjectHotStartUpMeasurer {
     }
     else if (noEditorEvent != null) {
       ContainerUtil.addAll(data,
-                           DURATION.with(getDurationFromStart(noEditorEvent.time, lastHandledEvent).getValueForFUS()),
+                           DURATION.with(getDurationFromStart(noEditorEvent.time, lastHandledEvent)),
                            NO_EDITORS_TO_OPEN_FIELD.with(true))
     }
 
@@ -360,12 +360,12 @@ object FUSProjectHotStartUpMeasurer {
           frameBecameVisibleEvent = event
         }
         is Event.WelcomeScreenEvent -> {
-          val welcomeScreedDurationForFUS = getDurationFromStart(event.time, lastHandledEvent).getValueForFUS()
+          val welcomeScreedDurationForFUS = getDurationFromStart(event.time, lastHandledEvent)
           if (splashBecameVisibleEvent == null) {
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(false))
           }
           else {
-            val splashScreenFUSDuration = getDurationFromStart(splashBecameVisibleEvent.time, lastHandledEvent).getValueForFUS()
+            val splashScreenFUSDuration = getDurationFromStart(splashBecameVisibleEvent.time, lastHandledEvent)
             WELCOME_SCREEN_EVENT.log(DURATION.with(welcomeScreedDurationForFUS), SPLASH_SCREEN_WAS_SHOWN.with(true),
                                      SPLASH_SCREEN_VISIBLE_DURATION.with(splashScreenFUSDuration))
           }
@@ -419,15 +419,11 @@ object FUSProjectHotStartUpMeasurer {
   }
 }
 
-private fun Duration.getValueForFUS(): Long {
-  return inWholeMilliseconds
-}
-
 private val WELCOME_SCREEN_GROUP = EventLogGroup("welcome.screen.startup.performance", 1)
 
 private val SPLASH_SCREEN_WAS_SHOWN = EventFields.Boolean("splash_screen_was_shown")
-private val SPLASH_SCREEN_VISIBLE_DURATION = LongEventField("splash_screen_became_visible_duration_ms")
-private val DURATION = EventFields.DurationMs
+private val SPLASH_SCREEN_VISIBLE_DURATION = createDurationField(DurationUnit.MILLISECONDS, "splash_screen_became_visible_duration_ms")
+private val DURATION = createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
 private val WELCOME_SCREEN_EVENT = WELCOME_SCREEN_GROUP.registerVarargEvent("welcome.screen.shown",
                                                                             DURATION, SPLASH_SCREEN_WAS_SHOWN,
                                                                             SPLASH_SCREEN_VISIBLE_DURATION)
@@ -444,7 +440,7 @@ private enum class UIResponseType {
 }
 
 private val UI_RESPONSE_TYPE = EventFields.Enum("type", UIResponseType::class.java)
-private val FIRST_UI_SHOWN_EVENT: EventId2<Long, UIResponseType> = GROUP.registerEvent("first.ui.shown", DURATION, UI_RESPONSE_TYPE)
+private val FIRST_UI_SHOWN_EVENT: EventId2<Duration, UIResponseType> = GROUP.registerEvent("first.ui.shown", DURATION, UI_RESPONSE_TYPE)
 
 private val PROJECTS_TYPE: EnumEventField<FUSProjectHotStartUpMeasurer.ProjectsType> =
   EventFields.Enum("projects_type", FUSProjectHotStartUpMeasurer.ProjectsType::class.java)

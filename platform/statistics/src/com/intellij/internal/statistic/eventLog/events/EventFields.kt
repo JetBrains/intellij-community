@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.security.InvalidParameterException
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import org.intellij.lang.annotations.Language as InjectedLanguage
 
 internal object EventFieldIds {
@@ -646,5 +648,19 @@ object EventFields {
       }
     }
     return ObjectEventField("additional", *additionalFields.toTypedArray())
+  }
+
+  @JvmStatic
+  fun createDurationField(unit: DurationUnit, fieldName: String): PrimitiveEventField<Duration> {
+    return object : PrimitiveEventField<Duration>() {
+
+      override val validationRule: List<String>
+        get() = listOf("{regexp#integer}")
+
+      override val name: String = fieldName
+      override fun addData(fuData: FeatureUsageData, value: Duration) {
+        fuData.addData(name, value.toInt(unit))
+      }
+    }
   }
 }
