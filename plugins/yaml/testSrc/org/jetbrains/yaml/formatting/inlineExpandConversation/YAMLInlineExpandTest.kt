@@ -12,14 +12,14 @@ class YAMLInlineExpandTest : BasePlatformTestCase() {
   private fun doInlineActionTest(testCase: String, testCaseAnswer: String) {
     myFixture.configureByText("test.yaml", testCase)
     val inlineAction = myFixture.findSingleIntention(YAMLBundle.message("yaml.intention.name.inline.collection"))
-    myFixture.launchAction(inlineAction)
+    myFixture.checkPreviewAndLaunchAction(inlineAction)
     myFixture.checkResult(testCaseAnswer)
   }
 
   private fun doExpandActionTest(testCase: String, testCaseAnswer: String) {
     myFixture.configureByText("test.yaml", testCase)
     val expandAction = myFixture.findSingleIntention(YAMLBundle.message("yaml.intention.name.expand.collection"))
-    myFixture.launchAction(expandAction)
+    myFixture.checkPreviewAndLaunchAction(expandAction)
     myFixture.checkResult(testCaseAnswer)
   }
 
@@ -28,7 +28,7 @@ class YAMLInlineExpandTest : BasePlatformTestCase() {
     val startIndent = CodeStyle.getIndentOptions(myFixture.file).INDENT_SIZE
     CodeStyle.getIndentOptions(myFixture.file).INDENT_SIZE = indent
     val expandAction = myFixture.findSingleIntention(YAMLBundle.message("yaml.intention.name.expand.collection"))
-    myFixture.launchAction(expandAction)
+    myFixture.checkPreviewAndLaunchAction(expandAction)
     myFixture.checkResult(testCaseAnswer)
     CodeStyle.getIndentOptions(myFixture.file).INDENT_SIZE = startIndent
   }
@@ -38,7 +38,7 @@ class YAMLInlineExpandTest : BasePlatformTestCase() {
     val startIndent = CodeStyle.getIndentOptions(myFixture.file).INDENT_SIZE
     CodeStyle.getIndentOptions(myFixture.file).INDENT_SIZE = indent
     val expandAllAction = myFixture.findSingleIntention(YAMLBundle.message("yaml.intention.name.expand.all.collections.inside"))
-    myFixture.launchAction(expandAllAction)
+    myFixture.checkPreviewAndLaunchAction(expandAllAction)
     try {
       myFixture.checkResult(testCaseAnswer)
     } finally {
@@ -49,7 +49,7 @@ class YAMLInlineExpandTest : BasePlatformTestCase() {
   private fun doExpandAllActionTest(testCase: String, testCaseAnswer: String) {
     myFixture.configureByText("test.yaml", testCase)
     val expandAllAction = myFixture.findSingleIntention(YAMLBundle.message("yaml.intention.name.expand.all.collections.inside"))
-    myFixture.launchAction(expandAllAction)
+    myFixture.checkPreviewAndLaunchAction(expandAllAction)
     myFixture.checkResult(testCaseAnswer)
   }
 

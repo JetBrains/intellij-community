@@ -3,9 +3,11 @@ package org.jetbrains.yaml.refactoring.inlineExpandConversion
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.DIFF
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.EMPTY
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -16,6 +18,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
+import kotlinx.coroutines.launch
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.YAMLElementGenerator
 import org.jetbrains.yaml.psi.YAMLKeyValue
@@ -60,8 +63,22 @@ open class YAMLExpandCollectionIntentionAction : PsiElementBaseIntentionAction()
     return text
   }
 
+
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    return EMPTY
+    val element: PsiElement = getElement(editor, file) ?: return EMPTY
+    var collectionPointer: SmartPsiElementPointer<PsiElement>? = null
+    var expandedElement: PsiElement? = null
+    runBlockingCancellable {
+      launch {
+            collectionPointer = readAction { getYamlCollectionUnderCaret(element) } ?: return@launch
+            val expanded: SmartPsiElementPointer<PsiElement> = processParentsVirtually(collectionPointer!!) ?: return@launch
+            expandedElement = expanded.element
+          }
+    }
+    collectionPointer?.element!!
+      .findTopmostParentInFile(true) { elementIsAvailableForExpanding(it) }
+        ?.replace(expandedElement?: return EMPTY) ?: return EMPTY
+    return DIFF
   }
 
   override fun invoke(project: Project, editor: Editor, element: PsiElement) {
@@ -152,6 +169,21 @@ class YAMLExpandAllCollectionsInsideIntentionAction : YAMLExpandCollectionIntent
   override fun getText(): String = YAMLBundle.message("yaml.intention.name.expand.all.collections.inside")
 
   override fun getFamilyName(): String = text
+
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    val element: PsiElement = getElement(editor, file) ?: return EMPTY
+    var collectionPointer: SmartPsiElementPointer<PsiElement>? = null
+    var expandedElement: PsiElement? = null
+    runBlockingCancellable {
+      launch {
+        collectionPointer = readAction { getYamlCollectionUnderCaret(element) ?: return@readAction null } ?: return@launch
+        val processed = processChildrenVirtually(collectionPointer!!)
+        expandedElement = processed.element
+      }
+    }
+    collectionPointer!!.element?.replace(expandedElement ?: return EMPTY) ?: return EMPTY
+    return DIFF
+  }
 
   override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
     val collection = getYamlCollectionUnderCaret(element)?.element ?: return false

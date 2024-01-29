@@ -7,6 +7,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -17,6 +18,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
+import kotlinx.coroutines.launch
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.YAMLElementGenerator
 import org.jetbrains.yaml.YAMLTokenTypes
@@ -34,7 +36,20 @@ class YAMLInlineCollectionIntentionAction : PsiElementBaseIntentionAction() {
   override fun getFamilyName(): String = text
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    return IntentionPreviewInfo.EMPTY
+    val element: PsiElement = getElement(editor, file) ?: return IntentionPreviewInfo.EMPTY
+    var collectionPointer: SmartPsiElementPointer<PsiElement>? = null
+    var expandedElement: PsiElement? = null
+    runBlockingCancellable {
+      launch {
+        collectionPointer = readAction { getYamlCollectionUnderCaret(element) } ?: return@launch
+        val reformatted: SmartPsiElementPointer<PsiElement> = readAction { invokeInlineActionVirtually(collectionPointer!!) }
+        expandedElement = reformatted.element
+      }
+    }
+
+    val replaced: PsiElement = collectionPointer?.element?.replace(expandedElement?: return IntentionPreviewInfo.EMPTY)?: return IntentionPreviewInfo.EMPTY
+    removeExtraEolIfGivenElementIsKeyValue(replaced.parent)
+    return IntentionPreviewInfo.DIFF
   }
 
   override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
