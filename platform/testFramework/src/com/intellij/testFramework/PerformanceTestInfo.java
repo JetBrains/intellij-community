@@ -363,7 +363,7 @@ public class PerformanceTestInfo {
     finally {
       try {
         // publish warmup and clean measurements at once at the end of the runs
-        if (iterationType.equals(IterationMode.MEASURE)) {
+        if (iterationType.equals(IterationMode.MEASURE) && UsefulTestCase.IS_UNDER_TEAMCITY) {
           MetricsPublisher.Companion.getInstance().publishSync(fullQualifiedTestMethodName, launchName);
         }
       }
