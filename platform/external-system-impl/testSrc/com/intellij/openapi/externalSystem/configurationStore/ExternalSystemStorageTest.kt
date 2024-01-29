@@ -46,6 +46,7 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement
 import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.storage.MutableEntityStorage.Companion.from
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.stateStore

@@ -4,6 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleExtensions;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,7 @@ public final class ModuleCustomImlDataFilesIndexableEntityProvider implements In
 
   private static @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
                                                                                                                 @NotNull ModuleEntity newEntity) {
-    if (shouldBeRescanned(oldEntity.getCustomImlData(), newEntity.getCustomImlData())) {
+    if (shouldBeRescanned(ModuleExtensions.getCustomImlData(oldEntity), ModuleExtensions.getCustomImlData(newEntity))) {
       List<IndexableIteratorBuilder> result = new ArrayList<>();
       result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(oldEntity.getSymbolicId()));
       result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getSymbolicId()));

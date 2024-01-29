@@ -12,6 +12,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity

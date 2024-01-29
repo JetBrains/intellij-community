@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntityAndExtensions;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot;
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource;
@@ -62,7 +63,7 @@ public class GradleProjectResolverUtilTest {
     MutableEntityStorage builder = MutableEntityStorage.create();
     ModuleEntity moduleEntity =
       builder.addEntity(ModuleEntity.create("m", Collections.emptyList(), NonPersistentEntitySource.INSTANCE, moduleBuilder -> {
-        moduleBuilder.setExModuleOptions(ExternalSystemModuleOptionsEntity.create(NonPersistentEntitySource.INSTANCE, externalBuilder -> {
+        ModuleEntityAndExtensions.setExModuleOptions(moduleBuilder, ExternalSystemModuleOptionsEntity.create(NonPersistentEntitySource.INSTANCE, externalBuilder -> {
           externalBuilder.setExternalSystem(SYSTEM_ID.getId());
           externalBuilder.setExternalSystemModuleType(moduleType);
           externalBuilder.setLinkedProjectId(projectId);
