@@ -219,7 +219,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public boolean hasBody() {
     if (!isAbstract()) {
       RefClass ownerClass = getOwnerClass();
-      if (ownerClass != null && !ownerClass.isInterface()) {
+      if (ownerClass == null || !ownerClass.isInterface()) {
         return true;
       }
     }
