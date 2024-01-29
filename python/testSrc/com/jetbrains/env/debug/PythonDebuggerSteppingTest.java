@@ -310,7 +310,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoConstructor() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_constructor.py") {
@@ -388,7 +387,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoCondition() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_condition.py") {
@@ -444,7 +442,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoDecorator1() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_decorator1.py") {
@@ -657,7 +654,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoMultiline2Python3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_multiline2.py") {
@@ -764,7 +760,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoBinaryOperator3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_binary_operator3.py") {
