@@ -47,7 +47,6 @@ public final class TrailingWhitespacesInTextBlockInspection extends AbstractBase
       private boolean checkTextBlock(@NotNull PsiElement textBlock, @NotNull String suffix) {
         String text = textBlock.getText();
         String[] lines = text.split("\n", -1);
-        if (lines.length < 2) return false;
         int indent = getIndent(textBlock);
         if (indent == -1) return false;
         int offset = 0;

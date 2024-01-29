@@ -22,6 +22,7 @@ public class TrailingWhitespacesInTextBlockInspectionTest extends LightJavaInspe
   public void testStringTemplate4Java21Preview() { doTestEscape(); }
   public void testStringTemplate5() { doTest(); }
   public void testStringTemplate6() { doTestAll(); }
+  public void testStringTemplateOneLine() { doTestAll(); }
   public void testTrailingSpaces() { doTestAll(); }
   public void testTrailingTabs() { doTestEscape(); }
   public void testWithBlankLines() { doTestAll(); }
