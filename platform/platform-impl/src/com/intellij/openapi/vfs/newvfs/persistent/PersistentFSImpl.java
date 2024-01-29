@@ -49,10 +49,8 @@ import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.*;
 
@@ -91,6 +89,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(
     getLongProperty("vfs.notify-user-if-recovery-longer-sec", defaultLongRecoveryThresholdSec())
   );
+
+  /**
+   * Sometimes PFS got request for the files with lost (missed) roots. We try to resolve each root against persistence,
+   * and it is quite expensive, so we don't want to repeat that attempt for the same root, if it is found to be missed.
+   * It shouldn't be a frequently called code, so plain synchronized collection should be enough.
+   */
+  private final IntSet missedRootIds = IntSets.synchronize(new IntOpenHashSet());
 
   private static long defaultLongRecoveryThresholdSec() {
     Application app = ApplicationManager.getApplication();
@@ -181,6 +186,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         // TODO make sure we don't have files in memory
         myRoots.clear();
         myIdToDirCache.clear();
+        missedRootIds.clear();
       }
       finally {
         FSRecordsImpl vfsPeer = this.vfsPeer;
@@ -1686,6 +1692,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       myRoots.put(rootUrl, newRoot);
       myIdToDirCache.cacheDir(newRoot);
+      //To be on a safe side: remove rootId from missed, to prevent any possibility of covering an actually existing root
+      missedRootIds.remove(rootId);
     }
 
     if (!markModified && attributes.lastModified != vfsPeer.getTimestamp(rootId)) {
@@ -1730,6 +1738,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * misses
    */
   private void cacheMissedRootFromPersistence(int rootId) {
+    if (missedRootIds.contains(rootId)) {
+      THROTTLED_LOG.warn("Can't find root[#" + rootId + "] in persistence");
+      //don't repeat long lookup if already know it won't find anything
+      return;
+    }
     Ref<String> missedRootUrlRef = new Ref<>();
     try {
       vfsPeer.treeAccessor().forEachRoot((rootFileId, rootUrlId) -> {
@@ -1743,7 +1756,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     if (missedRootUrlRef.isNull()) {
-      THROTTLED_LOG.warn("Can't find root[#" + rootId + "]");
+      missedRootIds.add(rootId);
+      THROTTLED_LOG.warn("Can't find root[#" + rootId + "] in persistence");
       return;
     }
 
