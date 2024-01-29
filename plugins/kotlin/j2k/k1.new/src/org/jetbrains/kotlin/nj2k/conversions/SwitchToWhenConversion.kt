@@ -7,14 +7,13 @@ import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.runExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.util.takeWhileInclusive
 
-
-internal class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKJavaSwitchBlock) return recurse(element)
         element.invalidate()

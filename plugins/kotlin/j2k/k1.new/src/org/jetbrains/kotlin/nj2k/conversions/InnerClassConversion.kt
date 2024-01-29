@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.isLocalClass
 import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
@@ -13,12 +13,12 @@ import org.jetbrains.kotlin.nj2k.tree.OtherModifier.INNER
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
 import org.jetbrains.kotlin.nj2k.tree.elementByModifier
 
-internal class InnerClassConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class InnerClassConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement =
         if (element is JKClass) recurseArmed(element, outerClass = element) else recurse(element)
 
     private fun recurseArmed(element: JKTreeElement, outerClass: JKClass): JKTreeElement =
-        applyRecursive(element, outerClass) { elem, outer -> elem.applyArmed(outer) }
+        applyRecursiveWithData(element, outerClass) { elem, outer -> elem.applyArmed(outer) }
 
     private fun JKTreeElement.applyArmed(outerClass: JKClass): JKTreeElement {
         if (this !is JKClass || classKind == COMPANION || isLocalClass()) return recurseArmed(this, outerClass)

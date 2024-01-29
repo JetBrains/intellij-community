@@ -154,7 +154,7 @@ internal fun stringLiteral(content: String, typeFactory: JKTypeFactory): JKExpre
 internal fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverterContext): List<JKFieldAccessExpression> {
     val symbol = context.symbolProvider.provideUniverseSymbol(this)
     val usages = mutableListOf<JKFieldAccessExpression>()
-    val searcher = object : RecursiveApplicableConversionBase(context) {
+    val searcher = object : RecursiveConversion(context) {
         override fun applyToElement(element: JKTreeElement): JKTreeElement {
             if (element is JKExpression) {
                 element.unboxFieldReference()?.also {
@@ -166,7 +166,7 @@ internal fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverte
             return recurse(element)
         }
     }
-    searcher.runConversion(scope, context)
+    searcher.run(scope, context)
     return usages
 }
 

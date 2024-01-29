@@ -3,14 +3,14 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.getOrCreateCompanionObject
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.COMPANION
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.OBJECT
 
-internal class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClass) return recurse(element)
         if (element.classKind == COMPANION || element.classKind == OBJECT) return element

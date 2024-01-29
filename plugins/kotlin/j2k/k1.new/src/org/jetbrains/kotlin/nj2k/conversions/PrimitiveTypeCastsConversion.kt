@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.LONG
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.SHORT
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         return recurse(convertTypeCastExpression(element) ?: element)
     }
@@ -27,7 +27,7 @@ internal class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : R
     }
 
     companion object {
-        fun RecursiveApplicableConversionBase.castToAsPrimitiveTypes(
+        fun RecursiveConversion.castToAsPrimitiveTypes(
             expression: JKExpression,
             toType: JKType,
             strict: Boolean
@@ -95,7 +95,7 @@ internal class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : R
             return result.withFormattingFrom(expression)
         }
 
-        private fun RecursiveApplicableConversionBase.charConversion(
+        private fun RecursiveConversion.charConversion(
             expression: JKExpression,
             fromType: JKJavaPrimitiveType,
             toType: JKJavaPrimitiveType
@@ -110,7 +110,7 @@ internal class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : R
             return null
         }
 
-        private fun RecursiveApplicableConversionBase.charToPrimitiveConversion(
+        private fun RecursiveConversion.charToPrimitiveConversion(
             expression: JKExpression,
             toType: JKJavaPrimitiveType
         ): JKExpression? {
@@ -130,7 +130,7 @@ internal class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : R
             return result
         }
 
-        private fun RecursiveApplicableConversionBase.primitiveToCharConversion(
+        private fun RecursiveConversion.primitiveToCharConversion(
             expression: JKExpression,
             fromType: JKJavaPrimitiveType
         ): JKExpression? {

@@ -5,13 +5,13 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.toArgumentList
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
-internal class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         var newElement = element
         if (element is JKJavaNewArray) {

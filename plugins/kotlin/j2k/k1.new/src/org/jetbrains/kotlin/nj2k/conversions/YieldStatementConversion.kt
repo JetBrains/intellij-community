@@ -3,28 +3,29 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionWithState
+import org.jetbrains.kotlin.nj2k.RecursiveConversionWithData
 import org.jetbrains.kotlin.nj2k.asStatement
 import org.jetbrains.kotlin.nj2k.tree.*
 
+internal class YieldStatementConversion(context: NewJ2kConverterContext) :
+    RecursiveConversionWithData<Boolean>(context, initialData = false) {
 
-internal class YieldStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionWithState<Boolean>(context, false) {
-    override fun applyToElement(element: JKTreeElement, state: Boolean/*is yield allowed*/): JKTreeElement {
+    override fun applyToElementWithData(element: JKTreeElement, data: Boolean /* is yield allowed */): JKTreeElement {
         when (element) {
-            is JKKtWhenExpression -> return recurse(element, true)
-            is JKMethod -> return recurse(element, false)
-            is JKLambdaExpression -> return recurse(element, false)
-            !is JKJavaYieldStatement -> return recurse(element, state)
+            is JKKtWhenExpression -> return recurseWithData(element, data = true)
+            is JKMethod -> return recurseWithData(element, data = false)
+            is JKLambdaExpression -> return recurseWithData(element, data = false)
+            !is JKJavaYieldStatement -> return recurseWithData(element, data)
         }
         element.invalidate()
 
         check(element is JKJavaYieldStatement)
-        val newElement = if (state) {
+        val newElement = if (data) {
             element.expression.asStatement()
         } else {
             JKErrorStatement(element.psi, "yield is not allowed outside switch expression")
         }
 
-        return recurse(newElement, false)
+        return recurseWithData(newElement, data = false)
     }
 }

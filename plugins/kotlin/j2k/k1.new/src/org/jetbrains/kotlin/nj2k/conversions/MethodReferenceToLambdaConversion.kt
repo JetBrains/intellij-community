@@ -7,7 +7,7 @@ import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.nullIfStubExpression
 import org.jetbrains.kotlin.nj2k.qualified
 import org.jetbrains.kotlin.nj2k.symbols.*
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private const val RECEIVER_NAME: String = "obj"
 
-internal class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKMethodReferenceExpression) return recurse(element)
 

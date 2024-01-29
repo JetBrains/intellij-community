@@ -9,7 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaVoidType
 import org.jetbrains.kotlin.nj2k.types.fqName
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
-internal class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKClass) {
             element.classBody.declarations.forEach {

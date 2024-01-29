@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 @ApiStatus.Internal
 class NewExternalCodeProcessing internal constructor(
     private val referenceSearcher: ReferenceSearcher,
-    private val inConversionContext: (PsiElement) -> Boolean
+    private val isInConversionContext: (PsiElement) -> Boolean
 ) : ExternalCodeProcessing {
 
     private sealed class MemberKey {
@@ -143,7 +143,7 @@ class NewExternalCodeProcessing internal constructor(
             searchKotlin = searchInKotlinFiles
         ).forEach { usage ->
             val element = usage.element
-            if (inConversionContext(element)) return@forEach
+            if (isInConversionContext(element)) return@forEach
             when {
                 element is KtElement -> kotlinUsages += element
                 element.language == JavaLanguage.INSTANCE -> javaUsages += element

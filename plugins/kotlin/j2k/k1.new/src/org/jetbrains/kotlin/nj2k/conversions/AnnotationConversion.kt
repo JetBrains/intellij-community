@@ -6,13 +6,13 @@ import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.primaryConstructor
 import org.jetbrains.kotlin.nj2k.toExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 
-internal class AnnotationConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class AnnotationConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKAnnotation) return recurse(element)
         fixVarargsInvocation(element)

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.nj2k.types.arrayInnerType
 import org.jetbrains.kotlin.nj2k.types.isStringType
 import org.jetbrains.kotlin.nj2k.types.updateNullabilityRecursively
 
-internal class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKMethodImpl -> element.convert()

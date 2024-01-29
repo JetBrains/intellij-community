@@ -2,15 +2,13 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.parenthesizedWithFormatting
 import org.jetbrains.kotlin.nj2k.tree.JKBinaryExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.tree.hasLineBreakAfter
 
-internal class ParenthesizeMultilineBinaryExpressionConversion(override val context: NewJ2kConverterContext) :
-    RecursiveApplicableConversionBase(context) {
-
+internal class ParenthesizeMultilineBinaryExpressionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKBinaryExpression) return recurse(element)
 

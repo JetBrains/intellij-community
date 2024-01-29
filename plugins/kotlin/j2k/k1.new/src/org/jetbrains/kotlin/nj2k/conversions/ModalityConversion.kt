@@ -5,14 +5,14 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.*
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
 
-internal class ModalityConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ModalityConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKClass -> element.process()

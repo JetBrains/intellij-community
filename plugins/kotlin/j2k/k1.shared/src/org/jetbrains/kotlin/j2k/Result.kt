@@ -8,4 +8,8 @@ data class Result(
     val results: List<ElementResult?>,
     val externalCodeProcessing: ExternalCodeProcessing?,
     val converterContext: ConverterContext?
-)
+) {
+    companion object {
+        val EMPTY = Result(results = emptyList(), externalCodeProcessing = null, converterContext = null)
+    }
+}

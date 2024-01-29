@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.nj2k.types.determineType
  *
  * See [JEP 395](https://openjdk.org/jeps/395) and [Records documentation](https://docs.oracle.com/en/java/javase/16/language/records.html)
  */
-internal class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKRecordClass) element.convert()
         return recurse(element)

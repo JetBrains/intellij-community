@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.extractRadix
 import kotlin.math.abs
 
-internal class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ForConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     private val forToWhile = ForToWhileConverter(context, symbolProvider)
     private val forToForeach = ForToForeachConverter(context, symbolProvider, typeFactory)
 
@@ -285,7 +285,7 @@ private class ForToWhileConverter(private val context: NewJ2kConverterContext, p
 
     private fun createWhileBody(loop: JKJavaForLoopStatement): JKStatement {
         if (loop.updaters.singleOrNull() is JKEmptyStatement) return loop::body.detached()
-        val continueStatementConverter = object : RecursiveApplicableConversionBase(context) {
+        val continueStatementConverter = object : RecursiveConversion(context) {
             override fun applyToElement(element: JKTreeElement): JKTreeElement {
                 if (element !is JKContinueStatement) return recurse(element)
                 val elementPsi = element.psi<PsiContinueStatement>()!!

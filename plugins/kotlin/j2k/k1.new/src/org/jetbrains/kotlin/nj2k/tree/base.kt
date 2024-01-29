@@ -89,10 +89,11 @@ internal abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable 
     inline fun forEachChild(block: (JKTreeElement) -> Unit) {
         children.forEach { child ->
             @Suppress("UNCHECKED_CAST")
-            if (child is JKTreeElement)
+            if (child is JKTreeElement) {
                 block(child)
-            else
+            } else {
                 (child as? List<JKTreeElement>)?.forEach { block(it) }
+            }
         }
     }
 

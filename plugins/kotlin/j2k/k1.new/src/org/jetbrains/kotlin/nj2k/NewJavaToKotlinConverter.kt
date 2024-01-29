@@ -79,7 +79,7 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
     ): Result {
-        val contextElement = inputElements.firstOrNull() ?: return Result(emptyList(), null, null)
+        val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
         val resolver = JKResolver(project, targetModule, contextElement)
         val symbolProvider = JKSymbolProvider(resolver)
         val typeFactory = JKTypeFactory(symbolProvider)
@@ -101,40 +101,38 @@ class NewJavaToKotlinConverter(
                     || element is PsiPackageStatement
         }
 
-        val asts = inputElements.mapIndexed { i, element ->
+        val elementsWithAsts = inputElements.mapIndexed { i, element ->
             processor.updateState(fileIndex = i, phase = BUILD_AST)
             element to treeBuilder.buildTree(element, saveImports)
         }
-        val inConversionContext = { element: PsiElement ->
-            inputElements.any { inputElement ->
-                if (inputElement == element) return@any true
-                inputElement.isAncestor(element, true)
-            }
-        }
 
-        val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, inConversionContext)
+        fun isInConversionContext(element: PsiElement): Boolean =
+            inputElements.any { it == element || it.isAncestor(element, strict = true) }
 
+        val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, ::isInConversionContext)
         val context = NewJ2kConverterContext(
             symbolProvider,
             typeFactory,
-            this,
-            inConversionContext,
+            converter = this,
+            ::isInConversionContext,
             importStorage,
             JKElementInfoStorage(),
             externalCodeProcessing,
             languageVersion.supportsFeature(LanguageFeature.FunctionalInterfaceConversion)
         )
-        ConversionsRunner.doApply(asts.mapNotNull { it.second }, context) { conversionIndex, conversionCount, i, desc ->
+
+        val treeRoots = elementsWithAsts.mapNotNull { it.second }
+        ConversionsRunner.doApply(treeRoots, context) { conversionIndex, conversionCount, fileIndex, description ->
             processor.updateState(
                 RUN_CONVERSIONS.phaseNumber,
                 conversionIndex,
                 conversionCount,
-                i,
-                desc
+                fileIndex,
+                description
             )
         }
 
-        val results = asts.mapIndexed { i, elementWithAst ->
+        val results = elementsWithAsts.mapIndexed { i, elementWithAst ->
             processor.updateState(fileIndex = i, phase = PRINT_CODE)
             val (element, ast) = elementWithAst
             if (ast == null) return@mapIndexed null

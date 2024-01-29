@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.kotlinAssert
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKJavaDisjunctionType
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.nj2k.useExpression
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKStatement) return recurse(element)
         return recurse(

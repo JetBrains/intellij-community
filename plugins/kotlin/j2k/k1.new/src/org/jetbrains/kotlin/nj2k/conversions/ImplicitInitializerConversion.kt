@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.conversions.InitializationState.*
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.findUsages
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
 
-internal class ImplicitInitializerConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class ImplicitInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)
         if (element.initializer !is JKStubExpression) return recurse(element)

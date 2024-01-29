@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.toKotlinMutableTypesMap
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtClass
 internal class TypeMappingConversion(
     context: NewJ2kConverterContext,
     inline val filter: (typeElement: JKTypeElement) -> Boolean = { true }
-) : RecursiveApplicableConversionBase(context) {
+) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {
             is JKTypeElement -> {

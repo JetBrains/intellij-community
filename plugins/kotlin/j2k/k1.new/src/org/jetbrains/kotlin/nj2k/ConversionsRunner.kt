@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
 import org.jetbrains.kotlin.nj2k.tree.JKParameter
 import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
 
 internal object ConversionsRunner {
     private fun createConversions(context: NewJ2kConverterContext) = listOf(
@@ -67,35 +66,20 @@ internal object ConversionsRunner {
         EnumSyntheticValuesMethodConversion(context)
     )
 
-
     fun doApply(
         trees: List<JKTreeRoot>,
         context: NewJ2kConverterContext,
-        updateProgress: (conversionIndex: Int, conversionCount: Int, fileIndex: Int, String) -> Unit
+        updateProgress: (conversionIndex: Int, conversionCount: Int, fileIndex: Int, description: String) -> Unit
     ) {
-
         val conversions = createConversions(context)
         for ((conversionIndex, conversion) in conversions.withIndex()) {
-
             val treeSequence = trees.asSequence().onEachIndexed { index, _ ->
-                updateProgress(conversionIndex, conversions.size, index, conversion.description())
+                updateProgress(conversionIndex, conversions.size, index, applyingConversionsMessage)
             }
 
-            conversion.runConversion(treeSequence, context)
+            conversion.runForEach(treeSequence, context)
         }
     }
-
-    private fun Conversion.description(): String {
-        val conversionName = this::class.simpleName
-        val words = conversionName?.let {
-            wordRegex.findAll(conversionName).map { it.value.replaceFirstChar { char -> char.lowercase(Locale.US) } }.toList()
-        }
-        return when {
-            conversionName == null -> "Converting..."
-            conversionName.endsWith("Conversion") -> "Converting ${words!!.dropLast(1).joinToString(" ")}"
-            else -> words!!.joinToString(" ")
-        }
-    }
-
-    private val wordRegex = """[A-Z][a-z\d]+""".toRegex()
 }
+
+private val applyingConversionsMessage: String = KotlinNJ2KBundle.message("j2k.applying.conversions")

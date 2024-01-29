@@ -31,61 +31,43 @@ internal fun <T : JKElement> KProperty0<List<T>>.detached(): List<T> =
 internal fun <T : JKElement> T.detached(from: JKElement): T =
     also { it.detach(from) }
 
-internal fun <R : JKTreeElement, T> applyRecursive(
-    element: R,
-    data: T,
-    onElementChanged: (JKTreeElement, JKTreeElement) -> Unit,
-    func: (JKTreeElement, T) -> JKTreeElement
-): R {
-    fun <T> applyRecursiveToList(
-        element: JKTreeElement,
-        child: List<JKTreeElement>,
-        iter: MutableListIterator<Any>,
-        data: T,
-        func: (JKTreeElement, T) -> JKTreeElement
-    ): List<JKTreeElement> {
+internal fun <E : JKTreeElement, D> applyRecursive(element: E, data: D, func: (JKTreeElement, D) -> JKTreeElement): E {
+    val iterator = element.children.listIterator()
 
-        val newChild = child.map {
-            func(it, data)
-        }
-
+    fun applyRecursiveToList(child: List<JKTreeElement>): List<JKTreeElement> {
+        val newChild = child.map { func(it, data) }
         child.forEach { it.detach(element) }
-        iter.set(child)
+        iterator.set(child)
         newChild.forEach { it.attach(element) }
-        newChild.zip(child).forEach { (old, new) ->
-            if (old !== new) {
-                onElementChanged(new, old)
-            }
-        }
         return newChild
     }
 
-    val iter = element.children.listIterator()
-    while (iter.hasNext()) {
-        val child = iter.next()
-
-        if (child is List<*>) {
-            @Suppress("UNCHECKED_CAST")
-            iter.set(applyRecursiveToList(element, child as List<JKTreeElement>, iter, data, func))
-        } else if (child is JKTreeElement) {
-            val newChild = func(child, data)
-            if (child !== newChild) {
-                child.detach(element)
-                iter.set(newChild)
-                newChild.attach(element)
-                onElementChanged(newChild, child)
+    while (iterator.hasNext()) {
+        when (val child = iterator.next()) {
+            is List<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val newChild = applyRecursiveToList(child as List<JKTreeElement>)
+                iterator.set(newChild)
             }
-        } else {
-            error("unsupported child type: ${child::class}")
+
+            is JKTreeElement -> {
+                val newChild = func(child, data)
+                if (child !== newChild) {
+                    child.detach(element)
+                    iterator.set(newChild)
+                    newChild.attach(element)
+                }
+            }
+
+            else -> error("unsupported child type: ${child::class}")
         }
     }
+
     return element
 }
 
-internal fun <R : JKTreeElement> applyRecursive(
-    element: R,
-    func: (JKTreeElement) -> JKTreeElement
-): R = applyRecursive(element, null, { _, _ -> }) { it, _ -> func(it) }
+internal fun <E : JKTreeElement> applyRecursive(element: E, func: (JKTreeElement) -> JKTreeElement): E =
+    applyRecursive(element, data = null) { it, _ -> func(it) }
 
 internal inline fun <reified T : JKTreeElement> T.copyTree(): T =
     copy().withFormattingFrom(this) as T

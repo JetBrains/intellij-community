@@ -3,14 +3,14 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.equalsExpression
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
 
-internal class EqualsOperatorConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class EqualsOperatorConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
         if (element.receiver is JKSuperExpression) return recurse(element)
