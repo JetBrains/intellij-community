@@ -311,7 +311,7 @@ internal class ProjectTypeList(
     }
 
     private fun <T : TemplateGroupItem> addItem(collection: MutableList<T>, offset: Int, item: T): Int {
-      var index = collection.indexOfFirst { it.group <= item.group }
+      var index = collection.indexOfFirst { it.group >= item.group }
       if (index < 0) index = 0
       collection.add(index, item)
       fireIntervalAdded(this, offset + index, offset + index)
@@ -320,7 +320,7 @@ internal class ProjectTypeList(
 
     private fun <T : TemplateGroupItem> removeItem(collection: MutableList<T>, offset: Int, name: String) {
       val index = collection.indexOfFirst { name == it.group.name }
-      if (index > 0) {
+      if (index >= 0) {
         collection.removeAt(index)
         fireIntervalRemoved(this, offset + index, offset + index)
       }
