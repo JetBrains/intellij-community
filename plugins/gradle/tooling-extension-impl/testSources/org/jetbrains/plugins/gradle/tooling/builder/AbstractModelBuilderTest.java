@@ -46,7 +46,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -78,9 +77,8 @@ public abstract class AbstractModelBuilderTest {
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
   public static Iterable<?> data() {
-    return Arrays.asList(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS);
+    return VersionMatcherRule.getSupportedGradleVersions();
   }
-
 
   @Before
   public void setUp() throws Exception {

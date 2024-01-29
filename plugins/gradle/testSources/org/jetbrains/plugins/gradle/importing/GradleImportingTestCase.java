@@ -77,7 +77,6 @@ import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-import static org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS;
 import static org.junit.Assume.assumeThat;
 
 @RunWith(Parameterized.class)
@@ -297,19 +296,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
   public static Iterable<?> data() {
-    String gradleVersionsString = System.getProperty("gradle.versions.to.run");
-    if (gradleVersionsString != null && !gradleVersionsString.isEmpty()) {
-      if (gradleVersionsString.startsWith("LAST:")) {
-        int last = Integer.parseInt(gradleVersionsString.substring("LAST:".length()));
-        List<String> all = Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
-        return all.subList(all.size() - last, all.size());
-      }
-      else {
-        String[] gradleVersionsToRun = gradleVersionsString.split(",");
-        return Arrays.asList(gradleVersionsToRun);
-      }
-    }
-    return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
+    return VersionMatcherRule.getSupportedGradleVersions();
   }
 
   @Override
