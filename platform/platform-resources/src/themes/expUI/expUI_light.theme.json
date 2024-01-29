@@ -521,11 +521,6 @@
       "iconTextGap": 4
     },
 
-    "SearchField": {
-      "errorForeground": "Red4",
-      "errorBackground": "Red9"
-    },
-
     "SearchEverywhere": {
       "Tab.selectedBackground": "Blue11",
       "SearchField.background": "Grey14",
@@ -534,6 +529,15 @@
         "foreground": "Grey7",
         "background": "Grey13"
       }
+    },
+
+    "SearchField": {
+      "errorForeground": "Red4",
+      "errorBackground": "Red9"
+    },
+
+    "SearchFieldWithExtension": {
+      "border": "com.intellij.ui.components.DarculaSearchFieldWithExtensionBorder"
     },
 
     "SearchMatch": {
