@@ -39,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
@@ -490,6 +491,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     if (!error.isNull()) {
       handleImportFailure(error.get().first, error.get().second);
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   protected void printOutput(@NotNull String text, boolean stdOut) {
