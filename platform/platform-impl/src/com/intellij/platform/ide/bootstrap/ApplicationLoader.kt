@@ -172,15 +172,15 @@ internal suspend fun loadApp(app: ApplicationImpl,
       getAppInitializedListeners(app)
     }
 
-    appRegisteredJob.join()
-    initConfigurationStoreJob.join()
-
-    __coroutineDebugJob = launch(CoroutineName("coroutine debug probes init")) {
+    __coroutineDebugJob = asyncScope.launch(CoroutineName("coroutine debug probes init")) {
       enableCoroutineDump().onFailure { e ->
         LOG.error("Cannot enable coroutine debug dump", e)
       }
-      enableJstack()
+      asyncScope.enableJstack()
     }
+
+    appRegisteredJob.join()
+    initConfigurationStoreJob.join()
 
     val appInitializedListenerJob = launch {
       val appInitializedListeners = appInitListeners.await()
@@ -218,8 +218,8 @@ internal suspend fun loadApp(app: ApplicationImpl,
 @JvmField
 var __coroutineDebugJob: Job? = null
 
-private suspend fun enableJstack() {
-  span("coroutine jstack configuration") {
+private fun CoroutineScope.enableJstack() {
+  launch(CoroutineName("coroutine jstack configuration")) {
     JBR.getJstack()?.includeInfoFrom {
       """
 $COROUTINE_DUMP_HEADER
