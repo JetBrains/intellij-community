@@ -73,7 +73,7 @@ fun <T> withRetry(
 }
 
 fun <T> executeWithRetry(retries: Int = 3, exception: Class<*>,
-                         errorMsg: String = "Fail to execute action $retries attempts",
+                         errorMsg: String = "Fail to execute action after $retries attempts",
                          delay: Duration,
                          call: () -> T): T {
   for (i in 0..retries) {
