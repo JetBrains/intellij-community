@@ -2259,10 +2259,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val info = layoutState.getInfo(toolWindow.id)
     if (info != null && info.isVisible) {
       LOG.assertTrue(!entry.readOnlyWindowInfo.isVisible)
-      if (showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false)) {
-        fireStateChanged(ToolWindowManagerEventType.ToolWindowAvailable, entry.toolWindow)
-      }
+      showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false)
     }
+
+    fireStateChanged(ToolWindowManagerEventType.ToolWindowAvailable, entry.toolWindow)
   }
 
   internal fun toolWindowUnavailable(toolWindow: ToolWindowImpl) {
