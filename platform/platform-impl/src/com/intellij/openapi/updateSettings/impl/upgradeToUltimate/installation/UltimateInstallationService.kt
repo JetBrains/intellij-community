@@ -316,7 +316,11 @@ internal fun runCommand(command: GeneralCommandLine): Boolean {
 }
 
 private fun generateDownloadLink(buildInfo: BuildInfo, suggestedIde: SuggestedIde, postfix: String): String {
-  return "${suggestedIde.baseDownloadUrl}-${buildInfo.version}$postfix"
+  val version = if (Registry.`is`("ide.try.ultimate.use.eap")) {
+    buildInfo.number.components.joinToString(".")
+  } else buildInfo.version
+  
+  return "${suggestedIde.baseDownloadUrl}-$version$postfix"
 }
 
 internal data class DownloadResult(val downloadPath: Path, val buildVersion: String)
