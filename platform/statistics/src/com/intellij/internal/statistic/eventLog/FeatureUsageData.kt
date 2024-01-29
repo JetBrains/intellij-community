@@ -56,7 +56,7 @@ class FeatureUsageData(val recorderId: String) {
     if (clientId != null && clientId != ClientId.defaultLocalId) {
       addClientId(clientId.value)
     }
-    if (QODANA_PROJECT_ID != null && ApplicationManager.getApplication().isHeadlessEnvironment) {
+    if (QODANA_PROJECT_ID != null) {
       data["system_qdcld_project_id"] = QODANA_PROJECT_ID
     }
   }
@@ -70,6 +70,7 @@ class FeatureUsageData(val recorderId: String) {
     private val QODANA_PROJECT_ID: String? = calcQodanaProjectId()
 
     private fun calcQodanaProjectId(): String? {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment) return null
       val env = System.getenv("QODANA_PROJECT_ID_HASH") ?: return null
       if (env.isEmpty()) return null
       return if (Pattern.compile(QODANA_PROJECT_ID_PATTERN).matcher(env).matches()) env else ValidationResultType.REJECTED.description
