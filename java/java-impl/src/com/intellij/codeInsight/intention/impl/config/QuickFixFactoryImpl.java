@@ -412,17 +412,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createRenameFix(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
-    if(!element.isPhysical()) return null;
-    ProblemDescriptor descriptor = new ProblemDescriptorBase(element,
-                                         element,
-                                         "",
-                                         null,
-                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                         false,
-                                         null,
-                                         true,
-                                         false);
-    return QuickFixWrapper.wrap(descriptor, new RenameFix());
+    PsiNameIdentifierOwner target = element instanceof PsiNameIdentifierOwner owner ? owner :
+                                    element.getParent() instanceof PsiNameIdentifierOwner owner ? owner : null;
+    if (target == null) {
+      throw new IllegalArgumentException("Wrong element is supplied: " + element.getClass());
+    }
+    return new RenameModCommandAction(target).asIntention();
   }
 
   @NotNull
