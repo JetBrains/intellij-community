@@ -18,9 +18,7 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.*
 
 class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
   private val service = controller.service.getThemeService()
@@ -31,6 +29,8 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
   private val contentPage: JComponent
 
   private var activeScheme: SchemePane
+
+  private val buttonGroup = ButtonGroup()
 
   init {
 
@@ -55,6 +55,10 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
 
       pages.add(pane)
       schemesPane.add(pane.pane, gbc)
+      buttonGroup.add(pane.jRadioButton)
+      pane.jRadioButton.addActionListener {
+        activePane(pane)
+      }
     }
 
     val centralPane = JPanel(BorderLayout(0, 0)).apply {
@@ -80,6 +84,10 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     activeScheme = pages[0]
     activePane(activeScheme)
 
+    SwingUtilities.invokeLater {
+      activeScheme.pane.requestFocus()
+    }
+
     val backAction = controller.goBackAction?.let {
       controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
         it.invoke()
@@ -98,8 +106,6 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     } ?: listOf(continueAction)
 
     contentPage = WizardPagePane(centralPane, buttons)
-    continueAction.requestFocus()
-
   }
 
   fun activePane(schemePane: SchemePane) {

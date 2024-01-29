@@ -15,16 +15,14 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 
 class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
   private val pages = mutableListOf<KeymapPane>()
   private var activeKeymap: KeymapPane
   private val keymapPane = JPanel(GridBagLayout())
   private val contentPage: JComponent
+  private val buttonGroup = ButtonGroup()
 
   init {
     val keymapService = controller.service.getKeymapService()
@@ -55,6 +53,10 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
 
       pages.add(pane)
       this.keymapPane.add(pane.pane, gbc)
+      buttonGroup.add(pane.jRadioButton)
+      pane.jRadioButton.addActionListener {
+        activePane(pane)
+      }
     }
 
     val centralPane = JPanel(BorderLayout(0, 0)).apply {
@@ -70,6 +72,9 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
 
     activeKeymap = pages[0]
     activePane(activeKeymap)
+    SwingUtilities.invokeLater {
+      activeKeymap.pane.requestFocus()
+    }
 
     val backAction = controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
       controller.goToThemePage()
@@ -87,7 +92,7 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
       else listOf(continueAction, backAction)
 
     contentPage = WizardPagePane(centralPane, buttons)
-    continueAction.requestFocus()
+
   }
 
   private fun activePane(keymap: KeymapPane)  {
