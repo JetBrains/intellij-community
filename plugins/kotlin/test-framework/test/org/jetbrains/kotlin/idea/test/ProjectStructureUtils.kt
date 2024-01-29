@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.projectModel.FullJdk
 import org.jetbrains.kotlin.projectModel.KotlinSdk
@@ -20,6 +21,9 @@ fun Module.addDependency(
     dependencyScope: DependencyScope = DependencyScope.COMPILE,
     exported: Boolean = false
 ) = ModuleRootModificationUtil.addDependency(this, library, dependencyScope, exported)
+    .also {
+        IndexingTestUtil.waitUntilIndexesAreReady(this.project)
+    }
 
 fun Module.addDependency(sdk: ResolveSdk, testRootDisposable: Disposable) {
     when (sdk) {
@@ -42,4 +46,5 @@ fun Module.addDependency(sdk: ResolveSdk, testRootDisposable: Disposable) {
 
         else -> error("Don't know how to set up SDK of type: ${sdk::class}")
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(this.project)
 }

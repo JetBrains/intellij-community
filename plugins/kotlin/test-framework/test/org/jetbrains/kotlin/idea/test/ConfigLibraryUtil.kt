@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.jarFile
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
@@ -110,6 +111,7 @@ object ConfigLibraryUtil {
             rootModel.sdk = sdk
             rootModel.commit()
         }
+        IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     }
 
     fun addProjectLibrary(
@@ -120,6 +122,8 @@ object ConfigLibraryUtil {
         LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(name).apply {
             modifiableModel.init()
         }
+    }.also {
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
 
     fun addProjectLibraryWithClassesRoot(project: Project, name: String): Library = runWriteAction {
@@ -134,6 +138,7 @@ object ConfigLibraryUtil {
         runWriteAction {
             LibraryTablesRegistrar.getInstance().getLibraryTable(project).removeLibrary(library)
         }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
 
     fun addLibrary(module: Module, name: String, kind: PersistentLibraryKind<*>? = null, init: Library.ModifiableModel.() -> Unit) {
@@ -143,6 +148,7 @@ object ConfigLibraryUtil {
                 commit()
             }
         }
+        IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     }
 
     fun addLibrary(
@@ -213,6 +219,8 @@ object ConfigLibraryUtil {
             model.commit()
 
             removed
+        }.also {
+            IndexingTestUtil.waitUntilIndexesAreReady(module.project)
         }
     }
 
@@ -248,6 +256,7 @@ object ConfigLibraryUtil {
                 }
             }
         }
+        IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     }
 
     fun configureLibrariesByDirective(module: Module, fileText: String) {
