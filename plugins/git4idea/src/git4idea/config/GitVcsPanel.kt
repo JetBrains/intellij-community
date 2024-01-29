@@ -9,13 +9,10 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -34,6 +31,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.AdvancedSettingsPredicate
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
@@ -357,17 +355,4 @@ class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : C
   }
 
   override fun invoke(): Boolean = GitRepositoryManager.getInstance(project).repositories.size != 0
-}
-
-class AdvancedSettingsPredicate(val id: String, val disposable: Disposable) : ComponentPredicate() {
-  override fun addListener(listener: (Boolean) -> Unit) {
-    ApplicationManager.getApplication().messageBus.connect(disposable)
-      .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
-        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-          listener(invoke())
-        }
-      })
-  }
-
-  override fun invoke(): Boolean = AdvancedSettings.getBoolean(id)
 }
