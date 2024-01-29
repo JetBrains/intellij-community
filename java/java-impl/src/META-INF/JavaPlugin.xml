@@ -2522,5 +2522,7 @@
     <listener class="com.intellij.ide.compilation.InvalidCompilationListener"
               topic="com.intellij.openapi.compiler.CompilationStatusListener"
               activeInHeadlessMode="false"/>
+    <listener class="com.intellij.openapi.roots.impl.LanguageLevelChangedListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 </idea-plugin>

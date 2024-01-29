@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -9,10 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
-import com.intellij.platform.workspace.storage.EntityChange;
-import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
@@ -36,20 +31,6 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
     setDefault(project.isDefault() ? true : null);
-    project.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED,
-      new WorkspaceModelChangeListener() {
-        @Override
-        public void changed(@NotNull VersionedStorageChange event) {
-          if (event.getChanges(JavaModuleSettingsEntity.class).stream().anyMatch(change ->
-            change instanceof EntityChange.Replaced<?> &&
-            !Objects.equals(((EntityChange.Replaced<JavaModuleSettingsEntity>)change).getOldEntity().getLanguageLevelId(),
-                            ((EntityChange.Replaced<JavaModuleSettingsEntity>)change).getNewEntity().getLanguageLevelId())
-          )) {
-            languageLevelsChanged();
-          }
-        }
-      }
-    );
   }
 
   public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {
@@ -119,10 +100,14 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
 
   @Override
   public void languageLevelsChanged() {
-    if (!myProject.isDefault()) {
-      myProject.getMessageBus().syncPublisher(LANGUAGE_LEVEL_CHANGED_TOPIC).onLanguageLevelsChanged();
-      ProjectRootManager.getInstance(myProject).incModificationCount();
-      JavaLanguageLevelPusher.pushLanguageLevel(myProject);
+    languageLevelsChanged(myProject);
+  }
+
+  public static void languageLevelsChanged(@NotNull Project project) {
+    if (!project.isDefault()) {
+      project.getMessageBus().syncPublisher(LANGUAGE_LEVEL_CHANGED_TOPIC).onLanguageLevelsChanged();
+      ProjectRootManager.getInstance(project).incModificationCount();
+      JavaLanguageLevelPusher.pushLanguageLevel(project);
     }
   }
 
