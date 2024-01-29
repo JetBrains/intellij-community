@@ -52,10 +52,10 @@ object CodeReviewDetailsBranchComponentFactory {
       scope.launchNow {
         branchesVm.showBranchesRequests.collectLatest { (source, target) ->
           val point = RelativePoint.getSouthWestOf(this@apply)
-          val actions = buildList<ReviewAction> {
+          val actions = buildList {
             add(ReviewAction.Checkout)
             if (branchesVm.canShowInLog) {
-              ReviewAction.ShowInLog
+              add(ReviewAction.ShowInLog)
             }
           }
           JBPopupFactory.getInstance().createPopupChooserBuilder(actions)
