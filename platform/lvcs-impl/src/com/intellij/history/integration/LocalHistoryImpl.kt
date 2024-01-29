@@ -161,33 +161,33 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     return a
   }
 
-  override fun putEventLabel(p: Project, name: @NlsContexts.Label String, activityId: ActivityId): Label {
+  override fun putEventLabel(project: Project, name: @NlsContexts.Label String, activityId: ActivityId): Label {
     if (!isInitialized()) {
       return Label.NULL_INSTANCE
     }
 
     val action = startAction(name, activityId)
-    val label = label(facade!!.putUserLabel(name, getProjectId(p)))
+    val label = label(facade!!.putUserLabel(name, getProjectId(project)))
     action.finish()
     return label
   }
 
-  override fun putUserLabel(p: Project, name: @NlsContexts.Label String): Label {
+  override fun putUserLabel(project: Project, name: @NlsContexts.Label String): Label {
     if (!isInitialized()) {
       return Label.NULL_INSTANCE
     }
 
     gateway!!.registerUnsavedDocuments(facade!!)
-    return label(facade!!.putUserLabel(name, getProjectId(p)))
+    return label(facade!!.putUserLabel(name, getProjectId(project)))
   }
 
-  override fun putSystemLabel(p: Project, name: @NlsContexts.Label String, color: Int): Label {
+  override fun putSystemLabel(project: Project, name: @NlsContexts.Label String, color: Int): Label {
     if (!isInitialized()) {
       return Label.NULL_INSTANCE
     }
 
     gateway!!.registerUnsavedDocuments(facade!!)
-    return label(facade!!.putSystemLabel(name, getProjectId(p), color))
+    return label(facade!!.putSystemLabel(name, getProjectId(project), color))
   }
 
   @ApiStatus.Internal
@@ -209,14 +209,14 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     }
   }
 
-  override fun getByteContent(virtualFile: VirtualFile, comparator: FileRevisionTimestampComparator): ByteArray? {
+  override fun getByteContent(virtualFile: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray? {
     if (!isInitialized()) {
       return null
     }
 
     return ApplicationManager.getApplication().runReadAction(Computable {
       if (gateway!!.areContentChangesVersioned(virtualFile)) {
-        ByteContentRetriever(gateway, facade, virtualFile, comparator).getResult()
+        ByteContentRetriever(gateway, facade, virtualFile, condition).getResult()
       }
       else {
         null
@@ -224,7 +224,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     })
   }
 
-  override fun isUnderControl(f: VirtualFile): Boolean = isInitialized() && gateway!!.isVersioned(f)
+  override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway!!.isVersioned(file)
 
   private fun isInitialized(): Boolean = isInitialized.get()
 
