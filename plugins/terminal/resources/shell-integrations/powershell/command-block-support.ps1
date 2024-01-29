@@ -30,6 +30,7 @@ $Global:__JetBrainsIntellijGeneratorRunning=$false
 
 function Global:Prompt() {
   $Success = $?
+  $ExitCode = $Global:LastExitCode
   if ($Global:__JetBrainsIntellijGeneratorRunning) {
     $Global:__JetBrainsIntellijGeneratorRunning = $false
     # Hide internal command in the built-in session history.
@@ -44,11 +45,10 @@ function Global:Prompt() {
   $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
   $PromptStateOSC = Global:__JetBrainsIntellijCreatePromptStateOSC
   if ($__JetBrainsIntellijTerminalInitialized) {
-    $ExitCode = "0"
-    if ($LASTEXITCODE -ne $null) {
-      $ExitCode = $LASTEXITCODE
+    if ($ExitCode -eq $null) {
+      $ExitCode = "0"
     }
-    if (-not$Success -and $ExitCode -eq "0") {
+    if (-not $Success -and $ExitCode -eq "0") {
       $ExitCode = "1"
     }
     if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
@@ -74,6 +74,9 @@ function Global:Prompt() {
 }
 
 function Global:__JetBrainsIntellijCreatePromptStateOSC() {
+  # Remember the exit code, because it can be changed in a result of git operations
+  $RealExitCode = $Global:LastExitCode
+
   $CurrentDirectory = (Get-Location).Path
   $GitBranch = ""
   if (Get-Command "git.exe" -ErrorAction SilentlyContinue) {
@@ -88,11 +91,14 @@ function Global:__JetBrainsIntellijCreatePromptStateOSC() {
   }
   $VirtualEnv = if ($Env:VIRTUAL_ENV_PROMPT -ne $null) { $Env:VIRTUAL_ENV_PROMPT } else { "" }
   $CondaEnv = if ($Env:CONDA_DEFAULT_ENV -ne $null) { $Env:CONDA_DEFAULT_ENV } else { "" }
-  return Global:__JetBrainsIntellijOSC ("prompt_state_updated;" +
+  $StateOSC = Global:__JetBrainsIntellijOSC ("prompt_state_updated;" +
     "current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory);" +
     "git_branch=$(__JetBrainsIntellijEncode $GitBranch);" +
     "virtual_env=$(__JetBrainsIntellijEncode $VirtualEnv);" +
     "conda_env=$(__JetBrainsIntellijEncode $CondaEnv)")
+
+  $Global:LastExitCode = $RealExitCode
+  return $StateOSC
 }
 
 function Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft() {
