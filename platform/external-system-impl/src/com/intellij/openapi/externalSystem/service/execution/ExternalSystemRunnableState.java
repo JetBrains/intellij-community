@@ -324,7 +324,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
             var title = executionName + " " + BuildBundle.message("build.status.failed");
             var externalSystemId = id.getProjectSystemId();
             var externalProjectPath = mySettings.getExternalProjectPath();
-            var dataContext = BuildConsoleUtils.getDataContext(id, progressListener);
+            var dataContext = BuildConsoleUtils.getDataContext(id, progressListener, consoleView);
             var eventResult = createFailureResult(title, e, externalSystemId, myProject, externalProjectPath, dataContext);
             eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult));
           }
