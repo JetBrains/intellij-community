@@ -28,8 +28,6 @@ function Global:__JetBrainsIntellijGetCommandEndMarker() {
 $Global:__JetBrainsIntellijTerminalInitialized=$false
 $Global:__JetBrainsIntellijGeneratorRunning=$false
 
-$Global:__JetBrainsIntellijOriginalPrompt = $function:Prompt
-
 function Global:Prompt() {
   $Success = $?
   if ($Global:__JetBrainsIntellijGeneratorRunning) {
@@ -42,7 +40,6 @@ function Global:Prompt() {
     return ""
   }
 
-  $OriginalPrompt = $Global:__JetBrainsIntellijOriginalPrompt.Invoke()
   $Result = ""
   $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
   if ($__JetBrainsIntellijTerminalInitialized) {

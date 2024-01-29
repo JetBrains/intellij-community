@@ -32,29 +32,23 @@ import kotlin.io.path.isExecutable
 import kotlin.io.path.name
 
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
-  private fun generateCommandForPowerShell(sdk: Sdk, sdkHomePath: VirtualFile, powershellName: String): Array<out String>? {
+  private fun generatePowerShellActivateScript(sdk: Sdk, sdkHomePath: VirtualFile): String? {
     // TODO: This should be migrated to Targets API: each target provides terminal
     if ((sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavor is CondaEnvSdkFlavor) {
       // Activate conda
-
       val condaPath = PyCondaPackageService.getCondaExecutable(sdk.homePath)?.let { Path(it) }
-      val condaActivationCommand: String
-      if (condaPath != null && condaPath.exists() && condaPath.isExecutable()) {
-        condaActivationCommand = getCondaActivationCommand(condaPath, sdkHomePath)
+      return if (condaPath != null && condaPath.exists() && condaPath.isExecutable()) {
+        getCondaActivationCommand(condaPath, sdkHomePath)
       }
       else {
         logger<PyVirtualEnvTerminalCustomizer>().warn("Can't find $condaPath, will not activate conda")
-        condaActivationCommand = PyTerminalBundle.message("powershell.conda.not.activated", "conda")
+        PyTerminalBundle.message("powershell.conda.not.activated", "conda")
       }
-      // To activate conda we need to allow code execution
-      return arrayOf(powershellName, "-ExecutionPolicy", "RemoteSigned", "-NoExit", "-Command", condaActivationCommand)
     }
 
     // Activate convenient virtualenv
     val virtualEnvProfile = sdkHomePath.parent.findChild("activate.ps1") ?: return null
-    return if (virtualEnvProfile.exists()) arrayOf(powershellName, "-ExecutionPolicy", "RemoteSigned", "-NoExit", "-File",
-                                                   virtualEnvProfile.path)
-    else null
+    return if (virtualEnvProfile.exists()) virtualEnvProfile.path else null
   }
 
   /**
@@ -98,19 +92,21 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
       if (sdkHomePath != null && command.isNotEmpty()) {
         val shellPath = command[0]
-
-        val shellName = Path(shellPath).name
-        if (shellName in arrayOf("powershell.exe", "pwsh.exe")) {
-          return generateCommandForPowerShell(sdk, sdkHomePath, shellName) ?: command
-        }
-
         if (isShellIntegrationAvailable(shellPath)) { //fish shell works only for virtualenv and not for conda
           //for bash we pass activate script to shell integration (see bash-integration.bash) to source it there
           //TODO: fix conda for fish [also in fleet.language.python.PythonVirtualEnvTerminalPreprocessor#preprocess]
 
-          findActivateScript(sdkHomePath.path, shellPath)?.let { activate ->
-            envs.put("JEDITERM_SOURCE", activate.first)
-            envs.put("JEDITERM_SOURCE_ARGS", activate.second ?: "")
+          val shellName = Path(shellPath).name
+          if (isPowerShell(shellName)) {
+            generatePowerShellActivateScript(sdk, sdkHomePath)?.let {
+              envs.put("JEDITERM_SOURCE", it)
+            }
+          }
+          else {
+            findActivateScript(sdkHomePath.path, shellPath)?.let { activate ->
+              envs.put("JEDITERM_SOURCE", activate.first)
+              envs.put("JEDITERM_SOURCE_ARGS", activate.second ?: "")
+            }
           }
         }
         else {
@@ -130,10 +126,16 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   private fun isShellIntegrationAvailable(shellPath: String): Boolean {
     if (TerminalOptionsProvider.instance.shellIntegration) {
       val shellName = File(shellPath).name
-      return shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || shellName == "zsh" || shellName == "fish"
+      return shellName == "bash"
+             || (SystemInfo.isMac && shellName == "sh")
+             || shellName == "zsh"
+             || shellName == "fish"
+             || isPowerShell(shellName)
     }
     return false
   }
+
+  private fun isPowerShell(shellName: String): Boolean = shellName in arrayOf("powershell.exe", "pwsh.exe")
 
   override fun getConfigurable(project: Project): UnnamedConfigurable = object : UnnamedConfigurable {
     val settings = PyVirtualEnvTerminalSettings.getInstance(project)
