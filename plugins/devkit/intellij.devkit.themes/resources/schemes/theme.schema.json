@@ -162,10 +162,11 @@
         },
         "Checkbox.Focus.Thin.Default": {
           "$ref": "#/definitions/color",
-          "description": "1px inner border in the focused state"
+          "description": "1px inner border in the focused state, old UI themes only"
         },
         "Checkbox.Focus.Thin.Selected": {
-          "$ref": "#/definitions/color"
+          "$ref": "#/definitions/color",
+          "description": "old UI themes only"
         },
         "Checkbox.Focus.Wide": {
           "$ref": "#/definitions/color",
@@ -173,47 +174,47 @@
         },
         "Checkbox.Background.Default.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Border.Default.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Background.Selected.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Border.Selected.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Foreground.Selected.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Background.Disabled.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Border.Disabled.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Foreground.Disabled.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Focus.Thin.Default.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Focus.Thin.Selected.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Focus.Wide.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Tree.iconColor": {
           "$ref": "#/definitions/color",

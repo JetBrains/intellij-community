@@ -35,7 +35,10 @@ class PaletteKeys(id: String) {
 /**
  * CheckBox scope for new themes, see [NewThemeCheckboxPatcher] for details
  */
-internal class UiThemePaletteCheckBoxScope(private val isDarkTheme: Boolean) : UiThemePaletteScope {
+internal class UiThemePaletteCheckBoxScope(theme: UIThemeBean) : UiThemePaletteScope {
+
+  private val themeName = theme.name
+  private val isDarkTheme = theme.dark
 
   /**
    * Checkbox mapping from ColorPalette of theme, keys are from [paletteNames]
@@ -58,20 +61,34 @@ internal class UiThemePaletteCheckBoxScope(private val isDarkTheme: Boolean) : U
   }
 
   fun registerPalette(colorKey: String, color: Any?) {
-    if (!paletteNames.contains(colorKey)) {
-      thisLogger().warn("Color key is not supported: $colorKey")
+    // Support deprecated .Dark keys
+    val key: String
+
+    if (isDarkTheme && colorKey.endsWith(".Dark")) {
+      key = colorKey.removeSuffix(".Dark")
+    } else {
+      key = colorKey
+    }
+
+    if (!paletteNames.contains(key)) {
+      thisLogger().warn("Theme $themeName: color key $colorKey is not supported and therefore ignored")
       return
+    }
+
+    if (key != colorKey) {
+      thisLogger().warn("Theme $themeName: $colorKey is deprecated for new UI themes, use $key instead")
     }
 
     if (color is Color) {
       val colorHex = "#" + ColorUtil.toHex(color, false)
-      palette[colorKey] = colorHex
-      alphas[colorKey] = color.alpha
+      palette[key] = colorHex
+      alphas[key] = color.alpha
     }
   }
 
   override fun updateHash(insecureHashBuilder: InsecureHashBuilder) {
     insecureHashBuilder
+      .putString(themeName ?: "")
       .putBoolean(isDarkTheme)
       .putStringMap(palette)
       .putStringIntMap(alphas)

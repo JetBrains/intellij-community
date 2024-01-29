@@ -52,7 +52,7 @@ internal class UiThemePaletteScopeManager(theme: UIThemeBean) {
   private val ui = UiThemePaletteScopeImpl()
   private val checkBoxes = UiThemePaletteScopeImpl()
   private val trees = UiThemePaletteScopeImpl()
-  private val checkBoxesExperimentalThemes = UiThemePaletteCheckBoxScope(theme.dark)
+  private val checkBoxesExperimentalThemes = UiThemePaletteCheckBoxScope(theme)
 
   fun configureIcons(theme: UIThemeBean,
                      iconMap: Map<String, Any?>): SVGLoader.SvgElementColorPatcherProvider? {
