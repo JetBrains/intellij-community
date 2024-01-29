@@ -470,6 +470,10 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon WebServiceClient = load("expui/javaee/webServiceClient.svg", 37295085, 2);
   }
 
+  public static final class Language {
+    /** 16x16 */ public static final @NotNull Icon Php = load("expui/language/php.svg", 1115780116, 2);
+  }
+
   public static final class MeetNewUi {
     /** 16x16 */ public static final @NotNull Icon DarkTheme = load("expui/meetNewUi/darkTheme.svg", -1512620599, 2);
     /** 16x16 */ public static final @NotNull Icon DarkThemeSelected = load("expui/meetNewUi/darkThemeSelected.svg", -462276083, 2);
