@@ -601,7 +601,9 @@ fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
     }
 
     let os_spec = get_os_specific_env_vars();
-    remote_dev_env_var_values.extend(os_spec);
+    for (key, value) in os_spec.iter() {
+        remote_dev_env_var_values.push((key, value))
+    }
 
     for (key, value) in remote_dev_env_var_values {
         match env::var(key) {
@@ -620,7 +622,7 @@ fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
     return Ok(())
 }
 #[cfg(target_os = "macos")]
-fn get_os_specific_env_vars() {
+fn get_os_specific_env_vars() -> Vec<(String, String)> {
     // GTW-6786 fix macos host crashing on start
     vec![("AWT_FORCE_HEADFUL".to_string(), "true".to_string())]
 }
