@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -19,7 +21,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
   private val blockStates: MutableMap<CommandBlock, List<BlockDecorationState>> = HashMap()
-  private var allHighlightingsCache: List<HighlightingInfo>? = null
+  private var allHighlightingsSnapshot: AllHighlightingsSnapshot? = null
 
   private val document: Document = editor.document
   private val listeners: MutableList<TerminalOutputListener> = CopyOnWriteArrayList()
@@ -75,7 +77,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     blocks.remove(block)
     decorations.remove(block)
     highlightings.remove(block)
-    allHighlightingsCache = null
+    allHighlightingsSnapshot = null
     blockStates.remove(block)
   }
 
@@ -126,27 +128,12 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun getAllHighlightings(): List<HighlightingInfo> {
-    var result: List<HighlightingInfo>? = allHighlightingsCache
-    if (result == null) {
-      result = calcAllHighlightings()
-      allHighlightingsCache = result
+  internal fun getHighlightingsSnapshot(): AllHighlightingsSnapshot {
+    var snapshot: AllHighlightingsSnapshot? = allHighlightingsSnapshot
+    if (snapshot == null) {
+      snapshot = AllHighlightingsSnapshot(highlightings.flatMap { it.value })
     }
-    return result
-  }
-
-  private fun calcAllHighlightings(): List<HighlightingInfo> {
-    val highlightings = highlightings.flatMap { it.value }
-    val result : MutableList<HighlightingInfo> = ArrayList(highlightings.size * 2)
-    var offset = 0
-    for (h in highlightings) {
-      if (offset < h.startOffset) {
-        result.add(HighlightingInfo(offset, h.startOffset, TextAttributes.ERASE_MARKER))
-      }
-      result.add(h)
-      offset = h.endOffset
-    }
-    return result
+    return snapshot
   }
 
   @RequiresEdt
@@ -157,7 +144,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   @RequiresEdt
   fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
     this.highlightings[block] = highlightings
-    allHighlightingsCache = null
+    allHighlightingsSnapshot = null
   }
 
   @RequiresEdt
@@ -189,6 +176,25 @@ class TerminalOutputModel(val editor: EditorEx) {
   interface TerminalOutputListener {
     fun blockRemoved(block: CommandBlock) {}
     fun blockDecorationStateChanged(block: CommandBlock, oldStates: List<BlockDecorationState>, newStates: List<BlockDecorationState>) {}
+  }
+}
+
+internal class AllHighlightingsSnapshot(highlightings: List<HighlightingInfo>) {
+
+  val allSortedHighlightings: ImmutableList<HighlightingInfo>
+
+  init {
+    val sortedHighlightings = highlightings.sortedBy { it.startOffset }
+    val result : MutableList<HighlightingInfo> = ArrayList(sortedHighlightings.size * 2)
+    var offset = 0
+    for (highlighting in sortedHighlightings) {
+      if (offset < highlighting.startOffset) {
+        result.add(HighlightingInfo(offset, highlighting.startOffset, TextAttributes.ERASE_MARKER))
+      }
+      result.add(highlighting)
+      offset = highlighting.endOffset
+    }
+    allSortedHighlightings = result.toImmutableList()
   }
 }
 

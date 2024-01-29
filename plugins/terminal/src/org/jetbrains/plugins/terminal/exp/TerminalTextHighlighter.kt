@@ -11,14 +11,16 @@ import java.util.*
 
 data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes)
 
-class TerminalTextHighlighter private constructor(private val getHighlightings: () -> List<HighlightingInfo>) : EditorHighlighter {
+class TerminalTextHighlighter private constructor(
+  private val allHighlightingsSnapshotProvider: () -> AllHighlightingsSnapshot
+) : EditorHighlighter {
   private var editor: HighlighterClient? = null
 
-  constructor(model: TerminalOutputModel) : this({ model.getAllHighlightings() })
-  constructor(highlightings: List<HighlightingInfo>) : this({ highlightings })
+  constructor(model: TerminalOutputModel) : this({ model.getHighlightingsSnapshot() })
+  internal constructor(allHighlightingsSnapshot: AllHighlightingsSnapshot) : this({ allHighlightingsSnapshot })
 
   override fun createIterator(startOffset: Int): HighlighterIterator {
-    val highlightings = getHighlightings()
+    val highlightings = allHighlightingsSnapshotProvider().allSortedHighlightings
     val curInd = findOffsetIndex(highlightings, startOffset)
     return MyHighlighterIterator(editor?.document, highlightings, curInd)
   }
