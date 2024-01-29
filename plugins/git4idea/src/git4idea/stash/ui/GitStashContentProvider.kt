@@ -38,25 +38,23 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.util.function.Predicate
 import java.util.function.Supplier
-import javax.swing.JComponent
 
 internal class GitStashContentProvider(private val project: Project) : ChangesViewContentProvider {
-  private var disposable: Disposable? = null
 
-  override fun initContent(): JComponent {
+  override fun initTabContent(content: Content) {
     project.service<GitStashTracker>().scheduleRefresh()
 
-    disposable = Disposer.newDisposable("Git Stash Content Provider")
-    val savedPatchesUi = GitSavedPatchesUi(GitStashProvider(project, disposable!!), ShelfProvider(project, disposable!!), disposable!!)
-    project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
-      override fun toolWindowMappingChanged() {
-        savedPatchesUi.updateLayout()
-      }
+    val disposable = Disposer.newDisposable("Git Stash Content Provider")
+    val savedPatchesUi = GitSavedPatchesUi(GitStashProvider(project, disposable), ShelfProvider(project, disposable), disposable)
+    project.messageBus.connect(disposable).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() = savedPatchesUi.updateLayout()
     })
-    project.messageBus.connect(disposable!!).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+    project.messageBus.connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun stateChanged(toolWindowManager: ToolWindowManager) = savedPatchesUi.updateLayout()
     })
-    return savedPatchesUi
+
+    content.component = savedPatchesUi
+    content.setDisposer(disposable)
   }
 
   private inner class GitSavedPatchesUi(private val stashProvider: GitStashProvider, private val shelfProvider: ShelfProvider,
@@ -107,10 +105,6 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     toolWindow.activate({
                           IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true)
                         }, false)
-  }
-
-  override fun disposeContent() {
-    disposable?.let { Disposer.dispose(it) }
   }
 
   companion object {
