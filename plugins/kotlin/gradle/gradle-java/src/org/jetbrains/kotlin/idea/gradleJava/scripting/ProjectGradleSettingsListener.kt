@@ -2,14 +2,21 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.core.script.ScriptModel
+import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
+import org.jetbrains.kotlin.idea.core.script.k2ScriptingEnabled
+import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
+import java.nio.file.Paths
 
 class ProjectGradleSettingsListener(val project: Project, private val cs: CoroutineScope) : GradleSettingsListener {
 
@@ -19,7 +26,26 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
             cs.launch(Dispatchers.IO) {
-                buildRootsManager.add(buildRootsManager.loadLinkedRoot(it))
+                val newRoot = buildRootsManager.loadLinkedRoot(it)
+
+                if (newRoot is Imported && k2ScriptingEnabled()) {
+                    val definitions = loadGradleDefinitions(it.externalProjectPath, newRoot.data.gradleHome, newRoot.data.javaHome, project)
+                    val scripts = newRoot.data.models.mapNotNull {
+                        val path = Paths.get(it.file)
+                        VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
+                            ScriptModel(
+                                virtualFile,
+                                it.classPath,
+                                it.sourcePath,
+                                it.imports
+                            )
+                        }
+
+                    }.toSet()
+                    configureGradleScriptsK2(newRoot.data.javaHome, project, scripts, definitions)
+                }
+
+                buildRootsManager.add(newRoot)
             }
         }
     }

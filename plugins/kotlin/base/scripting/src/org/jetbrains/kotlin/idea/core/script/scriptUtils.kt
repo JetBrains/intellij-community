@@ -2,13 +2,23 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 @set: org.jetbrains.annotations.TestOnly
@@ -25,7 +35,7 @@ fun scriptingDebugLog(file: KtFile, message: () -> String) {
 
 fun scriptingDebugLog(file: VirtualFile? = null, message: () -> String) {
     if (logger.isDebugEnabled) {
-        logger.debug("[KOTLIN_SCRIPTING] ${file?.let { file.path + " "} ?: ""}" + message())
+        logger.debug("[KOTLIN_SCRIPTING] ${file?.let { file.path + " " } ?: ""}" + message())
     }
 }
 
@@ -55,3 +65,42 @@ fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigura
         }
     }
 }
+
+fun scriptConfigurationMissingForK2(file: KtFile): Boolean = file.isScript()
+        && KotlinPluginModeProvider.isK2Mode()
+        && K2ScriptDependenciesProvider.getInstanceIfCreated(file.project)?.getConfiguration(file.virtualFile) == null
+
+fun getAllDefinitions(project: Project): List<ScriptDefinition> =
+    if (KotlinPluginModeProvider.isK2Mode()) {
+        K2ScriptDefinitionProvider.getInstanceIfCreated(project)?.currentDefinitions?.toList() ?: emptyList()
+    } else {
+        ScriptDefinitionsManager.getInstance(project).allDefinitions
+    }
+
+suspend fun configureGradleScriptsK2(
+    javaHome: String?,
+    project: Project,
+    scripts: Set<ScriptModel>,
+    definitions: List<ScriptDefinition>,
+) {
+    K2ScriptDefinitionProvider.getInstance(project).updateDefinitions(definitions)
+    K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(scripts, javaHome)
+    project.createScriptModules(scripts)
+
+    for (script in scripts) {
+        if (project.isOpen && !project.isDisposed) {
+            readAction {
+                val ktFile = script.virtualFile.toPsiFile(project) as? KtFile ?: error("Cannot convert to PSI file: ${script.virtualFile}")
+                DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+            }
+        }
+    }
+
+    writeAction {
+        project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
+    }
+}
+
+fun k2ScriptingEnabled(): Boolean = KotlinPluginModeProvider.isK2Mode() && scriptingEnabled
+
+val scriptingEnabled = Registry.`is`("kotlin.k2.scripting.enabled", false)

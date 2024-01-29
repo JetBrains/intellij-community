@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
-import kotlin.script.experimental.location.ScriptExpectedLocation
 
 class GradleKotlinScriptDefinitionWrapper(
     hostConfiguration: ScriptingHostConfiguration,

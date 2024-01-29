@@ -15,6 +15,8 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.k2ScriptingEnabled
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleJavaBundle
 import org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleStandaloneScriptActionsManager
@@ -62,6 +64,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
         }
 
         return Function { fileEditor ->
+            //if (k2ScriptingEnabled() && K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getConfiguration(file) != null) { return@Function null }
             when (scriptUnderRoot.notificationKind) {
                 dontCare -> null
                 legacy -> {

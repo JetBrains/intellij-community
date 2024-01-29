@@ -19,7 +19,17 @@ import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChange
 import org.jetbrains.kotlin.idea.core.script.isScriptChangesNotifierDisabled
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
-internal class ScriptChangesNotifier(private val project: Project) {
+interface ScriptChangesNotifier {
+    fun updateScriptDependenciesIfNeeded(file: VirtualFile)
+}
+
+internal class ScriptChangesNotifierK2 : ScriptChangesNotifier {
+    override fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
+    }
+
+}
+
+internal class ScriptChangesNotifierK1(private val project: Project) : ScriptChangesNotifier {
     private val scriptsQueue: Alarm
     private val scriptChangesListenerDelayMillis = 1400
 
@@ -90,7 +100,7 @@ internal class ScriptChangesNotifier(private val project: Project) {
             add(defaultListener)
         }
 
-    internal fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
+    override fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
         getListener(project, file)?.editorActivated(file)
     }
 

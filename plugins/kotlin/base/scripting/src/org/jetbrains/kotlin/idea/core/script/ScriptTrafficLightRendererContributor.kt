@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -19,7 +20,7 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
     @RequiresBackgroundThread
     override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? {
         val ktFile = file.safeAs<KtFile>() ?: return null
-        val isScript = runReadAction { ktFile.isScript() /* RequiresBackgroundThread */}
+        val isScript = runReadAction { ktFile.isScript() /* RequiresBackgroundThread */ }
         return if (isScript) {
             ScriptTrafficLightRenderer(ktFile.project, editor.document, ktFile)
         } else {
@@ -32,15 +33,21 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
         override fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 
-            val configurations = ScriptConfigurationManager.getServiceIfCreated(project)
-            if (configurations == null) {
-                // services not yet initialized (it should be initialized under the LoadScriptDefinitionsStartupActivity)
-                status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
-                status.errorAnalyzingFinished = false
-            } else if (configurations.isConfigurationLoadingInProgress(file)) {
-                status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
-                status.errorAnalyzingFinished = false
+            if (scriptingEnabled) {
+                if (KotlinPluginModeProvider.isK2Mode()) {
+                    if (K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getConfiguration(file.virtualFile) == null) {
+                        status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
+                        status.errorAnalyzingFinished = false
+                    }
+                } else {
+                    val configurations = ScriptConfigurationManager.getServiceIfCreated(project)
+                    if (configurations == null || configurations.isConfigurationLoadingInProgress(file)) {
+                        status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
+                        status.errorAnalyzingFinished = false
+                    }
+                }
             }
+
             return status
         }
     }
