@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.Groups
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
@@ -777,7 +778,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     private fun getLafGroups(): ActionGroup {
       val lightLaFs = ArrayList<UIThemeLookAndFeelInfo>()
       val darkLaFs = ArrayList<UIThemeLookAndFeelInfo>()
-      for (lafInfo in ThemeListProvider.getInstance().getShownThemes().asSequence().flatten()) {
+      for (lafInfo in ThemeListProvider.getInstance().getShownThemes().infos.asSequence().flatMap { it.items }) {
         if (lafInfo.isDark) {
           darkLaFs.add(lafInfo)
         }
@@ -842,17 +843,13 @@ private class LafCellRenderer(private val model: LafComboBoxModel?) : GroupedCom
 
   override fun separatorFor(value: LafReference): ListSeparator? {
     model ?: return null
-
     if (value.themeId.isEmpty()) return ListSeparator()
 
-    val firstItemInGroup = model.groupedThemes.asSequence().drop(1).firstOrNull {
-      value.themeId == it.firstOrNull()?.id
+    val groupWithSameFirstItem = model.groupedThemes.infos.firstOrNull { value.themeId == it.items.firstOrNull()?.id }
+    if (groupWithSameFirstItem != null) {
+      return ListSeparator(groupWithSameFirstItem.title)
     }
 
-    if (firstItemInGroup != null) {
-      if (firstItemInGroup.first().isThemeFromJetBrains) return ListSeparator()
-      else return ListSeparator(IdeBundle.message("combobox.list.custom.section.title"))
-    }
     return null
   }
 }
@@ -1226,8 +1223,6 @@ internal fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
   return themeListManager.findThemeById(id) ?: error("Default theme not found(id=$id, isDark=$isDark, isNewUI=$isNewUi)")
 }
 
-private class LafComboBoxModel(val groupedThemes: List<List<UIThemeLookAndFeelInfo>>)
-  : CollectionComboBoxModel<LafReference>(getAllReferences(groupedThemes))
-
-private fun getAllReferences(groupedThemes: List<List<UIThemeLookAndFeelInfo>>): List<LafReference> =
-  groupedThemes.asSequence().flatten().map { LafReference(it.name, it.id) }.toList()
+private class LafComboBoxModel(val groupedThemes: Groups<UIThemeLookAndFeelInfo>) : CollectionComboBoxModel<LafReference>(
+  groupedThemes.infos.asSequence().flatMap { it.items }.map { LafReference(it.name, it.id) }.toList()
+)

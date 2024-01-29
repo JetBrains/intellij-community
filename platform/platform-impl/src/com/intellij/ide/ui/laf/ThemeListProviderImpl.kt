@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.TargetUIType
 import com.intellij.ide.ui.ThemeListProvider
+import com.intellij.openapi.editor.colors.Groups
 import com.intellij.ui.ExperimentalUI
 
 private class ThemeListProviderImpl : ThemeListProvider {
-  override fun getShownThemes(): List<List<UIThemeLookAndFeelInfo>> {
-    val result = mutableListOf<List<UIThemeLookAndFeelInfo>>()
+  override fun getShownThemes(): Groups<UIThemeLookAndFeelInfo> {
     val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
 
     val newUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
@@ -39,14 +40,17 @@ private class ThemeListProviderImpl : ThemeListProvider {
     classicUiThemes.sortBy { it.name }
     customThemes.sortBy { it.name }
 
-    if (newUiThemes.isNotEmpty()) result.add(newUiThemes)
-    if (classicUiThemes.isNotEmpty()) result.add(classicUiThemes)
-    if (customThemes.isNotEmpty()) result.add(customThemes)
-
     if (highContrastThemeToAdd != null) {
-      (result.firstOrNull() as? MutableList)?.add(highContrastThemeToAdd)
+      val destination = if (newUiThemes.isEmpty()) classicUiThemes else newUiThemes
+      destination.add(highContrastThemeToAdd)
     }
 
-    return result
+    val groupInfos = mutableListOf<Groups.GroupInfo<UIThemeLookAndFeelInfo>>()
+
+    if (newUiThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(newUiThemes))
+    if (classicUiThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(classicUiThemes))
+    if (customThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(customThemes, IdeBundle.message("combobox.list.custom.section.title")))
+
+    return Groups(groupInfos)
   }
 }

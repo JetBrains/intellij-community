@@ -4,6 +4,7 @@ package com.intellij.ide.ui
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.Groups
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,5 +20,5 @@ interface ThemeListProvider {
    * Provides all available themes.
    * Themes are divided to groups, groups should be split by separators in all UIs
    */
-  fun getShownThemes(): List<List<UIThemeLookAndFeelInfo>>
+  fun getShownThemes(): Groups<UIThemeLookAndFeelInfo>
 }
