@@ -418,9 +418,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       // paint all backgrounds
       int gutterSeparatorX = getWhitespaceSeparatorOffset();
-      Color caretRowColor = getCaretRowColor();
-      paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
-      paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), caretRowColor);
+      paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, getCaretRowColor(false));
+      paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), getCaretRowColor(true));
 
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
@@ -656,7 +655,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     paintCaretRowBackground(g, x, width, caretRowColor);
   }
 
-  private Color getCaretRowColor() {
+  private Color getCaretRowColor(boolean isEditor) {
     if (!myEditor.getSettings().isCaretRowShown()) {
       return null;
     }
@@ -665,7 +664,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (myEditor.isStickyLinePainting()) {
       // suppress gutter caret row background on sticky lines panel
-      return null;
+      if (!isEditor || !myEditor.isStickyLineHovered()) {
+        return null;
+      }
     }
     return myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
   }
