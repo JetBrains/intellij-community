@@ -512,8 +512,9 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
 "PROVIDED"))), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$Exportable",
 "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem",
 "java.io.Serializable")),
-FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$SdkDependency", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "sdkName", valueType = primitiveTypeStringNotNullable, withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "sdkType", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.jps.entities.ModuleDependencyItem",
+FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$SdkDependency", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "sdk", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.jps.entities.SdkId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "type", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.jps.entities.ModuleDependencyItem",
 "java.io.Serializable")),
 FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$ModuleSourceDependency", properties = listOf(), supertypes = listOf("com.intellij.platform.workspace.jps.entities.ModuleDependencyItem",
 "java.io.Serializable"))), supertypes = listOf("java.io.Serializable")))), primitive = primitiveTypeListNotNullable), withDefault = false),
@@ -609,7 +610,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity", metadataHash = 926320716)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", metadataHash = -436113477)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity", metadataHash = -917110778)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = -1842172930)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = 22496707)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity", metadataHash = -371618300)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleSettingsBase", metadataHash = -1726065761)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkEntity", metadataHash = 154089668)
@@ -627,17 +628,17 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryRoot", metadataHash = -909142712)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryRootTypeId", metadataHash = -389178127)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryRoot\$InclusionOptions", metadataHash = 1781041525)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem", metadataHash = 1750526695)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem", metadataHash = -18128894)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$Exportable", metadataHash = 1274936359)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$Exportable\$LibraryDependency", metadataHash = -731896636)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$DependencyScope", metadataHash = 1352800951)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$Exportable\$ModuleDependency", metadataHash = -995506319)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$InheritedSdkDependency", metadataHash = 1619943135)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$ModuleSourceDependency", metadataHash = 1976084120)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$SdkDependency", metadataHash = 488098063)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleDependencyItem\$SdkDependency", metadataHash = 520844756)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = -1839163146)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkRoot", metadataHash = 18907249)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkRootTypeId", metadataHash = 1718825746)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = -1839163146)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 1426059948)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1035119344)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.CustomModuleEntitySource", metadataHash = -826697445)

@@ -424,8 +424,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         runCatchingXmlIssues {
           when (val orderEntryType = dependencyElement.getAttributeValue(TYPE_ATTRIBUTE)) {
             SOURCE_FOLDER_TYPE -> ModuleDependencyItem.ModuleSourceDependency
-            JDK_TYPE -> ModuleDependencyItem.SdkDependency(dependencyElement.getAttributeValueStrict(JDK_NAME_ATTRIBUTE),
-                                                           dependencyElement.getAttributeValue(JDK_TYPE_ATTRIBUTE))
+            JDK_TYPE -> ModuleDependencyItem.SdkDependency(SdkId(dependencyElement.getAttributeValueStrict(JDK_NAME_ATTRIBUTE),
+                                                           dependencyElement.getAttributeValue(JDK_TYPE_ATTRIBUTE)))
             INHERITED_JDK_TYPE -> ModuleDependencyItem.InheritedSdkDependency
             LIBRARY_TYPE -> {
               val level = dependencyElement.getAttributeValueStrict(LEVEL_ATTRIBUTE)
@@ -802,9 +802,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                  moduleLibraries: Map<String, LibraryEntity>) = when (dependencyItem) {
     is ModuleDependencyItem.ModuleSourceDependency -> createOrderEntryTag(SOURCE_FOLDER_TYPE).setAttribute("forTests", "false")
     is ModuleDependencyItem.SdkDependency -> createOrderEntryTag(JDK_TYPE).apply {
-      setAttribute(JDK_NAME_ATTRIBUTE, dependencyItem.sdkName)
+      setAttribute(JDK_NAME_ATTRIBUTE, dependencyItem.sdk.name)
 
-      val sdkType = dependencyItem.sdkType
+      val sdkType = dependencyItem.sdk.type
       setAttribute(JDK_TYPE_ATTRIBUTE, sdkType)
     }
     is ModuleDependencyItem.InheritedSdkDependency -> createOrderEntryTag(INHERITED_JDK_TYPE)

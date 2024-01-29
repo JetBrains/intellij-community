@@ -476,7 +476,7 @@ class ModifiableRootModelBridgeImpl(
     }
 
     val currentSdk = sdk
-    val jdkItem = currentSdk?.let { ModuleDependencyItem.SdkDependency(it.name, it.sdkType.name) }
+    val jdkItem = currentSdk?.let { ModuleDependencyItem.SdkDependency(SdkId(it.name, it.sdkType.name)) }
     if (moduleEntity.dependencies != listOfNotNull(jdkItem, ModuleDependencyItem.ModuleSourceDependency)) {
       removeDependencies { _, _ -> true }
       if (jdkItem != null) {
@@ -624,7 +624,7 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun setInvalidSdk(sdkName: String, sdkType: String) {
-    setSdkItem(ModuleDependencyItem.SdkDependency(sdkName, sdkType))
+    setSdkItem(ModuleDependencyItem.SdkDependency(SdkId(sdkName, sdkType)))
 
     if (assertChangesApplied && getSdkName() != sdkName) {
       error("setInvalidSdk: expected sdkName '$sdkName' but got '${getSdkName()}' after doing a change")

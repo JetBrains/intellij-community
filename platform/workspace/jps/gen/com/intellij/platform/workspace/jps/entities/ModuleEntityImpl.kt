@@ -333,6 +333,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
         is ModuleDependencyItem.ModuleSourceDependency -> {
         }
         is ModuleDependencyItem.SdkDependency -> {
+          result.add(item.sdk)
         }
       }
     }
@@ -357,6 +358,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
         is ModuleDependencyItem.ModuleSourceDependency -> {
         }
         is ModuleDependencyItem.SdkDependency -> {
+          index.index(this, item.sdk)
         }
       }
     }
@@ -388,6 +390,10 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
         is ModuleDependencyItem.ModuleSourceDependency -> {
         }
         is ModuleDependencyItem.SdkDependency -> {
+          val removedItem_item_sdk = mutablePreviousSet.remove(item.sdk)
+          if (!removedItem_item_sdk) {
+            index.index(this, item.sdk)
+          }
         }
       }
     }
@@ -442,7 +448,18 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
           _it
         }
         is ModuleDependencyItem.SdkDependency -> {
-          _it
+          val _it_sdk_data = if (_it.sdk == oldLink) {
+            changed = true
+            newLink as SdkId
+          }
+          else {
+            null
+          }
+          var _it_data = _it
+          if (_it_sdk_data != null) {
+            _it_data = _it_data.copy(sdk = _it_sdk_data)
+          }
+          _it_data
         }
       }
       if (res_it != null) {

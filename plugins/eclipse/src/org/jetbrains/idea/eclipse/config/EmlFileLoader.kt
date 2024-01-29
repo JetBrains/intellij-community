@@ -126,7 +126,7 @@ internal class EmlFileLoader(
     }
     else {
       emlTag.getAttributeValue("jdk")
-        ?.let { ModuleDependencyItem.SdkDependency(it, "JavaSDK") }
+        ?.let { ModuleDependencyItem.SdkDependency(SdkId(it, "JavaSDK")) }
     }
 
     if (sdkItem != null) {

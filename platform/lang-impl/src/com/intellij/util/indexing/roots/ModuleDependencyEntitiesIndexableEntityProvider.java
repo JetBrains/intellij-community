@@ -54,8 +54,8 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
   @NotNull
   private static Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
     if (dependency instanceof ModuleDependencyItem.SdkDependency) {
-      return IndexableIteratorBuilders.INSTANCE.forSdk(((ModuleDependencyItem.SdkDependency)dependency).getSdkName(),
-                                                       ((ModuleDependencyItem.SdkDependency)dependency).getSdkType());
+      return IndexableIteratorBuilders.INSTANCE.forSdk(((ModuleDependencyItem.SdkDependency)dependency).getSdk().getName(),
+                                                       ((ModuleDependencyItem.SdkDependency)dependency).getSdk().getType());
     }
     else if (dependency instanceof ModuleDependencyItem.Exportable.LibraryDependency) {
       LibraryId libraryId = ((ModuleDependencyItem.Exportable.LibraryDependency)dependency).getLibrary();
