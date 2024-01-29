@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
@@ -194,6 +195,18 @@ public final class GradleUtil {
         String.format("Unable to resolve Gradle distribution path '%s' in file '%s'", distributionUrl, propertiesFile.toAbsolutePath()));
     }
     return null;
+  }
+
+  public static @NotNull URI getWrapperDistributionUri(@NotNull GradleVersion gradleVersion) {
+    var distributionSource = gradleVersion.isSnapshot() ?
+                             "https://services.gradle.org/distributions-snapshots" :
+                             "https://services.gradle.org/distributions";
+    try {
+      return new URI(String.format("%s/gradle-%s-bin.zip", distributionSource, gradleVersion.getVersion()));
+    }
+    catch (URISyntaxException e) {
+      throw new ExternalSystemException(e);
+    }
   }
 
   /**

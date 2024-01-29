@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
@@ -33,6 +32,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -42,8 +42,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,8 +114,7 @@ public abstract class AbstractModelBuilderTest {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     GradleConnector connector = GradleConnector.newConnector();
 
-    final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
-    connector.useDistribution(distributionUri);
+    connector.useDistribution(GradleUtil.getWrapperDistributionUri(_gradleVersion));
     connector.forProjectDirectory(testDir);
     int daemonMaxIdleTimeSeconds = 5;
     try {
@@ -184,57 +181,5 @@ public abstract class AbstractModelBuilderTest {
     ourTempDir = new File(FileUtil.getTempDirectory(), "gradleTests");
     FileUtil.delete(ourTempDir);
     FileUtil.ensureExists(ourTempDir);
-  }
-
-  public static class DistributionLocator {
-    private static final String RELEASE_REPOSITORY_ENV = "GRADLE_RELEASE_REPOSITORY";
-    private static final String SNAPSHOT_REPOSITORY_ENV = "GRADLE_SNAPSHOT_REPOSITORY";
-    private static final String INTELLIJ_LABS_GRADLE_RELEASE_MIRROR =
-      "https://cache-redirector.jetbrains.com/downloads.gradle.org/distributions";
-    private static final String INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR =
-      "https://cache-redirector.jetbrains.com/downloads.gradle.org/distributions-snapshots";
-    private static final String GRADLE_RELEASE_REPO = "https://services.gradle.org/distributions";
-    private static final String GRADLE_SNAPSHOT_REPO = "https://services.gradle.org/distributions-snapshots";
-
-    @NotNull private final String myReleaseRepoUrl;
-    @NotNull private final String mySnapshotRepoUrl;
-
-    public DistributionLocator() {
-      this(DistributionLocator.getRepoUrl(false), DistributionLocator.getRepoUrl(true));
-    }
-
-    public DistributionLocator(@NotNull String releaseRepoUrl, @NotNull String snapshotRepoUrl) {
-      myReleaseRepoUrl = releaseRepoUrl;
-      mySnapshotRepoUrl = snapshotRepoUrl;
-    }
-
-    @NotNull
-    public URI getDistributionFor(@NotNull GradleVersion version) throws URISyntaxException {
-      return getDistribution(getDistributionRepository(version), version, "gradle", "bin");
-    }
-
-    @NotNull
-    private String getDistributionRepository(@NotNull GradleVersion version) {
-      return version.isSnapshot() ? mySnapshotRepoUrl : myReleaseRepoUrl;
-    }
-
-    private static URI getDistribution(@NotNull String repositoryUrl,
-                                       @NotNull GradleVersion version,
-                                       @NotNull String archiveName,
-                                       @NotNull String archiveClassifier) throws URISyntaxException {
-      return new URI(String.format("%s/%s-%s-%s.zip", repositoryUrl, archiveName, version.getVersion(), archiveClassifier));
-    }
-
-    @NotNull
-    public static String getRepoUrl(boolean isSnapshotUrl) {
-      final String envRepoUrl = System.getenv(isSnapshotUrl ? SNAPSHOT_REPOSITORY_ENV : RELEASE_REPOSITORY_ENV);
-      if (envRepoUrl != null) return envRepoUrl;
-
-      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-        return isSnapshotUrl ? INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR : INTELLIJ_LABS_GRADLE_RELEASE_MIRROR;
-      }
-
-      return isSnapshotUrl ? GRADLE_SNAPSHOT_REPO : GRADLE_RELEASE_REPO;
-    }
   }
 }
