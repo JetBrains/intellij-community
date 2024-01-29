@@ -12,13 +12,22 @@ import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.ui.popup.PopupPositionManager.Position
+import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
+import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Rectangle
+import kotlin.coroutines.cancellation.CancellationException
+
+const val LOOKUP_DOCUMENTATION_POPUP_WIDTH = 550
+const val LOOKUP_DOCUMENTATION_POPUP_MIN_HEIGHT = 300
 
 internal fun lookupPopupContext(editor: Editor?): PopupContext? {
   val lookup = LookupManager.getActiveLookup(editor)
@@ -42,7 +51,7 @@ internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext(
   override fun requestFlow(): Flow<DocumentationRequest?> = lookup.elementFlow().map(lookupElementToRequestMapper(lookup))
 
   override fun baseBoundsHandler(): PopupBoundsHandler {
-    return AdjusterPopupBoundsHandler(lookup.component)
+    return LookupPopupBoundsHandler(lookup)
   }
 }
 
@@ -99,3 +108,29 @@ internal fun lookupElementToRequestMapper(lookup: Lookup): suspend (LookupElemen
     }
   }
 }
+
+private class LookupPopupBoundsHandler(
+  private val lookup: LookupEx,
+) : AdjusterPopupBoundsHandler(lookup.component) {
+  override fun popupBounds(anchor: Component, size: Dimension): Rectangle {
+    val preferredSize = Dimension(LOOKUP_DOCUMENTATION_POPUP_WIDTH,
+                                  Math.min(size.height, Math.max(LOOKUP_DOCUMENTATION_POPUP_MIN_HEIGHT, anchor.height)))
+    val bounds = PositionAdjuster(anchor)
+      .adjustBounds(preferredSize, arrayOf(Position.RIGHT, Position.LEFT))
+      .applyIf(lookup.isPositionedAboveCaret) {
+        val location = anchor.locationOnScreen
+        Rectangle(x, location.y + anchor.height - height, width, height)
+      }
+    return Rectangle(bounds.x, bounds.y, bounds.width, bounds.height)
+  }
+
+  override fun componentResized(anchor: Component, popup: AbstractPopup) {
+    repositionPopup(popup, anchor, popupSize(popup, false))
+  }
+
+  override fun popupSize(popup: AbstractPopup, resized: Boolean): Dimension {
+    // For code completion popup always use preferred size
+    return popup.component.preferredSize
+  }
+}
+

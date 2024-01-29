@@ -70,7 +70,7 @@ private fun CoroutineScope.updateFromRequests(requests: Flow<DocumentationReques
   }
 }
 
-class AdjusterPopupBoundsHandler(
+open class AdjusterPopupBoundsHandler(
   private val referenceComponent: Component,
 ) : PopupBoundsHandler {
 
@@ -82,44 +82,48 @@ class AdjusterPopupBoundsHandler(
   override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
     repositionPopup(popup, referenceComponent, popupSize(popup, resized))
   }
-}
 
-private fun installPositionAdjuster(popup: AbstractPopup, anchor: Component) {
-  val listener = object : ComponentAdapter() {
-    override fun componentResized(e: ComponentEvent) {
-      repositionPopup(popup, anchor, popup.size)
+  private fun installPositionAdjuster(popup: AbstractPopup, anchor: Component) {
+    val listener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        componentResized(anchor, popup)
+      }
+    }
+    anchor.addComponentListener(listener)
+    Disposer.register(popup) {
+      anchor.removeComponentListener(listener)
     }
   }
-  anchor.addComponentListener(listener)
-  Disposer.register(popup) {
-    anchor.removeComponentListener(listener)
+
+  protected open fun componentResized(anchor: Component, popup: AbstractPopup) {
+    repositionPopup(popup, anchor, popup.size)
   }
-}
 
-private fun popupSize(popup: AbstractPopup, resized: Boolean): Dimension {
-  return if (resized) {
-    // popup was resized manually
-    // => persisted size was restored
-    popup.size
+  protected open fun popupSize(popup: AbstractPopup, resized: Boolean): Dimension {
+    return if (resized) {
+      // popup was resized manually
+      // => persisted size was restored
+      popup.size
+    }
+    else {
+      // popup was not resized manually
+      // => no size was saved
+      // => size should be computed by the popup content
+      popup.component.preferredSize
+    }
   }
-  else {
-    // popup was not resized manually
-    // => no size was saved
-    // => size should be computed by the popup content
-    popup.component.preferredSize
+
+  private fun showPopup(popup: AbstractPopup, anchor: Component, size: Dimension) {
+    val bounds = popupBounds(anchor, size)
+    popup.size = bounds.size
+    popup.showInScreenCoordinates(anchor, bounds.location)
   }
-}
 
-private fun showPopup(popup: AbstractPopup, anchor: Component, size: Dimension) {
-  val bounds = popupBounds(anchor, size)
-  popup.size = bounds.size
-  popup.showInScreenCoordinates(anchor, bounds.location)
-}
+  protected fun repositionPopup(popup: AbstractPopup, anchor: Component, size: Dimension) {
+    popup.setBounds(popupBounds(anchor, size))
+  }
 
-private fun repositionPopup(popup: AbstractPopup, anchor: Component, size: Dimension) {
-  popup.setBounds(popupBounds(anchor, size))
-}
-
-private fun popupBounds(anchor: Component, size: Dimension): Rectangle {
-  return PositionAdjuster(anchor).adjustBounds(size, arrayOf(Position.RIGHT, Position.LEFT))
+  protected open fun popupBounds(anchor: Component, size: Dimension): Rectangle {
+    return PositionAdjuster(anchor).adjustBounds(size, arrayOf(Position.RIGHT, Position.LEFT))
+  }
 }
