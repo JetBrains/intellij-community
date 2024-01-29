@@ -91,6 +91,7 @@ cp -r "syntaxes" "$ROOT/lib/bundles/jsp"
 
 cd ..
 
+# terraform
 git clone https://github.com/hashicorp/vscode-terraform
 cd vscode-terraform
 
@@ -101,6 +102,21 @@ cp -r "package.json" "$ROOT/lib/bundles/terraform"
 cp -r "language-configuration.json" "$ROOT/lib/bundles/terraform"
 cp -r "README.md" "$ROOT/lib/bundles/terraform"
 cp -r "snippets" "$ROOT/lib/bundles/terraform"
+
+cd ..
+
+# hcl
+git clone https://github.com/hashicorp/vscode-hcl
+cd vscode-hcl
+
+echo "Adding hcl"
+mkdir -p "$ROOT/lib/bundles/hcl"
+cp -r "LICENSE" "$ROOT/lib/bundles/hcl"
+cp -r "package.json" "$ROOT/lib/bundles/hcl"
+cp -r "language-configuration.json" "$ROOT/lib/bundles/hcl"
+cp -r "README.md" "$ROOT/lib/bundles/hcl"
+
+cd ..
 
 git clone https://github.com/twxs/vs.language.cmake
 cd vs.language.cmake
@@ -117,6 +133,8 @@ cd ..
 mkdir -p "$ROOT/lib/bundles/terraform/syntaxes"
 wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/terraform.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/terraform.tmGrammar.json"
 
+mkdir -p "$ROOT/lib/bundles/hcl/syntaxes"
+wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/hcl.tmGrammar.json -O "$ROOT/lib/bundles/hcl/syntaxes/hcl.tmGrammar.json"
 
 echo "Adding erlang"
 mkdir -p "$ROOT/lib/bundles/erlang/grammar"
