@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.GradleBuildScriptClasspathModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyProvider;
 import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
@@ -753,7 +754,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Override
   public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
     return ContainerUtil.newLinkedHashSet(
-      GradleBuildScriptClasspathModel.class,
       GradleExtensions.class,
       ExternalTestsModel.class,
       IntelliJProjectSettings.class,
@@ -777,7 +777,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       new GradleSourceSetModelProvider(),
       new GradleTaskModelProvider(),
       new GradleDependencyDownloadPolicyProvider(),
-      new GradleExternalProjectModelProvider()
+      new GradleExternalProjectModelProvider(),
+      new GradleBuildScriptClasspathModelProvider()
     );
   }
 

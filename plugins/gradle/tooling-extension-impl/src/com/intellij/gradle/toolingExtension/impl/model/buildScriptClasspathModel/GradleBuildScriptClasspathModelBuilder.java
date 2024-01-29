@@ -4,9 +4,11 @@ package com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathMode
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
@@ -20,17 +22,14 @@ import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilderService {
 
   private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
-  private final Map<String, DefaultGradleBuildScriptClasspathModel> cache = new ConcurrentHashMap<>();
 
   @Override
   public boolean canBuild(String modelName) {
@@ -40,73 +39,70 @@ public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilder
   @Nullable
   @Override
   public Object buildAll(@NotNull final String modelName, @NotNull final Project project, @NotNull ModelBuilderContext context) {
-    DefaultGradleBuildScriptClasspathModel buildScriptClasspath = cache.get(project.getPath());
-    if (buildScriptClasspath != null) return buildScriptClasspath;
-
-    buildScriptClasspath = new DefaultGradleBuildScriptClasspathModel();
-    final File gradleHomeDir = project.getGradle().getGradleHomeDir();
-    buildScriptClasspath.setGradleHomeDir(gradleHomeDir);
+    DefaultGradleBuildScriptClasspathModel buildScriptClasspath = new DefaultGradleBuildScriptClasspathModel();
+    buildScriptClasspath.setGradleHomeDir(project.getGradle().getGradleHomeDir());
     buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());
 
-    GradleDependencyDownloadPolicy dependencyDownloadPolicy = GradleDependencyDownloadPolicyCache.getInstance(context)
-      .getDependencyDownloadPolicy(project);
+    Project parentProject = project.getParent();
+    if (parentProject != null) {
+      GradleBuildScriptClasspathModel parentBuildScriptClasspath = GradleBuildScriptClasspathCache.getInstance(context)
+        .getBuildScriptClasspathModel(parentProject);
+      for (ClasspathEntryModel classpathEntryModel : parentBuildScriptClasspath.getClasspath()) {
+        buildScriptClasspath.add(classpathEntryModel);
+      }
+    }
 
-    Project parent = project.getParent();
-    if (parent != null) {
-      DefaultGradleBuildScriptClasspathModel
-        parentBuildScriptClasspath = (DefaultGradleBuildScriptClasspathModel)buildAll(modelName, parent, context);
-      if (parentBuildScriptClasspath != null) {
-        for (ClasspathEntryModel classpathEntryModel : parentBuildScriptClasspath.getClasspath()) {
-          buildScriptClasspath.add(classpathEntryModel);
+    Configuration classpathConfiguration = project.getBuildscript().getConfigurations().findByName(CLASSPATH_CONFIGURATION_NAME);
+    if (classpathConfiguration != null) {
+      GradleDependencyDownloadPolicy dependencyDownloadPolicy = GradleDependencyDownloadPolicyCache.getInstance(context)
+        .getDependencyDownloadPolicy(project);
+      Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project, dependencyDownloadPolicy)
+        .resolveDependencies(classpathConfiguration);
+
+      for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {
+        if (dependency instanceof ExternalProjectDependency) {
+          ExternalProjectDependency projectDependency = (ExternalProjectDependency)dependency;
+          Collection<File> projectDependencyArtifacts = projectDependency.getProjectDependencyArtifacts();
+          Collection<File> projectDependencyArtifactsSources = projectDependency.getProjectDependencyArtifactsSources();
+          buildScriptClasspath.add(new ClasspathEntryModelImpl(
+            projectDependencyArtifacts,
+            projectDependencyArtifactsSources,
+            Collections.emptySet()
+          ));
+        }
+        else if (dependency instanceof ExternalLibraryDependency) {
+          final ExternalLibraryDependency libraryDep = (ExternalLibraryDependency)dependency;
+          buildScriptClasspath.add(new ClasspathEntryModelImpl(
+            GradleCollections.createMaybeSingletonList(libraryDep.getFile()),
+            GradleCollections.createMaybeSingletonList(libraryDep.getSource()),
+            GradleCollections.createMaybeSingletonList(libraryDep.getJavadoc())
+          ));
+        }
+        else if (dependency instanceof ExternalMultiLibraryDependency) {
+          ExternalMultiLibraryDependency multiLibraryDependency = (ExternalMultiLibraryDependency)dependency;
+          buildScriptClasspath.add(new ClasspathEntryModelImpl(
+            multiLibraryDependency.getFiles(),
+            multiLibraryDependency.getSources(),
+            multiLibraryDependency.getJavadoc()
+          ));
+        }
+        else if (dependency instanceof FileCollectionDependency) {
+          FileCollectionDependency fileCollectionDependency = (FileCollectionDependency)dependency;
+          buildScriptClasspath.add(new ClasspathEntryModelImpl(
+            fileCollectionDependency.getFiles(),
+            Collections.emptySet(),
+            Collections.emptySet()
+          ));
         }
       }
     }
-    Configuration classpathConfiguration = project.getBuildscript().getConfigurations().findByName(CLASSPATH_CONFIGURATION_NAME);
-    if (classpathConfiguration == null) return null;
 
-    Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project, dependencyDownloadPolicy)
-      .resolveDependencies(classpathConfiguration);
+    GradleBuildScriptClasspathCache.getInstance(context)
+      .setBuildScriptClasspathModel(project, buildScriptClasspath);
 
-    for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {
-      if (dependency instanceof ExternalProjectDependency) {
-        ExternalProjectDependency projectDependency = (ExternalProjectDependency)dependency;
-        Collection<File> projectDependencyArtifacts = projectDependency.getProjectDependencyArtifacts();
-        Collection<File> projectDependencyArtifactsSources = projectDependency.getProjectDependencyArtifactsSources();
-        buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          projectDependencyArtifacts,
-          projectDependencyArtifactsSources,
-          Collections.emptySet()
-        ));
-      }
-      else if (dependency instanceof ExternalLibraryDependency) {
-        final ExternalLibraryDependency libraryDep = (ExternalLibraryDependency)dependency;
-        buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          singletonListOrEmpty(libraryDep.getFile()),
-          singletonListOrEmpty(libraryDep.getSource()),
-          singletonListOrEmpty(libraryDep.getJavadoc())
-        ));
-      }
-      else if (dependency instanceof ExternalMultiLibraryDependency) {
-        ExternalMultiLibraryDependency multiLibraryDependency = (ExternalMultiLibraryDependency)dependency;
-        buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          multiLibraryDependency.getFiles(),
-          multiLibraryDependency.getSources(),
-          multiLibraryDependency.getJavadoc()
-        ));
-      }
-      else if (dependency instanceof FileCollectionDependency) {
-        FileCollectionDependency fileCollectionDependency = (FileCollectionDependency)dependency;
-        buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          fileCollectionDependency.getFiles(),
-          Collections.emptySet(),
-          Collections.emptySet()
-        ));
-      }
-    }
-
-    cache.put(project.getPath(), buildScriptClasspath);
     return buildScriptClasspath;
   }
+
 
   @Override
   public void reportErrorMessage(
@@ -115,6 +111,9 @@ public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilder
     @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
+    GradleBuildScriptClasspathCache.getInstance(context)
+      .markBuildScriptClasspathModelAsError(project);
+
     context.getMessageReporter().createMessage()
       .withGroup(Messages.BUILDSCRIPT_CLASSPATH_MODEL_GROUP)
       .withKind(Message.Kind.WARNING)
@@ -122,10 +121,5 @@ public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilder
       .withText("Unable to resolve additional buildscript classpath dependencies")
       .withException(exception)
       .reportMessage(project);
-  }
-
-  @NotNull
-  private static List<File> singletonListOrEmpty(@Nullable File file) {
-    return file == null ? Collections.emptyList() : Collections.singletonList(file);
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathMode
 
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
@@ -16,6 +17,7 @@ import java.util.Objects;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScriptClasspathModel {
 
   private final List<ClasspathEntryModel> myClasspathEntries;

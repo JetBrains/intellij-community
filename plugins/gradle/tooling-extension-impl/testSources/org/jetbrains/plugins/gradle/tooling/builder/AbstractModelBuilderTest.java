@@ -25,6 +25,7 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -48,6 +49,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -128,6 +130,7 @@ public abstract class AbstractModelBuilderTest {
 
     try (ProjectConnection connection = connector.connect()) {
       final ProjectImportAction projectImportAction = new ProjectImportAction(false);
+      projectImportAction.addProjectImportModelProviders(getModelProviders());
       projectImportAction.addProjectImportModelProviders(GradleClassProjectModelProvider.createAll(getModels()));
       projectImportAction.addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject.class));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
@@ -167,7 +170,13 @@ public abstract class AbstractModelBuilderTest {
     }
   }
 
-  protected abstract Set<Class<?>> getModels();
+  protected Set<Class<?>> getModels() {
+    return Collections.emptySet();
+  }
+
+  protected Set<ProjectImportModelProvider> getModelProviders() {
+    return Collections.emptySet();
+  }
 
   private static void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;

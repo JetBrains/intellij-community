@@ -5,12 +5,12 @@ import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
-import org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.SimpleObjectFactory;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
@@ -27,6 +27,7 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class GradleBuildScriptClasspathSerializationService implements SerializationService<GradleBuildScriptClasspathModel> {
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
@@ -34,7 +35,7 @@ public final class GradleBuildScriptClasspathSerializationService implements Ser
   @Override
   public byte[] write(GradleBuildScriptClasspathModel classpathModel, Class<? extends GradleBuildScriptClasspathModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, classpathModel);
     }
     return out.toByteArray();

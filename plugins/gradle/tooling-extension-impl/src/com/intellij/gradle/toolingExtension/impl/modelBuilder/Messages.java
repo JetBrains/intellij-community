@@ -41,10 +41,13 @@ public final class Messages {
   public final static @NotNull String INTELLIJ_SETTINGS_MODEL_GROUP = "gradle.intellijSettingsModel.group";
   public final static @NotNull String INTELLIJ_PROJECT_SETTINGS_MODEL_GROUP = "gradle.intellijProjectSettingsModel.group";
 
+  public final static @NotNull String BUILDSCRIPT_CLASSPATH_MODEL_GROUP = "gradle.buildScriptClasspathModel.group";
+  public final static @NotNull String BUILDSCRIPT_CLASSPATH_MODEL_CACHE_GET_GROUP = "gradle.buildScriptClasspathModel.cacheGet.group";
+  public final static @NotNull String BUILDSCRIPT_CLASSPATH_MODEL_CACHE_SET_GROUP = "gradle.buildScriptClasspathModel.cacheSet.group";
+
   public final static @NotNull String TEST_MODEL_GROUP = "gradle.testModel.group";
   public final static @NotNull String MAVEN_REPOSITORY_MODEL_GROUP = "gradle.mavenRepositoryModel.group";
   public final static @NotNull String ANNOTATION_PROCESSOR_MODEL_GROUP = "gradle.annotationProcessorModel.group";
-  public final static @NotNull String BUILDSCRIPT_CLASSPATH_MODEL_GROUP = "gradle.buildscriptClasspathModel.group";
   public final static @NotNull String PROJECT_EXTENSION_MODEL_GROUP = "gradle.projectExtensionModel.group";
   public final static @NotNull String VERSION_CATALOG_MODEL_GROUP = "gradle.versionCatalogModel.group";
   // @formatter:on
