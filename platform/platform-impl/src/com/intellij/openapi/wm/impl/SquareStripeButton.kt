@@ -132,7 +132,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
 
           val f = getTextFont()
           val fm = getFontMetrics(f)
-          val text = toolWindow.stripeTitleProvider.get()
+          val text = toolWindow.stripeShortTitleProvider?.get() ?: toolWindow.stripeTitleProvider.get()
           val button = this@SquareStripeButton
           val insets = button.insets
           val x = insets.left + JBUI.scale(6)

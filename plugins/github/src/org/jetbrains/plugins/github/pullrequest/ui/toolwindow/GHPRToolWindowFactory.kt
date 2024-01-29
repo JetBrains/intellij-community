@@ -27,6 +27,10 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
+  override fun init(toolWindow: ToolWindow) {
+    toolWindow.setStripeShortTitleProvider(GithubBundle.messagePointer("toolwindow.stripe.Pull_Requests.shortName"))
+  }
+
   override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
     toolWindow.project.serviceAsync<GHPRToolWindowController>().manageAvailability(toolWindow)
   }
