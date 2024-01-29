@@ -24,9 +24,8 @@ data class PyRequirementImpl(private val name: String,
   override fun getInstallOptions(): List<String> = installOptions
 
   override fun match(packages: Collection<PyPackage>): PyPackage? {
-    val normalizedName = name.replace('_', '-')
     return packages.firstOrNull { `package` ->
-      normalizedName.equals(`package`.name, true)
+      name.equals(`package`.name, true)
       && versionSpecs.all { it.matches(`package`.version) }
     }
   }
