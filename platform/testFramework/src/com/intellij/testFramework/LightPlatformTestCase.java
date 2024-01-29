@@ -231,6 +231,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
       myLibraryTableTracker = new LibraryTableTracker();
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
@@ -341,6 +343,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
       result.set(Pair.createNonNull(project, ourModule));
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
     return result.get();
   }
 

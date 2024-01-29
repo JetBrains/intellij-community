@@ -239,6 +239,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
       InjectedLanguageManagerImpl.pushInjectors(myProject);
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
+      IndexingTestUtil.waitUntilIndexesAreReady(myProject);
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -273,6 +274,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
@@ -335,7 +337,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
                                                   @NotNull ModuleType<?> moduleType,
                                                   @NotNull Path path) {
     Path moduleFile = path.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    return WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
+    Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return module;
   }
 
   protected @NotNull ModuleType<?> getModuleType() {

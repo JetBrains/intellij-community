@@ -78,9 +78,11 @@ public class LightProjectDescriptor {
       throw new RuntimeException(e);
     }
 
-    return WriteAction.compute(() -> {
+    Module module = WriteAction.compute(() -> {
       return ModuleManager.getInstance(project).newModule(moduleFile, getModuleTypeId());
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return module;
   }
 
   public @NotNull String getModuleTypeId() {
@@ -137,7 +139,10 @@ public class LightProjectDescriptor {
     };
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.registerIndexableSet(indexableFileSet, project);
-    Disposer.register(project, () -> fileBasedIndex.removeIndexableSet(indexableFileSet));
+    Disposer.register(project, () -> {
+      fileBasedIndex.removeIndexableSet(indexableFileSet);
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
+    });
   }
 
   protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
@@ -154,10 +159,12 @@ public class LightProjectDescriptor {
 
       configureModule(module, model, contentEntry);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   private static void registerJdk(Sdk jdk, Disposable parentDisposable) {
     WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, parentDisposable));
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
   }
 
   protected @NotNull JpsModuleSourceRootType<?> getSourceRootType() {

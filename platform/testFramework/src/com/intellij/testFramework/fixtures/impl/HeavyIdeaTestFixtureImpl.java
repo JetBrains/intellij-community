@@ -24,7 +24,6 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -201,6 +200,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       LightPlatformTestCase.clearUncommittedDocuments(myProject);
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   @NotNull

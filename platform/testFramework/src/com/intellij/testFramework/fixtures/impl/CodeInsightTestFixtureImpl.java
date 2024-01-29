@@ -332,6 +332,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public static void ensureIndexesUpToDate(@NotNull Project project) {
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
     if (!DumbService.isDumb(project)) {
       ReadAction.run(() -> {
         for (FileBasedIndexExtension<?,?> extension : FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList()) {
@@ -456,6 +457,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     copyContent(sourceFile, targetFile);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     return targetFile;
   }
@@ -517,6 +519,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertNotNull(directory);
       policy.testDirectoryConfigured(directory);
     }
+
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     return file;
   }
@@ -1230,6 +1234,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
         finally {
           PsiManager.getInstance(getProject()).dropPsiCaches();
+          IndexingTestUtil.waitUntilIndexesAreReady(getProject());
         }
       });
       return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(file));
@@ -1381,6 +1386,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     }
     myLibraryTableTracker = new LibraryTableTracker();
+
+    IndexingTestUtil.waitUntilIndexesAreReady((getProject()));
   }
 
   protected boolean shouldTrackVirtualFilePointers() {
@@ -1507,8 +1514,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                    @NotNull Disposable parentDisposable) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (!fileType.equals(fileTypeManager.getFileTypeByExtension(extension))) {
-      WriteAction.runAndWait(() -> fileTypeManager.associateExtension(fileType, extension));
-      Disposer.register(parentDisposable, ()->WriteAction.runAndWait(() -> fileTypeManager.removeAssociatedExtension(fileType, extension)));
+      WriteAction.runAndWait(() -> {
+        fileTypeManager.associateExtension(fileType, extension);
+        IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+      });
+      Disposer.register(parentDisposable, () -> {
+        WriteAction.runAndWait(() -> {
+          fileTypeManager.removeAssociatedExtension(fileType, extension);
+          IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+        });
+      });
     }
   }
 
@@ -1642,6 +1657,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         policy.testFileConfigured(getFile());
       }
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     return getFile();
   }

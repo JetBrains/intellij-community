@@ -1260,6 +1260,7 @@ public final class PlatformTestUtil {
   public static @NotNull Project loadAndOpenProject(@NotNull Path path, @NotNull Disposable parent) {
     Project project = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, new OpenProjectTaskBuilder().build()));
     Disposer.register(parent, () -> forceCloseProjectWithoutSaving(project));
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
     return project;
   }
 
