@@ -83,7 +83,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
-  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1_000 /*ms*/);
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
@@ -1940,7 +1940,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       int preRootIdFlags = vfsPeer.getFlags(currentId);
       int startingFileFlags = vfsPeer.getFlags(startingFileId);
 
-      FSRecords.THROTTLED_LOG.info(
+      THROTTLED_LOG.info(
         () -> {
           //Check roots and cachedRoots are consistent
           IntOpenHashSet cachedRootsIds = new IntOpenHashSet();
@@ -1973,11 +1973,19 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             });
           }
 
+          StringBuilder relativePath = new StringBuilder();
+          for (int i = parentIds.size() - 1; i >= 0; i--) {
+            int fileId = parentIds.getInt(i);
+            String fileName = vfsPeer.getName(fileId);
+            relativePath.append('/').append(fileName);
+          }
+
           return
             "file[" + startingFileId + ", flags: " + startingFileFlags + "]: " +
             "top parent (id: " + currentId + ", name: '" + preRootFileName + "', flags: " + preRootIdFlags + " parent: 0), " +
             "is still not in the idToDirCache. " +
-            "path: " + parentIds + ", cachedRoots.size(=" + cachedRootsIds.size() + "), roots.size(=" + rootIds.size() + "), " +
+            "path: " + parentIds + " [" + relativePath + "], " +
+            "cachedRoots.size(=" + cachedRootsIds.size() + "), roots.size(=" + rootIds.size() + "), " +
             "pfs.roots.contains(" + currentId + ")=" + rootIds.contains(currentId) + ", " +
             "fs.roots.contains(" + currentId + ")=" + fsRootsHasCurrentId + ", " +
             "non-cached roots: " + nonCachedRoots.length + ", cached non-roots: " + cachedNonRoots.length + ", " +
