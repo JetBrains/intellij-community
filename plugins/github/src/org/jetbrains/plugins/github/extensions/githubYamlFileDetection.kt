@@ -39,8 +39,8 @@ private fun isGithubWorkflowFileInner(psiFile: PsiFile): Boolean {
 
 private val githubActionsFilePattern = RelativeFilePathPattern(
   FileSystemItemPattern("\\.github"),
-  FileSystemItemPattern("actions"),
   FileSystemItemPattern("(.)+"),
+  FileSystemItemPattern("(.)+"),//Action name
   FileSystemItemPattern("action.ya?ml")
 )
 
