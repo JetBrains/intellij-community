@@ -15,7 +15,7 @@ import java.io.File
 
 /**
  * Logic is mostly copied from [com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler].
- * Added additional characters to trigger auto popup (' ', '-', '/').
+ * Added additional characters to trigger auto popup ('-', '/').
  * Allowed to reopen the popup automatically in the [EmptyAutoPopup] phase.
  */
 class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
@@ -32,7 +32,7 @@ class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
       return Result.STOP
     }
 
-    if (Character.isLetterOrDigit(charTyped) || charTyped == ' ' || charTyped == '-' || charTyped == File.separatorChar) {
+    if (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
       return Result.STOP
     }
