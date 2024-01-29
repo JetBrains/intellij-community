@@ -6,5 +6,6 @@ class SpanFilter(val filter: (SpanElement) -> Boolean) {
     fun containsNameIn(names: List<String>) = SpanFilter { it.name in names }
     fun containsNameIn(vararg names: String) = SpanFilter { it.name in names }
     fun nameContains(substring: String) = SpanFilter { it.name.contains(substring) }
+    fun hasTags(tags: List<Pair<String, String>>) = SpanFilter { tags.all { tag -> tag in it.tags }}
   }
 }

@@ -35,6 +35,14 @@ class OpenTelemetryTest {
   }
 
   @Test
+  fun testTagsFilter() {
+    val result = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry.json"), SpanFilter.hasTags(
+      listOf(Pair("class", "com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter"),
+             Pair("plugin", "com.intellij"))))
+    result.shouldContainExactlyInAnyOrder(Metric.newDuration("run activity", 0))
+  }
+
+  @Test
   fun testContainsInFilter() {
     val spanNames = listOf("%findUsages", "run activity")
     val file = (openTelemetryReports / "opentelemetry.json")
