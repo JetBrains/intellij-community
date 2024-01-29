@@ -36,6 +36,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -50,6 +51,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.system.CpuArch
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -173,8 +175,17 @@ internal suspend fun loadApp(app: ApplicationImpl,
     }
 
     __coroutineDebugJob = asyncScope.launch(CoroutineName("coroutine debug probes init")) {
+      if (SystemInfoRt.isWindows && CpuArch.isArm64()) {
+        return@launch
+      }
+
       enableCoroutineDump().onFailure { e ->
-        LOG.error("Cannot enable coroutine debug dump", e)
+        if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+          LOG.warn("Cannot enable coroutine debug dump", e)
+        }
+        else {
+          LOG.error("Cannot enable coroutine debug dump", e)
+        }
       }
       asyncScope.enableJstack()
     }
