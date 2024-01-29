@@ -44,7 +44,7 @@ def get_stepping_variants(code):
                 tos.opcode,
                 tos.arg,
                 tos.argval,
-                tos.offset,
+                instruction.offset,
                 tos.positions.lineno
             )
         elif _is_binary_opname(instruction.opname):

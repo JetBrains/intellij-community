@@ -73,7 +73,7 @@ def get_stepping_variants(code):
                 tos.opcode,
                 tos.arg,
                 tos.argval,
-                tos.offset,
+                instruction.offset,
                 curr_line
             )
         elif _is_binary_opname(instruction.opname):
