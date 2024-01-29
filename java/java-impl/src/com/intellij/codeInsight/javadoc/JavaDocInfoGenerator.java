@@ -16,6 +16,7 @@ import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -80,7 +81,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.*;
 import static com.intellij.lang.documentation.QuickDocHighlightingHelper.*;
@@ -117,6 +117,8 @@ public class JavaDocInfoGenerator {
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
   private static final String NBSP = "&nbsp;";
+  private static final String BLOCKQUOTE_PRE_PREFIX = "<blockquote><pre>";
+  private static final String BLOCKQUOTE_PRE_SUFFIX = "</pre></blockquote>";
 
   /**
    * Tags for which javadoc is known to be generated.
@@ -1769,12 +1771,34 @@ public class JavaDocInfoGenerator {
                              int startIndex,
                              InheritDocProvider<PsiElement[]> provider) {
     int predictOffset = startIndex < elements.length ? elements[startIndex].getTextOffset() + elements[startIndex].getText().length() : 0;
+    StringBuilder blockquoteContents = null;
     for (int i = startIndex; i < elements.length; i++) {
-      if (elements[i].getTextOffset() > predictOffset) buffer.append(' ');
+      if (elements[i].getTextOffset() > predictOffset) {
+        if (blockquoteContents != null) {
+          blockquoteContents.append(' ');
+        }
+        else {
+          buffer.append(' ');
+        }
+      }
       predictOffset = elements[i].getTextOffset() + elements[i].getText().length();
       PsiElement element = elements[i];
       if (element instanceof PsiInlineDocTag tag) {
         String tagName = tag.getName();
+        if (blockquoteContents != null) {
+          if (CODE_TAG.equals(tagName)) {
+            StringBuilder value = new StringBuilder();
+            generateLiteralValue(value, tag, false);
+            int offset = !value.isEmpty() && value.charAt(0) == ' ' ? 1 : 0;
+            blockquoteContents.append(value, offset, value.length());
+            continue;
+          }
+          else {
+            buffer.append(BLOCKQUOTE_PRE_PREFIX);
+            appendPlainText(buffer, blockquoteContents.toString());
+            blockquoteContents = null;
+          }
+        }
         switch (tagName) {
           case LINK_TAG -> generateLinkValue(tag, buffer, false);
           case LITERAL_TAG -> generateLiteralValue(buffer, tag, true);
@@ -1804,12 +1828,45 @@ public class JavaDocInfoGenerator {
         else {
           text = element.getText();
         }
-        if (element.getPrevSibling() instanceof PsiInlineDocTag tag && isCodeBlock(tag)) {
-          // Remove following <pre> fragment and whitespaces
+        if (element.getPrevSibling() instanceof PsiInlineDocTag tag
+            && blockquoteContents == null
+            && isCodeBlock(tag)) {
+          // Remove following </pre> fragment and whitespaces
           text = StringUtil.trimStart(StringUtil.trimLeading(text), "</pre>");
         }
-        appendPlainText(buffer, text);
+        if (blockquoteContents != null) {
+          int suffixIndex = text.indexOf(BLOCKQUOTE_PRE_SUFFIX);
+          if (suffixIndex >= 0) {
+            blockquoteContents.append(text, 0, suffixIndex);
+            buffer.append(CODE_BLOCK_PREFIX);
+            appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+              doHighlightCodeBlocks(), buffer, myProject, JavaLanguage.INSTANCE,
+              StringUtil.unescapeXmlEntities(StringUtil.replaceUnicodeEscapeSequences(blockquoteContents.toString()))
+                .replace("&nbsp;", " "));
+            buffer.append(CODE_BLOCK_SUFFIX);
+            appendPlainText(buffer, text.substring(suffixIndex + BLOCKQUOTE_PRE_SUFFIX.length()));
+            blockquoteContents = null;
+          }
+          else {
+            blockquoteContents.append(text);
+          }
+        }
+        else {
+          int blockquotePreStart = text.indexOf(BLOCKQUOTE_PRE_PREFIX);
+          if (blockquotePreStart >= 0) {
+            appendPlainText(buffer, text.substring(0, blockquotePreStart));
+            blockquoteContents = new StringBuilder();
+            blockquoteContents.append(text, blockquotePreStart + BLOCKQUOTE_PRE_PREFIX.length(), text.length());
+          }
+          else {
+            appendPlainText(buffer, text);
+          }
+        }
       }
+    }
+    if (blockquoteContents != null) {
+      buffer.append(BLOCKQUOTE_PRE_PREFIX);
+      appendPlainText(buffer, blockquoteContents.toString());
     }
   }
 
@@ -2147,8 +2204,6 @@ public class JavaDocInfoGenerator {
       StringUtil.trimEnd(buffer, "<pre>");
     }
 
-    final int offset = isCodeBlock ? getCodeTagOffset(tag) : 0;
-
     buffer.append(isCodeBlock ? CODE_BLOCK_PREFIX : INLINE_CODE_PREFIX);
     int pos = buffer.length();
 
@@ -2170,13 +2225,7 @@ public class JavaDocInfoGenerator {
       codeSnippet = XmlStringUtil.escapeString(codeSnippet);
     }
 
-    if (isCodeBlock) {
-      // indent code block
-      codeSnippet = Arrays.stream(codeSnippet.contains(BR_TAG) ? codeSnippet.split(BR_TAG) : codeSnippet.split("\n"))
-        .map(it -> " ".repeat(offset + 1) + it)
-        .collect(Collectors.joining(BR_TAG));
-    }
-    else {
+    if (!isCodeBlock) {
       // we are in inline @code block, we should remove all new lines
       codeSnippet = codeSnippet.replace(BR_TAG, "");
     }
@@ -2184,13 +2233,6 @@ public class JavaDocInfoGenerator {
     buffer.append(codeSnippet);
     buffer.append(isCodeBlock ? CODE_BLOCK_SUFFIX : INLINE_CODE_SUFFIX);
     if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
-  }
-
-  private static int getCodeTagOffset(@NotNull PsiInlineDocTag tag) {
-    final PsiElement sibling = tag.getPrevSibling();
-    if (sibling == null || !sibling.getText().isBlank()) return 0;
-
-    return sibling.getTextLength();
   }
 
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag, boolean doEscaping) {

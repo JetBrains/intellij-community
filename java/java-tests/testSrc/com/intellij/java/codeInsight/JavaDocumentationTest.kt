@@ -331,6 +331,48 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
+  fun testBlockquotePre() {
+    configure("""
+      class C {
+        /** 
+         * <p> Examples of expected usage:
+         * <blockquote><pre>
+         *   StringBuilder sb = new StringBuilder();
+         * </pre></blockquote>
+         * <p> Continuing...
+         * <blockquote><pre>
+         *   quote nr&nbsp;2;</pre></blockquote>
+         * <p> Continuing...
+         * <blockquote><pre>
+         *   (this.charAt(<i>k</i>) == ch) {@code &&} (<i>k</i> &lt;= fromIndex)
+         * </pre></blockquote>
+         * <blockquote><pre>
+         *   Unfinished blockquote
+         * </pre> </blockquote>
+        */
+        public void <caret>m() { }
+      }
+    """.trimIndent())
+
+    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+    val doc = JavaDocumentationProvider().generateDoc(method, null)
+
+    val expected = """
+      <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://C"><code><span style="color:#000000;">C</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span>&nbsp;<span style="color:#000080;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">m</span><span style="">(</span><span style="">)</span></pre></div><div class='content'> 
+        <p> Examples of expected usage:
+        <div class='styled-code'><pre style="padding: 0px; margin: 0px"><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></pre></div>
+        <p> Continuing...
+        <div class='styled-code'><pre style="padding: 0px; margin: 0px"><span style="">quote&#32;nr </span><span style="color:#0000ff;">2</span><span style="">;</span></pre></div>
+        <p> Continuing...
+        <div class='styled-code'><pre style="padding: 0px; margin: 0px"><span style="">(</span><span style="color:#000080;font-weight:bold;">this</span><span style="">.charAt(&lt;i&gt;k&lt;/i&gt;)&#32;==&#32;ch)&#32;&amp;&amp;&#32;(&lt;i&gt;k&lt;/i&gt;&#32;&lt;=&#32;fromIndex)</span></pre></div>
+        <blockquote><pre>
+          Unfinished blockquote
+        </pre> </blockquote>
+        </div><table class='sections'></table>
+    """.trimIndent()
+    TestCase.assertEquals(expected, doc)
+  }
+
 
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
     configure(inputFile.trimIndent())
