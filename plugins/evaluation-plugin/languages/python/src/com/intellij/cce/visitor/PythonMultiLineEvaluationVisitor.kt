@@ -3,6 +3,7 @@ package com.intellij.cce.visitor
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.jetbrains.python.psi.*
@@ -36,6 +37,10 @@ class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVi
     return start
   }
 
+  private fun containsValuableSymbols(line: String) = line.any(::isValuableCharacter)
+  private fun isValuableCharacter(c: Char) = c.isLetterOrDigit() || valuableCharacters.contains(c)
+  private val valuableCharacters = arrayOf('+', '-', '*', '%', '=', '&', '|', '@', '$', '?', '_')
+
   private fun visitNonEmptyLines(node: PyFile, file: CodeFragment) {
     val document = node.fileDocument
     for (line in 0 until document.lineCount) {
@@ -48,6 +53,14 @@ class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVi
       if (lineStart >= lineEnd) continue
       val lineText = document.getText(TextRange(lineStart, lineEnd))
       if (lineText.isBlank()) continue
+
+      val element = node.findElementAt(lineStart)
+      when {
+        element?.parent.let { it is PyImportStatement || it is PyFromImportStatement }  -> continue
+        element is PsiComment -> continue
+      }
+
+      if (!containsValuableSymbols(lineText)) continue
 
       file.addChild(CodeToken(lineText, lineStart, LINE_START))
 
