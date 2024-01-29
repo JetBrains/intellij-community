@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.IndexingTestUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner

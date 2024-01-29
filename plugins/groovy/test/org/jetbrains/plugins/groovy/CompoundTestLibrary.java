@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.testFramework.IndexingTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompoundTestLibrary implements TestLibrary {
@@ -15,6 +16,7 @@ public final class CompoundTestLibrary implements TestLibrary {
     for (TestLibrary library : myLibraries) {
       library.addTo(module, model);
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(model.getProject());
   }
 
   private final TestLibrary[] myLibraries;
