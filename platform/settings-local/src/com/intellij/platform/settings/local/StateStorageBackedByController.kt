@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 @file:OptIn(IntellijInternalApi::class, ExperimentalSerializationApi::class)
 
@@ -43,9 +43,8 @@ internal class StateStorageBackedByController(
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     when {
       stateClass === Element::class.java -> {
-        val data = getXmlData(createSettingDescriptor(componentName))
-        if (data != null) {
-          return data as T
+        getXmlData(createSettingDescriptor(componentName))?.let {
+          return it as T
         }
         oldStorage?.getJdom(componentName)?.let {
           return it as T
@@ -53,17 +52,7 @@ internal class StateStorageBackedByController(
         return mergeInto
       }
       com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass) -> {
-        // we don't care about data from the old storage for deprecated JDOMExternalizable
-        val data = getXmlData(createSettingDescriptor(componentName)) ?: return mergeInto
-        if (mergeInto != null) {
-          thisLogger().error("State is ${stateClass.name}, merge into is $mergeInto, state element text is $data")
-        }
-
-        val t = MethodHandles.privateLookupIn(stateClass, MethodHandles.lookup())
-          .findConstructor(stateClass, MethodType.methodType(Void.TYPE))
-          .invoke() as com.intellij.openapi.util.JDOMExternalizable
-        t.readExternal(data)
-        return t as T
+        return readDataForDeprecatedJdomExternalizable(componentName = componentName, mergeInto = mergeInto, stateClass = stateClass)
       }
       else -> {
         try {
@@ -91,6 +80,22 @@ internal class StateStorageBackedByController(
         }
       }
     }
+  }
+
+  private fun <T : Any> readDataForDeprecatedJdomExternalizable(componentName: String, mergeInto: T?, stateClass: Class<T>): T? {
+    // we don't care about data from the old storage for deprecated JDOMExternalizable
+    val data = getXmlData(createSettingDescriptor(componentName)) ?: return mergeInto
+    if (mergeInto != null) {
+      thisLogger().error("State is ${stateClass.name}, merge into is $mergeInto, state element text is $data")
+    }
+
+    @Suppress("DEPRECATION")
+    val t = MethodHandles.privateLookupIn(stateClass, MethodHandles.lookup())
+      .findConstructor(stateClass, MethodType.methodType(Void.TYPE))
+      .invoke() as com.intellij.openapi.util.JDOMExternalizable
+    t.readExternal(data)
+    @Suppress("UNCHECKED_CAST")
+    return t as T
   }
 
   private fun <T : Any> getXmlSerializationState(mergeInto: T?, beanBinding: NotNullDeserializeBinding, componentName: String): T? {
