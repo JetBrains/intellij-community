@@ -3,12 +3,9 @@ package com.intellij.analysis.customization.console
 
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.execution.filters.HyperlinkInfoFactory
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.NonNls
@@ -16,21 +13,21 @@ import org.jetbrains.annotations.NonNls
 internal data class ProbableClassName(val from: Int,
                                       val to: Int,
                                       val fullLine: String,
-                                      val shortClassName: String,
-                                      val packageName: String,
-                                      val virtualFiles: List<VirtualFile>)
+                                      val fullClassName: String)
 
-private val EXCEPTION_IN_THREAD: @NonNls String = "Exception in thread \""
-private val CAUSED_BY: @NonNls String = "Caused by: "
-private val AT: @NonNls String = "\tat "
+private const val EXCEPTION_IN_THREAD: @NonNls String = "Exception in thread \""
+private const val CAUSED_BY: @NonNls String = "Caused by: "
+private const val AT: @NonNls String = "\tat "
+
+private const val POINT_CODE = '.'.code
 
 internal class ClassFinderFilter(private val myProject: Project, myScope: GlobalSearchScope) : Filter {
-  private val cache = ClassInfoCache(myProject, myScope)
+  private val cache = ClassInfoResolver(myProject, myScope)
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     val textStartOffset = entireLength - line.length
 
-    val expectedClasses = findProbableClasses(line, cache)
+    val expectedClasses = findProbableClasses(line)
     val results: MutableList<Filter.Result> = ArrayList()
     for (probableClass in expectedClasses) {
       val attributes = hyperLinkAttributes()
@@ -57,40 +54,53 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
 
 
   private fun getHyperLink(probableClassName: ProbableClassName): HyperlinkInfo {
-    return HyperlinkInfoFactory.getInstance()
-      .createMultipleFilesHyperlinkInfo(probableClassName.virtualFiles, 0, myProject, LogFinderHyperlinkHandler(probableClassName))
+    return OnFlyMultipleFilesHyperlinkInfo(cache, probableClassName,0, myProject, LogFinderHyperlinkHandler(probableClassName))
   }
 
   companion object {
-    private fun findProbableClasses(line: String, cache: ClassInfoCache): List<ProbableClassName> {
-      if (line.startsWith(EXCEPTION_IN_THREAD) || line.startsWith(CAUSED_BY) || line.startsWith(AT)) {
+    private fun findProbableClasses(line: String): List<ProbableClassName> {
+      if (line.isBlank() || line.startsWith(EXCEPTION_IN_THREAD) || line.startsWith(CAUSED_BY) || line.startsWith(AT)) {
         return emptyList()
       }
 
       val result = mutableListOf<ProbableClassName>()
       var start = -1
       var pointCount = 0
-      for (i in line.indices) {
-        val c = line.codePointAt(i)
-        if (start == -1 && isJavaIdentifierStart(c)) {
+      var i = 0
+      var first = true
+      while (true) {
+        if (!first) {
+          val previousPoint = line.codePointAt(i)
+          i += Character.charCount(previousPoint)
+          if (i >= line.length) {
+            break
+          }
+        }
+        else {
+          first = false
+        }
+
+        val point = line.codePointAt(i)
+        if (start == -1 && isJavaIdentifierStart(point)) {
           start = i
           continue
         }
-        if (start != -1 && c == '.'.code) {
+        if (start != -1 && point == POINT_CODE) {
           pointCount++
           continue
         }
         if (start != -1 &&
-            ((line[i - 1] == '.' && isJavaIdentifierStart(c)) ||
-             (line[i - 1] != '.' && isJavaIdentifierPart(c)))) {
-          if (i == line.lastIndex && pointCount >= 2) {
-            addProbableClass(line, start, i + 1, cache, result)
+            ((line.codePointAt(i - 1) == POINT_CODE && isJavaIdentifierStart(point)) ||
+             (line.codePointAt(i - 1) != POINT_CODE && isJavaIdentifierPart(point)))) {
+          val charCount = Character.charCount(point)
+          if (i + charCount >= line.length && pointCount >= 2) {
+            addProbableClass(line, start, line.length, result)
           }
           continue
         }
 
         if (pointCount >= 2) {
-          addProbableClass(line, start, i, cache, result)
+          addProbableClass(line, start, i, result)
         }
         pointCount = 0
         start = -1
@@ -111,7 +121,6 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
     private fun addProbableClass(line: String,
                                  startInclusive: Int,
                                  endExclusive: Int,
-                                 cache: ClassInfoCache,
                                  result: MutableList<ProbableClassName>) {
       var actualEndExclusive = endExclusive
       if (actualEndExclusive > 0 && line[actualEndExclusive - 1] == '.') {
@@ -119,15 +128,9 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
       }
       val fullClassName = line.substring(startInclusive, actualEndExclusive)
       if (canBeShortenedFullyQualifiedClassName(fullClassName) && isJavaStyle(fullClassName)) {
-        val packageName = StringUtil.getPackageName(fullClassName)
-        val className = fullClassName.substring(packageName.length + 1)
-        val resolvedClasses = cache.resolveClasses(className, packageName)
-        if (resolvedClasses.classes.isNotEmpty()) {
-          val probableClassName = ProbableClassName(startInclusive + fullClassName.lastIndexOf(".") + 1,
-                                                    startInclusive + fullClassName.length,
-                                                    line, className, packageName, resolvedClasses.classes.values.toList())
-          result.add(probableClassName)
-        }
+        val probableClassName = ProbableClassName(startInclusive + fullClassName.lastIndexOf(".") + 1,
+                                                  startInclusive + fullClassName.length, line, fullClassName)
+        result.add(probableClassName)
       }
     }
 

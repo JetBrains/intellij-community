@@ -1,6 +1,7 @@
 package com.intellij.jvm.analysis.internal.testFramework.internal
 
 import com.intellij.analysis.customization.console.ClassLoggingConsoleFilterProvider
+import com.intellij.analysis.customization.console.OnFlyMultipleFilesHyperlinkInfo
 import com.intellij.jvm.analysis.testFramework.LightJvmCodeInsightFixtureTestCase
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -41,7 +42,14 @@ abstract class LogFinderHyperlinkTestBase : LightJvmCodeInsightFixtureTestCase()
       len += logLine.length
       val result = filter.applyFilter(logLine, len)
       if (logItem.position == null) {
-        Assert.assertNull(logItem.toString(), result)
+        if (result == null) {
+          continue
+        }
+        val hyperlinkInfo = result.firstHyperlinkInfo
+        if (hyperlinkInfo is OnFlyMultipleFilesHyperlinkInfo) {
+          val files = hyperlinkInfo.getFiles(project)
+          Assert.assertTrue(logItem.toString(), files.isEmpty())
+        }
         continue
       }
       Assert.assertNotNull(logItem.toString(), result)
