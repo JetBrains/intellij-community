@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
@@ -58,7 +59,9 @@ fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Di
   return loadPluginWithText(
     pluginBuilder = PluginBuilder().extensions(extensionTag, ns),
     path = FileUtil.createTempDirectory("test", "test", true).toPath(),
-  )
+  ).also {
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+  }
 }
 
 internal fun loadPluginWithText(
@@ -74,6 +77,7 @@ internal fun loadPluginWithText(
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   try {
     DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
   catch (e: Exception) {
     unloadAndUninstallPlugin(descriptor)
@@ -120,5 +124,7 @@ internal fun unloadAndUninstallPlugin(descriptor: IdeaPluginDescriptorImpl): Boo
   return DynamicPlugins.unloadPlugin(
     descriptor,
     DynamicPlugins.UnloadPluginOptions(disable = false),
-  )
+  ).also {
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+  }
 }

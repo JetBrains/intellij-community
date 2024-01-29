@@ -18,6 +18,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FileTypeIndexImpl;
 import com.intellij.psi.search.FileTypeIndexImplBase;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,7 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     int version = index.getVersion();
     Disposable disposable = Disposer.newDisposable();
     FileType foo = registerFakeFileType(getTestName(false), "test", disposable);
+    //PsiTestUtil.waitUntilIndexesAreReady(getProject());
     try {
       assertEquals(version, index.getVersion());
       Collection<VirtualFile> files = FileTypeIndex.getFiles(foo, GlobalSearchScope.allScope(getProject()));
@@ -47,6 +49,7 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     }
     finally {
       Disposer.dispose(disposable);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
     assertEquals(PlainTextFileType.INSTANCE, FileTypeIndex.getIndexedFileType(file, getProject()));
     assertEmpty(FileTypeIndex.getFiles(foo, GlobalSearchScope.allScope(getProject())));
@@ -76,6 +79,7 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     assertEmpty(FileTypeIndex.getFiles(smth1, GlobalSearchScope.allScope(getProject())));
     assertOneElement(FileTypeIndex.getFiles(smth2, GlobalSearchScope.allScope(getProject())));
     Disposer.dispose(disposable);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     assertEquals(PlainTextFileType.INSTANCE, FileTypeIndex.getIndexedFileType(file, getProject()));
   }
 
@@ -175,6 +179,7 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     };
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).registerFileType(foo, List.of(), parent,
                                                                           PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     return foo;
   }
 }

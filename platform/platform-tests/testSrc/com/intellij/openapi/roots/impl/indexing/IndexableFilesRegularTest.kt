@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -204,6 +205,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         setOf(additionalRootsFile)
     }
     maskIndexableSetContributors(contributor)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     assertIndexableFiles(additionalProjectRootJava.file, additionalRootJava.file)
     assertIdIndexContainsWord(additionalRootJava.file, "AdditionalRoot")
     assertIdIndexContainsWord(additionalProjectRootJava.file, "AdditionalProjectRoot")
@@ -318,6 +320,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
       }
     }
     ModuleRootModificationUtil.addContentRoot(module, contentRootDirSpec.file.path)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     assertFilesInIndexableFilesFilter(contentFile, sourceFile)
 
@@ -330,6 +333,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
       sourceFile2 = file("SourceFile2.java", "class SourceFile2 {}")
     }
     ModuleRootModificationUtil.addContentRoot(module, secondContentRoot.path)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     assertFilesInIndexableFilesFilter(contentFile, sourceFile, contentFile2, sourceFile2)
   }

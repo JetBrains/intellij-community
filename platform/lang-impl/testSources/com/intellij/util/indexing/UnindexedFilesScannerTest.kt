@@ -64,6 +64,7 @@ class UnindexedFilesScannerTest {
   @Before
   fun setup() {
     project = p.project
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     testRootDisposable = Disposer.newCheckedDisposable("ScanningAndIndexingTest")
   }
 
@@ -308,6 +309,7 @@ class UnindexedFilesScannerTest {
       }
       tumbler.turnOn()
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   private fun scanAndIndexFiles(filesAndDirs: SingleRootIndexableFilesIterator) {

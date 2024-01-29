@@ -796,6 +796,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), info);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   protected void assertNothingToRescanAndFinishIndexing() {
