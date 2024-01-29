@@ -275,12 +275,16 @@ public final class PlatformTestUtil {
   }
 
   public static void expandAll(@NotNull JTree tree) {
+    expandAll(tree, path -> !(TreeUtil.getLastUserObject(path) instanceof ExternalLibrariesNode));
+  }
+
+  public static void expandAll(@NotNull JTree tree, @NotNull Predicate<@NotNull TreePath> predicate) {
     // Ignore AbstractTreeNode.isIncludedInExpandAll because some tests need to expand
     // more than that, but not the External Libraries node which is huge and only wastes time.
     waitForPromise(TreeUtil.promiseExpand(
       tree,
       Integer.MAX_VALUE,
-      path -> !(TreeUtil.getLastUserObject(path) instanceof ExternalLibrariesNode)));
+      predicate));
   }
 
   private static long getMillisSince(long startTimeMillis) {
