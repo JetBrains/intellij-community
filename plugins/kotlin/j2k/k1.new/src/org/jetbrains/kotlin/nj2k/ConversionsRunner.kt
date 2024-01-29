@@ -64,7 +64,8 @@ internal object ConversionsRunner {
         FunctionalInterfacesConversion(context),
         FilterImportsConversion(context),
         AddElementsInfoConversion(context),
-        EnumSyntheticValuesMethodConversion(context)
+        EnumSyntheticValuesMethodConversion(context),
+        IsArrayOfCallConversion(context)
     )
 
 

@@ -60,10 +60,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE,
         Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING,
     ),
-    diagnosticBasedProcessing(
-        ConvertToIsArrayOfCallFix,
-        Errors.CANNOT_CHECK_FOR_ERASED,
-    ),
     fixTypeMismatchDiagnosticBasedProcessing
 )
 
