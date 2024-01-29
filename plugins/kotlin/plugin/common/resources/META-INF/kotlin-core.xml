@@ -443,7 +443,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup
             id="kotlin.external.compiler.updates"
-            displayType="STICKY_BALLOON"
+            displayType="BALLOON"
             key="kotlin.external.compiler.updates.notification.group.name"
     />
     <notificationGroup

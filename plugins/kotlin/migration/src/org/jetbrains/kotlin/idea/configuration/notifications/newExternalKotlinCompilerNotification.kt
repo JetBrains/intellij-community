@@ -62,10 +62,8 @@ fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
                     KotlinMigrationBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinVersion),
                     NotificationType.INFORMATION,
                 )
-                .setSuggestionType(true)
                 .addAction(createWhatIsNewAction(bundledKotlinVersion))
                 .setIcon(KotlinIcons.SMALL_LOGO)
-                .setImportant(true)
                 .notify(project)
         }
         .submit(AppExecutorUtil.getAppExecutorService())
