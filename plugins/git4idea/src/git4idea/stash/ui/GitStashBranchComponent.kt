@@ -20,7 +20,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.JPanel
 
-class GitStashPainter(val tree: ChangesTree, iconCache: LabelIconCache) : JPanel() {
+class GitStashBranchComponent(val tree: ChangesTree, iconCache: LabelIconCache) : JPanel() {
   private val labelPainter = LabelPainter(tree, iconCache)
 
   private val rightGap get() = UIUtil.getScrollBarWidth()

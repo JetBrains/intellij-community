@@ -198,7 +198,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     override fun getLabelComponent(tree: ChangesTree, row: Int, selected: Boolean): JComponent? {
       val branchName = data.branchName ?: return null
 
-      val painter = GitStashPainter(tree, iconCache)
+      val painter = GitStashBranchComponent(tree, iconCache)
       painter.customise(branchName, data.root, row, selected)
       return painter
     }
