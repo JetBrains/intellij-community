@@ -30,9 +30,8 @@ import static org.jetbrains.annotations.ApiStatus.Internal;
  */
 @Internal
 public final class StickyLinesModel {
-
   private static final Key<Boolean> STICKY_LINES_FIRST_PASS_KEY = Key.create("editor.sticky.lines.first.pass");
-  public static final Key<String> STICKY_LINE_SOURCE = Key.create("editor.sticky.lines.source");
+  private static final Key<String> STICKY_LINE_SOURCE = Key.create("editor.sticky.lines.source");
   private static final Key<StickyLinesModel> STICKY_LINES_MODEL_KEY = Key.create("editor.sticky.lines.model");
   private static final Key<StickyLineImpl> STICKY_LINE_IMPL_KEY = Key.create("editor.sticky.line.impl");
   private static final TextAttributesKey STICKY_LINE_ATTRIBUTE = TextAttributesKey.createTextAttributesKey(
@@ -71,7 +70,7 @@ public final class StickyLinesModel {
     return isFirstTime;
   }
 
-  void addStickyLine(int textOffset, int endOffset, @NotNull String source, @Nullable String debugText) {
+  public StickyLine addStickyLine(int textOffset, int endOffset, @NotNull String source, @Nullable String debugText) {
     if (textOffset >= endOffset) {
       throw new IllegalArgumentException(String.format(
         "sticky line endOffset %s should be less than textOffset %s", textOffset, endOffset
@@ -87,9 +86,10 @@ public final class StickyLinesModel {
     StickyLineImpl stickyLine = new StickyLineImpl(highlighter.getDocument(), highlighter, debugText);
     highlighter.putUserData(STICKY_LINE_IMPL_KEY, stickyLine);
     highlighter.putUserData(STICKY_LINE_SOURCE, source);
+    return stickyLine;
   }
 
-  void removeStickyLine(@NotNull StickyLine stickyLine) {
+  public void removeStickyLine(@NotNull StickyLine stickyLine) {
     RangeMarker rangeMarker = ((StickyLineImpl)stickyLine).rangeMarker();
     myMarkupModel.removeHighlighter((RangeHighlighter) rangeMarker);
   }
