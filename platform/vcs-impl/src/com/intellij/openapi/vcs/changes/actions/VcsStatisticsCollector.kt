@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -12,10 +13,15 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 
 object VcsStatisticsCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("vcs", 13)
+  val GROUP = EventLogGroup("vcs", 14)
 
   @JvmField
   val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
+
+  @JvmField
+  val ANNOTATE_ACTIVITY = GROUP.registerIdeActivity("annotate",
+                                                    finishEventAdditionalFields = arrayOf(ActionsEventLogGroup.CONTEXT_MENU,
+                                                                                          EventFields.ActionPlace, EventFields.InputEvent))
   val FETCH_ACTIVITY = GROUP.registerIdeActivity("fetch")
   val COMMIT_ACTIVITY = GROUP.registerIdeActivity("commit")
 

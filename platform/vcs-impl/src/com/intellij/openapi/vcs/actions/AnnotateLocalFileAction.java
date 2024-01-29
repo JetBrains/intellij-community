@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +28,10 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.ANNOTATE_ACTIVITY;
 
 public class AnnotateLocalFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateLocalFileAction.class);
@@ -88,11 +94,12 @@ public class AnnotateLocalFileAction {
         }
       }
 
-      doAnnotate(editor, project);
+      doAnnotate(editor, e, project);
     }
   }
 
-  private static void doAnnotate(@NotNull final Editor editor, @NotNull final Project project) {
+  private static void doAnnotate(@NotNull final Editor editor, AnActionEvent e, @NotNull final Project project) {
+    StructuredIdeActivity activity = ANNOTATE_ACTIVITY.started(project);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
     if (file == null) return;
 
@@ -147,6 +154,8 @@ public class AnnotateLocalFileAction {
       @Override
       public void onFinished() {
         actionLock.unlock();
+        List<EventPair<?>> eventData = ActionsCollectorImpl.actionEventData(e);
+        activity.finished(() -> eventData);
       }
     };
     ProgressManager.getInstance().run(annotateTask);
