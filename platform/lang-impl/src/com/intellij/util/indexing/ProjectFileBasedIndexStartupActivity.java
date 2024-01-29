@@ -10,20 +10,25 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ConcurrentList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
+  private final ConcurrentList<Project> myOpenProjects = ContainerUtil.createConcurrentList();
+
   ProjectFileBasedIndexStartupActivity() {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        removeProjectIndexableSet(project);
+        onProjectClosing(project);
       }
     });
   }
 
   @Override
   public void runActivity(@NotNull Project project) {
+    myOpenProjects.add(project);
     ProgressManager.progress(IndexingBundle.message("progress.text.loading.indexes"));
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
@@ -42,12 +47,16 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     UnindexedFilesScanner.scanAndIndexProjectAfterOpen(project, suspended, "On project open");
 
     // done mostly for tests. In real life this is no-op, because the set was removed on project closing
-    Disposer.register(project, () -> removeProjectIndexableSet(project));
+    Disposer.register(project, () -> onProjectClosing(project));
   }
 
-  private static void removeProjectIndexableSet(@NotNull Project project) {
+  private void onProjectClosing(@NotNull Project project) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      ReadAction.run(() -> FileBasedIndex.getInstance().removeProjectFileSets(project));
+      ReadAction.run(() -> {
+        if (myOpenProjects.remove(project)) {
+          FileBasedIndex.getInstance().onProjectClosing(project);
+        }
+      });
     }, IndexingBundle.message("removing.indexable.set.project.handler"), false, project);
   }
 }

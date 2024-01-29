@@ -56,7 +56,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
@@ -109,8 +108,10 @@ import java.util.stream.Stream;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 import static com.intellij.util.MathUtil.clamp;
+import static com.intellij.util.indexing.FileBasedIndexDataInitialization.readAllProjectDirtyFilesQueues;
 import static com.intellij.util.indexing.IndexingFlag.cleanProcessingFlag;
 import static com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag;
+import static com.intellij.util.indexing.StaleIndexesChecker.shouldCheckStaleIndexesOnStartup;
 import static java.util.concurrent.TimeUnit.*;
 
 public final class FileBasedIndexImpl extends FileBasedIndexEx {
@@ -291,8 +292,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
-  public void removeProjectFileSets(@NotNull Project project) {
+  public void onProjectClosing(@NotNull Project project) {
     myIndexableSets.removeIf(p -> p.second.equals(project));
+    getChangedFilesCollector().onProjectClosing(project, vfsCreationStamp);
   }
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
@@ -542,7 +544,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     try {
-      if (StubUpdatingIndex.INDEX_ID.equals(extension.getName()) && index != null) {
+      if (shouldCheckStaleIndexesOnStartup() && StubUpdatingIndex.INDEX_ID.equals(extension.getName()) && index != null) {
         staleInputIdSink.addAll(StaleIndexesChecker.checkIndexForStaleRecords(index, dirtyFiles, true));
       }
     }
@@ -602,23 +604,29 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
-        Pair<ConcurrentBitSet, List<Pair<String, ConcurrentBitSet>>> pair = getChangedFilesCollector().getDirtyFiles();
+        if (myIsUnitTestMode) {
+          IntSet allStaleIds = new IntOpenHashSet();
+          synchronized (myStaleIds) {
+            allStaleIds.addAll(myStaleIds);
+            myStaleIds.clear();
+          }
+          // project dirty files are still in ChangedFilesCollector in case FileBasedIndex is restarted using Tumbler (projects are not closed)
+          // we need to persist queues, so we can properly re-read them here and in FileBasedIndexDataInitialization
+          for (Pair<IndexableFileSet, Project> p : myIndexableSets) {
+            getChangedFilesCollector().persistDirtyFiles(p.second, vfsCreationStamp);
+          }
+          // some deleted files were already saved to project queues and saved to disk during project closing
+          // we need to read them to avoid false-positive errors in checkIndexForStaleRecords
+          readAllProjectDirtyFilesQueues(allStaleIds);
 
-        IntSet allDirtyFileIds = new IntOpenHashSet();
-        for (Pair<String, ConcurrentBitSet> p : pair.second) {
-          IntSet dirtyFileIds = toIntSet(p.second);
-          allDirtyFileIds.addAll(dirtyFileIds);
-          PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(p.first), dirtyFileIds, vfsCreationStamp);
+          UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
+          if (index != null) {
+            StaleIndexesChecker.checkIndexForStaleRecords(index, allStaleIds, false);
+          }
         }
 
-        ConcurrentBitSet dirtyFilesSet = pair.first;
-        IntSet dirtyFileIds = toIntSet(dirtyFilesSet);
-        synchronized (myStaleIds) {
-          allDirtyFileIds.addAll(dirtyFileIds);
-          allDirtyFileIds.addAll(myStaleIds);
-          myStaleIds.clear();
-        }
-        PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), dirtyFileIds, vfsCreationStamp);
+        PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(),
+                                                     getChangedFilesCollector().getDirtyFilesWithoutProject(), vfsCreationStamp);
         getChangedFilesCollector().clearFilesToUpdate();
         vfsCreationStamp = 0;
 
@@ -626,13 +634,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         IndexingStamp.close();
         IndexingFlag.unlockAllFiles(); // TODO-ank: IndexingFlag should also be closed, because indexes might be cleared (IDEA-336540)
         // TODO-ank: review all the remaining usages of fast file attributes (IDEA-336540)
-
-        if (myIsUnitTestMode) {
-          UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
-          if (index != null) {
-            StaleIndexesChecker.checkIndexForStaleRecords(index, allDirtyFileIds, false);
-          }
-        }
 
         List<ThrowableRunnable<?>> indexDisposeTasks = new ArrayList<>();
         IndexConfiguration state = getState();
@@ -667,18 +668,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
       LOG.info("Index dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
     }
-  }
-
-  @NotNull
-  private static IntSet toIntSet(@NotNull ConcurrentBitSet dirtyFilesSet) {
-    IntSet dirtyFileIds = new IntOpenHashSet();
-    for (int fileId = 0; fileId < dirtyFilesSet.size(); fileId++) {
-      if (dirtyFilesSet.get(fileId)) {
-        PingProgress.interactWithEdtProgress();
-        dirtyFileIds.add(fileId);
-      }
-    }
-    return dirtyFileIds;
   }
 
   public void removeDataFromIndicesForFile(int fileId, @NotNull VirtualFile file, @NotNull String cause) {

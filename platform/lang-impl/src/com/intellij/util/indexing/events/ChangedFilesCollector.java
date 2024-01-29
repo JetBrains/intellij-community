@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -31,8 +32,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -132,13 +136,16 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   @NotNull
-  public Pair<ConcurrentBitSet, List<Pair<String, ConcurrentBitSet>>> getDirtyFiles() {
-    return new Pair<>(myDirtyFilesWithoutProject, myDirtyFiles);
+  public IntSet getDirtyFilesWithoutProject() {
+    return toIntSet(myDirtyFilesWithoutProject);
   }
 
   public void clearFilesToUpdate() {
     myFilesToUpdate.clear();
-    myDirtyFiles.clear();
+    myDirtyFilesWithoutProject.clear();
+    for (Pair<String, ConcurrentBitSet> p : myDirtyFiles) {
+      p.second.clear();
+    }
   }
 
   @Override
@@ -155,15 +162,17 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   private void addToDirtyFiles(@NotNull VirtualFile fileOrDir) {
     if (!(fileOrDir instanceof VirtualFileWithId fileOrDirWithId)) return;
+    int id = fileOrDirWithId.getId();
+
     Set<Project> projects = myFileBasedIndex.getContainingProjects(fileOrDir);
     if (projects.isEmpty()) {
-      myDirtyFilesWithoutProject.set(fileOrDirWithId.getId());
+      myDirtyFilesWithoutProject.set(id);
       return;
     }
     for (Project project : projects) {
-      Pair<String, ConcurrentBitSet> projectDirtyFiles = ContainerUtil.find(myDirtyFiles, p -> p.first.equals(project.getLocationHash()));
+      Pair<String, ConcurrentBitSet> projectDirtyFiles = getDirtyFilesWithoutProject(project);
       if (projectDirtyFiles != null) {
-        projectDirtyFiles.second.set(fileOrDirWithId.getId());
+        projectDirtyFiles.second.set(id);
       }
       else {
         assert false : "Project name: " + project.getName() + " hash: " + project.getLocationHash() +
@@ -212,6 +221,35 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   public void addProject(@NotNull Project project) {
     myDirtyFiles.add(new Pair<>(project.getLocationHash(), ConcurrentBitSet.create()));
+  }
+
+  public void onProjectClosing(@NotNull Project project, long vfsCreationStamp) {
+    persistDirtyFiles(project, vfsCreationStamp);
+    myDirtyFiles.removeIf(p -> p.first.equals(project.getLocationHash()));
+  }
+
+  public void persistDirtyFiles(@NotNull Project project, long vfsCreationStamp) {
+    Pair<String, ConcurrentBitSet> p = getDirtyFilesWithoutProject(project);
+    if (p == null) return;
+    IntSet dirtyFileIds = toIntSet(p.second);
+    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(p.first), dirtyFileIds, vfsCreationStamp);
+  }
+
+  @NotNull
+  private static IntSet toIntSet(@NotNull ConcurrentBitSet dirtyFilesSet) {
+    IntSet dirtyFileIds = new IntOpenHashSet();
+    for (int fileId = 0; fileId < dirtyFilesSet.size(); fileId++) {
+      if (dirtyFilesSet.get(fileId)) {
+        PingProgress.interactWithEdtProgress();
+        dirtyFileIds.add(fileId);
+      }
+    }
+    return dirtyFileIds;
+  }
+
+  @Nullable
+  private Pair<String, ConcurrentBitSet> getDirtyFilesWithoutProject(@NotNull Project project) {
+    return ContainerUtil.find(myDirtyFiles, p -> p.first.equals(project.getLocationHash()));
   }
 
   private static boolean memoryStorageCleaningNeeded(@NotNull VFileEvent event) {

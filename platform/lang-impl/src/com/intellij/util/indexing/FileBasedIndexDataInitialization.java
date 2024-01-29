@@ -66,12 +66,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     List<ThrowableRunnable<?>> tasks = new ArrayList<>(FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint().size());
 
     myDirtyFileIds.addAll(PersistentDirtyFilesQueue.readIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp()));
-    File[] projectQueueFiles = PersistentDirtyFilesQueue.getQueuesDir().toFile().listFiles();
-    if (projectQueueFiles != null) {
-      for (File file : projectQueueFiles) {
-        myDirtyFileIds.addAll(PersistentDirtyFilesQueue.readIndexingQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp()));
-      }
-    }
+    // todo: after IJPL-319 don't forget to read all dirty files if StaleIndexesChecker.shouldCheckStaleIndexesOnStartup() is true
+    readAllProjectDirtyFilesQueues(myDirtyFileIds);
     // todo: init contentless indices first ?
     while (extensions.hasNext()) {
       FileBasedIndexExtension<?, ?> extension = extensions.next();
@@ -111,6 +107,15 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     activity.end();
 
     return tasks;
+  }
+
+  public static void readAllProjectDirtyFilesQueues(@NotNull IntSet dirtyFiles) {
+    File[] projectQueueFiles = PersistentDirtyFilesQueue.getQueuesDir().toFile().listFiles();
+    if (projectQueueFiles != null) {
+      for (File file : projectQueueFiles) {
+        dirtyFiles.addAll(PersistentDirtyFilesQueue.readIndexingQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp()));
+      }
+    }
   }
 
   @Override
