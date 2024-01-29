@@ -13,11 +13,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.jetbrains.python.PyNames
@@ -169,6 +166,7 @@ class PySdkPathsTest {
     }
     registerSdk(sdk)
     module.pythonSdk = sdk
+    IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
 
     val projectSdksModel = PyConfigurableInterpreterList.getInstance(projectModel.project).model
@@ -227,6 +225,7 @@ class PySdkPathsTest {
 
     registerSdk(sdk)
     module.pythonSdk = sdk
+    IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
 
     val projectSdksModel = PyConfigurableInterpreterList.getInstance(projectModel.project).model
@@ -408,6 +407,7 @@ class PySdkPathsTest {
       addContentEntry(moduleRoot)
       runWriteActionAndWait { commit() }
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
     assertThat(PyUtil.getSourceRoots(module)).containsOnly(moduleRoot)
 
     return module to moduleRoot
