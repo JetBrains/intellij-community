@@ -1117,7 +1117,7 @@
     <group id="EditorGutterPopupMenu.Appearance" popup="true">
       <action id="EditorGutterToggleGlobalLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction"/>
       <action id="EditorGutterToggleGlobalIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesGloballyAction"/>
-
+      <action id="EditorGutterToggleGlobalStickyLines" class="com.intellij.openapi.editor.impl.stickyLines.ToggleShowStickyLinesGloballyAction"/>
     </group>
 
     <group id="EditorGutterPopupMenu">
@@ -1580,12 +1580,11 @@
       <action id="EditorBreadcrumbsShowBelow" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowBelow"/>
       <action id="EditorBreadcrumbsHideBoth" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$HideBoth"/>
       <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
-      <add-to-group group-id="EditorGutterPopupMenu.Appearance" relative-to-action="EditorGutterToggleGlobalIndentLines" anchor="after"/>
+      <add-to-group group-id="EditorGutterPopupMenu.Appearance" relative-to-action="EditorGutterToggleGlobalStickyLines" anchor="after"/>
     </group>
 
-    <group id="EditorStickyLinesSettings" popup="true">
-      <action id="EditorStickyLinesHide" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesSettingsHideAction"/>
-      <add-to-group group-id="EditorGutterPopupMenu.Appearance" relative-to-action="EditorBreadcrumbsSettings" anchor="after"/>
+    <group id="EditorStickyLinesSettings" popup="true" searchable="false">
+      <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesSettingsDisableAction"/>
     </group>
 
     <action class="com.intellij.ide.plugins.InstallFromDiskAction" id="plugin.InstallFromDiskAction"/>
