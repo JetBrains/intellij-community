@@ -70,5 +70,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
   </component>
 </module>
