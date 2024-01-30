@@ -82,7 +82,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean IS_FOLDING_ENDINGS_SHOWN = false; //is not used in old UI
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
-    public boolean SHOW_STICKY_LINES = false;
+    public boolean SHOW_STICKY_LINES = true;
     public int STICKY_LINES_LIMIT = 5;
     public boolean ENABLE_RENDERED_DOC = false;
     public boolean SHOW_INTENTION_PREVIEW = true;
