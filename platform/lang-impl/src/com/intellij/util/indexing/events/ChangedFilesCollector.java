@@ -54,7 +54,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   // files from myEventMerger and myFilesToUpdate
-  private final List<Pair<String, ConcurrentBitSet>> myDirtyFiles = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Pair<Project, ConcurrentBitSet>> myDirtyFiles = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ConcurrentBitSet myDirtyFilesWithoutProject = ConcurrentBitSet.create();
 
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
@@ -115,7 +115,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   private void removeFromDirtyFiles(int fileId) {
     myDirtyFilesWithoutProject.clear(fileId);
-    for (Pair<String, ConcurrentBitSet> pair : myDirtyFiles) {
+    for (Pair<Project, ConcurrentBitSet> pair : myDirtyFiles) {
       pair.second.clear(fileId);
     }
   }
@@ -143,7 +143,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public void clearFilesToUpdate() {
     myFilesToUpdate.clear();
     myDirtyFilesWithoutProject.clear();
-    for (Pair<String, ConcurrentBitSet> p : myDirtyFiles) {
+    for (Pair<Project, ConcurrentBitSet> p : myDirtyFiles) {
       p.second.clear();
     }
   }
@@ -170,14 +170,14 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       return;
     }
     for (Project project : projects) {
-      Pair<String, ConcurrentBitSet> projectDirtyFiles = getDirtyFilesWithoutProject(project);
+      Pair<Project, ConcurrentBitSet> projectDirtyFiles = getDirtyFilesWithoutProject(project);
       if (projectDirtyFiles != null) {
         projectDirtyFiles.second.set(id);
       }
       else {
-        assert false : "Project name: " + project.getName() + " hash: " + project.getLocationHash() +
-                       " was not found in myDirtyFiles. " +
-                       "Projects in myDirtyFiles: " + Strings.join(myDirtyFiles, p -> p.first, ", ");
+        assert false : "Project (name: " + project.getName() + " hash: " + project.getLocationHash() + ") " +
+                       "was not found in myDirtyFiles. " +
+                       "Projects in myDirtyFiles: " + Strings.join(myDirtyFiles, p -> "(name: " + p.first.getName() + " hash: " + p.first.getLocationHash() + ") ", ", ");
       }
     }
   }
@@ -220,19 +220,19 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void addProject(@NotNull Project project) {
-    myDirtyFiles.add(new Pair<>(project.getLocationHash(), ConcurrentBitSet.create()));
+    myDirtyFiles.add(new Pair<>(project, ConcurrentBitSet.create()));
   }
 
   public void onProjectClosing(@NotNull Project project, long vfsCreationStamp) {
     persistDirtyFiles(project, vfsCreationStamp);
-    myDirtyFiles.removeIf(p -> p.first.equals(project.getLocationHash()));
+    myDirtyFiles.removeIf(p -> p.first.equals(project));
   }
 
   public void persistDirtyFiles(@NotNull Project project, long vfsCreationStamp) {
-    Pair<String, ConcurrentBitSet> p = getDirtyFilesWithoutProject(project);
+    Pair<Project, ConcurrentBitSet> p = getDirtyFilesWithoutProject(project);
     if (p == null) return;
     IntSet dirtyFileIds = toIntSet(p.second);
-    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(p.first), dirtyFileIds, vfsCreationStamp);
+    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(p.first.getLocationHash()), dirtyFileIds, vfsCreationStamp);
   }
 
   @NotNull
@@ -248,8 +248,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   @Nullable
-  private Pair<String, ConcurrentBitSet> getDirtyFilesWithoutProject(@NotNull Project project) {
-    return ContainerUtil.find(myDirtyFiles, p -> p.first.equals(project.getLocationHash()));
+  private Pair<Project, ConcurrentBitSet> getDirtyFilesWithoutProject(@NotNull Project project) {
+    return ContainerUtil.find(myDirtyFiles, p -> p.first.equals(project));
   }
 
   private static boolean memoryStorageCleaningNeeded(@NotNull VFileEvent event) {
