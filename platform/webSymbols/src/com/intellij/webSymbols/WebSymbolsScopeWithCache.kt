@@ -165,7 +165,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
     override fun Sequence<WebSymbol>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol> = this
 
     fun add(symbol: WebSymbol) {
-      assert(symbol.origin.framework == framework) {
+      assert(framework == null || symbol.origin.framework == framework) {
         "WebSymbolsScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
       }
       add(symbol.qualifiedName, symbol.pattern, symbol)
