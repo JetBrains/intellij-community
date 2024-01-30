@@ -143,9 +143,9 @@ __jetbrains_intellij_report_prompt_state() {
   then
     git_branch="$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse --short HEAD 2> /dev/null)"
   fi
-  if [[ -n $VIRTUAL_ENV_PROMPT ]]
+  if [[ -n $VIRTUAL_ENV ]]
   then
-    virtual_env="$VIRTUAL_ENV_PROMPT"
+    virtual_env="$VIRTUAL_ENV"
   fi
   if [[ -n $CONDA_DEFAULT_ENV ]]
   then

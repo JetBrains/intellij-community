@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.ui.AwtTransformers
@@ -56,7 +57,8 @@ class TerminalPromptModel(private val session: BlockTerminalSession) : ShellComm
 
     if (!state.virtualEnv.isNullOrBlank()) {
       addComponent("(", greenAttributes)
-      addComponent(state.virtualEnv, magentaAttributes)
+      val venvName = PathUtil.getFileName(state.virtualEnv)
+      addComponent(venvName, magentaAttributes)
       addComponent(")", greenAttributes)
     }
     if (!state.condaEnv.isNullOrBlank()) {

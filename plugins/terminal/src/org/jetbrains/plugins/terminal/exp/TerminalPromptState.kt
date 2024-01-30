@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 data class TerminalPromptState(
   val currentDirectory: String,
   val gitBranch: String? = null,
+  /** Absolute path to the virtual env */
   val virtualEnv: String? = null,
   val condaEnv: String? = null
 )

@@ -89,7 +89,7 @@ function Global:__JetBrainsIntellijCreatePromptStateOSC() {
       }
     }
   }
-  $VirtualEnv = if ($Env:VIRTUAL_ENV_PROMPT -ne $null) { $Env:VIRTUAL_ENV_PROMPT } else { "" }
+  $VirtualEnv = if ($Env:VIRTUAL_ENV -ne $null) { $Env:VIRTUAL_ENV } else { "" }
   $CondaEnv = if ($Env:CONDA_DEFAULT_ENV -ne $null) { $Env:CONDA_DEFAULT_ENV } else { "" }
   $StateOSC = Global:__JetBrainsIntellijOSC ("prompt_state_updated;" +
     "current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory);" +
