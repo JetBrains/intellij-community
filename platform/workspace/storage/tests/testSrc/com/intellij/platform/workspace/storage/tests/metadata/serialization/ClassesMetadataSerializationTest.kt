@@ -1,16 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
-import com.intellij.platform.workspace.storage.impl.serialization.UnsupportedEntitiesVersionException
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
+import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
 
 class ClassesMetadataSerializationTest: MetadataSerializationTest() {
   // SEALED CLASSES
-  @Test(expected = UnsupportedEntitiesVersionException::class) //cache version and current version should be different
+  @Test
   fun `simple sealed class entity`() {
     val builder = createEmptyBuilder()
 
@@ -20,7 +20,15 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    Assert.assertEquals("""
+      Start comparing cache: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass"     with current: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass"
+        Start comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass${"$"}SecondKeyPropDataClass"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"
+          Cache: supertypes = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass, Current: supertypes = com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass    Result: not equal
+        End comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"    Result: not equal
+      End comparing cache: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass"     with current: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass"    Result: not equal
+
+    """.trimIndent(), cacheDiff)
   }
 
   @Ignore("Disabled while the hash is naively counted")
@@ -39,7 +47,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
 
 
   // ENUMS
-  @Test(expected = UnsupportedEntitiesVersionException::class) //cache version and current version should be different
+  @Test
   fun `changed enum name entity`() {
     val builder = createEmptyBuilder()
     
@@ -48,7 +56,19 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    Assert.assertEquals("""
+       Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEntity"
+         Start comparing cache: Own property "someEnum"     with current: Own property "someEnum"
+           Start comparing cache: Custom type     with current: Custom type
+             Start comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEnum"
+               Cache: enum entries = THIRD, Current: enum entries = NOT_THIRD    Result: not equal
+             End comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEnum"    Result: not equal
+           End comparing cache: Custom type     with current: Custom type    Result: not equal
+         End comparing cache: Own property "someEnum"     with current: Own property "someEnum"    Result: not equal
+       End comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedEnumNameEntity"    Result: not equal
+
+    """.trimIndent(), cacheDiff)
   }
 
   @Test //cache version and current version should be the same
@@ -64,7 +84,7 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
   }
 
   //TODO("Fix it")
-  @Test(expected = UnsupportedEntitiesVersionException::class) //cache version and current version should be different
+  @Test
   fun `subset enum entity`() {
     val builder = createEmptyBuilder()
 
@@ -73,6 +93,12 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
       SampleEntitySource("test")
     )
 
-    MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    Assert.assertEquals("""
+      Start comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum"
+        Cache: enum entries = FIFTH, Current: enum entries = SECOND    Result: not equal
+      End comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum"    Result: not equal
+
+    """.trimIndent(), cacheDiff)
   }
 }

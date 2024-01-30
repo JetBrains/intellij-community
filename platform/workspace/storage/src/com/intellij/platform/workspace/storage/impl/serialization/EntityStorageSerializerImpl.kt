@@ -22,6 +22,7 @@ import com.intellij.platform.workspace.storage.impl.serialization.registration.S
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.StorageSerializerUtil
+import com.intellij.platform.workspace.storage.metadata.diff.ComparisonResult
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -137,20 +138,17 @@ public class EntityStorageSerializerImpl(
       val (kryo, classCache) = createKryo()
 
       try { // Read version
-        val cacheVersion = input.readString()
-        if (cacheVersion != serializerDataFormatVersion) {
-          LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        if (!checkCacheVersionIdentical(input)) {
           return Result.success(null)
         }
 
         var time = System.nanoTime()
         val metadataDeserializationStartTimeMs = System.currentTimeMillis()
 
-        val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
-        val comparisonResult = compareWithCurrentEntitiesMetadata(cacheMetadata, typesResolver)
+        val (comparisonResult, cacheMetadata) = compareCacheMetadata(kryo, input)
         if (!comparisonResult.areEquals) {
           LOG.info("Cache isn't loaded. Reason:\n${comparisonResult.info}")
-          return Result.failure(UnsupportedEntitiesVersionException())
+          return Result.success(null)
         }
 
         loadCacheMetadataFromFileTimeMs.addElapsedTimeMillis(metadataDeserializationStartTimeMs)
@@ -215,6 +213,19 @@ public class EntityStorageSerializerImpl(
     return Result.success(deserializedCache)
   }
 
+  private fun checkCacheVersionIdentical(input: Input): Boolean {
+    val cacheVersion = input.readString()
+    if (cacheVersion != serializerDataFormatVersion) {
+      LOG.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+      return false
+    }
+    return true
+  }
+
+  private fun compareCacheMetadata(kryo: Kryo, input: Input): Pair<ComparisonResult, CacheMetadata> {
+    val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
+    return compareWithCurrentEntitiesMetadata(cacheMetadata, typesResolver) to cacheMetadata
+  }
 
   private fun writeAndRegisterClasses(kryo: Kryo, output: Output, entityStorage: ImmutableEntityStorageImpl,
                                       cacheMetadata: CacheMetadata, classCache: Object2IntWithDefaultMap<TypeInfo>) {
@@ -274,6 +285,18 @@ public class EntityStorageSerializerImpl(
   private fun logAndResetTime(time: Long, measuredTimeToText: (Long) -> String): Long {
     LOG.debug(measuredTimeToText.invoke(System.nanoTime() - time))
     return System.nanoTime()
+  }
+
+  @TestOnly
+  public fun calculateCacheDiff(file: Path): String {
+    createKryoInput(file).use { input ->
+      val (kryo, _) = createKryo()
+
+      checkCacheVersionIdentical(input)
+
+      val (comparisonResult, _) = compareCacheMetadata(kryo, input)
+      return comparisonResult.info
+    }
   }
 }
 
