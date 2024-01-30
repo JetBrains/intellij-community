@@ -134,6 +134,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   addDiagnosticsBlock("RAW FILTERED:", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS:", "analyzed_proposals", popup, lookup)
   addDiagnosticsBlock("ANALYZED FILTERED:", "analyzed_filtered", popup, lookup)
+  addDiagnosticsBlock("RESULT SUGGESTIONS:", "result_proposals", popup, lookup)
 }
 
 function addSuggestions(sessionDiv, popup, lookup) {
