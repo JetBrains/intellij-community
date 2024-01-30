@@ -64,6 +64,7 @@ public final class TerminalShellCommandHandlerHelper {
   private PropertiesComponent myPropertiesComponent;
   private final AtomicLong myLastKeyPressedMillis = new AtomicLong();
   private TerminalLineIntervalHighlighting myCommandHighlighting;
+  private volatile SmartCommandContext myLastSmartCommandContext;
   private Disposable myNotificationDisposable;
 
   TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
@@ -92,7 +93,9 @@ public final class TerminalShellCommandHandlerHelper {
 
   private void scheduleCommandHighlighting() {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(() -> { highlightMatchedCommand(myWidget.getProject()); }, 0);
+    myAlarm.addRequest(() -> {
+      highlightMatchedCommand(myWidget.getProject());
+    }, 0);
   }
 
   public static boolean isFeatureEnabled() {
@@ -147,7 +150,7 @@ public final class TerminalShellCommandHandlerHelper {
     if (myNotificationDisposable != null && !Disposer.isDisposed(myNotificationDisposable)) {
       return;
     }
-    Disposable notificationDisposable = Disposer.newDisposable(myWidget.getTerminalPanel(), "terminal.smart_command_execution"); 
+    Disposable notificationDisposable = Disposer.newDisposable(myWidget.getTerminalPanel(), "terminal.smart_command_execution");
     String content = TerminalBundle.message("smart_command_execution.notification.text",
                                             KeymapUtil.getFirstKeyboardShortcutText(getRunAction()),
                                             KeymapUtil.getFirstKeyboardShortcutText(getDebugAction()));
@@ -165,7 +168,8 @@ public final class TerminalShellCommandHandlerHelper {
       Rectangle bounds = myWidget.processTerminalBuffer(buffer -> myWidget.getTerminalPanel().getBounds(commandHighlighting));
       if (bounds != null) {
         int shiftY = 0;
-        if (balloon instanceof BalloonImpl && BalloonImpl.getAbstractPositionFor(Balloon.Position.below) == ((BalloonImpl)balloon).getPosition()) {
+        if (balloon instanceof BalloonImpl &&
+            BalloonImpl.getAbstractPositionFor(Balloon.Position.below) == ((BalloonImpl)balloon).getPosition()) {
           shiftY = bounds.height;
         }
         return new Point(bounds.x + bounds.width / 2, bounds.y + shiftY);
@@ -211,12 +215,18 @@ public final class TerminalShellCommandHandlerHelper {
 
   private @Nullable TerminalLineIntervalHighlighting highlightCommandIfMatched(@NotNull Project project, @NotNull String command) {
     if (command.isEmpty()) {
+      myLastSmartCommandContext = null;
       return null;
     }
-    if (!TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !hasRunningCommands(), command)) {
+    String workingDirectory = getWorkingDirectory();
+    boolean localSession = !hasRunningCommands();
+    TerminalShellCommandHandler handler = ContainerUtil.find(TerminalShellCommandHandler.Companion.getEP().getExtensionList(),
+                                                             it -> it.matches(project, workingDirectory, localSession, command));
+    if (handler == null) {
+      myLastSmartCommandContext = null;
       return null;
     }
-    return myWidget.processTerminalBuffer(textBuffer -> {
+    TerminalLineIntervalHighlighting highlighting = myWidget.processTerminalBuffer(textBuffer -> {
       int cursorLine = myWidget.getLineNumberAtCursor();
       if (cursorLine < 0 || cursorLine >= textBuffer.getHeight()) {
         return null;
@@ -232,6 +242,14 @@ public final class TerminalShellCommandHandlerHelper {
       }
       return myWidget.highlightLineInterval(cursorLine, commandStartInd, command.length(), textStyle);
     });
+    if (highlighting != null) {
+      myLastSmartCommandContext = new SmartCommandContext(handler, myWidget.getTtyConnector(),
+                                                          project, workingDirectory, localSession, command);
+    }
+    else {
+      myLastSmartCommandContext = null;
+    }
+    return highlighting;
   }
 
   private static @Nullable TextStyle getSmartCommandExecutionStyle() {
@@ -255,61 +273,27 @@ public final class TerminalShellCommandHandlerHelper {
     }
     myAlarm.cancelAllRequests();
 
-    Project project = myWidget.getProject();
-    String workingDirectory = getWorkingDirectory();
     Executor executor = matchedExecutor(keyPressed);
-    boolean hasRunningCommands;
-    if (executor != null) {
-      hasRunningCommands = hasRunningCommands();
+    SmartCommandContext smartCommandContext = getLastSmartCommandContextIfMatched(command);
+    if (smartCommandContext != null && executor != null) {
+      smartCommandContext.execute(executor);
+      return true;
     }
-    else {
-      Boolean hasRunningCommandsLocal = myHasRunningCommands;
-      if (hasRunningCommandsLocal == null) {
-        // to not execute hasRunningCommands() on EDT just to report statistics
-        onShellCommandExecuted();
-        return false;
-      }
-      hasRunningCommands = hasRunningCommandsLocal;
+    if (smartCommandContext != null) {
+      smartCommandContext.triggerCommandExecuted(false);
     }
-    boolean localSession = !hasRunningCommands;
-    if (!TerminalShellCommandHandler.Companion.matches(project, workingDirectory, localSession, command)) {
-      onShellCommandExecuted();
-      return false;
-    }
+    onShellCommandExecuted();
+    return false;
+  }
 
-    TerminalShellCommandHandler handler = TerminalShellCommandHandler.Companion.getEP().getExtensionList().stream()
-      .filter(it -> it.matches(project, workingDirectory, localSession, command))
-      .findFirst()
-      .orElseThrow(() -> new RuntimeException("Cannot find matching command handler."));
-
-    if (executor == null) {
-      onShellCommandExecuted();
-      TerminalUsageTriggerCollector.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);
-      return false;
-    }
-
-    TerminalUsageTriggerCollector.triggerSmartCommand(project, workingDirectory, localSession, command, handler, true);
-    TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
-                                                                     !hasRunningCommands(), command, executor);
-    clearTypedCommand(command);
-    return true;
+  private @Nullable SmartCommandContext getLastSmartCommandContextIfMatched(@NotNull String command) {
+    SmartCommandContext smartCommandContext = myLastSmartCommandContext;
+    return smartCommandContext != null && smartCommandContext.myCommand.equals(command) ? smartCommandContext : null;
   }
 
   private void onShellCommandExecuted() {
     myWorkingDirectory = null;
     myHasRunningCommands = null;
-  }
-
-  private void clearTypedCommand(@NotNull String command) {
-    TtyConnector connector = myWidget.getTtyConnector();
-    byte[] array = new byte[command.length()];
-    Arrays.fill(array, Ascii.BS);
-    try {
-      connector.write(array);
-    }
-    catch (IOException e) {
-      LOG.info("Cannot clear shell command " + command, e);
-    }
   }
 
   static @Nullable Executor matchedExecutor(@NotNull KeyEvent e) {
@@ -333,5 +317,50 @@ public final class TerminalShellCommandHandlerHelper {
 
   private static @NotNull AnAction getDebugAction() {
     return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Debug"));
+  }
+
+  private static class SmartCommandContext {
+
+    private final TerminalShellCommandHandler myHandler;
+    private final TtyConnector myTtyConnector;
+    private final Project myProject;
+    private final String myWorkingDirectory;
+    private final boolean myLocalSession;
+    private final String myCommand;
+
+    private SmartCommandContext(@NotNull TerminalShellCommandHandler handler,
+                                @NotNull TtyConnector ttyConnector,
+                                @NotNull Project project,
+                                @Nullable String workingDirectory,
+                                boolean localSession,
+                                @NotNull String command) {
+      myHandler = handler;
+      myTtyConnector = ttyConnector;
+      myProject = project;
+      myWorkingDirectory = workingDirectory;
+      myLocalSession = localSession;
+      myCommand = command;
+    }
+
+    private void execute(@NotNull Executor executor) {
+      triggerCommandExecuted(true);
+      TerminalShellCommandHandler.Companion.executeShellCommandHandler(myProject, myWorkingDirectory, myLocalSession, myCommand, executor);
+      clearTypedCommand(myCommand);
+    }
+
+    private void clearTypedCommand(@NotNull String command) {
+      byte[] array = new byte[command.length()];
+      Arrays.fill(array, Ascii.BS);
+      try {
+        myTtyConnector.write(array);
+      }
+      catch (IOException e) {
+        LOG.info("Cannot clear shell command " + command, e);
+      }
+    }
+
+    private void triggerCommandExecuted(boolean inSmartWay) {
+      TerminalUsageTriggerCollector.triggerSmartCommand(myProject, myWorkingDirectory, myLocalSession, myCommand, myHandler, inSmartWay);
+    }
   }
 }
