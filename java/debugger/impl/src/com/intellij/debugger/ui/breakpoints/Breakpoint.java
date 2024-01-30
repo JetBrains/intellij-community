@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class Breakpoint
@@ -43,6 +43,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -208,6 +209,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public abstract Icon getIcon();
 
   public abstract void reload();
+
+  void scheduleReload() {
+    ReadAction.nonBlocking(this::reload)
+      .coalesceBy(myProject, this)
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
 
   /**
    * returns UI representation

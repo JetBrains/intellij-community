@@ -17,7 +17,6 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -30,7 +29,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -106,6 +105,7 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
     return PositionUtil.getPsiElementAt(myProject, PsiField.class, sourcePosition);
   }
 
+  @RequiresBackgroundThread
   @Override
   public void reload() {
     super.reload();
@@ -116,14 +116,9 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
       if (psiClass != null) {
         getProperties().myClassName = psiClass.getQualifiedName();
       }
-      ReadAction.nonBlocking(() -> field.hasModifierProperty(PsiModifier.STATIC))
-        .coalesceBy(this)
-        .finishOnUiThread(ModalityState.any(), isStatic -> {
-          if (isStatic) {
-            setInstanceFiltersEnabled(false);
-          }
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        setInstanceFiltersEnabled(false);
+      }
     }
   }
 

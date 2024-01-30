@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.statistics.BreakpointInstallStatistic;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,12 +20,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -180,7 +181,13 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   protected BreakpointWithHighlighter(@NotNull Project project, XBreakpoint xBreakpoint) {
     //for persistency
     super(project, xBreakpoint);
-    ApplicationManager.getApplication().runReadAction(this::reload);
+    scheduleReload();
+  }
+
+  @Override
+  void scheduleReload() {
+    resetSourcePosition(); // sync init source position just in case
+    super.scheduleReload();
   }
 
   @Override
@@ -238,10 +245,15 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   @Override
   public void reload() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    mySourcePosition = DebuggerUtilsEx.toSourcePosition(myXBreakpoint.getSourcePosition(), myProject);
+    resetSourcePosition();
+  }
+
+  private void resetSourcePosition() {
+    mySourcePosition = DebuggerUtilsEx.toSourcePosition(ObjectUtils.doIfNotNull(myXBreakpoint, XBreakpoint::getSourcePosition), myProject);
   }
 
   @Nullable
@@ -260,6 +272,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public void createRequest(@NotNull DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+
+    ReadAction.run(this::reload); // force reload to ensure the most recent data
+
     // check is this breakpoint is enabled, vm reference is valid and there're no requests created yet
     if (!shouldCreateRequest(debugProcess)) {
       return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BreakpointManager
@@ -132,7 +132,8 @@ public class BreakpointManager {
       public void breakpointChanged(@NotNull XBreakpoint xBreakpoint) {
         Breakpoint<?> breakpoint = getJavaBreakpoint(xBreakpoint);
         if (breakpoint != null) {
-          fireBreakpointChanged(breakpoint);
+          breakpoint.scheduleReload();
+          breakpoint.updateUI();
         }
       }
     });
@@ -659,15 +660,6 @@ public class BreakpointManager {
       .coalesceBy(this)
       .submit(AppExecutorUtil.getAppExecutorService())
       .onSuccess(b -> b.forEach(Breakpoint::updateUI));
-  }
-
-  public void reloadBreakpoints() {
-    ReadAction.run(() -> DebuggerUtilsImpl.forEachSafe(getBreakpoints(), Breakpoint::reload));
-  }
-
-  public void fireBreakpointChanged(Breakpoint breakpoint) {
-    breakpoint.reload();
-    breakpoint.updateUI();
   }
 
   @Nullable
