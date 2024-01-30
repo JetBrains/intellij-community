@@ -20,11 +20,11 @@ import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingMode
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -64,13 +64,16 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
       checkbox("onlyReportSwitchExpressions", InspectionGadgetsBundle.message("unnecessary.default.expressions.option")));
   }
 
-  @Nullable
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    return new DeleteDefaultFix();
+    return LocalQuickFix.from(new DeleteDefaultFix());
   }
 
-  public static class DeleteDefaultFix extends PsiUpdateModCommandQuickFix {
+  public static class DeleteDefaultFix extends PsiUpdateModCommandAction<PsiElement> {
+    public DeleteDefaultFix() {
+      super(PsiElement.class);
+    }
+
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -79,13 +82,13 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
-      final PsiElement element = startElement.getParent();
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if(element instanceof PsiKeyword) element = element.getParent();
       if (element instanceof PsiSwitchLabelStatementBase label) {
         DeleteSwitchLabelFix.deleteLabel(label);
       }
       else if (element instanceof PsiDefaultCaseLabelElement defaultElement) {
-        DeleteSwitchLabelFix.deleteLabelElement(project, defaultElement);
+        DeleteSwitchLabelFix.deleteLabelElement(context.project(), defaultElement);
       }
     }
   }
@@ -143,7 +146,8 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
       }
       while (nextStatement != null) {
         if (statementSwitch && !ControlFlowUtils.statementMayCompleteNormally(nextStatement)) {
-          final PsiMethod method = PsiTreeUtil.getParentOfType(switchBlock, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+          final PsiMethod method =
+            PsiTreeUtil.getParentOfType(switchBlock, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
           if (method != null && !PsiTypes.voidType().equals(method.getReturnType()) &&
               !ControlFlowUtils.statementContainsNakedBreak(nextStatement)) {
             final PsiCodeBlock body = method.getBody();

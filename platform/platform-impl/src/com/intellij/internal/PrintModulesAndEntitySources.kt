@@ -16,19 +16,23 @@ class PrintModulesAndEntitySources : DumbAwareAction("Print Modules and Entity S
       return
     }
 
+    val builder = StringBuilder()
+
     val snap = project.workspaceModel.currentSnapshot
     snap.entities(ModuleEntity::class.java).forEach { module ->
-      log.info("Module: ${module.name}, source: ${module.entitySource}")
+      builder.appendLine("Module: ${module.name}, source: ${module.entitySource}")
       module.contentRoots.forEach { contentRootEntity ->
-        log.info(" - ContentRoot: ${contentRootEntity.url}, source: ${contentRootEntity.entitySource}")
+        builder.appendLine(" - ContentRoot: ${contentRootEntity.url}, source: ${contentRootEntity.entitySource}")
         contentRootEntity.sourceRoots.forEach { sourceRootEntity ->
-          log.info("   - SourceRoot: ${sourceRootEntity.url}, source: ${sourceRootEntity.entitySource}")
+          builder.appendLine("   - SourceRoot: ${sourceRootEntity.url}, source: ${sourceRootEntity.entitySource}")
         }
         contentRootEntity.excludedUrls.forEach { exclude ->
-          log.info("   - ExcludeRoot: ${exclude.url}, source: ${exclude.entitySource}")
+          builder.appendLine("   - ExcludeRoot: ${exclude.url}, source: ${exclude.entitySource}")
         }
       }
     }
+
+    log.info("\n" + builder)
   }
 
   companion object {

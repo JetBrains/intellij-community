@@ -7,8 +7,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
@@ -39,11 +39,11 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       return when {
         filePath.contains(JarFileSystem.JAR_SEPARATOR) -> JarFileSystem.getInstance().findFileByPath(filePath)
         FileUtil.isAbsolute(filePath) -> LocalFileSystem.getInstance().findFileByPath(filePath)
-        else -> project.guessProjectDir()?.findFileByRelativePath(filePath)
+        else -> project.getBaseDirectories().firstNotNullOfOrNull { it.findFileByRelativePath(filePath) }
       }
     }
   }
-
+  
   override fun getName(): String {
     return NAME
   }

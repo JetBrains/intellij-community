@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.diagnostic.Logger
@@ -30,9 +30,14 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
 fun createBuildOptionsForTest(productProperties: ProductProperties, skipDependencySetup: Boolean = false): BuildOptions {
+  val outDir = createTestBuildOutDir(productProperties)
   val options = BuildOptions()
-  customizeBuildOptionsForTest(options = options, productProperties = productProperties, skipDependencySetup = skipDependencySetup)
+  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup)
   return options
+}
+
+fun createTestBuildOutDir(productProperties: ProductProperties): Path {
+  return FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
 }
 
 private inline fun createBuildOptionsForTest(productProperties: ProductProperties, customizer: (BuildOptions) -> Unit): BuildOptions {
@@ -41,9 +46,10 @@ private inline fun createBuildOptionsForTest(productProperties: ProductPropertie
   return options
 }
 
-fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
+fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false) {
   options.skipDependencySetup = skipDependencySetup
   options.isTestBuild = true
+
   options.buildStepsToSkip.addAll(listOf(
     BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
     BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
@@ -53,13 +59,14 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
     BuildOptions.MAC_NOTARIZE_STEP,
   ))
   options.buildUnixSnaps = false
-  options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
+  options.outputRootPath = outDir
   options.useCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
 }
 
 suspend inline fun createBuildContext(
-  homePath: Path, productProperties: ProductProperties,
+  homePath: Path,
+  productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
@@ -127,12 +134,14 @@ fun runTestBuild(
   }
   else {
     doRunTestBuild(
-      context = BuildContextImpl.createContext(communityHome = communityHomePath,
-                                               projectHome = homePath,
-                                               productProperties = productProperties,
-                                               proprietaryBuildTools = buildTools,
-                                               setupTracer = false,
-                                               options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer)),
+      context = BuildContextImpl.createContext(
+        communityHome = communityHomePath,
+        projectHome = homePath,
+        productProperties = productProperties,
+        proprietaryBuildTools = buildTools,
+        setupTracer = false,
+        options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer),
+      ),
       writeTelemetry = true,
       traceSpanName = traceSpanName,
       build = { context ->

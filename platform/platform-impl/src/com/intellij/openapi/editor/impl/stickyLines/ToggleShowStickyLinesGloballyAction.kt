@@ -8,20 +8,19 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.DumbAware
 
-// don't show action
-internal class StickyLinesSettingsHideAction : ToggleAction(), DumbAware {
+internal class ToggleShowStickyLinesGloballyAction : ToggleAction(), DumbAware {
 
   override fun isSelected(event: AnActionEvent): Boolean {
     val settings = EditorSettingsExternalizable.getInstance()
     // true -> "don't show"
-    return !settings.areStickyLinesShown()
+    return settings.areStickyLinesShown()
   }
 
-  override fun setSelected(event: AnActionEvent, hide: Boolean) {
+  override fun setSelected(event: AnActionEvent, isSelected: Boolean) {
     val settings = EditorSettingsExternalizable.getInstance()
     val shown = settings.areStickyLinesShown()
-    if (shown == hide) {
-      settings.setStickyLinesShown(!shown)
+    if (shown != isSelected) {
+      settings.setStickyLinesShown(isSelected)
       UISettings.getInstance().fireUISettingsChanged()
     }
   }

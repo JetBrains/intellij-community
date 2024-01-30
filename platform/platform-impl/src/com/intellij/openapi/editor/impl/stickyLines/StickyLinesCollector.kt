@@ -52,7 +52,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
       stickyModel.removeStickyLine(toRemove)
     }
     for (toAdd: StickyLineInfo in linesToAdd) {
-      stickyModel.addStickyLine(toAdd.textOffset, toAdd.endOffset, toAdd.debugText)
+      stickyModel.addStickyLine(toAdd.textOffset, toAdd.endOffset, STICKY_LINE_SOURCE, toAdd.debugText)
     }
     stickyModel.notifyListeners()
   }
@@ -63,7 +63,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
     removeExisting: Boolean,
   ): List<StickyLine> {
     val outdatedLines: MutableList<StickyLine> = mutableListOf()
-    stickyModel.processStickyLines { existingLine: StickyLine ->
+    stickyModel.processStickyLines(STICKY_LINE_SOURCE) { existingLine: StickyLine ->
       if (removeExisting) {
         // remove all existing
         outdatedLines.add(existingLine)
@@ -105,5 +105,9 @@ class StickyLinesCollector(private val project: Project, private val document: D
       }
     }
     return false
+  }
+
+  companion object {
+    private const val STICKY_LINE_SOURCE = "StickyLinesCollectorSource"
   }
 }

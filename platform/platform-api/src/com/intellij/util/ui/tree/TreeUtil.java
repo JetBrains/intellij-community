@@ -1014,6 +1014,11 @@ public final class TreeUtil {
    * @return a promise that will be succeeded when all needed nodes are expanded
    */
   public static @NotNull Promise<?> promiseExpand(@NotNull JTree tree, int depth) {
+    return promiseExpand(tree, depth, path -> depth < Integer.MAX_VALUE || isIncludedInExpandAll(path));
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Promise<?> promiseExpand(@NotNull JTree tree, int depth, @NotNull Predicate<@NotNull TreePath> predicate) {
     AsyncPromise<?> promise = new AsyncPromise<>();
     promiseMakeVisible(tree, new TreeVisitor() {
       @Override
@@ -1023,7 +1028,11 @@ public final class TreeUtil {
 
       @Override
       public @NotNull Action visit(@NotNull TreePath path) {
-        return depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE;
+        return depth < path.getPathCount()
+               ? TreeVisitor.Action.SKIP_SIBLINGS
+               : predicate.test(path)
+               ? TreeVisitor.Action.CONTINUE
+               : TreeVisitor.Action.SKIP_CHILDREN;
       }
     }, promise)
       .onError(promise::setError)
@@ -1032,6 +1041,16 @@ public final class TreeUtil {
         promise.setResult(null);
       });
     return promise;
+  }
+
+  private static boolean isIncludedInExpandAll(@NotNull TreePath path) {
+    var value = getLastUserObject(path);
+    if (value instanceof AbstractTreeNode<?> node) {
+      return node.isIncludedInExpandAll();
+    }
+    else {
+      return true;
+    }
   }
 
   public static @NotNull ActionCallback selectInTree(DefaultMutableTreeNode node, boolean requestFocus, @NotNull JTree tree) {

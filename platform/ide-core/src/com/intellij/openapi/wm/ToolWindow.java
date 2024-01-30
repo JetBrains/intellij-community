@@ -161,6 +161,15 @@ public interface ToolWindow extends BusyObject {
 
   void setStripeTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title);
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @Nullable default Supplier<@NlsContexts.TabTitle String> getStripeShortTitleProvider() {
+    return null;
+  }
+
+  default void setStripeShortTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title) {
+  }
+
   /**
    * @return Whether the window is available or not.
    */

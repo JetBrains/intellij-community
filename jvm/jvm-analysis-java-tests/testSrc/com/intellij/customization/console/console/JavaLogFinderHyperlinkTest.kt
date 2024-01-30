@@ -211,6 +211,47 @@ public final class Slf4JFluent {
     )
   }
 
+  fun testUnicode() {
+    LoggingTestUtils.addSlf4J(myFixture)
+    checkColumnFinderJava(
+      fileName = "Slf4JFluent",
+      classText = """
+package com.example.úsh.čas;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public final class UčenjaУченья {
+    private final static Logger log = LoggerFactory.getLogger(UčenjaУченья.class);
+
+    public static void main(String[] args) {
+        System.out.println(2);
+        log1(1);
+        log2(2);
+    }
+
+    private static void log1(int i) {
+        String msg = "test" + i;
+        log.atInfo()
+                .setMessage(msg)
+                .log();
+    }
+
+    private static void log2(int i) {
+        String msg = "log2" + i;
+        log.atInfo()
+                .log(msg);
+    }
+}
+""".trimIndent(),
+      logItems = listOf(
+        LogItem("java.exe", null),
+        LogItem("1", null),
+        LogItem("20:13:25.878 [main] INFO com.example.úsh.čas.UčenjaУченья - test1", LogicalPosition(16, 8)),
+      )
+    )
+  }
+
   fun testSkipException() {
     LoggingTestUtils.addSlf4J(myFixture)
     checkColumnFinderJava(

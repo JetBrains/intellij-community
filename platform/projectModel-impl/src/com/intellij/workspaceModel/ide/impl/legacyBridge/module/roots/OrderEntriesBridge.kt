@@ -285,20 +285,20 @@ internal class SdkOrderEntryBridge(
   override val rootProvider: RootProvider?
     get() = jdk?.rootProvider
 
-  override fun getPresentableName() = "< ${jdk?.name ?: sdkDependencyItem.sdkName} >"
+  override fun getPresentableName() = "< ${jdk?.name ?: sdkDependencyItem.sdk.name} >"
 
   override fun isValid(): Boolean = jdk != null
 
   override fun getJdk(): Sdk? {
-    val sdkType = sdkDependencyItem.sdkType
-    val sdkName = sdkDependencyItem.sdkName
+    val sdkType = sdkDependencyItem.sdk.type
+    val sdkName = sdkDependencyItem.sdk.name
     val sdk = ModifiableRootModelBridge.findSdk(sdkName, sdkType)
     return getRootModel().accessor.getSdk(sdk, sdkName)
   }
 
-  override fun getJdkName() = sdkDependencyItem.sdkName
+  override fun getJdkName() = sdkDependencyItem.sdk.name
 
-  override fun getJdkTypeName() = sdkDependencyItem.sdkType
+  override fun getJdkTypeName() = sdkDependencyItem.sdk.type
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitJdkOrderEntry(this, initialValue)
 

@@ -36,9 +36,12 @@ import javax.swing.tree.TreePath
 
 class SavedPatchesTree(project: Project,
                        private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
+                       private val isProviderVisible: (SavedPatchesProvider<*>) -> Boolean,
                        parentDisposable: Disposable) : AsyncChangesTree(project, false, false, false) {
   internal val speedSearch: SpeedSearchSupply
   override val changesTreeModel: AsyncChangesTreeModel = SavedPatchesTreeModel()
+
+  internal val visibleProvidersList get() = savedPatchesProviders.filter { isProviderVisible(it) }
 
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, false)
@@ -62,7 +65,11 @@ class SavedPatchesTree(project: Project,
       isEnabled
     }
 
-    savedPatchesProviders.forEach { provider -> provider.subscribeToPatchesListChanges(parentDisposable, ::rebuildTree) }
+    savedPatchesProviders.forEach { provider ->
+      provider.subscribeToPatchesListChanges(parentDisposable) {
+        if (isProviderVisible(provider)) rebuildTree()
+      }
+    }
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
@@ -71,7 +78,7 @@ class SavedPatchesTree(project: Project,
 
   override fun getData(dataId: String): Any? {
     val selectedObjects = selectedPatchObjects()
-    val data = savedPatchesProviders.firstNotNullOfOrNull { provider -> provider.getData(dataId, selectedObjects) }
+    val data = visibleProvidersList.firstNotNullOfOrNull { provider -> provider.getData(dataId, selectedObjects) }
     if (data != null) return data
     if (CommonDataKeys.PROJECT.`is`(dataId)) return myProject
     return super.getData(dataId)
@@ -85,11 +92,18 @@ class SavedPatchesTree(project: Project,
 
   override fun getToggleClickCount(): Int = 2
 
+  internal fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
+    if (!isProviderVisible(provider)) return
+    val tagNode = VcsTreeModelData.findTagNode(this, provider.tag) ?: root
+    expandPath(TreeUtil.getPathFromRoot(tagNode))
+  }
+
   private inner class SavedPatchesTreeModel : SimpleAsyncChangesTreeModel() {
     override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
       val modelBuilder = TreeModelBuilder(project, grouping)
-      if (savedPatchesProviders.any { !it.isEmpty() }) {
-        savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
+      val visibleProviders = visibleProvidersList
+      if (visibleProviders.any { !it.isEmpty() }) {
+        visibleProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder, visibleProviders.size > 1) }
       }
       return modelBuilder.build()
     }

@@ -43,8 +43,8 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     val bundle = loadXMLSuite()
     val consumer = PackageAnnotationConsumer()
     XMLReportAnnotator.getInstance(myProject).annotate(bundle, manager, consumer)
-    assertEquals(3, consumer.myDirectoryCoverage.size)
     assertEquals(FULL_REPORT, consumer.collectInfo())
+    assertEquals(3, consumer.myDirectoryCoverage.size)
   }
 
   @Test
@@ -54,7 +54,6 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     val bundle = loadIJSuite(filters)
     val consumer = PackageAnnotationConsumer()
     JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite()
-    assertEquals(1, consumer.myDirectoryCoverage.size)
     assertEquals("""
       Classes: 
       foo.bar.BarClass: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
@@ -66,6 +65,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
       foo.bar: TC=1 CC=1 TM=3 CM=1 TL=3 CL=1 TB=0 CB=0 
       
     """.trimIndent(), consumer.collectInfo())
+    assertEquals(1, consumer.myDirectoryCoverage.size)
   }
 
   @Test
@@ -85,8 +85,8 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     val bundle = loadJaCoCoSuite()
     val consumer = PackageAnnotationConsumer()
     JavaCoverageReportEnumerator.collectSummaryInReport(bundle, myProject, consumer)
-    assertEquals(3, consumer.myDirectoryCoverage.size)
     assertEquals(IGNORE_CONSTRUCTOR_REPORT, consumer.collectInfo())
+    assertEquals(3, consumer.myDirectoryCoverage.size)
   }
 
   @Test
@@ -131,7 +131,6 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     run {
       val consumer = PackageAnnotationConsumer()
       JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
-      assertEquals(2, consumer.myDirectoryCoverage.size)
       assertEquals("""
         Classes: 
         foo.FooClass: TC=1 CC=0 TM=2 CM=0 TL=2 CL=0 TB=2 CB=0 
@@ -146,6 +145,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
         foo.bar: TC=2 CC=1 TM=7 CM=1 TL=7 CL=1 TB=0 CB=0 
 
       """.trimIndent(), consumer.collectInfo())
+      assertEquals(2, consumer.myDirectoryCoverage.size)
     }
 
     val fooTestSummary = """
@@ -168,8 +168,8 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     run {
       val consumer = PackageAnnotationConsumer()
       JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
-      assertEquals(2, consumer.myDirectoryCoverage.size)
       assertEquals(fooTestSummary, consumer.collectInfo())
+      assertEquals(2, consumer.myDirectoryCoverage.size)
     }
 
     waitSuiteProcessing {
@@ -178,8 +178,8 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     run {
       val consumer = PackageAnnotationConsumer()
       JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
-      assertEquals(2, consumer.myDirectoryCoverage.size)
       assertEquals(fooTestSummary, consumer.collectInfo())
+      assertEquals(2, consumer.myDirectoryCoverage.size)
     }
 
     waitSuiteProcessing {
@@ -260,9 +260,9 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors = ignoreConstructor
     val consumer = PackageAnnotationConsumer()
     JavaCoverageClassesAnnotator(suite, myProject, consumer).visitSuite()
-    assertEquals(2, consumer.myDirectoryCoverage.size)
     val expected = if (ignoreConstructor) if (ignoreBranches) IGNORE_BRANCHES_REPORT else IGNORE_CONSTRUCTOR_REPORT else FULL_REPORT
     assertEquals(expected, consumer.collectInfo(ignoreBranches))
+    assertEquals(2, consumer.myDirectoryCoverage.size)
   }
 }
 

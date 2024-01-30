@@ -10,11 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
-open class SaveSessionProducerManager {
+open class SaveSessionProducerManager(private val isUseVfsForWrite: Boolean) {
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
-
-  // withing a single component store, individual storages might be heterogeneous, hence computing on the fly
-  private var isVfsRequired = false
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
     var producer = producers[storage]
@@ -22,9 +19,6 @@ open class SaveSessionProducerManager {
       producer = storage.createSaveSessionProducer() ?: return null
       val prev = producers.put(storage, producer)
       check(prev == null)
-      if (storage.isUseVfsForWrite) {
-        isVfsRequired = true
-      }
     }
     return producer
   }
@@ -59,7 +53,7 @@ open class SaveSessionProducerManager {
   }
 
   protected suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
-    if (isVfsRequired) {
+    if (isUseVfsForWrite) {
       writeAction {
         for (saveSession in saveSessions) {
           executeSaveBlocking(saveSession, saveResult)

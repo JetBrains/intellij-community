@@ -451,8 +451,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final IdeaModule ideaModule = pair.second;
 
       if (gradleHomeDir == null) {
-        final BuildScriptClasspathModel buildScriptClasspathModel =
-          resolverCtx.getExtraProject(ideaModule, BuildScriptClasspathModel.class);
+        final GradleBuildScriptClasspathModel buildScriptClasspathModel =
+          resolverCtx.getExtraProject(ideaModule, GradleBuildScriptClasspathModel.class);
         if (buildScriptClasspathModel != null) {
           gradleHomeDir = buildScriptClasspathModel.getGradleHomeDir();
         }

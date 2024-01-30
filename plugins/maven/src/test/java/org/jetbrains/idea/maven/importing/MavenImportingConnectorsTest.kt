@@ -139,7 +139,9 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     val value = Registry.`is`("maven.server.per.idea.project")
     try {
       Registry.get("maven.server.per.idea.project").setValue(true)
-      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
+      waitForImportWithinTimeout {
+        MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
+      }
       assertModules("project1", "m1", "project2", "m2")
 
       assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
@@ -154,7 +156,6 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     finally {
       Registry.get("maven.server.per.idea.project").setValue(value)
     }
-
   }
 
 

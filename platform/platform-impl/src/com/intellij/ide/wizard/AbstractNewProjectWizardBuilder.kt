@@ -18,10 +18,11 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   private var panel: NewProjectWizardStepPanel? = null
 
   abstract override fun getPresentableName(): String
-  abstract override fun getDescription(): String
   abstract override fun getNodeIcon(): Icon
 
   protected abstract fun createStep(context: WizardContext): NewProjectWizardStep
+
+  override fun getDescription(): String = ""
 
   final override fun getModuleType(): ModuleType<AbstractNewProjectWizardBuilder> =
     object : ModuleType<AbstractNewProjectWizardBuilder>(NPW_PREFIX + javaClass.simpleName) {

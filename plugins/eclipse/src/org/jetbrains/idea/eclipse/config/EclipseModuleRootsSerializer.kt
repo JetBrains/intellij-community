@@ -317,7 +317,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           else if (path.startsWith(EclipseXml.JRE_CONTAINER)) {
             val jdkName = AbstractEclipseClasspathReader.getLastPathComponent(path)
             dependencies.removeIf { it is ModuleDependencyItem.SdkDependency || it == ModuleDependencyItem.InheritedSdkDependency }
-            dependencies.add(if (jdkName != null) ModuleDependencyItem.SdkDependency(jdkName, IdeaXml.JAVA_SDK_TYPE)
+            dependencies.add(if (jdkName != null) ModuleDependencyItem.SdkDependency(SdkId(jdkName, IdeaXml.JAVA_SDK_TYPE))
                              else ModuleDependencyItem.InheritedSdkDependency)
           }
           else if (path.startsWith(EclipseXml.USER_LIBRARY)) {
@@ -621,7 +621,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           }
         }
         is ModuleDependencyItem.SdkDependency -> {
-          val jdkLink = "${EclipseXml.JRE_CONTAINER}${if (item.sdkType == "JavaSDK") EclipseXml.JAVA_SDK_TYPE else ""}/${item.sdkName}"
+          val jdkLink = "${EclipseXml.JRE_CONTAINER}${if (item.sdk.type == "JavaSDK") EclipseXml.JAVA_SDK_TYPE else ""}/${item.sdk.name}"
           addClasspathEntry(EclipseXml.CON_KIND, jdkLink)
         }
       }

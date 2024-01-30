@@ -216,6 +216,11 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     }
 
     @Override
+    public boolean isIncludedInExpandAll() {
+      return false;
+    }
+
+    @Override
     public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
       return NodeSortOrder.SCRATCH_ROOT;
     }

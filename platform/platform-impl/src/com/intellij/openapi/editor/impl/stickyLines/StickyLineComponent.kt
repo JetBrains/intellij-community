@@ -209,6 +209,15 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
             popMenu.show(event.component, event.x, event.y)
           }
         }
+        MouseEvent.MOUSE_RELEASED -> {
+          // From review: on some platform RELEASED event can be a popup trigger
+          if (!isPopup) {
+            isPopup = event.isPopupTrigger
+            if (isPopup) {
+              popMenu.show(event.component, event.x, event.y)
+            }
+          }
+        }
         MouseEvent.MOUSE_CLICKED -> {
           if (!isPopup && !isEmpty()) {
             editor.caretModel.moveToOffset(offsetOnClick)
@@ -216,7 +225,6 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
             editor.selectionModel.removeSelection(/* allCarets = */ true)
           }
         }
-        MouseEvent.MOUSE_RELEASED,
         MouseEvent.MOUSE_DRAGGED, -> {}
       }
       event.consume()

@@ -349,8 +349,8 @@ public final class GradleProjectResolverUtil {
                                             @NotNull final LibraryData library,
                                             @NotNull final ProjectResolverContext resolverCtx) {
     if (libFile == null || !libFile.getName().startsWith("gradle-")) return;
-    final BuildScriptClasspathModel buildScriptClasspathModel =
-      resolverCtx.getExtraProject(gradleModule, BuildScriptClasspathModel.class);
+    final GradleBuildScriptClasspathModel buildScriptClasspathModel =
+      resolverCtx.getExtraProject(gradleModule, GradleBuildScriptClasspathModel.class);
     if (buildScriptClasspathModel == null) return;
     final File gradleHomeDir = buildScriptClasspathModel.getGradleHomeDir();
     if (gradleHomeDir == null) return;

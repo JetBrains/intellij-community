@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.configurationStore
 
@@ -87,19 +87,10 @@ open class ApplicationStoreImpl(private val app: Application)
   override fun toString() = "app"
 }
 
-internal val appFileBasedStorageConfiguration = object: FileBasedStorageConfiguration {
-  override val isUseVfsForWrite: Boolean
-    get() = false
-}
-
 @VisibleForTesting
 class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null, settingsController: SettingsController?)
-  : StateStorageManagerImpl(rootTagName = "application",
-                            macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(),
-                            componentManager = null,
-                            settingsController = settingsController) {
-  override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
-
+  : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, settingsController)
+{
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
     @Suppress("DEPRECATION")
     return when (component) {

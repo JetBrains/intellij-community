@@ -9,13 +9,10 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -34,6 +31,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.AdvancedSettingsPredicate
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
@@ -53,6 +51,8 @@ import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.ui.isStashTabAvailable
+import git4idea.stash.ui.setStashesAndShelvesTabEnabled
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import java.awt.event.FocusAdapter
@@ -77,7 +77,7 @@ private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = 
 private val cdOverrideCredentialHelper                                  get() = CheckboxDescriptor(message("settings.credential.helper"), { applicationSettings.isUseCredentialHelper }, { applicationSettings.isUseCredentialHelper = it }, groupName = gitOptionGroupName)
 private fun synchronizeBranchProtectionRules(project: Project)                = CheckboxDescriptor(message("settings.synchronize.branch.protection.rules"), {gitSharedSettings(project).isSynchronizeBranchProtectionRules}, { gitSharedSettings(project).isSynchronizeBranchProtectionRules = it }, groupName = gitOptionGroupName, comment = message("settings.synchronize.branch.protection.rules.description"))
 private val cdEnableStagingArea                                         get() = CheckboxDescriptor(message("settings.enable.staging.area"), { applicationSettings.isStagingAreaEnabled }, { enableStagingArea(it) }, groupName = gitOptionGroupName, comment = message("settings.enable.staging.area.comment"))
-// @formatter:on
+private val cdCombineStashesAndShelves                                  get() = CheckboxDescriptor(message("settings.enable.stashes.and.shelves"), { applicationSettings.isCombinedStashesAndShelvesTabEnabled }, { setStashesAndShelvesTabEnabled(it) }, groupName = gitOptionGroupName)// @formatter:on
 
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
   val list = mutableListOf(
@@ -243,6 +243,11 @@ internal class GitVcsPanel(private val project: Project) :
     row {
       checkBox(cdOverrideCredentialHelper)
     }
+    if (isStashTabAvailable()) {
+      row {
+        checkBox(cdCombineStashesAndShelves)
+      }
+    }
     for (configurable in configurables) {
       appendDslConfigurable(configurable)
     }
@@ -357,17 +362,4 @@ class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : C
   }
 
   override fun invoke(): Boolean = GitRepositoryManager.getInstance(project).repositories.size != 0
-}
-
-class AdvancedSettingsPredicate(val id: String, val disposable: Disposable) : ComponentPredicate() {
-  override fun addListener(listener: (Boolean) -> Unit) {
-    ApplicationManager.getApplication().messageBus.connect(disposable)
-      .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
-        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-          listener(invoke())
-        }
-      })
-  }
-
-  override fun invoke(): Boolean = AdvancedSettings.getBoolean(id)
 }

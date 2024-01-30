@@ -79,7 +79,7 @@ public final class ByteContentRetriever {
     myVcs.accept(new ChangeVisitor() {
       @Override
       public void begin(ChangeSet c) {
-        if (c.affectsPath(myPath)) changes.add(c);
+        if (c.anyChangeMatches(change -> change.affectsPath(myPath))) changes.add(c);
       }
     });
     return changes;

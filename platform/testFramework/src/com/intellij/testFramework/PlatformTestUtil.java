@@ -25,6 +25,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
+import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.model.psi.PsiSymbolReferenceService;
@@ -274,7 +275,16 @@ public final class PlatformTestUtil {
   }
 
   public static void expandAll(@NotNull JTree tree) {
-    waitForPromise(TreeUtil.promiseExpandAll(tree));
+    expandAll(tree, path -> !(TreeUtil.getLastUserObject(path) instanceof ExternalLibrariesNode));
+  }
+
+  public static void expandAll(@NotNull JTree tree, @NotNull Predicate<@NotNull TreePath> predicate) {
+    // Ignore AbstractTreeNode.isIncludedInExpandAll because some tests need to expand
+    // more than that, but not the External Libraries node which is huge and only wastes time.
+    waitForPromise(TreeUtil.promiseExpand(
+      tree,
+      Integer.MAX_VALUE,
+      predicate));
   }
 
   private static long getMillisSince(long startTimeMillis) {

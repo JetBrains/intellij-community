@@ -15,14 +15,10 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import javax.swing.*
 
 class ProductChooserPage(val controller: ImportSettingsController) : OnboardingPage {
 
@@ -78,6 +74,10 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
     act.targetComponent = pane
 
     pane.add(act.component)
+
+    SwingUtilities.invokeLater {
+      act.component.requestFocus()
+    }
   }
 
   private val south = JPanel(BorderLayout()).apply {
@@ -92,7 +92,7 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
     add(at.component, BorderLayout.EAST)
 
     border = JBUI.Borders.empty(0, 20, 10, 0)
-    preferredHeight = JBUI.scale(47)
+    preferredSize = Dimension(preferredSize.width, JBUI.scale(47))
   }
 
   private val contentPage = JPanel(GridBagLayout()).apply {

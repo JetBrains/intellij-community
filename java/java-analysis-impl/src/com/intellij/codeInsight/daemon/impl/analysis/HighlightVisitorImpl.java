@@ -248,7 +248,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
     myJavaSdkVersion = ObjectUtils
       .notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
-    myJavaModule = myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
+    myJavaModule = myLanguageLevel.isAtLeast(HighlightingFeature.MODULES.getLevel()) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
     myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new HighlightingFeature.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
   }
 
@@ -1133,7 +1133,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
     super.visitPackageStatement(statement);
     add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement, myFile));
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+    if (myLanguageLevel.isAtLeast(HighlightingFeature.MODULES.getLevel())) {
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkPackageStatement(statement, myFile, myJavaModule));
     }
     if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkPackageNotAllowedInImplicitClass(statement, myFile));
@@ -1957,7 +1957,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
     super.visitRequiresStatement(statement);
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+    if (myLanguageLevel.isAtLeast(HighlightingFeature.MODULES.getLevel())) {
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
       if (!hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
         ModuleHighlightUtil.checkModifiers(statement, myErrorSink);
@@ -1968,7 +1968,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
     super.visitPackageAccessibilityStatement(statement);
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+    if (myLanguageLevel.isAtLeast(HighlightingFeature.MODULES.getLevel())) {
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkHostModuleStrength(statement));
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkPackageReference(statement, myFile));
       if (!hasErrorResults()) ModuleHighlightUtil.checkPackageAccessTargets(statement, myErrorSink);
@@ -1978,7 +1978,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitUsesStatement(@NotNull PsiUsesStatement statement) {
     super.visitUsesStatement(statement);
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+    if (myLanguageLevel.isAtLeast(HighlightingFeature.MODULES.getLevel())) {
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkServiceReference(statement.getClassReference()));
     }
   }
@@ -1986,7 +1986,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitProvidesStatement(@NotNull PsiProvidesStatement statement) {
     super.visitProvidesStatement(statement);
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+    if (myLanguageLevel.isAtLeast(HighlightingFeature.MODULES.getLevel())) {
       if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
     }
   }

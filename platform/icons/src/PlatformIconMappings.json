@@ -525,6 +525,9 @@
       "webService.svg": "javaee/WebService.svg",
       "webServiceClient.svg": "javaee/WebServiceClient.svg"
     },
+    "language": {
+      "php.svg": "language/php.svg"
+    },
     "nodes": {
       "abstractException.svg": "nodes/abstractException.svg",
       "accessLocal.svg": "nodes/c_plocal.svg",

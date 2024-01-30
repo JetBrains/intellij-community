@@ -8,19 +8,23 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import java.awt.*
+import javax.swing.*
 
 class KeymapPane(val keymap: Keymap) {
   private val KEY_BACKGROUND = JBColor(0xDFE1E5, 0x4E5157)
 
   private val names = mutableListOf<ShortcutItem>()
+
+  val jRadioButton = object : JRadioButton() {
+    override fun paintComponent(g: Graphics?) {}
+
+    init {
+      minimumSize = Dimension(0, 0)
+      preferredSize = minimumSize
+      maximumSize = minimumSize
+    }
+  }
 
   var active: Boolean = false
     set(value) {
@@ -38,56 +42,60 @@ class KeymapPane(val keymap: Keymap) {
                                                   RoundedPanel.RADIUS)
 
 
+  val mainPanel = JPanel()
+
   private val keyMapGridBagLayout = GridBagLayout()
-  val pane = JPanel().apply {
-    setFocusable(true)
+  val pane = JPanel(BorderLayout()).apply {
+    add(mainPanel.apply {
+      layout = VerticalLayout(0)
+      border = regularBorder
 
-    layout = VerticalLayout(0)
-    border = regularBorder
+      add(JLabel(keymap.name).apply {
+        font = JBFont.label().asBold()
+        border = JBUI.Borders.empty(13, 0)
+        horizontalAlignment = SwingConstants.CENTER
+        minimumSize = Dimension(0, 0)
+      })
 
-    add(JLabel(keymap.name).apply {
-      font = JBFont.label().asBold()
-      border = JBUI.Borders.empty(11, 0, 13, 0)
-      horizontalAlignment = SwingConstants.CENTER
-      minimumSize = Dimension(0, 0)
-    })
+      add(JPanel(keyMapGridBagLayout).apply {
+        isOpaque = false
+        minimumSize = Dimension(0, 0)
+        val gbc1 = GridBagConstraints()
+        gbc1.insets = JBUI.insetsBottom(14)
+        gbc1.gridy = 0
 
-    add(JPanel(keyMapGridBagLayout).apply {
-      isOpaque = false
-      minimumSize = Dimension(0, 0)
-      val gbc1 = GridBagConstraints()
-      gbc1.insets = JBUI.insetsBottom(14)
-      gbc1.gridy = 0
+        keymap.shortcut.forEach {
+          gbc1.weightx = 1.0
+          gbc1.weighty = 0.0
+          gbc1.gridx = 0
+          gbc1.anchor = GridBagConstraints.CENTER
+          gbc1.fill = GridBagConstraints.HORIZONTAL
+          val name = JLabel(it.name)
+          add(name, gbc1)
 
-      keymap.shortcut.forEach {
-        gbc1.weightx = 1.0
-        gbc1.weighty = 0.0
-        gbc1.gridx = 0
-        gbc1.anchor = GridBagConstraints.CENTER
-        gbc1.fill = GridBagConstraints.HORIZONTAL
-        val name = JLabel(it.name)
-        add(name, gbc1)
+          gbc1.gridx = 1
+          gbc1.weightx = 0.0
+          gbc1.weighty = 0.0
+          gbc1.fill = GridBagConstraints.NONE
 
-        gbc1.gridx = 1
-        gbc1.weightx = 0.0
-        gbc1.weighty = 0.0
-        gbc1.fill = GridBagConstraints.NONE
+          val keyPanel = JPanel(VerticalLayout(0)).apply {
+            isOpaque = false
+            add(JLabel(it.value).apply {
+              font = JBFont.medium()
+              border = JBUI.Borders.empty(0, 4)
+            })
+            border = FilledRoundedBorder({KEY_BACKGROUND}, {KEY_BACKGROUND}, 2, 7)
+          }
+          border = JBUI.Borders.empty(0, 8)
 
-        val keyPanel = JPanel(VerticalLayout(0)).apply {
-          isOpaque = false
-          add(JLabel(it.value).apply {
-            font = JBFont.medium()
-            border = JBUI.Borders.empty(0, 4)
-          })
-          border = FilledRoundedBorder({KEY_BACKGROUND}, {KEY_BACKGROUND}, 2, 7)
+          names.add(ShortcutItem(name, keyPanel))
+          add(keyPanel, gbc1)
+          gbc1.gridy += 1
         }
-        border = JBUI.Borders.empty(0, 8)
+      })
 
-        names.add(ShortcutItem(name, keyPanel))
-        add(keyPanel, gbc1)
-        gbc1.gridy += 1
-      }
-    })
+    }, BorderLayout.CENTER)
+    add(jRadioButton, BorderLayout.SOUTH)
   }
 
   init {
@@ -102,7 +110,8 @@ class KeymapPane(val keymap: Keymap) {
       constraints.anchor = if(active) GridBagConstraints.LINE_START else GridBagConstraints.CENTER
       keyMapGridBagLayout.setConstraints(it.value, constraints)
     }
-    pane.border = if (active) activeBorder else regularBorder
+    mainPanel.border = if (active) activeBorder else regularBorder
+    jRadioButton.isSelected = active
   }
 
   private data class ShortcutItem(val name: JComponent, val value: JComponent)

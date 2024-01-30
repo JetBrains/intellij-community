@@ -14,6 +14,7 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class VersionMatcherRule extends TestWatcher {
 
@@ -52,5 +53,21 @@ public class VersionMatcherRule extends TestWatcher {
         return item instanceof String && new VersionMatcher(GradleVersion.version(item.toString())).isVersionMatch(targetVersions);
       }
     };
+  }
+
+  public static @NotNull List<String> getSupportedGradleVersions() {
+    String gradleVersionsString = System.getProperty("gradle.versions.to.run");
+    if (gradleVersionsString != null && !gradleVersionsString.isEmpty()) {
+      if (gradleVersionsString.startsWith("LAST:")) {
+        int last = Integer.parseInt(gradleVersionsString.substring("LAST:".length()));
+        List<String> all = Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
+        return all.subList(all.size() - last, all.size());
+      }
+      else {
+        String[] gradleVersionsToRun = gradleVersionsString.split(",");
+        return Arrays.asList(gradleVersionsToRun);
+      }
+    }
+    return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
 }

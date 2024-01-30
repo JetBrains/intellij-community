@@ -5,9 +5,9 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
@@ -58,6 +58,7 @@ import java.util.zip.Deflater
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.name
 import kotlin.io.path.walk
+import kotlin.time.Duration.Companion.seconds
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
@@ -66,11 +67,6 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
 
   override suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
     zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = includeLibraries, context = context)
-  }
-
-  override suspend fun compileModulesFromProduct() {
-    checkProductProperties(context)
-    compileModulesForDistribution(context)
   }
 
   override suspend fun buildDistributions() {
@@ -82,8 +78,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
-    val distState = createDistributionBuilderState(pluginsToPublish = pluginsToPublish,
-                                                   context = context)
+    val distState = createDistributionBuilderState(pluginsToPublish = pluginsToPublish, context = context)
     val compilationTasks = CompilationTasks.create(context = context)
     compilationTasks.compileModules(
       moduleNames = distState.getModulesForPluginsToPublish() + listOf("intellij.idea.community.build.tasks",
@@ -144,11 +139,9 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
       val propertiesFile = createIdeaPropertyFile(context)
       val builder = getOsDistributionBuilder(os = currentOs, ideaProperties = propertiesFile, context = context)!!
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      context.bundledRuntime.extractTo(os = currentOs,
-                                       destinationDir = targetDirectory.resolve("jbr"),
-                                       arch = arch)
+      context.bundledRuntime.extractTo(os = currentOs, destinationDir = targetDirectory.resolve("jbr"), arch = arch)
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch = arch).keys)
-      builder.checkExecutablePermissions(targetDirectory, root = "", includeRuntime = true, arch = arch)
+      builder.checkExecutablePermissions(distribution = targetDirectory, root = "", includeRuntime = true, arch = arch)
       builder.writeProductInfoFile(targetDirectory, arch)
     }
     else {
@@ -580,7 +573,8 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
         runApplicationStarter(context = context,
                               tempDir = context.paths.tempDir.resolve("builtinModules"),
                               ideClasspath = ideClasspath,
-                              arguments = listOf("listBundledPlugins", providedModuleFile.toString()))
+                              arguments = listOf("listBundledPlugins", providedModuleFile.toString()),
+                              timeout = 30.seconds)
         productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
         try {
           val builtinModuleData = readBuiltinModulesFile(file = providedModuleFile)

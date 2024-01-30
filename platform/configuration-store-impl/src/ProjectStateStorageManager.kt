@@ -10,18 +10,17 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import org.jdom.Element
 import java.nio.file.Path
 
-// extended in upsource
-open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
-                                      private val project: Project,
-                                      useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl(ROOT_TAG_NAME, macroSubstitutor, if (useVirtualFileTracker) project else null) {
+class ProjectStateStorageManager(
+  macroSubstitutor: PathMacroSubstitutor,
+  private val project: Project,
+  useVirtualFileTracker: Boolean = true
+) : StateStorageManagerImpl(ROOT_TAG_NAME, macroSubstitutor, componentManager = if (useVirtualFileTracker) project else null) {
   companion object {
     internal const val VERSION_OPTION = "version"
     const val ROOT_TAG_NAME = "project"
   }
 
-  override fun getFileBasedStorageConfiguration(fileSpec: String): FileBasedStorageConfiguration =
-    if (isSpecialStorage(fileSpec)) appFileBasedStorageConfiguration
-    else defaultFileBasedStorageConfiguration
+  override fun isUseVfsForWrite(): Boolean = true
 
   override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
 

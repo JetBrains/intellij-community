@@ -14,11 +14,9 @@ import java.nio.file.Path
 
 @NonNls private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
-private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) :
-  FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED)
+private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager)
+  : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED)
 {
-  override val configuration = appFileBasedStorageConfiguration
-
   public override fun loadLocalData(): Element? {
     val element = super.loadLocalData() ?: return null
     try {

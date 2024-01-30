@@ -85,6 +85,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   private val focusTask by lazy { FocusTask(this) }
   val focusAlarm: SingleAlarm by lazy { SingleAlarm(focusTask, 0, disposable) }
 
+  private var stripeShortTitleProvider: Supplier<@NlsContexts.TabTitle String>? = null
+
   override fun getId(): String = id
 
   override fun getProject(): Project = toolWindowManager.project
@@ -515,6 +517,12 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun setStripeTitleProvider(title: Supplier<String>) {
     stripeTitleProvider = title
+  }
+
+  override fun getStripeShortTitleProvider() = stripeShortTitleProvider
+
+  override fun setStripeShortTitleProvider(title: Supplier<String>) {
+    stripeShortTitleProvider = title
   }
 
   override fun updateContentUi() {

@@ -25,7 +25,8 @@ import java.io.Serializable;
 /**
  * @author Vladislav.Soroka
  */
-public interface BuildScriptClasspathModel extends Serializable {
+public interface GradleBuildScriptClasspathModel extends Serializable {
+
   DomainObjectSet<? extends ClasspathEntryModel> getClasspath();
 
   @Nullable

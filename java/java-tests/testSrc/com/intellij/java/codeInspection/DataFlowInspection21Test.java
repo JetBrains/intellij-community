@@ -54,6 +54,10 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
   
+  public void testDeconstructionNullability() {
+    doTest();
+  }
+  
   public void testUnnamedPatterns() {
     doTest();
   }

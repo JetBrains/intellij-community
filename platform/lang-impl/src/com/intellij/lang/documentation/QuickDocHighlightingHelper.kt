@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
@@ -160,6 +160,7 @@ object QuickDocHighlightingHelper {
   fun StringBuilder.appendStyledSignatureFragment(contents: String, textAttributesKey: TextAttributesKey): StringBuilder =
     appendStyledSpan(DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), textAttributesKey,
                      contents, false)
+
   /**
    * This method should be used when generating Quick Doc element signatures.
    * Any special HTML characters, like `<` or `>` are escaped.
@@ -170,7 +171,7 @@ object QuickDocHighlightingHelper {
   @JvmStatic
   @RequiresReadLock
   fun getStyledSignatureFragment(project: Project, language: Language?, code: String): @NlsSafe String =
-    StringBuilder().apply { appendStyledSignatureFragment(project, language, code)}
+    StringBuilder().apply { appendStyledSignatureFragment(project, language, code) }
       .toString()
 
   /**
@@ -266,6 +267,33 @@ object QuickDocHighlightingHelper {
             .filter { languageMatches(language, it) }
         )
         .firstOrNull()
+
+  @Internal
+  @JvmStatic
+  fun getDefaultFormattingStyles(): List<String> {
+    val fontSize = StartupUiUtil.labelFont.getSize()
+    return listOf(
+      "h6 { font-size: ${fontSize + 2}}",
+      "h5 { font-size: ${fontSize + 4}}",
+      "h4 { font-size: ${fontSize + 6}}",
+      "h3 { font-size: ${fontSize + 8}}",
+      "h2 { font-size: ${fontSize + 10}}",
+      "h1 { font-size: ${fontSize + 12}}",
+      "h1, h2, h3, h4, h5, h6 {margin-top: 0; margin-bottom: 0; padding-top: 6}",
+      "p { padding: 6px 0 2px 0; }",
+      "ol { padding: 0px; margin-top: 6px; margin-bottom: 2px; }",
+      "ul { padding: 0px; margin-top: 6px; margin-bottom: 2px; }",
+      "li { padding: 1px 0 2px 0; }",
+      "li p { padding-top: 0 }",
+      "table p { padding-bottom: 0}",
+      "th { text-align: left; }",
+      "tr { margin: 0 0 0 0; padding: 0 0 0 0; }",
+      "td { margin: 4px 0 0 0; padding: 2 0 2 0; }",
+      "td p { padding-top: 0 }",
+      "td pre { padding: 1px 0 0 0; margin: 0 0 0 0 }",
+      ".centered { text-align: center}",
+    )
+  }
 
   @Internal
   @JvmStatic

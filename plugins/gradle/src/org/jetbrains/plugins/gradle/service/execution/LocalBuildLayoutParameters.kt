@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import org.gradle.util.DistributionLocator
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.PathAssembler
 import org.gradle.wrapper.WrapperConfiguration
@@ -32,7 +31,7 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
     when (distributionType) {
       DistributionType.DEFAULT_WRAPPED -> GradleUtil.getWrapperConfiguration(projectPath)
       DistributionType.BUNDLED -> WrapperConfiguration().apply {
-        distribution = DistributionLocator().getDistributionFor(GradleVersion.current())
+        distribution = GradleUtil.getWrapperDistributionUri(GradleVersion.current())
       }
       else -> null
     }

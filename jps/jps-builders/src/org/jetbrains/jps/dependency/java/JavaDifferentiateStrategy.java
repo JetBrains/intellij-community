@@ -964,21 +964,6 @@ public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
     return true;
   }
 
-  private void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason) {
-    affectNodeSources(context, clsId, affectReason, false);
-  }
-  
-  private void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, boolean forceAffect) {
-    Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
-    Predicate<? super NodeSource> affectionFilter = context.getParams().affectionFilter();
-    for (NodeSource source : filter(context.getGraph().getSources(clsId), affectionFilter::test)) {
-      if (forceAffect || !context.isCompiled(source) && !deletedSources.contains(source)) {
-        context.affectNodeSource(source);
-        debug(affectReason, source);
-      }
-    }
-  }
-
   private void affectModule(DifferentiateContext context, Utils utils, JvmModule mod) {
     debug("Affecting module ", mod.getName());
     for (NodeSource source : utils.getNodeSources(mod.getReferenceID())) {

@@ -14,7 +14,6 @@ abstract class GeneratorNewProjectWizardBuilderAdapter(val wizard: GeneratorNewP
   override fun getWeight(): Int = Int.MAX_VALUE - wizard.ordinal
   override fun getBuilderId(): String = NPW_PREFIX + wizard.id
   override fun getPresentableName(): String = wizard.name
-  override fun getDescription(): String = wizard.description ?: ""
   override fun getGroupName(): String = wizard.groupName ?: super.getGroupName()
   override fun getNodeIcon(): Icon = wizard.icon
   override fun isAvailable(): Boolean = wizard.isEnabled()

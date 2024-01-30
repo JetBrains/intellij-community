@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
@@ -21,10 +21,8 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
-import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
-import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
@@ -37,26 +35,11 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
   private companion object {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val CUSTOMIMLDATA_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
-                                                                                 ModuleCustomImlDataEntity::class.java,
-                                                                                 ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val GROUPPATH_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java,
-                                                                             ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val EXMODULEOPTIONS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
-                                                                                   ExternalSystemModuleOptionsEntity::class.java,
-                                                                                   ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val TESTPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
-                                                                                  TestModulePropertiesEntity::class.java,
-                                                                                  ConnectionId.ConnectionType.ONE_TO_ONE, false)
     internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
-      CUSTOMIMLDATA_CONNECTION_ID,
-      GROUPPATH_CONNECTION_ID,
-      EXMODULEOPTIONS_CONNECTION_ID,
-      TESTPROPERTIES_CONNECTION_ID,
       FACETS_CONNECTION_ID,
     )
 
@@ -82,18 +65,6 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
 
   override val contentRoots: List<ContentRootEntity>
     get() = snapshot.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList()
-
-  override val customImlData: ModuleCustomImlDataEntity?
-    get() = snapshot.extractOneToOneChild(CUSTOMIMLDATA_CONNECTION_ID, this)
-
-  override val groupPath: ModuleGroupPathEntity?
-    get() = snapshot.extractOneToOneChild(GROUPPATH_CONNECTION_ID, this)
-
-  override val exModuleOptions: ExternalSystemModuleOptionsEntity?
-    get() = snapshot.extractOneToOneChild(EXMODULEOPTIONS_CONNECTION_ID, this)
-
-  override val testProperties: TestModulePropertiesEntity?
-    get() = snapshot.extractOneToOneChild(TESTPROPERTIES_CONNECTION_ID, this)
 
   override val facets: List<FacetEntity>
     get() = snapshot.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList()
@@ -285,146 +256,6 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
         changedProperty.add("contentRoots")
       }
 
-    override var customImlData: ModuleCustomImlDataEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(CUSTOMIMLDATA_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                       CUSTOMIMLDATA_CONNECTION_ID)] as? ModuleCustomImlDataEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, CUSTOMIMLDATA_CONNECTION_ID)] as? ModuleCustomImlDataEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CUSTOMIMLDATA_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(CUSTOMIMLDATA_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CUSTOMIMLDATA_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, CUSTOMIMLDATA_CONNECTION_ID)] = value
-        }
-        changedProperty.add("customImlData")
-      }
-
-    override var groupPath: ModuleGroupPathEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(GROUPPATH_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                   GROUPPATH_CONNECTION_ID)] as? ModuleGroupPathEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, GROUPPATH_CONNECTION_ID)] as? ModuleGroupPathEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, GROUPPATH_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(GROUPPATH_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, GROUPPATH_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, GROUPPATH_CONNECTION_ID)] = value
-        }
-        changedProperty.add("groupPath")
-      }
-
-    override var exModuleOptions: ExternalSystemModuleOptionsEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(EXMODULEOPTIONS_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                         EXMODULEOPTIONS_CONNECTION_ID)] as? ExternalSystemModuleOptionsEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, EXMODULEOPTIONS_CONNECTION_ID)] as? ExternalSystemModuleOptionsEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, EXMODULEOPTIONS_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(EXMODULEOPTIONS_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, EXMODULEOPTIONS_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, EXMODULEOPTIONS_CONNECTION_ID)] = value
-        }
-        changedProperty.add("exModuleOptions")
-      }
-
-    override var testProperties: TestModulePropertiesEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(TESTPROPERTIES_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                        TESTPROPERTIES_CONNECTION_ID)] as? TestModulePropertiesEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, TESTPROPERTIES_CONNECTION_ID)] as? TestModulePropertiesEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, TESTPROPERTIES_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(TESTPROPERTIES_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, TESTPROPERTIES_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, TESTPROPERTIES_CONNECTION_ID)] = value
-        }
-        changedProperty.add("testProperties")
-      }
-
     // List of non-abstract referenced types
     var _facets: List<FacetEntity>? = emptyList()
     override var facets: List<FacetEntity>
@@ -502,6 +333,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
         is ModuleDependencyItem.ModuleSourceDependency -> {
         }
         is ModuleDependencyItem.SdkDependency -> {
+          result.add(item.sdk)
         }
       }
     }
@@ -526,6 +358,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
         is ModuleDependencyItem.ModuleSourceDependency -> {
         }
         is ModuleDependencyItem.SdkDependency -> {
+          index.index(this, item.sdk)
         }
       }
     }
@@ -557,6 +390,10 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
         is ModuleDependencyItem.ModuleSourceDependency -> {
         }
         is ModuleDependencyItem.SdkDependency -> {
+          val removedItem_item_sdk = mutablePreviousSet.remove(item.sdk)
+          if (!removedItem_item_sdk) {
+            index.index(this, item.sdk)
+          }
         }
       }
     }
@@ -611,7 +448,18 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
           _it
         }
         is ModuleDependencyItem.SdkDependency -> {
-          _it
+          val _it_sdk_data = if (_it.sdk == oldLink) {
+            changed = true
+            newLink as SdkId
+          }
+          else {
+            null
+          }
+          var _it_data = _it
+          if (_it_sdk_data != null) {
+            _it_data = _it_data.copy(sdk = _it_sdk_data)
+          }
+          _it_data
         }
       }
       if (res_it != null) {

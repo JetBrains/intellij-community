@@ -29,6 +29,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.*;
@@ -504,7 +505,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       if (Comparing.strEqual(qualifiedName, BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME) ||
           Comparing.strEqual(qualifiedName, "kotlin.Suppress")) {
         UAnnotated annotated = UastUtils.getParentOfType(annotation, UAnnotated.class);
-        // TODO support kotlin suppressions
         if (annotated == null) {
           UElement parent = annotation.getUastParent();
           if (parent == null) {
@@ -528,17 +528,17 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           final List<UNamedExpression> nameValuePairs = annotation.getAttributeValues();
           for (UNamedExpression nameValuePair : nameValuePairs) {
             UExpression value = nameValuePair.getExpression();
-            if (value instanceof ULiteralExpression) {
-              Object val = ((ULiteralExpression)value).getValue();
-              if (val instanceof String) {
-                buf.append(",").append(String.valueOf(val).replaceAll("[{}\"]", ""));
+            if (value instanceof UInjectionHost host) {
+              String val = host.evaluateToString();
+              if (val != null) {
+                buf.append(",").append(val.replaceAll("[{}\"]", ""));
               }
             }
-            else if (value instanceof UCallExpression && ((UCallExpression)value).getKind() == UastCallKind.NESTED_ARRAY_INITIALIZER) {
-              for (UExpression argument : ((UCallExpression)value).getValueArguments()) {
-                if (argument instanceof ULiteralExpression) {
-                  Object val = ((ULiteralExpression)argument).getValue();
-                  if (val instanceof String) {
+            else if (value instanceof UCallExpression call && call.getKind() == UastCallKind.NESTED_ARRAY_INITIALIZER) {
+              for (UExpression argument : call.getValueArguments()) {
+                if (argument instanceof UInjectionHost host) {
+                  String val = host.evaluateToString();
+                  if (val != null) {
                     buf.append(",").append(val);
                   }
                 }

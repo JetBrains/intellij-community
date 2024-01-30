@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -31,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.roots.DependencyScope.TEST;
+
 /**
  * @author anna
  */
@@ -41,7 +45,10 @@ class AddModuleDependencyFix extends OrderEntryFix {
   private final boolean myExported;
   private final List<SmartPsiElementPointer<PsiClass>> myClasses;
 
-  AddModuleDependencyFix(@NotNull PsiReference reference, @NotNull Module currentModule, @NotNull DependencyScope scope, @NotNull List<? extends PsiClass> classes) {
+  AddModuleDependencyFix(@NotNull PsiReference reference,
+                         @NotNull Module currentModule,
+                         @NotNull DependencyScope scope,
+                         @NotNull List<? extends PsiClass> classes) {
     super(reference);
     myCurrentModule = currentModule;
     LinkedHashSet<Module> modules = new LinkedHashSet<>();
@@ -62,7 +69,11 @@ class AddModuleDependencyFix extends OrderEntryFix {
     myModules = modules;
   }
 
-  AddModuleDependencyFix(@NotNull PsiJavaModuleReference reference, @NotNull Module currentModule, @NotNull Set<? extends Module> modules, @NotNull DependencyScope scope, boolean exported) {
+  AddModuleDependencyFix(@NotNull PsiPolyVariantReference reference,
+                         @NotNull Module currentModule,
+                         @NotNull Set<? extends Module> modules,
+                         @NotNull DependencyScope scope,
+                         boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
     myModules = modules;
@@ -73,8 +84,8 @@ class AddModuleDependencyFix extends OrderEntryFix {
 
   private static boolean dependsWithScope(@NotNull ModuleRootManager rootManager, Module classModule, DependencyScope scope) {
     return ContainerUtil.exists(rootManager.getOrderEntries(),
-                                entry -> entry instanceof ModuleOrderEntry && classModule.equals(((ModuleOrderEntry)entry).getModule()) &&
-                                         (scope == DependencyScope.TEST || scope == ((ModuleOrderEntry)entry).getScope()));
+                                entry -> entry instanceof ModuleOrderEntry orderEntry && classModule.equals(orderEntry.getModule()) &&
+                                         (scope == TEST || scope == orderEntry.getScope()));
   }
 
   private static boolean isAccessible(PsiClass aClass, PsiElement refElement) {
@@ -87,7 +98,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     if (myModules.size() == 1) {
       Module module = ContainerUtil.getFirstItem(myModules);
       assert module != null;
-      return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module", module.getName());
+      return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module", getModuleName(module));
     }
     return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module.choose");
   }
@@ -138,10 +149,10 @@ class AddModuleDependencyFix extends OrderEntryFix {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return new IntentionPreviewInfo.Html(
       HtmlChunk.text(JavaBundle.message("adds.module.dependencies.preview",
-                                         myModules.size(),
-                                         ContainerUtil.getFirstItem(myModules).getName(),
-                                         NlsMessages.formatAndList(ContainerUtil.map(myModules, module -> "'" + module.getName() + "'")),
-                                         myCurrentModule.getName())));
+                                        myModules.size(),
+                                        getModuleName(ContainerUtil.getFirstItem(myModules)),
+                                        NlsMessages.formatAndList(ContainerUtil.map(myModules, module -> "'" + getModuleName(module) + "'")),
+                                        getModuleName(myCurrentModule))));
   }
 
   private void addDependencyOnModule(@NotNull Project project, Editor editor, @NotNull Module module) {
@@ -165,11 +176,17 @@ class AddModuleDependencyFix extends OrderEntryFix {
     }
   }
 
-  private static boolean showCircularWarning(@NotNull Project project, @NotNull Couple<Module> circle, @NotNull Module classModule) {
+  private boolean showCircularWarning(@NotNull Project project, @NotNull Couple<Module> circle, @NotNull Module classModule) {
     String message = QuickFixBundle.message("orderEntry.fix.circular.dependency.warning",
-                                            classModule.getName(), circle.getFirst().getName(), circle.getSecond().getName());
+                                            getModuleName(classModule), getModuleName(circle.getFirst()),
+                                            getModuleName(circle.getSecond()));
     String title = QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning");
     return Messages.showOkCancelDialog(project, message, title, Messages.getWarningIcon()) == Messages.OK;
   }
 
+  @NotNull
+  private String getModuleName(@NotNull Module module) {
+    final PsiJavaModule javaModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(module, myScope == TEST));
+    return javaModule != null ? javaModule.getName() : module.getName();
+  }
 }

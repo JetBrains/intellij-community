@@ -10,14 +10,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Assume
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
 
-@RunWith(Parameterized::class)
 class GradleDependencySourcesImportingTest : GradleImportingTestCase() {
 
   @Parameter(1)
@@ -52,13 +50,8 @@ class GradleDependencySourcesImportingTest : GradleImportingTestCase() {
 
     private fun generateParameters(): List<Array<Any>> {
       val result: MutableList<Array<Any>> = ArrayList()
-      val supportedVersionCount = SUPPORTED_GRADLE_VERSIONS.size
-      val supportedVersions =  if (supportedVersionCount > 3) {
-        SUPPORTED_GRADLE_VERSIONS.copyOfRange(supportedVersionCount - 3, supportedVersionCount)
-      } else {
-        SUPPORTED_GRADLE_VERSIONS
-      }
-      for (version in supportedVersions) {
+      val supportedVersions = VersionMatcherRule.getSupportedGradleVersions()
+      for (version in supportedVersions.takeLast(3)) {
         for (testCase in testCaseMatrix) {
           result.add(arrayOf(version, testCase))
         }

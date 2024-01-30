@@ -257,10 +257,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "bouncy-castle-provider", url = "https://www.bouncycastle.org")
       .mit("https://www.bouncycastle.org/license.html")
       .suppliedByOrganizations("The Legion of the Bouncy Castle Inc."),
-    LibraryLicense(name = "Byte Buddy agent", libraryName = "byte-buddy-agent",
-                   url = "https://github.com/raphw/byte-buddy")
-      .apache("https://github.com/raphw/byte-buddy/blob/master/LICENSE")
-      .suppliedByPersons("Rafael Winterhalter"),
     LibraryLicense(name = "caffeine", libraryName = "caffeine",
                    url = "https://github.com/ben-manes/caffeine")
       .apache("https://github.com/ben-manes/caffeine/blob/master/LICENSE")

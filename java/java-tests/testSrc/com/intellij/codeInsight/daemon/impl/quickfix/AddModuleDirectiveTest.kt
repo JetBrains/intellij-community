@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -10,6 +10,22 @@ import com.intellij.psi.PsiJavaModule
 class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testNewRequires(): Unit = doRequiresTest(
     "module M { }",
+    "module M {\n" +
+    "    requires M2;\n" +
+    "}")
+
+  fun testBrokenLeftBrace(): Unit = doRequiresTest(
+    "module M }",
+    "module M {\n" +
+    "    requires M2; }")
+
+  fun testBrokenRightBrace(): Unit = doRequiresTest(
+    "module M {",
+    "module M {\n" +
+    "    requires M2;")
+
+  fun testWithoutBraces(): Unit = doRequiresTest(
+    "module M",
     "module M {\n" +
     "    requires M2;\n" +
     "}")

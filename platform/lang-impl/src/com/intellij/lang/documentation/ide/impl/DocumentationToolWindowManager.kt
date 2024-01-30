@@ -82,6 +82,7 @@ internal class DocumentationToolWindowManager(
     ))
     toolWindow.setTitleActions(navigationActions())
     toolWindow.installWatcher(toolWindow.contentManager)
+    toolWindow.setStripeShortTitleProvider(IdeBundle.messagePointer("toolwindow.stripe.documentation.v2.shortName"))
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)
     toolWindow.helpId = "reference.toolWindows.Documentation"
   }

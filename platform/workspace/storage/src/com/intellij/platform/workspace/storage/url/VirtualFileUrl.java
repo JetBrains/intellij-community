@@ -29,7 +29,8 @@ public interface VirtualFileUrl {
   String getFileName();
 
   /**
-   * @return the parent of the VirtualFileUrl, or null if there are no parent.
+   * @return the parent of the {@link VirtualFileUrl}, or null if it's a root file. If {@link VirtualFileUrl} for the parent hasn't been created,
+   * it'll be automatically instantiated.
    */
   @Nullable VirtualFileUrl getParent();
 

@@ -26,14 +26,14 @@ internal class ComponentStoreModificationTrackerTest {
   }
 
   private var testAppConfig: Path by Delegates.notNull()
-  private var componentStore: MyComponentStore by Delegates.notNull()
+  private var componentStore: TestComponentStore by Delegates.notNull()
 
   @JvmField @Rule val fsRule = InMemoryFsRule()
 
   @Before
   fun setUp() {
     testAppConfig = fsRule.fs.getPath("/config")
-    componentStore = MyComponentStore(testAppConfig)
+    componentStore = TestComponentStore(testAppConfig)
   }
 
   @Test
@@ -162,10 +162,8 @@ internal class ComponentStoreModificationTrackerTest {
   }
 }
 
-private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {
-  private class MyStorageManager : StateStorageManagerImpl("application", componentManager = null) {
-    override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
-
+private class TestComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {
+  private class TestStorageManager : StateStorageManagerImpl("application", componentManager = null) {
     override val isUseXmlProlog = false
 
     override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
@@ -175,7 +173,7 @@ private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStor
       else macros[0].value.resolve(collapsedPath)
   }
 
-  override val storageManager: StateStorageManagerImpl = MyStorageManager()
+  override val storageManager: StateStorageManagerImpl = TestStorageManager()
 
   init {
     setPath(testAppConfigPath)

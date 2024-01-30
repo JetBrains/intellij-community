@@ -129,6 +129,10 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return false;
   }
 
+  public boolean isIncludedInExpandAll() {
+    return true;
+  }
+
   @Override
   public final @Nullable AbstractTreeNode<T> getElement() {
     return getEqualityObject() != null ? this : null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DeprecatedCallableAddReplaceWith", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.plugins
@@ -436,10 +436,10 @@ object PluginManagerCore {
       set.addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds())
       val selectedPlugins = LinkedHashSet<IdeaPluginDescriptorImpl>(set.size)
       for (id in set) {
-        val descriptor = idMap[id] ?: continue
+        val descriptor = idMap.get(id) ?: continue
         selectedPlugins.add(descriptor)
         processAllNonOptionalDependencies(descriptor, idMap) { dependency ->
-          if (dependency != null) selectedPlugins.add(dependency)
+          selectedPlugins.add(dependency)
           FileVisitResult.CONTINUE
         }
       }
@@ -894,11 +894,13 @@ object PluginManagerCore {
   @Internal
   fun processAllNonOptionalDependencies(rootDescriptor: IdeaPluginDescriptorImpl,
                                         pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-                                        consumer: (IdeaPluginDescriptorImpl?) -> FileVisitResult): Boolean {
-    return processAllNonOptionalDependencies(rootDescriptor = rootDescriptor,
-                                             depProcessed = HashSet(),
-                                             pluginIdMap = pluginIdMap,
-                                             consumer = { _, descriptor -> consumer(descriptor) })
+                                        consumer: (IdeaPluginDescriptorImpl) -> FileVisitResult): Boolean {
+    return processAllNonOptionalDependencies(
+      rootDescriptor = rootDescriptor,
+      depProcessed = HashSet(),
+      pluginIdMap = pluginIdMap,
+      consumer = { _, descriptor -> if (descriptor == null) FileVisitResult.CONTINUE else consumer(descriptor) },
+    )
   }
 
   private fun processAllNonOptionalDependencies(rootDescriptor: IdeaPluginDescriptorImpl,
@@ -910,11 +912,13 @@ object PluginManagerCore {
       val pluginId = descriptor?.getPluginId() ?: dependencyId
       when (consumer(pluginId, descriptor)) {
         FileVisitResult.TERMINATE -> return false
-        FileVisitResult.CONTINUE -> if (descriptor != null && depProcessed.add(descriptor)) {
-          processAllNonOptionalDependencies(rootDescriptor = descriptor,
-                                            depProcessed = depProcessed,
-                                            pluginIdMap = pluginIdMap,
-                                            consumer = consumer)
+        FileVisitResult.CONTINUE -> {
+          if (descriptor != null && depProcessed.add(descriptor)) {
+            processAllNonOptionalDependencies(rootDescriptor = descriptor,
+                                              depProcessed = depProcessed,
+                                              pluginIdMap = pluginIdMap,
+                                              consumer = consumer)
+          }
         }
         FileVisitResult.SKIP_SUBTREE -> {}
         FileVisitResult.SKIP_SIBLINGS -> throw UnsupportedOperationException("FileVisitResult.SKIP_SIBLINGS is not supported")

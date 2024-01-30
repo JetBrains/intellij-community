@@ -10,7 +10,6 @@ import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleUtil
-import java.net.URI
 import java.nio.file.Path
 
 @ApiStatus.Internal
@@ -28,7 +27,6 @@ private fun generateGradleWrapper(root: Path, configuration: WrapperConfiguratio
 
 private fun generateGradleWrapperConfiguration(gradleVersion: GradleVersion): WrapperConfiguration {
   return WrapperConfiguration().apply {
-    val distributionSource = if (gradleVersion.isSnapshot) "distributions-snapshots" else "distributions"
-    distribution = URI("https://services.gradle.org/$distributionSource/gradle-${gradleVersion.version}-bin.zip")
+    distribution = GradleUtil.getWrapperDistributionUri(gradleVersion)
   }
 }

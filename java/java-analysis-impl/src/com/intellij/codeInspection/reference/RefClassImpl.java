@@ -635,4 +635,13 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
     return false;
   }
+
+  @Override
+  public boolean isSuppressed(String @NotNull ... toolIds) {
+    if (super.isSuppressed(toolIds)) {
+      return true;
+    }
+    RefElement fileRef = getRefManager().getReference(getContainingFile());
+    return fileRef instanceof RefJavaFileImpl file && file.isSuppressed(toolIds);
+  }
 }

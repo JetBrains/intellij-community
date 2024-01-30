@@ -12,10 +12,13 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -47,14 +50,14 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
     private JrePathEditor jrePathEditor;
     private LabeledComponent<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
 
-    private ConfigurationModuleSelector moduleSelector;
     private JComponent anchor;
 
+    private final ConfigurationModuleSelector moduleSelector;
     private final Project project;
 
     private static ClassBrowser createApplicationClassBrowser(
             Project project,
-            ConfigurationModuleSelector moduleSelector,
+            Computable<? extends Module> moduleSelector,
             LabeledComponent<ModuleDescriptionsComboBox> moduleChooser
     ) {
         ClassFilter applicationClass = new ClassFilter() {
@@ -76,7 +79,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
             @Override
             protected void onClassChosen(@NotNull PsiClass psiClass) {
                 Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-                if (module != null && moduleSelector.isModuleAccepted(module)) {
+                if (module != null && ModuleTypeManager.getInstance().isClasspathProvider(ModuleType.get(module))) {
                     moduleChooser.getComponent().setSelectedModule(module);
                 }
             }
@@ -118,6 +121,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
 
     public KotlinRunConfigurationEditor(Project project) {
         this.project = project;
+        moduleSelector = new ConfigurationModuleSelector(project, moduleChooser.getComponent());
         jrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(moduleChooser.getComponent(), false));
         commonProgramParameters.setModuleContext(moduleSelector.getModule());
         moduleChooser.getComponent().addActionListener(new ActionListener() {
@@ -158,9 +162,6 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
     }
 
     private void createUIComponents() {
-        moduleChooser = new LabeledComponent<>();
-        moduleChooser.setComponent(new ModuleDescriptionsComboBox());
-        moduleSelector = new ConfigurationModuleSelector(project, moduleChooser.getComponent());
         mainClass = new LabeledComponent<>();
         mainClass.setComponent(ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), (declaration, place) -> {
             if (declaration instanceof KtLightClass aClass) {
@@ -171,7 +172,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
                 }
             }
             return JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE;
-        },  createApplicationClassBrowser(project, moduleSelector, moduleChooser)));
+        },  createApplicationClassBrowser(project, () -> moduleSelector.getModule(), moduleChooser)));
     }
 
     @Override

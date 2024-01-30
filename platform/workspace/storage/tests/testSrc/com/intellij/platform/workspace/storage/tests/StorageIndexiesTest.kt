@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.io.URLUtil
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import kotlin.test.assertEquals
@@ -45,10 +46,10 @@ class StorageIndexesTest {
   @Test
   fun `check virtual file index`() {
     val virtualFileUrlManager = VirtualFileUrlManagerImpl()
-    val sourceUrl = "/source".toVirtualFileUrl(virtualFileUrlManager)
-    val directory = "/tmp/example".toVirtualFileUrl(virtualFileUrlManager)
-    val firstRoot = "/m2/root/one".toVirtualFileUrl(virtualFileUrlManager)
-    val secondRoot = "/m2/root/second".toVirtualFileUrl(virtualFileUrlManager)
+    val sourceUrl = virtualFileUrlManager.getOrCreateFromUri("/source".toPathWithScheme())
+    val directory = virtualFileUrlManager.getOrCreateFromUri("/tmp/example".toPathWithScheme())
+    val firstRoot = virtualFileUrlManager.getOrCreateFromUri("/m2/root/one".toPathWithScheme())
+    val secondRoot = virtualFileUrlManager.getOrCreateFromUri("/m2/root/second".toPathWithScheme())
 
     val entity = VFUEntity2("VFUEntityData", directory, listOf(firstRoot, secondRoot), VFUEntitySource(sourceUrl))
 
@@ -98,6 +99,10 @@ class StorageIndexesTest {
     val oldProperty = propertyExtractor.invoke(originEntity)
     val newProperty = propertyExtractor.invoke(entity.first as VFUEntity2)
     assertEquals(oldProperty, newProperty)
+  }
+
+  private fun String.toPathWithScheme(): String {
+    return URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(this)
   }
 }
 

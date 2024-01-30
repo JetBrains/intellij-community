@@ -31,17 +31,14 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
 
-open class FileBasedStorage(file: Path,
-                            fileSpec: String,
-                            rootElementName: String?,
-                            pathMacroManager: PathMacroSubstitutor? = null,
-                            roamingType: RoamingType,
-                            provider: StreamProvider? = null) :
-  XmlElementStorage(fileSpec = fileSpec,
-                    rootElementName = rootElementName,
-                    pathMacroSubstitutor = pathMacroManager,
-                    storageRoamingType = roamingType,
-                    provider = provider) {
+open class FileBasedStorage(
+  file: Path,
+  fileSpec: String,
+  rootElementName: String?,
+  pathMacroManager: PathMacroSubstitutor? = null,
+  roamingType: RoamingType,
+  provider: StreamProvider? = null
+) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
 
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
@@ -53,9 +50,6 @@ open class FileBasedStorage(file: Path,
   var file = file
     private set
 
-  protected open val configuration: FileBasedStorageConfiguration
-    get() = defaultFileBasedStorageConfiguration
-
   init {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isUnitTestMode && file.toString().startsWith('$')) {
@@ -64,9 +58,6 @@ open class FileBasedStorage(file: Path,
   }
 
   protected open val isUseXmlProlog = false
-
-  final override val isUseVfsForWrite: Boolean
-    get() = configuration.isUseVfsForWrite
 
   private val isUseUnixLineSeparator: Boolean
     // only ApplicationStore doesn't use xml prolog
@@ -104,7 +95,7 @@ open class FileBasedStorage(file: Path,
         storage.lineSeparator = lineSeparator
       }
 
-      val isUseVfs = storage.configuration.isUseVfsForWrite
+      val isUseVfs = storage.isUseVfsForWrite
       val virtualFile = if (isUseVfs) storage.getVirtualFile() else null
       when {
         dataWriter == null -> {

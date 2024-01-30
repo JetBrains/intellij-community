@@ -45,14 +45,16 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
   }
 
   fun forceBeginChangeSet() {
-    if (changeList.forceBeginChangeSet()) {
-      fireChangeSetFinished()
+    val lastChangeSet = changeList.forceBeginChangeSet()
+    if (lastChangeSet != null) {
+      fireChangeSetFinished(lastChangeSet)
     }
   }
 
   fun endChangeSet(name: @NlsContexts.Label String?) {
-    if (changeList.endChangeSet(name)) {
-      fireChangeSetFinished()
+    val lastChangeSet = changeList.endChangeSet(name)
+    if (lastChangeSet != null) {
+      fireChangeSetFinished(lastChangeSet)
     }
   }
 
@@ -191,15 +193,15 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
     }
   }
 
-  private fun fireChangeSetFinished() {
+  private fun fireChangeSetFinished(changeSet: ChangeSet) {
     for (each in listeners) {
-      each.changeSetFinished()
+      each.changeSetFinished(changeSet)
     }
   }
 
   abstract class Listener {
     open fun changeAdded(c: Change) = Unit
-    open fun changeSetFinished() = Unit
+    open fun changeSetFinished(changeSet: ChangeSet) = Unit
   }
 }
 

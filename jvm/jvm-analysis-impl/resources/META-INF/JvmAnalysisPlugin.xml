@@ -154,6 +154,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="inspection.suppression.annotation.display.name"
                      implementationClass="com.intellij.codeInspection.SuppressionAnnotationInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" 
+                      enabledByDefault="true" groupBundle="messages.InspectionsBundle"
+                      level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
+                      key="inspection.empty.method.display.name" bundle="messages.JvmAnalysisBundle"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>

@@ -1,14 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.codeInspection;
+package com.intellij.codeInspection.tests.java;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
+import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class EmptyMethodInspectionTest extends JavaInspectionTestCase {
+import java.io.File;
+
+public class JavaEmptyMethodInspectionTest extends JavaInspectionTestCase {
+
+  @Override
+  protected String getBasePath() {
+    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/emptyMethod/";
+  }
+
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+    return PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
   private void doTest() {
@@ -17,7 +26,7 @@ public class EmptyMethodInspectionTest extends JavaInspectionTestCase {
 
   private void doTest(final boolean checkRange) {
     final EmptyMethodInspection tool = new EmptyMethodInspection();
-    doTest("emptyMethod/" + getTestName(true), tool, checkRange);
+    doTest(getTestName(true), tool, checkRange);
   }
 
   public void testSuperCall() {

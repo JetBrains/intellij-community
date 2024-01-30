@@ -34,6 +34,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
@@ -48,7 +49,7 @@ class GlobalWorkspaceModel : Disposable {
 
   // Marker indicating that changes came from global storage
   internal var isFromGlobalWorkspaceModel: Boolean = false
-  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
+  private var virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
   private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply { setVirtualFileUrlManager(virtualFileManager) }
   private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsGlobalFileEntitySource
                                                                      || entitySource is LegacyCustomLibraryEntitySource }
@@ -154,6 +155,12 @@ class GlobalWorkspaceModel : Disposable {
    */
   @ApiStatus.Internal
   fun getVirtualFileUrlManager(): VirtualFileUrlManager = virtualFileManager
+
+  @TestOnly
+  fun resetVirtualFileUrlManager() {
+    virtualFileManager = IdeVirtualFileUrlManagerImpl()
+    globalWorkspaceModelCache?.setVirtualFileUrlManager(virtualFileManager)
+  }
 
   override fun dispose() = Unit
 

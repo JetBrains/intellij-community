@@ -29,7 +29,7 @@ public class LombokRequiresStaticModulInfoTest extends LightJavaCodeInsightFixtu
     myFixture.addFileToProject("module-info.java", "module test { }");
 
     String actualPreview =
-      myFixture.getIntentionPreviewText(myFixture.findSingleIntention("Add 'requires static lombok' directive to module-info.java"));
+      myFixture.getIntentionPreviewText(myFixture.findSingleIntention("Add 'requires lombok' directive to module-info.java"));
     assertEquals("""
                    module test {
                        requires static lombok;

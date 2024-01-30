@@ -7,7 +7,6 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
-import com.intellij.ui.UIBundle
 import javax.swing.Icon
 
 class BaseLanguageGeneratorNewProjectWizard(
@@ -22,9 +21,6 @@ class BaseLanguageGeneratorNewProjectWizard(
   override val icon: Icon = wizard.icon
 
   override val ordinal: Int = wizard.ordinal
-
-  override val description: String =
-    UIBundle.message("label.project.wizard.project.generator.description", context.isCreatingNewProjectInt, wizard.name)
 
   override fun isEnabled(): Boolean = wizard.isEnabled(context)
 

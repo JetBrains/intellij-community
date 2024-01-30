@@ -8,10 +8,12 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
+import java.awt.Graphics
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JRadioButton
 import javax.swing.SwingConstants
 
 class SchemePane(val scheme: WizardScheme) {
@@ -27,6 +29,16 @@ class SchemePane(val scheme: WizardScheme) {
 
   private fun update() {
     pane.border = if (active) activeBorder else border
+    jRadioButton.isSelected = active
+  }
+
+  val jRadioButton = object : JRadioButton() {
+    init {
+      preferredSize = Dimension(0, 0)
+      minimumSize = preferredSize
+      maximumSize = preferredSize
+    }
+    override fun paintComponent(g: Graphics?) {}
   }
 
   private val roundedPanel = RoundedPanel.createRoundedPane().apply {
@@ -47,7 +59,7 @@ class SchemePane(val scheme: WizardScheme) {
 
       add(JLabel(scheme.name).apply {
         font = JBFont.label().asBold()
-        border = JBUI.Borders.empty(10, 0)
+        border = JBUI.Borders.empty(13, 0, 10, 0)
       }, gbc)
 
       gbc.gridy = 1
@@ -61,11 +73,10 @@ class SchemePane(val scheme: WizardScheme) {
           horizontalAlignment = SwingConstants.LEFT
           verticalAlignment = SwingConstants.TOP
         })
-
+        add(jRadioButton)
       }, gbc)
+
     }
-  }.apply {
-    isFocusable = true
   }
 
   val pane: JPanel = roundedPanel

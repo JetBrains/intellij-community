@@ -10,8 +10,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.jps.model.JpsProject
@@ -86,25 +84,6 @@ class BuildContextImpl(
   }
 
   companion object {
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @JvmStatic
-    @JvmOverloads
-    @Deprecated("Use createContext")
-    fun createContextBlocking(communityHome: BuildDependenciesCommunityRoot,
-                              projectHome: Path,
-                              productProperties: ProductProperties,
-                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                              options: BuildOptions = BuildOptions()): BuildContext {
-      return runBlocking(Dispatchers.Default) {
-        createContext(communityHome = communityHome,
-                      projectHome = projectHome,
-                      productProperties = productProperties,
-                      setupTracer = true,
-                      proprietaryBuildTools = proprietaryBuildTools,
-                      options = options)
-      }
-    }
-
     suspend fun createContext(communityHome: BuildDependenciesCommunityRoot,
                               projectHome: Path,
                               productProperties: ProductProperties,
@@ -298,7 +277,7 @@ class BuildContextImpl(
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
 
     if (productProperties.useSplash) {
-      @Suppress("SpellCheckingInspection")
+      @Suppress("SpellCheckingInspection", "RedundantSuppression")
       jvmArgs.add("-Dsplash=true")
     }
 

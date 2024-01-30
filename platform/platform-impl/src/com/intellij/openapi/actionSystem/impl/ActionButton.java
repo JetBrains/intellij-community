@@ -7,6 +7,7 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -209,7 +210,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
-        toolbar.updateActionsImmediately();
+        ApplicationManager.getApplication().invokeLater(() -> toolbar.updateActionsAsync());
       }
     }
   }

@@ -1,4 +1,4 @@
-// "Add dependency on module 'B'" "true"
+// "Add dependency on module 'b'" "true"
 package z;
 
 class B {

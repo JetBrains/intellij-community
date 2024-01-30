@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.wizard.themeChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
+import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardController
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.ide.startup.importSettings.data.ThemeService
@@ -10,7 +11,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
@@ -18,9 +18,7 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.*
 
 class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
   private val service = controller.service.getThemeService()
@@ -31,6 +29,8 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
   private val contentPage: JComponent
 
   private var activeScheme: SchemePane
+
+  private val buttonGroup = ButtonGroup()
 
   init {
 
@@ -48,21 +48,25 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       }
       val gbc = GridBagConstraints()
 
-      gbc.insets = JBUI.insetsRight(if(index < list.size - 1) 10 else 0)
+      gbc.insets = JBUI.insetsRight(if(index < list.size - 1) 9 else 0)
       gbc.weightx = 1.0
       gbc.weighty = 1.0
       gbc.fill = GridBagConstraints.BOTH
 
       pages.add(pane)
       schemesPane.add(pane.pane, gbc)
+      buttonGroup.add(pane.jRadioButton)
+      pane.jRadioButton.addActionListener {
+        activePane(pane)
+      }
     }
 
     val centralPane = JPanel(BorderLayout(0, 0)).apply {
       val pane = panel {
         row {
           label(ImportSettingsBundle.message("theme.page.title")).applyToComponent {
-            font = JBFont.h1()
-            border = JBUI.Borders.empty(18, 0)
+            font = UiUtils.HEADER_FONT
+            border = UiUtils.HEADER_BORDER
           }.resizableColumn()
           segmentedButton = segmentedButton(service.themeList) { text = it.themeName }
             .whenItemSelected { service.currentTheme = it }.apply {
@@ -74,11 +78,15 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       add(pane, BorderLayout.NORTH)
       add(schemesPane, BorderLayout.CENTER)
 
-      border = JBUI.Borders.empty(0, 20, 14, 20)
+      border = UiUtils.CARD_BORDER
     }
 
     activeScheme = pages[0]
     activePane(activeScheme)
+
+    SwingUtilities.invokeLater {
+      activeScheme.pane.requestFocus()
+    }
 
     val backAction = controller.goBackAction?.let {
       controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
@@ -98,8 +106,6 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     } ?: listOf(continueAction)
 
     contentPage = WizardPagePane(centralPane, buttons)
-    continueAction.requestFocus()
-
   }
 
   fun activePane(schemePane: SchemePane) {
@@ -109,6 +115,7 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     activeScheme = schemePane
     activeScheme.active = true
 
+    service.updateScheme(schemePane.scheme.id)
   }
 
   override val content: JComponent = contentPage

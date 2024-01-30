@@ -9,9 +9,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.util.containers.ContainerUtil
 
-class ClassInfoCache(val project: Project, private val mySearchScope: GlobalSearchScope) {
+class ClassInfoResolver(val project: Project, private val mySearchScope: GlobalSearchScope) {
 
   companion object {
     private fun findClasses(project: Project,
@@ -56,15 +55,7 @@ class ClassInfoCache(val project: Project, private val mySearchScope: GlobalSear
     }
   }
 
-  private val myCache = ContainerUtil.createConcurrentSoftValueMap<String, ClassResolveInfo>()
-
   fun resolveClasses(className: String, packageName: String): ClassResolveInfo {
-    val key = "$packageName.$className"
-    val cached = myCache[key]
-    if (cached != null && cached.isValid) {
-      return cached
-    }
-
     if (isDumb(project)) {
       return ClassResolveInfo.EMPTY
     }
@@ -77,7 +68,6 @@ class ClassInfoCache(val project: Project, private val mySearchScope: GlobalSear
       .toMap()
 
     val result = if (mapWithClasses.isEmpty()) ClassResolveInfo.EMPTY else ClassResolveInfo(mapWithClasses)
-    myCache[key] = result
     return result
   }
 

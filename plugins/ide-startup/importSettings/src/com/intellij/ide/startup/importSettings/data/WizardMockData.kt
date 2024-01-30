@@ -181,7 +181,7 @@ class TestWizardKeymap(override val id: String,
                        override val name: String,
                        override val description: @Nls String) : WizardKeymap {
 
-  private val shortCuts = listOf("Shift+Shift", "Alt+Shift+F", "Alt+Shift+F12", "F12", "F1")
+  private val shortCuts = listOf("Shift+Shift", "Alt+Shift+F", "Alt+Shift+F1", "F12", "F1")
   override fun getShortcutValue(id: String): String {
     return shortCuts.random()
   }

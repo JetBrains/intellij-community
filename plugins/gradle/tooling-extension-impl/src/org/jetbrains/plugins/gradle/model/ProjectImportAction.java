@@ -58,10 +58,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     myIsPreviewMode = isPreviewMode;
   }
 
-  public void addProjectImportModelProviders(
+  public ProjectImportAction addProjectImportModelProviders(
     @NotNull Collection<? extends ProjectImportModelProvider> providers
   ) {
     myModelProviders.addAll(providers);
+    return this;
   }
 
   @ApiStatus.Internal

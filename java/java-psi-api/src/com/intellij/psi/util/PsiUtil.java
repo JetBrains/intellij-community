@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -1430,12 +1430,39 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static PsiElement addModuleStatement(@NotNull PsiJavaModule module, @NotNull PsiStatement moduleStatement) {
-    PsiElement anchor = SyntaxTraverser.psiTraverser().children(module).filter(moduleStatement.getClass()).last();
+    final SyntaxTraverser<PsiElement> psiTraverser = SyntaxTraverser.psiTraverser();
+    PsiElement anchor = psiTraverser.children(module).filter(moduleStatement.getClass()).last();
     if (anchor == null) {
-      anchor = SyntaxTraverser.psiTraverser().children(module).filter(e -> isJavaToken(e, JavaTokenType.LBRACE)).first();
+      anchor = psiTraverser.children(module).filter(e -> isJavaToken(e, JavaTokenType.LBRACE)).first();
     }
     if (anchor == null) {
-      throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));
+      final PsiElement moduleReference = psiTraverser.children(module)
+        .filter(PsiJavaModuleReferenceElement.class::isInstance).first();
+
+      if (moduleReference != null) {
+        PsiJavaParserFacade facade = JavaPsiFacade.getInstance(module.getProject()).getParserFacade();
+        final PsiCodeBlock block = facade.createCodeBlockFromText("{}", null);
+
+        final PsiJavaToken lBrace = block.getLBrace();
+        final PsiJavaToken rBrace = block.getRBrace();
+        if (lBrace != null && rBrace != null) {
+          anchor = module.addAfter(lBrace, moduleReference);
+          PsiElement rbrace = psiTraverser.children(module).filter(e -> isJavaToken(e, JavaTokenType.RBRACE)).last();
+          if (rbrace == null) {
+            final PsiElement error = psiTraverser.children(module).filter(PsiErrorElement.class::isInstance).last();
+            if (error != null) {
+              rbrace = psiTraverser.children(error).filter(e -> isJavaToken(e, JavaTokenType.RBRACE)).last();
+            }
+          }
+          if (rbrace == null) {
+            module.add(rBrace);
+          }
+        } else {
+          throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));
+        }
+      } else {
+        throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));
+      }
     }
     return module.addAfter(moduleStatement, anchor);
   }

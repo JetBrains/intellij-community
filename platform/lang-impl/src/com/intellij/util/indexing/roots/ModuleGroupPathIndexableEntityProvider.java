@@ -3,6 +3,7 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleExtensions;
 import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
@@ -60,7 +61,7 @@ public final class ModuleGroupPathIndexableEntityProvider implements IndexableEn
 
   private static @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
                                                                                                                 @NotNull ModuleEntity newEntity) {
-    if (shouldBeRescanned(oldEntity.getGroupPath(), newEntity.getGroupPath())) {
+    if (shouldBeRescanned(ModuleExtensions.getGroupPath(oldEntity), ModuleExtensions.getGroupPath(newEntity))) {
       return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getSymbolicId());
     }
     return Collections.emptyList();

@@ -39,7 +39,7 @@ fun ModuleEntity.getModuleLevelLibraries(snapshot: EntityStorage): Sequence<Libr
  */
 fun ModuleEntity.findSdkFromDependencies(): List<Sdk> {
   return this.dependencies.filterIsInstance(ModuleDependencyItem.SdkDependency::class.java).mapNotNull { sdkDependency ->
-    ModifiableRootModelBridge.findSdk(sdkDependency.sdkName, sdkDependency.sdkType)
+    ModifiableRootModelBridge.findSdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
   }
 }
 

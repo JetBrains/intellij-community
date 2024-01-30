@@ -971,7 +971,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
         }
         if (!PluginManagerCore.processAllNonOptionalDependencies((rootDescriptor as IdeaPluginDescriptorImpl), pluginIdMap) { descriptor ->
             when {
-              descriptor!!.isEnabled -> if (pluginIdsToDisable.contains(descriptor.pluginId)) FileVisitResult.TERMINATE
+              descriptor.isEnabled -> if (pluginIdsToDisable.contains(descriptor.pluginId)) FileVisitResult.TERMINATE
               else FileVisitResult.CONTINUE
               else -> FileVisitResult.SKIP_SUBTREE
             }

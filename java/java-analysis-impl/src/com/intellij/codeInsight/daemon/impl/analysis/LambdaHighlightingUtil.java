@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -221,6 +222,15 @@ public final class LambdaHighlightingUtil {
       }
       return info;
     }
+
+    final ErrorWithFixes moduleProblem = HighlightUtil.getModuleProblem(psiClass, expression, resolveResult);
+    if (moduleProblem != null) {
+      HighlightInfo.Builder info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(moduleProblem.message);
+      moduleProblem.fixes.forEach(fix -> info.registerFix(fix, List.of(), null, null, null));
+      return info;
+    }
+
     return null;
   }
 

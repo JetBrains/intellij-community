@@ -291,11 +291,11 @@ public class PerformanceTestInfo {
     try {
       computeWithSpanAttribute(tracer, launchName, "warmup", (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)), () -> {
         try {
+          PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
           for (int attempt = 1; attempt <= maxIterationsNumber; attempt++) {
             AtomicInteger actualInputSize;
 
             if (setup != null) setup.run();
-            PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
             actualInputSize = new AtomicInteger(expectedInputSize);
 
             int iterationNumber = attempt;
@@ -363,7 +363,7 @@ public class PerformanceTestInfo {
     finally {
       try {
         // publish warmup and clean measurements at once at the end of the runs
-        if (iterationType.equals(IterationMode.MEASURE)) {
+        if (iterationType.equals(IterationMode.MEASURE) && UsefulTestCase.IS_UNDER_TEAMCITY) {
           MetricsPublisher.Companion.getInstance().publishSync(fullQualifiedTestMethodName, launchName);
         }
       }

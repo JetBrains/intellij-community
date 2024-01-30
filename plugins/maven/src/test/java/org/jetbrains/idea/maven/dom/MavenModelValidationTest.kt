@@ -294,16 +294,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    fixture.saveText(projectPom,
-                     """
-                         <project>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                           <<error><</error>/project>
-                         """.trimIndent())
-    checkHighlighting()
+    checkHighlighting(projectPom, Highlight(text = "<"))
   }
 
   @Test
@@ -323,7 +314,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                              <dependency>
                                <groupId>xxx</groupId>
                                <artifactId>yyy</artifactId>
-                               <version>xxx</version>
+                               <version>zzz</version>
                              </dependency>
                            </dependencies>
                          </project>
@@ -331,26 +322,11 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    fixture.saveText(projectPom,
-                     """
-                         <project>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                           <packaging>pom</packaging>
-                           <modules>
-                             <module><error>foo</error></module>
-                           </modules>
-                           <dependencies>
-                             <dependency>
-                               <groupId><error>xxx</error></groupId>
-                               <artifactId><error>yyy</error></artifactId>
-                               <version><error>xxx</error></version>
-                             </dependency>
-                           </dependencies>
-                         </project>
-                         """.trimIndent())
-    checkHighlighting()
+    checkHighlighting(projectPom,
+                      Highlight(text = "foo"),
+                      Highlight(text = "xxx"),
+                      Highlight(text = "yyy"),
+                      Highlight(text = "zzz"),
+    )
   }
 }

@@ -53,8 +53,8 @@ internal class EmlFileSaver(private val module: ModuleEntity,
           root.setAttribute(IdeaSpecificSettings.INHERIT_JDK, true.toString())
         }
         is ModuleDependencyItem.SdkDependency -> {
-          root.setAttribute("jdk", dep.sdkName)
-          root.setAttribute("jdk_type", dep.sdkType)
+          root.setAttribute("jdk", dep.sdk.name)
+          root.setAttribute("jdk_type", dep.sdk.type)
         }
         is ModuleDependencyItem.Exportable.LibraryDependency -> {
           val libTag = Element("lib")

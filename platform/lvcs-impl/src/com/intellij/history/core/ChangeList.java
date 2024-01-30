@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.NlsContexts;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -59,37 +60,40 @@ public class ChangeList {
     myCurrentChangeSet = new ChangeSet(nextId(), Clock.getTime());
   }
 
-  public synchronized boolean forceBeginChangeSet() {
-    boolean split = myChangeSetDepth > 0;
-    if (split) doEndChangeSet(null);
+  public synchronized @Nullable ChangeSet forceBeginChangeSet() {
+    ChangeSet lastChangeSet = null;
+    if (myChangeSetDepth > 0) {
+      lastChangeSet = doEndChangeSet(null);
+    }
 
     myChangeSetDepth++;
     doBeginChangeSet();
-    return split;
+    return lastChangeSet;
   }
 
-  public synchronized boolean endChangeSet(@NlsContexts.Label String name) {
+  public synchronized @Nullable ChangeSet endChangeSet(@NlsContexts.Label String name) {
     LocalHistoryLog.LOG.assertTrue(myChangeSetDepth > 0, "not balanced 'begin/end-change set' calls");
 
     myChangeSetDepth--;
-    if (myChangeSetDepth > 0) return false;
+    if (myChangeSetDepth > 0) return null;
 
     return doEndChangeSet(name);
   }
 
-  private boolean doEndChangeSet(@NlsContexts.Label String name) {
+  private @Nullable ChangeSet doEndChangeSet(@NlsContexts.Label String name) {
     if (myCurrentChangeSet.isEmpty()) {
       myCurrentChangeSet = null;
-      return false;
+      return null;
     }
 
-    myCurrentChangeSet.setName(name);
-    myCurrentChangeSet.lock();
+    ChangeSet lastChangeSet = myCurrentChangeSet;
+    lastChangeSet.setName(name);
+    lastChangeSet.lock();
+    myStorage.writeNextSet(lastChangeSet);
 
-    myStorage.writeNextSet(myCurrentChangeSet);
     myCurrentChangeSet = null;
 
-    return true;
+    return lastChangeSet;
   }
 
   @TestOnly

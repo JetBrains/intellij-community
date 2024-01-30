@@ -2,6 +2,7 @@
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader

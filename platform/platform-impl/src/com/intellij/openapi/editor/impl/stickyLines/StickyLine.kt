@@ -15,7 +15,7 @@ import com.intellij.openapi.util.TextRange
  * }                   // <- scope line
  * ```
  */
-internal interface StickyLine : Comparable<StickyLine> {
+public interface StickyLine : Comparable<StickyLine> {
 
   /**
    * The first logical line of scope used to pin corresponding editor's line on sticky panel.

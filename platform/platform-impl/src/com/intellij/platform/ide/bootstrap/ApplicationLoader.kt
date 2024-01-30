@@ -23,7 +23,6 @@ import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
 import com.intellij.idea.IdeStarter
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -246,13 +245,6 @@ private suspend fun preInitApp(app: ApplicationImpl,
                                euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?,
                                loadIconMapping: Job?) {
   val cssInit = coroutineScope {
-    if (!app.isHeadlessEnvironment) {
-      asyncScope.launch(CoroutineName("FUS class preloading")) {
-        // preload FUS classes (IDEA-301206)
-        ActionsEventLogGroup.GROUP.id
-      }
-    }
-
     // LaF must be initialized before app init because icons maybe requested and, as a result,
     // a scale must be already initialized (especially important for Linux)
     span("init laf waiting") {

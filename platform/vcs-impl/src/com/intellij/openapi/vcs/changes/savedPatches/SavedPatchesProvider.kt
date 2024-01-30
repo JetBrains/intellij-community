@@ -22,7 +22,7 @@ interface SavedPatchesProvider<S> {
 
   fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit)
   fun isEmpty(): Boolean
-  fun buildPatchesTree(modelBuilder: TreeModelBuilder)
+  fun buildPatchesTree(modelBuilder: TreeModelBuilder, showRootNode: Boolean)
   fun getData(dataId: String, selectedObjects: Stream<PatchObject<*>>): Any?
 
   interface PatchObject<S> {

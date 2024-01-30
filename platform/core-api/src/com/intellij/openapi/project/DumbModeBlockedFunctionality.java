@@ -23,6 +23,7 @@ public enum DumbModeBlockedFunctionality {
   GotoTarget,
   GotoTypeDeclaration,
   GotoImplementations,
+  Jpa,
   LineProfiler,
   JfrStackFrames,
   RDClientHyperlink,

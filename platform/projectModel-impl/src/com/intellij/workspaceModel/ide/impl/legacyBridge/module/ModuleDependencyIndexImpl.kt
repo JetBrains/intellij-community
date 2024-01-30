@@ -319,7 +319,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-      val sdkDependency = ModuleDependencyItem.SdkDependency(previousName, jdk.sdkType.name)
+      val sdkDependency = ModuleDependencyItem.SdkDependency(SdkId(previousName, jdk.sdkType.name))
       val affectedModules = sdkDependencies.get(sdkDependency)
       if (affectedModules.isNotEmpty()) {
         WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: jdk name changed") { builder ->
@@ -327,7 +327,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
             val module = moduleId.resolve(builder) ?: continue
             val updated = module.dependencies.map {
               when (it) {
-                is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
+                is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(SdkId(jdk.name, jdk.sdkType.name))
                 else -> it
               }
             } as MutableList<ModuleDependencyItem>
@@ -417,12 +417,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     private fun findSdk(sdkDependency: ModuleDependencyItem): Sdk? = when (sdkDependency) {
       is ModuleDependencyItem.InheritedSdkDependency -> projectRootManager.projectSdk
-      is ModuleDependencyItem.SdkDependency -> ModifiableRootModelBridge.findSdk(sdkDependency.sdkName, sdkDependency.sdkType)
+      is ModuleDependencyItem.SdkDependency -> ModifiableRootModelBridge.findSdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
       else -> null
     }
 
     fun hasDependencyOn(jdk: Sdk): Boolean {
-      return sdkDependencies.get(ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)).isNotEmpty()
+      return sdkDependencies.get(ModuleDependencyItem.SdkDependency(SdkId(jdk.name, jdk.sdkType.name))).isNotEmpty()
              || isProjectSdk(jdk) && hasProjectSdkDependency()
     }
 

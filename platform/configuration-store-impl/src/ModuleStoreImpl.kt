@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
@@ -69,6 +69,9 @@ abstract class ModuleStoreBase : ChildlessComponentStore(), ModuleStore {
   final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage) = false
 
   abstract override val storageManager: StateStorageManagerImpl
+
+  override fun createSaveSessionProducerManager(): SaveSessionProducerManager =
+    SaveSessionProducerManager(storageManager.isUseVfsForWrite())
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>,
                                    stateSpec: State,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.jvm.JvmLanguage;
@@ -8,9 +8,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootModificationTracker;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +40,11 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.jar.JarFile;
 
+import static com.intellij.openapi.roots.DependencyScope.PROVIDED;
+
 public final class JavaModuleGraphUtil {
+  private static final Set<String> STATIC_REQUIRES_MODULE_NAMES = Set.of("lombok");
+
   private JavaModuleGraphUtil() { }
 
   @Contract("null->null")
@@ -102,6 +106,14 @@ public final class JavaModuleGraphUtil {
     PsiJavaModule javaModule = inTests //to have different providers for production and tests
                                ? valuesManager.getCachedValue(module, () -> createModuleCacheResult(module, true))
                                : valuesManager.getCachedValue(module, () -> createModuleCacheResult(module, false));
+    return javaModule != null && javaModule.isValid() ? javaModule : null;
+  }
+
+  public static @Nullable PsiJavaModule findDescriptorByLibrary(@Nullable Library library, @NotNull Project project) {
+    if (library == null) return null;
+    final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+    if (files.length == 0) return null;
+    final PsiJavaModule javaModule = findDescriptorInLibrary(project, ProjectFileIndex.getInstance(project), files[0]);
     return javaModule != null && javaModule.isValid() ? javaModule : null;
   }
   
@@ -195,6 +207,33 @@ public final class JavaModuleGraphUtil {
 
   public static @Nullable PsiJavaModule findOrigin(@NotNull PsiJavaModule module, @NotNull String packageName) {
     return getRequiresGraph(module).findOrigin(module, packageName);
+  }
+
+  public static boolean addDependency(@NotNull PsiJavaModule from,
+                                   @NotNull String to,
+                                   @Nullable DependencyScope scope,
+                                   boolean isExported) {
+    if (!HighlightingFeature.MODULES.isAvailable(from)) return false;
+    if (alreadyContainsRequires(from, to)) return false;
+    PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
+                                     (isStaticModule(to, scope) ? PsiKeyword.STATIC + " " : "") +
+                                     (isExported ? PsiKeyword.TRANSITIVE + " " : "") +
+                                     to);
+    return true;
+  }
+
+  private static boolean alreadyContainsRequires(@NotNull PsiJavaModule module, @NotNull String dependency) {
+    for (PsiRequiresStatement requiresStatement : module.getRequires()) {
+      if (Objects.equals(requiresStatement.getModuleName(), dependency)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isStaticModule(@NotNull String moduleName, @Nullable DependencyScope scope) {
+    if (STATIC_REQUIRES_MODULE_NAMES.contains(moduleName)) return true;
+    return scope == PROVIDED;
   }
 
   /*

@@ -1,17 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.DifferentiateContext;
-import org.jetbrains.jps.dependency.Node;
-import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.*;
 
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.javac.Iterators.asIterable;
-import static org.jetbrains.jps.javac.Iterators.flat;
+import static org.jetbrains.jps.javac.Iterators.*;
 
 /**
  * This class provides some common utilities for strategy implementations
@@ -78,5 +76,20 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
 
   protected void debug(String message) {
     LOG.debug(message);
+  }
+
+  protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason) {
+    affectNodeSources(context, clsId, affectReason, false);
+  }
+
+  protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, boolean forceAffect) {
+    Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
+    Predicate<? super NodeSource> affectionFilter = context.getParams().affectionFilter();
+    for (NodeSource source : filter(context.getGraph().getSources(clsId), affectionFilter::test)) {
+      if (forceAffect || !context.isCompiled(source) && !deletedSources.contains(source)) {
+        context.affectNodeSource(source);
+        debug(affectReason, source);
+      }
+    }
   }
 }

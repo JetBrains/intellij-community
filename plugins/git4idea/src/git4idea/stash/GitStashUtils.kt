@@ -59,7 +59,7 @@ import git4idea.i18n.GitBundle
 import git4idea.index.isStagingAreaAvailable
 import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.ui.isStashToolWindowEnabled
+import git4idea.stash.ui.isStashTabAvailable
 import git4idea.stash.ui.showStashes
 import git4idea.stash.ui.stashToolWindowRegistryOption
 import git4idea.ui.StashInfo
@@ -285,11 +285,11 @@ object GitStashOperations {
 
   fun showSuccessNotification(project: Project, successfulRoots: Collection<VirtualFile>, hasErrors: Boolean) {
     val actions = buildList {
-      if (isStashToolWindowEnabled(project)) {
+      if (isStashTabAvailable()) {
         add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project) })
       }
       else if (isStagingAreaAvailable(project)) {
-        add(NotificationAction.createSimpleExpiring(GitBundle.message("stash.enable.stashes.link", GitBundle.message("stash.tab.name"))) {
+        add(NotificationAction.createSimpleExpiring(GitBundle.message("stash.enable.stashes.link")) {
           stashToolWindowRegistryOption().setValue(true)
           showStashes(project)
         })

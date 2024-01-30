@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -6,8 +6,8 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -880,10 +880,10 @@ suspend fun layoutDistribution(layout: BaseLayout,
                                includedModules: Collection<ModuleItem>,
                                moduleWithSearchableOptions: Set<String>,
                                context: BuildContext): Pair<List<DistributionFileEntry>, Path> {
-  Files.createDirectories(targetDirectory)
-
   if (copyFiles) {
     withContext(Dispatchers.IO) {
+      Files.createDirectories(targetDirectory)
+
       if (!layout.moduleExcludes.isEmpty()) {
         launch {
           checkModuleExcludes(layout.moduleExcludes, context)

@@ -1988,7 +1988,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      UIntKt
      ULongArrayKt
      ULongKt
-     UnsignedKt
+     +UnsignedKt
      UNumbersKt
      UShortArrayKt
      UShortKt

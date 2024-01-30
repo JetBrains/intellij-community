@@ -77,8 +77,7 @@ private val json by lazy {
   }
 }
 
-internal class LocalDiskJarCacheManager(private val cacheDir: Path,
-                                        private val classOutDirectory: Path) : JarCacheManager {
+internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val classOutDirectory: Path) : JarCacheManager {
   init {
     Files.createDirectories(cacheDir)
   }
