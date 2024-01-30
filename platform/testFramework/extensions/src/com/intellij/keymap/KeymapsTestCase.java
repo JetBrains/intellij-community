@@ -314,6 +314,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt UP",        "MoveStatementUp", "ResizeToolWindowUp"},
       {"ctrl SLASH",               "AIAssistant.Editor.GenerateCodeInplace", "Graph.ActualSize"},
       {"alt SLASH",                "AIAssistant.Editor.CompleteCodeWithAI", "HippieCompletion"},
+      {"F8",                       "NextOccurence", "NextDiff"},
+      {"shift F8",                 "PreviousOccurence", "PreviousDiff"},
     }),
     Map.entry("Visual Studio OSX", new String[][]{
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
