@@ -125,14 +125,6 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
                     """.trimIndent()
     )
 
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <properties>
-                         <aaa>${'$'}{<error>git.commitsCount</error>}</aaa></properties>
-                       """.trimIndent())
-
-    checkHighlighting()
+    checkHighlighting(projectPom, Highlight(text = "git.commitsCount"))
   }
 }
