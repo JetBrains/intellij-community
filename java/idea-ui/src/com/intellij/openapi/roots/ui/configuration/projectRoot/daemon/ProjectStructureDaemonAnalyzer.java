@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +25,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   private final Set<ProjectStructureElement> myElementWithNotCalculatedUsages = new HashSet<>();
   private final Set<ProjectStructureElement> myElementsToShowWarningIfUnused = new HashSet<>();
   private final Map<ProjectStructureElement, ProjectStructureProblemDescription> myWarningsAboutUnused = new HashMap<>();
-  private final MergingUpdateQueue myAnalyzerQueue;
-  private final MergingUpdateQueue myResultsUpdateQueue;
+  private final SimpleMergingQueue<Runnable> myAnalyzerQueue;
+  private final SimpleMergingQueue<Runnable> myResultsUpdateQueue;
   private final EventDispatcher<ProjectStructureDaemonAnalyzerListener> myDispatcher = EventDispatcher.create(ProjectStructureDaemonAnalyzerListener.class);
   private final AtomicBoolean myStopped = new AtomicBoolean(false);
   private final ProjectConfigurationProblems myProjectConfigurationProblems;
@@ -34,9 +34,9 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   public ProjectStructureDaemonAnalyzer(@NotNull StructureConfigurableContext context) {
     Disposer.register(context, this);
     myProjectConfigurationProblems = new ProjectConfigurationProblems(this, context);
-    myAnalyzerQueue = new MergingUpdateQueue("Project Structure Daemon Analyzer", 300, false, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
-    myResultsUpdateQueue = new MergingUpdateQueue("Project Structure Analysis Results Updater", 300, false, MergingUpdateQueue.ANY_COMPONENT,
-                                                  this, null, Alarm.ThreadToUse.SWING_THREAD);
+
+    myAnalyzerQueue = new SimpleMergingQueue<>("Project Structure Daemon Analyzer", 300, false, Alarm.ThreadToUse.POOLED_THREAD, this);
+    myResultsUpdateQueue = new SimpleMergingQueue<>("Project Structure Analysis Results Updater", 300, false, Alarm.ThreadToUse.SWING_THREAD, this);
   }
 
   private void doUpdate(@NotNull ProjectStructureElement element) {
@@ -168,11 +168,9 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   public void stop() {
     LOG.debug("analyzer stopped");
     myStopped.set(true);
-    myAnalyzerQueue.cancelAllUpdates();
-    myResultsUpdateQueue.cancelAllUpdates();
     clearCaches();
-    myAnalyzerQueue.deactivate();
-    myResultsUpdateQueue.deactivate();
+    myAnalyzerQueue.stop();
+    myResultsUpdateQueue.stop();
   }
 
   public void clearCaches() {
@@ -189,6 +187,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }
     myProblemHolders.clear();
     LOG.debug("Adding to queue updates for " + toUpdate.size() + " problematic elements");
+
     for (ProjectStructureElement element : toUpdate) {
       queueUpdate(element);
     }
@@ -197,8 +196,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   @Override
   public void dispose() {
     myStopped.set(true);
-    myAnalyzerQueue.cancelAllUpdates();
-    myResultsUpdateQueue.cancelAllUpdates();
+    myAnalyzerQueue.stop();
+    myResultsUpdateQueue.stop();
   }
 
   @Nullable
@@ -222,8 +221,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
   public void reset() {
     LOG.debug("analyzer started");
-    myAnalyzerQueue.activate();
-    myResultsUpdateQueue.activate();
+    myAnalyzerQueue.start();
+    myResultsUpdateQueue.start();
     myAnalyzerQueue.queue(new Update("reset") {
       @Override
       public void run() {
@@ -241,25 +240,11 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myProjectConfigurationProblems.clearProblems();
   }
 
-  private class AnalyzeElementUpdate extends Update {
+  private final class AnalyzeElementUpdate implements Runnable {
     private final @NotNull ProjectStructureElement myElement;
-    private final @NotNull Object @NotNull [] myEqualityObjects;
 
     AnalyzeElementUpdate(@NotNull ProjectStructureElement element) {
-      super(element);
       myElement = element;
-      myEqualityObjects = new Object[]{myElement};
-    }
-
-    @Override
-    public boolean canEat(@NotNull Update update) {
-      if (!(update instanceof AnalyzeElementUpdate other)) return false;
-      return myElement.equals(other.myElement);
-    }
-
-    @Override
-    public Object @NotNull [] getEqualityObjects() {
-      return myEqualityObjects;
     }
 
     @Override
@@ -271,23 +256,28 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
         LOG.error(t);
       }
     }
-  }
 
-  private class UsagesCollectedUpdate extends Update {
-    private final @NotNull ProjectStructureElement myElement;
-    private final @NotNull List<? extends ProjectStructureElementUsage> myUsages;
-    private final @NotNull Object @NotNull [] myEqualityObjects;
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof AnalyzeElementUpdate update)) return false;
 
-    UsagesCollectedUpdate(@NotNull ProjectStructureElement element, @NotNull List<? extends ProjectStructureElementUsage> usages) {
-      super(element);
-      myElement = element;
-      myUsages = usages;
-      myEqualityObjects = new Object[]{element, "usages collected"};
+      return myElement.equals(update.myElement);
     }
 
     @Override
-    public Object @NotNull [] getEqualityObjects() {
-      return myEqualityObjects;
+    public int hashCode() {
+      return myElement.hashCode();
+    }
+  }
+
+  private final class UsagesCollectedUpdate implements Runnable {
+    private final @NotNull ProjectStructureElement myElement;
+    private final @NotNull List<? extends ProjectStructureElementUsage> myUsages;
+
+    UsagesCollectedUpdate(@NotNull ProjectStructureElement element, @NotNull List<? extends ProjectStructureElementUsage> usages) {
+      myElement = element;
+      myUsages = usages;
     }
 
     @Override
@@ -299,23 +289,28 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       }
       updateUsages(myElement, myUsages);
     }
-  }
 
-  private class ProblemsComputedUpdate extends Update {
-    private final @NotNull ProjectStructureElement myElement;
-    private final @NotNull ProjectStructureProblemsHolderImpl myProblemsHolder;
-    private final @NotNull Object @NotNull [] myEqualityObjects;
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof UsagesCollectedUpdate other)) return false;
 
-    ProblemsComputedUpdate(@NotNull ProjectStructureElement element, @NotNull ProjectStructureProblemsHolderImpl problemsHolder) {
-      super(element);
-      myElement = element;
-      myProblemsHolder = problemsHolder;
-      myEqualityObjects = new Object[]{element, "problems computed"};
+      return myElement.equals(other.myElement);
     }
 
     @Override
-    public Object @NotNull [] getEqualityObjects() {
-      return myEqualityObjects;
+    public int hashCode() {
+      return myElement.hashCode() + 1;
+    }
+  }
+
+  private final class ProblemsComputedUpdate implements Runnable {
+    private final @NotNull ProjectStructureElement myElement;
+    private final @NotNull ProjectStructureProblemsHolderImpl myProblemsHolder;
+
+    ProblemsComputedUpdate(@NotNull ProjectStructureElement element, @NotNull ProjectStructureProblemsHolderImpl problemsHolder) {
+      myElement = element;
+      myProblemsHolder = problemsHolder;
     }
 
     @Override
@@ -332,16 +327,35 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       myProblemHolders.put(myElement, myProblemsHolder);
       myDispatcher.getMulticaster().problemsChanged(myElement);
     }
-  }
 
-  private final class ReportUnusedElementsUpdate extends Update {
-    private ReportUnusedElementsUpdate() {
-      super("unused elements");
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ProblemsComputedUpdate update)) return false;
+
+      return myElement.equals(update.myElement);
     }
 
     @Override
+    public int hashCode() {
+      return myElement.hashCode() + 2;
+    }
+  }
+
+  private final class ReportUnusedElementsUpdate implements Runnable {
+    @Override
     public void run() {
       reportUnusedElements();
+    }
+
+    @Override
+    public int hashCode() {
+      return 3;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ReportUnusedElementsUpdate;
     }
   }
 }
