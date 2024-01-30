@@ -48,13 +48,15 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
     void assertSmartStepIntoVariants(@NotNull String @NotNull ... expectedFunctionNames) {
       getSmartStepIntoVariantsAsync().onSuccess(variants -> {
-        String[] arr = new String[variants.size()];
-        for(int i = 0; i < arr.length; i++) {
-          PySmartStepIntoVariant v = (PySmartStepIntoVariant) variants.get(i);
-          arr[i] = v.getFunctionName();
-        }
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          String[] arr = new String[variants.size()];
+          for(int i = 0; i < arr.length; i++) {
+            PySmartStepIntoVariant v = (PySmartStepIntoVariant) variants.get(i);
+            arr[i] = v.getFunctionName();
+          }
 
-        Assert.assertArrayEquals(expectedFunctionNames, arr);
+          Assert.assertArrayEquals(expectedFunctionNames, arr);
+        });
       });
     }
 
