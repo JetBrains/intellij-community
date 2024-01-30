@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.Disposable;
@@ -39,15 +39,11 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
                                                   this, null, Alarm.ThreadToUse.SWING_THREAD);
   }
 
-  private void doUpdate(final ProjectStructureElement element, final boolean check, final boolean collectUsages) {
+  private void doUpdate(final ProjectStructureElement element) {
     if (myStopped.get()) return;
 
-    if (check) {
-      doCheck(element);
-    }
-    if (collectUsages) {
-      doCollectUsages(element);
-    }
+    doCheck(element);
+    doCollectUsages(element);
   }
 
   private void doCheck(final ProjectStructureElement element) {
@@ -91,20 +87,14 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public void queueUpdate(@NotNull final ProjectStructureElement element) {
-    queueUpdate(element, true, true);
-  }
-
-  private void queueUpdate(@NotNull final ProjectStructureElement element, final boolean check, final boolean collectUsages) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("start " + (check ? "checking " : "") + (collectUsages ? "collecting usages " : "") + "for " + element);
+      LOG.debug("start checking and collecting usages for " + element);
     }
-    if (collectUsages) {
-      myElementWithNotCalculatedUsages.add(element);
-    }
+    myElementWithNotCalculatedUsages.add(element);
     if (element.shouldShowWarningIfUnused()) {
       myElementsToShowWarningIfUnused.add(element);
     }
-    myAnalyzerQueue.queue(new AnalyzeElementUpdate(element, check, collectUsages));
+    myAnalyzerQueue.queue(new AnalyzeElementUpdate(element));
   }
 
   public void removeElement(ProjectStructureElement element) {
@@ -253,22 +243,18 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
   private class AnalyzeElementUpdate extends Update {
     private final ProjectStructureElement myElement;
-    private final boolean myCheck;
-    private final boolean myCollectUsages;
     private final Object[] myEqualityObjects;
 
-    AnalyzeElementUpdate(ProjectStructureElement element, boolean check, boolean collectUsages) {
+    AnalyzeElementUpdate(ProjectStructureElement element) {
       super(element);
       myElement = element;
-      myCheck = check;
-      myCollectUsages = collectUsages;
-      myEqualityObjects = new Object[]{myElement, myCheck, myCollectUsages};
+      myEqualityObjects = new Object[]{myElement};
     }
 
     @Override
     public boolean canEat(@NotNull Update update) {
       if (!(update instanceof AnalyzeElementUpdate other)) return false;
-      return myElement.equals(other.myElement) && (!other.myCheck || myCheck) && (!other.myCollectUsages || myCollectUsages);
+      return myElement.equals(other.myElement);
     }
 
     @Override
@@ -279,7 +265,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     @Override
     public void run() {
       try {
-        doUpdate(myElement, myCheck, myCollectUsages);
+        doUpdate(myElement);
       }
       catch (Throwable t) {
         LOG.error(t);
