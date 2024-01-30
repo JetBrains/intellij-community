@@ -132,6 +132,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     var snapshot: AllHighlightingsSnapshot? = allHighlightingsSnapshot
     if (snapshot == null) {
       snapshot = AllHighlightingsSnapshot(highlightings.flatMap { it.value })
+      allHighlightingsSnapshot = snapshot
     }
     return snapshot
   }
