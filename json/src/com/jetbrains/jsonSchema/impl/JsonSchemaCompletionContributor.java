@@ -219,7 +219,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       }
 
       if (isName != ThreeState.YES) {
-        suggestValues(schema, isName == ThreeState.NO);
+        suggestValues(schema, isName == ThreeState.NO, completionPath);
       }
     }
 
@@ -280,12 +280,12 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     // some schemas provide empty array / empty object in enum values...
     private static final Set<String> filtered = Set.of("[]", "{}", "[ ]", "{ }");
 
-    private void suggestValues(JsonSchemaObject schema, boolean isSurelyValue) {
-      suggestValuesForSchemaVariants(schema.getAnyOf(), isSurelyValue);
-      suggestValuesForSchemaVariants(schema.getOneOf(), isSurelyValue);
-      suggestValuesForSchemaVariants(schema.getAllOf(), isSurelyValue);
+    private void suggestValues(JsonSchemaObject schema, boolean isSurelyValue, SchemaPath completionPath) {
+      suggestValuesForSchemaVariants(schema.getAnyOf(), isSurelyValue, completionPath);
+      suggestValuesForSchemaVariants(schema.getOneOf(), isSurelyValue, completionPath);
+      suggestValuesForSchemaVariants(schema.getAllOf(), isSurelyValue, completionPath);
 
-      if (schema.getEnum() != null) {
+       if (schema.getEnum() != null && completionPath == null) {
         Map<String, Map<String, String>> metadata = schema.getEnumMetadata();
         for (Object o : schema.getEnum()) {
           if (myInsideStringLiteral && !(o instanceof String)) continue;
@@ -413,10 +413,10 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       }
     }
 
-    private void suggestValuesForSchemaVariants(List<? extends JsonSchemaObject> list, boolean isSurelyValue) {
+    private void suggestValuesForSchemaVariants(List<? extends JsonSchemaObject> list, boolean isSurelyValue, SchemaPath completionPath) {
       if (list != null && list.size() > 0) {
         for (JsonSchemaObject schemaObject : list) {
-          suggestValues(schemaObject, isSurelyValue);
+          suggestValues(schemaObject, isSurelyValue, completionPath);
         }
       }
     }
