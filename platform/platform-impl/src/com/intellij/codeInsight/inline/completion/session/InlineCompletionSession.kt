@@ -133,8 +133,7 @@ class InlineCompletionSession private constructor(
   }
 
   /**
-   * Represents information of all the variants, provided by [provider], at any point of time.
-   * If [provider] didn't provide any variants yet, then it's impossible to capture [Snapshot].
+   * Represents information of all the variants, provided by [provider], if [provider] suggested something at that moment.
    */
   class Snapshot @ApiStatus.Internal constructor(val variants: List<InlineCompletionVariant.Snapshot>) {
 
@@ -157,6 +156,7 @@ class InlineCompletionSession private constructor(
      * The second value in the range denotes the number of possibly non-empty variants
      * (the variants that are already non-empty plus the variants that can be non-empty in the future).
      */
+    @ApiStatus.Experimental
     val nonEmptyVariantsRange: IntRange = run {
       val forSure = variants.count { !it.isEmpty() }
       val potential = variants.count {

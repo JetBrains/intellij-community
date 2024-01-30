@@ -11,6 +11,7 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEve
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 /**
  * Responsible for updating currently rendered [InlineCompletionElement] when a user types a new fragment.
@@ -29,6 +30,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  * @see InlineCompletionElementManipulator
  */
 @Deprecated(message = "Directly use InlineCompletionEventBasedSuggestionUpdater")
+@ScheduledForRemoval
 interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdater.Adapter {
 
   // Back compatibility
@@ -74,6 +76,7 @@ interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdate
 
 
   @Deprecated(message = "Use InlineCompletionEventBasedSuggestionUpdater.Adapter")
+  @ScheduledForRemoval
   abstract class Adapter : InlineCompletionOvertyper {
     override fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
       return when (typing) {
@@ -117,6 +120,7 @@ interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdate
  * @see InlineCompletionElementManipulator
  */
 @Deprecated(message = "Use InlineCompletionEventBasedSuggestionUpdater.Default")
+@ScheduledForRemoval
 open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter() {
 
   private val suggestionUpdater

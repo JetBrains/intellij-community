@@ -13,23 +13,23 @@ import kotlinx.coroutines.flow.FlowCollector
 /**
  * The `InlineCompletionSuggestion` interface provides a contract for retrieving inline completion variants.
  *
- * It is one of the core components of the inline completion. For simpler construction of [InlineCompletionSuggestion], please
- * see [InlineCompletionSuggestionBuilder] and [InlineCompletionSingleSuggestion].
- *
  * The flow of suggestion is as follows:
  * * The [InlineCompletionHandler] asks a provider all the variants via [getVariants].
  * * After that, it starts computing them **one by one** (at least for now) on the background thread.
  * * If some event happens during presence of [InlineCompletionSuggestion], [InlineCompletionEventBasedSuggestionUpdater] is used.
- * * There is a limitation to the number of variants: [MAX_VARIANTS_NUMBER]. At some point, this number can be lifted.
+ * * There is a limitation to the number of variants: [MAX_VARIANTS_NUMBER].
  *
+ * @see InlineCompletionVariant
  * @see InlineCompletionSession.useNextVariant
  * @see InlineCompletionSession.usePrevVariant
  * @see InlineCompletionSession.capture
+ * @see InlineCompletionSingleSuggestion
+ * @see InlineCompletionSuggestionBuilder
  */
 interface InlineCompletionSuggestion {
 
   /**
-   * @return all possible variants at the moment that can be seen by a user. See the documentation of [InlineCompletionVariant].
+   * @see InlineCompletionVariant
    */
   suspend fun getVariants(): List<InlineCompletionVariant>
 
