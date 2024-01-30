@@ -73,7 +73,7 @@ public class MavenServerCMDState extends CommandLineState {
   private static String getProfilerVMString() {
     String profilerOptionPrefix = "-agentpath:";
     String profilerVMOption = VMOptions.readOption(profilerOptionPrefix, true);
-    boolean isIntegrationTest = System.getProperty("idea.is.integration.test") != null;
+    boolean isIntegrationTest = System.getProperty("test.build_tool.daemon.profiler") != null;
     // Doesn't work for macOS with java 11. Pending update to https://github.com/async-profiler/async-profiler/releases/tag/v3.0
     if (profilerVMOption == null || SystemInfo.isMac || !isIntegrationTest) return null;
     String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("mm:ss"));
