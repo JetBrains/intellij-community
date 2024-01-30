@@ -128,8 +128,9 @@ public final class NullabilityUtil {
     }
     if (expression instanceof PsiReferenceExpression ref) {
       PsiElement target = ref.resolve();
-      if (target instanceof PsiPatternVariable) {
-        return Nullability.NOT_NULL; // currently all pattern variables are not-null
+      if (target instanceof PsiPatternVariable patternVariable && 
+          !(patternVariable.getPattern().getParent() instanceof PsiDeconstructionList)) {
+        return Nullability.NOT_NULL; // currently top-level pattern variables are not-null
       }
       if (dumb) return Nullability.UNKNOWN;
       if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {

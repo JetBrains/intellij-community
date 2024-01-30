@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
@@ -1142,19 +1143,24 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PopInstruction());
 
       PsiPattern[] components = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
-      PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(patternType);
-      if (recordClass != null && recordClass.isRecord()) {
-        PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
-        if (components.length == recordComponents.length) {
-          for (int i = 0; i < components.length; i++) {
-            PsiRecordComponent recordComponent = recordComponents[i];
-            PsiPattern patternComponent = components[i];
-            PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent);
-            if (accessor == null) continue;
-            DfaVariableValue accessorDfaVar =
-              getFactory().getVarFactory().createVariableValue(new GetterDescriptor(accessor), patternDfaVar);
-            addInstruction(new JvmPushInstruction(accessorDfaVar, null));
-            processPattern(sourcePattern, patternComponent, recordComponent.getType(), null, endPatternOffset);
+      if (patternType instanceof PsiClassType patternClassType) {
+        PsiClassType.ClassResolveResult resolveResult = patternClassType.resolveGenerics();
+        PsiClass recordClass = resolveResult.getElement();
+        boolean unchecked = JavaGenericsUtil.isUncheckedCast(patternClassType, checkType);
+        PsiSubstitutor substitutor = unchecked ? PsiSubstitutor.EMPTY : resolveResult.getSubstitutor();
+        if (recordClass != null && recordClass.isRecord()) {
+          PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
+          if (components.length == recordComponents.length) {
+            for (int i = 0; i < components.length; i++) {
+              PsiRecordComponent recordComponent = recordComponents[i];
+              PsiPattern patternComponent = components[i];
+              PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent);
+              if (accessor == null) continue;
+              DfaVariableValue accessorDfaVar =
+                getFactory().getVarFactory().createVariableValue(new GetterDescriptor(accessor), patternDfaVar);
+              addInstruction(new JvmPushInstruction(accessorDfaVar, null));
+              processPattern(sourcePattern, patternComponent, substitutor.substitute(recordComponent.getType()), null, endPatternOffset);
+            }
           }
         }
       }
