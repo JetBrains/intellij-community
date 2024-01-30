@@ -126,7 +126,8 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     projectSessionManager: ProjectSaveSessionProducerManager
   ) { }
 
-  override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager = ProjectSaveSessionProducerManager(project)
+  override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager =
+    ProjectSaveSessionProducerManager(project, storageManager.isUseVfsForWrite())
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
     if (isDirectoryBased) {

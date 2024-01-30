@@ -17,12 +17,9 @@ import java.nio.file.Path
 import kotlin.concurrent.write
 
 @ApiStatus.Internal
-internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) :
-  StateStorageManagerImpl(
-    rootTagName = "module",
-    macroSubstitutor = macroSubstitutor,
-    componentManager = module,
-  ), RenameableStateStorageManager {
+internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module)
+  : StateStorageManagerImpl("module", macroSubstitutor, module,), RenameableStateStorageManager
+{
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = StoragePathMacros.MODULE_FILE
 
   // the only macro is supported by ModuleStateStorageManager
@@ -103,12 +100,14 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
   override val isExternalSystemStorageEnabled: Boolean
     get() = (componentManager as Module?)?.project?.isExternalStorageEnabled ?: false
 
+  override fun isUseVfsForWrite(): Boolean = true
+
   override fun createFileBasedStorage(file: Path,
                                       collapsedPath: String,
                                       roamingType: RoamingType,
                                       usePathMacroManager: Boolean,
                                       rootTagName: String?): StateStorage {
     val provider = if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider
-    return MyFileStorage(storageManager = this, file, collapsedPath, rootTagName, roamingType, macroSubstitutor, provider)
+    return TrackedFileStorage(storageManager = this, file, collapsedPath, rootTagName, roamingType, macroSubstitutor, provider)
   }
 }

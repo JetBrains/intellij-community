@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.configurationStore
@@ -70,7 +70,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
   }
 
   final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager =
-    ProjectWithModulesSaveSessionProducerManager(project)
+    ProjectWithModulesSaveSessionProducerManager(project, storageManager.isUseVfsForWrite())
 
   override fun createContentReader(): JpsFileContentReaderWithCache =
     StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
@@ -114,7 +114,9 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 private val NULL_ELEMENT = Element("null")
 
-private class ProjectWithModulesSaveSessionProducerManager(project: Project) : ProjectSaveSessionProducerManager(project) {
+private class ProjectWithModulesSaveSessionProducerManager(project: Project, isUseVfsForWrite: Boolean)
+  : ProjectSaveSessionProducerManager(project, isUseVfsForWrite)
+{
   private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> =
     if (!SystemInfoRt.isFileSystemCaseSensitive) ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive())
     else ConcurrentCollectionFactory.createConcurrentMap()

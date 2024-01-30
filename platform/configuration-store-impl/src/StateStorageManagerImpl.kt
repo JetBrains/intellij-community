@@ -61,8 +61,6 @@ open class StateStorageManagerImpl(
     else -> ThreeState.UNSURE // unsure because depends on stream provider state
   }
 
-  open fun getFileBasedStorageConfiguration(fileSpec: String): FileBasedStorageConfiguration = defaultFileBasedStorageConfiguration
-
   protected open val isUseXmlProlog: Boolean
     get() = true
 
@@ -229,39 +227,39 @@ open class StateStorageManagerImpl(
     return storage
   }
 
-  protected open fun createFileBasedStorage(file: Path,
-                                            collapsedPath: String,
-                                            roamingType: RoamingType,
-                                            usePathMacroManager: Boolean,
-                                            rootTagName: String?): StateStorage {
+  internal open fun isUseVfsForWrite(): Boolean = false
+
+  protected open fun createDirectoryBasedStorage(dir: Path, collapsedPath: String, @Suppress("DEPRECATION", "removal") splitter: StateSplitter): StateStorage =
+    TrackedDirectoryStorage(storageManager = this, dir, splitter, macroSubstitutor)
+
+  protected open fun createFileBasedStorage(
+    file: Path,
+    collapsedPath: String,
+    roamingType: RoamingType,
+    usePathMacroManager: Boolean,
+    rootTagName: String?
+  ): StateStorage {
     compoundStreamProvider.deleteIfObsolete(collapsedPath, roamingType)
     if (roamingType == RoamingType.DISABLED && settingsController != null) {
       settingsController.createStateStorage(collapsedPath, file)?.let {
         return it  as StateStorage
       }
     }
-
-    return MyFileStorage(storageManager = this,
-                         file = file,
-                         fileSpec = collapsedPath,
-                         rootElementName = rootTagName,
-                         roamingType = roamingType,
-                         pathMacroManager = if (usePathMacroManager) macroSubstitutor else null,
-                         provider = compoundStreamProvider)
+    val pathMacroManager = if (usePathMacroManager) macroSubstitutor else null
+    return TrackedFileStorage(storageManager = this, file, collapsedPath, rootTagName, roamingType, pathMacroManager, compoundStreamProvider)
   }
 
-  // open for upsource
-  protected open fun createDirectoryBasedStorage(file: Path,
-                                                 collapsedPath: String,
-                                                 @Suppress("DEPRECATION", "removal") splitter: StateSplitter): StateStorage {
-    return object : DirectoryBasedStorage(dir = file,
-                                          splitter = splitter,
-                                          pathMacroSubstitutor = macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
-      override val storageManager = this@StateStorageManagerImpl
-    }
+  internal class TrackedDirectoryStorage(
+    override val storageManager: StateStorageManagerImpl,
+    dir: Path,
+    @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
+    macroSubstitutor: PathMacroSubstitutor?
+  ) : DirectoryBasedStorage(dir, splitter, macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
+    override val isUseVfsForWrite: Boolean
+      get() = storageManager.isUseVfsForWrite()
   }
 
-  protected open class MyFileStorage(
+  internal class TrackedFileStorage(
     override val storageManager: StateStorageManagerImpl,
     file: Path,
     fileSpec: String,
@@ -269,17 +267,12 @@ open class StateStorageManagerImpl(
     roamingType: RoamingType,
     pathMacroManager: PathMacroSubstitutor? = null,
     provider: StreamProvider? = null,
-  ) : FileBasedStorage(file = file,
-                       fileSpec = fileSpec,
-                       rootElementName = rootElementName,
-                       pathMacroManager = pathMacroManager,
-                       roamingType = roamingType,
-                       provider = provider), StorageVirtualFileTracker.TrackedStorage {
+  ) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)
 
-    override val configuration: FileBasedStorageConfiguration
-      get() = storageManager.getFileBasedStorageConfiguration(fileSpec)
+    override val isUseVfsForWrite: Boolean
+      get() = storageManager.isUseVfsForWrite()
 
     override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
       if (rootElementName != null) {

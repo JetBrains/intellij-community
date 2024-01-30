@@ -11,7 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-open class ProjectSaveSessionProducerManager(protected val project: Project) : SaveSessionProducerManager() {
+open class ProjectSaveSessionProducerManager(protected val project: Project, isUseVfsForWrite: Boolean)
+  : SaveSessionProducerManager(isUseVfsForWrite)
+{
   suspend fun saveAndValidate(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
     saveSessions(saveSessions, saveResult)
     validate(saveResult)

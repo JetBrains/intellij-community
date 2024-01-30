@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.createDir
@@ -76,9 +76,6 @@ interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {
 open class DirectoryBasedStorage(override val dir: Path,
                                  @Suppress("DEPRECATION") splitter: com.intellij.openapi.components.StateSplitter,
                                  pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
-  override val isUseVfsForWrite: Boolean
-    get() = true
-
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
 
