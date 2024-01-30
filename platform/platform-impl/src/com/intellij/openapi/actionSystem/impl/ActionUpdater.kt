@@ -190,7 +190,7 @@ internal class ActionUpdater @JvmOverloads constructor(
           var traceCookie: ThreadDumpService.Cookie? = null
           try {
             Triple({ ProhibitAWTEvents.start(operationName) },
-                   { ProgressIndicatorUtils.prohibitWriteActionsInside(application) },
+                   { IdeEventQueue.getInstance().threadingSupport.prohibitWriteActionsInside() },
                    { threadDumpService.start(100, 50, 5, Thread.currentThread()) }).use { _, _, cookie ->
               traceCookie = cookie
               ourInEDTActionOperationStack = prevStack.prepend(operationName)

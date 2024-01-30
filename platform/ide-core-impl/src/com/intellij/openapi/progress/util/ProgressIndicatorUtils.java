@@ -155,11 +155,6 @@ public final class ProgressIndicatorUtils {
     return ProgressIndicatorUtilService.getInstance(application).runActionAndCancelBeforeWrite(cancellation, action);
   }
 
-  @ApiStatus.Internal
-  public static @NotNull AccessToken prohibitWriteActionsInside(@NotNull Application application) {
-    return ProgressIndicatorUtilService.getInstance(application).prohibitWriteActionsInside();
-  }
-
   private static @NotNull Runnable indicatorCancellation(@NotNull ProgressIndicator progressIndicator) {
     return () -> {
       if (!progressIndicator.isCanceled()) {

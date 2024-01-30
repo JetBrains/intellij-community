@@ -6,11 +6,7 @@ import com.intellij.codeWithMe.ClientId.Companion.decorateRunnable
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ReadActionListener
-import com.intellij.openapi.application.ThreadingSupport
-import com.intellij.openapi.application.WriteActionListener
-import com.intellij.openapi.application.WriteDelayDiagnostics
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -35,6 +31,7 @@ import java.lang.Deprecated
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -54,6 +51,7 @@ object RwLockHolder: ThreadingSupport {
   private var myWriteStackBase = 0
   @Volatile
   private var myWriteActionPending = false
+  private var myNoWriteActionCounter = AtomicInteger()
 
   @Internal
   override fun postInit(writeThread: Thread) {
@@ -471,6 +469,19 @@ object RwLockHolder: ThreadingSupport {
     return WriteAccessToken(marker)
   }
 
+  override fun prohibitWriteActionsInside(): AccessToken {
+    val l = lock ?: notReady()
+    if (myWriteActionPending || l.isWriteAcquired || !EDT.isCurrentThreadEdt()) {
+      throwCannotWriteException()
+    }
+    myNoWriteActionCounter.incrementAndGet()
+    return object: AccessToken() {
+      override fun finish() {
+        myNoWriteActionCounter.decrementAndGet()
+      }
+    }
+  }
+
   override fun executeByImpatientReader(runnable: Runnable) {
     if (EDT.isCurrentThreadEdt()) {
       runnable.run()
@@ -495,9 +506,17 @@ object RwLockHolder: ThreadingSupport {
     // callback (beforeWriteActionStart) anymore, but it should be Ok and lead to less cancelled read actions.
     l.checkForPossibilityOfWriteLock()
 
+    // Check that write action is not disabled
+    // NB: It is before all cancellations will be run via fireBeforeWriteActionStart
+    // It is change for old behavior, when ProgressUtilService checked this AFTER all cancellations.
+    if (myNoWriteActionCounter.get() > 0) {
+      throwCannotWriteException()
+    }
+
     myWriteActionPending = true
     try {
       fireBeforeWriteActionStart(clazz)
+
 
       // otherwise (when myLock is locked) there's a nesting write action:
       // - allow it,
@@ -666,5 +685,9 @@ object RwLockHolder: ThreadingSupport {
     private fun id(): String {
       return " [WriteAccessToken]"
     }
+  }
+
+  private fun throwCannotWriteException() {
+    throw java.lang.IllegalStateException("Write actions are prohibited")
   }
 }

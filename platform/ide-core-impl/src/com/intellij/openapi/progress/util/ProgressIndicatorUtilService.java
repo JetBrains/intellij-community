@@ -2,19 +2,16 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.isWriteActionRunningOrPending;
 
@@ -29,7 +26,6 @@ final class ProgressIndicatorUtilService implements Disposable {
 
   private final @NotNull ApplicationEx myApplication;
   private final List<Runnable> myWriteActionCancellations = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final AtomicInteger myNoWriteActionCounter = new AtomicInteger();
 
   private ProgressIndicatorUtilService() {
     myApplication = ApplicationManagerEx.getApplicationEx();
@@ -52,9 +48,6 @@ final class ProgressIndicatorUtilService implements Disposable {
     for (Runnable cancellation : myWriteActionCancellations) {
       cancellation.run();
     }
-    if (myNoWriteActionCounter.get() > 0) {
-      throwCannotWriteException();
-    }
   }
 
   boolean runActionAndCancelBeforeWrite(@NotNull Runnable cancellation, @NotNull Runnable action) {
@@ -76,20 +69,6 @@ final class ProgressIndicatorUtilService implements Disposable {
     finally {
       myWriteActionCancellations.remove(cancellation);
     }
-  }
-
-  @RequiresEdt
-  @NotNull AccessToken prohibitWriteActionsInside() {
-    if (isWriteActionRunningOrPending(myApplication)) {
-      throwCannotWriteException();
-    }
-    myNoWriteActionCounter.incrementAndGet();
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        myNoWriteActionCounter.decrementAndGet();
-      }
-    };
   }
 
   private static void throwCannotWriteException() {

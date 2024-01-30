@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -343,6 +342,11 @@ interface ThreadingSupport {
    */
   @Deprecated
   fun acquireWriteActionLock(marker: Class<*>): AccessToken
+
+  /**
+   * Disable write actions till token will be released.
+   */
+  fun prohibitWriteActionsInside(): AccessToken
 
   /**
    * DO NOT USE

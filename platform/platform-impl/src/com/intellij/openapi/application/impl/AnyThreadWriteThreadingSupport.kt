@@ -83,6 +83,7 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private val myWriteActionsStack = Stack<Class<*>>()
   private var myWriteStackBase = 0
   private val myWriteActionPending = AtomicInteger(0)
+  private var myNoWriteActionCounter = AtomicInteger()
 
   private val myState = ThreadLocal.withInitial { ThreadState(null, false) }
 
@@ -337,6 +338,13 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
       throw IllegalStateException("WriteAction can not be called from ReadAction")
     }
 
+    // Check that write action is not disabled
+    // NB: It is before all cancellations will be run via fireBeforeWriteActionStart
+    // It is change for old behavior, when ProgressUtilService checked this AFTER all cancellations.
+    if (myNoWriteActionCounter.get() > 0) {
+      throwCannotWriteException()
+    }
+
     var oldPermit: Permit? = null
     val release = !ts.hasWrite
 
@@ -457,6 +465,18 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
   override fun acquireWriteActionLock(marker: Class<*>): AccessToken {
     PluginException.reportDeprecatedUsage("ThreadingSupport.acquireWriteActionLock", "Use `runWriteAction()` instead")
     return WriteAccessToken(marker)
+  }
+
+  override fun prohibitWriteActionsInside(): AccessToken {
+    if (myWriteActionPending.get() > 0 || myWriteAcquired) {
+      throwCannotWriteException()
+    }
+    myNoWriteActionCounter.incrementAndGet()
+    return object: AccessToken() {
+      override fun finish() {
+        myNoWriteActionCounter.decrementAndGet()
+      }
+    }
   }
 
   override fun executeByImpatientReader(runnable: Runnable) {
@@ -667,5 +687,9 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
     private fun id(): String {
       return " [WriteAccessToken]"
     }
+  }
+
+  private fun throwCannotWriteException() {
+    throw java.lang.IllegalStateException("Write actions are prohibited")
   }
 }
