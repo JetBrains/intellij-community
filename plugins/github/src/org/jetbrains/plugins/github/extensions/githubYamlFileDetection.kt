@@ -29,11 +29,17 @@ fun isGithubActionsFile(psiFile: PsiFile?): Boolean {
 }
 
 fun isGithubActionFile(psiFile: PsiFile): Boolean {
-  return psiFile.language.`is` (YAMLLanguage.INSTANCE) && githubActionsFilePattern.matches(psiFile.virtualFile.path)
+  val virtualFile = psiFile.virtualFile
+  if (virtualFile == null) return false
+  return psiFile.language.`is` (YAMLLanguage.INSTANCE)
+         && githubActionsFilePattern.matches(virtualFile.path)
 }
 
 fun isGithubWorkflowFile(psiFile: PsiFile): Boolean {
-  return psiFile.language.`is` (YAMLLanguage.INSTANCE) && githubWorkflowsFilePattern.matches(psiFile.virtualFile.path)
+  val virtualFile = psiFile.virtualFile
+  if (virtualFile == null) return false
+  return psiFile.language.`is` (YAMLLanguage.INSTANCE)
+         && githubWorkflowsFilePattern.matches(virtualFile.path)
 }
 
 private val githubActionsFilePattern =
