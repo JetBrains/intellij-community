@@ -118,11 +118,13 @@ public final class PackageAnnotator {
     final boolean classExists = classData != null && classData.getLines() != null;
     if (classFile != null && (!classExists || !classData.isFullyAnalysed())) {
       ClassData fullClassData = collectNonCoveredClassInfo(classFile, className, getUnloadedClassesProjectData());
-      if (classData == null) {
-        classData = fullClassData;
-      }
-      else {
-        classData.merge(fullClassData);
+      if (fullClassData != null) {
+        if (classData == null) {
+          classData = fullClassData;
+        }
+        else {
+          classData.merge(fullClassData);
+        }
       }
     }
 
