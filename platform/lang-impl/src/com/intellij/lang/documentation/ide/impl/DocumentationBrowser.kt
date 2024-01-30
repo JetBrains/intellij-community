@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.internal.statistic.service.fus.collectors.DocumentationLinkProtocol
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.model.Pointer
@@ -125,12 +128,14 @@ internal class DocumentationBrowser private constructor(
         // TODO ? target was invalidated
       }
       InternalLinkResult.CannotResolve -> withContext(Dispatchers.EDT) {
+        logLinkClicked(DocumentationLinkProtocol.of(url))
         @Suppress("ControlFlowWithEmptyBody")
         if (!openUrl(project, targetPointer, url)) {
           // TODO ? can't resolve link to target & nobody can open the link
         }
       }
       is InternalLinkResult.Request -> {
+        logLinkClicked(DocumentationLinkProtocol.PSI_ELEMENT)
         load(internalResult.request, reset = false)
       }
       is InternalLinkResult.Updater -> {
@@ -167,6 +172,13 @@ internal class DocumentationBrowser private constructor(
 
   private fun restore(snapshot: HistorySnapshot) {
     check(myRequestFlow.tryEmit(BrowserRequest.Restore(snapshot)))
+  }
+
+  private fun logLinkClicked(protocol: DocumentationLinkProtocol) {
+    UIEventLogger.DocumentationLinkClicked.log(
+      protocol,
+      LookupManager.getInstance(project).activeLookup != null
+    )
   }
 
   companion object {
