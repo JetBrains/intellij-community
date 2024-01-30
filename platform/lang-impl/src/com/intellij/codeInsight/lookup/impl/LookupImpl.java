@@ -884,6 +884,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         setLookupFocusDegree(LookupFocusDegree.FOCUSED);
         markSelectionTouched();
+        editorComponent.requestFocus();
 
         if (clickCount == 2){
           CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookup(NORMAL_SELECT_CHAR), "", null, myEditor.getDocument());
