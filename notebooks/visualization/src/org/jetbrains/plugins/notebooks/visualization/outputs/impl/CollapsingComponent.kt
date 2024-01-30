@@ -24,12 +24,10 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class CollapsingComponent(
-  internal val editor: EditorImpl,
-  child: JComponent,
-  internal val resizable: Boolean,
-  private val collapsedTextSupplier: () -> @NlsSafe String,
-) : JPanel(null) {
+internal class CollapsingComponent(internal val editor: EditorImpl,
+                                   child: JComponent,
+                                   internal val resizable: Boolean,
+                                   private val collapsedTextSupplier: () -> @NlsSafe String) : JPanel(null) {
   private var customHeight: Int = -1
 
   private val resizeController by lazy {
