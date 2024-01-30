@@ -50,15 +50,17 @@ public class Invoker implements InvokerMBean {
   private final Map<Integer, Session> sessions = new ConcurrentHashMap<>();
   private final AtomicInteger sessionIdSequence = new AtomicInteger(1);
 
-  private final Map<Integer, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
+  private final Map<String, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
 
   private final ClearableLazyValue<IJTracer> tracer;
   private final Consumer<String> screenshotAction;
+  private final String refIdPrefix;
   private final Supplier<? extends Context> timedContextSupplier;
 
-  public Invoker(@NotNull Supplier<? extends IJTracer> tracerSupplier,
+  public Invoker(@NotNull String refIdPrefix, @NotNull Supplier<? extends IJTracer> tracerSupplier,
                  @NotNull Supplier<? extends Context> timedContextSupplier,
                  @NotNull Consumer<String> screenshotAction) {
+    this.refIdPrefix = refIdPrefix;
     this.timedContextSupplier = timedContextSupplier;
     this.tracer = new ClearableLazyValue<>() {
       @Override
@@ -160,7 +162,7 @@ public class Invoker implements InvokerMBean {
     }
 
     if (call.getSessionId() == NO_SESSION_ID) {
-      int id = REF_SEQUENCE.getAndIncrement();
+      var id = refIdPrefix + REF_SEQUENCE.getAndIncrement();
       Ref ref = RefProducer.makeRef(id, result);
       adhocReferenceMap.put(id, new WeakReference<>(result));
 
@@ -307,7 +309,7 @@ public class Invoker implements InvokerMBean {
   }
 
   private @NotNull Ref putAdhocReference(@NotNull Object item) {
-    int itemId = REF_SEQUENCE.getAndIncrement();
+    String itemId = refIdPrefix + REF_SEQUENCE.getAndIncrement();
     adhocReferenceMap.put(itemId, new WeakReference<>(item));
     return RefProducer.makeRef(itemId, item);
   }
@@ -515,20 +517,29 @@ public class Invoker implements InvokerMBean {
     return args;
   }
 
-  private @NotNull Object getReference(int sessionId, int id) {
+  private @NotNull Object getReference(int sessionId, String id) {
     if (sessionId != NO_SESSION_ID) {
       WeakReference<Object> adhocReference = adhocReferenceMap.get(id);
       if (adhocReference != null) {
         return dereference(adhocReference, id);
       }
 
-      // first lookup in session
+      // first lookup in the current session
       Session session = sessions.get(sessionId);
       if (session == null) {
         throw new IllegalStateException("No such session " + sessionId);
       }
 
-      return session.findReference(id);
+      HardReference reference = session.findReference(id);
+      if (reference != null) return reference.value;
+
+      // otherwise check any sessions
+      for (Session s : sessions.values()) {
+        HardReference r = s.findReference(id);
+        if (r != null) return r.value;
+      }
+
+      throw new IllegalStateException("No such reference with id " + id);
     }
 
     WeakReference<Object> reference = adhocReferenceMap.get(id);
@@ -537,7 +548,7 @@ public class Invoker implements InvokerMBean {
     return dereference(reference, id);
   }
 
-  private static @NotNull Object dereference(@NotNull WeakReference<Object> reference, int id) {
+  private static @NotNull Object dereference(@NotNull WeakReference<Object> reference, String id) {
     Object weakTarget = reference.get();
     if (weakTarget == null) {
       throw new IllegalStateException(
@@ -551,13 +562,22 @@ public class Invoker implements InvokerMBean {
   @Override
   public int newSession() {
     int id = sessionIdSequence.getAndIncrement();
-    sessions.put(id, new Session());
+    sessions.put(id, new Session(refIdPrefix));
     return id;
   }
 
   @Override
   public void cleanup(int sessionId) {
     sessions.remove(sessionId);
+
+    var expiredKeys = adhocReferenceMap.entrySet().stream()
+      .filter(entry -> entry.getValue().get() == null)
+      .map(Map.Entry::getKey)
+      .toList();
+
+    for (String key : expiredKeys) {
+      adhocReferenceMap.remove(key);
+    }
   }
 
   @Override
@@ -569,23 +589,31 @@ public class Invoker implements InvokerMBean {
 record CallTarget(@NotNull Class<?> clazz, @NotNull Method targetMethod) {
 }
 
-final class Session {
-  private final Map<Integer, Object> variables = new ConcurrentHashMap<>();
+final class HardReference {
+  final Object value;
 
-  public @NotNull Object findReference(int id) {
-    if (!variables.containsKey(id)) throw new IllegalStateException("No such reference with id " + id);
+  HardReference(Object value) { this.value = value; }
+}
+
+final class Session {
+  private final String idPrefix;
+  private final Map<String, HardReference> variables = new ConcurrentHashMap<>();
+
+  Session(String prefix) { idPrefix = prefix; }
+
+  public @Nullable HardReference findReference(String id) {
     return variables.get(id);
   }
 
   public @NotNull Ref putReference(@NotNull Object value) {
-    var id = Invoker.REF_SEQUENCE.getAndIncrement();
-    variables.put(id, value);
+    var id = idPrefix + Invoker.REF_SEQUENCE.getAndIncrement();
+    variables.put(id, new HardReference(value));
     return RefProducer.makeRef(id, value);
   }
 }
 
 final class RefProducer {
-  public static @NotNull Ref makeRef(int id, @NotNull Object value) {
+  public static @NotNull Ref makeRef(String id, @NotNull Object value) {
     if (value instanceof Ref) return (Ref)value;
 
     return new Ref(

@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public record RefList(
-  int id,
+  String id,
   String className,
   List<Ref> items
 ) implements Serializable {

@@ -36,6 +36,6 @@ public interface InvokerMBean {
                        @NotNull Consumer<String> screenshotAction) throws JMException {
     ObjectName objectName = new ObjectName("com.intellij.driver:type=Invoker");
     MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-    server.registerMBean(new Invoker(tracerSupplier, timedContextSupplier, screenshotAction), objectName);
+    server.registerMBean(new Invoker("v", tracerSupplier, timedContextSupplier, screenshotAction), objectName);
   }
 }
