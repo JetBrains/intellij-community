@@ -5,3 +5,7 @@ class TestSuppressFile {
     
   }
 }
+
+fun topLevel() {
+  
+}
