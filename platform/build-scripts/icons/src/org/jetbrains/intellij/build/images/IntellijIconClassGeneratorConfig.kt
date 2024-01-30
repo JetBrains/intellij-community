@@ -137,6 +137,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.jpb"
       )
 
+      "intellij.javaee.jpa.jpb.model" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JpaIcons",
+        packageName = "com.intellij.jpa.jpb.model"
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }
