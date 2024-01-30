@@ -15,7 +15,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("actions", 74)
+  val GROUP: EventLogGroup = EventLogGroup("actions", 75)
 
   @JvmField
   val ACTION_ID: PrimitiveEventField<String?> = ActioIdEventField("action_id")
@@ -53,6 +53,9 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   val CONTEXT_MENU: BooleanEventField = EventFields.Boolean("context_menu")
 
   @JvmField
+  val LOOKUP_ACTIVE: BooleanEventField = EventFields.Boolean("lookup_active")
+
+  @JvmField
   val IS_SUBMENU: BooleanEventField = EventFields.Boolean("isSubmenu")
 
   @JvmField
@@ -75,7 +78,8 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
 
   @JvmField
   val ACTION_FINISHED: VarargEventId = registerActionEvent(
-    GROUP, ACTION_FINISHED_EVENT_ID, EventFields.StartTime, ADDITIONAL, EventFields.Language, EventFields.DurationMs, DUMB_START, RESULT
+    GROUP, ACTION_FINISHED_EVENT_ID, EventFields.StartTime, ADDITIONAL, EventFields.Language, EventFields.DurationMs,
+    DUMB_START, RESULT, LOOKUP_ACTIVE
   )
 
   @JvmField
