@@ -233,10 +233,6 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createRenameFileFix(@NotNull String newName);
 
-  /**
-   * @param element element to rename (either {@link PsiNameIdentifierOwner} or its child)
-   * @return fix that ivokes the rename refactoring on an element; null if element is not suitable for rename
-   */
   @Nullable
   public abstract IntentionAction createRenameFix(@NotNull PsiElement element);
 
