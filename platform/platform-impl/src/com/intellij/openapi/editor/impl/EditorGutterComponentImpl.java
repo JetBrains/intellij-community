@@ -418,9 +418,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       // paint all backgrounds
       int gutterSeparatorX = getWhitespaceSeparatorOffset();
-      paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, getCaretRowColor(false));
-      paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), getCaretRowColor(true));
-
+      Color caretRowColor = getCaretRowColor();
+      paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
+      paintBackground(g, clip, gutterSeparatorX, getWidth() - gutterSeparatorX, myEditor.getBackgroundColor(), caretRowColor);
+      paintStickyLineBackground(g, startVisualLine, endVisualLine);
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
       Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -484,6 +485,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           showToolTip(area.toString(), p, Balloon.Position.below); //NON-NLS
           break;
         }
+      }
+    }
+  }
+
+  private void paintStickyLineBackground(Graphics2D g, int startVisualLine, int endVisualLine) {
+    if (ExperimentalUI.isNewUI() && myEditor.isStickyLinePainting() && myEditor.isStickyLineHovered()) {
+      if (startVisualLine != endVisualLine) {
+        LOG.error("Sticky line painting mode expected only one line to paint: " + startVisualLine + ", " + endVisualLine);
+      }
+      Color hoveredColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+      if (hoveredColor != null) {
+        int[] yRange = myEditor.visualLineToYRange(startVisualLine);
+        g.setColor(hoveredColor);
+        g.fillRect(0, yRange[0], getWidth(), yRange[1] - yRange[0]);
       }
     }
   }
@@ -655,7 +670,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     paintCaretRowBackground(g, x, width, caretRowColor);
   }
 
-  private Color getCaretRowColor(boolean isEditor) {
+  private Color getCaretRowColor() {
     if (!myEditor.getSettings().isCaretRowShown()) {
       return null;
     }
@@ -664,9 +679,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (myEditor.isStickyLinePainting()) {
       // suppress gutter caret row background on sticky lines panel
-      if (!isEditor || !myEditor.isStickyLineHovered()) {
-        return null;
-      }
+      return null;
     }
     return myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
   }
