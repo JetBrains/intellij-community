@@ -52,7 +52,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
 
     // process dependent modules
     for (module in context.storage.entities(ModuleEntity::class.java)) {
-      for (dependency in module.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>()) {
+      for (dependency in module.dependencies.filterIsInstance<ModuleDependency>()) {
         val dependencyModuleId = dependency.module
         if (shadeModuleIds.contains(dependencyModuleId)) {
           val mavenProject = shadeModuleIdToMavenProject[dependencyModuleId]!!
@@ -85,8 +85,8 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
       listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED))
     }
 
-    val scope = ModuleDependencyItem.DependencyScope.COMPILE
-    val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(libraryId, false, scope)
+    val scope = DependencyScope.COMPILE
+    val libraryDependency = LibraryDependency(libraryId, false, scope)
 
     builder.modifyEntity(module) {
       this.dependencies.add(libraryDependency)

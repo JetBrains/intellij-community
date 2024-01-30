@@ -2,10 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.NotNull;
@@ -53,15 +50,15 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
 
   @NotNull
   private static Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
-    if (dependency instanceof ModuleDependencyItem.SdkDependency) {
-      return IndexableIteratorBuilders.INSTANCE.forSdk(((ModuleDependencyItem.SdkDependency)dependency).getSdk().getName(),
-                                                       ((ModuleDependencyItem.SdkDependency)dependency).getSdk().getType());
+    if (dependency instanceof SdkDependency) {
+      return IndexableIteratorBuilders.INSTANCE.forSdk(((SdkDependency)dependency).getSdk().getName(),
+                                                       ((SdkDependency)dependency).getSdk().getType());
     }
-    else if (dependency instanceof ModuleDependencyItem.Exportable.LibraryDependency) {
-      LibraryId libraryId = ((ModuleDependencyItem.Exportable.LibraryDependency)dependency).getLibrary();
+    else if (dependency instanceof LibraryDependency) {
+      LibraryId libraryId = ((LibraryDependency)dependency).getLibrary();
       return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(libraryId, true);
     }
-    else if (dependency instanceof ModuleDependencyItem.InheritedSdkDependency) {
+    else if (dependency instanceof InheritedSdkDependency) {
       return IndexableIteratorBuilders.INSTANCE.forInheritedSdk();
     }
     return Collections.emptyList();

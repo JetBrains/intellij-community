@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.project.PackagingModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.ArrayUtil
@@ -185,7 +185,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
                 } else {
                     val minVersion =
                         module.dependencies.mapNotNull { moduleDependencyItem ->
-                            if (moduleDependencyItem !is ModuleDependencyItem.Exportable.LibraryDependency) return@mapNotNull null
+                            if (moduleDependencyItem !is LibraryDependency) return@mapNotNull null
                             val name = moduleDependencyItem.library.name
                             val artifactWithVersion = name.substringAfterLastOrNull("org.jetbrains.kotlin:")
                             if (artifactWithVersion != null && artifactWithVersion.contains(KOTLIN_JAVA_STDLIB_NAME)) {

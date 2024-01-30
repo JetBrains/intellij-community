@@ -14,10 +14,7 @@ import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.customImlData
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
@@ -114,13 +111,13 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
       updater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
     ): OrderEntryBridge {
       return when (item) {
-        is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryBridge(rootModelBridge, index, item, updater)
-        is ModuleDependencyItem.Exportable.LibraryDependency -> {
+        is ModuleDependency -> ModuleOrderEntryBridge(rootModelBridge, index, item, updater)
+        is LibraryDependency -> {
           LibraryOrderEntryBridge(rootModelBridge, index, item, updater)
         }
-        is ModuleDependencyItem.SdkDependency -> SdkOrderEntryBridge(rootModelBridge, index, item)
-        is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryBridge(rootModelBridge, index, item)
-        is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryBridge(rootModelBridge, index, item)
+        is SdkDependency -> SdkOrderEntryBridge(rootModelBridge, index, item)
+        is InheritedSdkDependency -> InheritedSdkOrderEntryBridge(rootModelBridge, index, item)
+        is ModuleSourceDependency -> ModuleSourceOrderEntryBridge(rootModelBridge, index, item)
       }
     }
 

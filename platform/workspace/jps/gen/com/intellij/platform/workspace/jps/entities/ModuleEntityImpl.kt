@@ -318,21 +318,17 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
     val result = HashSet<SymbolicEntityId<*>>()
     for (item in dependencies) {
       when (item) {
-        is ModuleDependencyItem.Exportable -> {
-          when (item) {
-            is ModuleDependencyItem.Exportable.LibraryDependency -> {
-              result.add(item.library)
-            }
-            is ModuleDependencyItem.Exportable.ModuleDependency -> {
-              result.add(item.module)
-            }
-          }
+        is InheritedSdkDependency -> {
         }
-        is ModuleDependencyItem.InheritedSdkDependency -> {
+        is LibraryDependency -> {
+          result.add(item.library)
         }
-        is ModuleDependencyItem.ModuleSourceDependency -> {
+        is ModuleDependency -> {
+          result.add(item.module)
         }
-        is ModuleDependencyItem.SdkDependency -> {
+        is ModuleSourceDependency -> {
+        }
+        is SdkDependency -> {
           result.add(item.sdk)
         }
       }
@@ -343,21 +339,17 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
   override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     for (item in dependencies) {
       when (item) {
-        is ModuleDependencyItem.Exportable -> {
-          when (item) {
-            is ModuleDependencyItem.Exportable.LibraryDependency -> {
-              index.index(this, item.library)
-            }
-            is ModuleDependencyItem.Exportable.ModuleDependency -> {
-              index.index(this, item.module)
-            }
-          }
+        is InheritedSdkDependency -> {
         }
-        is ModuleDependencyItem.InheritedSdkDependency -> {
+        is LibraryDependency -> {
+          index.index(this, item.library)
         }
-        is ModuleDependencyItem.ModuleSourceDependency -> {
+        is ModuleDependency -> {
+          index.index(this, item.module)
         }
-        is ModuleDependencyItem.SdkDependency -> {
+        is ModuleSourceDependency -> {
+        }
+        is SdkDependency -> {
           index.index(this, item.sdk)
         }
       }
@@ -369,27 +361,23 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
     val mutablePreviousSet = HashSet(prev)
     for (item in dependencies) {
       when (item) {
-        is ModuleDependencyItem.Exportable -> {
-          when (item) {
-            is ModuleDependencyItem.Exportable.LibraryDependency -> {
-              val removedItem_item_library = mutablePreviousSet.remove(item.library)
-              if (!removedItem_item_library) {
-                index.index(this, item.library)
-              }
-            }
-            is ModuleDependencyItem.Exportable.ModuleDependency -> {
-              val removedItem_item_module = mutablePreviousSet.remove(item.module)
-              if (!removedItem_item_module) {
-                index.index(this, item.module)
-              }
-            }
+        is InheritedSdkDependency -> {
+        }
+        is LibraryDependency -> {
+          val removedItem_item_library = mutablePreviousSet.remove(item.library)
+          if (!removedItem_item_library) {
+            index.index(this, item.library)
           }
         }
-        is ModuleDependencyItem.InheritedSdkDependency -> {
+        is ModuleDependency -> {
+          val removedItem_item_module = mutablePreviousSet.remove(item.module)
+          if (!removedItem_item_module) {
+            index.index(this, item.module)
+          }
         }
-        is ModuleDependencyItem.ModuleSourceDependency -> {
+        is ModuleSourceDependency -> {
         }
-        is ModuleDependencyItem.SdkDependency -> {
+        is SdkDependency -> {
           val removedItem_item_sdk = mutablePreviousSet.remove(item.sdk)
           if (!removedItem_item_sdk) {
             index.index(this, item.sdk)
@@ -407,47 +395,41 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
     val dependencies_data = dependencies.map {
       val _it = it
       val res_it = when (_it) {
-        is ModuleDependencyItem.Exportable -> {
-          val __it = _it
-          val res__it = when (__it) {
-            is ModuleDependencyItem.Exportable.LibraryDependency -> {
-              val __it_library_data = if (__it.library == oldLink) {
-                changed = true
-                newLink as LibraryId
-              }
-              else {
-                null
-              }
-              var __it_data = __it
-              if (__it_library_data != null) {
-                __it_data = __it_data.copy(library = __it_library_data)
-              }
-              __it_data
-            }
-            is ModuleDependencyItem.Exportable.ModuleDependency -> {
-              val __it_module_data = if (__it.module == oldLink) {
-                changed = true
-                newLink as ModuleId
-              }
-              else {
-                null
-              }
-              var __it_data = __it
-              if (__it_module_data != null) {
-                __it_data = __it_data.copy(module = __it_module_data)
-              }
-              __it_data
-            }
+        is InheritedSdkDependency -> {
+          _it
+        }
+        is LibraryDependency -> {
+          val _it_library_data = if (_it.library == oldLink) {
+            changed = true
+            newLink as LibraryId
           }
-          res__it
+          else {
+            null
+          }
+          var _it_data = _it
+          if (_it_library_data != null) {
+            _it_data = _it_data.copy(library = _it_library_data)
+          }
+          _it_data
         }
-        is ModuleDependencyItem.InheritedSdkDependency -> {
+        is ModuleDependency -> {
+          val _it_module_data = if (_it.module == oldLink) {
+            changed = true
+            newLink as ModuleId
+          }
+          else {
+            null
+          }
+          var _it_data = _it
+          if (_it_module_data != null) {
+            _it_data = _it_data.copy(module = _it_module_data)
+          }
+          _it_data
+        }
+        is ModuleSourceDependency -> {
           _it
         }
-        is ModuleDependencyItem.ModuleSourceDependency -> {
-          _it
-        }
-        is ModuleDependencyItem.SdkDependency -> {
+        is SdkDependency -> {
           val _it_sdk_data = if (_it.sdk == oldLink) {
             changed = true
             newLink as SdkId

@@ -591,8 +591,8 @@ private fun buildModuleGraph(storage: EntityStorage, includeTests: Boolean): Gra
       val moduleMap = storage.moduleMap
       val entity = moduleMap.getFirstEntity(m as ModuleBridge) as ModuleEntity?
       return (entity?.dependencies?.asSequence() ?: emptySequence())
-        .filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>()
-        .filter { includeTests || it.scope != ModuleDependencyItem.DependencyScope.TEST }
+        .filterIsInstance<ModuleDependency>()
+        .filter { includeTests || it.scope != DependencyScope.TEST }
         .mapNotNull {
           it.module.resolve(storage)
         }

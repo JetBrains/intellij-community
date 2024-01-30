@@ -26,41 +26,26 @@ data class FacetId(val name: @NlsSafe String, val type: @NonNls String, val pare
 }
 
 @Open
-sealed class ModuleDependencyItem : Serializable {
-  @Open
-  sealed class Exportable : ModuleDependencyItem() {
-    abstract val exported: Boolean
-    abstract val scope: DependencyScope
+sealed class ModuleDependencyItem : Serializable
 
-    abstract fun withScope(scope: DependencyScope): Exportable
-    abstract fun withExported(exported: Boolean): Exportable
+data class ModuleDependency(
+  val module: ModuleId,
+  val exported: Boolean,
+  val scope: DependencyScope,
+  val productionOnTest: Boolean
+) : ModuleDependencyItem()
 
-    data class ModuleDependency(
-      val module: ModuleId,
-      override val exported: Boolean,
-      override val scope: DependencyScope,
-      val productionOnTest: Boolean
-    ) : Exportable() {
-      override fun withScope(scope: DependencyScope): Exportable = copy(scope = scope)
-      override fun withExported(exported: Boolean): Exportable = copy(exported = exported)
-    }
+data class LibraryDependency(
+  val library: LibraryId,
+  val exported: Boolean,
+  val scope: DependencyScope
+) : ModuleDependencyItem()
 
-    data class LibraryDependency(
-      val library: LibraryId,
-      override val exported: Boolean,
-      override val scope: DependencyScope
-    ) : Exportable() {
-      override fun withScope(scope: DependencyScope): Exportable = copy(scope = scope)
-      override fun withExported(exported: Boolean): Exportable = copy(exported = exported)
-    }
-  }
+data class SdkDependency(val sdk: SdkId) : ModuleDependencyItem()
 
-  data class SdkDependency(val sdk: SdkId) : ModuleDependencyItem()
-
-  object InheritedSdkDependency : ModuleDependencyItem()
-  object ModuleSourceDependency : ModuleDependencyItem()
-  enum class DependencyScope { COMPILE, TEST, RUNTIME, PROVIDED }
-}
+object InheritedSdkDependency : ModuleDependencyItem()
+object ModuleSourceDependency : ModuleDependencyItem()
+enum class DependencyScope { COMPILE, TEST, RUNTIME, PROVIDED }
 
 @Open
 sealed class LibraryTableId : Serializable {

@@ -110,7 +110,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     for (change in event.getChanges(ModuleEntity::class.java)) {
       val (oldLibDeps, newLibDeps) = when (change) {
         is EntityChange.Removed -> continue
-        is EntityChange.Added -> emptySet<ModuleDependencyItem.Exportable.LibraryDependency>() to change.entity.libraryDependencies()
+        is EntityChange.Added -> emptySet<LibraryDependency>() to change.entity.libraryDependencies()
         is EntityChange.Replaced -> change.oldEntity.libraryDependencies() to change.newEntity.libraryDependencies()
       }
 
@@ -134,9 +134,9 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     return library as? LibraryEx
   }
 
-  private fun findLibrary(libDep: ModuleDependencyItem.Exportable.LibraryDependency, storage: EntityStorage): LibraryEx? =
+  private fun findLibrary(libDep: LibraryDependency, storage: EntityStorage): LibraryEx? =
     findLibrary(libDep.library, storage)
 
-  private fun ModuleEntity.libraryDependencies(): Set<ModuleDependencyItem.Exportable.LibraryDependency> =
-    dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>().toHashSet()
+  private fun ModuleEntity.libraryDependencies(): Set<LibraryDependency> =
+    dependencies.filterIsInstance<LibraryDependency>().toHashSet()
 }

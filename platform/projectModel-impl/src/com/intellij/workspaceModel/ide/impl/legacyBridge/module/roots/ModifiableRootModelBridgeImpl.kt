@@ -24,6 +24,7 @@ import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntitySource
@@ -166,7 +167,7 @@ class ModifiableRootModelBridgeImpl(
       dependencies = copy
     }
 
-    if (newItem is ModuleDependencyItem.Exportable.LibraryDependency && newItem.library.tableId is LibraryTableId.ModuleLibraryTableId) {
+    if (newItem is LibraryDependency && newItem.library.tableId is LibraryTableId.ModuleLibraryTableId) {
       changedLibraryDependency.add(newItem.library)
     }
   }
@@ -265,9 +266,9 @@ class ModifiableRootModelBridgeImpl(
       }
 
       is ModuleOrderEntry -> orderEntry.module?.let { addModuleOrderEntry(it) } ?: error("Module is empty: $orderEntry")
-      is ModuleSourceOrderEntry -> appendDependency(ModuleDependencyItem.ModuleSourceDependency)
+      is ModuleSourceOrderEntry -> appendDependency(ModuleSourceDependency)
 
-      is InheritedJdkOrderEntry -> appendDependency(ModuleDependencyItem.InheritedSdkDependency)
+      is InheritedJdkOrderEntry -> appendDependency(InheritedSdkDependency)
       is ModuleJdkOrderEntry -> appendDependency((orderEntry as SdkOrderEntryBridge).sdkDependencyItem)
 
       else -> error("OrderEntry should not be extended by external systems")
@@ -275,10 +276,10 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun addLibraryEntry(library: Library): LibraryOrderEntry {
-    appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(
+    appendDependency(LibraryDependency(
       library = library.libraryId,
       exported = false,
-      scope = ModuleDependencyItem.DependencyScope.COMPILE
+      scope = EntitiesDependencyScope.COMPILE
     ))
     return (mutableOrderEntries.lastOrNull() as? LibraryOrderEntry ?: error("Unable to find library orderEntry after adding"))
   }
@@ -300,15 +301,15 @@ class ModifiableRootModelBridgeImpl(
   override fun addLibraryEntries(libraries: List<Library>, scope: DependencyScope, exported: Boolean) {
     val dependencyScope = scope.toEntityDependencyScope()
     appendDependencies(libraries.map {
-      ModuleDependencyItem.Exportable.LibraryDependency(it.libraryId, exported, dependencyScope)
+      LibraryDependency(it.libraryId, exported, dependencyScope)
     })
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
-    val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
+    val libraryDependency = LibraryDependency(
       library = LibraryId(name, LibraryNameGenerator.getLibraryTableId(level)),
       exported = false,
-      scope = ModuleDependencyItem.DependencyScope.COMPILE
+      scope = EntitiesDependencyScope.COMPILE
     )
 
     appendDependency(libraryDependency)
@@ -317,11 +318,11 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun addModuleOrderEntry(module: Module): ModuleOrderEntry {
-    val moduleDependency = ModuleDependencyItem.Exportable.ModuleDependency(
+    val moduleDependency = ModuleDependency(
       module = (module as ModuleBridge).moduleEntityId,
       productionOnTest = false,
       exported = false,
-      scope = ModuleDependencyItem.DependencyScope.COMPILE
+      scope = EntitiesDependencyScope.COMPILE
     )
 
     appendDependency(moduleDependency)
@@ -332,17 +333,16 @@ class ModifiableRootModelBridgeImpl(
   override fun addModuleEntries(modules: MutableList<Module>, scope: DependencyScope, exported: Boolean) {
     val dependencyScope = scope.toEntityDependencyScope()
     appendDependencies(modules.map {
-      ModuleDependencyItem.Exportable.ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope,
-                                                       productionOnTest = false)
+      ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope, productionOnTest = false)
     })
   }
 
   override fun addInvalidModuleEntry(name: String): ModuleOrderEntry {
-    val moduleDependency = ModuleDependencyItem.Exportable.ModuleDependency(
+    val moduleDependency = ModuleDependency(
       module = ModuleId(name),
       productionOnTest = false,
       exported = false,
-      scope = ModuleDependencyItem.DependencyScope.COMPILE
+      scope = EntitiesDependencyScope.COMPILE
     )
 
     appendDependency(moduleDependency)
@@ -476,13 +476,13 @@ class ModifiableRootModelBridgeImpl(
     }
 
     val currentSdk = sdk
-    val jdkItem = currentSdk?.let { ModuleDependencyItem.SdkDependency(SdkId(it.name, it.sdkType.name)) }
-    if (moduleEntity.dependencies != listOfNotNull(jdkItem, ModuleDependencyItem.ModuleSourceDependency)) {
+    val jdkItem = currentSdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
+    if (moduleEntity.dependencies != listOfNotNull(jdkItem, ModuleSourceDependency)) {
       removeDependencies { _, _ -> true }
       if (jdkItem != null) {
         appendDependency(jdkItem)
       }
-      appendDependency(ModuleDependencyItem.ModuleSourceDependency)
+      appendDependency(ModuleSourceDependency)
     }
 
     for (contentRoot in moduleEntity.contentRoots) {
@@ -624,7 +624,7 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun setInvalidSdk(sdkName: String, sdkType: String) {
-    setSdkItem(ModuleDependencyItem.SdkDependency(SdkId(sdkName, sdkType)))
+    setSdkItem(SdkDependency(SdkId(sdkName, sdkType)))
 
     if (assertChangesApplied && getSdkName() != sdkName) {
       error("setInvalidSdk: expected sdkName '$sdkName' but got '${getSdkName()}' after doing a change")
@@ -634,7 +634,7 @@ class ModifiableRootModelBridgeImpl(
   override fun inheritSdk() {
     if (isSdkInherited) return
 
-    setSdkItem(ModuleDependencyItem.InheritedSdkDependency)
+    setSdkItem(InheritedSdkDependency)
 
     if (assertChangesApplied && !isSdkInherited) {
       error("inheritSdk: Sdk is still not inherited after inheritSdk()")
@@ -661,7 +661,7 @@ class ModifiableRootModelBridgeImpl(
   override fun isDisposed(): Boolean = modelIsCommittedOrDisposed
 
   private fun setSdkItem(item: ModuleDependencyItem?) {
-    removeDependencies { _, it -> it is ModuleDependencyItem.InheritedSdkDependency || it is ModuleDependencyItem.SdkDependency }
+    removeDependencies { _, it -> it is InheritedSdkDependency || it is SdkDependency }
     if (item != null) {
       insertDependency(item, 0)
     }

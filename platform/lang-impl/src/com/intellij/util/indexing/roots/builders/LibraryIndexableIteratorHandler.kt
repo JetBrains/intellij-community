@@ -3,10 +3,7 @@ package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -154,7 +151,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     private fun checkDependencies(iterator: Iterator<ModuleDependencyItem>, libraryId: LibraryId): Boolean {
       while (iterator.hasNext()) {
         val next = iterator.next()
-        if (next is ModuleDependencyItem.Exportable.LibraryDependency) {
+        if (next is LibraryDependency) {
           idsFromDependencies.add(next.library)
           if (libraryId == next.library) {
             idsToIndex.add(libraryId)

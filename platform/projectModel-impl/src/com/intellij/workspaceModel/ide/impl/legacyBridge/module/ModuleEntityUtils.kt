@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
@@ -38,7 +35,7 @@ fun ModuleEntity.getModuleLevelLibraries(snapshot: EntityStorage): Sequence<Libr
  * @return list of SDKs from module dependencies
  */
 fun ModuleEntity.findSdkFromDependencies(): List<Sdk> {
-  return this.dependencies.filterIsInstance(ModuleDependencyItem.SdkDependency::class.java).mapNotNull { sdkDependency ->
+  return this.dependencies.filterIsInstance<SdkDependency>().mapNotNull { sdkDependency ->
     ModifiableRootModelBridge.findSdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
   }
 }
@@ -52,7 +49,7 @@ fun ModuleEntity.findSdkFromDependencies(): List<Sdk> {
  * @return list of global libraries from module dependencies
  */
 fun ModuleEntity.findGlobalLibsFromDependencies(project: Project): List<Library> {
-  return this.dependencies.filterIsInstance(ModuleDependencyItem.Exportable.LibraryDependency::class.java).mapNotNull { libraryDependency ->
+  return this.dependencies.filterIsInstance<LibraryDependency>().mapNotNull { libraryDependency ->
     val libraryId = libraryDependency.library
     if (libraryId.tableId !is LibraryTableId.GlobalLibraryTableId) return@mapNotNull null
     LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryId.tableId.level, project)?.getLibraryByName(libraryId.name)

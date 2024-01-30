@@ -156,7 +156,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
 
     val sourceRoots = mutableListOf<VirtualFileUrl>()
     val dependencies = ArrayList<ModuleDependencyItem>()
-    dependencies.add(ModuleDependencyItem.ModuleSourceDependency)
+    dependencies.add(ModuleSourceDependency)
 
     classpathTag.getChildren(EclipseXml.CLASSPATHENTRY_TAG).forEachIndexed { index, entryTag ->
       val kind = entryTag.getAttributeValue(EclipseXml.KIND_ATTR)
@@ -174,8 +174,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
       when (kind) {
         EclipseXml.SRC_KIND -> {
           if (path.startsWith("/")) {
-            dependencies.add(ModuleDependencyItem.Exportable.ModuleDependency(ModuleId(path.removePrefix("/")), exported,
-                                                                              ModuleDependencyItem.DependencyScope.COMPILE, false))
+            dependencies.add(ModuleDependency(ModuleId(path.removePrefix("/")), exported,
+                                              DependencyScope.COMPILE, false))
           }
           else {
             val linkedPath = expandLinkedResourcesPath(storageRootPath, expandMacroMap, path)
@@ -203,8 +203,8 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
               this.sourceRoot = sourceRoot
             }
             sourceRoots.add(sourceRoot.url)
-            dependencies.removeIf { it is ModuleDependencyItem.ModuleSourceDependency }
-            dependencies.add(ModuleDependencyItem.ModuleSourceDependency)
+            dependencies.removeIf { it is ModuleSourceDependency }
+            dependencies.add(ModuleSourceDependency)
             editEclipseProperties { eclipseProperties ->
               eclipseProperties.expectedModuleSourcePlace = dependencies.size - 1
               eclipseProperties.srcPlace = eclipseProperties.srcPlace.toMutableMap().also { it[srcUrl.url] = index }
@@ -269,8 +269,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                             roots,
                                             contentRootEntity.entitySource)
           moduleLibrariesCollector[libraryEntity.symbolicId] = libraryEntity
-          dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.symbolicId, exported,
-                                                                             ModuleDependencyItem.DependencyScope.COMPILE))
+          dependencies.add(LibraryDependency(libraryEntity.symbolicId, exported, DependencyScope.COMPILE))
         }
         EclipseXml.VAR_KIND -> {
           val slash = path.indexOf('/')
@@ -303,22 +302,20 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           val libraryEntity = LibraryEntity(libName, LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),
                                             roots, contentRootEntity.entitySource)
           moduleLibrariesCollector[libraryEntity.symbolicId] = libraryEntity
-          dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.symbolicId, exported,
-                                                                             ModuleDependencyItem.DependencyScope.COMPILE))
+          dependencies.add(LibraryDependency(libraryEntity.symbolicId, exported, DependencyScope.COMPILE))
 
         }
         EclipseXml.CON_KIND -> {
           if (path == EclipseXml.ECLIPSE_PLATFORM) {
             val libraryId = LibraryId(IdeaXml.ECLIPSE_LIBRARY,
                                       LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))
-            dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryId, exported,
-                                                                               ModuleDependencyItem.DependencyScope.COMPILE))
+            dependencies.add(LibraryDependency(libraryId, exported, DependencyScope.COMPILE))
           }
           else if (path.startsWith(EclipseXml.JRE_CONTAINER)) {
             val jdkName = AbstractEclipseClasspathReader.getLastPathComponent(path)
-            dependencies.removeIf { it is ModuleDependencyItem.SdkDependency || it == ModuleDependencyItem.InheritedSdkDependency }
-            dependencies.add(if (jdkName != null) ModuleDependencyItem.SdkDependency(SdkId(jdkName, IdeaXml.JAVA_SDK_TYPE))
-                             else ModuleDependencyItem.InheritedSdkDependency)
+            dependencies.removeIf { it is SdkDependency || it == InheritedSdkDependency }
+            dependencies.add(if (jdkName != null) SdkDependency(SdkId(jdkName, IdeaXml.JAVA_SDK_TYPE))
+                             else InheritedSdkDependency)
           }
           else if (path.startsWith(EclipseXml.USER_LIBRARY)) {
             val libraryName = AbstractEclipseClasspathReader.getPresentableName(path)
@@ -326,8 +323,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             val tableId = if (globalLevel != null) LibraryTableId.GlobalLibraryTableId(globalLevel)
             else LibraryTableId.ProjectLibraryTableId
             val libraryId = LibraryId(libraryName, tableId)
-            dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryId, exported,
-                                                                               ModuleDependencyItem.DependencyScope.COMPILE))
+            dependencies.add(LibraryDependency(libraryId, exported, DependencyScope.COMPILE))
 
           }
           else if (path.startsWith(EclipseXml.JUNIT_CONTAINER)) {
@@ -339,8 +335,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                               LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),
                                               roots, contentRootEntity.entitySource)
             moduleLibrariesCollector[libraryEntity.symbolicId] = libraryEntity
-            dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.symbolicId, exported,
-                                                                               ModuleDependencyItem.DependencyScope.COMPILE))
+            dependencies.add(LibraryDependency(libraryEntity.symbolicId, exported, DependencyScope.COMPILE))
           }
           else {
             val definedCons = EclipseNatureImporter.getAllDefinedCons()
@@ -355,8 +350,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                 it.unknownCons += path
               }
               val libraryId = LibraryId(path, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))
-              dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryId, exported,
-                                                                                 ModuleDependencyItem.DependencyScope.COMPILE))
+              dependencies.add(LibraryDependency(libraryId, exported, DependencyScope.COMPILE))
             }
           }
         }
@@ -365,12 +359,12 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
         }
       }
     }
-    if (dependencies.none { it is ModuleDependencyItem.SdkDependency || it == ModuleDependencyItem.InheritedSdkDependency }) {
+    if (dependencies.none { it is SdkDependency || it == InheritedSdkDependency }) {
       editEclipseProperties {
         it.forceConfigureJdk = true
         it.expectedModuleSourcePlace++
       }
-      dependencies.add(0, ModuleDependencyItem.InheritedSdkDependency)
+      dependencies.add(0, InheritedSdkDependency)
     }
 
     createSourceRootsOrder(sourceRoots, contentRootEntity.entitySource)?.let { sourceRootsOrder ->
@@ -497,7 +491,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
 
     for ((itemIndex, item) in module.dependencies.withIndex()) {
       when (item) {
-        ModuleDependencyItem.ModuleSourceDependency -> {
+        ModuleSourceDependency -> {
           val shouldPlaceSeparately = eclipseProperties?.expectedModuleSourcePlace == itemIndex
           val comparator = module.mainContentRoot?.getSourceRootsComparator() ?: compareBy { it.url.url }
           for (sourceRoot in sourceRoots.sortedWith(comparator)) {
@@ -512,7 +506,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             addClasspathEntry(EclipseXml.SRC_KIND, relativePath, if (shouldPlaceSeparately) index else -1)
           }
         }
-        is ModuleDependencyItem.Exportable.ModuleDependency -> {
+        is ModuleDependency -> {
           val path = "/${item.module.name}"
           val oldElement = EclipseClasspathWriter.getOldElement(EclipseXml.SRC_KIND, path, oldEntries)
           val classpathEntry = addClasspathEntry(EclipseXml.SRC_KIND, path)
@@ -521,7 +515,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           }
           EclipseClasspathWriter.setExported(classpathEntry, item.exported)
         }
-        is ModuleDependencyItem.Exportable.LibraryDependency -> {
+        is LibraryDependency -> {
           val libraryName = item.library.name
           if (item.library.tableId is LibraryTableId.ModuleLibraryTableId) {
             val libraryRoots = moduleLibraries[libraryName]?.roots ?: emptyList()
@@ -615,12 +609,12 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           }
 
         }
-        ModuleDependencyItem.InheritedSdkDependency -> {
+        InheritedSdkDependency -> {
           if (eclipseProperties?.forceConfigureJdk != true) {
             addClasspathEntry(EclipseXml.CON_KIND, EclipseXml.JRE_CONTAINER)
           }
         }
-        is ModuleDependencyItem.SdkDependency -> {
+        is SdkDependency -> {
           val jdkLink = "${EclipseXml.JRE_CONTAINER}${if (item.sdk.type == "JavaSDK") EclipseXml.JAVA_SDK_TYPE else ""}/${item.sdk.name}"
           addClasspathEntry(EclipseXml.CON_KIND, jdkLink)
         }

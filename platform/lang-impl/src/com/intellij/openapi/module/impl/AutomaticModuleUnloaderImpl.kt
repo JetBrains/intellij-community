@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -93,7 +93,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
     val moduleEntity = storage.resolve(moduleId) ?: unloadedEntitiesStorage.resolve(moduleId) ?: return
     if (!result.add(moduleEntity.name)) return
     moduleEntity.dependencies.forEach {
-      if (it is ModuleDependencyItem.Exportable.ModuleDependency) {
+      if (it is ModuleDependency) {
         processTransitiveDependencies(it.module, storage, unloadedEntitiesStorage, explicitlyUnloadedHolder, result)
       }
     }

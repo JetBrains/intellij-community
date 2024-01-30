@@ -12,10 +12,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jdom.Element
@@ -44,19 +41,19 @@ internal class EmlFileSaver(private val module: ModuleEntity,
     val libLevels = LinkedHashMap<String, String>()
     module.dependencies.forEach { dep ->
       when (dep) {
-        is ModuleDependencyItem.Exportable.ModuleDependency -> {
-          if (dep.scope != ModuleDependencyItem.DependencyScope.COMPILE) {
+        is ModuleDependency -> {
+          if (dep.scope != DependencyScope.COMPILE) {
             root.addContent(Element("module").setAttribute("name", dep.module.name).setAttribute("scope", dep.scope.name))
           }
         }
-        is ModuleDependencyItem.InheritedSdkDependency -> {
+        is InheritedSdkDependency -> {
           root.setAttribute(IdeaSpecificSettings.INHERIT_JDK, true.toString())
         }
-        is ModuleDependencyItem.SdkDependency -> {
+        is SdkDependency -> {
           root.setAttribute("jdk", dep.sdk.name)
           root.setAttribute("jdk_type", dep.sdk.type)
         }
-        is ModuleDependencyItem.Exportable.LibraryDependency -> {
+        is LibraryDependency -> {
           val libTag = Element("lib")
           val library = moduleLibraries[dep.library.name]
           val libName = LibraryNameGenerator.getLegacyLibraryName(dep.library) ?: generateLibName(library)
@@ -90,7 +87,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
               }
             }
           }
-          if (libTag.children.isNotEmpty() || dep.scope != ModuleDependencyItem.DependencyScope.COMPILE) {
+          if (libTag.children.isNotEmpty() || dep.scope != DependencyScope.COMPILE) {
             root.addContent(libTag)
           }
         }

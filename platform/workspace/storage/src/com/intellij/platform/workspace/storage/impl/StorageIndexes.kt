@@ -92,11 +92,11 @@ internal open class StorageIndexes(
     val actualRefs = HashSet<Any>(entityData.dependencies.size)
     entityData.dependencies.forEach { dependency ->
       when (dependency) {
-        is ModuleDependencyItem.Exportable.ModuleDependency -> {
+        is ModuleDependency -> {
           assert(dependency.module in expectedLinks)
           actualRefs += dependency.module
         }
-        is ModuleDependencyItem.Exportable.LibraryDependency -> {
+        is LibraryDependency -> {
           assert(dependency.library in expectedLinks)
           actualRefs += dependency.library
         }

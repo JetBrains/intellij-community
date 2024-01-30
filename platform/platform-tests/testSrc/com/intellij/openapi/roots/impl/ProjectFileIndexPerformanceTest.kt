@@ -52,7 +52,7 @@ class ProjectFileIndexPerformanceTest {
           val directory = bigModuleRoot.subdir("dir$i").deepSubdir("subDir", 50)
           directory.createManyFiles(50, "File", ".java", ourSourceFilesToTest)
         }
-        builder addEntity ModuleEntity("big", listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency), NonPersistentEntitySource) {
+        builder addEntity ModuleEntity("big", listOf(InheritedSdkDependency, ModuleSourceDependency), NonPersistentEntitySource) {
           contentRoots = listOf(ContentRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource) {
             sourceRoots = listOf(
               SourceRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
@@ -73,9 +73,9 @@ class ProjectFileIndexPerformanceTest {
             .createManyFiles(10, "Lib", ".java", ourLibrarySourceFilesToTest)
 
           val dependencies = listOf(
-            ModuleDependencyItem.InheritedSdkDependency,
-            ModuleDependencyItem.ModuleSourceDependency,
-            ModuleDependencyItem.Exportable.LibraryDependency(library.symbolicId, false, ModuleDependencyItem.DependencyScope.COMPILE)
+            InheritedSdkDependency,
+            ModuleSourceDependency,
+            LibraryDependency(library.symbolicId, false, DependencyScope.COMPILE)
           )
 
           val srcRoot = smallModuleRoot.subdir("src")

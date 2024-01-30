@@ -20,6 +20,7 @@ import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -201,7 +202,7 @@ class ModuleBridgesTest {
     val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
       assertNotNull(WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java)
                       .first { it.symbolicId.name == moduleName }.dependencies
-                      .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
+                      .find { it is ModuleDependency && it.module.name == dependencyModuleName })
     }
 
     val antModuleName = "ant"
@@ -496,8 +497,7 @@ class ModuleBridgesTest {
                                                               entitySource = source)
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
-        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false,
-                                                          ModuleDependencyItem.DependencyScope.COMPILE)
+        LibraryDependency(moduleLibraryEntity.symbolicId, false, DependencyScope.COMPILE)
       ).toMutableList()
     }
 

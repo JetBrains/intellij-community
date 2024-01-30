@@ -13,10 +13,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -79,7 +76,7 @@ class SaveFacetsTest {
       JpsProjectFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
     runWriteActionAndWait {
       workspaceModel.updateProjectModel {
-        val moduleEntity = it addEntity ModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source)
+        val moduleEntity = it addEntity ModuleEntity("foo", listOf(ModuleSourceDependency), source)
         it addEntity ModuleCustomImlDataEntity(HashMap(mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID)),
                                                source) {
           module = moduleEntity
@@ -97,7 +94,7 @@ class SaveFacetsTest {
       workspaceModel.updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
         it.modifyEntity(moduleEntity) {
-          dependencies = mutableListOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency)
+          dependencies = mutableListOf(ModuleSourceDependency, InheritedSdkDependency)
         }
       }
     }

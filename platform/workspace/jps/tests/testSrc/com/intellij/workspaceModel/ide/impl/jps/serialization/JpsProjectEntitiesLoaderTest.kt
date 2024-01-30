@@ -89,16 +89,16 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, mainModuleSrc.rootType)
 
     assertEquals(6, mainModule.dependencies.size)
-    assertEquals(ModuleDependencyItem.InheritedSdkDependency, mainModule.dependencies[0])
-    assertEquals(ModuleDependencyItem.ModuleSourceDependency, mainModule.dependencies[1])
-    assertEquals("log4j", (mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).library.name)
-    assertFalse((mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).exported)
-    assertEquals(ModuleDependencyItem.DependencyScope.COMPILE,
-                 (mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).scope)
-    assertEquals(ModuleDependencyItem.DependencyScope.TEST,
-                 (mainModule.dependencies[3] as ModuleDependencyItem.Exportable.LibraryDependency).scope)
-    assertTrue((mainModule.dependencies[4] as ModuleDependencyItem.Exportable.LibraryDependency).exported)
-    assertEquals("util", (mainModule.dependencies[5] as ModuleDependencyItem.Exportable.ModuleDependency).module.name)
+    assertEquals(InheritedSdkDependency, mainModule.dependencies[0])
+    assertEquals(ModuleSourceDependency, mainModule.dependencies[1])
+    assertEquals("log4j", (mainModule.dependencies[2] as LibraryDependency).library.name)
+    assertFalse((mainModule.dependencies[2] as LibraryDependency).exported)
+    assertEquals(DependencyScope.COMPILE,
+                 (mainModule.dependencies[2] as LibraryDependency).scope)
+    assertEquals(DependencyScope.TEST,
+                 (mainModule.dependencies[3] as LibraryDependency).scope)
+    assertTrue((mainModule.dependencies[4] as LibraryDependency).exported)
+    assertEquals("util", (mainModule.dependencies[5] as ModuleDependency).module.name)
 
     val utilModule = modules[1]
     assertEquals("util", utilModule.name)

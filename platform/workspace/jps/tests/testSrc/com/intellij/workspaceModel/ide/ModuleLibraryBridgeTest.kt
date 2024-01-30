@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -222,8 +223,8 @@ class ModuleLibraryBridgeTest {
         val libraryDependencies = WorkspaceModel.getInstance(project).currentSnapshot.entities(
           ModuleEntity::class.java).first().dependencies.drop(1)
         assertEquals(2, libraryDependencies.size)
-        val libraryDepOne = libraryDependencies[0] as ModuleDependencyItem.Exportable.LibraryDependency
-        val libraryDepTwo = libraryDependencies[1] as ModuleDependencyItem.Exportable.LibraryDependency
+        val libraryDepOne = libraryDependencies[0] as LibraryDependency
+        val libraryDepTwo = libraryDependencies[1] as LibraryDependency
         // Check name mangling for libraries with the same name
         assertTrue(libraryDepOne.library.name != libraryDepTwo.library.name)
 
@@ -246,8 +247,8 @@ class ModuleLibraryBridgeTest {
       .entities(ModuleEntity::class.java).first()
       .dependencies.drop(1)
     assertEquals(2, libraryDependencies.size)
-    val libraryDepOne = libraryDependencies[0] as ModuleDependencyItem.Exportable.LibraryDependency
-    val libraryDepTwo = libraryDependencies[1] as ModuleDependencyItem.Exportable.LibraryDependency
+    val libraryDepOne = libraryDependencies[0] as LibraryDependency
+    val libraryDepTwo = libraryDependencies[1] as LibraryDependency
     // Check no name mangling for libraries
     assertTrue(listOf(libraryDepOne.library.name, libraryDepTwo.library.name).containsAll(listOf(mavenLibraryName, gradleLibraryName)))
   }
@@ -456,8 +457,8 @@ class ModuleLibraryBridgeTest {
     val moduleDependencyItem = WorkspaceModel.getInstance(project).currentSnapshot
       .entities(ModuleEntity::class.java).first()
       .dependencies.last()
-    assertTrue(moduleDependencyItem is ModuleDependencyItem.Exportable.LibraryDependency)
-    val libraryDependency = moduleDependencyItem as ModuleDependencyItem.Exportable.LibraryDependency
+    assertTrue(moduleDependencyItem is LibraryDependency)
+    val libraryDependency = moduleDependencyItem as LibraryDependency
     assertEquals(libraryName, libraryDependency.library.name)
   }
 }

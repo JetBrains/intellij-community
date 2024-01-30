@@ -58,7 +58,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
     val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
-                                                   dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+                                                   dependencies = listOf(ModuleSourceDependency),
                                                    entitySource = NonPersistentEntitySource
     )
 
@@ -97,7 +97,7 @@ internal class ModifiableModuleModelBridgeImpl(
     )
 
     val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
-                                                   dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+                                                   dependencies = listOf(ModuleSourceDependency),
                                                    entitySource = entitySource
     ) {
       type = moduleTypeId
@@ -186,7 +186,7 @@ internal class ModifiableModuleModelBridgeImpl(
     }
     moduleEntity.dependencies
       .asSequence()
-      .filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+      .filterIsInstance<LibraryDependency>()
       .filter { (it.library.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId == module.moduleEntityId }
       .mapNotNull { it.library.resolve(diff) }
       .forEach {

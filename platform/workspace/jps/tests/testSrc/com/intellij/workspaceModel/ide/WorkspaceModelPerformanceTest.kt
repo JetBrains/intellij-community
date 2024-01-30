@@ -58,14 +58,12 @@ class WorkspaceModelPerformanceTest {
         val dependentModules = if (i > 10) 1..10 else IntRange.EMPTY
         val dependentLibraries = (1..10).toList() + (if (i > 10) listOf(i) else emptyList())
         val dependencies = listOf(
-          listOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency),
+          listOf(ModuleSourceDependency, InheritedSdkDependency),
           dependentModules.map {
-            ModuleDependencyItem.Exportable.ModuleDependency(ModuleId("module$it"), false, ModuleDependencyItem.DependencyScope.COMPILE,
-                                                             false)
+            ModuleDependency(ModuleId("module$it"), false, DependencyScope.COMPILE, false)
           },
           dependentLibraries.map {
-            ModuleDependencyItem.Exportable.LibraryDependency(LibraryId("lib$it", LibraryTableId.ProjectLibraryTableId), false,
-                                                              ModuleDependencyItem.DependencyScope.COMPILE)
+            LibraryDependency(LibraryId("lib$it", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.COMPILE)
           }
         ).flatten()
         builder addEntity ModuleEntity("module$i", dependencies, NonPersistentEntitySource) {

@@ -81,15 +81,14 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       }
     }
 
-    return createAndAddLibrary(libraryEntity, false, ModuleDependencyItem.DependencyScope.COMPILE)
+    return createAndAddLibrary(libraryEntity, false, DependencyScope.COMPILE)
   }
 
   private fun createAndAddLibrary(libraryEntity: LibraryEntity, exported: Boolean,
-                                  scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
+                                  scope: DependencyScope): LibraryBridgeImpl {
     val libraryId = libraryEntity.symbolicId
 
-    modifiableModel.appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(library = libraryId, exported = exported,
-                                                                                       scope = scope))
+    modifiableModel.appendDependency(LibraryDependency(library = libraryId, exported = exported, scope = scope))
 
     val library = LibraryBridgeImpl(
       libraryTable = ModuleRootComponentBridge.getInstance(modifiableModel.module).moduleLibraryTable,
@@ -106,7 +105,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
   internal fun addLibraryCopy(original: LibraryBridgeImpl,
                               exported: Boolean,
-                              scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
+                              scope: DependencyScope): LibraryBridgeImpl {
     val tableId = getTableId()
     val libraryEntityName = LibraryNameGenerator.generateLibraryEntityName(original.name) { existsName ->
       LibraryId(existsName, tableId) in modifiableModel.diff
@@ -150,7 +149,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
     val libraryId = libraryEntity.symbolicId
     modifiableModel.removeDependencies { _, item ->
-      item is ModuleDependencyItem.Exportable.LibraryDependency && item.library == libraryId
+      item is LibraryDependency && item.library == libraryId
     }
 
     modifiableModel.diff.removeEntity(libraryEntity)

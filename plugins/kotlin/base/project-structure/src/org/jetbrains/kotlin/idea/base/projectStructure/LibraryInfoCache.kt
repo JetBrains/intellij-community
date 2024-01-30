@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
@@ -334,11 +335,11 @@ class LibraryInfoCache(project: Project) : Disposable {
                 .toMutableList()
 
             val oldLibDependencies = moduleChanges.mapNotNull {
-                it.oldEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+                it.oldEntity?.dependencies?.filterIsInstance<LibraryDependency>()
             }.flatten().associateBy { it.library }
 
             val newLibDependencies = moduleChanges.mapNotNull {
-                it.newEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+                it.newEntity?.dependencies?.filterIsInstance<LibraryDependency>()
             }.flatten().associateBy { it.library }
 
             for (entry in oldLibDependencies.entries) {
