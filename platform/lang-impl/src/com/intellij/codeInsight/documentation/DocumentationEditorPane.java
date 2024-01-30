@@ -2,11 +2,10 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.documentation.DocumentationImageResolver;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,7 +40,7 @@ import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 @Internal
 public abstract class DocumentationEditorPane extends JEditorPane implements Disposable {
   private static final Color BACKGROUND_COLOR = JBColor.lazy(() -> {
-    ColorKey colorKey = DocumentationComponent.COLOR_KEY;
+    ColorKey colorKey = EditorColors.DOCUMENTATION_COLOR;
     EditorColorsScheme scheme = EditorColorsUtil.getColorSchemeForBackground(null);
     Color color;
     color = scheme.getColor(colorKey);
@@ -79,8 +78,10 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     }
     setBackground(BACKGROUND_COLOR);
     HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
-      .replaceViewFactoryExtensions(DocumentationHtmlUtil.getIconsExtension(iconResolver), Extensions.BASE64_IMAGES,
-                                    Extensions.INLINE_VIEW_EX)
+      .replaceViewFactoryExtensions(DocumentationHtmlUtil.getIconsExtension(iconResolver),
+                                    Extensions.BASE64_IMAGES,
+                                    Extensions.INLINE_VIEW_EX,
+                                    QuickDocHighlightingHelper.getScalingImageViewExtension())
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
     updateDocumentationPaneDefaultCssRules(editorKit);
 
@@ -260,11 +261,12 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
         setCaretPosition(startOffset);
         if (!ScreenReader.isActive()) {
           // scrolling to target location explicitly, as we've disabled auto-scrolling to caret
+          //noinspection deprecation
           scrollRectToVisible(modelToView(startOffset));
         }
       }
       catch (BadLocationException e) {
-        DocumentationManager.LOG.warn("Error highlighting link", e);
+        Logger.getInstance(DocumentationEditorPane.class).warn("Error highlighting link", e);
       }
     }
     else if (myHighlightedTag != null) {

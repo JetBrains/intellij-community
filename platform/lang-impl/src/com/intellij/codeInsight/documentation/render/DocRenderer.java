@@ -4,13 +4,12 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.codeInsight.documentation.DocumentationActionProvider;
-import com.intellij.codeInsight.documentation.DocumentationComponent;
+import com.intellij.codeInsight.documentation.DocumentationFontSize;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -26,7 +25,6 @@ import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.ShortcutExtension;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
@@ -42,7 +40,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.EditorKit;
+import javax.swing.text.View;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
@@ -311,7 +311,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     pane.setEditorKit(createEditorKit(editor, useTipsKit));
     pane.setBorder(JBUI.Borders.empty());
     Map<TextAttribute, Object> fontAttributes = new HashMap<>();
-    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationComponent.getQuickDocFontSize().getSize()));
+    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationFontSize.getDocumentationFontSize().getSize()));
     // disable kerning for now - laying out all fragments in a file with it takes too much time
     fontAttributes.put(TextAttribute.KERNING, 0);
     pane.setFont(pane.getFont().deriveFont(fontAttributes));
@@ -350,9 +350,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static EditorKit createEditorKit(@NotNull Editor editor, boolean useTipsKit) {
     HTMLEditorKit editorKit =
       new HTMLEditorKitBuilder()
-        .withViewFactoryExtensions(useTipsKit ?
-                                   new ShortcutExtension() :
-                                   ((element, view) -> view instanceof ImageView ? new MyScalingImageView(element) : null)
+        .withViewFactoryExtensions(
+          useTipsKit ? new ShortcutExtension()
+                     : QuickDocHighlightingHelper.getScalingImageViewExtension()
         )
         .withFontResolver(EditorCssFontResolver.getInstance(editor))
         .build();
@@ -544,89 +544,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     void dispose() {
       MEMORY_MANAGER.unregister(DocRenderer.this);
       myImages.forEach(image -> IMAGE_MANAGER.dispose(image));
-    }
-  }
-
-  private static final class MyScalingImageView extends ImageView {
-    private int myAvailableWidth;
-
-    private MyScalingImageView(Element element) {
-      super(element);
-    }
-
-    @Override
-    public Icon getLoadingImageIcon() {
-      return AllIcons.Process.Step_passive;
-    }
-
-    @Override
-    public int getResizeWeight(int axis) {
-      return 1;
-    }
-
-    @Override
-    public float getMaximumSpan(int axis) {
-      return getPreferredSpan(axis);
-    }
-
-    @Override
-    public float getPreferredSpan(int axis) {
-      float baseSpan = super.getPreferredSpan(axis);
-      if (axis == View.X_AXIS) {
-        return baseSpan;
-      }
-      else {
-        int availableWidth = getAvailableWidth();
-        if (availableWidth <= 0) return baseSpan;
-        float baseXSpan = super.getPreferredSpan(View.X_AXIS);
-        if (baseXSpan <= 0) return baseSpan;
-        if (availableWidth > baseXSpan) {
-          availableWidth = (int)baseXSpan;
-        }
-        if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
-          preferenceChanged(null, false, true);
-        }
-        myAvailableWidth = availableWidth;
-        return baseSpan * availableWidth / baseXSpan;
-      }
-    }
-
-    private int getAvailableWidth() {
-      for (View v = this; v != null; ) {
-        View parent = v.getParent();
-        if (parent instanceof FlowView) {
-          int childCount = parent.getViewCount();
-          for (int i = 0; i < childCount; i++) {
-            if (parent.getView(i) == v) {
-              return ((FlowView)parent).getFlowSpan(i);
-            }
-          }
-        }
-        v = parent;
-      }
-      return 0;
-    }
-
-    @Override
-    public void paint(Graphics g, Shape a) {
-      Rectangle targetRect = (a instanceof Rectangle) ? (Rectangle)a : a.getBounds();
-      Graphics scalingGraphics = new Graphics2DDelegate((Graphics2D)g) {
-        @Override
-        public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
-          int maxWidth = Math.max(0, targetRect.width - 2 * (x - targetRect.x)); // assuming left and right insets are the same
-          int maxHeight = Math.max(0, targetRect.height - 2 * (y - targetRect.y)); // assuming top and bottom insets are the same
-          if (width > maxWidth) {
-            height = height * maxWidth / width;
-            width = maxWidth;
-          }
-          if (height > maxHeight) {
-            width = width * maxHeight / height;
-            height = maxHeight;
-          }
-          return super.drawImage(img, x, y, width, height, observer);
-        }
-      };
-      super.paint(scalingGraphics, a);
     }
   }
 
