@@ -31,7 +31,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   private final AtomicBoolean myStopped = new AtomicBoolean(false);
   private final ProjectConfigurationProblems myProjectConfigurationProblems;
 
-  public ProjectStructureDaemonAnalyzer(StructureConfigurableContext context) {
+  public ProjectStructureDaemonAnalyzer(@NotNull StructureConfigurableContext context) {
     Disposer.register(context, this);
     myProjectConfigurationProblems = new ProjectConfigurationProblems(this, context);
     myAnalyzerQueue = new MergingUpdateQueue("Project Structure Daemon Analyzer", 300, false, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
@@ -39,14 +39,14 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
                                                   this, null, Alarm.ThreadToUse.SWING_THREAD);
   }
 
-  private void doUpdate(final ProjectStructureElement element) {
+  private void doUpdate(@NotNull ProjectStructureElement element) {
     if (myStopped.get()) return;
 
     doCheck(element);
     doCollectUsages(element);
   }
 
-  private void doCheck(final ProjectStructureElement element) {
+  private void doCheck(@NotNull ProjectStructureElement element) {
     final ProjectStructureProblemsHolderImpl problemsHolder = new ProjectStructureProblemsHolderImpl();
     ReadAction.run(() -> {
       if (myStopped.get()) return;
@@ -59,7 +59,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myResultsUpdateQueue.queue(new ProblemsComputedUpdate(element, problemsHolder));
   }
 
-  private void doCollectUsages(final ProjectStructureElement element) {
+  private void doCollectUsages(@NotNull ProjectStructureElement element) {
     final List<ProjectStructureElementUsage> usages = ReadAction.compute(() -> {
       if (myStopped.get()) return null;
 
@@ -73,11 +73,11 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }
   }
 
-  private static List<ProjectStructureElementUsage> getUsagesInElement(final ProjectStructureElement element) {
+  private static List<ProjectStructureElementUsage> getUsagesInElement(@NotNull ProjectStructureElement element) {
     return ProjectStructureValidator.getUsagesInElement(element);
   }
 
-  private void updateUsages(ProjectStructureElement element, List<? extends ProjectStructureElementUsage> usages) {
+  private void updateUsages(@NotNull ProjectStructureElement element, @NotNull List<? extends ProjectStructureElementUsage> usages) {
     removeUsagesInElement(element);
     for (ProjectStructureElementUsage usage : usages) {
       addUsage(usage);
@@ -86,7 +86,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myResultsUpdateQueue.queue(new ReportUnusedElementsUpdate());
   }
 
-  public void queueUpdate(@NotNull final ProjectStructureElement element) {
+  public void queueUpdate(@NotNull ProjectStructureElement element) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("start checking and collecting usages for " + element);
     }
@@ -97,7 +97,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myAnalyzerQueue.queue(new AnalyzeElementUpdate(element));
   }
 
-  public void removeElement(ProjectStructureElement element) {
+  public void removeElement(@NotNull ProjectStructureElement element) {
     removeElements(Collections.singletonList(element));
   }
 
@@ -202,11 +202,11 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   @Nullable
-  public ProjectStructureProblemsHolderImpl getProblemsHolder(ProjectStructureElement element) {
+  public ProjectStructureProblemsHolderImpl getProblemsHolder(@NotNull ProjectStructureElement element) {
     return myProblemHolders.get(element);
   }
 
-  public Collection<ProjectStructureElementUsage> getUsages(ProjectStructureElement selected) {
+  public Collection<ProjectStructureElementUsage> getUsages(@NotNull ProjectStructureElement selected) {
     ProjectStructureElement[] elements = myElementWithNotCalculatedUsages.toArray(new ProjectStructureElement[0]);
     for (ProjectStructureElement element : elements) {
       updateUsages(element, getUsagesInElement(element));
@@ -215,7 +215,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     return usages != null ? usages : Collections.emptyList();
   }
 
-  public void addListener(ProjectStructureDaemonAnalyzerListener listener) {
+  public void addListener(@NotNull ProjectStructureDaemonAnalyzerListener listener) {
     LOG.debug("listener added " + listener);
     myDispatcher.addListener(listener);
   }
@@ -242,10 +242,10 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   private class AnalyzeElementUpdate extends Update {
-    private final ProjectStructureElement myElement;
-    private final Object[] myEqualityObjects;
+    private final @NotNull ProjectStructureElement myElement;
+    private final @NotNull Object @NotNull [] myEqualityObjects;
 
-    AnalyzeElementUpdate(ProjectStructureElement element) {
+    AnalyzeElementUpdate(@NotNull ProjectStructureElement element) {
       super(element);
       myElement = element;
       myEqualityObjects = new Object[]{myElement};
@@ -274,11 +274,11 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   private class UsagesCollectedUpdate extends Update {
-    private final ProjectStructureElement myElement;
-    private final List<? extends ProjectStructureElementUsage> myUsages;
-    private final Object[] myEqualityObjects;
+    private final @NotNull ProjectStructureElement myElement;
+    private final @NotNull List<? extends ProjectStructureElementUsage> myUsages;
+    private final @NotNull Object @NotNull [] myEqualityObjects;
 
-    UsagesCollectedUpdate(ProjectStructureElement element, List<? extends ProjectStructureElementUsage> usages) {
+    UsagesCollectedUpdate(@NotNull ProjectStructureElement element, @NotNull List<? extends ProjectStructureElementUsage> usages) {
       super(element);
       myElement = element;
       myUsages = usages;
@@ -302,11 +302,11 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   private class ProblemsComputedUpdate extends Update {
-    private final ProjectStructureElement myElement;
-    private final ProjectStructureProblemsHolderImpl myProblemsHolder;
-    private final Object[] myEqualityObjects;
+    private final @NotNull ProjectStructureElement myElement;
+    private final @NotNull ProjectStructureProblemsHolderImpl myProblemsHolder;
+    private final @NotNull Object @NotNull [] myEqualityObjects;
 
-    ProblemsComputedUpdate(ProjectStructureElement element, ProjectStructureProblemsHolderImpl problemsHolder) {
+    ProblemsComputedUpdate(@NotNull ProjectStructureElement element, @NotNull ProjectStructureProblemsHolderImpl problemsHolder) {
       super(element);
       myElement = element;
       myProblemsHolder = problemsHolder;
