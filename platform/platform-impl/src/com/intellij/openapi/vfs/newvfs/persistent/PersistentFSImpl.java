@@ -1988,11 +1988,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
           StringBuilder relativePath = new StringBuilder();
-          for (int i = parentIds.size() - 1; i >= 0; i--) {
-            int fileId = parentIds.getInt(i);
-            String fileName = vfsPeer.getName(fileId);
-            relativePath.append('/').append(fileName);
+          if (parentIds != null) {
+            for (int i = parentIds.size() - 1; i >= 0; i--) {
+              int fileId = parentIds.getInt(i);
+              String fileName = vfsPeer.getName(fileId);
+              relativePath.append('/').append(fileName);
+            }
           }
+
 
           return
             "file[" + startingFileId + ", flags: " + startingFileFlags + "]: " +
