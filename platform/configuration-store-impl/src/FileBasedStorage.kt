@@ -178,7 +178,6 @@ open class FileBasedStorage(
 
   private fun processReadException(e: Exception?) {
     val contentTruncated = e == null
-
     if (!contentTruncated &&
         (fileSpec == PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
          fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)) {
