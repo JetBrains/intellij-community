@@ -1275,7 +1275,7 @@ private fun String.patchProse(): String =
     .replace("&quot;", "\"")
     .replace("&nbsp;", " ")
     .replace(Regex("<p>\\s+"), "<p>")
-    .replace(Regex("(^<p>\\s*)|(\\s*</p>)|(\\s*<figure\\s*class=\"table-container\">\\s*</figure>\\s*)"), "")
+    .replace(Regex("(^<p>\\s*)|(\\s*</p>)|(\\s*<img[^>]*>)|(\\s*<figure\\s*class=\"table-container\">\\s*</figure>\\s*)"), "")
     .also { fixedProse ->
       Regex("&(?!lt|gt|amp)[a-z]*;").find(fixedProse)?.let {
         throw Exception("Unknown entity found in prose: ${it.value}")

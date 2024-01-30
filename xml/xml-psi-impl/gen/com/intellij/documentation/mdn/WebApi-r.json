@@ -3902,7 +3902,7 @@
     },
     "rtcicecandidatepairstats.priority": {
       "url": "$MDN_URL$/web/api/rtcicecandidatepairstats/priority",
-      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <em>obsolete</em> <a href=\"$MDN_URL$/Web/API/RTCIceCandidatePairStats\"><code>RTCIceCandidatePairStats</code></a>\nproperty <strong><code>priority</code></strong> reports the priority of the candidate\npair as an integer value. The higher the value, the more likely the WebRTC\nlayer is to select the candidate pair when the time comes to establish (or re-establish)\na connection between the two peers."
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <em>obsolete</em> <a href=\"$MDN_URL$/Web/API/RTCIceCandidatePairStats\"><code>RTCIceCandidatePairStats</code></a>\nproperty <strong><code>priority</code></strong> reports the priority of the candidate\npair as an integer value. The higher the value, the more likely the WebRTC\nlayer is to select the candidate pair when the time comes to establish (or re-establish)\na connection between the two peers."
     },
     "rtcicecandidatepairstats.readable": {
       "url": "$MDN_URL$/web/api/rtcicecandidatepairstats/readable",
@@ -8082,7 +8082,7 @@
       "doc": "The <strong><code>clients</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/Clients\"><code>Clients</code></a>\nobject associated with the service worker."
     },
     "serviceworkerglobalscope.cookiestore": {
-      "url": "$MDN_URL$/web/api/serviceworkerglobalscope/cookieStore",
+      "url": "$MDN_URL$/web/api/serviceworkerglobalscope/cookiestore",
       "status": [
         "Experimental",
         "StandardTrack"
@@ -8351,7 +8351,7 @@
         "Edge": "79",
         "Opera": "36"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>sync</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the\n<a href=\"$MDN_URL$/Web/API/SyncManager\"><code>SyncManager</code></a> interface, which manages background synchronization\nprocesses.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>sync</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/ServiceWorkerRegistration\"><code>ServiceWorkerRegistration</code></a> interface returns a reference to the\n<a href=\"$MDN_URL$/Web/API/SyncManager\"><code>SyncManager</code></a> interface, which manages background synchronization\nprocesses.<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>\n</div>"
     },
     "serviceworkerregistration.unregister": {
       "url": "$MDN_URL$/web/api/serviceworkerregistration/unregister",
@@ -8514,6 +8514,16 @@
         "SafariIOS": "16.4"
       },
       "doc": "The <strong><code>adoptedStyleSheets</code></strong> property of the <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> interface sets an array of constructed stylesheets to be used by the shadow DOM subtree.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> A constructed stylesheet is a stylesheet created programmatically using the <a href=\"$MDN_URL$/Web/API/CSSStyleSheet/CSSStyleSheet\"><code>CSSStyleSheet()</code> constructor</a> (as compared to one created by a user-agent when importing a stylesheet from a script, imported using <a href=\"$MDN_URL$/Web/HTML/Element/style\"><code>&lt;style&gt;</code></a> and <a href=\"$MDN_URL$/Web/CSS/@import\"><code>@import</code></a>, or linked to via <a href=\"$MDN_URL$/Web/HTML/Element/link\"><code>&lt;link&gt;</code></a>).\n</div>\n<p>The same constructed stylesheet can be adopted by multiple <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> instances, and by the parent document (using the <a href=\"$MDN_URL$/Web/API/Document/adoptedStyleSheets\"><code>Document.adoptedStyleSheets</code></a> property).\nChanging an adopted stylesheet will affect all the adopting objects.\n<p>Stylesheets in the <code>adoptedStyleSheets</code> property are considered along with the shadow DOM's other stylesheets.\nFor the purpose of determining the final computed CSS of any element, they are considered to have been added <em>after</em> the other stylesheets in the shadow DOM (<a href=\"$MDN_URL$/Web/API/ShadowRoot/styleSheets\"><code>ShadowRoot.styleSheets</code></a>).\n<p>Only stylesheets created using the <a href=\"$MDN_URL$/Web/API/CSSStyleSheet/CSSStyleSheet\"><code>CSSStyleSheet()</code> constructor</a>, and from within the same parent <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> as the shadow root, may be adopted."
+    },
+    "shadowroot.clonable": {
+      "url": "$MDN_URL$/web/api/shadowroot/clonable",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Firefox": "preview"
+      },
+      "doc": "The <strong><code>clonable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> interface returns <code>true</code> if the shadow root is clonable, and <code>false</code> otherwise. It always returns <code>true</code> for shadow roots created via declarative shadow DOM. It can be set to <code>true</code> using the <code>clonable</code> option of the <a href=\"$MDN_URL$/Web/API/Element/attachShadow\"><code>Element.attachShadow()</code></a> method."
     },
     "shadowroot.delegatesfocus": {
       "url": "$MDN_URL$/web/api/shadowroot/delegatesfocus",
@@ -14492,7 +14502,7 @@
         "Edge": "79",
         "Opera": "36"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SyncEvent</code></strong> interface represents a sync action that is dispatched on the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> of a ServiceWorker.\n<p>This interface inherits from the <a href=\"$MDN_URL$/Web/API/ExtendableEvent\"><code>ExtendableEvent</code></a> interface."
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SyncEvent</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Background_Synchronization_API\">Background Synchronization API</a> represents a sync action that is dispatched on the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> of a ServiceWorker.\n<p>This interface inherits from the <a href=\"$MDN_URL$/Web/API/ExtendableEvent\"><code>ExtendableEvent</code></a> interface."
     },
     "syncevent.lastchance": {
       "url": "$MDN_URL$/web/api/syncevent/lastchance",
@@ -14506,7 +14516,7 @@
         "Edge": "79",
         "Opera": "36"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SyncEvent.lastChance</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/SyncEvent\"><code>SyncEvent</code></a> interface returns <code>true</code> if the user agent will not\nmake further synchronization attempts after the current attempt. This is the value\npassed in the <code>lastChance</code> parameter of the\n<a href=\"$MDN_URL$/Web/API/SyncEvent/SyncEvent\" ><code>SyncEvent()</code></a> constructor."
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>lastChance</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/SyncEvent\"><code>SyncEvent</code></a> interface returns <code>true</code> if the user agent will not\nmake further synchronization attempts after the current attempt. This is the value\npassed in the <code>lastChance</code> parameter of the\n<a href=\"$MDN_URL$/Web/API/SyncEvent/SyncEvent\" ><code>SyncEvent()</code></a> constructor."
     },
     "syncevent.syncevent": {
       "url": "$MDN_URL$/web/api/syncevent/syncevent",
@@ -14539,7 +14549,7 @@
         "Edge": "79",
         "Opera": "36"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SyncEvent.tag</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/SyncEvent\"><code>SyncEvent</code></a> interface returns the developer-defined identifier for\nthis <code>SyncEvent</code>. This is the value passed in the <code>tag</code> parameter\nof the <a href=\"$MDN_URL$/Web/API/SyncEvent/SyncEvent\" ><code>SyncEvent()</code></a> constructor."
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>tag</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/SyncEvent\"><code>SyncEvent</code></a> interface returns the developer-defined identifier for\nthis <code>SyncEvent</code>. This is the value passed in the <code>tag</code> parameter\nof the <a href=\"$MDN_URL$/Web/API/SyncEvent/SyncEvent\" ><code>SyncEvent()</code></a> constructor."
     },
     "syncmanager": {
       "url": "$MDN_URL$/web/api/syncmanager",
@@ -14553,7 +14563,7 @@
         "Edge": "79",
         "Opera": "36"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SyncManager</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">ServiceWorker API</a> provides an interface for registering and listing sync registrations."
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SyncManager</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Background_Synchronization_API\">Background Synchronization API</a> provides an interface for registering and listing sync registrations."
     },
     "syncmanager.gettags": {
       "url": "$MDN_URL$/web/api/syncmanager/gettags",
@@ -14567,7 +14577,7 @@
         "Edge": "79",
         "Opera": "36"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SyncManager.getTags</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/SyncManager\"><code>SyncManager</code></a> interface returns a list of developer-defined identifiers for\n<code>SyncManager</code> registrations.",
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>getTags()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/SyncManager\"><code>SyncManager</code></a> interface returns a list of developer-defined identifiers for\n<code>SyncManager</code> registrations.",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to an array of strings\n  containing developer-defined identifiers for <code>SyncManager</code> registrations."
     },
     "syncmanager.register": {
@@ -14582,11 +14592,15 @@
         "Edge": "79",
         "Opera": "36"
       },
-      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>SyncManager.register</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SyncManager\"><code>SyncManager</code></a> interface registers a synchronization event, triggering a <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/sync_event\" ><code>sync</code></a> event inside the associated service worker as soon as network connectivity is available.",
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>register()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/SyncManager\"><code>SyncManager</code></a> interface registers a synchronization event, triggering a <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/sync_event\" ><code>sync</code></a> event inside the associated service worker as soon as network connectivity is available.",
       "parameters": {
         "tag": "An identifier for this synchronization event. This will be the value of the <code>tag</code> property of the <a href=\"$MDN_URL$/Web/API/SyncEvent\"><code>SyncEvent</code></a> that gets passed into the service worker's <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/sync_event\" ><code>sync</code></a> event handler."
       },
-      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>."
+      "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that resolves to <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>.",
+      "throws": {
+        "InvalidStateError DOMException": "Thrown if current service worker is not active.",
+        "NotAllowedError DOMException": "Thrown if background sync has been disabled by the user."
+      }
     },
     "taskattributiontiming": {
       "url": "$MDN_URL$/web/api/taskattributiontiming",
@@ -15352,7 +15366,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextFormat</code></strong> interface represents specific formatting that should be applied to a range of text in an editable text region that's attached to an <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> instance. The text formatting is requested by the <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window that the user is composing text with.\n<p>When using one of the default editable regions of the web, such as a <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> element, IME composition is handled by the browser and operating system for you. For example, when using Japanese IME in a textarea, on Windows, the following text formats can be applied:\n<ul>\n<li>\nWhen text is being composed with the keyboard, the typed characters have a thin wavy underline:\n</li>\n<li>\nWhen the user selects a suggestion from the list of candidates in the IME window, the text is replaced and is underlined with a thick solid line:\n</li>\n</ul>\n<p>When creating your own custom editable region by using the <a href=\"$MDN_URL$/Web/API/EditContext_API\">EditContext API</a>, you need to handle IME composition yourself. You should listen for the <a href=\"$MDN_URL$/Web/API/EditContext/textformatupdate_event\" ><code>textformatupdate</code></a> event, which gives you the list of text formats that the IME window wants to apply to the text being composed. You should then update the formatting of the text displayed in your editable region accordingly."
     },
@@ -15364,7 +15379,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>rangeEnd</code></strong> property of the <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> interface indicates the end position of the text range that needs to be formatted with the given text format."
     },
@@ -15376,7 +15392,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>rangeStart</code></strong> property of the <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> interface indicates the start position of the text range that needs to be formatted with the given text format."
     },
@@ -15388,7 +15405,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextFormat()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> object.",
       "parameters": {
@@ -15403,7 +15421,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>underlineStyle</code></strong> property of the <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> interface indicates the style of the underline that needs to be applied to the text range that is being formatted."
     },
@@ -15415,7 +15434,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>underlineThickness</code></strong> property of the <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> interface indicates the thickness of the underline that needs to be applied to the text range that is being formatted."
     },
@@ -15427,7 +15447,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextFormatUpdateEvent</code></strong> interface is a <a href=\"$MDN_URL$/Web/API/Event\" ><code>DOM event</code></a> that represents a list of text formats that an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window wants to apply to the text being composed in an editable region that's attached to an <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> instance.\n<p>This interface inherits properties from <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>."
     },
@@ -15439,7 +15460,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>getTextFormats()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/TextFormatUpdateEvent\"><code>TextFormatUpdateEvent</code></a> interface returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> of <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> objects that represent the formats that an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window wants to apply to the text being composed.",
       "returns": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> containing <a href=\"$MDN_URL$/Web/API/TextFormat\"><code>TextFormat</code></a> objects."
@@ -15452,7 +15474,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextFormatUpdateEvent()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/TextFormatUpdateEvent\"><code>TextFormatUpdateEvent</code></a> object.",
       "parameters": {
@@ -16058,7 +16081,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent</code></strong> interface is a <a href=\"$MDN_URL$/Web/API/Event\" ><code>DOM event</code></a> that represents a text or selection update in an editable text region that's attached to an <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> instance.\n<p>This interface inherits properties from <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>."
     },
@@ -16070,7 +16094,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.selectionEnd</code></strong> read-only property indicates the position of the end of the selection (or caret) within the text content of the editable region attached to the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object."
     },
@@ -16082,7 +16107,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.selectionStart</code></strong> read-only property indicates the position of the end of the selection (or caret) within the text content of the editable region attached to the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object."
     },
@@ -16094,7 +16120,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.text</code></strong> read-only property contains the text that was inserted within the updated range of a <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a>'s <code>textupdate</code> event."
     },
@@ -16106,7 +16133,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/TextUpdateEvent\"><code>TextUpdateEvent</code></a> object.",
       "parameters": {
@@ -16122,7 +16150,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.updateRangeEnd</code></strong> read-only property indicates the end position of the text range that is being replaced in the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object."
     },
@@ -16134,7 +16163,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>TextUpdateEvent.updateRangeStart</code></strong> read-only property indicates the start position of the text range that is being replaced in the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object."
     },

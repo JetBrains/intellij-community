@@ -11899,7 +11899,7 @@
       "doc": "The <strong><code>Window.console</code></strong> property returns a reference to the <a href=\"$MDN_URL$/Web/API/console\"><code>console</code></a> object, which provides methods for logging information to the browser's console. These methods are intended for debugging purposes only and should not be relied on for presenting information to end users."
     },
     "window.cookiestore": {
-      "url": "$MDN_URL$/web/api/window/cookieStore",
+      "url": "$MDN_URL$/web/api/window/cookiestore",
       "status": [
         "Experimental",
         "StandardTrack"

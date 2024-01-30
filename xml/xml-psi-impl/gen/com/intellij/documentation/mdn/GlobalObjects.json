@@ -518,6 +518,7 @@
         "ChromeAndroid": "121",
         "Edge": "121",
         "Firefox": "115",
+        "Opera": "107",
         "Safari": "16.4",
         "SafariIOS": "16.4",
         "Deno": "1.38"

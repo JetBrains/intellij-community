@@ -8519,7 +8519,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CharacterBoundsUpdateEvent</code></strong> interface is a <a href=\"$MDN_URL$/Web/API/Event\" ><code>DOM event</code></a> that represents a request from the operating system to know the bounds of certain characters within an editable region that's attached to an <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> instance.\n<p>This interface inherits properties from <a href=\"$MDN_URL$/Web/API/Event\"><code>Event</code></a>."
     },
@@ -8531,7 +8532,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CharacterBoundsUpdateEvent()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/CharacterBoundsUpdateEvent\"><code>CharacterBoundsUpdateEvent</code></a> object.",
       "parameters": {
@@ -8547,7 +8549,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CharacterBoundsUpdateEvent.rangeEnd</code></strong> read-only property represents the offset of the last character within the editable text region for which the operating system needs the bounds."
     },
@@ -8559,7 +8562,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CharacterBoundsUpdateEvent.rangeStart</code></strong> read-only property represents the offset of the first character within the editable text region for which the operating system needs the bounds."
     },
@@ -9106,6 +9110,7 @@
       ],
       "compatibility": {
         "Edge": "79",
+        "Firefox": "preview",
         "Opera": "63",
         "Safari": "13.1",
         "SafariIOS": "13.4"
@@ -9125,10 +9130,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "66",
-        "ChromeAndroid": "66",
-        "Edge": "79",
-        "Opera": "53",
+        "Firefox": "preview",
         "Safari": "13.1",
         "SafariIOS": "13.4"
       },
@@ -9148,6 +9150,7 @@
         "Chrome": "66",
         "ChromeAndroid": "66",
         "Edge": "79",
+        "Firefox": "preview",
         "Opera": "63",
         "Safari": "13.1",
         "SafariIOS": "13.4"
@@ -9246,6 +9249,7 @@
         "Chrome": "76",
         "ChromeAndroid": "84",
         "Edge": "79",
+        "Firefox": "preview",
         "Opera": "63",
         "Safari": "13.1",
         "SafariIOS": "13.4"
@@ -9261,6 +9265,7 @@
         "Chrome": "98",
         "ChromeAndroid": "98",
         "Edge": "98",
+        "Firefox": "preview",
         "Opera": "84",
         "Safari": "13.1",
         "SafariIOS": "13.4"
@@ -9280,6 +9285,7 @@
         "Chrome": "76",
         "ChromeAndroid": "84",
         "Edge": "79",
+        "Firefox": "preview",
         "Opera": "63",
         "Safari": "13.1",
         "SafariIOS": "13.4"
@@ -9300,6 +9306,7 @@
         "StandardTrack"
       ],
       "compatibility": {
+        "Firefox": "preview",
         "Safari": "13.1",
         "SafariIOS": "13.4"
       },
@@ -9314,6 +9321,7 @@
         "Chrome": "76",
         "ChromeAndroid": "84",
         "Edge": "79",
+        "Firefox": "preview",
         "Opera": "63",
         "Safari": "13.1",
         "SafariIOS": "13.4"
@@ -12015,7 +12023,8 @@
       "compatibility": {
         "Chrome": "121",
         "ChromeAndroid": "121",
-        "Firefox": "114"
+        "Firefox": "114",
+        "Opera": "107"
       },
       "doc": "The read-only <strong><code>supportsText</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSImportRule\"><code>CSSImportRule</code></a> interface returns the supports condition specified by the <a href=\"$MDN_URL$/Web/CSS/@import\"><code>@import</code></a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a>."
     },
@@ -13757,6 +13766,7 @@
       "compatibility": {
         "Chrome": "118",
         "ChromeAndroid": "118",
+        "Edge": "118",
         "Opera": "104"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>CSSScopeRule</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/CSS_Object_Model\">CSS Object Model</a> represents a CSS <a href=\"$MDN_URL$/Web/CSS/@scope\"><code>@scope</code></a> at-rule."
@@ -13770,6 +13780,7 @@
       "compatibility": {
         "Chrome": "118",
         "ChromeAndroid": "118",
+        "Edge": "118",
         "Opera": "104"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>end</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSScopeRule\"><code>CSSScopeRule</code></a> interface returns a string containing the value of the <code>@scope</code> at-rule's scope limit."
@@ -13783,6 +13794,7 @@
       "compatibility": {
         "Chrome": "118",
         "ChromeAndroid": "118",
+        "Edge": "118",
         "Opera": "104"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>start</code></strong> property of the <a href=\"$MDN_URL$/Web/API/CSSScopeRule\"><code>CSSScopeRule</code></a> interface returns a string containing the value of the <code>@scope</code> at-rule's scope root."

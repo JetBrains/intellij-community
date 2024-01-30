@@ -33,7 +33,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>EditContext</code></strong> interface represents the text edit context of an element that was made editable by using the <a href=\"$MDN_URL$/Web/API/EditContext_API\">EditContext API</a>.\n<p>The <a href=\"$MDN_URL$/Web/API/EditContext_API\">EditContext API</a> can be used to build rich text editors on the web that support advanced text input experiences, such as <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) composition, emoji picker, or any other platform-specific editing-related UI surfaces."
     },
@@ -45,7 +46,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>attachedElements()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> that contains only one item. This item is the element that's associated with the <code>EditContext</code> object.",
       "returns": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> containing one <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a> object.\n<p>There can only be one element associated to an <code>EditContext</code> instance, so the returned array will always contain one element. If the API is extended in the future to support multiple associated elements, the return value will be an array containing multiple elements."
@@ -58,7 +60,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>characterBounds()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface returns an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> containing the list of bounding rectangles for the characters in the <code>EditContext</code> object.\n<p>The position and size of the characters in an <code>EditContext</code> object is used by the operating system to correctly position platform-specific editing-related UI surfaces such as an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window when needed. This is especially important in situations where the operating system can't automatically detect the position and size of the characters, such as when rendering text in a <code>&lt;canvas&gt;</code> element.\n<p>Web developers will most likely be interested in using the <a href=\"$MDN_URL$/Web/API/EditContext/characterboundsupdate_event\" ><code>characterboundsupdate</code></a> event together with the <a href=\"$MDN_URL$/Web/API/EditContext/updateCharacterBounds\"><code>EditContext.updateCharacterBounds()</code></a> method to update the character bounds when the operating system indicates that it requires information about the position and size of the characters.\n<p>The <code>characterBounds()</code> method returns the list of character bounds that were last updated with <code>updateCharacterBounds()</code>. The list doesn't contain an item for every character in the <code>EditContext</code> object, only for the characters that were updated with <code>updateCharacterBounds()</code>. To know where the characters are located in the <code>EditContext</code> object, use the <a href=\"$MDN_URL$/Web/API/EditContext/characterBoundsRangeStart\"><code>EditContext.characterBoundsRangeStart</code></a> property.",
       "returns": "An <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> containing <a href=\"$MDN_URL$/Web/API/DOMRect\"><code>DOMRect</code></a> objects."
@@ -71,7 +74,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>characterBoundsRangeStart</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface indicates the index of the character, within the editable text content, that corresponds to the first item in the <a href=\"$MDN_URL$/Web/API/EditContext/characterBounds\" ><code>characterBounds</code></a> array.\n<p>For example, if the <code>EditContent</code> contains the characters <code>abc</code>, and if <code>characterBoundRangeStart</code> is <code>1</code>, the first item in the <code>characterBounds</code> array contains the bounds for the character <code>b</code>."
     },
@@ -83,7 +87,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>EditContext()</code></strong> constructor returns a new <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object.",
       "parameters": {
@@ -98,7 +103,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>selectionEnd</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> refers to the offset, within the editable text content, of the end of the current selection."
     },
@@ -110,7 +116,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>selectionStart</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> refers to the offset, within the editable text content, of the start of the current selection."
     },
@@ -122,7 +129,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>text</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface represents the editable content of the element."
     },
@@ -134,7 +142,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>EditContext.updateCharacterBounds()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface should be called as response to a <a href=\"$MDN_URL$/Web/API/EditContext/characterboundsupdate_event\" ><code>characterboundsupdate</code></a> event to inform the operating system about the position and size of the characters in the <code>EditContext</code> object.\n<p>The <code>characterboundsupdate</code> event is the only time you need to call the <code>updateCharacterBounds()</code> method.\n<p>The character bounds information is then used by the operating system to correctly position the <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window when needed. This is especially important in situations where the operating system can't automatically detect the position and size of the characters, such as when rendering text in a <code>&lt;canvas&gt;</code> element.",
       "parameters": {
@@ -150,7 +159,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>EditContext.updateControlBounds()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface is used to inform the operating system about the position and size of the editable text region of the <code>EditContext</code> object.\n<p>Call this method to tell the operating system the bounds of the current editable region. You should call it when initializing the EditContext, and whenever the editable region's bounds change such as when the webpage is resized. These bounds are used to position platform-specific editing-related UI surfaces such as an <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) window.",
       "parameters": {
@@ -165,7 +175,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>updateSelection()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface updates the internal state of the selection within the editable text context. This method is used to update the selection state when the user interacts with the text rendering in the <code>EditContext</code>'s associated element, such as by clicking or dragging the mouse, or by using the keyboard.",
       "parameters": {
@@ -181,7 +192,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>EditContext.updateSelectionBounds()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface is used to inform the operating system about the bounds of the text selection within the editable region that's associated with the <code>EditContext</code> object.\n<p>Call this method to tell the operating system the bounds of the user's current selection. You should call the method whenever the user's selection changes in the editable region. The selection bounds are used by the operating system to help position the IME window or any other platform-specific editing-related UI surfaces.",
       "parameters": {
@@ -196,7 +208,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>updateText()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> interface updates the internal text content of an <code>EditContext</code> object.\n<p>This method doesn't need to be used when the user types text in the associated element. The <code>EditContext</code> object will automatically update its internal text content, and will fire <a href=\"$MDN_URL$/Web/API/EditContext/textupdate_event\" ><code>textupdate</code></a> events as needed.\n<p>This method can, however, be used when the user interacts with the text content in other ways, such as when pasting text from the clipboard.",
       "parameters": {
@@ -945,7 +958,7 @@
       },
       "doc": "The <strong><code>Element.attachShadow()</code></strong> method attaches a shadow DOM tree to the specified element and returns a reference to its <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a>.",
       "parameters": {
-        "options": "An object which contains the following fields: <dl> <dt id=\"mode\"><a href=\"#mode\"><code>mode</code></a></dt> <dd> <p>A string specifying the <em>encapsulation mode</em> for the shadow DOM tree. This can be one of: <dl> <dt id=\"open\"><a href=\"#open\"><code>open</code></a></dt> <dd> <p>Elements of the shadow root are accessible from JavaScript outside the root, for example using <a href=\"$MDN_URL$/Web/API/Element/shadowRoot\"><code>Element.shadowRoot</code></a>: <div class=\"code-example\"><div> ```js element.attachShadow({ mode: \"open\" }); element.shadowRoot; // Returns a ShadowRoot obj ``` </div></div> </dd> <dt id=\"closed\"><a href=\"#closed\"><code>closed</code></a></dt> <dd> <p>Denies access to the node(s) of a closed shadow root from JavaScript outside it: <div class=\"code-example\"><div> ```js element.attachShadow({ mode: \"closed\" }); element.shadowRoot; // Returns null ``` </div></div> </dd> </dl> </dd> <dt id=\"delegatesfocus\"><a href=\"#delegatesfocus\"><code>delegatesFocus</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>A boolean that, when set to <code>true</code>, specifies behavior that mitigates custom element issues around focusability. When a non-focusable part of the shadow DOM is clicked, the first focusable part is given focus, and the shadow host is given any available <code>:focus</code> styling. Its default value is <code>false</code>. </dd> <dt id=\"slotassignment\"><a href=\"#slotassignment\"><code>slotAssignment</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>A string specifying the <em>slot assignment mode</em> for the shadow DOM tree. This can be one of: <dl> <dt id=\"named\"><a href=\"#named\"><code>named</code></a></dt> <dd> <p>Elements are automatically assigned to <a href=\"$MDN_URL$/Web/HTML/Element/slot\"><code>&lt;slot&gt;</code></a> elements within this shadow root. Any descendants of the host with a <code>slot</code> attribute which matches the <code>name</code> attribute of a <code>&lt;slot&gt;</code> within this shadow root will be assigned to that slot. Any top-level children of the host with no <code>slot</code> attribute will be assigned to a <code>&lt;slot&gt;</code> with no <code>name</code> attribute (the \"default slot\") if one is present. </dd> <dt id=\"manual\"><a href=\"#manual\"><code>manual</code></a></dt> <dd> <p>Elements are not automatically assigned to <a href=\"$MDN_URL$/Web/HTML/Element/slot\"><code>&lt;slot&gt;</code></a> elements. Instead, they must be manually assigned with <a href=\"$MDN_URL$/Web/API/HTMLSlotElement/assign\"><code>HTMLSlotElement.assign()</code></a>. Its default value is <code>named</code>. </dd> </dl> </dd> </dl>"
+        "options": "An object which contains the following fields: <dl> <dt id=\"mode\"><a href=\"#mode\"><code>mode</code></a></dt> <dd> <p>A string specifying the <em>encapsulation mode</em> for the shadow DOM tree. This can be one of: <dl> <dt id=\"open\"><a href=\"#open\"><code>open</code></a></dt> <dd> <p>Elements of the shadow root are accessible from JavaScript outside the root, for example using <a href=\"$MDN_URL$/Web/API/Element/shadowRoot\"><code>Element.shadowRoot</code></a>: <div class=\"code-example\"><div> ```js element.attachShadow({ mode: \"open\" }); element.shadowRoot; // Returns a ShadowRoot obj ``` </div></div> </dd> <dt id=\"closed\"><a href=\"#closed\"><code>closed</code></a></dt> <dd> <p>Denies access to the node(s) of a closed shadow root from JavaScript outside it: <div class=\"code-example\"><div> ```js element.attachShadow({ mode: \"closed\" }); element.shadowRoot; // Returns null ``` </div></div> </dd> </dl> </dd> <dt id=\"clonable\"><a href=\"#clonable\"><code>clonable</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>A boolean that specifies whether the shadow root is clonable: when set to <code>true</code>, the shadow host cloned with <a href=\"$MDN_URL$/Web/API/Node/cloneNode\"><code>Node.cloneNode()</code></a> or <a href=\"$MDN_URL$/Web/API/Document/importNode\"><code>Document.importNode()</code></a> will include shadow root in the copy. Its default value is <code>false</code>, unless the shadow root is created via declarative shadow DOM. </dd> <dt id=\"delegatesfocus\"><a href=\"#delegatesfocus\"><code>delegatesFocus</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>A boolean that, when set to <code>true</code>, specifies behavior that mitigates custom element issues around focusability. When a non-focusable part of the shadow DOM is clicked, the first focusable part is given focus, and the shadow host is given any available <code>:focus</code> styling. Its default value is <code>false</code>. </dd> <dt id=\"slotassignment\"><a href=\"#slotassignment\"><code>slotAssignment</code></a> <span class=\"badge inline optional\">Optional</span></dt> <dd> <p>A string specifying the <em>slot assignment mode</em> for the shadow DOM tree. This can be one of: <dl> <dt id=\"named\"><a href=\"#named\"><code>named</code></a></dt> <dd> <p>Elements are automatically assigned to <a href=\"$MDN_URL$/Web/HTML/Element/slot\"><code>&lt;slot&gt;</code></a> elements within this shadow root. Any descendants of the host with a <code>slot</code> attribute which matches the <code>name</code> attribute of a <code>&lt;slot&gt;</code> within this shadow root will be assigned to that slot. Any top-level children of the host with no <code>slot</code> attribute will be assigned to a <code>&lt;slot&gt;</code> with no <code>name</code> attribute (the \"default slot\") if one is present. </dd> <dt id=\"manual\"><a href=\"#manual\"><code>manual</code></a></dt> <dd> <p>Elements are not automatically assigned to <a href=\"$MDN_URL$/Web/HTML/Element/slot\"><code>&lt;slot&gt;</code></a> elements. Instead, they must be manually assigned with <a href=\"$MDN_URL$/Web/API/HTMLSlotElement/assign\"><code>HTMLSlotElement.assign()</code></a>. Its default value is <code>named</code>. </dd> </dl> </dd> </dl>"
       },
       "returns": "Returns a <a href=\"$MDN_URL$/Web/API/ShadowRoot\"><code>ShadowRoot</code></a> object.",
       "throws": {
@@ -1332,7 +1345,7 @@
         "SafariIOS": "3.2"
       },
       "doc": "The <strong><code>Element.getBoundingClientRect()</code></strong> method returns a\n<a href=\"$MDN_URL$/Web/API/DOMRect\"><code>DOMRect</code></a> object providing information about the size of an element and its\nposition relative to the <a href=\"$MDN_URL$/Glossary/Viewport\">viewport</a>.",
-      "returns": "The returned value is a <a href=\"$MDN_URL$/Web/API/DOMRect\"><code>DOMRect</code></a> object which is the smallest rectangle\n  which contains the entire element, including its padding and border-width. The\n  <code>left</code>, <code>top</code>, <code>right</code>, <code>bottom</code>,\n  <code>x</code>, <code>y</code>, <code>width</code>, and <code>height</code> properties\n  describe the position and size of the overall rectangle in pixels. Properties other than\n  <code>width</code> and <code>height</code> are relative to the top-left of the viewport.\n<p><img src=\"$MDN_URL$/Web/API/Element/getBoundingClientRect/element-box-diagram.png\" alt=\"DOMRect object that is the smallest rectangle containing the entire element.\" width=\"1466\" height=\"1099\" loading=\"lazy\">\n<p>The <code>width</code> and <code>height</code> properties of the <a href=\"$MDN_URL$/Web/API/DOMRect\"><code>DOMRect</code></a>\n  object returned by the method include the <code>padding</code> and\n  <code>border-width</code>, not only the content width/height. In the standard box model,\n  this would be equal to the <code>width</code> or <code>height</code> property of the\n  element + <code>padding</code> + <code>border-width</code>. But\n  if <a href=\"$MDN_URL$/Web/CSS/box-sizing\"><code>box-sizing: border-box</code></a> is\n  set for the element this would be directly equal to its <code>width</code> or\n  <code>height</code>.\n<p>The returned value can be thought of as the union of the rectangles returned by\n  <a href=\"$MDN_URL$/Web/API/Element/getClientRects\" title=\"getClientRects()\"><code>getClientRects()</code></a> for the element, i.e., the CSS\n  border-boxes associated with the element.\n<p>Empty border-boxes are completely ignored. If all the element's border-boxes are empty,\n  then a rectangle is returned with a <code>width</code> and <code>height</code> of zero\n  and where the <code>top</code> and <code>left</code> are the top-left of the border-box\n  for the first CSS box (in content order) for the element.\n<p>The amount of scrolling that has been done of the viewport area (or any other\n  scrollable element) is taken into account when computing the bounding rectangle. This\n  means that the rectangle's boundary edges (<code>top</code>, <code>right</code>,\n  <code>bottom</code>, <code>left</code>) change their values every time the scrolling\n  position changes (because their values are relative to the viewport and not absolute).\n<p>If you need the bounding rectangle relative to the top-left corner of the document,\n  just add the current scrolling position to the <code>top</code> and <code>left</code>\n  properties (these can be obtained using <a href=\"$MDN_URL$/Web/API/Window/scrollY\"><code>window.scrollY</code></a> and\n  <a href=\"$MDN_URL$/Web/API/Window/scrollX\"><code>window.scrollX</code></a>) to get a bounding rectangle which is independent from the\n  current scrolling position."
+      "returns": "The returned value is a <a href=\"$MDN_URL$/Web/API/DOMRect\"><code>DOMRect</code></a> object which is the smallest rectangle\n  which contains the entire element, including its padding and border-width. The\n  <code>left</code>, <code>top</code>, <code>right</code>, <code>bottom</code>,\n  <code>x</code>, <code>y</code>, <code>width</code>, and <code>height</code> properties\n  describe the position and size of the overall rectangle in pixels. Properties other than\n  <code>width</code> and <code>height</code> are relative to the top-left of the viewport.\n<p>\n<p>The <code>width</code> and <code>height</code> properties of the <a href=\"$MDN_URL$/Web/API/DOMRect\"><code>DOMRect</code></a>\n  object returned by the method include the <code>padding</code> and\n  <code>border-width</code>, not only the content width/height. In the standard box model,\n  this would be equal to the <code>width</code> or <code>height</code> property of the\n  element + <code>padding</code> + <code>border-width</code>. But\n  if <a href=\"$MDN_URL$/Web/CSS/box-sizing\"><code>box-sizing: border-box</code></a> is\n  set for the element this would be directly equal to its <code>width</code> or\n  <code>height</code>.\n<p>The returned value can be thought of as the union of the rectangles returned by\n  <a href=\"$MDN_URL$/Web/API/Element/getClientRects\" title=\"getClientRects()\"><code>getClientRects()</code></a> for the element, i.e., the CSS\n  border-boxes associated with the element.\n<p>Empty border-boxes are completely ignored. If all the element's border-boxes are empty,\n  then a rectangle is returned with a <code>width</code> and <code>height</code> of zero\n  and where the <code>top</code> and <code>left</code> are the top-left of the border-box\n  for the first CSS box (in content order) for the element.\n<p>The amount of scrolling that has been done of the viewport area (or any other\n  scrollable element) is taken into account when computing the bounding rectangle. This\n  means that the rectangle's boundary edges (<code>top</code>, <code>right</code>,\n  <code>bottom</code>, <code>left</code>) change their values every time the scrolling\n  position changes (because their values are relative to the viewport and not absolute).\n<p>If you need the bounding rectangle relative to the top-left corner of the document,\n  just add the current scrolling position to the <code>top</code> and <code>left</code>\n  properties (these can be obtained using <a href=\"$MDN_URL$/Web/API/Window/scrollY\"><code>window.scrollY</code></a> and\n  <a href=\"$MDN_URL$/Web/API/Window/scrollX\"><code>window.scrollX</code></a>) to get a bounding rectangle which is independent from the\n  current scrolling position."
     },
     "element.getclientrects": {
       "url": "$MDN_URL$/web/api/element/getclientrects",
@@ -12606,6 +12619,21 @@
       },
       "doc": "The <strong><code>HTMLAnchorElement.pathname</code></strong> property is a\nstring containing an initial <code>'/'</code> followed by the path of\nthe URL not including the query string or fragment (or the empty string if there is no\npath)."
     },
+    "htmlanchorelement.ping": {
+      "url": "$MDN_URL$/web/api/htmlanchorelement/ping",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "12",
+        "ChromeAndroid": "",
+        "Edge": "17",
+        "Opera": "15",
+        "Safari": "5.1",
+        "SafariIOS": "5"
+      },
+      "doc": "The <strong><code>ping</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLAnchorElement\"><code>HTMLAnchorElement</code></a> interface is a space-separated list of URLs. When the link is followed, the browser will send <a href=\"$MDN_URL$/Web/HTTP/Methods/POST\"><code>POST</code></a> requests with the body PING to the URLs.\n<p>It reflects the <code>ping</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/a\"><code>&lt;a&gt;</code></a> element.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This property is not effective in Firefox and its usage may be limited due to privacy and security concerns.\n</div>"
+    },
     "htmlanchorelement.port": {
       "url": "$MDN_URL$/web/api/htmlanchorelement/port",
       "status": [
@@ -12718,6 +12746,22 @@
       },
       "doc": "The <strong><code>target</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLAnchorElement\"><code>HTMLAnchorElement</code></a> interface is a string that indicates where to display the linked resource.\n<p>It reflects the <a href=\"$MDN_URL$/Web/HTML/Element/a#target\"><code>target</code></a> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/a\"><code>&lt;a&gt;</code></a> element."
     },
+    "htmlanchorelement.text": {
+      "url": "$MDN_URL$/web/api/htmlanchorelement/text",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "Opera": "12.1",
+        "Safari": "",
+        "SafariIOS": ""
+      },
+      "doc": "The <strong><code>text</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLAnchorElement\"><code>HTMLAnchorElement</code></a> represents the text inside the the element.\nThis property represents the same information as <a href=\"$MDN_URL$/Web/API/Node/textContent\"><code>Node.textContent</code></a>."
+    },
     "htmlanchorelement.tostring": {
       "url": "$MDN_URL$/web/api/htmlanchorelement/tostring",
       "status": [
@@ -12734,6 +12778,22 @@
       },
       "doc": "The <strong><code>HTMLAnchorElement.toString()</code></strong> <a href=\"$MDN_URL$/Glossary/Stringifier\">stringifier</a>\nmethod returns a string containing the whole URL. It is a read-only\nversion of <a href=\"$MDN_URL$/Web/API/HTMLAnchorElement/href\"><code>HTMLAnchorElement.href</code></a>.",
       "returns": "A string containing the element's complete URL."
+    },
+    "htmlanchorelement.type": {
+      "url": "$MDN_URL$/web/api/htmlanchorelement/type",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "Opera": "12.1",
+        "Safari": "",
+        "SafariIOS": ""
+      },
+      "doc": "The <strong><code>type</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLAnchorElement\"><code>HTMLAnchorElement</code></a> interface is a string that indicates the MIME type of the linked resource.\n<p>It reflects the <code>type</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/a\"><code>&lt;a&gt;</code></a> element."
     },
     "htmlanchorelement.username": {
       "url": "$MDN_URL$/web/api/htmlanchorelement/username",
@@ -12878,6 +12938,21 @@
         "SafariIOS": ""
       },
       "doc": "The <strong><code>HTMLAreaElement.pathname</code></strong> property is a\nstring containing an initial <code>'/'</code> followed by the path of\nthe URL not including the query string or fragment (or the empty string if there is no\npath)."
+    },
+    "htmlareaelement.ping": {
+      "url": "$MDN_URL$/web/api/htmlareaelement/ping",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "12",
+        "ChromeAndroid": "",
+        "Edge": "17",
+        "Opera": "15",
+        "Safari": "5.1",
+        "SafariIOS": "5"
+      },
+      "doc": "The <strong><code>ping</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLAreaElement\"><code>HTMLAreaElement</code></a> interface is a space-separated list of URLs. When the link is followed, the browser will send <a href=\"$MDN_URL$/Web/HTTP/Methods/POST\"><code>POST</code></a> requests with the body PING to the URLs.\n<p>It reflects the <code>ping</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/area\"><code>&lt;area&gt;</code></a> element.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This property is not effective in Firefox and its usage may be limited due to privacy and security concerns.\n</div>"
     },
     "htmlareaelement.port": {
       "url": "$MDN_URL$/web/api/htmlareaelement/port",
@@ -13895,7 +13970,8 @@
       ],
       "compatibility": {
         "Chrome": "121",
-        "Edge": "121"
+        "Edge": "121",
+        "Opera": "107"
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>editContext</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a> interface gets and sets an element's associated <a href=\"$MDN_URL$/Web/API/EditContext\"><code>EditContext</code></a> object.\n<p>The <a href=\"$MDN_URL$/Web/API/EditContext_API\">EditContext API</a> can be used to build rich text editors on the web that support advanced text input experiences, such as <a href=\"$MDN_URL$/Glossary/Input_method_editor\">Input Method Editor</a> (IME) composition, emoji picker, or any other platform-specific editing-related UI surfaces."
     },
@@ -14328,6 +14404,38 @@
         "SafariIOS": ""
       },
       "doc": "The <strong><code>HTMLEmbedElement</code></strong> interface provides special properties (beyond the regular <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a> interface it also has available to it by inheritance) for manipulating <a href=\"$MDN_URL$/Web/HTML/Element/embed\"><code>&lt;embed&gt;</code></a> elements.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This topic describes the <code>HTMLEmbedElement</code> interface as defined in the standard. It does not address earlier, non-standardized version of the interface.\n</div>"
+    },
+    "htmlembedelement.height": {
+      "url": "$MDN_URL$/web/api/htmlembedelement/height",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "Opera": "12.1",
+        "Safari": "3",
+        "SafariIOS": ""
+      },
+      "doc": "The <strong><code>height</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLEmbedElement\"><code>HTMLEmbedElement</code></a> interface returns a string that reflects the <code>height</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/embed\"><code>&lt;embed&gt;</code></a> element, indicating the displayed height of the resource in CSS pixels."
+    },
+    "htmlembedelement.width": {
+      "url": "$MDN_URL$/web/api/htmlembedelement/width",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "Opera": "12.1",
+        "Safari": "3",
+        "SafariIOS": ""
+      },
+      "doc": "The <strong><code>width</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLEmbedElement\"><code>HTMLEmbedElement</code></a> interface returns a string that reflects the <code>width</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/embed\"><code>&lt;embed&gt;</code></a> element, indicating the displayed width of the resource in CSS pixels."
     },
     "htmlfieldsetelement": {
       "url": "$MDN_URL$/web/api/htmlfieldsetelement",
@@ -14798,6 +14906,21 @@
       },
       "doc": "The <strong><code>HTMLIFrameElement</code></strong> interface provides special properties and methods (beyond those of the <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a> interface it also has available to it by inheritance) for manipulating the layout and presentation of inline frame elements."
     },
+    "htmliframeelement.allowfullscreen": {
+      "url": "$MDN_URL$/web/api/htmliframeelement/allowFullscreen",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "38",
+        "ChromeAndroid": "38",
+        "Edge": "",
+        "Firefox": "22",
+        "Opera": "25",
+        "Safari": "10.1"
+      },
+      "doc": "The <strong><code>allowFullscreen</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> interface is a boolean value that reflects the <code>allowfullscreen</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/iframe\"><code>&lt;iframe&gt;</code></a> element, indicating whether to allow the iframe's contents to use <a href=\"$MDN_URL$/Web/API/Element/requestFullscreen\" ><code>requestFullscreen()</code></a>.\n<blockquote>\n<p><strong>Note</strong>: This property is considered a legacy property. Use <code>allow=\"fullscreen\"</code> and domxref(\"HTMLIFrameElement.allow\")}} instead.\n</blockquote>"
+    },
     "htmliframeelement.allowpaymentrequest": {
       "url": "$MDN_URL$/web/api/htmliframeelement/allowpaymentrequest",
       "status": [
@@ -14885,6 +15008,22 @@
       },
       "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>featurePolicy</code></strong> read-only\nproperty of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> interface returns the\n<a href=\"$MDN_URL$/Web/API/FeaturePolicy\"><code>FeaturePolicy</code></a> interface which provides a simple API for introspecting\nthe <a href=\"$MDN_URL$/Web/HTTP/Permissions_Policy\">Permissions Policies</a> applied to a specific frame."
     },
+    "htmliframeelement.height": {
+      "url": "$MDN_URL$/web/api/htmliframeelement/height",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "Opera": "12.1",
+        "Safari": "3",
+        "SafariIOS": ""
+      },
+      "doc": "The <strong><code>height</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> interface returns a string that reflects the <code>height</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/iframe\"><code>&lt;iframe&gt;</code></a> element, indicating the height of the frame in CSS pixels."
+    },
     "htmliframeelement.loading": {
       "url": "$MDN_URL$/web/api/htmliframeelement/loading",
       "status": [
@@ -14900,6 +15039,22 @@
         "SafariIOS": "16.4"
       },
       "doc": "The <strong><code>loading</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> interface is a string that provides a hint to the <a href=\"$MDN_URL$/Glossary/User_agent\">user agent</a> indicating whether the <a href=\"$MDN_URL$/Web/HTML/Element/iframe\">iframe</a> should be loaded immediately on page load, or only when it is needed.\n<p>This can be used to optimize the loading of the document's contents.\nIframes that are visible when the page loads can be downloaded immediately (eagerly), while iframes that are likely to be offscreen on initial page load can be downloaded lazily — just before they will appear in the window's <a href=\"$MDN_URL$/Glossary/Visual_Viewport\">visual viewport</a>."
+    },
+    "htmliframeelement.name": {
+      "url": "$MDN_URL$/web/api/htmliframeelement/name",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "Opera": "12.1",
+        "Safari": "3",
+        "SafariIOS": ""
+      },
+      "doc": "The <strong><code>name</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> interface is a string value that reflects the <code>name</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/iframe\"><code>&lt;iframe&gt;</code></a> element, indicating the specific name of the <code>&lt;iframe&gt;</code> element."
     },
     "htmliframeelement.referrerpolicy": {
       "url": "$MDN_URL$/web/api/htmliframeelement/referrerpolicy",
@@ -14948,6 +15103,22 @@
         "SafariIOS": "6"
       },
       "doc": "The <strong><code>srcdoc</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> specifies the content of the page."
+    },
+    "htmliframeelement.width": {
+      "url": "$MDN_URL$/web/api/htmliframeelement/width",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "",
+        "Opera": "12.1",
+        "Safari": "3",
+        "SafariIOS": ""
+      },
+      "doc": "The <strong><code>width</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> interface returns a string that reflects the <code>width</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/iframe\"><code>&lt;iframe&gt;</code></a> element, indicating the width of the frame in CSS pixels."
     },
     "htmlimageelement": {
       "url": "$MDN_URL$/web/api/htmlimageelement",
@@ -15295,7 +15466,7 @@
         "Safari": "9.1",
         "SafariIOS": "9.3"
       },
-      "doc": "The <a href=\"$MDN_URL$/Web/API/HTMLImageElement\"><code>HTMLImageElement</code></a> property\n<strong><code>sizes</code></strong> allows you to specify the layout width of the\nimage for each of a list of media conditions. This provides the ability to\nautomatically select among different images—even images of different orientations or\naspect ratios—as the document state changes to match different media\nconditions.\n<p>Each condition is specified using the same conditional format used\nby <a href=\"$MDN_URL$/Web/CSS/CSS_media_queries\">media queries</a>."
+      "doc": "The <a href=\"$MDN_URL$/Web/API/HTMLImageElement\"><code>HTMLImageElement</code></a> property\n<strong><code>sizes</code></strong> allows you to specify the layout width of the\n<a href=\"$MDN_URL$/Web/HTML/Element/img\">image</a> for each of a list of media conditions. This provides the ability to\nautomatically select among different images—even images of different orientations or\naspect ratios—as the document state changes to match different media\nconditions.\n<p>Each condition is specified using the same conditional format used\nby <a href=\"$MDN_URL$/Web/CSS/CSS_media_queries\">media queries</a>."
     },
     "htmlimageelement.src": {
       "url": "$MDN_URL$/web/api/htmlimageelement/src",
@@ -17291,6 +17462,54 @@
       },
       "doc": "The <strong><code>HTMLProgressElement.labels</code></strong> read-only property returns\na <a href=\"$MDN_URL$/Web/API/NodeList\"><code>NodeList</code></a> of the <a href=\"$MDN_URL$/Web/HTML/Element/label\"><code>&lt;label&gt;</code></a> elements associated with the\n<a href=\"$MDN_URL$/Web/HTML/Element/progress\"><code>&lt;progress&gt;</code></a> element."
     },
+    "htmlprogresselement.max": {
+      "url": "$MDN_URL$/web/api/htmlprogresselement/max",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "6",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "6",
+        "Opera": "12.1",
+        "Safari": "6",
+        "SafariIOS": "6"
+      },
+      "doc": "The <strong><code>max</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLProgressElement\"><code>HTMLProgressElement</code></a> interface represents the upper bound of the <a href=\"$MDN_URL$/Web/HTML/Element/progress\"><code>&lt;progress&gt;</code></a> element's range."
+    },
+    "htmlprogresselement.position": {
+      "url": "$MDN_URL$/web/api/htmlprogresselement/position",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "6",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "6",
+        "Opera": "12.1",
+        "Safari": "6",
+        "SafariIOS": "6"
+      },
+      "doc": "The <strong><code>position</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/HTMLProgressElement\"><code>HTMLProgressElement</code></a> interface returns current progress of the <a href=\"$MDN_URL$/Web/HTML/Element/progress\"><code>&lt;progress&gt;</code></a> element."
+    },
+    "htmlprogresselement.value": {
+      "url": "$MDN_URL$/web/api/htmlprogresselement/value",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "6",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "6",
+        "Opera": "12.1",
+        "Safari": "6",
+        "SafariIOS": "6"
+      },
+      "doc": "The <strong><code>value</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLProgressElement\"><code>HTMLProgressElement</code></a> interface represents the current progress of the <a href=\"$MDN_URL$/Web/HTML/Element/progress\"><code>&lt;progress&gt;</code></a> element."
+    },
     "htmlquoteelement": {
       "url": "$MDN_URL$/web/api/htmlquoteelement",
       "status": [
@@ -17605,7 +17824,8 @@
         "Chrome": "121",
         "ChromeAndroid": "121",
         "Edge": "121",
-        "Firefox": "122"
+        "Firefox": "122",
+        "Opera": "107"
       },
       "doc": "The <strong><code>HTMLSelectElement.showPicker()</code></strong> method displays the browser picker for a <code>select</code> element.\n<p>This is the same picker that would normally be displayed when the element is selected, but can be triggered from a button press or other user interaction.",
       "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>).",
@@ -18578,6 +18798,25 @@
       },
       "doc": "Implemented by the <a href=\"$MDN_URL$/Web/HTML/Element/video\"><code>&lt;video&gt;</code></a> element, the <strong><code>HTMLVideoElement</code></strong> interface provides special properties and methods for manipulating video objects. It also inherits properties and methods of <a href=\"$MDN_URL$/Web/API/HTMLMediaElement\"><code>HTMLMediaElement</code></a> and <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a>.\n<p>The list of <a href=\"$MDN_URL$/Web/Media/Formats\">supported media formats</a> varies from one browser to the other. You should either provide your video in a single format that all the relevant browsers supports, or provide multiple video sources in enough different formats that all the browsers you need to support are covered."
     },
+    "htmlvideoelement.cancelvideoframecallback": {
+      "url": "$MDN_URL$/web/api/htmlvideoelement/cancelvideoframecallback",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "83",
+        "ChromeAndroid": "83",
+        "Edge": "83",
+        "Opera": "69",
+        "Safari": "15.4",
+        "SafariIOS": "15.4"
+      },
+      "doc": "The <strong><code>cancelVideoFrameCallback()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/HTMLVideoElement\"><code>HTMLVideoElement</code></a> interface cancels a previously-registered video frame callback.",
+      "parameters": {
+        "id": "A number representing the ID of the video frame callback you want to cancel. This will be the value returned by the corresponding <a href=\"$MDN_URL$/Web/API/HTMLVideoElement/requestVideoFrameCallback\"><code>HTMLVideoElement.requestVideoFrameCallback</code></a> call."
+      },
+      "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
+    },
     "htmlvideoelement.disablepictureinpicture": {
       "url": "$MDN_URL$/web/api/htmlvideoelement/disablepictureinpicture",
       "status": [
@@ -18610,6 +18849,22 @@
       "doc": "The <strong><a href=\"$MDN_URL$/Web/API/HTMLVideoElement\"><code>HTMLVideoElement</code></a></strong> method\n<strong><code>getVideoPlaybackQuality()</code></strong> creates and returns a\n<a href=\"$MDN_URL$/Web/API/VideoPlaybackQuality\"><code>VideoPlaybackQuality</code></a> object containing metrics including how many\nframes have been lost.\n<p>The data returned can be used to evaluate the quality of the video stream.",
       "returns": "A <a href=\"$MDN_URL$/Web/API/VideoPlaybackQuality\"><code>VideoPlaybackQuality</code></a> object providing information about the video\n  element's current playback quality."
     },
+    "htmlvideoelement.height": {
+      "url": "$MDN_URL$/web/api/htmlvideoelement/height",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "3",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "3.5",
+        "Opera": "10.5",
+        "Safari": "3.1",
+        "SafariIOS": "3"
+      },
+      "doc": "The <strong><code>height</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLVideoElement\"><code>HTMLVideoElement</code></a> interface returns an integer that reflects the <code>height</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/video\"><code>&lt;video&gt;</code></a> element, specifying the displayed height of the resource in CSS pixels."
+    },
     "htmlvideoelement.requestpictureinpicture": {
       "url": "$MDN_URL$/web/api/htmlvideoelement/requestpictureinpicture",
       "status": [
@@ -18631,6 +18886,25 @@
         "InvalidStateError DOMException": "Thrown if the video element's <code>readState</code> is <code>HAVE_NOTHING</code>, or if the video element has no video track, or if the video element's <code>disablePictureInPicture</code> attribute is <code>true</code>.",
         "NotAllowedError DOMException": "Thrown if <code>document.pictureInPictureElement</code> is <code>null</code> and the document does not have <a href=\"$MDN_URL$/Glossary/Transient_activation\">transient activation</a>."
       }
+    },
+    "htmlvideoelement.requestvideoframecallback": {
+      "url": "$MDN_URL$/web/api/htmlvideoelement/requestvideoframecallback",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "83",
+        "ChromeAndroid": "83",
+        "Edge": "83",
+        "Opera": "69",
+        "Safari": "15.4",
+        "SafariIOS": "15.4"
+      },
+      "doc": "The <strong><code>requestVideoFrameCallback()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/HTMLVideoElement\"><code>HTMLVideoElement</code></a> interface registers a callback function that runs when a new video frame is sent to the compositor. This enables developers to perform efficient operations on each video frame.",
+      "parameters": {
+        "callback": "The callback function that runs when a new video frame is sent to the compositor. This contains two parameters: <dl> <dt id=\"now\"><a href=\"#now\"><code>now</code></a></dt> <dd> <p>A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> representing the time when the callback was called. </dd> <dt id=\"metadata\"><a href=\"#metadata\"><code>metadata</code></a></dt> <dd> <p>An object containing the following properties: <ul> <li><code>expectedDisplayTime</code>: A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> representing the time when the browser expects the frame to be visible.</li> <li><code>height</code>: A number, in media pixels, representing the height of the video frame (the visible decoded pixels, without aspect ratio adjustments).</li> <li><code>mediaTime</code>: A number, in seconds, representing the media presentation timestamp of the presented frame. This is equal to the frame's timestamp on the <a href=\"$MDN_URL$/Web/API/HTMLMediaElement/currentTime\"><code>HTMLMediaElement.currentTime</code></a> timeline.</li> <li><code>presentationTime</code>: A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> representing the time when the browser submitted the frame for composition.</li> <li><code>presentedFrames</code>: A number representing the number of frames submitted for composition so far alongside the current callback. This can be used to detect whether frames were missed between callback instances.</li> <li><code>processingDuration</code>: A number, in seconds, representing the duration between the submission of the encoded packet with the same presentation timestamp as this frame to the decoder (i.e., the <code>mediaTime</code>) and the decoded frame being ready for presentation.</li> <li><code>width</code>: A number, in media pixels, representing the width of the video frame (the visible decoded pixels, without aspect ratio adjustments).</li> </ul> <p>Additional metadata properties may be available within <code>requestVideoFrameCallback()</code> callbacks used in <a href=\"$MDN_URL$/Web/API/WebRTC_API\" >WebRTC</a> applications: <ul> <li><code>captureTime</code>: A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> representing the time when the frame was captured. This applies to video frames coming from a local or remote source. For a remote source, the capture time is estimated using clock synchronization and RTCP sender reports to convert RTP timestamps to capture time.</li> <li><code>receiveTime</code>: A <a href=\"$MDN_URL$/Web/API/DOMHighResTimeStamp\"><code>DOMHighResTimeStamp</code></a> representing the time when the encoded frame was received by the platform. This applies to video frames coming from a remote source. Specifically, this corresponds to the time when the last packet belonging to this frame was received over the network.</li> <li><code>rtpTimestamp</code>: A number representing the RTP timestamp associated with this video frame.</li> </ul> </dd> </dl>"
+      },
+      "returns": "A number representing a unique callback ID.\n<p>This can be passed to <a href=\"$MDN_URL$/Web/API/HTMLVideoElement/cancelVideoFrameCallback\"><code>HTMLVideoElement.cancelVideoFrameCallback()</code></a> to cancel the callback registration."
     },
     "htmlvideoelement.videoheight": {
       "url": "$MDN_URL$/web/api/htmlvideoelement/videoheight",
@@ -18663,6 +18937,22 @@
         "SafariIOS": "3"
       },
       "doc": "The <a href=\"$MDN_URL$/Web/API/HTMLVideoElement\"><code>HTMLVideoElement</code></a> interface's read-only <strong><code>videoWidth</code></strong> property indicates the <a href=\"$MDN_URL$/Web/API/HTMLVideoElement/videoHeight#about_intrinsic_width_and_height\">intrinsic width</a> of the video, expressed in CSS pixels.\nIn simple terms, this is the width of the media in its natural size.\n<p>See <a href=\"$MDN_URL$/Web/API/HTMLVideoElement/videoHeight#about_intrinsic_width_and_height\"><code>HTMLVideoElement.videoHeight</code> &gt; About intrinsic width and height</a> for more details."
+    },
+    "htmlvideoelement.width": {
+      "url": "$MDN_URL$/web/api/htmlvideoelement/width",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "3",
+        "ChromeAndroid": "",
+        "Edge": "",
+        "Firefox": "3.5",
+        "Opera": "10.5",
+        "Safari": "3.1",
+        "SafariIOS": "3"
+      },
+      "doc": "The <strong><code>width</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLVideoElement\"><code>HTMLVideoElement</code></a> interface returns an integer that that reflects the <code>width</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/video\"><code>&lt;video&gt;</code></a> element, specifying the displayed width of the resource in CSS pixels."
     },
     "idbcursor": {
       "url": "$MDN_URL$/web/api/idbcursor",
@@ -19812,7 +20102,7 @@
       "parameters": {
         "indexName": "The name of the index to create. Note that it is possible to create an index with an empty name.",
         "keyPath": "The key path for the index to use. Note that it is possible to create an index with an empty <code>keyPath</code>, and also to pass in a sequence (array) as a <code>keyPath</code>.",
-        "options": "An object which can include the following properties: <dl> <dt id=\"unique\"><a href=\"#unique\"><code>unique</code></a></dt> <dd> <p>If <code>true</code>, the index will not allow duplicate values for a single key. Defaults to <code>false</code>. </dd> <dt id=\"multientry\"><a href=\"#multientry\"><code>multiEntry</code></a></dt> <dd> <p>If <code>true</code>, the index will add an entry in the index for each array element when the <code>keyPath</code> resolves to an array. If <code>false</code>, it will add one single entry containing the array. Defaults to <code>false</code>. </dd> <dt id=\"locale\"><a href=\"#locale\"><code>locale</code></a> </dt> <dd> <p>Currently Firefox-only (43+), this allows you to specify a locale for the index. Any sorting operations performed on the data via key ranges will then obey sorting rules of that locale (see <a href=\"$MDN_URL$/Web/API/IndexedDB_API/Using_IndexedDB#locale-aware_sorting\">locale-aware sorting</a>). You can specify its value in one of three ways: <ul> <li><code>string</code>: A string containing a specific locale code, e.g. <code>en-US</code>, or <code>pl</code>.</li> <li><code>auto</code>: The platform default locale will be used (may be changed by user agent settings).</li> <li><code>null</code> or <code>undefined</code>: If no locale is specified, normal JavaScript sorting will be used — not locale-aware.</li> </ul> </dd> </dl>"
+        "options": "An object which can include the following properties: <dl> <dt id=\"unique\"><a href=\"#unique\"><code>unique</code></a></dt> <dd> <p>If <code>true</code>, the index will not allow duplicate values for a single key. Defaults to <code>false</code>. </dd> <dt id=\"multientry\"><a href=\"#multientry\"><code>multiEntry</code></a></dt> <dd> <p>If <code>true</code>, the index will add an entry in the index for each array element when the <code>keyPath</code> resolves to an array. If <code>false</code>, it will add one single entry containing the array. Defaults to <code>false</code>. </dd> <dt id=\"locale\"><a href=\"#locale\"><code>locale</code></a>  </dt> <dd> <p>Allows you to specify a locale for the index. Any sorting operations performed on the data via key ranges will then obey sorting rules of that locale (see <a href=\"$MDN_URL$/Web/API/IndexedDB_API/Using_IndexedDB#locale-aware_sorting\">locale-aware sorting</a>). You can specify its value in one of three ways: <ul> <li><code>string</code>: A string containing a specific locale code, e.g. <code>en-US</code>, or <code>pl</code>.</li> <li><code>auto</code>: The platform default locale will be used (may be changed by user agent settings).</li> <li><code>null</code> or <code>undefined</code>: If no locale is specified, normal JavaScript sorting will be used — not locale-aware.</li> </ul> </dd> </dl>"
       },
       "returns": "An <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a> object: the newly created index.",
       "throws": {

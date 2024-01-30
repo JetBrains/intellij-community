@@ -1092,6 +1092,15 @@
         },
         "controlslist": {
           "url": "$MDN_URL$/web/html/element/audio#controlslist",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "58",
+            "ChromeAndroid": "58",
+            "Edge": "79",
+            "Opera": "45"
+          },
           "doc": "The <a href=\"https://wicg.github.io/controls-list/explainer.html\" class=\"external\" target=\"_blank\"><code>controlslist</code></a> attribute, when specified, helps the browser select what controls to show for the <code>audio</code> element whenever the browser shows its own set of controls (that is, when the <code>controls</code> attribute is specified).\n<p>The allowed values are <code>nodownload</code>, <code>nofullscreen</code> and <code>noremoteplayback</code>."
         },
         "crossorigin": {
@@ -1706,13 +1715,6 @@
         "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLButtonElement\"><code>HTMLButtonElement</code></a>\n"
       },
       "attrs": {
-        "autocomplete": {
-          "url": "$MDN_URL$/web/html/element/button#autocomplete",
-          "compatibility": {
-            "Firefox": "4"
-          },
-          "doc": "This attribute on a <a href=\"$MDN_URL$/Web/HTML/Element/button\" aria-current=\"page\"><code>&lt;button&gt;</code></a> is nonstandard and Firefox-specific. Unlike other browsers, <a href=\"https://stackoverflow.com/questions/5985839/bug-with-firefox-disabled-attribute-of-input-not-resetting-when-refreshing\" class=\"external\" target=\"_blank\">Firefox persists the dynamic disabled state</a> of a <a href=\"$MDN_URL$/Web/HTML/Element/button\" aria-current=\"page\"><code>&lt;button&gt;</code></a> across page loads. Setting <code>autocomplete=\"off\"</code> on the button disables this feature; see <a href=\"https://bugzil.la/654072\" class=\"external\" target=\"_blank\">Firefox bug 654072</a>."
-        },
         "autofocus": {
           "url": "$MDN_URL$/web/html/element/button#autofocus",
           "doc": "This Boolean attribute specifies that the button should have input <a href=\"$MDN_URL$/Web/API/HTMLElement/focus\">focus</a> when the page loads. <strong>Only one element in a document can have this attribute.</strong>"
@@ -1847,10 +1849,34 @@
         },
         "popovertarget": {
           "url": "$MDN_URL$/web/html/element/button#popovertarget",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "114",
+            "ChromeAndroid": "114",
+            "Edge": "114",
+            "Firefox": "preview",
+            "Opera": "100",
+            "Safari": "17",
+            "SafariIOS": "17"
+          },
           "doc": "Turns a <code>&lt;button&gt;</code> element into a popover control button; takes the ID of the popover element to control as its value. See the <a href=\"$MDN_URL$/Web/API/Popover_API\" >Popover API</a> landing page for more details."
         },
         "popovertargetaction": {
           "url": "$MDN_URL$/web/html/element/button#popovertargetaction",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "114",
+            "ChromeAndroid": "114",
+            "Edge": "114",
+            "Firefox": "preview",
+            "Opera": "100",
+            "Safari": "17",
+            "SafariIOS": "17"
+          },
           "doc": "Specifies the action to be performed on a popover element being controlled by a control <code>&lt;button&gt;</code>. Possible values are:\n<dl>\n<dt id=\"hide\"><a href=\"#hide\"><code>\"hide\"</code></a></dt>\n<dd>\n<p>The button will hide a shown popover. If you try to hide an already hidden popover, no action will be taken.\n</dd>\n<dt id=\"show\"><a href=\"#show\"><code>\"show\"</code></a></dt>\n<dd>\n<p>The button will show a hidden popover. If you try to show an already showing popover, no action will be taken.\n</dd>\n<dt id=\"toggle\"><a href=\"#toggle\"><code>\"toggle\"</code></a></dt>\n<dd>\n<p>The button will toggle a popover between showing and hidden. If the popover is hidden, it will be shown; if the popover is showing, it will be hidden. If <code>popovertargetaction</code> is omitted, <code>\"toggle\"</code> is the default action that will be performed by the control button.\n</dd>\n</dl>"
         },
         "type": {
@@ -1964,7 +1990,7 @@
         "Safari": "4",
         "SafariIOS": "3.2"
       },
-      "doc": "The <strong><code>&lt;caption&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element specifies the caption (or title) of a table.",
+      "doc": "The <strong><code>&lt;caption&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element specifies the caption (or title) of a table, providing the table an <a href=\"$MDN_URL$/Glossary/Accessible_description\">accessible description</a>.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">Flow content</a>\n.\n",
@@ -1990,7 +2016,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute indicates how the caption must be aligned with respect to the table. It may have one of the following values:\n<dl>\n<dt id=\"left\"><a href=\"#left\"><code>left</code></a></dt>\n<dd>\n<p>The caption is displayed to the left of the table.\n</dd>\n<dt id=\"top\"><a href=\"#top\"><code>top</code></a></dt>\n<dd>\n<p>The caption is displayed above the table.\n</dd>\n<dt id=\"right\"><a href=\"#right\"><code>right</code></a></dt>\n<dd>\n<p>The caption is displayed to the right of the table.\n</dd>\n<dt id=\"bottom\"><a href=\"#bottom\"><code>bottom</code></a></dt>\n<dd>\n<p>The caption is displayed below the table.\n</dd>\n</dl>\n<div class=\"notecard warning\" id=\"sect1\">\n<p><strong>Warning:</strong> Do not use this attribute, as it has been deprecated. The <a href=\"$MDN_URL$/Web/HTML/Element/caption\" aria-current=\"page\"><code>&lt;caption&gt;</code></a> element should be styled using the <a href=\"$MDN_URL$/Web/CSS\">CSS</a> properties <a href=\"$MDN_URL$/Web/CSS/caption-side\"><code>caption-side</code></a> and <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a>.\n</div>"
+          "doc": "Specifies on which side of the table the caption should be displayed. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>top</code>, <code>right</code>, or <code>bottom</code>. Use the <a href=\"$MDN_URL$/Web/CSS/caption-side\"><code>caption-side</code></a> and <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS properties instead, as this attribute is deprecated."
         }
       }
     },
@@ -2075,7 +2101,7 @@
         "Safari": "4",
         "SafariIOS": "3.2"
       },
-      "doc": "The <strong><code>&lt;col&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a column within a table and is used for defining common semantics on all common cells. It is generally found within a <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> element.\n<p><code>&lt;col&gt;</code> allows styling columns using CSS, but only a few properties will have an effect on the column (<a href=\"https://www.w3.org/TR/CSS21/tables.html#columns\" class=\"external\" target=\"_blank\">see the CSS 2.1 specification</a> for a list).",
+      "doc": "The <strong><code>&lt;col&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines one or more columns in a column group represented by its parent <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> element. The <code>&lt;col&gt;</code> element is only valid as a child of a <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> element that has no <a href=\"$MDN_URL$/Web/HTML/Element/colgroup#span\"><code>span</code></a> attribute defined.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "None; it is a\n<a href=\"$MDN_URL$/Glossary/Void_element\">void element</a>\n.\n",
@@ -2101,7 +2127,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how horizontal alignment of each column cell content will be handled. Possible values are:\n<ul>\n<li><code>left</code>, aligning the content to the left of the cell</li>\n<li><code>center</code>, centering the content in the cell</li>\n<li><code>right</code>, aligning the content to the right of the cell</li>\n<li><code>justify</code>, inserting spaces into the textual content so that the content is justified in the cell</li>\n</ul>\n<p>If this attribute is not set, its value is inherited from the <a href=\"$MDN_URL$/Web/HTML/Element/colgroup#align\"><code>align</code></a> of the <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> element this <code>&lt;col&gt;</code> element belongs too. If there are none, the <code>left</code> value is assumed.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> To achieve the same effect as the <code>left</code>, <code>center</code>, <code>right</code> or <code>justify</code> values, do not try to set the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property on a selector giving a <code>&lt;col&gt;</code> element. Because <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements are not descendant of the <code>&lt;col&gt;</code> element, they won't inherit it.\n<p>If the table doesn't use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, use the <code>td:nth-child(an+b)</code> CSS selector. Set <code>a</code> to zero and <code>b</code> to the position of the column in the table, e.g. <code>td:nth-child(2) { text-align: right; }</code> to right-align the second column.\n<p>If the table does use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, the effect can be achieved by combining adequate CSS attribute selectors like <code>[colspan=n]</code>, though this is not trivial.\n</div>"
+          "doc": "Specifies the horizontal alignment of each column cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, <code>right</code>, <code>justify</code>, and <code>char</code>. When supported, the <code>char</code> value aligns the textual content on the character defined in the <a href=\"#char\"><code>char</code></a> attribute and on offset defined by the <a href=\"#charoff\"><code>charoff</code></a> attribute. Note that this attribute overrides the specified <a href=\"$MDN_URL$/Web/HTML/Element/colgroup#align\"><code>align</code></a> of its <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> parent element. Use the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS property on the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements instead, as this attribute is deprecated.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Setting <code>text-align</code> on the <code>&lt;col&gt;</code> element has no effect as <code>&lt;col&gt;</code> has no descendants, and therefore no elements inherit from it.\n<p>If the table does not use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, use the <code>td:nth-of-type(an+b)</code> CSS selector. Set <code>a</code> to zero and <code>b</code> to the position of the column in the table, e.g. <code>td:nth-of-type(2) { text-align: right; }</code> to right-align the second column cells.\n<p>If the table does use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, the effect can be achieved by combining adequate CSS attribute selectors like <code>[colspan=n]</code>, though this is not trivial.\n</div>"
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/col#bgcolor",
@@ -2118,7 +2144,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "The background color of the table. It is a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>'. One of the predefined <a href=\"$MDN_URL$/Web/CSS/color_value#named_colors\">color keywords</a> can also be used.\n<p>To achieve a similar effect, use the CSS <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> property."
+          "doc": "Defines the background color of each column cell. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "char": {
           "url": "$MDN_URL$/web/html/element/col#char",
@@ -2134,7 +2160,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute sets the character to align the cells in a column on. Typical values for this include a period (.) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
+          "doc": "Specifies the alignment of the content to a character of each column cell. Typical values for this include a period (<code>.</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored, though it will still override the specified <a href=\"$MDN_URL$/Web/HTML/Element/colgroup#char\"><code>char</code></a> of its <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> parent element."
         },
         "charoff": {
           "url": "$MDN_URL$/web/html/element/col#charoff",
@@ -2150,7 +2176,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute is used to indicate the number of characters to offset the column data from the alignment characters specified by the <code>char</code> attribute."
+          "doc": "Specifies the number of characters to offset the column cell content from the alignment character specified by the <a href=\"#char\"><code>char</code></a> attribute."
         },
         "span": {
           "url": "$MDN_URL$/web/html/element/col#span",
@@ -2166,7 +2192,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute contains a positive integer indicating the number of consecutive columns the <code>&lt;col&gt;</code> element spans. If not present, its default value is <code>1</code>."
+          "doc": "Specifies the number of consecutive columns the <code>&lt;col&gt;</code> element spans. The value must be a positive integer greater than zero. If not present, its default value is <code>1</code>."
         },
         "valign": {
           "url": "$MDN_URL$/web/html/element/col#valign",
@@ -2183,7 +2209,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute specifies the vertical alignment of the text within each cell of the column. Possible values for this attribute are:\n<ul>\n<li><code>baseline</code>, which will put the text as close to the bottom of the cell as it is possible, but align it on the <a href=\"https://en.wikipedia.org/wiki/Baseline_%28typography%29\" class=\"external\" target=\"_blank\">baseline</a> of the characters instead of the bottom of them. If characters are all of the size, this has the same effect as <code>bottom</code>.</li>\n<li><code>bottom</code>, which will put the text as close to the bottom of the cell as it is possible;</li>\n<li><code>middle</code>, which will center the text in the cell;</li>\n<li>and <code>top</code>, which will put the text as close to the top of the cell as it is possible.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Do not try to set the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> property on a selector giving a <code>&lt;col&gt;</code> element. Because <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements are not descendant of the <code>&lt;col&gt;</code> element, they won't inherit it.\n<p>If the table doesn't use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, use the <code>td:nth-child(an+b)</code> CSS selector where 'a' is the total number of the columns in the table and 'b' is the ordinal position of the column in the table. Only after this selector the <code>vertical-align</code> property can be used.\n<p>If the table does use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, the effect can be achieved by combining adequate CSS attribute selectors like <code>[colspan=n]</code>, though this is not trivial.\n</div>"
+          "doc": "Specifies the vertical alignment of each column cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>baseline</code>, <code>bottom</code>, <code>middle</code>, and <code>top</code>. Note that this attribute overrides the specified <a href=\"$MDN_URL$/Web/HTML/Element/colgroup#valign\"><code>valign</code></a> of its <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> parent element. Use the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> CSS property on the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements instead, as this attribute is deprecated.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Setting <code>vertical-align</code> on the <code>&lt;col&gt;</code> element has no effect as <code>&lt;col&gt;</code> has no descendants, and therefore no elements inherit from it.\n<p>If the table does not use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, use the <code>td:nth-of-type(an+b)</code> CSS selector. Set <code>a</code> to zero and <code>b</code> to the position of the column in the table, e.g. <code>td:nth-of-type(2) { vertical-align: middle; }</code> to center the second column cells vertically.\n<p>If the table does use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, the effect can be achieved by combining adequate CSS attribute selectors like <code>[colspan=n]</code>, though this is not trivial.\n</div>"
         },
         "width": {
           "url": "$MDN_URL$/web/html/element/col#width",
@@ -2200,7 +2226,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute specifies a default width for each column in the current column group. In addition to the standard pixel and percentage values, this attribute might take the special form <code>0*</code>, which means that the width of each column in the group should be the minimum width necessary to hold the column's contents. Relative widths such as <code>5*</code> also can be used."
+          "doc": "Specifies a default width for each column. In addition to the standard pixel and percentage values, this attribute can take the special form <code>0*</code>, which means that the width of each column spanned should be the minimum width necessary to hold the column's contents. Relative widths such as <code>5*</code> can also be used. Note that this attribute overrides the specified <a href=\"$MDN_URL$/Web/HTML/Element/colgroup#width\"><code>width</code></a> of its <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> parent element. Use the <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> CSS property instead, as this attribute is deprecated."
         }
       }
     },
@@ -2223,7 +2249,7 @@
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "If the\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup#span\" aria-current=\"page\"><code>span</code></a>\nattribute is\npresent: none.\n<br>\nIf\nthe attribute is not present: zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a>\nelement\n",
         "Tag omission": "The start tag may be omitted, if it has a\n<a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a>\nelement as its first child and if it is not preceded by a\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\" aria-current=\"page\"><code>&lt;colgroup&gt;</code></a>\nwhose end tag has been omitted.\n<br>\nThe\nend tag may be omitted, if it is not followed by a space or a comment.\n",
-        "Permitted parents": "A\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement. The\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\" aria-current=\"page\"><code>&lt;colgroup&gt;</code></a>\nmust appear after any optional\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\nelement but before any\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelement.\n",
+        "Permitted parents": "A\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement. The\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\" aria-current=\"page\"><code>&lt;colgroup&gt;</code></a>\nmust appear after any\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\nelement, but before any\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\n, and\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
         "Implicit ARIA role": "<a href=\"https://www.w3.org/TR/html-aria/#dfn-no-corresponding-role\" class=\"external\" target=\"_blank\">No corresponding role</a>\n",
         "Permitted ARIA roles": "No\n<code>role</code>\npermitted\n",
         "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLTableColElement\"><code>HTMLTableColElement</code></a>\n"
@@ -2244,7 +2270,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how horizontal alignment of each column cell content will be handled. Possible values are:\n<ul>\n<li><code>left</code>, aligning the content to the left of the cell</li>\n<li><code>center</code>, centering the content in the cell</li>\n<li><code>right</code>, aligning the content to the right of the cell</li>\n<li><code>justify</code>, inserting spaces into the textual content so that the content is justified in the cell</li>\n<li><code>char</code>, aligning the textual content on a special character with a minimal offset, defined by the <a href=\"$MDN_URL$/Web/HTML/Element/col#char\"><code>char</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/col#charoff\"><code>charoff</code></a> attributes.</li>\n</ul>\n<p>If this attribute is not set, the <code>left</code> value is assumed. The descendant <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> elements may override this value using their own <a href=\"$MDN_URL$/Web/HTML/Element/col#align\"><code>align</code></a> attribute.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Do not try to set the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property on a selector giving a <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\" aria-current=\"page\"><code>&lt;colgroup&gt;</code></a> element. Because <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements are not descendant of the <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\" aria-current=\"page\"><code>&lt;colgroup&gt;</code></a> element, they won't inherit it.\n<p>If the table doesn't use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, use one <code>td:nth-child(an+b)</code> CSS selector per column, where 'a' is the total number of the columns in the table and 'b' is the ordinal position of this column in the table. Only after this selector the <code>text-align</code> property can be used.\n<p>If the table does use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, the effect can be achieved by combining adequate CSS attribute selectors like <code>[colspan=n]</code>, though this is not trivial.\n</div>"
+          "doc": "Specifies the horizontal alignment of each column group cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, <code>right</code>, <code>justify</code>, and <code>char</code>. When supported, the <code>char</code> value aligns the textual content on the character defined in the <a href=\"#char\"><code>char</code></a> attribute and the offset defined by the <a href=\"#charoff\"><code>charoff</code></a> attribute. Note that the descendant <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> elements may override this value using their own <a href=\"$MDN_URL$/Web/HTML/Element/col#align\"><code>align</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS property on the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements instead, as this attribute is deprecated.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Setting <code>text-align</code> on the <code>&lt;colgroup&gt;</code> element has no effect as <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements are not descendants of the <code>&lt;colgroup&gt;</code> element, and therefore they do not inherit from it.\n<p>If the table does not use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, use the <code>td:nth-of-type(an+b)</code> CSS selector per column, where <code>a</code> is the total number of the columns in the table and <code>b</code> is the ordinal position of the column in the table, e.g. <code>td:nth-of-type(7n+2) { text-align: right; }</code> to right-align the second column cells.\n<p>If the table does use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, the effect can be achieved by combining adequate CSS attribute selectors like <code>[colspan=n]</code>, though this is not trivial.\n</div>"
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/colgroup#bgcolor",
@@ -2261,7 +2287,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "The background color of the table. It is a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>'. One of the predefined <a href=\"$MDN_URL$/Web/CSS/named-color\">color keywords</a> can also be used.\n<p>To achieve a similar effect, use the CSS <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> property."
+          "doc": "Defines the background color of each column group cell. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "char": {
           "url": "$MDN_URL$/web/html/element/colgroup#char",
@@ -2277,7 +2303,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute specifies the alignment of the content in a column group to a character. Typical values for this include a period (.) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored, though it will still be used as the default value for the <a href=\"$MDN_URL$/Web/HTML/Element/col#align\"><code>align</code></a> of the <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> which are members of this column group."
+          "doc": "Specifies the alignment of the content to a character of each column group cell. Typical values for this include a period (<code>.</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored, though it will still be used as the default value for the <a href=\"$MDN_URL$/Web/HTML/Element/col#align\"><code>align</code></a> of the <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> elements which are members of this column group."
         },
         "charoff": {
           "url": "$MDN_URL$/web/html/element/colgroup#charoff",
@@ -2293,7 +2319,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute is used to indicate the number of characters to offset the column data from the alignment character specified by the <code>char</code> attribute."
+          "doc": "Specifies the number of characters to offset the column group cell content from the alignment character specified by the <a href=\"#char\"><code>char</code></a> attribute."
         },
         "span": {
           "url": "$MDN_URL$/web/html/element/colgroup#span",
@@ -2309,7 +2335,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute contains a positive integer indicating the number of consecutive columns the <code>&lt;colgroup&gt;</code> element spans. If not present, its default value is <code>1</code>.\n<p>The <code>span</code> attribute is not permitted if there are one or more <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> elements within the <code>&lt;colgroup&gt;</code>."
+          "doc": "Specifies the number of consecutive columns the <code>&lt;colgroup&gt;</code> element spans. The value must be a positive integer greater than zero. If not present, its default value is <code>1</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <code>span</code> attribute is not permitted if there are one or more <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> elements within the <code>&lt;colgroup&gt;</code>.\n</div>"
         },
         "valign": {
           "url": "$MDN_URL$/web/html/element/colgroup#valign",
@@ -2326,7 +2352,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute specifies the vertical alignment of the text within each cell of the column. Possible values for this attribute are:\n<ul>\n<li><code>baseline</code>, which will put the text as close to the bottom of the cell as it is possible, but align it on the <a href=\"https://en.wikipedia.org/wiki/Baseline_%28typography%29\" class=\"external\" target=\"_blank\">baseline</a> of the characters instead of the bottom of them. If characters are all of the size, this has the same effect as <code>bottom</code>.</li>\n<li><code>bottom</code>, which will put the text as close to the bottom of the cell as it is possible;</li>\n<li><code>middle</code>, which will center the text in the cell;</li>\n<li>and <code>top</code>, which will put the text as close to the top of the cell as it is possible.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Do not try to set the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> property on a selector giving a <code>&lt;colgroup&gt;</code> element. Because <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements are not descendant of the <code>&lt;colgroup&gt;</code> element, they won't inherit it.\n<p>If the table doesn't use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, use the <code>td:nth-child(an+b)</code> CSS selector per column, where 'a' is the total number of the columns in the table and 'b' is the ordinal position of the column in the table. Only after this selector the <code>vertical-align</code> property can be used.\n<p>If the table does use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, the effect can be achieved by combining adequate CSS attribute selectors like <code>[colspan=n]</code>, though this is not trivial.\n</div>"
+          "doc": "Specifies the vertical alignment of each column group cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>baseline</code>, <code>bottom</code>, <code>middle</code>, and <code>top</code>. Note that the descendant <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> elements may override this value using their own <a href=\"$MDN_URL$/Web/HTML/Element/col#valign\"><code>valign</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> CSS property on the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements instead, as this attribute is deprecated.\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> Setting <code>vertical-align</code> on the <code>&lt;colgroup&gt;</code> element has no effect as <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements are not descendants of the <code>&lt;colgroup&gt;</code> element, and therefore they do not inherit from it.\n<p>If the table does not use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, use the <a href=\"$MDN_URL$/Web/CSS/:nth-of-type\"><code>td:nth-of-type()</code></a> CSS selector per column, e.g. <code>td:nth-of-type(2) { vertical-align: middle; }</code> to center the second column cells vertically.\n<p>If the table does use a <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, the effect can be achieved by combining adequate CSS attribute selectors like <code>[colspan=n]</code>, though this is not trivial.\n</div>"
         },
         "width": {
           "url": "$MDN_URL$/web/html/element/colgroup#width",
@@ -2342,7 +2368,8 @@
             "Opera": "15",
             "Safari": "4",
             "SafariIOS": "3.2"
-          }
+          },
+          "doc": "Specifies a default width for each column in the current column group. In addition to the standard pixel and percentage values, this attribute can take the special form <code>0*</code>, which means that the width of each column spanned should be the minimum width necessary to hold the column's contents. Relative widths such as <code>5*</code> can also be used. Note that the descendant <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> elements may override this value using their own <a href=\"$MDN_URL$/Web/HTML/Element/col#width\"><code>width</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> CSS property instead, as this attribute is deprecated."
         }
       }
     },
@@ -2517,7 +2544,7 @@
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;details&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element creates a disclosure widget in which information is visible only when the widget is toggled into an \"open\" state. A summary or label must be provided using the <a href=\"$MDN_URL$/Web/HTML/Element/summary\"><code>&lt;summary&gt;</code></a> element.\n<p>A disclosure widget is typically presented onscreen using a small triangle which rotates (or twists) to indicate open/closed status, with a label next to the triangle. The contents of the <code>&lt;summary&gt;</code> element are used as the label for the disclosure widget.\n<p>A <code>&lt;details&gt;</code> widget can be in one of two states. The default <em>closed</em> state displays only the triangle and the label inside <code>&lt;summary&gt;</code> (or a <a href=\"$MDN_URL$/Glossary/User_agent\">user agent</a>-defined default string if no <code>&lt;summary&gt;</code>).\n<p>When the user clicks on the widget or focuses it then presses the space bar, it \"twists\" open, revealing its contents. The common use of a triangle which rotates or twists around to represent opening or closing the widget is why these are sometimes called \"twisty\".\n<p>You can use CSS to style the disclosure widget, and you can programmatically open and close the widget by setting/removing its <a href=\"#open\"><code>open</code></a> attribute. Unfortunately, at this time, there's no built-in way to animate the transition between open and closed.\n<p>By default when closed, the widget is only tall enough to display the disclosure triangle and summary. When open, it expands to display the details contained within.\n<p>Fully standards-compliant implementations automatically apply the CSS <code><a href=\"$MDN_URL$/Web/CSS/display\"><code>display</code></a>: list-item</code> to the <a href=\"$MDN_URL$/Web/HTML/Element/summary\"><code>&lt;summary&gt;</code></a> element. You can use this to customize its appearance further. See <a href=\"#customizing_the_disclosure_widget\">Customizing the disclosure widget</a> for further details.",
+      "doc": "The <strong><code>&lt;details&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element creates a disclosure widget in which information is visible only when the widget is toggled into an \"open\" state. A summary or label must be provided using the <a href=\"$MDN_URL$/Web/HTML/Element/summary\"><code>&lt;summary&gt;</code></a> element.\n<p>A disclosure widget is typically presented onscreen using a small triangle that rotates (or twists) to indicate open/closed status, with a label next to the triangle. The contents of the <code>&lt;summary&gt;</code> element are used as the label for the disclosure widget. The contents of the <code>&lt;details&gt;</code> provide the <a href=\"$MDN_URL$/Glossary/Accessible_description\">accessible description</a> for the <code>&lt;summary&gt;</code>.\n<p>A <code>&lt;details&gt;</code> widget can be in one of two states. The default <em>closed</em> state displays only the triangle and the label inside <code>&lt;summary&gt;</code> (or a <a href=\"$MDN_URL$/Glossary/User_agent\">user agent</a>-defined default string if no <code>&lt;summary&gt;</code>).\n<p>When the user clicks on the widget or focuses it then presses the space bar, it \"twists\" open, revealing its contents. The common use of a triangle which rotates or twists around to represent opening or closing the widget is why these are sometimes called \"twisty\".\n<p>You can use CSS to style the disclosure widget, and you can programmatically open and close the widget by setting/removing its <a href=\"#open\"><code>open</code></a> attribute. Unfortunately, at this time, there's no built-in way to animate the transition between open and closed.\n<p>By default when closed, the widget is only tall enough to display the disclosure triangle and summary. When open, it expands to display the details contained within.\n<p>Fully standards-compliant implementations automatically apply the CSS <code><a href=\"$MDN_URL$/Web/CSS/display\"><code>display</code></a>: list-item</code> to the <a href=\"$MDN_URL$/Web/HTML/Element/summary\"><code>&lt;summary&gt;</code></a> element. You can use this to customize its appearance further. See <a href=\"#customizing_the_disclosure_widget\">Customizing the disclosure widget</a> for further details.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">Flow content</a>\n, sectioning root, interactive content, palpable content.\n",
         "Permitted content": "One\n<a href=\"$MDN_URL$/Web/HTML/Element/summary\"><code>&lt;summary&gt;</code></a>\nelement followed by\n<a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">flow content</a>\n.\n",
@@ -2992,7 +3019,7 @@
         "Safari": "5.1",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>&lt;figcaption&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element represents a caption or legend describing the rest of the contents of its parent <a href=\"$MDN_URL$/Web/HTML/Element/figure\"><code>&lt;figure&gt;</code></a> element.",
+      "doc": "The <strong><code>&lt;figcaption&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element represents a caption or legend describing the rest of the contents of its parent <a href=\"$MDN_URL$/Web/HTML/Element/figure\"><code>&lt;figure&gt;</code></a> element, providing the <code>&lt;figure&gt;</code> an <a href=\"$MDN_URL$/Glossary/Accessible_description\">accessible description</a>.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">Flow content</a>\n.\n",
@@ -3904,6 +3931,16 @@
         },
         "csp": {
           "url": "$MDN_URL$/web/html/element/iframe#csp",
+          "status": [
+            "Experimental",
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "61",
+            "ChromeAndroid": "61",
+            "Edge": "79",
+            "Opera": "48"
+          },
           "doc": "A <a href=\"$MDN_URL$/Web/HTTP/CSP\">Content Security Policy</a> enforced for the embedded resource. See <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement/csp\"><code>HTMLIFrameElement.csp</code></a> for details."
         },
         "frameborder": {
@@ -4337,7 +4374,7 @@
             "Safari": "15.4",
             "SafariIOS": "15.4"
           },
-          "doc": "Indicates how the browser should load the image:\n<dl>\n<dt id=\"eager\"><a href=\"#eager\"><code>eager</code></a></dt>\n<dd>\n<p>Loads the image immediately, regardless of whether or not the image is currently within the visible viewport (this is the default value).\n</dd>\n<dt id=\"lazy\"><a href=\"#lazy\"><code>lazy</code></a></dt>\n<dd>\n<p>Defers loading the image until it reaches a calculated distance from the viewport, as defined by the browser. The intent is to avoid the network and storage bandwidth needed to handle the image until it's reasonably certain that it will be needed. This generally improves the performance of the content in most typical use cases.\n</dd>\n</dl>\n<div class=\"notecard note\" id=\"sect5\">\n<p><strong>Note:</strong> Loading is only deferred when JavaScript is enabled. This is an anti-tracking measure, because if a user agent supported lazy loading when scripting is disabled, it would still be possible for a site to track a user's approximate scroll position throughout a session, by strategically placing images in a page's markup such that a server can track how many images are requested and when.\n</div>"
+          "doc": "Indicates how the browser should load the image:\n<dl>\n<dt id=\"eager\"><a href=\"#eager\"><code>eager</code></a></dt>\n<dd>\n<p>Loads the image immediately, regardless of whether or not the image is currently within the visible viewport (this is the default value).\n</dd>\n<dt id=\"lazy\"><a href=\"#lazy\"><code>lazy</code></a></dt>\n<dd>\n<p>Defers loading the image until it reaches a calculated distance from the viewport, as defined by the browser. The intent is to avoid the network and storage bandwidth needed to handle the image until it's reasonably certain that it will be needed. This generally improves the performance of the content in most typical use cases.\n</dd>\n</dl>\n<div class=\"notecard note\" id=\"sect5\">\n<p><strong>Note:</strong> Loading is only deferred when JavaScript is enabled. This is an anti-tracking measure, because if a user agent supported lazy loading when scripting is disabled, it would still be possible for a site to track a user's approximate scroll position throughout a session, by strategically placing images in a page's markup such that a server can track how many images are requested and when.\n<strong>Note:</strong> Images with <code>loading</code> set to <code>lazy</code> will never be loaded if they do not intersect a visible part of an element, even if loading them would change that as unloaded images have a <code>width</code> and <code>height</code> of <code>0</code>. Putting <code>width</code> and <code>height</code> on lazyloaded images fixes this issue and is a best practice, <a href=\"https://html.spec.whatwg.org/multipage/embedded-content.html#the-img-element\" class=\"external\" target=\"_blank\">recommended by the specification</a>. Doing so also helps prevent layout shifts.\n</div>"
         },
         "longdesc": {
           "url": "$MDN_URL$/web/html/element/img#longdesc",
@@ -4872,6 +4909,36 @@
             "Opera": "12.1",
             "Safari": "4",
             "SafariIOS": "3.2"
+          }
+        },
+        "popovertarget": {
+          "url": "$MDN_URL$/web/html/element/input#popovertarget",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "114",
+            "ChromeAndroid": "114",
+            "Edge": "114",
+            "Firefox": "preview",
+            "Opera": "100",
+            "Safari": "17",
+            "SafariIOS": "17"
+          }
+        },
+        "popovertargetaction": {
+          "url": "$MDN_URL$/web/html/element/input#popovertargetaction",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "114",
+            "ChromeAndroid": "114",
+            "Edge": "114",
+            "Firefox": "preview",
+            "Opera": "100",
+            "Safari": "17",
+            "SafariIOS": "17"
           }
         },
         "readonly": {
@@ -7372,18 +7439,6 @@
         },
         "language": {
           "url": "$MDN_URL$/web/html/element/script#language",
-          "status": [
-            "Deprecated"
-          ],
-          "compatibility": {
-            "Chrome": "",
-            "ChromeAndroid": "",
-            "Edge": "",
-            "Firefox": "",
-            "Opera": "15",
-            "Safari": "4",
-            "SafariIOS": "3.2"
-          },
           "doc": "Like the <code>type</code> attribute, this attribute identifies the scripting language in use. Unlike the <code>type</code> attribute, however, this attribute's possible values were never standardized. The <code>type</code> attribute should be used instead."
         },
         "nomodule": {
@@ -8109,7 +8164,7 @@
         "Safari": "",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>&lt;table&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element represents tabular data — that is, information presented in a two-dimensional table comprised of rows and columns of cells containing data.",
+      "doc": "The <strong><code>&lt;table&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element represents tabular data—that is, information presented in a two-dimensional table comprised of rows and columns of cells containing data.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">Flow content</a>\n",
         "Permitted content": "In this order:\n<ol>\n<li>an optional <a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a> element,</li>\n<li>zero or more <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> elements,</li>\n<li>an optional <a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a> element,</li>\n<li>either one of the following:\n<ul>\n<li>zero or more <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a> elements</li>\n<li>one or more <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> elements</li>\n</ul>\n</li>\n<li>an optional <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a> element</li>\n</ol>\n",
@@ -8135,7 +8190,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute indicates how the table must be aligned inside the containing document. It may have the following values:\n<ul>\n<li><code>left</code>: the table is displayed on the left side of the document;</li>\n<li><code>center</code>: the table is displayed in the center of the document;</li>\n<li><code>right</code>: the table is displayed on the right side of the document.</li>\n</ul>\n<p>Set <a href=\"$MDN_URL$/Web/CSS/margin-left\"><code>margin-left</code></a> and <a href=\"$MDN_URL$/Web/CSS/margin-right\"><code>margin-right</code></a> to achieve an effect that is similar to the align attribute:\n<ul>\n<li><code>left</code>: <code>margin-right: auto; margin-left: 0;</code></li>\n<li><code>center</code>: <code>margin-right: auto; margin-left: auto;</code></li>\n<li><code>right</code>: <code>margin-right: 0; margin-left: auto;</code></li>\n</ul>"
+          "doc": "Specifies the horizontal alignment of the table within its parent element. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, and <code>right</code>. Use the <a href=\"$MDN_URL$/Web/CSS/margin-inline-start\"><code>margin-inline-start</code></a> and <a href=\"$MDN_URL$/Web/CSS/margin-inline-end\"><code>margin-inline-end</code></a> CSS properties instead, as this attribute is deprecated."
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/table#bgcolor",
@@ -8152,7 +8207,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "The background color of the table. It is a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>'. One of the predefined <a href=\"$MDN_URL$/Web/CSS/named-color\">color keywords</a> can also be used.\n<p>To achieve a similar effect, use the CSS <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> property."
+          "doc": "Defines the background color of the table. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "border": {
           "url": "$MDN_URL$/web/html/element/table#border",
@@ -8169,7 +8224,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This integer attribute defines, in pixels, the size of the frame surrounding the table. If set to 0, the <a href=\"#frame\"><code>frame</code></a> attribute is set to void.\n<p>To achieve a similar effect, use the CSS <a href=\"$MDN_URL$/Web/CSS/border\"><code>border</code></a> shorthand property."
+          "doc": "Defines, as a non-negative integer value (in pixels), the size of the frame surrounding the table. If set to <code>0</code>, the <a href=\"#frame\"><code>frame</code></a> attribute is set to void. Use the <a href=\"$MDN_URL$/Web/CSS/border\"><code>border</code></a> CSS property instead, as this attribute is deprecated."
         },
         "cellpadding": {
           "url": "$MDN_URL$/web/html/element/table#cellpadding",
@@ -8186,7 +8241,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute defines the space between the content of a cell and its border, displayed or not. If the cellpadding's length is defined in pixels, this pixel-sized space will be applied to all four sides of the cell's content. If the length is defined using a percentage value, the content will be centered and the total vertical space (top and bottom) will represent this value. The same is true for the total horizontal space (left and right).\n<p>To achieve a similar effect, apply the <a href=\"$MDN_URL$/Web/CSS/border-collapse\"><code>border-collapse</code></a> property to the <code>&lt;table&gt;</code> element, with its value set to collapse, and the <a href=\"$MDN_URL$/Web/CSS/padding\"><code>padding</code></a> property to the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements."
+          "doc": "Defines the space between the content of a cell and its border, displayed or not. If the cellpadding's length is defined in pixels, this pixel-sized space will be applied to all four sides of the cell's content. If the length is defined using a percentage value, the content will be centered and the total vertical space (top and bottom) will represent this value. The same is true for the total horizontal space (left and right). Apply the <a href=\"$MDN_URL$/Web/CSS/border-collapse\"><code>border-collapse</code></a> CSS property to the <code>&lt;table&gt;</code> element, with its value set to <code>collapse</code>, and the <a href=\"$MDN_URL$/Web/CSS/padding\"><code>padding</code></a> CSS property to the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements instead, as this attribute is deprecated."
         },
         "cellspacing": {
           "url": "$MDN_URL$/web/html/element/table#cellspacing",
@@ -8203,7 +8258,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute defines the size of the space between two cells in a percentage value or pixels. The attribute is applied both horizontally and vertically, to the space between the top of the table and the cells of the first row, the left of the table and the first column, the right of the table and the last column and the bottom of the table and the last row.\n<p>To achieve a similar effect, apply the <a href=\"$MDN_URL$/Web/CSS/border-spacing\"><code>border-spacing</code></a> property to the <code>&lt;table&gt;</code> element. <code>border-spacing</code> does not have any effect if <a href=\"$MDN_URL$/Web/CSS/border-collapse\"><code>border-collapse</code></a> is set to collapse."
+          "doc": "Defines the size of the space between two cells in a percentage value or pixels. The attribute is applied both horizontally and vertically, to the space between the top of the table and the cells of the first row, the left of the table and the first column, the right of the table and the last column and the bottom of the table and the last row. Apply the <a href=\"$MDN_URL$/Web/CSS/border-spacing\"><code>border-spacing</code></a> CSS property to the <code>&lt;table&gt;</code> element instead, as this attribute is deprecated. <code>border-spacing</code> does not have any effect if the <a href=\"$MDN_URL$/Web/CSS/border-collapse\"><code>border-collapse</code></a> CSS property is set to <code>collapse</code>."
         },
         "frame": {
           "url": "$MDN_URL$/web/html/element/table#frame",
@@ -8220,7 +8275,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This enumerated attribute defines which side of the frame surrounding the table must be displayed.\n<p>To achieve a similar effect, use the <a href=\"$MDN_URL$/Web/CSS/border-style\"><code>border-style</code></a> and <a href=\"$MDN_URL$/Web/CSS/border-width\"><code>border-width</code></a> properties."
+          "doc": "Defines which side of the frame surrounding the table must be displayed. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>void</code>, <code>above</code>, <code>below</code>, <code>hsides</code>, <code>vsides</code>, <code>lhs</code>, <code>rhs</code>, <code>box</code> and <code>border</code>. Use the <a href=\"$MDN_URL$/Web/CSS/border-style\"><code>border-style</code></a> and <a href=\"$MDN_URL$/Web/CSS/border-width\"><code>border-width</code></a> CSS properties instead, as this attribute is deprecated."
         },
         "rules": {
           "url": "$MDN_URL$/web/html/element/table#rules",
@@ -8237,7 +8292,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This enumerated attribute defines where rules, i.e. lines, should appear in a table. It can have the following values:\n<ul>\n<li><code>none</code>, which indicates that no rules will be displayed; it is the default value;</li>\n<li><code>groups</code>, which will cause the rules to be displayed between row groups (defined by the <a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a> elements) and between column groups (defined by the <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> elements) only;</li>\n<li><code>rows</code>, which will cause the rules to be displayed between rows;</li>\n<li><code>cols</code>, which will cause the rules to be displayed between columns;</li>\n<li><code>all</code>, which will cause the rules to be displayed between rows and columns.</li>\n</ul>\n<p>To achieve a similar effect, apply the <a href=\"$MDN_URL$/Web/CSS/border\"><code>border</code></a> property to the appropriate <a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a>, or <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> elements."
+          "doc": "Defines where rules (borders) are displayed in the table. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>none</code> (default value), <code>groups</code> (<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>, and <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a> elements), <code>rows</code> (horizontal lines), <code>cols</code> (vertical lines), and <code>all</code> (border around every cell). Use the <a href=\"$MDN_URL$/Web/CSS/border\"><code>border</code></a> CSS property on the appropriate table-related elements, as well as on the <code>&lt;table&gt;</code> itself, instead, as this attribute is deprecated."
         },
         "summary": {
           "url": "$MDN_URL$/web/html/element/table#summary",
@@ -8254,7 +8309,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute defines an alternative text that summarizes the content of the table. Use the <a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a> element instead."
+          "doc": "Defines an alternative text that summarizes the content of the table. Use the <a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a> element instead, as this attribute is deprecated."
         },
         "width": {
           "url": "$MDN_URL$/web/html/element/table#width",
@@ -8271,7 +8326,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute defines the width of the table. Use the CSS <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> property instead."
+          "doc": "Specifies the width of the table. Use the <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> CSS property instead, as this attribute is deprecated.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> While no HTML specification includes <code>height</code> as a <code>&lt;table&gt;</code> attribute, some browsers support a non-standard interpretation of <code>height</code>. The unitless value sets a minimum absolute height in pixels. If set as a percent value, the minimum table height will be relative to the parent container's height. Use the <a href=\"$MDN_URL$/Web/CSS/min-height\"><code>min-height</code></a> CSS property instead, as this attribute is deprecated.\n</div>"
         }
       }
     },
@@ -8289,12 +8344,12 @@
         "Safari": "",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>&lt;tbody&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element encapsulates a set of table rows (<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> elements), indicating that they comprise the body of the table (<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>).\n<p>The <code>&lt;tbody&gt;</code> element, along with its related <a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a> elements, provide useful semantic information that can be used when rendering for either screen or printer.",
+      "doc": "The <strong><code>&lt;tbody&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element encapsulates a set of table rows (<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> elements), indicating that they comprise the body of a table's (main) data.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
-        "Tag omission": "A\n<code>&lt;tbody&gt;</code>\nelement's start tag can be omitted if the first thing inside the\n<code>&lt;tbody&gt;</code>\nelement is a\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelement, and if the element is not immediately preceded by a\n<code>&lt;tbody&gt;</code>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n, or\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nelement whose end tag has been omitted. (It can't be omitted if the element is empty.)\nA\n<code>&lt;tbody&gt;</code>\nelement's end tag can be omitted if the\n<code>&lt;tbody&gt;</code>\nelement is immediately followed by a\n<code>&lt;tbody&gt;</code>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nelement, or if there is no more content in the parent element.\n",
-        "Permitted parents": "Within the required parent\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement,\nthe\n<code>&lt;tbody&gt;</code>\nelement can be added after a\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\n, and a\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\nelement.\n",
+        "Tag omission": "A\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\" aria-current=\"page\"><code>&lt;tbody&gt;</code></a>\nelement's start tag can be omitted if the first thing inside the\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\" aria-current=\"page\"><code>&lt;tbody&gt;</code></a>\nelement is a\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelement, and if the element is not immediately preceded by a\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\" aria-current=\"page\"><code>&lt;tbody&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n, or\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nelement whose end tag has been omitted. (It can't be omitted if the element is empty.)\nA\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\" aria-current=\"page\"><code>&lt;tbody&gt;</code></a>\nelement's end tag can be omitted if the\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\" aria-current=\"page\"><code>&lt;tbody&gt;</code></a>\nelement is immediately followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\" aria-current=\"page\"><code>&lt;tbody&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nelement, or if there is no more content in the parent element.\n",
+        "Permitted parents": "Within the required parent\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement,\nthe\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\" aria-current=\"page\"><code>&lt;tbody&gt;</code></a>\nelement can be added after any\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\n,\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\nelements.\n",
         "Implicit ARIA role": "<code><a href=\"$MDN_URL$/Web/Accessibility/ARIA/Roles/rowgroup_role\">rowgroup</a></code>\n",
         "Permitted ARIA roles": "Any\n",
         "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLTableSectionElement\"><code>HTMLTableSectionElement</code></a>\n"
@@ -8315,7 +8370,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how horizontal alignment of each cell content will be handled. Possible values are:\n<ul>\n<li><code>left</code>, aligning the content to the left of the cell</li>\n<li><code>center</code>, centering the content in the cell</li>\n<li><code>right</code>, aligning the content to the right of the cell</li>\n<li><code>justify</code>, inserting spaces into the textual content so that the content is justified in the cell</li>\n<li><code>char</code>, aligning the textual content on a special character with a minimal offset, defined by the <a href=\"#char\"><code>char</code></a> and <a href=\"#charoff\"><code>charoff</code></a> attributes.</li>\n</ul>\n<p>If this attribute is not set, the <code>left</code> value is assumed.\n<p>As this attribute is deprecated, use the CSS <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property instead.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The equivalent <code>text-align</code> property for the <code>align=\"char\"</code> is not implemented in any browsers yet. See the <a href=\"$MDN_URL$/Web/CSS/text-align#browser_compatibility\"><code>text-align</code>'s browser compatibility section</a> for the <code>&lt;string&gt;</code> value.\n</div>"
+          "doc": "Specifies the horizontal alignment of each body cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, <code>right</code>, <code>justify</code>, and <code>char</code>. When supported, the <code>char</code> value aligns the textual content on the character defined in the <a href=\"#char\"><code>char</code></a> attribute and on offset defined by the <a href=\"#charoff\"><code>charoff</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS property instead, as this attribute is deprecated."
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/tbody#bgcolor",
@@ -8332,7 +8387,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "The background color of the table. It is a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>'. One of the predefined <a href=\"$MDN_URL$/Web/CSS/named-color\">color keywords</a> can also be used.\n<p>As this attribute is deprecated, use the CSS <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> property instead."
+          "doc": "Defines the background color of each body cell. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "char": {
           "url": "$MDN_URL$/web/html/element/tbody#char",
@@ -8348,7 +8403,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute is used to set the character to align the cells in a column on. Typical values for this include a period (<code>.</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
+          "doc": "Specifies the alignment of the content to a character of each body cell. Typical values for this include a period (<code>.</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
         },
         "charoff": {
           "url": "$MDN_URL$/web/html/element/tbody#charoff",
@@ -8365,7 +8420,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute is used to indicate the number of characters to offset the column data from the alignment characters specified by the <code>char</code> attribute."
+          "doc": "Specifies the number of characters to offset the body cell content from the alignment character specified by the <a href=\"#char\"><code>char</code></a> attribute."
         },
         "valign": {
           "url": "$MDN_URL$/web/html/element/tbody#valign",
@@ -8382,7 +8437,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute specifies the vertical alignment of the text within each row of cells of the table header. Possible values for this attribute are:\n<ul>\n<li><code>baseline</code>, which will put the text as close to the bottom of the cell as it is possible, but align it on the <a href=\"https://en.wikipedia.org/wiki/Baseline_%28typography%29\" class=\"external\" target=\"_blank\">baseline</a> of the characters instead of the bottom of them. If characters are all of the size, this has the same effect as <code>bottom</code>.</li>\n<li><code>bottom</code>, which will put the text as close to the bottom of the cell as it is possible;</li>\n<li><code>middle</code>, which will center the text in the cell;</li>\n<li>and <code>top</code>, which will put the text as close to the top of the cell as it is possible.</li>\n</ul>\n<p>As this attribute is deprecated, use the CSS <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> property instead."
+          "doc": "Specifies the vertical alignment of each body cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>baseline</code>, <code>bottom</code>, <code>middle</code>, and <code>top</code>. Use the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> CSS property instead, as this attribute is deprecated."
         }
       }
     },
@@ -8400,7 +8455,7 @@
         "Safari": "",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>&lt;td&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a cell of a table that contains data. It participates in the <em>table model</em>.",
+      "doc": "The <strong><code>&lt;td&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a cell of a table that contains data and may be used as a child of the <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> element.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "Sectioning root.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">Flow content</a>\n.\n",
@@ -8426,7 +8481,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a short abbreviated description of the cell's content. Some user-agents, such as speech readers, may present this description before the content itself.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard. Alternatively, you can put the abbreviated description inside the cell and place the long content in the <strong>title</strong> attribute.\n</div>"
+          "doc": "Contains a short abbreviated description of the data cell's content. Some user-agents, such as speech readers, may present this description before the content itself. Put the abbreviated content inside the cell and place the (longer) description in the <a href=\"$MDN_URL$/Web/HTML/Global_attributes/title\"><code>title</code></a> attribute, as this attribute is deprecated. Or, preferably, include the content within the data cell, and use CSS to <a href=\"$MDN_URL$/Web/CSS/text-overflow\">visually clip overflowing text</a>."
         },
         "align": {
           "url": "$MDN_URL$/web/html/element/td#align",
@@ -8443,7 +8498,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how the cell content's horizontal alignment will be handled. Possible values are:\n<ul>\n<li><code>left</code>: The content is aligned to the left of the cell.</li>\n<li><code>center</code>: The content is centered in the cell.</li>\n<li><code>right</code>: The content is aligned to the right of the cell.</li>\n<li><code>justify</code> (with text only): The content is stretched out inside the cell so that it covers its entire width.</li>\n<li><code>char</code> (with text only): The content is aligned to a character inside the <code>&lt;th&gt;</code> element with minimal offset. This character is defined by the <a href=\"#char\"><code>char</code></a> and <a href=\"#charoff\"><code>charoff</code></a> attributes.</li>\n</ul>\n<p>The default value when this attribute is not specified is <code>left</code>.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong>\n<ul>\n<li>To achieve the same effect as the <code>left</code>, <code>center</code>, <code>right</code> or <code>justify</code> values, apply the CSS <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property to the element.</li>\n<li>To achieve the same effect as the <code>char</code> value, give the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property the same value you would use for the <a href=\"#char\"><code>char</code></a>.</li>\n</ul>\n</div>"
+          "doc": "Specifies the horizontal alignment of the data cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, <code>right</code>, <code>justify</code>, and <code>char</code>. When supported, the <code>char</code> value aligns the textual content on the character defined in the <a href=\"#char\"><code>char</code></a> attribute and the offset defined by the <a href=\"#charoff\"><code>charoff</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS property instead, as this attribute is deprecated."
         },
         "axis": {
           "url": "$MDN_URL$/web/html/element/td#axis",
@@ -8460,7 +8515,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a list of space-separated strings. Each string is the <code>id</code> of a group of cells that this header applies to."
+          "doc": "Contains a list of space-separated strings, each corresponding to the <code>id</code> attribute of a group of cells that the data cell applies to."
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/td#bgcolor",
@@ -8477,7 +8532,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute defines the background color of each cell in a column. It is a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>'. One of the predefined <a href=\"$MDN_URL$/Web/CSS/named-color\">color keywords</a> can also be used.\n<p>To achieve a similar effect, use the CSS <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> property."
+          "doc": "Defines the background color of the data cell. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "char": {
           "url": "$MDN_URL$/web/html/element/td#char",
@@ -8493,7 +8548,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "The content in the cell element is aligned to a character. Typical values include a period (.) to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
+          "doc": "Specifies the alignment of the content to a character of the data cell. Typical values for this include a period (<code>.</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
         },
         "charoff": {
           "url": "$MDN_URL$/web/html/element/td#charoff",
@@ -8510,7 +8565,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute is used to shift column data to the right of the character specified by the <strong>char</strong> attribute. Its value specifies the length of this shift."
+          "doc": "Specifies the number of characters to offset the data cell content from the alignment character specified by the <a href=\"#char\"><code>char</code></a> attribute."
         },
         "colspan": {
           "url": "$MDN_URL$/web/html/element/td#colspan",
@@ -8526,7 +8581,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a non-negative integer value that indicates for how many columns the cell extends. Its default value is <code>1</code>. Values higher than 1000 will be considered as incorrect and will be set to the default value (1)."
+          "doc": "Contains a non-negative integer value that indicates how many columns the data cell spans or extends. The default value is <code>1</code>. User agents dismiss values higher than 1000 as incorrect, setting to the default value (<code>1</code>)."
         },
         "headers": {
           "url": "$MDN_URL$/web/html/element/td#headers",
@@ -8542,11 +8597,11 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a list of space-separated strings, each corresponding to the <strong>id</strong> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements that apply to this element."
+          "doc": "Contains a list of space-separated strings, each corresponding to the <code>id</code> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements that provide headings for this table cell."
         },
         "height": {
           "url": "$MDN_URL$/web/html/element/td#height",
-          "doc": "This attribute is used to define a recommended cell height. Use the CSS <a href=\"$MDN_URL$/Web/CSS/height\"><code>height</code></a> property instead."
+          "doc": "Defines a recommended data cell height. Use the <a href=\"$MDN_URL$/Web/CSS/height\"><code>height</code></a> CSS property instead, as this attribute is deprecated."
         },
         "rowspan": {
           "url": "$MDN_URL$/web/html/element/td#rowspan",
@@ -8562,7 +8617,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a non-negative integer value that indicates for how many rows the cell extends. Its default value is <code>1</code>; if its value is set to <code>0</code>, it extends until the end of the table section (<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>, even if implicitly defined), that the cell belongs to. Values higher than 65534 are clipped down to 65534."
+          "doc": "Contains a non-negative integer value that indicates for how many rows the data cell spans or extends. The default value is <code>1</code>; if its value is set to <code>0</code>, it extends until the end of the table grouping section (<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>, even if implicitly defined), that the cell belongs to. Values higher than <code>65534</code> are clipped to <code>65534</code>."
         },
         "scope": {
           "url": "$MDN_URL$/web/html/element/td#scope",
@@ -8579,7 +8634,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This enumerated attribute defines the cells that the header (defined in the <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a>) element relates to. Only use this attribute with the <code>&lt;th&gt;</code> element to define the row or column for which it is a header."
+          "doc": "Defines the cells that the header (defined in the <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a>) element relates to. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>row</code>, <code>col</code>, <code>rowgroup</code>, and <code>colgroup</code>. Only use this attribute with the <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> element to define the row or column for which it is a header, as this attribute is deprecated for the <code>&lt;td&gt;</code> element."
         },
         "valign": {
           "url": "$MDN_URL$/web/html/element/td#valign",
@@ -8596,7 +8651,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute specifies how a text is vertically aligned inside a cell. Possible values for this attribute are:\n<ul>\n<li><code>baseline</code>: Positions the text near the bottom of the cell and aligns it with the <a href=\"https://en.wikipedia.org/wiki/Baseline_%28typography%29\" class=\"external\" target=\"_blank\">baseline</a> of the characters instead of the bottom. If characters don't descend below the baseline, the baseline value achieves the same effect as <code>bottom</code>.</li>\n<li><code>bottom</code>: Positions the text near the bottom of the cell.</li>\n<li><code>middle</code>: Centers the text in the cell.</li>\n<li>and <code>top</code>: Positions the text near the top of the cell.</li>\n</ul>\n<p>To achieve a similar effect, use the CSS <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> property."
+          "doc": "Specifies the vertical alignment of the data cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>baseline</code>, <code>bottom</code>, <code>middle</code>, and <code>top</code>. Use the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> CSS property instead, as this attribute is deprecated."
         },
         "width": {
           "url": "$MDN_URL$/web/html/element/td#width",
@@ -8613,7 +8668,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute is used to define a recommended cell width. Use the CSS <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> property instead."
+          "doc": "Defines a recommended data cell width. Use the <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> CSS property instead, as this attribute is deprecated."
         }
       }
     },
@@ -8631,7 +8686,7 @@
         "Safari": "8",
         "SafariIOS": "8"
       },
-      "doc": "The <strong><code>&lt;template&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is a mechanism for holding <a href=\"$MDN_URL$/Glossary/HTML\">HTML</a> that is not to be rendered immediately when a page is loaded but may be instantiated subsequently during runtime using JavaScript.\n<p>Think of a template as a content fragment that is being stored for subsequent use in the document. While the parser does process the contents of the <strong><code>&lt;template&gt;</code></strong> element while loading the page, it does so only to ensure that those contents are valid; the element's contents are not rendered, however.",
+      "doc": "The <strong><code>&lt;template&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element serves as a mechanism for holding <a href=\"$MDN_URL$/Glossary/HTML\">HTML</a> fragments, which can either be used later via JavaScript or generated immediately into shadow DOM.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/HTML/Content_categories#metadata_content\">Metadata content</a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">flow content</a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Content_categories#phrasing_content\">phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Content_categories#script-supporting_elements\">script-supporting element</a>\n",
         "Permitted content": "No restrictions\n",
@@ -8655,7 +8710,8 @@
             "Opera": "97",
             "Safari": "16.4",
             "SafariIOS": "16.4"
-          }
+          },
+          "doc": "Creates a <a href=\"$MDN_URL$/Glossary/Shadow_tree\">shadow root</a> for the parent element. It is a declarative version of the <a href=\"$MDN_URL$/Web/API/Element/attachShadow\"><code>Element.attachShadow()</code></a> method and accepts the same <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values.\n<dl>\n<dt id=\"open\"><a href=\"#open\"><code>open</code></a></dt>\n<dd>\n<p>Exposes the internal shadow root DOM for JavaScript (recommended for most use cases).\n</dd>\n<dt id=\"closed\"><a href=\"#closed\"><code>closed</code></a></dt>\n<dd>\n<p>Hides the internal shadow root DOM from JavaScript.\n</dd>\n</dl>\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This is a feature of the HTML parser that cannot be used post-parsing by setting the <code>shadowrootmode</code> attribute through JavaScript. Only allowed values will create the shadow root; any other values, including empty ones, won't trigger this behavior.\n</div>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> You may find the non-standard <code>shadowroot</code> attribute in older tutorials and examples that used to be supported in Chrome 90-110. This attribute has since been removed and replaced by the standard <code>shadowrootmode</code> attribute.\n</div>"
         }
       }
     },
@@ -8936,12 +8992,12 @@
         "Safari": "",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>&lt;tfoot&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a set of rows summarizing the columns of the table.",
+      "doc": "The <strong><code>&lt;tfoot&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element encapsulates a set of table rows (<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> elements), indicating that they comprise the foot of a table with information about the table's columns. This is usually a summary of the columns, e.g., a sum of the given numbers in a column.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
         "Tag omission": "The start tag is mandatory. The end tag may be omitted if there is no\nmore content in the parent\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement.\n",
-        "Permitted parents": "A\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement. The\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\" aria-current=\"page\"><code>&lt;tfoot&gt;</code></a>\nmust appear after any\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\n, or\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelement. Note that this is the requirement in HTML.\n<br>\nOriginally, in HTML4, the opposite was true: the\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\" aria-current=\"page\"><code>&lt;tfoot&gt;</code></a>\nelement could not be placed after any\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelement.\n",
+        "Permitted parents": "A\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement. The\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\" aria-current=\"page\"><code>&lt;tfoot&gt;</code></a>\nmust appear after any\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\n, and\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements. Note that this is the requirement in HTML.\n<br>\nOriginally, in HTML4, the opposite was true: the\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\" aria-current=\"page\"><code>&lt;tfoot&gt;</code></a>\nelement could not be placed after any\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
         "Implicit ARIA role": "<code><a href=\"$MDN_URL$/Web/Accessibility/ARIA/Roles/rowgroup_role\">rowgroup</a></code>\n",
         "Permitted ARIA roles": "Any\n",
         "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLTableSectionElement\"><code>HTMLTableSectionElement</code></a>\n"
@@ -8962,7 +9018,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how horizontal alignment of each cell content will be handled. Possible values are:\n<ul>\n<li><code>left</code>, aligning the content to the left of the cell</li>\n<li><code>center</code>, centering the content in the cell</li>\n<li><code>right</code>, aligning the content to the right of the cell</li>\n<li><code>justify</code>, inserting spaces into the textual content so that the content is justified in the cell</li>\n<li><code>char</code>, aligning the textual content on a special character with a minimal offset, defined by the <a href=\"#char\"><code>char</code></a> and <a href=\"#charoff\"><code>charoff</code></a> attributes.</li>\n</ul>\n<p>If this attribute is not set, the <code>left</code> value is assumed.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong>\n<ul>\n<li>To achieve the same effect as the <code>left</code>, <code>center</code>, <code>right</code> or <code>justify</code> values, use the CSS <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property on it.</li>\n<li>To achieve the same effect as the <code>char</code> value, in CSS, you can use the value of the <a href=\"#char\"><code>char</code></a> as the value of the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property.</li>\n</ul>\n</div>"
+          "doc": "Specifies the horizontal alignment of each foot cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, <code>right</code>, <code>justify</code>, and <code>char</code>. When supported, the <code>char</code> value aligns the textual content on the character defined in the <a href=\"#char\"><code>char</code></a> attribute and on offset defined by the <a href=\"#charoff\"><code>charoff</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS property instead, as this attribute is deprecated."
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/tfoot#bgcolor",
@@ -8979,7 +9035,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "The background color of the table. It is a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>'. One of the predefined <a href=\"$MDN_URL$/Web/CSS/named-color\">color keywords</a> can also be used.\n<p>To achieve a similar effect, use the CSS <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> property."
+          "doc": "Defines the background color of each foot cell. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "char": {
           "url": "$MDN_URL$/web/html/element/tfoot#char",
@@ -8995,7 +9051,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute specifies the alignment of the content in a column to a character. Typical values for this include a period (.) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
+          "doc": "Specifies the alignment of the content to a character of each foot cell. Typical values for this include a period (<code>.</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
         },
         "charoff": {
           "url": "$MDN_URL$/web/html/element/tfoot#charoff",
@@ -9012,7 +9068,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute is used to indicate the number of characters to offset the column data from the alignment characters specified by the <code>char</code> attribute."
+          "doc": "Specifies the number of characters to offset the foot cell content from the alignment character specified by the <a href=\"#char\"><code>char</code></a> attribute."
         },
         "valign": {
           "url": "$MDN_URL$/web/html/element/tfoot#valign",
@@ -9029,7 +9085,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute specifies the vertical alignment of the text within each row of cells of the table footer. Possible values for this attribute are:\n<ul>\n<li><code>baseline</code>, which will put the text as close to the bottom of the cell as it is possible, but align it on the <a href=\"https://en.wikipedia.org/wiki/Baseline_%28typography%29\" class=\"external\" target=\"_blank\">baseline</a> of the characters instead of the bottom of them. If characters are all of the size, this has the same effect as <code>bottom</code>.</li>\n<li><code>bottom</code>, which will put the text as close to the bottom of the cell as it is possible;</li>\n<li><code>middle</code>, which will center the text in the cell;</li>\n<li>and <code>top</code>, which will put the text as close to the top of the cell as it is possible.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete (and not supported) in the latest standard: instead set the CSS <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> property on it.\n</div>"
+          "doc": "Specifies the vertical alignment of each foot cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>baseline</code>, <code>bottom</code>, <code>middle</code>, and <code>top</code>. Use the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> CSS property instead, as this attribute is deprecated."
         }
       }
     },
@@ -9047,7 +9103,7 @@
         "Safari": "",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>&lt;th&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a cell as the header of a group of table cells. The exact nature of this group is defined by the <a href=\"#scope\"><code>scope</code></a> and <a href=\"#headers\"><code>headers</code></a> attributes.",
+      "doc": "The <strong><code>&lt;th&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a cell as the header of a group of table cells and may be used as a child of the <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> element. The exact nature of this group is defined by the <a href=\"#scope\"><code>scope</code></a> and <a href=\"#headers\"><code>headers</code></a> attributes.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">Flow content</a>\n, but with no header, footer, sectioning content, or heading content\ndescendants.\n",
@@ -9072,7 +9128,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a short abbreviated description of the cell's content. Some user-agents, such as speech readers, may present this description before the content itself."
+          "doc": "A short, abbreviated description of the header cell's content provided as an alternative label to use for the header cell when referencing the cell in other contexts. Some user-agents, such as speech readers, may present this description before the content itself."
         },
         "align": {
           "url": "$MDN_URL$/web/html/element/th#align",
@@ -9089,7 +9145,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This enumerated attribute specifies how the cell content's horizontal alignment will be handled. Possible values are:\n<ul>\n<li><code>left</code>: The content is aligned to the left of the cell.</li>\n<li><code>center</code>: The content is centered in the cell.</li>\n<li><code>right</code>: The content is aligned to the right of the cell.</li>\n<li><code>justify</code> (with text only): The content is stretched out inside the cell so that it covers its entire width.</li>\n<li><code>char</code> (with text only): The content is aligned to a character inside the <code>&lt;th&gt;</code> element with minimal offset. This character is defined by the <a href=\"#char\"><code>char</code></a> and <a href=\"#charoff\"><code>charoff</code></a> attributes.</li>\n</ul>\n<p>The default value when this attribute is not specified is <code>left</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard.\n<ul>\n<li>To achieve the same effect as the <code>left</code>, <code>center</code>, <code>right</code> or <code>justify</code> values, apply the CSS <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property to the element.</li>\n<li>To achieve the same effect as the <code>char</code> value, give the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property the same value you would use for the <a href=\"#char\"><code>char</code></a>.</li>\n</ul>\n</div>"
+          "doc": "Specifies the horizontal alignment of the header cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, <code>right</code>, <code>justify</code>, and <code>char</code>. When supported, the <code>char</code> value aligns the textual content on the character defined in the <a href=\"#char\"><code>char</code></a> attribute and the offset defined by the <a href=\"#charoff\"><code>charoff</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS property instead, as this attribute is deprecated."
         },
         "axis": {
           "url": "$MDN_URL$/web/html/element/th#axis",
@@ -9106,7 +9162,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a list of space-separated strings. Each string is the <code>id</code> of a group of cells that this header applies to.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard: use the <a href=\"#scope\"><code>scope</code></a> attribute instead.\n</div>"
+          "doc": "Contains a list of space-separated strings, each corresponding to the <code>id</code> attribute of a group of cells that the header cell applies to. Use the <a href=\"#scope\"><code>scope</code></a> attribute instead, as this attribute is deprecated."
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/th#bgcolor",
@@ -9123,7 +9179,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute defines the background color of each cell in a column. It consists of a 6-digit hexadecimal code as defined in <a href=\"https://www.w3.org/Graphics/Color/sRGB\" class=\"external\" target=\"_blank\">sRGB</a> and is prefixed by '#'."
+          "doc": "Defines the background color of the header cell. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "char": {
           "url": "$MDN_URL$/web/html/element/th#char",
@@ -9139,7 +9195,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "The content in the cell element is aligned to a character. Typical values include a period (.) to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored.\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard. To achieve the same effect, you can specify the character as the first value of the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property.\n</div>"
+          "doc": "Specifies the alignment of the content to a character of the header cell. Typical values for this include a period (<code>.</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
         },
         "charoff": {
           "url": "$MDN_URL$/web/html/element/th#charoff",
@@ -9156,7 +9212,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute is used to shift column data to the right of the character specified by the <strong>char</strong> attribute. Its value specifies the length of this shift.\n<div class=\"notecard note\" id=\"sect4\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard.\n</div>"
+          "doc": "Specifies the number of characters to offset the header cell content from the alignment character specified by the <a href=\"#char\"><code>char</code></a> attribute."
         },
         "colspan": {
           "url": "$MDN_URL$/web/html/element/th#colspan",
@@ -9172,7 +9228,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a non-negative integer value that indicates for how many columns the cell extends. Its default value is <code>1</code>. Values higher than 1000 will be considered as incorrect and will be set to the default value (1)."
+          "doc": "A non-negative integer value indicating how many columns the header cell spans or extends. The default value is <code>1</code>. User agents dismiss values higher than 1000 as incorrect, defaulting such values to <code>1</code>."
         },
         "headers": {
           "url": "$MDN_URL$/web/html/element/th#headers",
@@ -9188,11 +9244,11 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a list of space-separated strings, each corresponding to the <strong>id</strong> attribute of the <a href=\"$MDN_URL$/Web/HTML/Element/th\" aria-current=\"page\"><code>&lt;th&gt;</code></a> elements that apply to this element."
+          "doc": "A list of space-separated strings corresponding to the <code>id</code> attributes of the <code>&lt;th&gt;</code> elements that provide the headers for this header cell."
         },
         "height": {
           "url": "$MDN_URL$/web/html/element/th#height",
-          "doc": "This attribute is used to define a recommended cell height.\n<div class=\"notecard note\" id=\"sect5\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard: use the CSS <a href=\"$MDN_URL$/Web/CSS/height\"><code>height</code></a> property instead.\n</div>"
+          "doc": "Defines a recommended header cell height. Use the <a href=\"$MDN_URL$/Web/CSS/height\"><code>height</code></a> CSS property instead, as this attribute is deprecated."
         },
         "rowspan": {
           "url": "$MDN_URL$/web/html/element/th#rowspan",
@@ -9208,7 +9264,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute contains a non-negative integer value that indicates for how many rows the cell extends. Its default value is <code>1</code>; if its value is set to <code>0</code>, it extends until the end of the table section (<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>, even if implicitly defined), that the cell belongs to. Values higher than 65534 are clipped down to 65534."
+          "doc": "A non-negative integer value indicating how many rows the header cell spans or extends. The default value is <code>1</code>; if its value is set to <code>0</code>, the header cell will extends to the end of the table grouping section (<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>, even if implicitly defined), that the <code>&lt;th&gt;</code> belongs to. Values higher than <code>65534</code> are clipped at <code>65534</code>."
         },
         "scope": {
           "url": "$MDN_URL$/web/html/element/th#scope",
@@ -9224,7 +9280,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute defines the cells that the header (defined in the <a href=\"$MDN_URL$/Web/HTML/Element/th\" aria-current=\"page\"><code>&lt;th&gt;</code></a>) element relates to. It may have the following values:\n<ul>\n<li><code>row</code>: The header relates to all cells of the row it belongs to.</li>\n<li><code>col</code>: The header relates to all cells of the column it belongs to.</li>\n<li><code>rowgroup</code>: The header belongs to a rowgroup and relates to all of its cells.</li>\n<li><code>colgroup</code>: The header belongs to a colgroup and relates to all of its cells.</li>\n</ul>\n<p>If the <code>scope</code> attribute is not specified, or its value is not <code>row</code>, <code>col</code>, or <code>rowgroup</code>, or <code>colgroup</code>, then browsers automatically select the set of cells to which the header cell applies."
+          "doc": "Defines the cells that the header (defined in the <code>&lt;th&gt;</code>) element relates to. Possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are:\n<ul>\n<li><code>row</code>: the header relates to all cells of the row it belongs to;</li>\n<li><code>col</code>: the header relates to all cells of the column it belongs to;</li>\n<li><code>rowgroup</code>: the header belongs to a rowgroup and relates to all of its cells;</li>\n<li><code>colgroup</code>: the header belongs to a colgroup and relates to all of its cells.</li>\n</ul>\n<p>If the <code>scope</code> attribute is not specified, or its value is not <code>row</code>, <code>col</code>, <code>rowgroup</code>, or <code>colgroup</code>, then browsers automatically select the set of cells to which the header cell applies."
         },
         "valign": {
           "url": "$MDN_URL$/web/html/element/th#valign",
@@ -9241,7 +9297,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute specifies how a text is vertically aligned inside a cell. Possible values for this attribute are:\n<ul>\n<li><code>baseline</code>: Positions the text near the bottom of the cell and aligns it with the <a href=\"https://en.wikipedia.org/wiki/Baseline_%28typography%29\" class=\"external\" target=\"_blank\">baseline</a> of the characters instead of the bottom. If characters don't descend below the baseline, the baseline value achieves the same effect as <code>bottom</code>.</li>\n<li><code>bottom</code>: Positions the text near the bottom of the cell.</li>\n<li><code>middle</code>: Centers the text in the cell.</li>\n<li>and <code>top</code>: Positions the text near the top of the cell.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect6\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard: use the CSS <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> property instead.\n</div>"
+          "doc": "Specifies the vertical alignment of the header cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>baseline</code>, <code>bottom</code>, <code>middle</code>, and <code>top</code>. Use the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> CSS property instead, as this attribute is deprecated."
         },
         "width": {
           "url": "$MDN_URL$/web/html/element/th#width",
@@ -9258,7 +9314,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute is used to define a recommended cell width. Additional space can be added with the <a href=\"$MDN_URL$/Web/API/HTMLTableElement/cellSpacing\" ><code>cellspacing</code></a> and <a href=\"$MDN_URL$/Web/API/HTMLTableElement/cellPadding\" ><code>cellpadding</code></a> properties and the width of the <a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a> element can also create extra width. But, if a column's width is too narrow to show a particular cell properly, it will be widened when displayed.\n<div class=\"notecard note\" id=\"sect7\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete in the latest standard: use the CSS <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> property instead.\n</div>"
+          "doc": "Defines a recommended header cell width. Use the <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> CSS property instead, as this attribute is deprecated."
         }
       }
     },
@@ -9276,12 +9332,12 @@
         "Safari": "",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>&lt;thead&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a set of rows defining the head of the columns of the table.",
+      "doc": "The <strong><code>&lt;thead&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element encapsulates a set of table rows (<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> elements), indicating that they comprise the head of a table with information about the table's columns. This is usually in the form of column headers (<a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements).",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
         "Tag omission": "The start tag is mandatory. The end tag may be omitted if the\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\" aria-current=\"page\"><code>&lt;thead&gt;</code></a>\nelement is immediately followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nelement.\n",
-        "Permitted parents": "A\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement. The\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\" aria-current=\"page\"><code>&lt;thead&gt;</code></a>\nmust appear after any\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\nelement, even implicitly defined,\nbut before any\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelement.\n",
+        "Permitted parents": "A\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement. The\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\" aria-current=\"page\"><code>&lt;thead&gt;</code></a>\nmust appear after any\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\nelements, even implicitly defined,\nbut before any\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\n, and\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
         "Implicit ARIA role": "<code><a href=\"$MDN_URL$/Web/Accessibility/ARIA/Roles/rowgroup_role\">rowgroup</a></code>\n",
         "Permitted ARIA roles": "Any\n",
         "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLTableSectionElement\"><code>HTMLTableSectionElement</code></a>\n"
@@ -9302,7 +9358,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how horizontal alignment of each cell content will be handled. Possible values are:\n<ul>\n<li><code>left</code>, aligning the content to the left of the cell</li>\n<li><code>center</code>, centering the content in the cell</li>\n<li><code>right</code>, aligning the content to the right of the cell</li>\n<li><code>justify</code>, inserting spaces into the textual content so that the content is justified in the cell</li>\n<li><code>char</code>, aligning the textual content on a special character with a minimal offset, defined by the <a href=\"#char\"><code>char</code></a> and <a href=\"#charoff\"><code>charoff</code></a> attributes.</li>\n</ul>\n<p>If this attribute is not set, the <code>left</code> value is assumed.\n<div class=\"notecard warning\" id=\"sect1\">\n<p><strong>Warning:</strong> Do not use this attribute as it is obsolete (not supported) in the latest standard.\n<ul>\n<li>To align values, use the CSS <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property instead.</li>\n</ul>\n</div>"
+          "doc": "Specifies the horizontal alignment of each head cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, <code>right</code>, <code>justify</code>, and <code>char</code>. When supported, the <code>char</code> value aligns the textual content on the character defined in the <a href=\"#char\"><code>char</code></a> attribute and the offset defined by the <a href=\"#charoff\"><code>charoff</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS property instead, as this attribute is deprecated."
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/thead#bgcolor",
@@ -9319,7 +9375,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "This attribute defines the background color of each column cell. It accepts a 6-digit hexadecimal color or a named color. Alpha transparency is not supported.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Do not use this attribute, as it is non-standard. The <code>thead</code> element should be styled using the CSS <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> property, which can be applied to any element, including the <code>thead</code>, <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> elements.\n</div>"
+          "doc": "Defines the background color of each head cell. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "char": {
           "url": "$MDN_URL$/web/html/element/thead#char",
@@ -9335,7 +9391,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute is used to set the character to align the cells in a column on. Typical values for this include a period (.) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored.\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete (and not supported) in the latest standard.\n</div>"
+          "doc": "Specifies the alignment of the content to a character of each head cell. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
         },
         "charoff": {
           "url": "$MDN_URL$/web/html/element/thead#charoff",
@@ -9352,7 +9408,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "This attribute is used to indicate the number of characters to offset the column data from the alignment characters specified by the <strong>char</strong> attribute.\n<div class=\"notecard note\" id=\"sect4\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete (and not supported) in the latest standard.\n</div>"
+          "doc": "Specifies the number of characters to offset the head cell content from the alignment character specified by the <a href=\"#char\"><code>char</code></a> attribute."
         },
         "valign": {
           "url": "$MDN_URL$/web/html/element/thead#valign",
@@ -9369,7 +9425,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "This attribute specifies the vertical alignment of the text within each row of cells of the table header. Possible values for this attribute are:\n<ul>\n<li><code>baseline</code>, which will put the text as close to the bottom of the cell as it is possible, but align it on the <a href=\"https://en.wikipedia.org/wiki/Baseline_%28typography%29\" class=\"external\" target=\"_blank\">baseline</a> of the characters instead of the bottom of them. If characters are all of the size, this has the same effect as <code>bottom</code>.</li>\n<li><code>bottom</code>, which will put the text as close to the bottom of the cell as it is possible;</li>\n<li><code>middle</code>, which will center the text in the cell;</li>\n<li><code>top</code>, which will put the text as close to the top of the cell as it is possible.</li>\n</ul>\n<div class=\"notecard note\" id=\"sect5\">\n<p><strong>Note:</strong> Do not use this attribute as it is obsolete (and not supported) in the latest standard: instead set the CSS <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> property on it.\n</div>"
+          "doc": "Specifies the vertical alignment of each head cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>baseline</code>, <code>bottom</code>, <code>middle</code>, and <code>top</code>. Use the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> CSS property instead, as this attribute is deprecated."
         }
       }
     },
@@ -9455,12 +9511,12 @@
         "Safari": "",
         "SafariIOS": ""
       },
-      "doc": "The <strong><code>&lt;tr&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a row of cells in a table. The row's cells can then be established using a mix of <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> (data cell) and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> (header cell) elements.\n<p>To provide additional control over how cells fit into (or span across) columns, both <code>&lt;th&gt;</code> and <code>&lt;td&gt;</code> support the <a href=\"$MDN_URL$/Web/HTML/Element/td#colspan\"><code>colspan</code></a> attribute, which lets you specify how many columns wide the cell should be, with the default being 1. Similarly, you can use the <a href=\"$MDN_URL$/Web/HTML/Element/td#rowspan\"><code>rowspan</code></a> attribute on cells to indicate they should span more than one table row.\n<p>This can take a little practice to get right when building your tables. We have some <a href=\"#examples\">examples</a> below, but for more examples and an in-depth tutorial, see the <a href=\"$MDN_URL$/Learn/HTML/Tables\">HTML tables</a> series in our <a href=\"$MDN_URL$/Learn\">Learn web development</a> area, where you'll learn how to use the table elements and their attributes to get just the right layout and formatting for your tabular data.",
+      "doc": "The <strong><code>&lt;tr&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element defines a row of cells in a table. The row's cells can then be established using a mix of <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> (data cell) and <a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a> (header cell) elements.",
       "details": {
         "<a href=\"$MDN_URL$/Web/HTML/Content_categories\">Content categories</a>": "None\n",
-        "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a>\nand/or\n<a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a>\nelements;\n<a href=\"$MDN_URL$/Glossary/Script-supporting_element\">script-supporting elements</a>\n(\n<a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a>\n) are also allowed\n",
-        "Tag omission": "Start tag is mandatory. End tag may be omitted if the\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\" aria-current=\"page\"><code>&lt;tr&gt;</code></a>\nelement is immediately followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\" aria-current=\"page\"><code>&lt;tr&gt;</code></a>\nelement, or if the row is the last element\nin its parent table group (\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\n)\nelement\n",
-        "Permitted parents": "<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\n(only if the table has no child\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nelement, and even then only after any\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\n, and\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\nelements); otherwise, the parent must\nbe\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\n",
+        "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a>\nand/or\n<a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a>\nelements;\n<a href=\"$MDN_URL$/Glossary/Script-supporting_element\">script-supporting elements</a>\n(\n<a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a>\n) are also allowed.\n",
+        "Tag omission": "Start tag is mandatory. End tag may be omitted if the\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\" aria-current=\"page\"><code>&lt;tr&gt;</code></a>\nelement is immediately followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\" aria-current=\"page\"><code>&lt;tr&gt;</code></a>\nelement, or if the row is the last element\nin its parent table group (\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\n)\nelement.\n",
+        "Permitted parents": "<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\n(only if the table has no child\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nelement, and even then only after any\n<a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\n, and\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\nelements); otherwise, the parent must\nbe a\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nelement.\n",
         "Implicit ARIA role": "<code><a href=\"$MDN_URL$/Web/Accessibility/ARIA/Roles/row_role\">row</a></code>\n",
         "Permitted ARIA roles": "Any\n",
         "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLTableRowElement\"><code>HTMLTableRowElement</code></a>\n"
@@ -9481,7 +9537,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "A string which specifies how the cell's context should be aligned horizontally within the cells in the row; this is shorthand for using <code>align</code> on every cell in the row individually. Possible values are:\n<dl>\n<dt id=\"left\"><a href=\"#left\"><code>left</code></a></dt>\n<dd>\n<p>Align the content of each cell at its left edge.\n</dd>\n<dt id=\"center\"><a href=\"#center\"><code>center</code></a></dt>\n<dd>\n<p>Center the contents of each cell between their left and right edges.\n</dd>\n<dt id=\"right\"><a href=\"#right\"><code>right</code></a></dt>\n<dd>\n<p>Align the content of each cell at its right edge.\n</dd>\n<dt id=\"justify\"><a href=\"#justify\"><code>justify</code></a></dt>\n<dd>\n<p>Widen whitespaces within the text of each cell so that the text fills the full width of each cell (full justification).\n</dd>\n<dt id=\"char\"><a href=\"#char\"><code>char</code></a></dt>\n<dd>\n<p>Align each cell in the row on a specific character (such that each row in the column that is configured this way will horizontally align its cells on that character). This uses the <a href=\"#char\"><code>char</code></a> and <a href=\"#charoff\"><code>charoff</code></a> to establish the alignment character (typically \".\" or \",\" when aligning numerical data) and the number of characters that should follow the alignment character. This alignment type was never widely supported.\n</dd>\n</dl>\n<p>If no value is expressly set for <code>align</code>, the parent node's value is inherited.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Instead of using the obsolete <code>align</code> attribute, you should instead use the CSS <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property to establish <code>left</code>, <code>center</code>, <code>right</code>, or <code>justify</code> alignment for the row's cells. To apply character-based alignment, set the CSS <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property to the alignment character (such as <code>\".\"</code> or <code>\",\"</code>).\n</div>"
+          "doc": "Specifies the horizontal alignment of each row cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>left</code>, <code>center</code>, <code>right</code>, <code>justify</code>, and <code>char</code>. When supported, the <code>char</code> value aligns the textual content on the character defined in the <a href=\"#char\"><code>char</code></a> attribute and on offset defined by the <a href=\"#charoff\"><code>charoff</code></a> attribute. Use the <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> CSS property instead, as this attribute is deprecated."
         },
         "bgcolor": {
           "url": "$MDN_URL$/web/html/element/tr#bgcolor",
@@ -9498,7 +9554,7 @@
             "Safari": "",
             "SafariIOS": ""
           },
-          "doc": "A string specifying a color to apply to the backgrounds of each of the row's cells. This can be either a <a href=\"$MDN_URL$/Web/CSS/color_value/rgb\">hexadecimal <code>#RRGGBB</code> or <code>#RGB</code> value</a> or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Omitting the attribute or setting it to <code>null</code> in JavaScript causes the row's cells to inherit the row's parent element's background color.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> The <a href=\"$MDN_URL$/Web/HTML/Element/tr\" aria-current=\"page\"><code>&lt;tr&gt;</code></a> element should be styled using <a href=\"$MDN_URL$/Web/CSS\">CSS</a>. To give a similar effect as the <code>bgcolor</code> attribute, use the CSS property <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a>.\n</div>"
+          "doc": "Defines the background color of each row cell. The value is an HTML color; either a <a href=\"$MDN_URL$/Web/CSS/hex-color\">6-digit hexadecimal RGB code</a>, prefixed by a '<code>#</code>', or a <a href=\"$MDN_URL$/Web/CSS/named-color\">color keyword</a>. Other CSS <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a> values are not supported. Use the <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> CSS property instead, as this attribute is deprecated."
         },
         "char": {
           "url": "$MDN_URL$/web/html/element/tr#char",
@@ -9514,7 +9570,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "A string that sets the character to align the cells in each row's columns (each row's centering that uses the same character gets aligned with others using the same character. Typical values for this include a period (<code>\".\"</code>) or comma (<code>\",\"</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored.\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> This attribute is obsolete and rarely implemented anyway. To achieve the same effect as the <a href=\"#char\"><code>char</code></a> attribute, set the CSS <a href=\"$MDN_URL$/Web/CSS/text-align\"><code>text-align</code></a> property to the same string you would specify for the <code>char</code> property, such as <code>text-align: \".\"</code>.\n</div>"
+          "doc": "Specifies the alignment of the content to a character of each row cell. Typical values for this include a period (<code>.</code>) when attempting to align numbers or monetary values. If <a href=\"#align\"><code>align</code></a> is not set to <code>char</code>, this attribute is ignored."
         },
         "charoff": {
           "url": "$MDN_URL$/web/html/element/tr#charoff",
@@ -9530,7 +9586,7 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           },
-          "doc": "A string indicating the number of characters on the tail end of the column's data should be displayed after the alignment character specified by the <code>char</code> attribute. For example, when displaying money values for currencies that use hundredths of a unit (such as the dollar, which is divided into 100 cents), you would typically specify a value of 2, so that in tandem with <code>char</code> being set to <code>\".\"</code>, the values in a column would be cleanly aligned on the decimal points, with the number of cents properly displayed to the right of the decimal point.\n<div class=\"notecard note\" id=\"sect4\">\n<p><strong>Note:</strong> This attribute is obsolete, and was never widely supported anyway.\n</div>"
+          "doc": "Specifies the number of characters to offset the row cell content from the alignment character specified by the <a href=\"#char\"><code>char</code></a> attribute."
         },
         "valign": {
           "url": "$MDN_URL$/web/html/element/tr#valign",
@@ -9547,7 +9603,7 @@
             "Safari": "3",
             "SafariIOS": "2"
           },
-          "doc": "A string specifying the vertical alignment of the text within each cell in the row. Possible values for this attribute are:\n<dl>\n<dt id=\"baseline\"><a href=\"#baseline\"><code>baseline</code></a></dt>\n<dd>\n<p>Aligns each cell's content text as closely as possible to the bottom of the cell, handling alignment of different fonts and font sizes by aligning the characters along the <a href=\"https://en.wikipedia.org/wiki/Baseline\" class=\"external\" target=\"_blank\">baseline</a> of the font(s) used in the row. If all the characters in the row are the same size, the effect is the same as <code>bottom</code>.\n</dd>\n<dt id=\"bottom\"><a href=\"#bottom\"><code>bottom</code></a>,</dt>\n<dd>\n<p>Draws the text in each of the row's cells as closely as possible to the bottom edge of those cells.\n</dd>\n<dt id=\"middle\"><a href=\"#middle\"><code>middle</code></a></dt>\n<dd>\n<p>Each cell's text is vertically centered.\n</dd>\n<dt id=\"top\"><a href=\"#top\"><code>top</code></a></dt>\n<dd>\n<p>Each cell's text is drawn as closely as possible to the top edge of the containing cell.\n</dd>\n</dl>\n<div class=\"notecard note\" id=\"sect5\">\n<p><strong>Note:</strong> Don't use the obsolete <code>valign</code> attribute. Instead, add the CSS <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> property to the row.\n</div>"
+          "doc": "Specifies the vertical alignment of each row cell. The possible <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> values are <code>baseline</code>, <code>bottom</code>, <code>middle</code>, and <code>top</code>. Use the <a href=\"$MDN_URL$/Web/CSS/vertical-align\"><code>vertical-align</code></a> CSS property instead, as this attribute is deprecated."
         }
       }
     },
@@ -9851,6 +9907,15 @@
         },
         "controlslist": {
           "url": "$MDN_URL$/web/html/element/video#controlslist",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "58",
+            "ChromeAndroid": "58",
+            "Edge": "79",
+            "Opera": "45"
+          },
           "doc": "The <a href=\"https://wicg.github.io/controls-list/explainer.html\" class=\"external\" target=\"_blank\"><code>controlslist</code></a> attribute, when specified, helps the browser select what controls to show for the <code>video</code> element whenever the browser shows its own set of controls (that is, when the <code>controls</code> attribute is specified).\n<p>The allowed values are <code>nodownload</code>, <code>nofullscreen</code> and <code>noremoteplayback</code>.\n<p>Use the <a href=\"#disablepictureinpicture\"><code>disablepictureinpicture</code></a> attribute if you want to disable the Picture-In-Picture mode (and the control)."
         },
         "crossorigin": {
@@ -9871,6 +9936,17 @@
         },
         "disablepictureinpicture": {
           "url": "$MDN_URL$/web/html/element/video#disablepictureinpicture",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "69",
+            "ChromeAndroid": "105",
+            "Edge": "79",
+            "Opera": "56",
+            "Safari": "13.1",
+            "SafariIOS": "13.4"
+          },
           "doc": "Prevents the browser from suggesting a Picture-in-Picture context menu or to request Picture-in-Picture automatically in some cases."
         },
         "disableremoteplayback": {
@@ -9926,6 +10002,17 @@
         },
         "playsinline": {
           "url": "$MDN_URL$/web/html/element/video#playsinline",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "75",
+            "ChromeAndroid": "75",
+            "Edge": "79",
+            "Opera": "62",
+            "Safari": "10",
+            "SafariIOS": "10"
+          },
           "doc": "A Boolean attribute indicating that the video is to be played \"inline\", that is within the element's playback area. Note that the absence of this attribute <em>does not</em> imply that the video will always be played in fullscreen."
         },
         "poster": {
