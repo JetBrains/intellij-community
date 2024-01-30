@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -43,6 +42,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTreeTable;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -555,33 +555,23 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     ReadAction.nonBlocking(() -> {
         final PsiElement element = myViewExtension.getElementToSelect(object);
         final VirtualFile file = myViewExtension.getVirtualFile(object);
-        return getNode(element, file);
+        myModel.accept(new TreeVisitor() {
+          @Override
+          public @NotNull Action visit(@NotNull TreePath path) {
+            var node = getLast(path);
+            if (Comparing.equal(node.getValue(), element)) return Action.INTERRUPT;
+            if (node instanceof CoverageListNode coverageNode && coverageNode.contains(file)) {
+              return Action.CONTINUE;
+            }
+            return Action.SKIP_CHILDREN;
+          }
+        }).onSuccess((path -> {
+          if (path != null) {
+            TreeUtil.promiseSelect(myTable.getTree(), path);
+          }
+        }));
       })
-      .finishOnUiThread(ModalityState.nonModal(), (node) -> myModel.makeVisible(node, this::selectPath))
       .submit(AppExecutorUtil.getAppExecutorService());
-  }
-
-  private void selectPath(TreePath path) {
-    if (path == null) return;
-    myTable.getTree().addSelectionPath(path);
-    ScrollingUtil.ensureSelectionExists(myTable.getTable());
-  }
-
-  private AbstractTreeNode<?> getNode(PsiElement element, VirtualFile file) {
-    AbstractTreeNode<?> node = (AbstractTreeNode<?>)myTreeStructure.getRootElement();
-    down:
-    while (true) {
-      if (Comparing.equal(node.getValue(), element)) break;
-      for (Object child : myTreeStructure.getChildElements(node)) {
-        final CoverageListNode childNode = (CoverageListNode)child;
-        if (childNode.contains(file)) {
-          node = childNode;
-          continue down;
-        }
-      }
-      break;
-    }
-    return node;
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
