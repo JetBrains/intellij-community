@@ -1,27 +1,34 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -43,6 +50,16 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
     setUpJdk();
     myModule = ModuleManager.getInstance(getProject()).findModuleByName("A");
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk9();
+  }
+
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_1_9;
   }
 
   @Override
@@ -94,14 +111,28 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   public void testAddDependency() {
     removeModule();
     doTest("B/src/y/AddDependency.java", true);
+    checkModuleInfo("B/src/module-info.java", "a");
   }
 
   public void testAddAmbiguousDependency() {
     doTest("B/src/y/AddAmbiguous.java", true);
+    checkModuleInfo("B/src/module-info.java", "a");
   }
 
   public void testTestDependency() {
     doTest("C/src/z/B.java", true);
+    checkModuleInfo("C/src/module-info.java", "b");
+  }
+
+  private void checkModuleInfo(@NotNull String moduleFileName, @NotNull String expectedModule) {
+    VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
+    final VirtualFile moduleFile = root.findFileByRelativePath(moduleFileName);
+    final PsiFile file = PsiManager.getInstance(myProject).findFile(moduleFile);
+    PsiJavaModule module = (PsiJavaModule)SyntaxTraverser.psiTraverser().children(file).filter(PsiJavaModule.class::isInstance).first();
+    for (PsiRequiresStatement require : module.getRequires()) {
+      if (require.getModuleName().equals(expectedModule)) return;
+    }
+    fail("Expected module '" + expectedModule + "' not found");
   }
 
   private void removeModule() {
@@ -113,6 +144,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   public void testAddLibrary() {
     doTest("B/src/y/AddLibrary.java", true);
+    checkModuleInfo("B/src/module-info.java", "lib");
   }
 
   public void testAddCircularDependency() {
@@ -126,12 +158,18 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       fail("user should have been warned");
     }
     catch (RuntimeException e) {
-      final String expected = "Adding dependency on module '" + a.getName() + "'" +
-                              " will introduce circular dependency between modules '" + a.getName() + "' and '" +
-                              b.getName() + "'.\n" + "Add dependency anyway?";
+      final String expected = "Adding dependency on module '" + getModuleName(a) + "'" +
+                              " will introduce circular dependency between modules '" + getModuleName(a) + "' and '" +
+                              getModuleName(b) + "'.\n" + "Add dependency anyway?";
       String message = e.getMessage();
       assertEquals(expected, message);
     }
+  }
+
+  @NotNull
+  private static String getModuleName(@NotNull Module module) {
+    final PsiJavaModule javaModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(module, false));
+    return javaModule != null ? javaModule.getName() : module.getName();
   }
 
   public void testAddJunit() {

@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
@@ -18,9 +19,11 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiReference;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -54,7 +57,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   @NotNull
   public String getText() {
     if (myLibraries.size() == 1) {
-      return QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", ContainerUtil.getFirstItem(myLibraries.keySet()).getPresentableName());
+      return QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", getLibraryName(ContainerUtil.getFirstItem(myLibraries.keySet())));
     }
     return QuickFixBundle.message("orderEntry.fix.family.add.library.to.classpath.options");
   }
@@ -82,7 +85,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
           @Override
           public void customize(@NotNull JList<? extends Library> list, Library lib, int index, boolean selected, boolean hasFocus) {
             if (lib != null) {
-              setText(lib.getPresentableName());
+              setText(getLibraryName(lib));
               setIcon(AllIcons.Nodes.PpLib);
             }
           }
@@ -130,10 +133,16 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     String fqName = myLibraries.get(firstItem);
     String refName = !StringUtil.isEmpty(fqName) ? StringUtil.getShortName(fqName) : null;
 
-    String libraryList = NlsMessages.formatAndList(ContainerUtil.map(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'"));
-    String libraryName = firstItem.getPresentableName();
+    String libraryList = NlsMessages.formatAndList(ContainerUtil.map(myLibraries.keySet(), library -> "'" + getLibraryName(library) + "'"));
+    String libraryName = getLibraryName(firstItem);
     String message = refName != null ? JavaBundle.message("adds.library.preview", myLibraries.size(), libraryName, libraryList, myCurrentModule.getName(), refName)
                                      : JavaBundle.message("adds.library.preview.no.import", myLibraries.size(), libraryName, libraryList, myCurrentModule.getName());
     return new IntentionPreviewInfo.Html(HtmlChunk.text(message));
+  }
+
+  @NlsContexts.Label
+  private String getLibraryName(@NotNull Library library) {
+    final PsiJavaModule javaModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, myCurrentModule.getProject()));
+    return javaModule != null ? javaModule.getName() : library.getPresentableName();
   }
 }

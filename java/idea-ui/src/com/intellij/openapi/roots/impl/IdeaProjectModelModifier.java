@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryAttachDialog;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -22,9 +24,11 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
@@ -47,12 +51,22 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   @Override
   public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
     ModuleRootModificationUtil.addDependency(from, to, scope, exported);
+
+    PsiJavaModule fromModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(from, scope == DependencyScope.TEST));
+    PsiJavaModule toModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(to, scope == DependencyScope.TEST));
+    addJigsawModule(fromModule, toModule, scope, exported);
+
     return Promises.resolvedPromise(null);
   }
 
   @Override
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     WriteAction.run(() -> OrderEntryUtil.addLibraryToRoots(from, library, scope, exported));
+
+    PsiJavaModule fromModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(from, scope == DependencyScope.TEST));
+    PsiJavaModule toLibrary = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, from.getProject()));
+    addJigsawModule(fromModule, toLibrary, scope, exported);
+
     return Promises.resolvedPromise(null);
   }
 
@@ -95,6 +109,19 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       final List<String> urls = OrderEntryFix.refreshAndConvertToUrls(classesRoots);
       if (modules.size() == 1) {
         ModuleRootModificationUtil.addModuleLibrary(firstModule, libraryName, urls, Collections.emptyList(), scope);
+
+        if (libraryName != null) {
+          ReadAction.run(() -> {
+            Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
+            if (library == null) return;
+
+            for (Module module : modules) {
+              PsiJavaModule fromModule = JavaModuleGraphUtil.findDescriptorByModule(module, scope == DependencyScope.TEST);
+              PsiJavaModule toLibrary = JavaModuleGraphUtil.findDescriptorByLibrary(library, module.getProject());
+              addJigsawModule(fromModule, toLibrary, scope, false);
+            }
+          });
+        }
       }
       else {
         WriteAction.run(() -> {
@@ -107,6 +134,12 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
           model.commit();
           for (Module module : modules) {
             ModuleRootModificationUtil.addDependency(module, library, scope, false);
+
+            ReadAction.run(() -> {
+              PsiJavaModule fromModule = JavaModuleGraphUtil.findDescriptorByModule(module, scope == DependencyScope.TEST);
+              PsiJavaModule toLibrary = JavaModuleGraphUtil.findDescriptorByLibrary(library, module.getProject());
+              addJigsawModule(fromModule, toLibrary, scope, false);
+            });
           }
         });
       }
@@ -127,5 +160,14 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, RootsChangeRescanningInfo.TOTAL_RESCAN);
     }
     return Promises.resolvedPromise(null);
+  }
+
+
+  private static void addJigsawModule(@Nullable PsiJavaModule from,
+                                      @Nullable PsiJavaModule to,
+                                      @NotNull DependencyScope scope,
+                                      boolean exported) {
+    if (from == null || to == null) return;
+    WriteAction.run(() -> JavaModuleGraphUtil.addDependency(from, to.getName(), scope, exported));
   }
 }

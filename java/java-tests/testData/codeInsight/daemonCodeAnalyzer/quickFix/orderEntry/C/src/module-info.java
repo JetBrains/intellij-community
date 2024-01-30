@@ -1,0 +1,3 @@
+module c {
+  exports z;
+}

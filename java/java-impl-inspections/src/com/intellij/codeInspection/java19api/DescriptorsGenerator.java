@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInspection.java19api.ModuleNode.DependencyType.*;
+import static com.intellij.codeInspection.java19api.ModuleNode.DependencyType.TRANSITIVE;
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
@@ -211,10 +211,7 @@ class DescriptorsGenerator {
                                             @NotNull Map<PsiJavaModule, ModuleNode> nodesByDescriptor,
                                             @NotNull Project project,
                                             @NotNull Library library) {
-    final VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
-    if (libraryFiles.length == 0) return null;
-
-    final PsiJavaModule descriptor = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(libraryFiles[0], project));
+    final PsiJavaModule descriptor = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, project));
     if (descriptor == null) return null;
 
     final ModuleNode node = nodesByDescriptor.computeIfAbsent(descriptor, d -> new ModuleNode(d));

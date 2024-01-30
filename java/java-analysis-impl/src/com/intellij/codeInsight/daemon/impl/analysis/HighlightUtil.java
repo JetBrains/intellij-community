@@ -2205,35 +2205,48 @@ public final class HighlightUtil {
     }
 
     String containerName = getContainerName(refElement, result.getSubstitutor());
-    ErrorWithFixes problem = checkModuleAccess(resolved, ref, symbolName, containerName);
+    ErrorWithFixes problem = getModuleProblem(resolved, ref, symbolName, containerName);
     if (problem != null) return Pair.pair(problem.message, problem.fixes);
     return Pair.pair(JavaErrorBundle.message("visibility.access.problem", symbolName, containerName), null);
   }
 
-  private static ErrorWithFixes checkModuleAccess(@NotNull PsiElement target,
-                                                  @NotNull PsiElement place,
-                                                  @Nullable String symbolName,
-                                                  @Nullable String containerName) {
-    ErrorWithFixes error = null;
-    for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensionList()) {
-      if (moduleSystem instanceof JavaModuleSystemEx) {
-        error = checkAccess((JavaModuleSystemEx)moduleSystem, target, place);
-      }
-      else if (!isAccessible(moduleSystem, target, place)) {
-        String message = JavaErrorBundle.message("visibility.module.access.problem", symbolName, containerName, moduleSystem.getName());
-        error = new ErrorWithFixes(message);
-      }
-      if (error != null) {
-        return error;
-      }
+  @Nullable
+  @Nls
+  static ErrorWithFixes getModuleProblem(@NotNull PsiElement resolved, @NotNull PsiElement ref, @NotNull JavaResolveResult result) {
+    PsiElement refElement = resolved;
+    PsiClass packageLocalClass = HighlightFixUtil.getPackageLocalClassInTheMiddle(ref);
+    if (packageLocalClass != null) {
+      refElement = packageLocalClass;
     }
 
-    return null;
+    String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
+    String containerName = (resolved instanceof PsiModifierListOwner modifierListOwner)
+                           ? getContainerName(modifierListOwner, result.getSubstitutor())
+                           : null;
+    return getModuleProblem(resolved, ref, symbolName, containerName);
   }
 
-  private static ErrorWithFixes checkAccess(@NotNull JavaModuleSystemEx system, @NotNull PsiElement target, @NotNull PsiElement place) {
-    if (target instanceof PsiClass) return system.checkAccess((PsiClass)target, place);
-    if (target instanceof PsiPackage) return system.checkAccess(((PsiPackage)target).getQualifiedName(), null, place);
+  @Nullable
+  @Nls
+  private static ErrorWithFixes getModuleProblem(@NotNull PsiElement target,
+                                                 @NotNull PsiElement place,
+                                                 @Nullable String symbolName,
+                                                 @Nullable String containerName) {
+    for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensionList()) {
+      if (moduleSystem instanceof JavaModuleSystemEx system) {
+        if (target instanceof PsiClass targetClass) {
+          final ErrorWithFixes problem = system.getProblem(targetClass, place);
+          if (problem != null) return problem;
+        }
+        if (target instanceof PsiPackage targetPackage) {
+          final ErrorWithFixes problem = system.getProblem(targetPackage.getQualifiedName(), null, place);
+          if (problem != null) return problem;
+        }
+      }
+      else if (!isAccessible(moduleSystem, target, place)) {
+        return new ErrorWithFixes(JavaErrorBundle.message("visibility.module.access.problem", symbolName, containerName, moduleSystem.getName()));
+      }
+    }
     return null;
   }
 
@@ -3431,23 +3444,21 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkReference(@NotNull PsiJavaCodeReferenceElement ref,
-                                      @NotNull JavaResolveResult result,
-                                      @NotNull PsiFile containingFile,
-                                      @NotNull LanguageLevel languageLevel) {
+                                              @NotNull JavaResolveResult result,
+                                              @NotNull PsiFile containingFile,
+                                              @NotNull LanguageLevel languageLevel) {
     PsiElement refName = ref.getReferenceNameElement();
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
     PsiElement resolved = result.getElement();
 
     PsiElement refParent = ref.getParent();
 
-    PsiElement granny;
-    if (refParent instanceof PsiReferenceExpression && (granny = refParent.getParent()) instanceof PsiMethodCallExpression) {
-      PsiReferenceExpression referenceToMethod = ((PsiMethodCallExpression)granny).getMethodExpression();
+    if (refParent instanceof PsiReferenceExpression && refParent.getParent() instanceof PsiMethodCallExpression granny) {
+      PsiReferenceExpression referenceToMethod = granny.getMethodExpression();
       PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
       if (qualifierExpression == ref && resolved != null && !(resolved instanceof PsiClass) && !(resolved instanceof PsiVariable)) {
         String message = JavaErrorBundle.message("qualifier.must.be.expression");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(qualifierExpression).descriptionAndTooltip(message)
-          ;
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(qualifierExpression).descriptionAndTooltip(message);
       }
     }
     else if (refParent instanceof PsiMethodCallExpression) {
@@ -3504,18 +3515,22 @@ public final class HighlightUtil {
       PsiUtil.isInsideJavadocComment(ref) ||
       PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class, true) != null ||
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
-    if (!skipValidityChecks && !result.isValidResult()) {
+
+    final ErrorWithFixes moduleProblem = getModuleProblem(resolved, ref, result);
+    if (!skipValidityChecks && !(result.isValidResult() && moduleProblem == null)) {
+      if (moduleProblem != null) {
+        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(findPackagePrefix(ref))
+          .descriptionAndTooltip(moduleProblem.message);
+        moduleProblem.fixes.forEach(fix -> info.registerFix(fix, List.of(), null, null, null));
+        return info;
+      }
+
       if (!result.isAccessible()) {
-        Pair<@Nls String, List<IntentionAction>> problem = accessProblemDescriptionAndFixes(ref, resolved, result);
-        boolean moduleAccessProblem = problem.second != null;
-        PsiElement range = moduleAccessProblem ? findPackagePrefix(ref) : refName;
+        @Nls String description = accessProblemDescription(ref, resolved, result);
         HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(range).descriptionAndTooltip(problem.first);
-        if (moduleAccessProblem) {
-          problem.second.forEach(fix -> info.registerFix(fix, List.of(), null, null, null));
-        }
-        else if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
-          HighlightFixUtil.registerAccessQuickFixAction(info, range.getTextRange(), (PsiJvmMember)resolved, ref, result.getCurrentFileResolveScope(), null);
+          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
+        if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
+          HighlightFixUtil.registerAccessQuickFixAction(info, refName.getTextRange(), (PsiJvmMember)resolved, ref, result.getCurrentFileResolveScope(), null);
           if (ref instanceof PsiReferenceExpression) {
             IntentionAction action = getFixFactory().createRenameWrongRefFix((PsiReferenceExpression)ref);
             info.registerFix(action, null, null, null, null);
