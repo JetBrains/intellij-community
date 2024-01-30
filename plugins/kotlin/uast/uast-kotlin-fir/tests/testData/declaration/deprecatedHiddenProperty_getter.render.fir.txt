@@ -25,7 +25,7 @@ public final class Test {
             if (var8a4c2ed8 != null) var8a4c2ed8 else "null?"
         }
     }
-    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN)
+    @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
     public fun setPOld_getter_deprecatedOnProperty(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
     public fun getPOld_getter_deprecatedOnGetter() : java.lang.String {
         return elvis {
@@ -33,6 +33,6 @@ public final class Test {
             if (var8a4c4878 != null) var8a4c4878 else "null?"
         }
     }
-    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN)
+    @kotlin.Deprecated(message = "no more setter", level = DeprecationLevel.HIDDEN)
     public fun setPOld_getter_deprecatedOnSetter(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
 }
