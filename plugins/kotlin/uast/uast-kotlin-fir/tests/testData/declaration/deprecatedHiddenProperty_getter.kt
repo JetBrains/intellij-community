@@ -1,15 +1,15 @@
 package test.pkg
 
 class Test {
-    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+    @Deprecated("no more property", level = DeprecationLevel.HIDDEN)
     var pOld_getter_deprecatedOnProperty: String? = null
         get() = field ?: "null?"
 
-    @get:Deprecated(level = DeprecationLevel.HIDDEN, "no more getter")
+    @get:Deprecated("no more getter", level = DeprecationLevel.HIDDEN)
     var pOld_getter_deprecatedOnGetter: String? = null
         get() = field ?: "null?"
 
-    @set:Deprecated(level = DeprecationLevel.HIDDEN, "no more setter")
+    @set:Deprecated("no more setter", level = DeprecationLevel.HIDDEN)
     var pOld_getter_deprecatedOnSetter: String? = null
         get() = field ?: "null?"
 

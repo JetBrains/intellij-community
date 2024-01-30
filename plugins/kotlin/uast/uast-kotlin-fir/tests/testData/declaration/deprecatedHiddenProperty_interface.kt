@@ -1,13 +1,13 @@
 package test.pkg
 
 interface TestInterface {
-    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+    @Deprecated("no more property", level = DeprecationLevel.HIDDEN)
     var pOld_deprecatedOnProperty: Int
 
-    @get:Deprecated(level = DeprecationLevel.HIDDEN, "no more getter")
+    @get:Deprecated("no more getter", level = DeprecationLevel.HIDDEN)
     var pOld_deprecatedOnGetter: Int
 
-    @set:Deprecated(level = DeprecationLevel.HIDDEN, "no more setter")
+    @set:Deprecated("no more setter", level = DeprecationLevel.HIDDEN)
     var pOld_deprecatedOnSetter: Int
 
     var pNew: Int
