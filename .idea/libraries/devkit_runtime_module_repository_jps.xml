@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="devkit.runtime.module.repository.jps" type="repository">
+    <properties include-transitive-deps="false" jar-repository-id="intellij-dependencies" maven-id="com.jetbrains.intellij.devkit:devkit-runtime-module-repository-jps:241.10769">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/241.10769/devkit-runtime-module-repository-jps-241.10769.jar">
+          <sha256sum>b704aae290a44a972e88fff8566e8ad754c11df656f1a0763f6bc94c6bc1b19b</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/241.10769/devkit-runtime-module-repository-jps-241.10769.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/241.10769/devkit-runtime-module-repository-jps-241.10769-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
