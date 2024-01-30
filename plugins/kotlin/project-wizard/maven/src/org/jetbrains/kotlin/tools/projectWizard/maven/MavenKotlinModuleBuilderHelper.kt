@@ -84,7 +84,7 @@ class MavenKotlinModuleBuilderHelper(
 
         if (myAggregatorProject == null) {
             val manager = MavenProjectsManager.getInstance(project)
-            manager.addManagedFilesOrUnignore(listOf(pom))
+            manager.addManagedFilesOrUnignoreNoUpdate(listOf(pom))
         }
 
         MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()

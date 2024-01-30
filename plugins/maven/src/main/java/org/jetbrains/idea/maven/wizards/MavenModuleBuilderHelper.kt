@@ -85,7 +85,7 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
 
     if (myAggregatorProject == null) {
       val manager = MavenProjectsManager.getInstance(project)
-      manager.addManagedFilesOrUnignore(listOf(pom))
+      manager.addManagedFilesOrUnignoreNoUpdate(listOf(pom))
     }
 
     if (myArchetype == null) {

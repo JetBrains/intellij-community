@@ -449,9 +449,14 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManager.addManagedFiles"));
   }
 
-  public void addManagedFilesOrUnignore(@NotNull List<VirtualFile> files) {
+  public void addManagedFilesOrUnignoreNoUpdate(@NotNull List<VirtualFile> files) {
     removeIgnoredFilesPaths(MavenUtil.collectPaths(files));
-    addManagedFiles(files);
+    doAddManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null);
+  }
+
+  public void addManagedFilesOrUnignore(@NotNull List<VirtualFile> files) {
+    addManagedFilesOrUnignoreNoUpdate(files);
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManager.addManagedFilesOrUnignore"));
   }
 
   public boolean isManagedFile(@NotNull VirtualFile f) {
