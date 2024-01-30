@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.toMultiMap
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
@@ -19,23 +21,24 @@ import java.util.concurrent.atomic.AtomicReference
 @Service(Service.Level.PROJECT)
 @State(name = "VcsDirectoryRenames", storages = [Storage(value = "vcs.xml")])
 internal class VcsDirectoryRenamesProvider : PersistentStateComponent<Array<RenameRecord>> {
-  private val renames: AtomicReference<Map<EdgeData<CommitId>, EdgeData<FilePath>>> = AtomicReference(emptyMap())
+  private val renames: AtomicReference<MultiMap<EdgeData<CommitId>, EdgeData<FilePath>>> = AtomicReference(MultiMap.createLinked())
 
-  val renamesMap: Map<EdgeData<CommitId>, EdgeData<FilePath>>
+  val renamesMap: MultiMap<EdgeData<CommitId>, EdgeData<FilePath>>
     get() = renames.get()
 
   override fun getState(): Array<RenameRecord> {
-    return renames.get().entries.groupBy({ it.value }) { it.key }.map { entry ->
-      val paths = entry.key
-      val commits = entry.value
-      val root = commits.first().parent.root
-      RenameRecord(root.path, VcsFileUtil.relativePath(root, paths.parent), VcsFileUtil.relativePath(root, paths.child),
-                   commits.map { Hashes(it) }.toTypedArray())
+    return renames.get().entrySet().groupBy({ it.value }) { it.key }.flatMap { entry ->
+      entry.key.map { paths ->
+        val commits = entry.value
+        val root = commits.first().parent.root
+        RenameRecord(root.path, VcsFileUtil.relativePath(root, paths.parent), VcsFileUtil.relativePath(root, paths.child),
+                     commits.map { Hashes(it) }.toTypedArray())
+      }
     }.toTypedArray()
   }
 
   override fun loadState(state: Array<RenameRecord>) {
-    renames.set(state.flatMap { record -> record.getCommitsAndPaths() }.toMap(linkedMapOf()))
+    renames.set(state.flatMap { record -> record.getCommitsAndPaths() }.toMultiMap())
   }
 
   companion object {

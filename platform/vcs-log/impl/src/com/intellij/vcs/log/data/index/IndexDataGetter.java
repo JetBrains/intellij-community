@@ -339,15 +339,16 @@ public final class IndexDataGetter {
     private DirectoryHistoryData(@NotNull FilePath startPath) {
       super(startPath);
 
-      for (Map.Entry<EdgeData<CommitId>, EdgeData<FilePath>> entry : myDirectoryRenamesProvider.getRenamesMap().entrySet()) {
+      for (Map.Entry<EdgeData<CommitId>, Collection<EdgeData<FilePath>>> entry : myDirectoryRenamesProvider.getRenamesMap().entrySet()) {
         EdgeData<CommitId> commits = entry.getKey();
-        EdgeData<FilePath> rename = entry.getValue();
-        if (VcsFileUtil.isAncestor(rename.child, startPath, false)) {
-          FilePath renamedPath = VcsUtil.getFilePath(rename.parent.getPath() + "/" +
-                                                     VcsFileUtil.relativePath(rename.child, startPath), true);
-          renamesMap.put(new EdgeData<>(myLogStorage.getCommitIndex(commits.parent.getHash(), commits.parent.getRoot()),
-                                        myLogStorage.getCommitIndex(commits.child.getHash(), commits.child.getRoot())),
-                         new EdgeData<>(renamedPath, startPath));
+        for (EdgeData<FilePath> rename : entry.getValue()) {
+          if (VcsFileUtil.isAncestor(rename.child, startPath, false)) {
+            FilePath renamedPath = VcsUtil.getFilePath(rename.parent.getPath() + "/" +
+                                                       VcsFileUtil.relativePath(rename.child, startPath), true);
+            renamesMap.put(new EdgeData<>(myLogStorage.getCommitIndex(commits.parent.getHash(), commits.parent.getRoot()),
+                                          myLogStorage.getCommitIndex(commits.child.getHash(), commits.child.getRoot())),
+                           new EdgeData<>(renamedPath, startPath));
+          }
         }
       }
     }
