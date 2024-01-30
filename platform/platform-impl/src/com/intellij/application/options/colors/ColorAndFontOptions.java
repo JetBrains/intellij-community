@@ -680,6 +680,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     if (selectedName.equals(scheme.getName())) return;
 
+    // Ensure the scheme is in the list and it's possible to select it
+    String baseName = Scheme.getBaseName(scheme.getName());
+    if (mySchemes.get(baseName) == null && mySchemes.get(Scheme.EDITABLE_COPY_PREFIX + baseName) == null) return;
+
     reset();
   }
 
