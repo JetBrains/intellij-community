@@ -415,6 +415,10 @@
                     beanClass="com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsPreviewLanguage"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.refactoring.renameCodeVisionSupport"
+                    interface="com.intellij.refactoring.rename.RenameCodeVisionSupport"
+                    dynamic="true" />
+
     <extensionPoint name="lang.floatingToolbarCustomizer" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer"/>

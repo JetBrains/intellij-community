@@ -75,6 +75,11 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
   @RequiresReadLock
   private fun getCodeVisionState(editor: Editor, project: Project): CodeVisionState {
     val file = editor.virtualFile?.findPsiFile(project)
+
+    if (file != null && !RenameCodeVisionSupport.isEnabledFor(file.fileType)) {
+      return CodeVisionState.READY_EMPTY
+    }
+
     val refactoring = file?.getUserData(REFACTORING_DATA_KEY)
                       ?: editor.getUserData(REFACTORING_DATA_KEY)
                       ?: return CodeVisionState.READY_EMPTY
