@@ -47,7 +47,7 @@ internal class GradualMultiSuggestInlineCompletionProvider(
   }
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
-    val suggestion = InlineCompletionSuggestion.build(suggestionBuilder)
+    val suggestion = InlineCompletionSuggestion(suggestionBuilder)
     return object : InlineCompletionSuggestion {
       override suspend fun getVariants(): List<InlineCompletionVariant> {
         val variants = suggestion.getVariants()
@@ -115,7 +115,7 @@ internal class ExceptionInComputationInlineCompletionProvider : InlineCompletion
   override fun isEnabled(event: InlineCompletionEvent): Boolean = true
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
-    return InlineCompletionSuggestion.build {
+    return InlineCompletionSuggestion {
       variant {
         emit(InlineCompletionGrayTextElement("element"))
         throw IllegalStateException("expected error")

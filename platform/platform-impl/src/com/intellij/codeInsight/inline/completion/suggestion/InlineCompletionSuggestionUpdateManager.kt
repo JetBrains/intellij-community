@@ -5,7 +5,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater.UpdateResult.*
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.*
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  * * If the currently displayed variant was emptied (it contains no elements after update), then the current session would be cleared.
  * * If the variant, that's not currently displayed, was emptied, then the variant would be invalidated but session would not.
  */
-interface InlineCompletionEventBasedSuggestionUpdater {
+interface InlineCompletionSuggestionUpdateManager {
 
   /**
    * Updates the inline completion suggestions based on a given event and variant.
@@ -64,7 +64,7 @@ interface InlineCompletionEventBasedSuggestionUpdater {
     data object Invalidated : UpdateResult
   }
 
-  interface Adapter : InlineCompletionEventBasedSuggestionUpdater {
+  interface Adapter : InlineCompletionSuggestionUpdateManager {
 
     override fun update(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       return when (event) {
@@ -77,31 +77,23 @@ interface InlineCompletionEventBasedSuggestionUpdater {
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onDocumentChange(event: InlineCompletionEvent.DocumentChange, variant: InlineCompletionVariant.Snapshot): UpdateResult {
-      return Invalidated
-    }
+    fun onDocumentChange(event: InlineCompletionEvent.DocumentChange, variant: InlineCompletionVariant.Snapshot): UpdateResult = Invalidated
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onDirectCall(event: InlineCompletionEvent.DirectCall, variant: InlineCompletionVariant.Snapshot): UpdateResult {
-      return Same
-    }
+    fun onDirectCall(event: InlineCompletionEvent.DirectCall, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onLookupEvent(event: InlineCompletionEvent.InlineLookupEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult {
-      return Same
-    }
+    fun onLookupEvent(event: InlineCompletionEvent.InlineLookupEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): Same {
-      return Same
-    }
+    fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): Same = Same
   }
 
   /**
-   * A default implementation of the [InlineCompletionEventBasedSuggestionUpdater] interface.
+   * A default implementation of the [InlineCompletionSuggestionUpdateManager] interface.
    * This implementation specializes in handling [InlineCompletionEvent.DocumentChange] events
    * with a typing event of type [TypingEvent.OneSymbol].
    *

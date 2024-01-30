@@ -53,7 +53,7 @@ sealed class InlineCompletionEventType {
    * * A variant is actually switched using `InlineCompletionSession` (e.g. using shortcuts or UI). Then [explicit] is `true`.
    * * A variant is switched because a currently used variant was computed and turned out to be empty. It happens only
    * for the prefix of the variants until one of them is non-empty. Then [explicit] is `false`.
-   * * A currently used variant was invalidated via `InlineCompletionEventBasedSuggestionUpdater`. Then [explicit] is `false`.
+   * * A currently used variant was invalidated via `InlineCompletionSuggestionUpdateManager`. Then [explicit] is `false`.
    */
   class VariantSwitched @ApiStatus.Internal constructor(
     val fromVariantIndex: Int,

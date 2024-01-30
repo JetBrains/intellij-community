@@ -28,7 +28,7 @@ interface InlineCompletionVariant {
 
   /**
    * [UserDataHolderBase] associated with the variant.
-   * It can be accessed via [InlineCompletionSession.capture] or [InlineCompletionEventBasedSuggestionUpdater].
+   * It can be accessed via [InlineCompletionSession.capture] or [InlineCompletionSuggestionUpdateManager].
    *
    * Also, if this variant is currently used, the data is synced with [InlineCompletionSession.context].
    */
@@ -42,7 +42,7 @@ interface InlineCompletionVariant {
 
   /**
    * Represents information about a variant at some point of time. Actively used in [InlineCompletionSession.capture] and
-   * [InlineCompletionEventBasedSuggestionUpdater].
+   * [InlineCompletionSuggestionUpdateManager].
    *
    * It is valid only at the time you receive it on EDT. It is not invalidated automatically, so you should not store snapshots.
    *
@@ -68,7 +68,7 @@ interface InlineCompletionVariant {
      */
     val isActive: Boolean,
     /**
-     * Whether the variant is being computed, already computed, invalidated by [InlineCompletionEventBasedSuggestionUpdater] or untouched.
+     * Whether the variant is being computed, already computed, invalidated by [InlineCompletionSuggestionUpdateManager] or untouched.
      * 'Untouched' means that it didn't start computing.
      */
     val state: State

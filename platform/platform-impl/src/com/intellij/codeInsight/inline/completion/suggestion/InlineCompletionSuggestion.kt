@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.FlowCollector
  * The flow of suggestion is as follows:
  * * The [InlineCompletionHandler] asks a provider all the variants via [getVariants].
  * * After that, it starts computing them **one by one** (at least for now) on the background thread.
- * * If some event happens during presence of [InlineCompletionSuggestion], [InlineCompletionEventBasedSuggestionUpdater] is used.
+ * * If some event happens during presence of [InlineCompletionSuggestion], [InlineCompletionSuggestionUpdateManager] is used.
  * * There is a limitation to the number of variants: [MAX_VARIANTS_NUMBER].
  *
  * @see InlineCompletionVariant

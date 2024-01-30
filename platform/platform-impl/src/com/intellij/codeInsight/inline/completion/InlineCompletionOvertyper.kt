@@ -6,8 +6,8 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionEleme
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater.UpdateResult
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -29,9 +29,9 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
  * @see InlineCompletionProvider.overtyper
  * @see InlineCompletionElementManipulator
  */
-@Deprecated(message = "Directly use InlineCompletionEventBasedSuggestionUpdater")
+@Deprecated(message = "Directly use InlineCompletionSuggestionUpdateManager")
 @ScheduledForRemoval
-interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdater.Adapter {
+interface InlineCompletionOvertyper : InlineCompletionSuggestionUpdateManager.Adapter {
 
   // Back compatibility
   override fun onDocumentChange(
@@ -75,7 +75,7 @@ interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdate
   class UpdatedElements(val elements: List<InlineCompletionElement>, val overtypedLength: Int)
 
 
-  @Deprecated(message = "Use InlineCompletionEventBasedSuggestionUpdater.Adapter")
+  @Deprecated(message = "Use InlineCompletionSuggestionUpdateManager.Adapter")
   @ScheduledForRemoval
   abstract class Adapter : InlineCompletionOvertyper {
     override fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements? {
@@ -119,18 +119,18 @@ interface InlineCompletionOvertyper : InlineCompletionEventBasedSuggestionUpdate
  *
  * @see InlineCompletionElementManipulator
  */
-@Deprecated(message = "Use InlineCompletionEventBasedSuggestionUpdater.Default")
+@Deprecated(message = "Use InlineCompletionSuggestionUpdateManager.Default")
 @ScheduledForRemoval
 open class DefaultInlineCompletionOvertyper : InlineCompletionOvertyper.Adapter() {
 
-  private val suggestionUpdater
-    get() = InlineCompletionEventBasedSuggestionUpdater.Default.INSTANCE
+  private val suggestionUpdateManager
+    get() = InlineCompletionSuggestionUpdateManager.Default.INSTANCE
 
   override fun onOneSymbol(context: InlineCompletionContext, typing: TypingEvent.OneSymbol): UpdatedElements? {
     val event = InlineCompletionEvent.DocumentChange(typing, context.editor)
     val elements = context.state.elements.map { it.element }
     val variant = checkNotNull(InlineCompletionSession.getOrNull(context.editor)?.capture()).variants.first { it.isActive }
-    return when (val result = suggestionUpdater.update(event, variant)) {
+    return when (val result = suggestionUpdateManager.update(event, variant)) {
       is UpdateResult.Changed -> UpdatedElements(result.snapshot.elements, 0)
       UpdateResult.Invalidated -> null
       UpdateResult.Same -> UpdatedElements(elements, 0)

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.inline.completion.suggestion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater.UpdateResult
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantState.Status
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.UserDataHolderBase
@@ -28,7 +28,7 @@ internal interface InlineCompletionVariantsProvider : Disposable {
 
   @RequiresEdt
   @RequiresBlockingContext
-  fun update(updater: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean
+  fun update(updateManager: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean
 }
 
 internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructor(
@@ -68,7 +68,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     return variantsStates.indices.map { getSnapshot(it) }
   }
 
-  override fun update(updater: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean {
+  override fun update(updateManager: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
 
     var currentVariantResult: UpdateResult? = null
@@ -79,7 +79,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
       }
 
       val snapshot = getSnapshot(index)
-      val updated = updater(snapshot)
+      val updated = updateManager(snapshot)
       if (currentVariant.index == index) {
         currentVariantResult = updated
       }

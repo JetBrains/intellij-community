@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.FlowCollector
 import java.util.concurrent.atomic.AtomicBoolean
 
 @DslMarker
-private annotation class InlineCompletionSuggestionDsl
+private annotation class InlineCompletionSuggestionDslMarker
 
 /**
  * Used to conveniently build [InlineCompletionSuggestion].
@@ -16,7 +16,7 @@ private annotation class InlineCompletionSuggestionDsl
  *
  * Example:
  * ```kotlin
- * return InlineCompletionSuggestion.build {
+ * return InlineCompletionSuggestion {
  *  variant { data ->
  *    data.putUserData(...)
  *    emit(...)
@@ -27,10 +27,12 @@ private annotation class InlineCompletionSuggestionDsl
  *  }
  * }
  * ```
+ *
+ * @see InlineCompletionSuggestion.Companion.invoke
  */
 sealed interface InlineCompletionSuggestionBuilder {
 
-  @InlineCompletionSuggestionDsl
+  @InlineCompletionSuggestionDslMarker
   suspend fun variant(
     data: UserDataHolderBase = UserDataHolderBase(),
     buildElements: suspend FlowCollector<InlineCompletionElement>.(data: UserDataHolderBase) -> Unit
@@ -60,7 +62,7 @@ private class InlineCompletionSuggestionBuilderImpl : InlineCompletionSuggestion
   }
 }
 
-suspend fun InlineCompletionSuggestion.Companion.build(
+suspend operator fun InlineCompletionSuggestion.Companion.invoke(
   block: suspend InlineCompletionSuggestionBuilder.() -> Unit
 ): InlineCompletionSuggestion {
   return InlineCompletionSuggestionBuilderImpl().apply { block() }.build()

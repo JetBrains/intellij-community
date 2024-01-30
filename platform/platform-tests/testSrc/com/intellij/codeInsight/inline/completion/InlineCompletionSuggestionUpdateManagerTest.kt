@@ -2,11 +2,11 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
-import com.intellij.codeInsight.inline.completion.suggestion.build
+import com.intellij.codeInsight.inline.completion.suggestion.invoke
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Key
 import org.junit.Test
@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletionTestCase() {
+internal class InlineCompletionSuggestionUpdateManagerTest : InlineCompletionTestCase() {
 
   @Test
   fun `test custom over typing`() = myFixture.testInlineCompletion {
@@ -22,7 +22,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
 
     // Doubles inline completion elements after each typing
     // Also, records number of elements to [key]
-    val updater = object : InlineCompletionEventBasedSuggestionUpdater.Adapter {
+    val updateManager = object : InlineCompletionSuggestionUpdateManager.Adapter {
       override fun onDocumentChange(
         event: InlineCompletionEvent.DocumentChange,
         variant: InlineCompletionVariant.Snapshot
@@ -33,7 +33,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
       }
     }
     val provider = object : InlineCompletionProviderBase("1") {
-      override val suggestionUpdater = updater
+      override val suggestionUpdateManager = updateManager
     }
     InlineCompletionHandler.registerTestHandler(provider, testRootDisposable)
 
@@ -58,7 +58,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
   @Test
   fun `test update on lookup events`() = myFixture.testInlineCompletion {
     // Changes inline completion element to 'provided prefix + item string'
-    val updater = object : InlineCompletionEventBasedSuggestionUpdater.Adapter {
+    val updateManager = object : InlineCompletionSuggestionUpdateManager.Adapter {
       override fun onLookupEvent(
         event: InlineCompletionEvent.InlineLookupEvent,
         variant: InlineCompletionVariant.Snapshot
@@ -73,7 +73,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
       }
     }
     val provider = object : InlineCompletionProviderBase("inline is ") {
-      override val suggestionUpdater = updater
+      override val suggestionUpdateManager = updateManager
     }
     InlineCompletionHandler.registerTestHandler(provider, testRootDisposable)
 
@@ -99,7 +99,7 @@ internal class InlineCompletionEventBasedSuggestionUpdaterTest : InlineCompletio
     override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
 
     override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
-      return InlineCompletionSuggestion.build {
+      return InlineCompletionSuggestion {
         variants.forEach {
           variant { _ ->
             emit(InlineCompletionGrayTextElement(it))

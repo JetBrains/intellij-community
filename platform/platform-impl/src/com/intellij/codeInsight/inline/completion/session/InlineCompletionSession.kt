@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsProvider
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionJob
@@ -126,7 +126,7 @@ class InlineCompletionSession private constructor(
 
   @RequiresEdt
   internal fun update(
-    updater: (InlineCompletionVariant.Snapshot) -> InlineCompletionEventBasedSuggestionUpdater.UpdateResult
+    updater: (InlineCompletionVariant.Snapshot) -> InlineCompletionSuggestionUpdateManager.UpdateResult
   ): Boolean {
     check(isActive())
     return checkNotNull(variantsProvider).update(updater)

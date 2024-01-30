@@ -427,7 +427,7 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
       override val overtyper = overtyper
       override fun isEnabled(event: InlineCompletionEvent): Boolean = true
-      override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSuggestion.build {
+      override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSuggestion {
         variant {
           emit(InlineCompletionGrayTextElement("ab"))
           emit(InlineCompletionGrayTextElement("bcd"))
@@ -497,25 +497,25 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
   
   @Test
   fun `test events for custom event handling`() = testListener { 
-    val updater = object : InlineCompletionEventBasedSuggestionUpdater.Adapter {
+    val updateManager = object : InlineCompletionSuggestionUpdateManager.Adapter {
       override fun onLookupEvent(
         event: InlineCompletionEvent.InlineLookupEvent,
         variant: InlineCompletionVariant.Snapshot
-      ): InlineCompletionEventBasedSuggestionUpdater.UpdateResult {
-        val itemString = event.event.item?.lookupString ?: return InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Same
+      ): InlineCompletionSuggestionUpdateManager.UpdateResult {
+        val itemString = event.event.item?.lookupString ?: return InlineCompletionSuggestionUpdateManager.UpdateResult.Same
         if (event !is InlineCompletionEvent.LookupChange || !variant.isActive) {
-          return InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Same
+          return InlineCompletionSuggestionUpdateManager.UpdateResult.Same
         }
         val snapshot = variant.copy(variant.elements.dropLast(1) + InlineCompletionGrayTextElement(itemString))
-        return InlineCompletionEventBasedSuggestionUpdater.UpdateResult.Changed(snapshot)
+        return InlineCompletionSuggestionUpdateManager.UpdateResult.Changed(snapshot)
       }
     }
     val provider = object : InlineCompletionProvider {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
-      override val suggestionUpdater = updater
+      override val suggestionUpdateManager = updateManager
       override fun isEnabled(event: InlineCompletionEvent): Boolean = true
       override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
-        return InlineCompletionSuggestion.build {
+        return InlineCompletionSuggestion {
           variant {
             emit(InlineCompletionGrayTextElement("first: "))
             emit(InlineCompletionGrayTextElement("some value"))

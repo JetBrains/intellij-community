@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion.session
 import com.intellij.codeInsight.inline.completion.DefaultInlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -79,25 +79,25 @@ internal abstract class InlineCompletionSessionManager {
     val provider = session.provider
     val overtyper = provider.overtyper
     // Preserving back compatibility
-    val updater = if (overtyper::class != DefaultInlineCompletionOvertyper::class) overtyper else provider.suggestionUpdater
-    return updateSession(session, updater, request)
+    val updateManager = if (overtyper::class != DefaultInlineCompletionOvertyper::class) overtyper else provider.suggestionUpdateManager
+    return updateSession(session, updateManager, request)
   }
 
   private fun updateSession(
     session: InlineCompletionSession,
-    suggestionUpdater: InlineCompletionEventBasedSuggestionUpdater,
+    suggestionUpdateManager: InlineCompletionSuggestionUpdateManager,
     request: InlineCompletionRequest
   ): UpdateSessionResult {
     val event = request.event
 
     if (!session.isActive()) { // variants are not provided yet
-      return when (suggestionUpdater.updateWhileNoVariants(event)) {
+      return when (suggestionUpdateManager.updateWhileNoVariants(event)) {
         true -> UpdateSessionResult.Succeeded
         false -> UpdateSessionResult.Invalidated
       }
     }
 
-    val success = session.update { variant -> suggestionUpdater.update(event, variant) }
+    val success = session.update { variant -> suggestionUpdateManager.update(event, variant) }
     if (!success) {
       return UpdateSessionResult.Invalidated
     }

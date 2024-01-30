@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
-import com.intellij.codeInsight.inline.completion.suggestion.build
+import com.intellij.codeInsight.inline.completion.suggestion.invoke
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Key
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +24,7 @@ internal class InlineCompletionDeprecatedTest : InlineCompletionTestCase() {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
       override val overtyper = overtyper
       override fun isEnabled(event: InlineCompletionEvent): Boolean = true
-      override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSuggestion.build {
+      override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSuggestion {
         variant {
           emit(InlineCompletionGrayTextElement("abcd"))
           emit(InlineCompletionGrayTextElement("efgh"))

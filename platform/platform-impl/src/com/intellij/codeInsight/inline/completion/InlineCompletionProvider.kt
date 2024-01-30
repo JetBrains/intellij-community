@@ -4,8 +4,8 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionEventBasedSuggestionUpdater
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
  *   - If some event requires hiding of shown elements, implement [restartOn]
  *   - If you need to do something specific after insertion of provided elements, provide custom [InlineCompletionInsertHandler]
- *   - If some elements are rendered and a user types a new symbol, [suggestionUpdater] is used to update rendered elements.
+ *   - If some elements are rendered and a user types a new symbol, [suggestionUpdateManager] is used to update rendered elements.
  *
  * If you need custom logic, like invoking completion, getting current state or listen for events:
  * - [InlineCompletionHandler] for everything related to actions with inline completion, adding listeners, ect (get for editor via [InlineCompletion.getHandlerOrNull])
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
  * @see InlineCompletionInsertHandler
- * @see InlineCompletionEventBasedSuggestionUpdater
+ * @see InlineCompletionSuggestionUpdateManager
  * @see InlineCompletionProviderPresentation
  */
 interface InlineCompletionProvider {
@@ -102,22 +102,22 @@ interface InlineCompletionProvider {
    * @see InlineCompletionOvertyper
    */
   @Deprecated(
-    message = "Use InlineCompletionEventBasedSuggestionUpdater",
-    replaceWith = ReplaceWith("suggestionUpdater")
+    message = "Use InlineCompletionSuggestionUpdateManager",
+    replaceWith = ReplaceWith("suggestionUpdateManager")
   )
   val overtyper: InlineCompletionOvertyper
     @ApiStatus.ScheduledForRemoval
-    @Deprecated(message = "Use InlineCompletionEventBasedSuggestionUpdater")
+    @Deprecated(message = "Use InlineCompletionSuggestionUpdateManager")
     get() = DefaultInlineCompletionOvertyper()
 
   /**
    * Reacts on [InlineCompletionEvent] while a session exists and update the current suggestions.
    *
    * **Since previously there was [overtyper], this property is used if you haven't overridden [overtyper]**.
-   * @see InlineCompletionEventBasedSuggestionUpdater
+   * @see InlineCompletionSuggestionUpdateManager
    */
-  val suggestionUpdater: InlineCompletionEventBasedSuggestionUpdater
-    get() = InlineCompletionEventBasedSuggestionUpdater.Default.INSTANCE
+  val suggestionUpdateManager: InlineCompletionSuggestionUpdateManager
+    get() = InlineCompletionSuggestionUpdateManager.Default.INSTANCE
 
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")
