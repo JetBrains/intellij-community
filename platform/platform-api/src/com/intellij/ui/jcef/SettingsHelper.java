@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 final class SettingsHelper {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
@@ -72,7 +73,7 @@ final class SettingsHelper {
       if (SystemInfoRt.isWindows) {
         String sandboxPtr = System.getProperty("jcef.sandbox.ptr");
         if (sandboxPtr != null && !sandboxPtr.trim().isEmpty()) {
-          if (isSandboxSupported())
+          if (isSandboxSupported() && checkWinLauncherCefVersion())
             settings.browser_subprocess_path = "";
           else {
             LOG.info("JCEF-sandbox was disabled because current jcef version doesn't support sandbox");
@@ -335,5 +336,40 @@ final class SettingsHelper {
       return false;
     }
     return version.cefVersion.major >= 104 && version.apiVersion.minor >= 9;
+  }
+
+  private static boolean checkWinLauncherCefVersion() {
+    // a string like "119.4.7+g55e15c8+chromium-119.0.6045.199"
+    String launcherCefVersion = System.getProperty("jcef.sandbox.cefVersion");
+    if (launcherCefVersion == null) {
+      LOG.error("The launcher cef version is unknown");
+      return false;
+    }
+
+    String cefVersion;
+    try {
+      JCefVersionDetails version = JCefAppConfig.getVersionDetails();
+      cefVersion = "%d.%d.%d+g%s+chromium-%d.%d.%d.%d".formatted(
+        version.cefVersion.major,
+        version.cefVersion.api,
+        version.cefVersion.patch,
+        version.cefVersion.commitHash,
+        version.chromiumVersion.major,
+        version.chromiumVersion.minor,
+        version.chromiumVersion.build,
+        version.chromiumVersion.patch
+      );
+    }
+    catch (Throwable e) {
+      LOG.error("JCEF runtime version is not available");
+      return false;
+    }
+
+    if (!cefVersion.equals(launcherCefVersion)) {
+      LOG.warn("CEF version " + cefVersion + " doesn't match the launcher version " + launcherCefVersion);
+      return false;
+    }
+
+    return true;
   }
 }
