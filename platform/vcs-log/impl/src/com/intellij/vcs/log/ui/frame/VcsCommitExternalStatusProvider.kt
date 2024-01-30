@@ -30,9 +30,6 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
   @get:NonNls
   val id: String
 
-  /**
-   * Must be disposed when the list of EPs is changed
-   */
   @RequiresEdt
   fun createLoader(project: Project): VcsCommitsDataLoader<T>
 
@@ -63,6 +60,8 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
      */
     @RequiresEdt
     protected abstract fun getExternalStatusColumnService(): VcsLogExternalStatusColumnService<T>
+
+    final override fun createLoader(project: Project): VcsCommitsDataLoader<T> = getExternalStatusColumnService().getDataLoader(project)
 
     /**
      * Value that will be passed to a renderer when the table cell is empty or when an exception happens when calculating the status

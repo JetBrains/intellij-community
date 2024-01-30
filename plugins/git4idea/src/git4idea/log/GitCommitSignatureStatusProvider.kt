@@ -27,12 +27,6 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
   override val isColumnEnabledByDefault = false
   override val columnName = GitBundle.message("column.name.commit.signature")
 
-  override fun createLoader(project: Project): VcsCommitsDataLoader<GitCommitSignature> {
-    val loader = if (SystemInfo.isWindows) NonCancellableGitCommitSignatureLoader(project)
-    else SimpleGitCommitSignatureLoader(project)
-    return service<GitCommitSignatureLoaderSharedCache>().wrapWithCaching(loader)
-  }
-
   override fun getPresentation(project: Project, status: GitCommitSignature): VcsCommitExternalStatusPresentation.Signature =
     GitCommitSignatureStatusPresentation(status)
 
@@ -97,5 +91,9 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
 
 @Service(Service.Level.APP)
 internal class GitCommitSignatureColumnService(override val scope: CoroutineScope) : VcsLogExternalStatusColumnService<GitCommitSignature>() {
-  override fun getDataLoader(project: Project) = GitCommitSignatureStatusProvider().createLoader(project)
+  override fun getDataLoader(project: Project): VcsCommitsDataLoader<GitCommitSignature> {
+    val loader = if (SystemInfo.isWindows) NonCancellableGitCommitSignatureLoader(project)
+    else SimpleGitCommitSignatureLoader(project)
+    return service<GitCommitSignatureLoaderSharedCache>().wrapWithCaching(loader)
+  }
 }
