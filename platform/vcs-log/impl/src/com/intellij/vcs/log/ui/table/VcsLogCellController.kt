@@ -1,21 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.ui.table;
+package com.intellij.vcs.log.ui.table
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.awt.Cursor
+import java.awt.event.MouseEvent
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
+interface VcsLogCellController {
+  fun performMouseClick(row: Int, e: MouseEvent): Cursor?
 
-public interface VcsLogCellController {
+  fun performMouseMove(row: Int, e: MouseEvent): Cursor?
 
-  @Nullable
-  Cursor performMouseClick(int row, @NotNull MouseEvent e);
-
-  @Nullable
-  Cursor performMouseMove(int row, @NotNull MouseEvent e);
-
-  default boolean shouldSelectCell(int row, @NotNull MouseEvent e) {
-    return false;
+  fun shouldSelectCell(row: Int, e: MouseEvent): Boolean {
+    return false
   }
 }
