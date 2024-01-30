@@ -79,7 +79,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
     assertModules("project", "m1")
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:2.0")
   }
