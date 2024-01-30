@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -342,8 +341,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public void triggerPresentationUpdate() {
-    CoverageDataAnnotationsManager.getInstance(myProject).update();
-    UIUtil.invokeLaterIfNeeded(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> CoverageDataAnnotationsManager.getInstance(myProject).update());
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       ProjectView.getInstance(myProject).refresh();
     });

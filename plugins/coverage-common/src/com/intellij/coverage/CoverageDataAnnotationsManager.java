@@ -17,6 +17,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -67,6 +68,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
     });
   }
 
+  @RequiresBackgroundThread
   public synchronized void update() {
     if (CoverageDataManager.getInstance(myProject).activeSuites().isEmpty()) return;
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
