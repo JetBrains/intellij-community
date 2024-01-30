@@ -294,16 +294,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    fixture.saveText(projectPom,
-                     """
-                         <project>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                           <<error><</error>/project>
-                         """.trimIndent())
-    checkHighlighting()
+    checkHighlighting(projectPom, Highlight(text = "<"))
   }
 
   @Test
