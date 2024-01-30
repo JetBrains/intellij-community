@@ -371,23 +371,14 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       @Language("CSS") String input =
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "pre {white-space: pre-wrap}" +  // supported by JetBrains Runtime
-        "h1, h2, h3, h4, h5, h6 {margin-top: 0; padding-top: 1}" +
         "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
-        "p {padding: 7 0 2 0}" +
-        "ol {padding: 0 20 0 0}" +
-        "ul {padding: 0 20 0 0}" +
-        "li {padding: 1 0 2 0}" +
-        "li p {padding-top: 0}" +
-        "table p {padding-bottom: 0}" +
-        "th {text-align: left}" +
-        "td {padding: 2 0 2 0}" +
-        "td p {padding-top: 0}" +
         ".sections {border-spacing: 0}" +
         ".section {padding-right: 5; white-space: nowrap}" +
         ".content {padding: 2 0 2 0}" +
         (useTipsKit ? createAdditionalStylesForTips(editor) : "") +
         StringUtil.join(QuickDocHighlightingHelper.getDefaultDocCodeStyles(
-          colorsScheme, colorsScheme.getDefaultBackground()), "\n");
+          colorsScheme, colorsScheme.getDefaultBackground()), "\n") +
+        StringUtil.join(QuickDocHighlightingHelper.getDefaultFormattingStyles(), "\n");
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
       if (!useTipsKit) {
         ourCachedStyleSheet = result;
