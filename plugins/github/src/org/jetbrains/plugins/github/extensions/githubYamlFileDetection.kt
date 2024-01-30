@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -23,49 +22,22 @@ fun isGithubActionsFile(psiFile: PsiFile?): Boolean {
   psiFile ?: return false
   return CachedValuesManager.getCachedValue(psiFile) {
     CachedValueProvider.Result.create(
-      isGithubActionFileInner(psiFile) || isGithubWorkflowFileInner(psiFile),
+      isGithubActionFile(psiFile) || isGithubWorkflowFile(psiFile),
       psiFile.manager.modificationTracker.forLanguage(YAMLLanguage.INSTANCE)
     )
   }
 }
 
-private fun isGithubActionFileInner(psiFile: PsiFile): Boolean {
-  return githubActionsFilePattern.matchesFromLeafUp(psiFile) && psiFile.language.`is` (YAMLLanguage.INSTANCE)
+fun isGithubActionFile(psiFile: PsiFile): Boolean {
+  return psiFile.language.`is` (YAMLLanguage.INSTANCE) && githubActionsFilePattern.matches(psiFile.virtualFile.path)
 }
 
-private fun isGithubWorkflowFileInner(psiFile: PsiFile): Boolean {
-  return githubWorkflowsFilePattern.matchesFromLeafUp(psiFile) && psiFile.language.`is` (YAMLLanguage.INSTANCE)
+fun isGithubWorkflowFile(psiFile: PsiFile): Boolean {
+  return psiFile.language.`is` (YAMLLanguage.INSTANCE) && githubWorkflowsFilePattern.matches(psiFile.virtualFile.path)
 }
 
-private val githubActionsFilePattern = RelativeFilePathPattern(
-  FileSystemItemPattern("\\.github"),
-  FileSystemItemPattern("(.)+"),
-  FileSystemItemPattern("(.)+"),//Action name
-  FileSystemItemPattern("action.ya?ml")
-)
+private val githubActionsFilePattern =
+  Regex(StringUtil.newBombedCharSequence("""^.*/\.github/.*/action\.ya?ml${'$'}""", 1000L).toString())
 
-private val githubWorkflowsFilePattern = RelativeFilePathPattern(
-  FileSystemItemPattern("\\.github"),
-  FileSystemItemPattern("workflows"),
-  FileSystemItemPattern("(.)+.ya?ml")
-)
-
-
-private class FileSystemItemPattern(vararg expectedNames: String) {
-  private val expectedNames = expectedNames.toSet().map { Regex(StringUtil.newBombedCharSequence(it, 1000L).toString()) }
-
-  fun matches(node: PsiFileSystemItem): Boolean {
-    return expectedNames.all{ it.matches(node.name)}
-  }
-}
-
-private class RelativeFilePathPattern(vararg expectedItems: FileSystemItemPattern) {
-  private val expectedItems = expectedItems.reversed()
-
-  fun matchesFromLeafUp(leafItem: PsiFileSystemItem?): Boolean {
-    return expectedItems.asSequence()
-      .zip(generateSequence(leafItem, PsiFileSystemItem::getParent))
-      .map { (pattern, item) -> pattern.matches(item) }
-      .all { it }
-  }
-}
+private val githubWorkflowsFilePattern =
+  Regex(StringUtil.newBombedCharSequence("""^.*/\.github/workflows/.*\.(ya?ml)${'$'}""", 1000L).toString())
