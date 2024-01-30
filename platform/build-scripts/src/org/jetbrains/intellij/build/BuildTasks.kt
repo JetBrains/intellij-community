@@ -21,7 +21,7 @@ interface BuildTasks {
 
   fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
     runBlocking {
-      zipSourcesOfModules(modules, targetFile, includeLibraries = false)
+      zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = false)
     }
   }
 
@@ -30,8 +30,6 @@ interface BuildTasks {
    * files accordingly to [ProductProperties.productLayout], and creating distributions and installers for all OS.
    */
   suspend fun buildDistributions()
-
-  suspend fun compileModulesFromProduct()
 
   /**
    * Compiles required modules and builds zip archives of the specified plugins in [artifacts][BuildPaths.artifactDir]/&lt;product-code&gt;-plugins
