@@ -35,7 +35,7 @@ class BlockTerminalController(
 
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
-    outputController.startCommandBlock(command = null, promptText = null)
+    outputController.startCommandBlock(command = null, prompt = null)
     promptController.promptIsVisible = false
     session.model.isCommandRunning = true
   }
@@ -54,7 +54,7 @@ class BlockTerminalController(
   }
 
   private fun startCommand(command: String) {
-    outputController.startCommandBlock(command, promptText = promptController.promptText)
+    outputController.startCommandBlock(command, promptController.promptRenderingInfo)
     // Hide the prompt with delay, so it will be possible to cancel hide request if command is extra fast.
     // And there will be no blinking of prompt in this case.
     promptVisibilityAlarm.addRequest(Runnable {

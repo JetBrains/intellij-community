@@ -3,14 +3,12 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
@@ -47,11 +45,10 @@ class TerminalPromptView(
   init {
     val editorTextField = createPromptTextField(session)
     editor = editorTextField.getEditor(true) as EditorImpl
-    controller = TerminalPromptController(project, editor, session, commandExecutor)
+    controller = TerminalPromptController(editor, session, commandExecutor)
     controller.addListener(this)
 
     promptLabel = createPromptLabel()
-    promptLabel.text = controller.promptText
 
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, commandExecutor)
     commandSearchPresenter = CommandSearchPresenter(project, editor)
@@ -80,8 +77,8 @@ class TerminalPromptView(
     component.isVisible = visible
   }
 
-  override fun promptLabelChanged(newText: @NlsSafe String) {
-    runInEdt { promptLabel.text = newText }
+  override fun promptContentChanged(renderingInfo: PromptRenderingInfo) {
+    promptLabel.text = renderingInfo.text
   }
 
   override fun commandHistoryStateChanged(showing: Boolean) {

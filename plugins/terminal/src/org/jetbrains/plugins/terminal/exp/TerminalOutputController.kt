@@ -24,7 +24,7 @@ class TerminalOutputController(
   project: Project,
   private val editor: EditorEx,
   private val session: BlockTerminalSession,
-  private val settings: JBTerminalSystemSettingsProviderBase
+  private val settings: JBTerminalSystemSettingsProviderBase,
 ) : TerminalModel.TerminalListener {
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
@@ -56,13 +56,14 @@ class TerminalOutputController(
   }
 
   @RequiresEdt
-  fun startCommandBlock(command: String?, promptText: String?) {
-    val block = outputModel.createBlock(command, promptText)
+  fun startCommandBlock(command: String?, prompt: PromptRenderingInfo?) {
+    // The prompt is empty for the initial block, but better to use explicit null here
+    val block = outputModel.createBlock(command, prompt)
     if (block.withPrompt) {
-      appendLineToBlock(block, promptText!!, createPromptHighlighting(block))
+      appendLineToBlock(block, block.prompt!!.text, block.prompt.highlightings)
     }
     if (block.withCommand) {
-      appendLineToBlock(block, command!!, createCommandHighlighting(block))
+      appendLineToBlock(block, command!!, listOf(createCommandHighlighting(block)))
     }
     if (block.withPrompt || block.withCommand) {
       blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
@@ -197,7 +198,7 @@ class TerminalOutputController(
           highlightings.add(0, createCommandHighlighting(block))
         }
         if (block.withPrompt) {
-          highlightings.add(0, createPromptHighlighting(block))
+          highlightings.addAll(0, block.prompt!!.highlightings)
         }
       }
     }
@@ -228,16 +229,10 @@ class TerminalOutputController(
 
   private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
 
-  private fun appendLineToBlock(block: CommandBlock, text: String, highlighting: HighlightingInfo) {
+  private fun appendLineToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>) {
     val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
-    outputModel.putHighlightings(block, existingHighlightings + highlighting)
+    outputModel.putHighlightings(block, existingHighlightings + highlightings)
     editor.document.insertString(block.endOffset, text + "\n")
-  }
-
-  /** It is implied that [CommandBlock.prompt] is not null */
-  private fun createPromptHighlighting(block: CommandBlock): HighlightingInfo {
-    val attributes = TextAttributes(TerminalUi.promptForeground, null, null, null, Font.PLAIN)
-    return HighlightingInfo(block.startOffset, block.startOffset + block.prompt!!.length, attributes)
   }
 
   /** It is implied that [CommandBlock.command] is not null */

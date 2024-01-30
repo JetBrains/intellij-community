@@ -34,15 +34,23 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun createBlock(command: String?, directory: String?): CommandBlock {
+  fun createBlock(command: String?, prompt: PromptRenderingInfo?): CommandBlock {
     closeLastBlock()
 
     if (document.textLength > 0) {
       document.insertString(document.textLength, "\n")
     }
-    val marker = document.createRangeMarker(document.textLength, document.textLength)
+    val startOffset = document.textLength
+    val marker = document.createRangeMarker(startOffset, startOffset)
     marker.isGreedyToRight = true
-    val block = CommandBlock(command, directory, marker)
+
+    val adjustedPrompt = prompt?.let { p ->
+      val highlightings = p.highlightings.map {
+        HighlightingInfo(startOffset + it.startOffset, startOffset + it.endOffset, it.textAttributes)
+      }
+      PromptRenderingInfo(p.text, highlightings)
+    }
+    val block = CommandBlock(command, adjustedPrompt, marker)
     blocks.add(block)
     return block
   }
@@ -199,18 +207,18 @@ internal class AllHighlightingsSnapshot(highlightings: List<HighlightingInfo>) {
   }
 }
 
-data class CommandBlock(val command: String?, val prompt: String?, val range: RangeMarker) {
+data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, val range: RangeMarker) {
   val startOffset: Int
     get() = range.startOffset
   val endOffset: Int
     get() = range.endOffset
   val commandStartOffset: Int
-    get() = range.startOffset + if (withPrompt) prompt!!.length + 1 else 0
+    get() = range.startOffset + if (withPrompt) prompt!!.text.length + 1 else 0
   val outputStartOffset: Int
     get() = commandStartOffset + if (withCommand) command!!.length + 1 else 0
   val textRange: TextRange
     get() = range.textRange
 
-  val withPrompt: Boolean = !prompt.isNullOrEmpty()
+  val withPrompt: Boolean = !prompt?.text.isNullOrEmpty()
   val withCommand: Boolean = !command.isNullOrEmpty()
 }
