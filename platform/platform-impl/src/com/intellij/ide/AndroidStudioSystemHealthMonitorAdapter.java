@@ -19,20 +19,21 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class AndroidStudioSystemHealthMonitorAdapter {
 
-  private static EventsListener ourListener;
-
   public static void countActionInvocation(AnAction anAction, Presentation presentation, AnActionEvent event) {
+    var ourListener = EventsListener.getInstance();
     if (ourListener != null) {
       ourListener.countActionInvocation(anAction, presentation, event);
     }
   }
 
   public static boolean handleExceptionEvent(IdeaLoggingEvent event, VMOptions.MemoryKind memoryKind) {
+    var ourListener = EventsListener.getInstance();
     if (ourListener != null) {
       return ourListener.handleExceptionEvent(event, memoryKind);
     } else {
@@ -40,14 +41,13 @@ public class AndroidStudioSystemHealthMonitorAdapter {
     }
   }
 
-  public static void registerEventsListener(@NotNull EventsListener listener) {
-    if (ourListener != null) {
-      throw new IllegalStateException("listener already registered");
-    }
-    ourListener = listener;
-  }
-
   public interface EventsListener {
+
+    @SuppressWarnings("IncorrectServiceRetrieving") // EventsListener is registered elsewhere (in the Android plugin).
+    private static EventsListener getInstance() {
+      return ApplicationManager.getApplication().getService(EventsListener.class);
+    }
+
     void countActionInvocation(AnAction aClass, Presentation presentation, AnActionEvent event);
 
     boolean handleExceptionEvent(IdeaLoggingEvent event, VMOptions.MemoryKind memoryKind);
