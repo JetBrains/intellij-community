@@ -131,6 +131,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
       * tags1 <unknownTag>this<unknownTag>is</unknownTag>unknown</unknownTag >
       * tags2 <unknown1>one<unknown2>unknown<unknown1>unknown</unknown2> two<p/> three<unknown1/> four</unknown1>
       * {@link #unknown} is unknown.
+      * {@snippet :
+      *   int foo = 1;
+      * }
       * @param foo the text without the parameter name
       * @return the offset of {@link #bar} in something
       * @throws Exception when something happens
