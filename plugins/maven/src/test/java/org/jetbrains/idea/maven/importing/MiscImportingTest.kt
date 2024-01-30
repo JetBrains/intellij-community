@@ -252,7 +252,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                       <artifactId>m2</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
@@ -297,7 +297,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
           }
         }
       })
-    importProjectAsync()
+    updateAllProjects()
     assertEquals(setOf("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl"), changeLog)
   }
 
