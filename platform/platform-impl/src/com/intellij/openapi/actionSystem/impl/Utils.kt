@@ -623,7 +623,8 @@ object Utils {
 
   private fun reportInvisibleMenuItem(action: AnAction, place: String) {
     val operationName = operationName(action, null, place)
-    LOG.error("Invisible menu item for $operationName")
+    LOG.error("Invisible menu item for $operationName" +
+              ". Most probably caused by async presentation updates that must be avoided")
   }
 
   @JvmStatic
