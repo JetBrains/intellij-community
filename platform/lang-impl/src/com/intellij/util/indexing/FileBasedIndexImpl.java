@@ -618,6 +618,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           // some deleted files were already saved to project queues and saved to disk during project closing
           // we need to read them to avoid false-positive errors in checkIndexForStaleRecords
           readAllProjectDirtyFilesQueues(allStaleIds);
+          allStaleIds.addAll(getChangedFilesCollector().getDirtyFilesWithoutProject());
 
           UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
           if (index != null) {
