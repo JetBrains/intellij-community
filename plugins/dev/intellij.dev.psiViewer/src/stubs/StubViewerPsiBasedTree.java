@@ -115,7 +115,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     toolbar.setTargetComponent(splitter);
 
     BorderLayoutPanel panel = new BorderLayoutPanel();
-    panel.addToCenter(splitter).addToRight(toolbar).setBorder(IdeBorderFactory.createBorder());
+    panel.addToCenter(splitter).addToRight(toolbar);
 
     initTree(myStubTree);
     myPanel = panel;
