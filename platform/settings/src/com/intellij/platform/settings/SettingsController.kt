@@ -29,16 +29,9 @@ interface SettingsController {
   fun release()
 }
 
+@Internal
 @JvmInline
 value class GetResult<out T : Any?> @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
-  val isResolved: Boolean
-    get() = value !is Inapplicable
-
-  @Suppress("UNCHECKED_CAST")
-  fun get(): T? = if (value is Inapplicable) null else value as T
-
-  override fun toString(): String = if (value is Inapplicable) "Inapplicable" else "Applicable($value)"
-
   companion object {
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("success")
@@ -48,7 +41,15 @@ value class GetResult<out T : Any?> @PublishedApi internal constructor(@Publishe
     fun <T : Any> inapplicable(): GetResult<T> = GetResult(Inapplicable)
   }
 
-  internal object Inapplicable
+  val isResolved: Boolean
+    get() = value !is Inapplicable
+
+  @Suppress("UNCHECKED_CAST")
+  fun get(): T? = if (value is Inapplicable) null else value as T
+
+  override fun toString(): String = if (value is Inapplicable) "Inapplicable" else "Applicable($value)"
+
+  private object Inapplicable
 }
 
 /**
@@ -69,6 +70,8 @@ interface DelegatedSettingsController {
    */
   @Throws(ReadOnlySettingException::class)
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean
+
+  //fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean? = null
 
   fun close() {
   }

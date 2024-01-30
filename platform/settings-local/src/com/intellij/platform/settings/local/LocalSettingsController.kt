@@ -24,12 +24,16 @@ internal suspend fun compactCacheStore() {
 private class LocalSettingsController : DelegatedSettingsController {
   private val service = service<LocalSettingsControllerService>()
 
-  override fun <T : Any> getItem(key: SettingDescriptor<T>) = GetResult.resolved(service.getItem(key))
+  override fun <T : Any> getItem(key: SettingDescriptor<T>) = service.getItem(key)
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean {
     service.setItem(key, value)
     return false
   }
+
+  //override fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean? {
+  //  return service.hasKeyStartsWith(key)
+  //}
 
   override fun close() {
     service.storeManager.close()
@@ -42,6 +46,7 @@ private class LocalSettingsControllerService : SettingsSavingComponent {
 
   // Telemetry is not ready at this point yet
   private val cacheMap by lazy { InternalStateStorageService(storeManager.openMap("cache_v1"), telemetryScopeName = "cacheStateStorage") }
+
   private val internalMap by lazy {
     InternalStateStorageService(storeManager.openMap("internal_v1"), telemetryScopeName = "internalStateStorage")
   }
@@ -50,25 +55,44 @@ private class LocalSettingsControllerService : SettingsSavingComponent {
     storeManager.save()
   }
 
-  fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
+  fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T> {
     for (tag in key.tags) {
       if (tag is PropertyManagerAdapterTag) {
         val propertyManager = PropertiesComponent.getInstance()
         @Suppress("UNCHECKED_CAST")
-        return propertyManager.getValue(tag.oldKey) as T?
+        return GetResult.resolved(propertyManager.getValue(tag.oldKey) as T?)
       }
     }
 
-    operate(key, internalOperation = {
-      return it.getValue(key = getEffectiveKey(key), serializer = key.serializer, pluginId = key.pluginId)
+    operate(key = key, internalOperation = { map, componentName ->
+      val value = map.getValue(key = getEffectiveKey(key), serializer = key.serializer, pluginId = key.pluginId)
+      if (value == null && componentName != null) {
+        if (map.map.hasKeyStartsWith("${key.pluginId.idString}.$componentName.")) {
+          return GetResult.resolved(null)
+        }
+        else {
+          return GetResult.inapplicable()
+        }
+      }
+      else {
+        return GetResult.resolved(value)
+      }
     })
 
-    return null
+    return GetResult.resolved(null)
   }
 
+  //fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean {
+  //  operate(key, internalOperation = {
+  //    return it.map.hasKeyStartsWith(getEffectiveKey(key) + ".")
+  //  })
+  //
+  //  return false
+  //}
+
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
-    operate(key, internalOperation = {
-      it.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
+    operate(key, internalOperation = { map, _ ->
+      map.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
     })
   }
 
@@ -78,13 +102,21 @@ private class LocalSettingsControllerService : SettingsSavingComponent {
 
   private fun getEffectiveKey(key: SettingDescriptor<*>): String = "${key.pluginId.idString}.${key.key}"
 
-  private inline fun  <T: Any> operate(key: SettingDescriptor<T>, internalOperation: (map: InternalStateStorageService) -> Unit) {
+  private inline fun  <T: Any> operate(key: SettingDescriptor<T>,
+                                       internalOperation: (map: InternalStateStorageService, componentName: String?) -> Unit) {
+    var componentName: String? = null
     for (tag in key.tags) {
-      if (tag is CacheTag) {
-        return internalOperation(cacheMap)
-      }
-      else if (tag is NonShareableInternalTag) {
-        return internalOperation(internalMap)
+      when (tag) {
+        is CacheTag -> {
+          return internalOperation(cacheMap, null)
+        }
+        is NonShareableInternalTag -> {
+          return internalOperation(internalMap, componentName)
+        }
+        is PersistenceStateComponentProperty -> {
+          // this tag is expected to be first
+          componentName = tag.componentName
+        }
       }
     }
 
@@ -92,6 +124,7 @@ private class LocalSettingsControllerService : SettingsSavingComponent {
   }
 }
 
+@Suppress("unused")
 private class CacheStateStorageInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
     service<LocalSettingsControllerService>().invalidateCaches()

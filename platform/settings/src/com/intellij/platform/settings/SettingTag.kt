@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConvertObjectToDataObject")
 package com.intellij.platform.settings
 
@@ -32,4 +32,8 @@ object NonShareableInternalTag : SettingTag {
 // Implementation note: stored in a system dir (see NonShareableStateTag)
 object CacheTag : SettingTag {
   override fun toString(): String = this::class.java.simpleName
+}
+
+class PersistenceStateComponentProperty(val componentName: String) : SettingTag {
+  override fun toString(): String = "PersistenceStateComponentProperty(componentName=$componentName)"
 }

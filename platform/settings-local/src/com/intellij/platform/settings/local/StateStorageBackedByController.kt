@@ -13,9 +13,7 @@ import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.settings.RawSettingSerializerDescriptor
-import com.intellij.platform.settings.SettingDescriptor
-import com.intellij.platform.settings.SettingTag
+import com.intellij.platform.settings.*
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
@@ -43,8 +41,8 @@ internal class StateStorageBackedByController(
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     when {
       stateClass === Element::class.java -> {
-        getXmlData(createSettingDescriptor(componentName))?.let {
-          return it as T
+        getXmlData(createSettingDescriptor(componentName, componentName)).takeIf { it.isResolved }?.let {
+          return it.get() as T?
         }
         oldStorage?.getJdom(componentName)?.let {
           return it as T
@@ -58,7 +56,7 @@ internal class StateStorageBackedByController(
         try {
           val beanBinding = bindingProducer.getRootBinding(stateClass) as NotNullDeserializeBinding
           if (beanBinding is KotlinxSerializationBinding) {
-            val data = controller.getItem(createSettingDescriptor(componentName))
+            val data = controller.getItem(createSettingDescriptor(componentName, componentName))
             if (data != null) {
               return cborFormat.decodeFromByteArray(beanBinding.serializer, data) as T
             }
@@ -84,7 +82,7 @@ internal class StateStorageBackedByController(
 
   private fun <T : Any> readDataForDeprecatedJdomExternalizable(componentName: String, mergeInto: T?, stateClass: Class<T>): T? {
     // we don't care about data from the old storage for deprecated JDOMExternalizable
-    val data = getXmlData(createSettingDescriptor(componentName)) ?: return mergeInto
+    val data = getXmlData(createSettingDescriptor(componentName, componentName)).get() ?: return mergeInto
     if (mergeInto != null) {
       thisLogger().error("State is ${stateClass.name}, merge into is $mergeInto, state element text is $data")
     }
@@ -100,39 +98,48 @@ internal class StateStorageBackedByController(
 
   private fun <T : Any> getXmlSerializationState(mergeInto: T?, beanBinding: NotNullDeserializeBinding, componentName: String): T? {
     var result = mergeInto
-    var hasData = false
     val bindings = (beanBinding as BeanBinding).bindings
+    val oldData by lazy { oldStorage?.get(componentName) }
+
     for ((index, binding) in bindings.withIndex()) {
-      val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}")) ?: continue
-      if (result == null) {
-        // create a result only if we have some data - do not return empty state class
-        @Suppress("UNCHECKED_CAST")
-        result = beanBinding.newInstance() as T
+      val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}", componentName))
+      if (!data.isResolved) {
+        if (oldData != null) {
+          if (result == null) {
+            // create a result only if we have some data - do not return empty state class
+            @Suppress("UNCHECKED_CAST")
+            result = beanBinding.newInstance() as T
+          }
+          BeanBinding.deserializeInto(result, oldData!!, bindings, index, index + 1)
+        }
+        continue
       }
 
-      hasData = true
-      BeanBinding.deserializeInto(result, data, null, bindings, index, index + 1)
-    }
+      val element = data.get()
+      if (element != null) {
+        if (result == null) {
+          // create a result only if we have some data - do not return empty state class
+          @Suppress("UNCHECKED_CAST")
+          result = beanBinding.newInstance() as T
+        }
 
-    if (!hasData && oldStorage != null) {
-      val oldData = oldStorage.get(componentName)
-      if (oldData != null) {
-        @Suppress("UNCHECKED_CAST")
-        result = mergeInto ?: beanBinding.newInstance() as T
-        beanBinding.deserializeInto(result, oldData)
+        BeanBinding.deserializeInto(result, element, null, bindings, index, index + 1)
       }
     }
     return result
   }
 
-  private fun getXmlData(key: SettingDescriptor<ByteArray>): Element? {
+  private fun getXmlData(key: SettingDescriptor<ByteArray>): GetResult<Element> {
     try {
-      return decodeCborToXml(controller.getItem(key) ?: return null)
+      val item = controller.doGetItem(key)
+      if (item.isResolved) {
+        return GetResult.resolved(decodeCborToXml(item.get() ?: return GetResult.resolved(null)))
+      }
     }
     catch (e: Throwable) {
       thisLogger().error("Cannot deserialize value for $key", e)
-      return null
     }
+    return if (oldStorage == null) GetResult.resolved(null) else GetResult.inapplicable()
   }
 
   override fun createSaveSessionProducer(): SaveSessionProducer {
@@ -143,11 +150,14 @@ internal class StateStorageBackedByController(
     // external change is not expected and not supported
   }
 
-  internal fun createSettingDescriptor(key: String): SettingDescriptor<ByteArray> {
+  internal fun createSettingDescriptor(key: String, componentName: String): SettingDescriptor<ByteArray> {
+    val tags = ArrayList<SettingTag>(this.tags.size + 1)
+    tags.add(PersistenceStateComponentProperty(componentName))
+    tags.addAll(this.tags)
     return SettingDescriptor(
       key = key,
       pluginId = shimPluginId,
-      tags = this.tags,
+      tags = tags,
       serializer = RawSettingSerializerDescriptor,
     )
   }
@@ -162,7 +172,7 @@ private class ControllerBackedSaveSessionProducer(
   }
 
   override fun setState(component: Any?, componentName: String, state: Any?) {
-    val settingDescriptor = storageController.createSettingDescriptor(componentName)
+    val settingDescriptor = storageController.createSettingDescriptor(componentName, componentName)
     if (state == null) {
       put(settingDescriptor, null)
       return

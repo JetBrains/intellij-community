@@ -1,4 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package com.intellij.platform.settings.local
 
 import com.intellij.diagnostic.PluginException
@@ -12,6 +14,7 @@ import com.intellij.platform.settings.RawSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingSerializerDescriptor
 import com.intellij.platform.settings.SettingValueSerializer
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit

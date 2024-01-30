@@ -129,6 +129,11 @@ internal class MvMapManager(private val map: MVMap<String, ByteArray>) {
       }
     })
   }
+
+  fun hasKeyStartsWith(key: String): Boolean {
+    val ceilingKey = map.ceilingKey(key)
+    return ceilingKey != null && ceilingKey.startsWith(key)
+  }
 }
 
 private fun getDatabaseFile(): Path = PathManager.getConfigDir().resolve("app-internal-state.db")

@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.ApplicationStoreImpl.ApplicationStateStorageManager
@@ -20,20 +22,18 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.data.MapEntry
 import org.intellij.lang.annotations.Language
-import org.junit.*
 import org.junit.Assert.*
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.createParentDirectories
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.exists
-import kotlin.io.path.getLastModifiedTime
-import kotlin.io.path.writeBytes
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 import kotlin.properties.Delegates
 
 class ApplicationStoreTest {
@@ -65,7 +65,7 @@ class ApplicationStoreTest {
     component.foo = "newValue"
     componentStore.save()
 
-    assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"])
+    assertThat(streamProvider.data.get(RoamingType.DEFAULT)!!.get("new.xml"))
       .isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
 
@@ -76,7 +76,7 @@ class ApplicationStoreTest {
     val map = HashMap<String, String>()
     val fileSpec = "new.xml"
     map[fileSpec] = "<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>"
-    streamProvider.data[RoamingType.DEFAULT] = map
+    streamProvider.data.put(RoamingType.DEFAULT, map)
 
     val storageManager = componentStore.storageManager
     storageManager.removeStreamProvider(MyStreamProvider::class.java)
@@ -557,7 +557,6 @@ class ApplicationStoreTest {
   }
 
   @Test
-  @Ignore("Temporary disabled until we use settings controller during settings migration")
   fun `settingsController - internal storage - read old data`() = runBlocking<Unit>(Dispatchers.Default) {
     clearCacheStore()
 
@@ -594,7 +593,6 @@ class ApplicationStoreTest {
                                       @JvmField val map: Map<String, Set<String>> = HashMap())
 
   @Test
-  @Ignore("Temporary disabled until we use settings controller during settings migration")
   fun `settingsController - internal storage - serialize map`() = runBlocking<Unit>(Dispatchers.Default) {
     clearCacheStore()
     @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])

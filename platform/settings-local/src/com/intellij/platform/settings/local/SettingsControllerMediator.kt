@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class)
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
@@ -16,21 +16,35 @@ import java.nio.file.Path
 internal val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<DelegatedSettingsController> =
   ExtensionPointName("com.intellij.settingsController")
 
-private val delegateToSettingsController = System.getProperty("idea.settings.internal.delegate.to.controller", "true").toBoolean()
+private val delegateToSettingsController = System.getProperty("idea.settings.internal.delegate.to.controller", "false").toBoolean()
 
 internal class SettingsControllerMediator : SettingsController {
   private val controllers = SETTINGS_CONTROLLER_EP_NAME.extensionList
 
   override fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
+    return doGetItem(key).get()
+  }
+
+  fun <T : Any> doGetItem(key: SettingDescriptor<T>): GetResult<T?> {
     for (controller in controllers) {
       val result = controller.getItem(key)
       if (result.isResolved) {
-        return result.get()
+        return result
       }
     }
 
-    return null
+    return GetResult.inapplicable()
   }
+
+  //fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean {
+  //  for (controller in controllers) {
+  //    if (controller.hasKeyStartsWith(key) == true) {
+  //      return true
+  //    }
+  //  }
+  //
+  //  return false
+  //}
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     for (controller in controllers) {
@@ -41,20 +55,19 @@ internal class SettingsControllerMediator : SettingsController {
   }
 
   override fun createStateStorage(collapsedPath: String, file: Path): Any? {
-    if (!delegateToSettingsController && !ApplicationManager.getApplication().isUnitTestMode) {
-      return null
-    }
-
     return when (collapsedPath) {
       StoragePathMacros.CACHE_FILE -> {
         StateStorageBackedByController(controller = this, tags = java.util.List.of(CacheTag), oldStorage = null)
       }
-      /*
       StoragePathMacros.NON_ROAMABLE_FILE -> {
-        val oldStorage = XmlFileStorage(file)
-        StateStorageBackedByController(this, java.util.List.of(NonShareableInternalTag), oldStorage)
+        if (delegateToSettingsController || ApplicationManager.getApplication().isUnitTestMode) {
+          val oldStorage = XmlFileStorage(file)
+          StateStorageBackedByController(controller = this, tags = java.util.List.of(NonShareableInternalTag), oldStorage = oldStorage)
+        }
+        else {
+          null
+        }
       }
-      */
       else -> null
     }
   }
