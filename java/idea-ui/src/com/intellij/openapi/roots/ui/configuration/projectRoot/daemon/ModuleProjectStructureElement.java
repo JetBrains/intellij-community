@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.CommonBundle;
@@ -38,8 +38,9 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
       return;//module has been deleted
     }
 
+    String myContextRealName = myContext.getRealName(myModule);
     for (Module each : all) {
-      if (each != myModule && myContext.getRealName(each).equals(myContext.getRealName(myModule))) {
+      if (each != myModule && myContext.getRealName(each).equals(myContextRealName)) {
         problemsHolder.registerProblem(JavaUiBundle.message("project.roots.module.duplicate.name.message"), null,
                                        ProjectStructureProblemType.error("duplicate-module-name"), createPlace(),
                                        null);
