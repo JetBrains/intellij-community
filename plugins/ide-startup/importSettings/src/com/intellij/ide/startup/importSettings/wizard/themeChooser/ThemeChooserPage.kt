@@ -84,10 +84,6 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     activeScheme = pages[0]
     activePane(activeScheme)
 
-    SwingUtilities.invokeLater {
-      activeScheme.pane.requestFocus()
-    }
-
     val backAction = controller.goBackAction?.let {
       controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
         it.invoke()

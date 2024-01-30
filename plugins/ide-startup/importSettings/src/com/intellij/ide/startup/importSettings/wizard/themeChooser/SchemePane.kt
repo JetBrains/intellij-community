@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.themeChooser
 
+import com.intellij.ide.startup.importSettings.chooser.ui.RoundedBorder
 import com.intellij.ide.startup.importSettings.chooser.ui.RoundedPanel
 import com.intellij.ide.startup.importSettings.data.WizardScheme
 import com.intellij.ui.components.panels.VerticalLayout
@@ -15,6 +16,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JRadioButton
 import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 class SchemePane(val scheme: WizardScheme) {
   private val backgroundColor = scheme.backgroundColor
@@ -23,6 +25,12 @@ class SchemePane(val scheme: WizardScheme) {
     set(value) {
       if (field == value) return
       field = value
+
+      if (value) {
+        SwingUtilities.invokeLater {
+          jRadioButton.requestFocus()
+        }
+      }
 
       update()
     }
@@ -38,6 +46,7 @@ class SchemePane(val scheme: WizardScheme) {
       minimumSize = preferredSize
       maximumSize = preferredSize
     }
+
     override fun paintComponent(g: Graphics?) {}
   }
 
@@ -81,8 +90,11 @@ class SchemePane(val scheme: WizardScheme) {
 
   val pane: JPanel = roundedPanel
 
-  private val activeBorder = roundedPanel.createBorder(RoundedPanel.SELECTED_BORDER_COLOR)
-  private val border = roundedPanel.createBorder(RoundedPanel.BORDER_COLOR)
+  private val activeBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.SELECTED_BORDER_COLOR,
+                                           { roundedPanel.background }, RoundedPanel.RADIUS)
+
+  private val border = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.THICKNESS, RoundedPanel.BORDER_COLOR,
+                                     { roundedPanel.background }, RoundedPanel.RADIUS)
 
 
   init {

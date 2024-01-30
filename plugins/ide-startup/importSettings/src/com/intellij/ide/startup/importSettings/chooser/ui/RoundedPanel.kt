@@ -14,18 +14,14 @@ import kotlin.math.max
 class RoundedPanel private constructor(val unscaledRadius: Int = RADIUS) : JPanel(BorderLayout()) {
   companion object {
     const val RADIUS = 20
-    const val thickness = 2
+    const val THICKNESS = 1
+    const val ACTIVE_THICKNESS = 2
     val SELECTED_BORDER_COLOR = JBColor(0x3574F0, 0x3574F0)
     val BORDER_COLOR = JBColor(0xD3D5DB, 0x43454A)
 
     fun createRoundedPane(): RoundedPanel {
       return RoundedPanel(RADIUS)
     }
-  }
-
-  fun createBorder(borderColor: Color,
-                   myThickness: Int = thickness): Border {
-    return RoundedBorder(borderColor, myThickness, this)
   }
 
   val contentPanel: JPanel = RoundedJPanel(unscaledRadius)
@@ -49,46 +45,46 @@ class RoundedPanel private constructor(val unscaledRadius: Int = RADIUS) : JPane
   }
 }
 
-private class RoundedBorder(borderColor: Color,
-                            myThickness: Int,
-                            panel: RoundedPanel
-) : FilledRoundedBorder({ borderColor }, { panel.background }, myThickness, panel.unscaledRadius)
-
-open class FilledRoundedBorder(private val borderColor: () -> Color,
-                               private val backgroundColor: () -> Color,
-                               private val thickness: Int,
-                               private val unscaledRadius: Int
+open class RoundedBorder(unscaledAreaThickness: Int,
+                         unscaledThickness: Int,
+                         private val color: Color,
+                         private val backgroundColor: () -> Color,
+                         unscaledRadius: Int
 ) : Border {
-  override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+  private val areaThickness = JBUI.scale(unscaledAreaThickness)
+  private val thickness = JBUI.scale(unscaledThickness)
+  private val arcSize = JBUI.scale(unscaledRadius)
+
+  override fun paintBorder(c: Component, g: Graphics?, x: Int, y: Int, width: Int, height: Int) {
     g as Graphics2D
 
     val config = GraphicsUtil.setupAAPainting(g)
+    val area = createArea(x, y, width, height, arcSize, 0.0)
 
-    val arcSize = JBUI.scale(unscaledRadius)
-    val area = Area(
-      RoundRectangle2D.Double(x.toDouble(), y.toDouble(), width.toDouble(), height.toDouble(), arcSize.toDouble(), arcSize.toDouble()))
-
-    val bkgArea = Area(
-      RoundRectangle2D.Double(x.toDouble() + (thickness / 2), y.toDouble() + (thickness / 2), (width - thickness).toDouble(),
-                              (height - thickness).toDouble(), arcSize.toDouble(), arcSize.toDouble()))
+    val bkgArea = createArea(x, y, width, height, arcSize, thickness.toDouble()/2)
 
     g.color = backgroundColor()
     g.fill(bkgArea)
 
-    g.color = borderColor()
 
-    val innerArc = max((arcSize - thickness).toDouble(), 0.0).toInt()
-    val innerArea = Area(RoundRectangle2D.Double((x + thickness).toDouble(), (y + thickness).toDouble(),
-                                                 (width - 2 * thickness).toDouble(), (height - 2 * thickness).toDouble(),
-                                                 innerArc.toDouble(), innerArc.toDouble()))
+    g.color = color
+    val innerArea = createArea(x, y, width, height, arcSize, thickness.toDouble())
+
     area.subtract(innerArea)
     g.fill(area)
 
     config.restore()
   }
 
-  override fun getBorderInsets(c: Component): Insets {
-    return JBUI.insets(thickness)
+  private fun createArea(x: Int, y: Int, width: Int, height: Int, arcSize: Int, th: Double): Area {
+    val innerArc = max((arcSize - th), 0.0).toInt()
+    return Area(RoundRectangle2D.Double((x + th), (y + th),
+                                   (width - 2 * th), (height - 2 * th),
+                                   innerArc.toDouble(), innerArc.toDouble()))
+  }
+
+  override fun getBorderInsets(c: Component?): Insets {
+    return JBUI.insets(areaThickness)
   }
 
   override fun isBorderOpaque(): Boolean {

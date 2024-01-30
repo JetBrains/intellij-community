@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.keymapChooser
 
-import com.intellij.ide.startup.importSettings.chooser.ui.FilledRoundedBorder
+import com.intellij.ide.startup.importSettings.chooser.ui.RoundedBorder
 import com.intellij.ide.startup.importSettings.chooser.ui.RoundedPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
@@ -31,15 +31,22 @@ class KeymapPane(val keymap: Keymap) {
       if (field == value) return
       field = value
 
+      if (value) {
+        SwingUtilities.invokeLater {
+          jRadioButton.requestFocus()
+        }
+      }
+
       update()
     }
 
   private val background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
 
-  private val activeBorder = FilledRoundedBorder({ RoundedPanel.SELECTED_BORDER_COLOR }, { background }, RoundedPanel.thickness,
-                                                 RoundedPanel.RADIUS)
-  private val regularBorder = FilledRoundedBorder({ RoundedPanel.BORDER_COLOR }, { background }, RoundedPanel.thickness,
-                                                  RoundedPanel.RADIUS)
+  private val activeBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.SELECTED_BORDER_COLOR,
+                                           { background }, RoundedPanel.RADIUS)
+
+  private val regularBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.THICKNESS, RoundedPanel.BORDER_COLOR,
+                                            { background }, RoundedPanel.RADIUS)
 
 
   val mainPanel = JPanel()
@@ -84,7 +91,7 @@ class KeymapPane(val keymap: Keymap) {
               font = JBFont.medium()
               border = JBUI.Borders.empty(0, 4)
             })
-            border = FilledRoundedBorder({KEY_BACKGROUND}, {KEY_BACKGROUND}, 2, 7)
+            border = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, KEY_BACKGROUND, {KEY_BACKGROUND}, 7)
           }
           border = JBUI.Borders.empty(0, 8)
 
@@ -109,10 +116,13 @@ class KeymapPane(val keymap: Keymap) {
       val constraints = keyMapGridBagLayout.getConstraints(it.value)
       constraints.anchor = if(active) GridBagConstraints.LINE_START else GridBagConstraints.CENTER
       keyMapGridBagLayout.setConstraints(it.value, constraints)
+      mainPanel.border = if (active) /*if(UiUtils.isFocusOwner(pane)) focusBorder else*/ activeBorder else regularBorder
     }
-    mainPanel.border = if (active) activeBorder else regularBorder
+
     jRadioButton.isSelected = active
   }
+
+
 
   private data class ShortcutItem(val name: JComponent, val value: JComponent)
 }

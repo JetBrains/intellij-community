@@ -5,6 +5,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import java.awt.KeyboardFocusManager
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 object UiUtils {
   const val DEFAULT_BUTTON_WIDTH: Int = 280
@@ -14,4 +17,9 @@ object UiUtils {
   val HEADER_FONT: JBFont =  JBFont.label().biggerOn(7f)
   val HEADER_BORDER = JBUI.Borders.empty(18, 0, 17, 0)
   val CARD_BORDER = JBUI.Borders.empty(0, 19, 13, 19)
+
+  fun isFocusOwner(container: JComponent): Boolean {
+    val focussed = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+    return (focussed == null || !SwingUtilities.isDescendingFrom(container, focussed))
+  }
 }
