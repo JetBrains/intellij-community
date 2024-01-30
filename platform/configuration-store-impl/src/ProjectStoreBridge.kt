@@ -209,9 +209,8 @@ internal class StorageJpsConfigurationReader(private val project: Project,
     }
   }
 
-  private fun isExternalMiscFile(filePath: String): Boolean {
-    return PathUtilRt.getFileName(filePath) == "misc.xml" && FileUtil.isAncestor(externalConfigurationDir.value, Path.of(filePath), false)
-  }
+  private fun isExternalMiscFile(filePath: String): Boolean =
+    PathUtilRt.getFileName(filePath) == "misc.xml" && Path.of(filePath).startsWith(externalConfigurationDir.value)
 
   private fun getCachingReader(): CachingJpsFileContentReader {
     val reader = fileContentCachingReader ?: CachingJpsFileContentReader(configLocation)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.ide.IdeBundle
@@ -37,7 +37,7 @@ import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import java.io.File
 import java.nio.file.InvalidPathException
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.util.*
 import javax.swing.JPanel
 
@@ -146,7 +146,7 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
   }
 
   private fun getBaseDir(): File {
-    if (PlatformUtils.isDataSpell() && FileUtil.isAncestor(PathManager.getConfigDir(), Paths.get(ProjectUtil.getBaseDir()), false)) {
+    if (PlatformUtils.isDataSpell() && Path.of(ProjectUtil.getBaseDir()).startsWith(PathManager.getConfigDir())) {
       return File(getUserHomeProjectDir())
     }
     return File(ProjectUtil.getBaseDir())
@@ -154,7 +154,7 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
 
   private fun updateHint(): String =
     try {
-      val projectPath = Paths.get(projectLocation.get(), projectName.get())
+      val projectPath = Path.of(projectLocation.get(), projectName.get())
       message("new.project.location.hint", projectPath)
     }
     catch (e: InvalidPathException) {

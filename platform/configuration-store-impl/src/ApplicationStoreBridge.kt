@@ -1,11 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
@@ -38,9 +36,8 @@ internal class AppStorageContentReader : JpsFileContentReader {
     return PathMacroManager.getInstance(ApplicationManager.getApplication()).expandMacroMap
   }
 
-  private fun isApplicationLevelFile(filePath: String): Boolean {
-    return FileUtil.isAncestor(Path.of(PathManager.getOptionsPath()), Path.of(filePath), false)
-  }
+  private fun isApplicationLevelFile(filePath: String): Boolean =
+    Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
 
   companion object {
     private val loadComponentTimeMs: AtomicLong = AtomicLong()
@@ -77,9 +74,8 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
     session.save()
   }
 
-  private fun isApplicationLevelFile(filePath: String): Boolean {
-    return FileUtil.isAncestor(Path.of(PathManager.getOptionsPath()), Path.of(filePath), false)
-  }
+  private fun isApplicationLevelFile(filePath: String): Boolean =
+    Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
 
   companion object {
     private val saveComponentTimeMs: AtomicLong = AtomicLong()

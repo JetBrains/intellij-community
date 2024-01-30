@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -96,10 +96,6 @@ public class FileUtil extends FileUtilRt {
     return isAncestor(ancestor.getPath(), file.getPath(), strict);
   }
 
-  public static boolean isAncestor(@NotNull Path ancestor, @NotNull Path file, boolean strict) {
-    return isAncestor(ancestor.toString(), file.toString(), strict);
-  }
-
   public static boolean isAncestor(@NotNull String ancestor, @NotNull String file, boolean strict) {
     return !ThreeState.NO.equals(isAncestorThreeState(ancestor, file, strict));
   }
@@ -176,7 +172,7 @@ public class FileUtil extends FileUtilRt {
   @Contract(pure = true)
   public static @Nullable Path findAncestor(@NotNull Path path1, @NotNull Path path2) {
     Path ancestor = path1;
-    while (ancestor != null && !isAncestor(ancestor, path2, false)) {
+    while (ancestor != null && !path2.startsWith(ancestor)) {
       ancestor = ancestor.getParent();
     }
     return ancestor;

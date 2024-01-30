@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
@@ -47,7 +47,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -411,7 +411,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   private static @NotNull File getBaseDir() {
-    if (PlatformUtils.isDataSpell() && FileUtil.isAncestor(PathManager.getConfigDir(), Paths.get(ProjectUtil.getBaseDir()), false)) {
+    if (PlatformUtils.isDataSpell() && Path.of(ProjectUtil.getBaseDir()).startsWith(PathManager.getConfigDir())) {
       return new File(ProjectUtil.getUserHomeProjectDir());
     }
     return new File(ProjectUtil.getBaseDir());

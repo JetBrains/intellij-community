@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.application.options.CodeStyle
@@ -118,7 +118,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
 
     val expectedApiDirPath = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_api", true)
     val expectedApiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedApiDirPath.toPath())!!
-    if (FileUtil.isAncestor(dirWithExpectedApiFiles, dirWithExpectedImplFiles, true)) {
+    if (dirWithExpectedImplFiles.startsWith(dirWithExpectedApiFiles) && dirWithExpectedImplFiles != dirWithExpectedApiFiles) {
       runWriteActionAndWait {
         VfsUtil.copyDirectory(this, srcPackageDir, expectedApiDir, null)
       }
