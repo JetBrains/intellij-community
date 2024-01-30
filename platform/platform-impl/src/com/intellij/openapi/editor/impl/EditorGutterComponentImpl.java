@@ -436,9 +436,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           g.setClip(clip.x, startY, clip.width, endY - startY);
         }
 
-        if (!myEditor.isStickyLinePainting()) { // suppress gutter line markers on sticky lines panel
-          paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
-        }
+        paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
 
         g.setClip(clip);
 
@@ -1224,11 +1222,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                     int firstVisibleOffset, int lastVisibleOffset, int firstVisibleLine, int lastVisibleLine) {
     Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    boolean stickyLinePainting = myEditor.isStickyLinePainting();
     try {
       List<RangeHighlighter> highlighters = new ArrayList<>();
       processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
-        LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
-        if (renderer != null) highlighters.add(highlighter);
+        LineMarkerRenderer r = highlighter.getLineMarkerRenderer();
+        if (r != null) {
+          // suppress gutter line markers on sticky lines panel
+          if (!stickyLinePainting || (r instanceof LineMarkerRendererEx rx && rx.isSticky())) {
+            highlighters.add(highlighter);
+          }
+        }
       });
 
       ContainerUtil.sort(highlighters, Comparator.comparingInt(RangeHighlighter::getLayer));
@@ -1241,7 +1245,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
     }
 
-    paintIcons(firstVisibleLine, lastVisibleLine, g);
+    if (!stickyLinePainting) { // suppress gutter icons on sticky lines panel
+      paintIcons(firstVisibleLine, lastVisibleLine, g);
+    }
   }
 
   private void paintIcons(final int firstVisibleLine, final int lastVisibleLine, final Graphics2D g) {

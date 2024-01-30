@@ -403,6 +403,6 @@ public final class BraceHighlightingHandler {
 
   public static @NotNull LineMarkerRenderer createLineMarkerRenderer(boolean matched) {
     TextAttributesKey key = matched ? CodeInsightColors.MATCHED_BRACE_ATTRIBUTES : CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES;
-    return new DefaultLineMarkerRenderer(key, 1, 0, LineMarkerRendererEx.Position.RIGHT);
+    return new DefaultLineMarkerRenderer(key, 1, 0, LineMarkerRendererEx.Position.RIGHT, true);
   }
 }
