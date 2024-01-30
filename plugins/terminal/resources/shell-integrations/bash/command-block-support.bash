@@ -136,8 +136,26 @@ __jetbrains_intellij_command_terminated() {
 
 __jetbrains_intellij_report_prompt_state() {
   builtin local current_directory="$PWD"
-  builtin printf '\e]1341;prompt_state_updated;current_directory=%s\a' \
-    "$(__jetbrains_intellij_encode "${current_directory}")"
+  builtin local git_branch=""
+  builtin local virtual_env=""
+  builtin local conda_env=""
+  if builtin command -v git > /dev/null
+  then
+    git_branch="$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse --short HEAD 2> /dev/null)"
+  fi
+  if [[ -n $VIRTUAL_ENV_PROMPT ]]
+  then
+    virtual_env="$VIRTUAL_ENV_PROMPT"
+  fi
+  if [[ -n $CONDA_DEFAULT_ENV ]]
+  then
+    conda_env="$CONDA_DEFAULT_ENV"
+  fi
+  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s\a' \
+    "$(__jetbrains_intellij_encode "${current_directory}")" \
+    "$(__jetbrains_intellij_encode "${git_branch}")" \
+    "$(__jetbrains_intellij_encode "${virtual_env}")" \
+    "$(__jetbrains_intellij_encode "${conda_env}")"
 }
 
 # override clear behaviour to handle it on IDE side and remove the blocks
