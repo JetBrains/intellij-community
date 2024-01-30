@@ -11,6 +11,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -63,18 +64,16 @@ open class ApplicationStoreImpl(private val app: Application)
     val saveSessionManager = createSaveSessionProducerManager()
     (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
     saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
-    // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
     coroutineScope {
       launch {
         saveSessionManager.save().appendTo(result)
       }
 
+      val projectManagerEx = serviceAsync<ProjectManager>() as ProjectManagerEx
       @Suppress("TestOnlyProblems")
-      if ((serviceAsync<ProjectManager>() as ProjectManagerEx).isDefaultProjectInitialized) {
+      if (projectManagerEx.isDefaultProjectInitialized) {
         launch {
-          // here, because no Project (and so, ProjectStoreImpl) on a Welcome Screen
-          val r = serviceAsync<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
-          r.appendTo(result)
+          (projectManagerEx.defaultProject.stateStore as ComponentStoreImpl).doSave(result, forceSavingAllSettings)
         }
       }
     }
