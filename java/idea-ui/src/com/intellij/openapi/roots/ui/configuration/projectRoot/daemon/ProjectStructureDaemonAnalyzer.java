@@ -87,14 +87,20 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public void queueUpdate(@NotNull ProjectStructureElement element) {
+    queueUpdates(List.of(element));
+  }
+
+  public void queueUpdates(@NotNull Collection<? extends ProjectStructureElement> elements) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("start checking and collecting usages for " + element);
+      LOG.debug("start checking and collecting usages for " + elements);
     }
-    myElementWithNotCalculatedUsages.add(element);
-    if (element.shouldShowWarningIfUnused()) {
-      myElementsToShowWarningIfUnused.add(element);
+    myElementWithNotCalculatedUsages.addAll(elements);
+    for (ProjectStructureElement element : elements) {
+      if (element.shouldShowWarningIfUnused()) {
+        myElementsToShowWarningIfUnused.add(element);
+      }
     }
-    myAnalyzerQueue.queue(new AnalyzeElementUpdate(element));
+    myAnalyzerQueue.queue(ContainerUtil.map(elements, AnalyzeElementUpdate::new));
   }
 
   public void removeElement(@NotNull ProjectStructureElement element) {
@@ -188,9 +194,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myProblemHolders.clear();
     LOG.debug("Adding to queue updates for " + toUpdate.size() + " problematic elements");
 
-    for (ProjectStructureElement element : toUpdate) {
-      queueUpdate(element);
-    }
+    queueUpdates(toUpdate);
   }
 
   @Override
