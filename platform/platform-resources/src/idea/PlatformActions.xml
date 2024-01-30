@@ -747,7 +747,8 @@
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
         <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
-        <group id="LayoutsGroup" popup="true">
+        <group id="LayoutsGroup" popup="true" class="com.intellij.ide.actions.LayoutsGroup">
+          <override-text place="MainMenu"/>
           <action id="RestoreFactoryDefaultLayout" class="com.intellij.ide.actions.RestoreFactoryDefaultLayoutAction" />
           <separator/>
           <group id="CustomLayoutsGroup" class="com.intellij.ide.actions.CustomLayoutsActionGroup" />
