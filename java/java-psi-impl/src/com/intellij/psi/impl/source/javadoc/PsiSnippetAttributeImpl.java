@@ -26,7 +26,6 @@ public class PsiSnippetAttributeImpl extends CompositePsiElement implements PsiS
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    super.accept(visitor);
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitSnippetAttribute(this);
     }
