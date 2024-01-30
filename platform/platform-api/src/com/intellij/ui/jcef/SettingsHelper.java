@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefSettings;
@@ -86,6 +88,9 @@ final class SettingsHelper {
         if (processAppPath.isPresent() && processAppPath.get().endsWith("/bin/java")) {
           // Sandbox must be disabled when user runs IDE from debugger (otherwise dlopen will fail)
           LOG.info("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
+          settings.no_sandbox = true;
+        } else if (!PathManager.getBundledRuntimePath().equals(SystemProperties.getJavaHome())) {
+          LOG.info("JCEF-sandbox was disabled (current JDK is not the bundled one)");
           settings.no_sandbox = true;
         }
       } else if (SystemInfoRt.isLinux) {
