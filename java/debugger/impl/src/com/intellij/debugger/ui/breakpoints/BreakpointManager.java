@@ -584,14 +584,15 @@ public class BreakpointManager {
       // the filter already added
       return;
     }
+
+    final ThreadReference oldFilterThread = requestManager.getFilterRealThread();
+    final ThreadReference newFilterThread = filter == null ? null : filter.getRealThread();
+
     requestManager.setThreadFilter(filter);
 
     if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
       return;
     }
-
-    final ThreadReference newFilterThread = filter == null ? null : filter.getRealThread();
-    final ThreadReference oldFilterThread = requestManager.getFilterRealThread();
 
     EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
     if (DebuggerUtilsAsync.isAsyncEnabled() && eventRequestManager instanceof EventRequestManagerImpl) {
