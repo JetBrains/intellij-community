@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -92,7 +92,8 @@ class ImlSerializationTest {
     val storage = storageBuilder.toSnapshot()
     val byteArray: ByteArray
     val timeMillis = measureTimeMillis {
-      byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
+      val res = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
+      byteArray = res.first
       println("Serialized size: ${byteArray.size}")
     }
     println("Time: $timeMillis ms")

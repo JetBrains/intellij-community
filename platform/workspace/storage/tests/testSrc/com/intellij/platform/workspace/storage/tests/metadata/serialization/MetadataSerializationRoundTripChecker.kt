@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityTypesResolver
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -39,7 +40,7 @@ object MetadataDiffTestResolver: EntityTypesResolver {
 
 object MetadataSerializationRoundTripChecker: BaseSerializationChecker() {
 
-  override fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
+  override fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): Pair<ByteArray, ImmutableEntityStorage> {
     deserialization = false
     storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
@@ -58,7 +59,7 @@ object MetadataSerializationRoundTripChecker: BaseSerializationChecker() {
       assertStorageEquals(storage, deserialized)
       deserialization = false
       storage.assertConsistency()
-      return Files.readAllBytes(file)
+      return Files.readAllBytes(file) to deserialized
     }
     finally {
       Files.deleteIfExists(file)

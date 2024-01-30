@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.SerializationResult
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
@@ -237,6 +238,25 @@ class EntityStorageSerializationTest {
     builder.removeEntity(entity)
 
     SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+  }
+
+  @Test
+  fun `entities with sealed classes and interfaces`() {
+    val builder = createEmptyBuilder()
+
+    builder addEntity WithSealedEntity(
+      listOf(MySealedClassOne("1"), MySealedClassTwo("2")),
+      listOf(MySealedInterfaceOne("1"), MySealedInterfaceTwo("2")),
+      MySource,
+    )
+
+    val (_, deserialized) = SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
+    val withSealedEntity = deserialized.entities<WithSealedEntity>().single()
+
+    assertEquals("1", (withSealedEntity.classes.first() as MySealedClassOne).info)
+    assertEquals("2", (withSealedEntity.classes.last() as MySealedClassTwo).info)
+    assertEquals("1", (withSealedEntity.interfaces.first() as MySealedInterfaceOne).info)
+    assertEquals("2", (withSealedEntity.interfaces.last() as MySealedInterfaceTwo).info)
   }
 }
 

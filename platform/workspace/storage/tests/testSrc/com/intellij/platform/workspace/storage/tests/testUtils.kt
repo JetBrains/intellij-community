@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
@@ -17,7 +18,7 @@ import kotlin.reflect.full.memberProperties
 
 abstract class BaseSerializationChecker {
 
-  open fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
+  open fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): Pair<ByteArray, ImmutableEntityStorage> {
     storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
 
@@ -34,7 +35,7 @@ abstract class BaseSerializationChecker {
       assertStorageEquals(storage, deserialized)
 
       storage.assertConsistency()
-      return Files.readAllBytes(file)
+      return Files.readAllBytes(file) to deserialized
     }
     finally {
       Files.deleteIfExists(file)
