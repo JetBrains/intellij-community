@@ -23,6 +23,8 @@
     <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
     <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
                  description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
+    <registryKey key="platform.feedback.ignore.common.conditions.for.all.surveys" defaultValue="false"
+                 description="Allows to ignore all isSuitableToShow conditions and test pure conditions of the concrete survey"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveyIdValidationRule"/>
