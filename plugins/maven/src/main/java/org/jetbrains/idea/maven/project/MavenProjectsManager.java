@@ -432,11 +432,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return MavenUtil.isMavenizedModule(m);
   }
 
-  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
-    doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete);
-    scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManager.addManagedFilesWithProfiles"));
-  }
-
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
@@ -450,7 +445,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
-    addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null);
+    doAddManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null);
+    scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManager.addManagedFiles"));
   }
 
   public void addManagedFilesOrUnignore(@NotNull List<VirtualFile> files) {
