@@ -67,7 +67,12 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
       override fun update(e: AnActionEvent) {
         super.update(e)
-        e.presentation.isEnabled = manager.activeLayoutName != layoutName
+        e.presentation.text = if (manager.activeLayoutName == layoutName) {
+          ActionsBundle.message("action.CustomLayoutActionsGroup.Restore.text")
+        }
+        else {
+          ActionsBundle.message("action.CustomLayoutActionsGroup.Apply.text")
+        }
         e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
       }
 
