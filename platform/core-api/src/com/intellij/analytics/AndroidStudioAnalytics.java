@@ -15,32 +15,27 @@
  */
 package com.intellij.analytics;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.PlatformUtils;
-
-import java.awt.GraphicsEnvironment;
-
 import org.jetbrains.annotations.NotNull;
 
 abstract public class AndroidStudioAnalytics {
-  static AndroidStudioAnalytics INSTANCE;
 
-  public static void initialize(AndroidStudioAnalytics analytics) {
-    INSTANCE = analytics;
-  }
-
+  @SuppressWarnings("IncorrectServiceRetrieving") // AndroidStudioAnalyticsImpl is registered elsewhere (in the Android plugin).
   public static AndroidStudioAnalytics getInstance() {
-    if (INSTANCE == null) {
-      // Android Studio Developers: If you hit this exception, you're trying to find out the status
-      // of AnalyticsSettings before the system has been initialized. Please reach out the the owners
-      // of this code to figure out how best to do these checks instead of getting null values.
-      if (PlatformUtils.isAndroidStudio() && !GraphicsEnvironment.isHeadless()) {
-        throw new RuntimeException("call to AndroidStudioAnalytics before initialization");
-      } else {
-        initialize(new NullAndroidStudioAnalytics());
-      }
+    Application app = ApplicationManager.getApplication();
+    AndroidStudioAnalytics service = app.getService(AndroidStudioAnalytics.class);
+    if (service != null) {
+      return service;
     }
-    return INSTANCE;
+    else if (PlatformUtils.isAndroidStudio() && !app.isHeadlessEnvironment()) {
+      throw new IllegalStateException("AndroidStudioAnalytics service not found, despite running inside Android Studio");
+    }
+    else {
+      return NullAndroidStudioAnalytics.INSTANCE;
+    }
   }
 
   public abstract void recordHighlightingLatency(Document document, long latencyMs);

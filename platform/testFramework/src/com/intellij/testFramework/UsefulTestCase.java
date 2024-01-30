@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.analytics.AndroidStudioAnalytics;
-import com.intellij.analytics.NullAndroidStudioAnalytics;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -216,8 +214,6 @@ public abstract class UsefulTestCase extends TestCase {
     GlobalState.checkSystemStreams();
 
     setupTempDir();
-
-    AndroidStudioAnalytics.initialize(new NullAndroidStudioAnalytics());
 
     boolean isStressTest = isStressTest();
     ApplicationManagerEx.setInStressTest(isStressTest);

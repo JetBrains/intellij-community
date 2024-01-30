@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
 
 public class NullAndroidStudioAnalytics extends AndroidStudioAnalytics {
+  public static final NullAndroidStudioAnalytics INSTANCE = new NullAndroidStudioAnalytics();
 
   @Override
   public void recordHighlightingLatency(Document document, long latencyMs) {
