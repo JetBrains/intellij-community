@@ -1379,7 +1379,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void updateAll() {
-    showPluginImpl(myPlugin, myUpdateDescriptor);
+    if (myPlugin != null) {
+      if (myIndicator != null) {
+        MyPluginModel.removeProgress(getDescriptorForActions(), myIndicator);
+        hideProgress(false, false);
+      }
+      showPluginImpl(myPlugin, myUpdateDescriptor);
+    }
   }
 
   private void updateButtons() {
