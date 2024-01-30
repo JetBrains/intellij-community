@@ -60,19 +60,20 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   @Override
-  public @Nullable Cursor performMouseMove(int row, @NotNull MouseEvent e) {
+  public @NotNull MouseMoveResult performMouseMove(int row, @NotNull MouseEvent e) {
     Point pointInCell = myTable.getPointInCell(e.getPoint(), Commit.INSTANCE);
     PrintElement printElement = findPrintElement(row, pointInCell);
     Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
     // if printElement is null, still need to unselect whatever was selected in a graph
     if (printElement == null) {
-      if (!showTooltip(row, pointInCell, e.getPoint(), false)) {
-        if (IdeTooltipManager.getInstance().hasCurrent()) {
-          IdeTooltipManager.getInstance().hideCurrent(e);
-        }
+      if (myTable.getExpandableItemsHandler().getExpandedItems().isEmpty() && showTooltip(row, pointInCell, e.getPoint(), false)) {
+        return new MouseMoveResult(cursor, false);
+      }
+      else if (IdeTooltipManager.getInstance().hasCurrent()) {
+        IdeTooltipManager.getInstance().hideCurrent(e);
       }
     }
-    return cursor;
+    return  new MouseMoveResult(cursor, cursor != null && cursor.getType() == Cursor.DEFAULT_CURSOR);
   }
 
   @Override

@@ -123,8 +123,8 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
       }
 
       @Override
-      public @NotNull Cursor performMouseMove(int row, @NotNull MouseEvent e) {
-        return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+      public @NotNull MouseMoveResult performMouseMove(int row, @NotNull MouseEvent e) {
+        return MouseMoveResult.fromCursor(Cursor.HAND_CURSOR);
       }
     };
   }

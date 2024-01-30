@@ -869,9 +869,11 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
 
         VcsLogCellController controller = getController(column);
         if (controller != null) {
-          Cursor cursor = controller.performMouseMove(row, e);
-          handleCursor(cursor);
-          return;
+          VcsLogCellController.MouseMoveResult mouseMoveResult = controller.performMouseMove(row, e);
+          handleCursor(mouseMoveResult.getCursor());
+          if(!mouseMoveResult.getContinueProcessing()) {
+            return;
+          }
         }
       }
 

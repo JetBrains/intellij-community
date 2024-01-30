@@ -7,9 +7,19 @@ import java.awt.event.MouseEvent
 interface VcsLogCellController {
   fun performMouseClick(row: Int, e: MouseEvent): Cursor?
 
-  fun performMouseMove(row: Int, e: MouseEvent): Cursor?
+  fun performMouseMove(row: Int, e: MouseEvent): MouseMoveResult
 
   fun shouldSelectCell(row: Int, e: MouseEvent): Boolean {
     return false
+  }
+
+  data class MouseMoveResult(val cursor: Cursor?, val continueProcessing: Boolean = true) {
+    companion object {
+      @JvmField
+      val DEFAULT = fromCursor(Cursor.DEFAULT_CURSOR)
+
+      @JvmStatic
+      fun fromCursor(cursor: Int): MouseMoveResult = MouseMoveResult(Cursor.getPredefinedCursor(cursor), false)
+    }
   }
 }
