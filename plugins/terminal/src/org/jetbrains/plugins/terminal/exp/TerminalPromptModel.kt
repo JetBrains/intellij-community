@@ -7,11 +7,13 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
+import com.jediterm.terminal.TerminalColor
+import com.jediterm.terminal.ui.AwtTransformers
 import org.jetbrains.plugins.terminal.TerminalUtil
 import java.awt.Font
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalPromptModel(session: BlockTerminalSession) : ShellCommandListener {
+class TerminalPromptModel(private val session: BlockTerminalSession) : ShellCommandListener {
   private val listeners: MutableList<TerminalPromptStateListener> = CopyOnWriteArrayList()
 
   var renderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
@@ -29,10 +31,49 @@ class TerminalPromptModel(session: BlockTerminalSession) : ShellCommandListener 
   }
 
   private fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo {
-    val directory = calculateDirectoryText(state.currentDirectory)
-    val directoryAttributes = TextAttributes(TerminalUi.promptForeground, null, null, null, Font.PLAIN)
-    val directoryHighlighting = HighlightingInfo(0, directory.length, directoryAttributes)
-    return PromptRenderingInfo(directory, listOf(directoryHighlighting))
+    val components = getPromptComponents(state)
+    val builder = StringBuilder()
+    val highlightings = mutableListOf<HighlightingInfo>()
+    for (component in components) {
+      val startOffset = builder.length
+      builder.append(component.text)
+      highlightings.add(HighlightingInfo(startOffset, builder.length, component.attributes))
+    }
+    return PromptRenderingInfo(builder.toString(), highlightings)
+  }
+
+  private fun getPromptComponents(state: TerminalPromptState): List<PromptComponentInfo> {
+    val result = mutableListOf<PromptComponentInfo>()
+    // numbers are the indexes in BlockTerminalColors.KEYS array
+    val greenAttributes = plainAttributes(2)
+    val magentaAttributes = plainAttributes(5)
+    val yellowAttributes = plainAttributes(3)
+    val defaultAttributes = plainAttributes(-1)
+
+    fun addComponent(text: String, attributes: TextAttributes) {
+      result.add(PromptComponentInfo(text, attributes))
+    }
+
+    if (!state.virtualEnv.isNullOrBlank()) {
+      addComponent("(", greenAttributes)
+      addComponent(state.virtualEnv, magentaAttributes)
+      addComponent(")", greenAttributes)
+    }
+    if (!state.condaEnv.isNullOrBlank()) {
+      addComponent("(", greenAttributes)
+      addComponent(state.condaEnv, magentaAttributes)
+      addComponent(")", greenAttributes)
+    }
+    if (result.isNotEmpty()) {
+      addComponent(" ", defaultAttributes)
+    }
+    addComponent(calculateDirectoryText(state.currentDirectory), defaultAttributes)
+    if (!state.gitBranch.isNullOrBlank()) {
+      addComponent(" ", defaultAttributes)
+      addComponent("git:", yellowAttributes)
+      addComponent("[${state.gitBranch}]", greenAttributes)
+    }
+    return result
   }
 
   private fun calculateDirectoryText(directory: String): @NlsSafe String {
@@ -42,9 +83,19 @@ class TerminalPromptModel(session: BlockTerminalSession) : ShellCommandListener 
     else "~"
   }
 
+  private fun plainAttributes(colorIndex: Int): TextAttributes {
+    val color = if (colorIndex > 0) {
+      session.colorPalette.getForeground(TerminalColor.index(colorIndex))
+    }
+    else session.colorPalette.defaultForeground
+    return TextAttributes(AwtTransformers.toAwtColor(color)!!, null, null, null, Font.PLAIN)
+  }
+
   fun addListener(listener: TerminalPromptStateListener, disposable: Disposable) {
     TerminalUtil.addItem(listeners, listener, disposable)
   }
+
+  private class PromptComponentInfo(val text: String, val attributes: TextAttributes)
 }
 
 interface TerminalPromptStateListener {
