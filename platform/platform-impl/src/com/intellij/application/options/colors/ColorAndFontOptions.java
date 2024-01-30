@@ -557,11 +557,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
     mySelectedScheme = mySchemes.get(globalScheme.getName());
 
-    if (myEditorColorSchemeConnection == null) {
-      myEditorColorSchemeConnection = ApplicationManager.getApplication().getMessageBus().connect(myDisposable);
-      myEditorColorSchemeConnection.subscribe(EditorColorsManager.TOPIC, scheme -> editorColorSchemeChanged(scheme));
-    }
-
     assert mySelectedScheme != null : globalScheme.getName() + "; myschemes=" + mySchemes;
   }
 
@@ -770,6 +765,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         }
       });
 
+      ensureSynchronizingWithGlobalScheme();
+    }
+  }
+
+  private void ensureSynchronizingWithGlobalScheme() {
+    if (myEditorColorSchemeConnection == null) {
+      myEditorColorSchemeConnection = ApplicationManager.getApplication().getMessageBus().connect(myDisposable);
+      myEditorColorSchemeConnection.subscribe(EditorColorsManager.TOPIC, scheme -> editorColorSchemeChanged(scheme));
     }
   }
 
