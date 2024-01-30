@@ -236,7 +236,14 @@ sealed class K2MoveRenameUsageInfo(
             // example: a.foo() where foo is an extension function
             fun KtSimpleNameExpression.isExtensionReference(): Boolean = allowAnalysisFromWriteAction {
                 analyze(this) {
-                    resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.extensionReceiver != null
+                    val call = resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>() ?: return false
+                    val partiallyAppliedSymbol = call.partiallyAppliedSymbol
+                    if (partiallyAppliedSymbol.extensionReceiver != null) return true
+                    if (call is KtVariableAccessCall) {
+                        val returnType = partiallyAppliedSymbol.signature.returnType
+                        return returnType is KtFunctionalType && returnType.receiverType != null
+                    }
+                    return false
                 }
             }
 
