@@ -114,6 +114,11 @@ class ResolutionAnchorCacheServiceImpl(
     }
 
     private fun createResolutionAnchorMapping(): AnchorMapping {
+        // Avoid loading all module infos if the project defines no anchor mappings.
+        if (myState.moduleNameToAnchorName.isEmpty()) {
+            return AnchorMapping(emptyMap(), emptyMap())
+        }
+
         val modulesByNames: Map<String, ModuleInfo> = associateModulesByNames()
 
         val anchorByLibrary = mutableMapOf<LibraryInfo, ModuleSourceInfo>()
