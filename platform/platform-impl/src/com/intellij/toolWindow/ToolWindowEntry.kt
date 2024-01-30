@@ -72,4 +72,8 @@ internal class ToolWindowEntry(stripeButton: StripeButtonManager?,
     val stripeButton = stripeButton ?: return
     stripeButton.updateState(toolWindow)
   }
+
+  override fun toString(): String {
+    return "ToolWindowEntry(toolWindowId=${toolWindow.id})"
+  }
 }
