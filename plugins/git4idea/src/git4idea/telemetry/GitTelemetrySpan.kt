@@ -50,7 +50,14 @@ interface GitTelemetrySpan : VcsTelemetrySpan {
     }
   }
 
-  enum class GitBranchesPopup : VcsTelemetrySpan {
+  enum class Annotations : GitTelemetrySpan {
+    OpenAnnotation {
+      override fun getName() = "git-open-annotation"
+    }
+  }
+
+
+  enum class GitBranchesPopup : GitTelemetrySpan {
     BuildingTree {
       override fun getName() = "git-branches-popup-building-tree"
     }

@@ -10,9 +10,13 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import git4idea.annotate.GitAnnotationProvider.GitRawAnnotationProvider
+import git4idea.telemetry.GitTelemetrySpan
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.produce
 import java.util.concurrent.CancellationException
@@ -32,14 +36,16 @@ class GitAnnotationService(private val project: Project, private val cs: Corouti
                revision: VcsRevisionNumber?,
                file: VirtualFile): GitFileAnnotation {
     return runBlockingCancellable {
-      val providers = GitRawAnnotationProvider.EP_NAME.getExtensions(project)
-      val default = providers.single { GitRawAnnotationProvider.isDefault(it.id) }
+      computeWithSpan(getInstance().getTracer(VcsScope), GitTelemetrySpan.Annotations.OpenAnnotation.getName()) {
+        val providers = GitRawAnnotationProvider.EP_NAME.getExtensions(project)
+        val default = providers.single { GitRawAnnotationProvider.isDefault(it.id) }
 
-      if (providers.size == 1) {
-        annotateWithSingleProvider(default, root, filePath, revision, file)
-      }
-      else {
-        annotateWithSeveralProviders(providers, root, filePath, revision, file)
+        if (providers.size == 1) {
+          annotateWithSingleProvider(default, root, filePath, revision, file)
+        }
+        else {
+          annotateWithSeveralProviders(providers, root, filePath, revision, file)
+        }
       }
     }
   }
