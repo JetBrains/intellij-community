@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.stickyLines
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -19,6 +20,10 @@ internal class StickyLinesSettingsDisableAction : AnAction() {
       settings.setStickyLinesShown(false)
       UISettings.getInstance().fireUISettingsChanged()
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun isDumbAware(): Boolean {
