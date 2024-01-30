@@ -7,7 +7,6 @@ import com.intellij.CommonBundle
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
-import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
@@ -28,10 +27,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.Groups
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -84,6 +83,9 @@ private const val ELEMENT_PREFERRED_LIGHT_LAF: @NonNls String = "preferred-light
 private const val ELEMENT_PREFERRED_DARK_LAF: @NonNls String = "preferred-dark-laf"
 private const val ATTRIBUTE_AUTODETECT: @NonNls String = "autodetect"
 private const val ATTRIBUTE_THEME_NAME: @NonNls String = "themeId"
+private const val ELEMENT_PREFERRED_LIGHT_EDITOR_SCHEME: @NonNls String = "preferred-light-editor-scheme"
+private const val ELEMENT_PREFERRED_DARK_EDITOR_SCHEME: @NonNls String = "preferred-dark-editor-scheme"
+private const val ATTRIBUTE_EDITOR_SCHEME_NAME: @NonNls String = "editorSchemeId"
 private const val ELEMENT_LAFS_TO_PREVIOUS_SCHEMES: @NonNls String = "lafs-to-previous-schemes"
 private const val ELEMENT_LAF_TO_SCHEME: @NonNls String = "laf-to-scheme"
 private const val ATTRIBUTE_LAF: @NonNls String = "laf"
@@ -107,13 +109,15 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private var preferredLightThemeId: String? = null
   private var preferredDarkThemeId: String? = null
+  private var preferredLightEditorSchemeId: String? = null
+  private var preferredDarkEditorSchemeId: String? = null
 
   private val storedDefaults = HashMap<String?, MutableMap<String, Any?>>()
   private val lafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> {
     LafComboBoxModel(ThemeListProvider.getInstance().getShownThemes())
   }
   private val settingsToolbar = lazy {
-    val group = DefaultActionGroup(PreferredLafAction())
+    val group = DefaultActionGroup(PreferredLafAndSchemeAction())
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
     toolbar.targetComponent = toolbar.component
     toolbar.component.isOpaque = false
@@ -228,6 +232,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
+  private fun syncThemeAndEditorScheme(systemIsDark: Boolean) {
+    syncTheme(systemIsDark)
+    syncEditorScheme(systemIsDark)
+  }
+
   private fun syncTheme(systemIsDark: Boolean) {
     if (!autodetect) {
       return
@@ -242,7 +251,26 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       preferredLightThemeId?.let { UiThemeProviderListManager.getInstance().findThemeById(it) } ?: defaultLightLaf
     }
     if (currentIsDark != systemIsDark || currentTheme !== expectedTheme) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(/* lafManager = */ this, /* laf = */ expectedTheme, /* async = */ true)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(/* lafManager = */ this, /* laf = */ expectedTheme, /* async = */ true, false, true)
+    }
+  }
+
+  private fun syncEditorScheme(systemIsDark: Boolean) {
+    if (!autodetect) {
+      return
+    }
+
+    val expectedScheme = ((if (systemIsDark) preferredDarkEditorSchemeId else preferredLightEditorSchemeId)
+                          ?: defaultEditorSchemeName(systemIsDark)).let {
+      EditorColorsManager.getInstance().getScheme(it)
+    } ?: return
+
+
+    SwingUtilities.invokeLater {
+      val currentScheme = EditorColorsManager.getInstance().globalScheme
+      if (currentScheme.baseName != expectedScheme.baseName) {
+        EditorColorsManager.getInstance().setGlobalScheme(expectedScheme)
+      }
     }
   }
 
@@ -250,6 +278,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     autodetect = element.getAttributeBooleanValue(ATTRIBUTE_AUTODETECT)
     preferredLightThemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)?.getThemeNameWithReplacingDeprecated()
     preferredDarkThemeId = element.getChild(ELEMENT_PREFERRED_DARK_LAF)?.getThemeNameWithReplacingDeprecated()
+    preferredLightEditorSchemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_EDITOR_SCHEME)?.getAttributeValue(ATTRIBUTE_EDITOR_SCHEME_NAME)
+    preferredDarkEditorSchemeId = element.getChild(ELEMENT_PREFERRED_DARK_EDITOR_SCHEME)?.getAttributeValue(ATTRIBUTE_EDITOR_SCHEME_NAME)
 
     val lafToPreviousScheme = HashMap<String, String>()
     val child = element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
@@ -348,6 +378,16 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       child.setAttribute(ATTRIBUTE_THEME_NAME, preferredDarkThemeId)
       element.addContent(child)
     }
+    if (preferredDarkEditorSchemeId != null && preferredDarkEditorSchemeId !== defaultEditorSchemeName(true)) {
+      val child = Element(ELEMENT_PREFERRED_DARK_EDITOR_SCHEME)
+      child.setAttribute(ATTRIBUTE_EDITOR_SCHEME_NAME, preferredDarkEditorSchemeId)
+      element.addContent(child)
+    }
+    if (preferredLightEditorSchemeId != null && preferredLightEditorSchemeId !== defaultEditorSchemeName(false)) {
+      val child = Element(ELEMENT_PREFERRED_LIGHT_EDITOR_SCHEME)
+      child.setAttribute(ATTRIBUTE_EDITOR_SCHEME_NAME, preferredLightEditorSchemeId)
+      element.addContent(child)
+    }
 
     if (lafToPreviousScheme.isNotEmpty()) {
       val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
@@ -412,7 +452,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     LafReference(it.name, it.id)
   }
 
-  override fun getLookAndFeelCellRenderer(): ListCellRenderer<LafReference> = LafCellRenderer(lafComboBoxModel.value as? LafComboBoxModel)
+  override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> =
+    LafCellRenderer(lafComboBoxModel.value as? LafComboBoxModel, component)
 
   override fun getSettingsToolbar(): JComponent = settingsToolbar.value.component
 
@@ -703,7 +744,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun getGetOrCreateLafDetector(): SystemDarkThemeDetector {
     var result = themeDetector
     if (result == null) {
-      result = createDetector(::syncTheme)
+      result = createDetector(::syncThemeAndEditorScheme)
       themeDetector = result
     }
 
@@ -752,30 +793,23 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     updateUI()
   }
 
-  private inner class PreferredLafAction : DefaultActionGroup(), DumbAware {
+  private inner class PreferredLafAndSchemeAction : DefaultActionGroup(PreferredLafAction(), PreferredEditorColorSchemeAction()), DumbAware {
     init {
       isPopup = true
       templatePresentation.icon = AllIcons.General.GearPlain
+      templatePresentation.text = IdeBundle.message("preferred.theme.and.editor.color.scheme.text")
+      templatePresentation.description = IdeBundle.message("preferred.theme.and.editor.color.scheme.description")
+    }
+  }
+
+  private inner class PreferredLafAction : DefaultActionGroup(), DumbAware {
+    init {
+      isPopup = true
       templatePresentation.text = IdeBundle.message("preferred.theme.text")
       templatePresentation.description = IdeBundle.message("preferred.theme.description")
-      templatePresentation.isPerformGroup = true
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-      val popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("preferred.theme.text"), getLafGroups(),
-                                                                      e.dataContext,
-                                                                      true, null, Int.MAX_VALUE)
-      val component = e.inputEvent!!.component
-      HelpTooltip.setMasterPopup(component, popup)
-      if (component is ActionButtonComponent) {
-        popup.showUnderneathOf(component)
-      }
-      else {
-        popup.showInCenterOf(component)
-      }
-    }
-
-    private fun getLafGroups(): ActionGroup {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       val lightLaFs = ArrayList<UIThemeLookAndFeelInfo>()
       val darkLaFs = ArrayList<UIThemeLookAndFeelInfo>()
       for (lafInfo in ThemeListProvider.getInstance().getShownThemes().infos.asSequence().flatMap { it.items }) {
@@ -787,10 +821,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         }
       }
 
-      val group = DefaultActionGroup()
-      group.addAll(createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLaFs, isDark = false))
-      group.addAll(createThemeActions(IdeBundle.message("preferred.theme.dark.header"), darkLaFs, isDark = true))
-      return group
+      return (createThemeActions(IdeBundle.message("preferred.theme.dark.header"), darkLaFs, isDark = true) +
+              createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLaFs, isDark = false)).toTypedArray()
     }
 
     private fun createThemeActions(separatorText: @NlsContexts.Separator String,
@@ -806,6 +838,90 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return result
     }
   }
+
+  private inner class PreferredEditorColorSchemeAction : DefaultActionGroup(), DumbAware {
+    init {
+      isPopup = true
+      templatePresentation.text = IdeBundle.message("preferred.editor.color.scheme.text")
+      templatePresentation.description = IdeBundle.message("preferred.editor.color.scheme.description")
+    }
+
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+      val schemes = EditorColorsManager.getInstance().allSchemes.let { schemes ->
+        val schemesMap = mutableMapOf<String, EditorColorsScheme>()
+        schemes.forEach { scheme ->
+          schemesMap[scheme.baseName] = scheme
+        }
+        schemesMap
+      }.toMutableMap()
+
+      val lightSchemes = ArrayList<EditorColorsScheme>()
+      val darkSchemes = ArrayList<EditorColorsScheme>()
+      val themeGroups = ThemeListProvider.getInstance().getShownThemes()
+      for (lafInfo in themeGroups.infos.asSequence().flatMap { it.items }) {
+        val schemeId = lafInfo.editorSchemeId ?: defaultNonLaFSchemeName(lafInfo.isDark)
+        val scheme = schemes.remove(schemeId) ?: continue
+
+        if (lafInfo.isDark) {
+          darkSchemes.add(scheme)
+        }
+        else {
+          lightSchemes.add(scheme)
+        }
+      }
+
+      return (createSchemeActions(IdeBundle.message("preferred.editor.color.scheme.dark.header"), darkSchemes, isDark = true) +
+              createSchemeActions(IdeBundle.message("preferred.editor.color.scheme.light.header"), lightSchemes, isDark = false)).toTypedArray()
+    }
+
+    private fun createSchemeActions(separatorText: @NlsContexts.Separator String,
+                                    schemes: List<EditorColorsScheme>,
+                                    isDark: Boolean): Collection<AnAction> {
+      if (schemes.isEmpty()) {
+        return emptyList()
+      }
+
+      val result = ArrayList<AnAction>()
+      result.add(Separator.create(separatorText))
+      schemes.mapTo(result) { SchemeToggleAction(it, isDark = isDark) }
+      return result
+    }
+
+    private inner class SchemeToggleAction(val scheme: EditorColorsScheme, private val isDark: Boolean) : ToggleAction(scheme.displayName) {
+      private val defaultEditorSchemeName: String get() = defaultEditorSchemeName(isDark)
+
+      override fun isSelected(e: AnActionEvent): Boolean {
+        return if (isDark) {
+          (preferredDarkEditorSchemeId ?: defaultEditorSchemeName) == scheme.baseName
+        }
+        else {
+          (preferredLightEditorSchemeId ?: defaultEditorSchemeName) == scheme.baseName
+        }
+      }
+
+      override fun setSelected(e: AnActionEvent, state: Boolean) {
+        if (isDark) {
+          if (preferredDarkEditorSchemeId != scheme.baseName) {
+            preferredDarkEditorSchemeId = scheme.baseName.takeIf { it != defaultEditorSchemeName }
+            detectAndSyncLaf()
+          }
+        }
+        else if (preferredLightThemeId != scheme.baseName) {
+          preferredLightEditorSchemeId = scheme.baseName.takeIf { it != defaultEditorSchemeName }
+          detectAndSyncLaf()
+        }
+      }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+      override fun isDumbAware() = true
+
+    }
+  }
+
+  private fun defaultEditorSchemeName(isDark: Boolean) =
+    (if (isDark) defaultDarkLaf.editorSchemeId else defaultLightLaf.editorSchemeId)
+    ?: defaultNonLaFSchemeName(isDark)
 
   private inner class LafToggleAction(name: @Nls String?, private val themeId: String, private val isDark: Boolean) : ToggleAction(name) {
     override fun isSelected(e: AnActionEvent): Boolean {
@@ -836,7 +952,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 }
 
-private class LafCellRenderer(private val model: LafComboBoxModel?) : GroupedComboBoxRenderer<LafReference>() {
+private class LafCellRenderer(private val model: LafComboBoxModel?, component: JComponent) : GroupedComboBoxRenderer<LafReference>(component) {
   override fun getText(item: LafReference): String {
     return item.name
   }
@@ -1226,3 +1342,5 @@ internal fun getDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo {
 private class LafComboBoxModel(val groupedThemes: Groups<UIThemeLookAndFeelInfo>) : CollectionComboBoxModel<LafReference>(
   groupedThemes.infos.asSequence().flatMap { it.items }.map { LafReference(it.name, it.id) }.toList()
 )
+
+private val Scheme.baseName: String get() = Scheme.getBaseName(name)

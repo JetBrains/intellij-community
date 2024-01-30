@@ -53,7 +53,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public ListCellRenderer<LafReference> getLookAndFeelCellRenderer() {
+  public ListCellRenderer<LafReference> getLookAndFeelCellRenderer(JComponent component) {
     return null;
   }
 

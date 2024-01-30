@@ -232,4 +232,9 @@ public final class EditableSchemesCombo<T extends Scheme> {
       this.isProjectScheme = isProjectScheme;
     }
   }
+
+  public void setEnabled(boolean enabled) {
+    getComponent().setEnabled(enabled);
+    myComboBox.setEnabled(enabled);
+  }
 }

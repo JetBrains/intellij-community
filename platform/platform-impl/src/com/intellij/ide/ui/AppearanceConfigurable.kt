@@ -56,7 +56,6 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
-import com.intellij.ui.layout.or
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
@@ -171,6 +170,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     return panel {
+      val autodetectSupportedPredicate = ComponentPredicate.fromValue(lafManager.autodetectSupported)
+      val syncThemeAndEditorSchemePredicate = autodetectSupportedPredicate.and(ComponentPredicate.fromObservableProperty(syncThemeProperty, disposable))
+
       panel {
         row(message("combobox.look.and.feel")) {
           val lafComboBoxModelWrapper = LafComboBoxModelWrapper(lafManager.lafComboBoxModel)
@@ -179,17 +181,16 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .accessibleName(message("combobox.look.and.feel"))
 
           theme.component.isSwingPopup = false
-          theme.component.renderer = lafManager.lookAndFeelCellRenderer
+          theme.component.renderer = lafManager.getLookAndFeelCellRenderer(theme.component)
           lafComboBoxModelWrapper.comboBoxComponent = theme.component
 
-          val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
+          checkBox(message("preferred.theme.autodetect.selector"))
             .bindSelected(syncThemeProperty)
             .visible(lafManager.autodetectSupported)
 
-          val autodetectSupportedPredicate = ComponentPredicate.fromValue(lafManager.autodetectSupported)
-          theme.enabledIf(autodetectSupportedPredicate.not().or(syncCheckBox.selected.not()))
+          theme.enabledIf(syncThemeAndEditorSchemePredicate.not())
           cell(lafManager.settingsToolbar)
-            .visibleIf(syncCheckBox.selected.and(autodetectSupportedPredicate))
+            .visibleIf(syncThemeAndEditorSchemePredicate)
         }
       }
 
@@ -210,7 +211,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             colorAndFontsOptions.apply()
           }.onReset {
             colorAndFontsOptions.reset()
-          }
+          }.enabledIf(syncThemeAndEditorSchemePredicate.not())
         }
 
         disposable?.whenDisposed {

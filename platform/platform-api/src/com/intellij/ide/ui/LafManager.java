@@ -45,7 +45,7 @@ public abstract class LafManager {
   public abstract LafReference getLookAndFeelReference();
 
   @ApiStatus.Internal
-  public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer();
+  public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer(JComponent component);
 
   @ApiStatus.Internal
   public abstract @NotNull JComponent getSettingsToolbar();

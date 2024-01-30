@@ -187,9 +187,10 @@ private class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenT
     return panel {
       header(IdeBundle.message("welcome.screen.color.theme.header"), true)
       row {
-        val themeBuilder = comboBox(laf.lafComboBoxModel, laf.lookAndFeelCellRenderer)
+        val themeBuilder = comboBox(laf.lafComboBoxModel)
           .bindItem(lafProperty)
           .accessibleName(IdeBundle.message("welcome.screen.color.theme.header"))
+        themeBuilder.component.renderer = laf.getLookAndFeelCellRenderer(themeBuilder.component)
         colorThemeComboBox = themeBuilder.component
         val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"))
           .bindSelected(syncThemeProperty)
