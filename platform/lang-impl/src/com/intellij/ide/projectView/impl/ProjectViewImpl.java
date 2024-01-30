@@ -85,10 +85,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -1038,7 +1035,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private synchronized void reloadPanes() {
+  @ApiStatus.Internal
+  public synchronized void reloadPanes() {
     if (project.isDisposed() || !isExtensionsLoaded.get()) return; // panes will be loaded later
 
     Map<String, AbstractProjectViewPane> newPanes = loadPanes();
