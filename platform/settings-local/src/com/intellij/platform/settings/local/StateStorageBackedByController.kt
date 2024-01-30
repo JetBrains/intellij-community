@@ -13,7 +13,10 @@ import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.platform.settings.*
+import com.intellij.platform.settings.GetResult
+import com.intellij.platform.settings.RawSettingSerializerDescriptor
+import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.SettingTag
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
@@ -150,10 +153,10 @@ internal class StateStorageBackedByController(
     // external change is not expected and not supported
   }
 
-  internal fun createSettingDescriptor(key: String, componentName: String): SettingDescriptor<ByteArray> {
-    val tags = ArrayList<SettingTag>(this.tags.size + 1)
-    tags.add(PersistenceStateComponentProperty(componentName))
-    tags.addAll(this.tags)
+  internal fun createSettingDescriptor(key: String, @Suppress("UNUSED_PARAMETER") componentName: String): SettingDescriptor<ByteArray> {
+    //val tags = ArrayList<SettingTag>(this.tags.size + 1)
+    //tags.add(PersistenceStateComponentProperty(componentName))
+    //tags.addAll(this.tags)
     return SettingDescriptor(
       key = key,
       pluginId = shimPluginId,

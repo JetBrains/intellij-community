@@ -71,8 +71,6 @@ interface DelegatedSettingsController {
   @Throws(ReadOnlySettingException::class)
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean
 
-  //fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean? = null
-
   fun close() {
   }
 }

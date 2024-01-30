@@ -31,10 +31,6 @@ private class LocalSettingsController : DelegatedSettingsController {
     return false
   }
 
-  //override fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean? {
-  //  return service.hasKeyStartsWith(key)
-  //}
-
   override fun close() {
     service.storeManager.close()
   }
@@ -79,16 +75,8 @@ private class LocalSettingsControllerService : SettingsSavingComponent {
       }
     })
 
-    return GetResult.resolved(null)
+    return GetResult.inapplicable()
   }
-
-  //fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean {
-  //  operate(key, internalOperation = {
-  //    return it.map.hasKeyStartsWith(getEffectiveKey(key) + ".")
-  //  })
-  //
-  //  return false
-  //}
 
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     operate(key, internalOperation = { map, _ ->

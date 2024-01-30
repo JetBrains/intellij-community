@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = logger<StateStorageBase<*>>()
@@ -15,22 +16,26 @@ private val LOG = logger<StateStorageBase<*>>()
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
+  @JvmField
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
   protected open val saveStorageDataOnReload: Boolean
     get() = true
 
   final override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
-    return deserializeState(stateElement = getSerializedState(storageData = getStorageData(reload),
-                                                              component = component,
-                                                              componentName = componentName,
-                                                              archive = false),
-                            stateClass = stateClass,
-                            mergeInto = mergeInto)
+    return deserializeState(
+      stateElement = getSerializedState(storageData = getStorageData(reload),
+                                        component = component,
+                                        componentName = componentName,
+                                        archive = false),
+      stateClass = stateClass,
+      mergeInto = mergeInto,
+    )
   }
 
-  fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, reload: Boolean = false, mergeInto: T? = null): T? {
-    return getState(component, componentName, stateClass, mergeInto, reload)
+  @TestOnly
+  fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>): T? {
+    return getState(component = component, componentName = componentName, stateClass = stateClass, mergeInto = null, reload = false)
   }
 
   @ApiStatus.Internal

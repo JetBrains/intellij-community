@@ -11,7 +11,10 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
-  internal fun <S : Any> createGetSession(component: PersistentStateComponent<S>, componentName: String, stateClass: Class<S>, reload: Boolean = false): StateGetter<S> {
+  internal fun <S : Any> createGetSession(component: PersistentStateComponent<S>,
+                                          componentName: String,
+                                          stateClass: Class<S>,
+                                          reload: Boolean = false): StateGetter<S> {
     return StateGetterImpl(component = component,
                            componentName = componentName,
                            storageData = getStorageData(reload),
@@ -25,7 +28,12 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   abstract fun archiveState(storageData: T, componentName: String, serializedState: Element?)
 }
 
-internal fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: StateStorage, component: PersistentStateComponent<S>, componentName: String, stateClass: Class<S>, reloadData: Boolean): StateGetter<S> {
+internal fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean,
+                                         storage: StateStorage,
+                                         component: PersistentStateComponent<S>,
+                                         componentName: String,
+                                         stateClass: Class<S>,
+                                         reloadData: Boolean): StateGetter<S> {
   if (isUseLoadedStateAsExisting && storage is StorageBaseEx<*>) {
     return storage.createGetSession(component = component, componentName = componentName, stateClass = stateClass, reload = reloadData)
   }

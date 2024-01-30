@@ -388,8 +388,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo {
     val existing = components.putIfAbsent(name, info)
     if (existing != null && existing.component !== info.component) {
-      LOG.error(
-        "Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} (componentManager=${storageManager.componentManager})")
+      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} " +
+                "(componentManager=${storageManager.componentManager})")
       return existing
     }
     else {
@@ -415,7 +415,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected fun initComponentWithoutStateSpec(component: PersistentStateComponent<Any>, configurationSchemaKey: String): Boolean {
     val stateClass = ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
     val storage = getReadOnlyStorage(component.javaClass, stateClass, configurationSchemaKey)
-    val state = storage?.getState(component, "", stateClass, null, reload = false)
+    val state = storage?.getState(component = component, componentName = "", stateClass = stateClass, mergeInto = null, reload = false)
     if (state == null) {
       component.noStateLoaded()
     }
@@ -518,14 +518,12 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean {
-    return !storageSpec.deprecated &&
-           stateSpec.reportStatistic &&
-           storageSpec.value != StoragePathMacros.CACHE_FILE
+    return !storageSpec.deprecated && stateSpec.reportStatistic && storageSpec.value != StoragePathMacros.CACHE_FILE
   }
 
   private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
-    return changedStorages.contains(storage) || storage is ExternalStorageWithInternalPart && changedStorages.contains(
-      storage.internalStorage)
+    return changedStorages.contains(storage) ||
+           (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
   }
 
   protected open fun doCreateStateGetter(reloadData: Boolean,
@@ -535,12 +533,14 @@ abstract class ComponentStoreImpl : IComponentStore {
                                          stateClass: Class<Any>): StateGetter<Any> {
     val isUseLoadedStateAsExisting = info.stateSpec!!.useLoadedStateAsExisting && isUseLoadedStateAsExisting(storage)
     @Suppress("UNCHECKED_CAST")
-    return createStateGetter(isUseLoadedStateAsExisting = isUseLoadedStateAsExisting,
-                             storage = storage,
-                             component = info.component as PersistentStateComponent<Any>,
-                             componentName = name,
-                             stateClass = stateClass,
-                             reloadData = reloadData)
+    return createStateGetter(
+      isUseLoadedStateAsExisting = isUseLoadedStateAsExisting,
+      storage = storage,
+      component = info.component as PersistentStateComponent<Any>,
+      componentName = name,
+      stateClass = stateClass,
+      reloadData = reloadData,
+    )
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean {
@@ -555,7 +555,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     try {
       val element = JDOMUtil.load(data)
       getPathMacroManagerForDefaults()?.expandPaths(element)
-      return deserializeState(element, stateClass, null)
+      return deserializeState(stateElement = element, stateClass = stateClass, mergeInto = null)
     }
     catch (e: Throwable) {
       throw IOException("Error loading default state for $componentName", e)

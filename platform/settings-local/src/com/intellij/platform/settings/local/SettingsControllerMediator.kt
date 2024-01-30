@@ -4,7 +4,6 @@
 
 package com.intellij.platform.settings.local
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
@@ -36,16 +35,6 @@ internal class SettingsControllerMediator : SettingsController {
     return GetResult.inapplicable()
   }
 
-  //fun <T : Any> hasKeyStartsWith(key: SettingDescriptor<T>): Boolean {
-  //  for (controller in controllers) {
-  //    if (controller.hasKeyStartsWith(key) == true) {
-  //      return true
-  //    }
-  //  }
-  //
-  //  return false
-  //}
-
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     for (controller in controllers) {
       if (controller.setItem(key = key, value = value)) {
@@ -59,15 +48,15 @@ internal class SettingsControllerMediator : SettingsController {
       StoragePathMacros.CACHE_FILE -> {
         StateStorageBackedByController(controller = this, tags = java.util.List.of(CacheTag), oldStorage = null)
       }
-      StoragePathMacros.NON_ROAMABLE_FILE -> {
-        if (delegateToSettingsController || ApplicationManager.getApplication().isUnitTestMode) {
-          val oldStorage = XmlFileStorage(file)
-          StateStorageBackedByController(controller = this, tags = java.util.List.of(NonShareableInternalTag), oldStorage = oldStorage)
-        }
-        else {
-          null
-        }
-      }
+      //StoragePathMacros.NON_ROAMABLE_FILE -> {
+      //  if (delegateToSettingsController || ApplicationManager.getApplication().isUnitTestMode) {
+      //    val oldStorage = XmlFileStorage(file)
+      //    StateStorageBackedByController(controller = this, tags = java.util.List.of(NonShareableInternalTag), oldStorage = oldStorage)
+      //  }
+      //  else {
+      //    null
+      //  }
+      //}
       else -> null
     }
   }

@@ -12,16 +12,18 @@ import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.SerializationConstants
 
-internal class ExternalModuleStorage(
-  private val module: Module,
-  storageManager: StateStorageManager
-) : XmlElementStorage(StoragePathMacros.MODULE_FILE, "module", storageManager.macroSubstitutor, RoamingType.DISABLED) {
+internal class ExternalModuleStorage(private val module: Module, storageManager: StateStorageManager)
+  : XmlElementStorage(fileSpec = StoragePathMacros.MODULE_FILE,
+                      rootElementName = "module",
+                      pathMacroSubstitutor = storageManager.macroSubstitutor,
+                      storageRoamingType = RoamingType.DISABLED) {
   private val manager: ExternalSystemStreamProviderFactory = findExternalSystemStreamProviderFactory(module.project)
 
   override fun loadLocalData(): Element? = manager.readModuleData(module.name)
 
-  override fun createSaveSession(states: StateMap): SaveSessionProducer =
-    ExternalStorageSaveSessionProducer(states, storage = this, manager.moduleStorage, module.name)
+  override fun createSaveSession(states: StateMap): SaveSessionProducer {
+    return ExternalStorageSaveSessionProducer(states = states, storage = this, fileStorage = manager.moduleStorage, name = module.name)
+  }
 }
 
 internal open class ExternalProjectStorage(
@@ -34,8 +36,9 @@ internal open class ExternalProjectStorage(
 
   override fun loadLocalData(): Element? = manager.fileStorage.read(fileSpec)
 
-  override fun createSaveSession(states: StateMap): SaveSessionProducer =
-    ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, fileSpec)
+  override fun createSaveSession(states: StateMap): SaveSessionProducer {
+    return ExternalStorageSaveSessionProducer(states = states, storage = this, fileStorage = manager.fileStorage, name = fileSpec)
+  }
 
   override fun toString(): String = "ExternalProjectStorage(fileSpec=${fileSpec})"
 }
@@ -47,25 +50,40 @@ internal class ExternalProjectFilteringStorage(
   storageManager: StateStorageManager,
   private val componentName: String,
   override val internalStorage: DirectoryBasedStorage
-) : ExternalProjectStorage(fileSpec, project, storageManager, rootElementName = null ), ExternalStorageWithInternalPart {
+) : ExternalProjectStorage(fileSpec, project, storageManager, rootElementName = null), ExternalStorageWithInternalPart {
   private val filter = object : DataWriterFilter {
     private val elementOutputFilter = JDOMUtil.ElementOutputFilter { childElement, level ->
       level != ElementLevel.FIRST.ordinal || childElement.getAttribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE) != null
     }
+
     override fun toElementFilter(): JDOMUtil.ElementOutputFilter = elementOutputFilter
+
     override fun hasData(element: Element): Boolean = element.children.any { elementOutputFilter.accept(it, 1) }
   }
 
-  override fun loadLocalData(): Element? = JDOMUtil.merge(
-    super.loadLocalData(),
-    internalStorage.getSerializedState(internalStorage.loadData(), component = null, componentName, archive = true))
+  override fun loadLocalData(): Element? {
+    return JDOMUtil.merge(
+      super.loadLocalData(),
+      internalStorage.getSerializedState(storageData = internalStorage.loadData(),
+                                         component = null,
+                                         componentName = componentName,
+                                         archive = true),
+    )
+  }
 
-  override fun createSaveSession(states: StateMap): SaveSessionProducer =
-    ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, fileSpec, filter)
+  override fun createSaveSession(states: StateMap): SaveSessionProducer {
+    return ExternalStorageSaveSessionProducer(states = states,
+                                              storage = this,
+                                              fileStorage = manager.fileStorage,
+                                              name = fileSpec,
+                                              filter = filter)
+  }
 }
 
-private fun findExternalSystemStreamProviderFactory(project: Project): ExternalSystemStreamProviderFactory =
-  StreamProviderFactory.EP_NAME.getExtensions(project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+private fun findExternalSystemStreamProviderFactory(project: Project): ExternalSystemStreamProviderFactory {
+  return StreamProviderFactory.EP_NAME.getExtensions(project)
+    .first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+}
 
 private class ExternalStorageSaveSessionProducer(
   states: StateMap,

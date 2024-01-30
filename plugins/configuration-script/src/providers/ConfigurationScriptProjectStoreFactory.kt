@@ -65,9 +65,9 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     }
   }
 
-  // In general, this method is not required in this form,
-  // because SaveSessionBase.setState accepts serialized state (Element) without any side effects or performance degradation,
-  // but it is better to express contract in code to make sure that it will be not broken in the future.
+  // Generally, this method isn't required in this form
+  // because SaveSessionBase.setState accepts serialized state (Element) without any side effects or performance degradation.
+  // However, it's preferable to express contracts explicitly in the code to ensure they aren't inadvertently broken in the future.
   override fun setStateToSaveSessionProducer(state: Any?,
                                              info: ComponentInfo,
                                              effectiveComponentName: String,
@@ -89,6 +89,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
         continue
       }
 
+      @Suppress("IncorrectServiceRetrieving")
       val component = project.getServiceIfCreated(storage.componentClass)
       if (component == null) {
         logger<ConfigurationScriptProjectStoreFactory>().error("Cannot find component by ${storage.componentClass.name}")
