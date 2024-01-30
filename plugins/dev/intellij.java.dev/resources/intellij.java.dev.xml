@@ -11,6 +11,7 @@
     <psiViewer.extension implementation="com.intellij.java.dev.psiViewer.PsiViewerExpressionExtension"/>
     <psiViewer.extension implementation="com.intellij.java.dev.psiViewer.PsiViewerCodeFragmentExtension"/>
     <psiViewer.extension implementation="com.intellij.java.dev.psiViewer.PsiViewerMethodExtension"/>
+    <psiViewer.propertyNodeFactory implementation="com.intellij.java.dev.psiViewer.PsiViewerPsiTypeNode$Factory"/>
 
     <lang.goodCodeRedVisitor language="JAVA" implementationClass="com.intellij.java.dev.codeInsight.internal.JavaGoodCodeRedVisitor"/>
   </extensions>

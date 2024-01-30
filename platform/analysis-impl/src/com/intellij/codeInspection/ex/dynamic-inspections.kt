@@ -34,8 +34,16 @@ sealed class DynamicInspectionDescriptor {
 
   val toolWrapper: InspectionToolWrapper<*, *> by lazy {
     when(this) {
-      is Global -> GlobalInspectionToolWrapper(tool)
-      is Local -> LocalInspectionToolWrapper(tool)
+      is Global -> object : GlobalInspectionToolWrapper(tool) {
+        override fun createCopy(): GlobalInspectionToolWrapper {
+          return GlobalInspectionToolWrapper(tool)
+        }
+      }
+      is Local -> object : LocalInspectionToolWrapper(tool) {
+        override fun createCopy(): LocalInspectionToolWrapper {
+          return LocalInspectionToolWrapper(tool)
+        }
+      }
     }
   }
 

@@ -3,7 +3,13 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.dev.psiViewer.extension" dynamic="true"
                     interface="com.intellij.dev.psiViewer.PsiViewerExtension"/>
+    <extensionPoint qualifiedName="com.intellij.dev.psiViewer.propertyNodeFactory" dynamic="true"
+                    interface="com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode$Factory"/>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij.dev">
+    <psiViewer.propertyNodeFactory implementation="com.intellij.dev.psiViewer.properties.tree.nodes.PsiViewerPrimitiveNode$Factory"/>
+    <psiViewer.propertyNodeFactory implementation="com.intellij.dev.psiViewer.properties.tree.nodes.PsiViewerPsiElementNode$Factory"/>
+  </extensions>
   <actions>
     <group id="Dev.PsiViewerActions">
       <separator/>

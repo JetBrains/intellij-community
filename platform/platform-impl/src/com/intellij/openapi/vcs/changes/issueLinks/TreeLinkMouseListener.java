@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import java.util.Objects;
 
 public class TreeLinkMouseListener extends LinkMouseListenerBase<Object> {
   private final ColoredTreeCellRenderer myRenderer;
-  protected WeakReference<TreeNode> myLastHitNode;
+  private WeakReference<Object> myLastHitNode;
 
   public TreeLinkMouseListener(final ColoredTreeCellRenderer renderer) {
     myRenderer = renderer;
@@ -40,17 +41,26 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase<Object> {
     final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
     if (path != null) {
       int dx = getRendererRelativeX(e, tree, path);
-      final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
+      final Object node = path.getLastPathComponent();
+
+      boolean isLeaf;
+      if (node instanceof TreeNode treeNode) {
+        isLeaf = treeNode.isLeaf();
+      } else if (node instanceof IsLeafProvider isLeafProvider) {
+        isLeaf = isLeafProvider.isLeaf();
+      } else {
+        isLeaf = false;
+      }
       AppUIUtil.targetToDevice(myRenderer, tree);
-      if (myLastHitNode == null || myLastHitNode.get() != treeNode || e.getButton() != MouseEvent.NOBUTTON) {
+      if (myLastHitNode == null || myLastHitNode.get() != node || e.getButton() != MouseEvent.NOBUTTON) {
         if (doCacheLastNode()) {
-          myLastHitNode = new WeakReference<>(treeNode);
+          myLastHitNode = new WeakReference<>(node);
         }
-        myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), tree.getRowForPath(path), false);
+        myRenderer.getTreeCellRendererComponent(tree, node, false, false, isLeaf, tree.getRowForPath(path), false);
       }
       tag = myRenderer.getFragmentTagAt(dx);
-      if (tag != null && treeNode instanceof HaveTooltip) {
-        haveTooltip = (HaveTooltip)treeNode;
+      if (tag != null && node instanceof HaveTooltip) {
+        haveTooltip = (HaveTooltip)node;
       }
     }
     showTooltip(tree, e, haveTooltip);
@@ -69,5 +79,10 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase<Object> {
 
   public interface HaveTooltip {
     @NlsContexts.Tooltip String getTooltip();
+  }
+
+  @ApiStatus.Internal
+  public interface IsLeafProvider {
+    boolean isLeaf();
   }
 }
