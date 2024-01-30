@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.io.IOUtil.magicWordToASCII;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
@@ -36,11 +37,20 @@ import static java.nio.ByteOrder.nativeOrder;
  */
 @ApiStatus.Internal
 public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmappable {
+
   //@formatter:off
+  /**
+   * On error, provide more verbose diagnostic info about AOLog state (i.e. was there a recovery?) and content
+   * around record in question
+   */
   private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("AppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
-  private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
-  /** How wide region around questionable record to dump for debug diagnostics (see {@link #dumpContentAroundId(long, int)}) */
+
+  /** Append to the exceptions/errors a dump (hex) of log's content around questionable region */
+  private static final boolean APPEND_LOG_DUMP_ON_ERROR = getBooleanProperty("AppendOnlyLogOverMMappedFile.APPEND_LOG_DUMP_ON_ERROR", true);
+  /** How wide region around questionable record to dump for debug diagnostics (see {@link #dumpContentAroundId(long, int, int)}) */
   private static final int DEBUG_DUMP_REGION_WIDTH = 256;
+  /** If record content is larger -- don't print remaining part in the dump */
+  private static final int MAX_RECORD_SIZE_TO_DUMP = getIntProperty("AppendOnlyLogOverMMappedFile.MAX_RECORD_SIZE_TO_DUMP", 256);
   //@formatter:on
 
   private static final VarHandle INT32_OVER_BYTE_BUFFER = byteBufferViewVarHandle(int[].class, nativeOrder()).withInvokeExactBehavior();
@@ -569,7 +579,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "] is not commited: " +
                             "(header=" + Integer.toHexString(recordHeader) + ") either not yet written or corrupted. " +
                             moreDiagnosticInfo(recordOffsetInFile) +
-                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH) : "")
+                            (APPEND_LOG_DUMP_ON_ERROR ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH, MAX_RECORD_SIZE_TO_DUMP) : "")
       );
     }
     int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
@@ -578,7 +588,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
                             "is incorrect: page[0.." + pageBuffer.limit() + "], " +
                             "committedUpTo: " + firstUnCommittedOffset() + ", allocatedUpTo: " + firstUnAllocatedOffset() + ". " +
                             moreDiagnosticInfo(recordOffsetInFile) +
-                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH) : "")
+                            (APPEND_LOG_DUMP_ON_ERROR ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH, MAX_RECORD_SIZE_TO_DUMP) : "")
       );
     }
     ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
@@ -989,27 +999,37 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   /**
    * @return log records in a region [aroundRecordId-regionWidth..aroundRecordId+regionWidth],
-   * one record per line. Record content formatted as hex-string
+   * one record per line.
+   * Record content formatted as hex-string.
+   * If fecord is larger than maxRecordSizeToDump -- first maxRecordSizeToDump bytes dumped, with '...' at the end
+   *
    */
   private String dumpContentAroundId(long aroundRecordId,
-                                     int regionWidth) throws IOException {
+                                     int regionWidth,
+                                     int maxRecordSizeToDump) throws IOException {
     StringBuilder sb = new StringBuilder("Log content around id: " + aroundRecordId + " +/- " + regionWidth +
                                          " (first uncommitted offset: " + firstUnCommittedOffset() +
                                          ", first unallocated: " + firstUnAllocatedOffset() + ")\n");
     forEachRecord((recordId, buffer) -> {
-      long nextRecordId = recordOffsetToId(
-        nextRecordOffset(recordIdToOffset(recordId), buffer.remaining())
-      );
+      long recordOffset = recordIdToOffset(recordId);
+      int recordSize = buffer.remaining();
+
+      long nextRecordId = recordOffsetToId(nextRecordOffset(recordOffset, recordSize));
+
       //MAYBE RC: only use insideQuestionableRecord? Seems like records around are of little use
       boolean insideQuestionableRecord = (recordId <= aroundRecordId && aroundRecordId <= nextRecordId);
       boolean insideNeighbourRegion = (aroundRecordId - regionWidth <= recordId
                                        && recordId <= aroundRecordId + regionWidth);
 
       if (insideQuestionableRecord || insideNeighbourRegion) {
-        String bufferAsHex = IOUtil.toHexString(buffer);
+        String bufferAsHex = recordSize > maxRecordSizeToDump ?
+                             IOUtil.toHexString(buffer.limit(buffer.position()+maxRecordSizeToDump)) + " ... " :
+                             IOUtil.toHexString(buffer);
         sb.append(insideQuestionableRecord ? "*" : "")
-          .append("[id: ").append(recordId).append("][offset: ").append(recordIdToOffset(recordId)).append("][hex: ")
-          .append(bufferAsHex).append("]\n");
+          .append("[id: ").append(recordId).append(']')
+          .append("[offset: ").append(recordOffset).append(']')
+          .append("[len: ").append(recordSize).append(']')
+          .append("[hex: ").append(bufferAsHex).append("]\n");
       }
       return recordId <= aroundRecordId + regionWidth;
     });
