@@ -987,25 +987,26 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     }
   }
 
+
   @Test
   fun testHighlightUnresolvedProperties() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>child</artifactId>
                        <version>1</version>
-                       <name>${'$'}{<error>xxx</error>}</name>
+                       <name>${'$'}{xxx}</name>
                        <properties>
                          <foo>
-                       ${'$'}{<error>zzz</error>}
-                       ${'$'}{<error>pom.maven.build.timestamp</error>}
-                       ${'$'}{<error>project.maven.build.timestamp</error>}
-                       ${'$'}{<error>parent.maven.build.timestamp</error>}
-                       ${'$'}{<error>baseUri</error>}
-                       ${'$'}{<error>unknownProperty</error>}
-                       ${'$'}{<error>project.version.bar</error>}
+                       ${'$'}{zzz}
+                       ${'$'}{pom.maven.build.timestamp}
+                       ${'$'}{project.maven.build.timestamp}
+                       ${'$'}{parent.maven.build.timestamp}
+                       ${'$'}{baseUri}
+                       ${'$'}{unknownProperty}
+                       ${'$'}{project.version.bar}
                        ${'$'}{maven.build.timestamp}
                        ${'$'}{project.parentFile.name}
-                       ${'$'}{<error>project.parentFile.nameXxx</error>}
+                       ${'$'}{project.parentFile.nameXxx}
                        ${'$'}{pom.compileArtifacts.empty}
                        ${'$'}{modules.empty}
                        ${'$'}{projectDirectory}
@@ -1014,9 +1015,17 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent()
     )
 
-    withContext(Dispatchers.EDT) {
-      checkHighlighting()
-    }
+    checkHighlighting(projectPom,
+                      Highlight(text = "xxx"),
+                      Highlight(text = "zzz"),
+                      Highlight(text = "pom.maven.build.timestamp"),
+                      Highlight(text = "parent.maven.build.timestamp"),
+                      Highlight(text = "baseUri"),
+                      Highlight(text = "unknownProperty"),
+                      Highlight(text = "project.version.bar"),
+                      Highlight(text = "project.parentFile.nameXxx"),
+    )
+
   }
 
   @Test
