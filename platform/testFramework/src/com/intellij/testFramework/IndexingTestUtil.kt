@@ -53,17 +53,15 @@ class IndexingTestUtil(private val project: Project) {
       // non-volatile: only updated on writing thread
       private var nested: Int = 1 // 1 because at least one write action is currently happenings
 
-      override fun writeActionStarted(action: Any) {
+      override fun beforeWriteActionStart(action: Any) {
         nested++
-      }
-
-      override fun writeActionFinished(action: Any) {
-        nested--
       }
 
       // invoked after all the write actions are finished (write lock is released)
       override fun afterWriteActionFinished(action: Any) {
-        if (nested <= 0) { // may be negative if write actions stack was not empty when waiting was started
+        nested--
+        assert(nested >= 0) { "We counted more finished write actions than started." }
+        if (nested <= 0) { // may not be negative, but let's stay on safe side
           Disposer.dispose(listenerDisposable);
           waitNow();
         }
