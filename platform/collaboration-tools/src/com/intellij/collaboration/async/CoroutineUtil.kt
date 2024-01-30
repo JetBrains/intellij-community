@@ -274,7 +274,7 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
       container.update(items)
     }
   }
-  container.mapState.collect {
+  container.mappingState.collect {
     send(it)
   }
 }
@@ -298,13 +298,13 @@ class MappingScopedItemsContainer<T, K, V>(
   private val destroy: suspend V.() -> Unit,
   private val update: (suspend V.(T) -> Unit)? = null
 ) {
-  private val _mapState = MutableStateFlow<Map<K, ScopingWrapper<V>>>(emptyMap())
-  val mapState: StateFlow<Map<K, V>> = _mapState.mapState { it.mapValues { (_, value) -> value.value } }
+  private val _mappingState = MutableStateFlow<Map<K, ScopingWrapper<V>>>(emptyMap())
+  val mappingState: StateFlow<Map<K, V>> = _mappingState.mapState { it.mapValues { (_, value) -> value.value } }
   private val mapGuard = Mutex()
 
   suspend fun update(items: Iterable<T>) = mapGuard.withLock {
     withContext(NonCancellable) {
-      val currentMap = _mapState.value
+      val currentMap = _mappingState.value
       var hasStructureChanges = false
       val newItemsSet = CollectionFactory.createLinkedCustomHashingStrategySet(hashingStrategy).also {
         items.mapTo(it, keyExtractor)
@@ -340,7 +340,7 @@ class MappingScopedItemsContainer<T, K, V>(
       }
 
       if (hasStructureChanges) {
-        _mapState.value = result
+        _mappingState.value = result
       }
     }
   }
@@ -348,7 +348,7 @@ class MappingScopedItemsContainer<T, K, V>(
   suspend fun addIfAbsent(item: T): V = mapGuard.withLock {
     withContext(NonCancellable) {
       val key = keyExtractor(item)
-      _mapState.value[key]?.value ?: _mapState.updateAndGet {
+      _mappingState.value[key]?.value ?: _mappingState.updateAndGet {
         val valueScope = cs.childScope()
         val newValue = ScopingWrapper(valueScope, mapper(valueScope, item))
         it + (key to newValue)

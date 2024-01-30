@@ -87,7 +87,7 @@ internal class GHPRDiffChangeViewModelImpl(
       GHPRNewCommentDiffViewModelImpl(it.position.location.lineLocation, it)
     }
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
-    newCommentsContainer.mapState.mapState { it.values }
+    newCommentsContainer.mappingState.mapState { it.values }
 
   init {
     cs.launchNow {
