@@ -215,7 +215,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     doTestFor(fileSuffix, createWrapper());
   }
 
-  protected void doSingleTest(String fileSuffix, String testDataPath) {
+  protected void doSingleTest(@NotNull String fileSuffix, String testDataPath) {
     doTestFor(fileSuffix, createWrapper(testDataPath));
   }
 
