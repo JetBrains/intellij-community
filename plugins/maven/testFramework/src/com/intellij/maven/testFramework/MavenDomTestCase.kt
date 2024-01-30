@@ -149,6 +149,18 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return getEditor(f).caretModel.offset
   }
 
+  private val caretElement = "<caret>"
+  protected fun moveCaretTo(f: VirtualFile, textWithCaret: String) {
+    val caretOffset = textWithCaret.indexOf(caretElement)
+    assertTrue(caretOffset > 0)
+    val textWithoutCaret = textWithCaret.replaceFirst(caretElement, "")
+    val documentText = getEditor(f).document.text
+    val textOffset = documentText.indexOf(textWithoutCaret)
+    assertTrue(textOffset > 0)
+    val offset = textOffset + caretOffset
+    getEditor(f).caretModel.moveToOffset(offset)
+  }
+
   protected val testPsiFile: PsiFile
     get() = getTestPsiFile(projectPom)
 

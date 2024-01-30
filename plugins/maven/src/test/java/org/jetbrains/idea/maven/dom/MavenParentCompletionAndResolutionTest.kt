@@ -187,7 +187,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <parentPath>parent/pom.xml</parentPath>
                        </properties>
                        <parent>
-                         <groupId><caret>test</groupId>
+                         <groupId>test</groupId>
                          <artifactId>parent</artifactId>
                          <version>1</version>
                          <relativePath>${'$'}{parentPath}</relativePath>
@@ -195,6 +195,10 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
+      getEditor(projectPom).caretModel.moveToOffset(449)
+      moveCaretTo(projectPom, """
+        <parent>
+          <groupId><caret>test</groupId>""".trimIndent())
       assertResolved(projectPom, findPsiFile(parent))
     }
   }
