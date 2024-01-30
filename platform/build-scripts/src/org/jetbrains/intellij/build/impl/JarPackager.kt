@@ -682,6 +682,10 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
     }
   }
 
+  if (dryRun) {
+    return emptyMap()
+  }
+
   val optimizeLibraryContext = OptimizeLibraryContext(tempDir = context.paths.tempDir, javaHome = context.getStableJdkHome())
   val list = withContext(Dispatchers.IO) {
     descriptors.map { item ->
@@ -694,47 +698,46 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
         }
 
         val file = item.file
+        if (sources.isEmpty()) {
+          return@async emptyMap()
+        }
+
         spanBuilder("build jar")
           .setAttribute("jar", file.toString())
           .setAttribute(AttributeKey.stringArrayKey("sources"), sources.map(Source::toString))
           .useWithoutActiveScope { span ->
-            if (sources.isEmpty()) {
-              return@async emptyMap()
-            }
-            else if (!dryRun) {
-              item.effectiveFile = cache.computeIfAbsent(
-                sources = sources,
-                targetFile = file,
-                nativeFiles = nativeFileHandler?.sourceToNativeFiles,
-                span = span,
-                producer = object : SourceBuilder {
-                  override val useCacheAsTargetFile: Boolean
-                    get() = useCacheAsTargetFile
+            item.effectiveFile = cache.computeIfAbsent(
+              sources = sources,
+              targetFile = file,
+              nativeFiles = nativeFileHandler?.sourceToNativeFiles,
+              span = span,
+              producer = object : SourceBuilder {
+                override val useCacheAsTargetFile: Boolean
+                  get() = useCacheAsTargetFile
 
-                  override fun updateDigest(digest: MessageDigest) {
-                    if (layout is PluginLayout) {
-                      val mainModule = layout.mainModule
-                      digest.update(mainModule.length.toByte())
-                      digest.update(mainModule.encodeToByteArray())
-                    }
-                    else {
-                      digest.update(0)
-                    }
+                override fun updateDigest(digest: MessageDigest) {
+                  if (layout is PluginLayout) {
+                    val mainModule = layout.mainModule
+                    digest.update(mainModule.length.toByte())
+                    digest.update(mainModule.encodeToByteArray())
                   }
-
-                  override suspend fun produce() {
-                    buildJar(targetFile = file,
-                             sources = sources,
-                             nativeFileHandler = nativeFileHandler,
-                             notify = false,
-                             optimizeLibraryContext = optimizeLibraryContext)
+                  else {
+                    digest.update(0)
                   }
                 }
-              )
-            }
+
+                override suspend fun produce() {
+                  buildJar(targetFile = file,
+                           sources = sources,
+                           nativeFileHandler = nativeFileHandler,
+                           notify = false,
+                           optimizeLibraryContext = optimizeLibraryContext)
+                }
+              }
+            )
           }
 
-        if (!dryRun && item.pathInClassLog.isNotEmpty()) {
+        if (item.pathInClassLog.isNotEmpty()) {
           reorderJar(relativePath = item.pathInClassLog, file = file)
         }
         nativeFileHandler?.sourceToNativeFiles ?: emptyMap()
