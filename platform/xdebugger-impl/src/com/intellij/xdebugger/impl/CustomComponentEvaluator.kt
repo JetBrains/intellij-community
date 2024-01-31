@@ -33,7 +33,7 @@ abstract class CustomComponentEvaluator(name: String) : XFullValueEvaluator() {
     this.startEvaluation(callback) /*to make it really cancellable*/
   }
 
-  private fun showValuePopup(event: MouseEvent,
+  protected open fun showValuePopup(event: MouseEvent,
                              project: Project,
                              editor: Editor?,
                              component: JComponent,
