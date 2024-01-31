@@ -11,6 +11,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil
 
+/**
+ * Represents a delegate implementation of the JvmLogger interface that is used to insert loggers which are [PsiAnnotation].
+ * Use it to handle with Lombok loggers
+ * @param fieldLoggerName the fully qualified name of the logger's type.
+ * @param loggerTypeName the fully qualified name of annotation used to generate logger
+ * @param priority the priority of the logger.
+ */
 class JvmLoggerAnnotationDelegate(
   private val fieldLoggerName: String,
   override val loggerTypeName: String,
@@ -32,7 +39,7 @@ class JvmLoggerAnnotationDelegate(
 
   override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz.hasAnnotation(loggerTypeName).not()
 
-  override fun createLoggerElementText(project: Project, clazz: PsiClass): PsiAnnotation {
+  override fun createLogger(project: Project, clazz: PsiClass): PsiAnnotation {
     val factory = JavaPsiFacade.getElementFactory(project)
     return factory.createAnnotationFromText("@$loggerTypeName", clazz)
   }

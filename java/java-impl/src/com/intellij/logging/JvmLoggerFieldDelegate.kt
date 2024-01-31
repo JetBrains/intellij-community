@@ -8,6 +8,15 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiUtil
 
+/**
+ * Represents a delegate implementation of the JvmLogger interface that is used to insert loggers which are [PsiField].
+ *
+ * @property factoryName The name of the factory class used to create the logger.
+ * @property methodName The name of the method in the factory class used to get the logger.
+ * @property classNamePattern The pattern used to format the class name when creating the logger element.
+ * @property loggerTypeName The fully qualified name of the logger's type.
+ * @property priority The priority of the logger, used for ordering in the settings.
+ */
 class JvmLoggerFieldDelegate(
   private val factoryName: String,
   private val methodName: String,
@@ -27,7 +36,7 @@ class JvmLoggerFieldDelegate(
   override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz
     .fields.any { it.name == LOGGER_IDENTIFIER || it.type.canonicalText == loggerTypeName }.not()
 
-  override fun createLoggerElementText(project: Project, clazz: PsiClass): PsiField? {
+  override fun createLogger(project: Project, clazz: PsiClass): PsiField? {
     val factory = JavaPsiFacade.getElementFactory(project)
     val className = clazz.name ?: return null
     val fieldText = "$loggerTypeName $LOGGER_IDENTIFIER = ${factoryName}.$methodName(${

@@ -6,6 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 
+/**
+ * This class represents logger which user has after creation of the project. This is fake logger which is only necessary to support
+ * "unspecified" state, e.g. where there is no preferred logger selected.
+ */
 class UnspecifiedLogger : JvmLogger {
   override val loggerTypeName: String = "Unspecified"
   override val priority: Int = 1000
@@ -21,7 +25,7 @@ class UnspecifiedLogger : JvmLogger {
 
   override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = false
 
-  override fun createLoggerElementText(project: Project, clazz: PsiClass): PsiElement = throw UnsupportedOperationException()
+  override fun createLogger(project: Project, clazz: PsiClass): PsiElement = throw UnsupportedOperationException()
 
   override fun toString(): String = UNSPECIFIED_LOGGER_NAME
 
