@@ -108,7 +108,7 @@ class UpdateableGHPRTimelineReviewViewModel internal constructor(
     createThreadsRequestsFlow()
       .computationState()
       .transformConsecutiveSuccesses {
-        map { threads -> threads.filter { it.reviewId == id } }.mapDataToModel({ id }, { createThread(it) }, { update(it) })
+        map { threads -> threads.filter { it.reviewId == id } }.mapDataToModel({ it.id }, { createThread(it) }, { update(it) })
       }
 
   private fun CoroutineScope.createThread(data: GHPullRequestReviewThread): UpdateableGHPRTimelineThreadViewModel {
