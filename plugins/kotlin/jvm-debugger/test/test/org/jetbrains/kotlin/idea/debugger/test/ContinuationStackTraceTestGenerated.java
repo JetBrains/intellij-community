@@ -28,6 +28,16 @@ public class ContinuationStackTraceTestGenerated extends AbstractContinuationSta
         runTest("testData/continuation/suspendFun.kt");
     }
 
+    @TestMetadata("suspendFunStackTraceFolded.kt")
+    public void testSuspendFunStackTraceFolded() throws Exception {
+        runTest("testData/continuation/suspendFunStackTraceFolded.kt");
+    }
+
+    @TestMetadata("suspendFunStackTraceHidden.kt")
+    public void testSuspendFunStackTraceHidden() throws Exception {
+        runTest("testData/continuation/suspendFunStackTraceHidden.kt");
+    }
+
     @TestMetadata("suspendFunWithInner.kt")
     public void testSuspendFunWithInner() throws Exception {
         runTest("testData/continuation/suspendFunWithInner.kt");

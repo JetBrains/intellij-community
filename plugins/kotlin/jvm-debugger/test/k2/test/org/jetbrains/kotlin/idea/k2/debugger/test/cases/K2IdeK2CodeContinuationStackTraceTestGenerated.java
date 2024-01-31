@@ -28,6 +28,16 @@ public class K2IdeK2CodeContinuationStackTraceTestGenerated extends AbstractK2Id
         runTest("../testData/continuation/suspendFun.kt");
     }
 
+    @TestMetadata("suspendFunStackTraceFolded.kt")
+    public void testSuspendFunStackTraceFolded() throws Exception {
+        runTest("../testData/continuation/suspendFunStackTraceFolded.kt");
+    }
+
+    @TestMetadata("suspendFunStackTraceHidden.kt")
+    public void testSuspendFunStackTraceHidden() throws Exception {
+        runTest("../testData/continuation/suspendFunStackTraceHidden.kt");
+    }
+
     @TestMetadata("suspendFunWithInner.kt")
     public void testSuspendFunWithInner() throws Exception {
         runTest("../testData/continuation/suspendFunWithInner.kt");
