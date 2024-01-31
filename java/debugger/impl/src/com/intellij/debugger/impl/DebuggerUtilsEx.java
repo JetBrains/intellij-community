@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerUtilsEx
@@ -6,7 +6,6 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
@@ -29,9 +28,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -54,6 +51,7 @@ import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XDebugProcess;
@@ -168,19 +166,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     }
     return null;
-  }
-
-  public static boolean valuesEqual(Value val1, Value val2) {
-    if (val1 == null) {
-      return val2 == null;
-    }
-    if (val2 == null) {
-      return false;
-    }
-    if (val1 instanceof StringReference && val2 instanceof StringReference) {
-      return ((StringReference)val1).value().equals(((StringReference)val2).value());
-    }
-    return val1.equals(val2);
   }
 
   public static ClassFilter create(Element element) throws InvalidDataException {
@@ -816,16 +801,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     };
   }
 
-  public static String prepareValueText(String text, Project project) {
-    text = StringUtil.unquoteString(text);
-    text = StringUtil.unescapeStringCharacters(text);
-    int tabSize = CodeStyle.getSettings(project).getTabSize(JavaFileType.INSTANCE);
-    if (tabSize < 0) {
-      tabSize = 0;
-    }
-    return text.replace("\t", StringUtil.repeat(" ", tabSize));
-  }
-
   private static final Key<Map<String, String>> DEBUGGER_ALTERNATIVE_SOURCE_MAPPING = Key.create("DEBUGGER_ALTERNATIVE_SOURCE_MAPPING");
 
   public static void setAlternativeSourceUrl(String className, String source, Project project) {
@@ -909,17 +884,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  @Nullable
-  public static TextRange intersectWithLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
-    if (range != null && file != null) {
-      Document document = file.getViewProvider().getDocument();
-      if (document != null) {
-        range = range.intersection(DocumentUtil.getLineTextRange(document, line));
-      }
-    }
-    return range;
-  }
-
   /**
    * Extract text range suitable for highlighting.
    * <p>
@@ -940,9 +904,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return range;
   }
 
+  @RequiresReadLock
   @Nullable
   public static PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (position != null) {
       VirtualFile file = position.getFile();
       if (file.isValid()) {
@@ -1014,8 +978,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return StringUtil.parseInt(StringUtil.substringAfterLast(name, "$"), -1);
   }
 
+  @RequiresReadLock
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
     final int line = position.getLine();
     final Document document = file.getViewProvider().getDocument();
@@ -1085,9 +1049,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return elemRange != null && elemRange.intersects(range);
   }
 
+  @RequiresReadLock
   @Nullable
   public static PsiElement getFirstElementOnTheLine(@NotNull PsiLambdaExpression lambda, Document document, int line) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     if (!intersects(lineRange, lambda)) return null;
     PsiElement body = lambda.getBody();
