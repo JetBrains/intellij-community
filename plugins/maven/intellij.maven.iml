@@ -105,6 +105,7 @@
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
   </component>
   <component name="copyright">
     <Base>
