@@ -183,6 +183,9 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
 
   addModule(UTIL_RT_JAR, listOf(
     "intellij.platform.util.rt",
+  ), productLayout = productLayout, layout = layout)
+  // trove is not used by JB Client - fix RuntimeModuleRepositoryChecker assert
+  addModule("trove.jar", listOf(
     "intellij.platform.util.trove",
   ), productLayout = productLayout, layout = layout)
   layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_8_JAR)
