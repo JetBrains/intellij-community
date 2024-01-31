@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.ServiceLoader;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -273,7 +272,6 @@ public class PerformanceTestInfo {
     System.out.printf("Starting performance test in mode: %s%n", iterationType);
 
     Timings.getStatistics(); // warm-up, measure
-    updateJitUsage();
 
     int maxIterationsNumber;
     if (iterationType.equals(IterationMode.WARMUP)) {
@@ -338,13 +336,8 @@ public class PerformanceTestInfo {
               },
               () -> operation.get());
 
-            JitUsageResult jitUsage = updateJitUsage();
-            String s =
-              "  " + (maxIterationsNumber - attempt) + " " + StringUtil.pluralize("attempt", maxIterationsNumber - attempt) + " remain" +
-              (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
-            TeamCityLogger.warning(s, null);
+
             if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-              System.out.println(s);
               System.out.println(iterationStatus);
             }
             //noinspection CallToSystemGC
@@ -396,36 +389,6 @@ public class PerformanceTestInfo {
       "\n  GC stats: " + data.getGcStats() +
       "\n  Process:  " + data.getProcessCpuStats();
   }
-
-  private long lastJitUsage;
-  private long lastJitStamp = -1;
-
-  private JitUsageResult updateJitUsage() {
-    long timeNow = System.nanoTime();
-    long jitNow = CpuUsageData.getTotalCompilationMillis();
-
-    long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(timeNow - lastJitStamp);
-    if (lastJitStamp >= 0) {
-      if (elapsedMillis >= 3_000) {
-        if (jitNow - lastJitUsage <= elapsedMillis / 10) {
-          return JitUsageResult.DEFINITELY_LOW;
-        }
-      }
-      else {
-        // don't update stamps too frequently,
-        // because JIT times are quite discrete: they only change after a compilation is finished,
-        // and some compilations take a second or even more
-        return JitUsageResult.UNCLEAR;
-      }
-    }
-
-    lastJitStamp = timeNow;
-    lastJitUsage = jitNow;
-
-    return JitUsageResult.UNCLEAR;
-  }
-
-  private enum JitUsageResult {DEFINITELY_LOW, UNCLEAR}
 
   enum IterationResult {
     ACCEPTABLE, // test was completed within the specified range
