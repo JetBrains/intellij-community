@@ -12,13 +12,13 @@ class JvmLoggerFieldDelegate(
   private val factoryName: String,
   private val methodName: String,
   private val classNamePattern: String,
-  override val loggerName: String,
+  override val loggerTypeName: String,
   override val priority: Int,
 ) : JvmLogger {
   override fun createLoggerElementText(project: Project, clazz: PsiClass): PsiField? {
     val factory = JavaPsiFacade.getElementFactory(project)
     val className = clazz.name ?: return null
-    val fieldText = "$loggerName ${JvmLogger.LOGGER_IDENTIFIER} = ${factoryName}.$methodName(${
+    val fieldText = "$loggerTypeName ${JvmLogger.LOGGER_IDENTIFIER} = ${factoryName}.$methodName(${
       String.format(classNamePattern, className)
     });"
     return factory.createFieldFromText(fieldText, clazz).apply {
@@ -33,7 +33,7 @@ class JvmLoggerFieldDelegate(
     return clazz.add(logger)
   }
 
-  override fun isAvailable(project: Project?): Boolean = JavaLibraryUtil.hasLibraryClass(project, loggerName)
+  override fun isAvailable(project: Project?): Boolean = JavaLibraryUtil.hasLibraryClass(project, loggerTypeName)
 
-  override fun isAvailable(module: Module?): Boolean = JavaLibraryUtil.hasLibraryClass(module, loggerName)
+  override fun isAvailable(module: Module?): Boolean = JavaLibraryUtil.hasLibraryClass(module, loggerTypeName)
 }

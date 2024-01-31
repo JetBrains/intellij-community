@@ -98,7 +98,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
         if (psiField.name == JvmLogger.LOGGER_IDENTIFIER) return false
 
         for (logger in JvmLogger.getAllLoggers(false)) {
-          if (logger.loggerName == typeName) return false
+          if (logger.loggerTypeName == typeName) return false
         }
       }
       return true

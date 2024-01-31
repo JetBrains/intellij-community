@@ -245,6 +245,8 @@
     <dependencySupport coordinate="org.projectlombok:lombok" kind="java" displayName="Lombok"/>
 
     <iconMapper mappingFile="LombokIconMappings.json"/>
+
+    <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokSlf4jLogger"/>
   </extensions>
 
   <projectListeners>

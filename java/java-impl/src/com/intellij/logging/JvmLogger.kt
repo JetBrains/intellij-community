@@ -8,17 +8,16 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiField
 
 interface JvmLogger {
-  val loggerName: String
+  val loggerTypeName: String
 
   val priority: Int
 
   fun isOnlyOnStartup() = false
 
   fun insertLoggerAtClass(project: Project, clazz: PsiClass): PsiElement? {
-    val logger = createLoggerElementText(project, clazz) as? PsiField ?: return null
+    val logger = createLoggerElementText(project, clazz) ?: return null
     return WriteAction.compute<PsiElement?, Exception> {
       insertLoggerAtClass(project, clazz, logger)
     }

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 
 class UnspecifiedLogger : JvmLogger {
-  override val loggerName: String = "Unspecified"
+  override val loggerTypeName: String = "Unspecified"
   override val priority: Int = 100
 
   override fun isOnlyOnStartup() = true
