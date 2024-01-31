@@ -196,7 +196,7 @@
     <action id="OpenElementInNewWindow" class="com.intellij.ide.actions.OpenElementInNewWindowAction" />
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
     <action id="TestSearchContributors" class="com.intellij.ide.actions.searcheverywhere.setesting.TestSearchEverywhereAction" internal="true"/>
-    <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
+    <group id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
 
     <action id="SpeedSearch" class="com.intellij.ide.actions.speedSearch.SpeedSearchAction" use-shortcut-of="Find" />
 
