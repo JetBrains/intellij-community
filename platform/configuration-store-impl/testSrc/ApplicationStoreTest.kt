@@ -338,7 +338,7 @@ class ApplicationStoreTest {
     val obsoleteStorageBean = ObsoleteStorageBean()
     obsoleteStorageBean.file = "i_do_not_want_to_be_deleted_but.xml"
     obsoleteStorageBean.components.addAll(listOf("loser1", "loser2", "lucky"))
-    ExtensionTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(ObsoleteStorageBean.EP_NAME, listOf(obsoleteStorageBean), disposableRule.disposable)
 
     @State(name = "loser1", storages = [(Storage(value = "i_do_not_want_to_be_deleted_but.xml"))])
     class AOther : A()
@@ -397,7 +397,7 @@ class ApplicationStoreTest {
     val obsoleteStorageBean = ObsoleteStorageBean()
     obsoleteStorageBean.file = "i_will_be_not_deleted.xml"
     obsoleteStorageBean.components.addAll(listOf("Loser"))
-    ExtensionTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(ObsoleteStorageBean.EP_NAME, listOf(obsoleteStorageBean), disposableRule.disposable)
 
     testAppConfig.resolve(obsoleteStorageBean.file).createParentDirectories().writeText("""
       <application>

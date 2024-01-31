@@ -197,7 +197,7 @@ class ProjectStoreTest {
       projectStalledStorageBean.file = storageFileName
       projectStalledStorageBean.isProjectLevel = true
       projectStalledStorageBean.components.addAll(listOf("ProjectLevelLoser"))
-      ExtensionTestUtil.maskExtensions(OBSOLETE_STORAGE_EP, listOf(obsoleteStorageBean, projectStalledStorageBean), project)
+      ExtensionTestUtil.maskExtensions(ObsoleteStorageBean.EP_NAME, listOf(obsoleteStorageBean, projectStalledStorageBean), project)
 
       val componentStore = project.stateStore
 

@@ -5,16 +5,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.*
-
-// A way to remove obsolete component data.
-internal val OBSOLETE_STORAGE_EP = ExtensionPointName<ObsoleteStorageBean>("com.intellij.obsoleteStorage")
 
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   protected abstract val serviceContainer: ComponentManagerImpl
@@ -94,7 +90,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   }
 
   internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
-    for (bean in OBSOLETE_STORAGE_EP.lazySequence()) {
+    for (bean in ObsoleteStorageBean.EP_NAME.lazySequence()) {
       if (bean.isProjectLevel != isProjectLevel) {
         continue
       }
