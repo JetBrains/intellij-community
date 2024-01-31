@@ -17,11 +17,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.ide.actions.newclass.TemplateListCellRendererKt.createTemplateListCellRenderer;
+
 public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPanel<CreateWithTemplatesDialogPanel.TemplatePresentation> {
   public record TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {}
 
   public CreateWithTemplatesDialogPanel(@Nullable String selectedItem, @NotNull List<? extends TemplatePresentation> templates) {
-    super(templates, new TemplateListCellRenderer());
+    super(templates, ExperimentalUI.isNewUI() ? createTemplateListCellRenderer() : new TemplateListCellRenderer());
     myTemplatesList.addListSelectionListener(e -> {
       TemplatePresentation selectedValue = myTemplatesList.getSelectedValue();
       if (selectedValue != null) {

@@ -4,11 +4,12 @@ package com.intellij.ide.ui.newItemPopup;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.SeparatorOrientation;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.render.RenderingUtil;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -75,16 +76,20 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     templatesListHolder = new JBBox(BoxLayout.Y_AXIS);
 
-    Border lineBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.NewClassDialog.bordersColor());
-    JBEmptyBorder topMarginBorder = JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth());
-    Border outerBorder = JBUI.Borders.merge(topMarginBorder, lineBorder, true);
-
+    setBottomSpace(false);
     if (ExperimentalUI.isNewUI()) {
+      scrollPane.setOverlappingScrollBar(true);
+      SeparatorComponent separator =
+        new SeparatorComponent(JBUI.CurrentTheme.Popup.separatorColor(), SeparatorOrientation.HORIZONTAL);
+      separator.setHGap(JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get());
+      templatesListHolder.add(separator);
+      myTemplatesList.setBorder(JBUI.Borders.empty(4, 0, JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd(), 0));
       templatesListHolder.setOpaque(true);
       templatesListHolder.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-      myTemplatesList.setBorder(outerBorder);
     }
     else {
+      Border lineBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.NewClassDialog.bordersColor());
+      Border outerBorder = JBUI.Borders.compound(lineBorder, JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()));
       templatesListHolder.setBorder(JBUI.Borders.merge(lineBorder, outerBorder, true));
     }
     templatesListHolder.add(scrollPane);
@@ -102,6 +107,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
 
   protected void setTemplatesListVisible(boolean visible) {
     if (templatesListHolder.isVisible() != visible) {
+      setBottomSpace(!visible);
       templatesListHolder.setVisible(visible);
       myVisibilityListeners.forEach(l -> l.visibilityChanged(visible));
     }
