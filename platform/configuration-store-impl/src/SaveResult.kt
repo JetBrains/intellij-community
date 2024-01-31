@@ -3,10 +3,8 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.util.addSuppressed
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class SaveResult {
+internal class SaveResult {
   private var error: Throwable? = null
 
   @JvmField

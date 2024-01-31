@@ -314,7 +314,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return saveResult.readonlyFiles.isNotEmpty()
   }
 
-  open fun createSaveSessionProducerManager() = SaveSessionProducerManager(false)
+  internal open fun createSaveSessionProducerManager() = SaveSessionProducerManager(false)
 
   private suspend fun commitComponent(
     sessionManager: SaveSessionProducerManager,

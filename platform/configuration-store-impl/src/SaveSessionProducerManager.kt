@@ -6,11 +6,9 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
 import kotlinx.coroutines.CancellationException
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@ApiStatus.Internal
-open class SaveSessionProducerManager(private val isUseVfsForWrite: Boolean) {
+internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boolean) {
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
