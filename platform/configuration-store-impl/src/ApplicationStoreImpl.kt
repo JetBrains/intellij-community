@@ -57,20 +57,19 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
     }
   }
 
-  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
-    val saveSessionManager = createSaveSessionProducerManager()
+  override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
-    saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
+
     coroutineScope {
       launch {
-        saveSessionManager.save().appendTo(result)
+        super.doSave(saveResult, forceSavingAllSettings)
       }
 
       val projectManagerEx = serviceAsync<ProjectManager>() as ProjectManagerEx
       @Suppress("TestOnlyProblems")
       if (projectManagerEx.isDefaultProjectInitialized) {
         launch {
-          (projectManagerEx.defaultProject.stateStore as ComponentStoreImpl).doSave(result, forceSavingAllSettings)
+          (projectManagerEx.defaultProject.stateStore as ComponentStoreImpl).doSave(saveResult, forceSavingAllSettings)
         }
       }
     }

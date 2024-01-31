@@ -24,12 +24,6 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
   override val serviceContainer: ComponentManagerImpl
     get() = project as ComponentManagerImpl
   
-  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
-    val saveSessionManager = createSaveSessionProducerManager()
-    saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
-    saveSessionManager.save().appendTo(result)
-  }
-
   override val storageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?
       get() = null

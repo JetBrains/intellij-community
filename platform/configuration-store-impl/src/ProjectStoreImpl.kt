@@ -360,7 +360,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
         val saveSessions = Collections.synchronizedList(ArrayList<SaveSession>())
         val projectSessionManager = createSaveSessionProducerManager()
         saveModules(saveSessions, saveResult, forceSavingAllSettings, projectSessionManager)
-        saveSettingsSavingComponentsAndCommitComponents(saveResult, forceSavingAllSettings, projectSessionManager)
+        saveSettingsAndCommitComponents(saveResult, forceSavingAllSettings, projectSessionManager)
         projectSessionManager.collectSaveSessions(saveSessions)
         if (saveSessions.isNotEmpty()) {
           projectSessionManager.saveAndValidate(saveSessions, saveResult)

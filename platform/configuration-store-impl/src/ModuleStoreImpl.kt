@@ -22,7 +22,7 @@ import kotlin.io.path.exists
 
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
-internal open class ModuleStoreImpl(module: Module) : ChildlessComponentStore(), ModuleStore {
+internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), ModuleStore {
   private val pathMacroManager = PathMacroManager.getInstance(module)
 
   override val project = module.project

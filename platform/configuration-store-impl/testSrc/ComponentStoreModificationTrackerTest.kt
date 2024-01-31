@@ -160,27 +160,27 @@ internal class ComponentStoreModificationTrackerTest {
       <component name="TestPersistentStateComponentWithModificationTracker" foo="new" />
     </application>""".trimIndent())
   }
-}
 
-private class TestComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {
-  private class TestStorageManager : StateStorageManagerImpl("application", componentManager = null) {
-    override val isUseXmlProlog = false
+  private class TestComponentStore(testAppConfigPath: Path) : ComponentStoreImpl() {
+    private class TestStateStorageManager : StateStorageManagerImpl("application", componentManager = null) {
+      override val isUseXmlProlog = false
 
-    override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
+      override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-    override fun expandMacro(collapsedPath: String): Path =
-      if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
-      else macros[0].value.resolve(collapsedPath)
-  }
+      override fun expandMacro(collapsedPath: String): Path =
+        if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
+        else macros[0].value.resolve(collapsedPath)
+    }
 
-  override val storageManager: StateStorageManagerImpl = TestStorageManager()
+    override val storageManager: StateStorageManagerImpl = TestStateStorageManager()
 
-  init {
-    setPath(testAppConfigPath)
-  }
+    init {
+      setPath(testAppConfigPath)
+    }
 
-  override fun setPath(path: Path) {
-    // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
-    storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path)))
+    override fun setPath(path: Path) {
+      // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
+      storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path)))
+    }
   }
 }

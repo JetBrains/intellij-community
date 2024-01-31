@@ -676,10 +676,6 @@ class ApplicationStoreTest {
       // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
       storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path), Macro(StoragePathMacros.CACHE_FILE, path)))
     }
-
-    override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
-      childlessSaveImplementation(result, forceSavingAllSettings)
-    }
   }
 
   private abstract class FooComponent : PersistentStateComponent<Foo> {

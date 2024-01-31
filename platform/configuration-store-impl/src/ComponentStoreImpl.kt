@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -32,7 +30,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.util.*
@@ -200,9 +197,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     result.throwIfErrored()
   }
 
-  internal abstract suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean)
+  internal open suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
+    val saveSessionManager = createSaveSessionProducerManager()
+    commitComponents(forceSavingAllSettings, saveSessionManager, saveResult)
+    saveSessionManager.save().appendTo(saveResult)
+  }
 
-  internal open suspend fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
+  internal open suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
     val names = ArrayUtilRt.toStringArray(components.keys)
     if (names.isEmpty()) {
       return
@@ -210,7 +211,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     names.sort()
 
-    @NonNls var timeLog: StringBuilder? = null
+    var timeLog: StringBuilder? = null
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     val isSaveModLogEnabled = SAVE_MOD_LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode
@@ -254,7 +255,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        commitComponent(session = session, info = info, componentName = name, modificationCountChanged = modificationCountChanged)
+        commitComponent(session = sessionManager, info = info, componentName = name, modificationCountChanged = modificationCountChanged)
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -727,7 +728,7 @@ internal fun sortStoragesByDeprecated(storages: List<Storage>): List<Storage> {
   }
 
   if (!storages.first().deprecated) {
-    val othersAreDeprecated = (1 until storages.size).any { storages.get(it).deprecated }
+    val othersAreDeprecated = (1 until storages.size).any { storages[it].deprecated }
     if (othersAreDeprecated) {
       return storages.toList()
     }
@@ -766,20 +767,6 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
     doNotify(macros, project, Collections.singletonMap(substitutor, store))
   }
-}
-
-// to make sure that ApplicationStore or ProjectStore will not call incomplete doSave implementation
-// (because these stores combine several calls for better control/async instead of simple sequential delegation)
-abstract class ChildlessComponentStore : ComponentStoreImpl() {
-  override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
-    childlessSaveImplementation(result, forceSavingAllSettings)
-  }
-}
-
-internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: SaveResult, forceSavingAllSettings: Boolean) {
-  val saveSessionManager = createSaveSessionProducerManager()
-  commitComponents(isForce = forceSavingAllSettings, session = saveSessionManager, saveResult = result)
-  saveSessionManager.save().appendTo(result)
 }
 
 private fun getComponentName(component: Any): String {

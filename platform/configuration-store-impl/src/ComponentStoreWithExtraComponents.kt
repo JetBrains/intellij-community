@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.EDT
@@ -44,7 +44,6 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }
-
     super.initComponent(component, serviceDescriptor, pluginId)
   }
 
@@ -55,14 +54,27 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     super.unloadComponent(component)
   }
 
-  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult,
-                                                                       forceSavingAllSettings: Boolean,
-                                                                       saveSessionProducerManager: SaveSessionProducerManager) {
+  override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
+    val saveSessionManager = createSaveSessionProducerManager()
+    saveSettingsAndCommitComponents(saveResult, forceSavingAllSettings, saveSessionManager)
+    saveSessionManager.save().appendTo(saveResult)
+  }
+
+  internal suspend fun saveSettingsAndCommitComponents(
+    saveResult: SaveResult,
+    forceSavingAllSettings: Boolean,
+    sessionManager: SaveSessionProducerManager
+  ) {
     coroutineScope {
       for (settingsSavingComponent in asyncSettingsSavingComponents.value) {
         launch {
-          runAndCollectException(result) {
+          try {
             settingsSavingComponent.save()
+          }
+          catch (e: ProcessCanceledException) { throw e }
+          catch (e: CancellationException) { throw e }
+          catch (e: Throwable) {
+            saveResult.addError(e)
           }
         }
       }
@@ -70,16 +82,15 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
     // SchemeManager (asyncSettingsSavingComponent) must be saved before saving components
     // (component state uses scheme manager in an ipr project, so, we must save it before) so, call it sequentially
-    commitComponents(isForce = forceSavingAllSettings, session = saveSessionProducerManager, saveResult = result)
+    commitComponents(forceSavingAllSettings, sessionManager, saveResult)
   }
 
-  override suspend fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
+  override suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
     // ensure that this task will not interrupt regular saving
     runCatching {
-      commitObsoleteComponents(session = session, isProjectLevel = false)
+      commitObsoleteComponents(session = sessionManager, isProjectLevel = false)
     }.getOrLogException(LOG)
-
-    super.commitComponents(isForce, session, saveResult)
+    super.commitComponents(isForce, sessionManager, saveResult)
   }
 
   internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
@@ -95,20 +106,5 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
         }
       }
     }
-  }
-}
-
-private inline fun runAndCollectException(result: SaveResult, runnable: () -> Unit) {
-  try {
-    runnable()
-  }
-  catch (e: ProcessCanceledException) {
-    throw e
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    result.addError(e)
   }
 }

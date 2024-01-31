@@ -1,6 +1,6 @@
 package com.intellij.settingsSync
 
-import com.intellij.configurationStore.ChildlessComponentStore
+import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.getStateSpec
 import com.intellij.idea.TestFor
@@ -9,9 +9,7 @@ import com.intellij.openapi.components.*
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
-import junit.framework.TestCase
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,7 +30,7 @@ class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
   @Test
   fun `process children with subfolders`() {
     val rootConfig = memoryFs.fs.getPath("/appconfig")
-    val componentStore = object : ChildlessComponentStore() {
+    val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = TODO("Not yet implemented")
 
@@ -58,7 +56,7 @@ true
   @Test
   fun `respect SettingSyncState`() {
     val rootConfig = memoryFs.fs.getPath("/appconfig")
-    val componentStore = object : ChildlessComponentStore() {
+    val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = ApplicationManager.getApplication().stateStore.storageManager
 
@@ -106,7 +104,7 @@ true
   fun `process files2apply last`() {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
     val rootConfig = memoryFs.fs.getPath("/IDEA-324914/appConfig")
-    val componentStore = object : ChildlessComponentStore() {
+    val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = ApplicationManager.getApplication().stateStore.storageManager
 
