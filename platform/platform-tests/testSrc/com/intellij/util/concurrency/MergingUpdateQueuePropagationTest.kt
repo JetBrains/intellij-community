@@ -72,7 +72,7 @@ class MergingUpdateQueuePropagationTest {
 
   @OptIn(DelicateCoroutinesApi::class)
   @Test
-  fun `ancels spawned tasks`() {
+  fun `cancels spawned tasks`() {
     val errorMessage = "intentionally failed"
     val currentHandler = Thread.getDefaultUncaughtExceptionHandler()
     try {
