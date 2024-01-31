@@ -1610,7 +1610,7 @@
     <action class="com.intellij.diagnostic.FixWSLFirewallAction" id="FixWSLFirewall"/>
 
     <group id="UpdateEntryPointGroup"/>
-    <group id="SettingsEntryPointGroup">
+    <group id="SettingsEntryPointGroup" class="com.intellij.ide.actions.SettingsEntryPointGroup">
       <reference id="RunAnything"/>
       <separator/>
       <reference id="ShowSettings"/>

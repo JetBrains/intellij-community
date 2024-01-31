@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -35,6 +36,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -53,19 +55,17 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class SettingsEntryPointAction extends DumbAwareAction
-  implements CustomComponentAction, RightAlignedToolbarAction, TooltipDescriptionProvider, Toggleable {
+public final class SettingsEntryPointAction extends ActionGroup
+  implements CustomComponentAction, RightAlignedToolbarAction, TooltipDescriptionProvider, Toggleable, DumbAware {
+
+  private static final Logger LOG = Logger.getInstance(SettingsEntryPointAction.class);
+
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
   private static final Icon NEW_UI_ICON =
     IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
 
-  private static final Logger LOG = Logger.getInstance(SettingsEntryPointAction.class);
-
-  public SettingsEntryPointAction() {
-    super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
-  }
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
@@ -89,18 +89,20 @@ public final class SettingsEntryPointAction extends DumbAwareAction
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    ListPopup popup = createMainPopup(e.getDataContext());
+    ListPopup popup = createMainPopup(this, e.getDataContext());
     PopupUtil.addToggledStateListener(popup, e.getPresentation());
     PopupUtil.showForActionButtonEvent(popup, e);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setPerformGroup(true);
+    e.getPresentation().setPopupGroup(true);
+    e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
     Presentation presentation = e.getPresentation();
     if (e.isFromActionToolbar()) {
       presentation.setText("");
     }
-
     presentation.setDescription(getActionTooltip());
     presentation.setIconSupplier(SettingsEntryPointAction::getActionIcon);
   }
@@ -110,12 +112,13 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     return ActionUpdateThread.BGT;
   }
 
-  private static AnAction @NotNull [] getTemplateActions() {
-    ActionGroup templateGroup = (ActionGroup)ActionManager.getInstance().getAction("SettingsEntryPointGroup");
-    return templateGroup == null ? EMPTY_ARRAY : templateGroup.getChildren(null);
-  }
+  @Override
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent event) {
+    if (event == null) return AnAction.EMPTY_ARRAY;
 
-  private static @NotNull ListPopup createMainPopup(@NotNull DataContext context) {
+    DataContext context = event.getDataContext();
+
+    List<AnAction> result = new ArrayList<>();
     List<AnAction> appActions = new ArrayList<>();
     List<AnAction> pluginActions = new ArrayList<>();
 
@@ -139,68 +142,49 @@ public final class SettingsEntryPointAction extends DumbAwareAction
       }
     }
 
-    DefaultActionGroup group = new DefaultActionGroup(appActions);
-    group.addAll(pluginActions);
+    result.addAll(appActions);
+    result.addAll(pluginActions);
 
-    if (group.getChildrenCount() == 0) {
+    if (result.isEmpty()) {
       resetActionIcon();
     }
-    AnAction updateGroup = ActionManager.getInstance().getAction("UpdateEntryPointGroup");
-    if (updateGroup != null) {
-      group.add(updateGroup);
-    }
-    group.addSeparator();
-
-    for (AnAction child : getTemplateActions()) {
-      if (child instanceof Separator) {
-        group.add(child);
-      }
-      else {
-        String text = child.getTemplateText();
-        if (text != null && !(text.endsWith("...") || text.endsWith("…")) && !(child instanceof NoDots)) {
-          AnAction button = new AnActionWrapper(child) {
-            @Override
-            public void update(@NotNull AnActionEvent e) {
-              super.update(e);
-              e.getPresentation().setText(e.getPresentation().getText() + "…");
-            }
-          };
-          group.add(button);
-        }
-        else {
-          group.add(child);
-        }
-      }
-    }
+    ContainerUtil.addIfNotNull(result, ActionManager.getInstance().getAction("UpdateEntryPointGroup"));
+    result.add(Separator.getInstance());
+    ContainerUtil.addIfNotNull(result, ActionManager.getInstance().getAction("SettingsEntryPointGroup"));
 
     if (ExperimentalUI.isNewUI()) {
-      int count = group.getChildrenCount();
-
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
         try {
-          for (AnAction action : provider.getLastActions(context)) {
-            group.add(action);
-          }
+          result.addAll(provider.getLastActions(context));
         }
         catch (Exception e) {
           LOG.error(e);
         }
       }
-
-      if (count != group.getChildrenCount()) {
-        return new MyPopup(group, context, new PresentationFactory());
-      }
     }
+    return result.toArray(AnAction.EMPTY_ARRAY);
+  }
 
-    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+  private static @NotNull ListPopup createMainPopup(@NotNull ActionGroup group, @NotNull DataContext context) {
+    boolean hasLastActions = ContainerUtil.find(
+      ActionProvider.EP_NAME.getExtensionList(), o -> !o.getLastActions(context).isEmpty()) != null;
+    if (hasLastActions && ExperimentalUI.isNewUI()) {
+      return new MyPopup(group, context, new PresentationFactory());
+    }
+    else {
+      return JBPopupFactory.getInstance().createActionGroupPopup(
+        null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+    }
   }
 
   private static class MyPopup extends PopupFactoryImpl.ActionGroupPopup {
-    private MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory) {
+
+    final @NotNull PresentationFactory myPresentationFactory;
+
+    MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory) {
       super(null, group, context, false, false, true, true, null, -1, null, null, presentationFactory, false);
       myPresentationFactory = presentationFactory;
     }
-    final @NotNull PresentationFactory myPresentationFactory;
 
     @Override
     protected JComponent createContent() {
@@ -213,73 +197,66 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     protected ListCellRenderer<?> getListElementRenderer() {
       //noinspection unchecked
       ListCellRenderer<Object> renderer = (ListCellRenderer<Object>)super.getListElementRenderer();
-      return new ListCellRenderer<>() {
-        @Override
-        public Component getListCellRendererComponent(JList<?> list,
-                                                      Object value,
-                                                      int index,
-                                                      boolean isSelected,
-                                                      boolean cellHasFocus) {
-          if (value instanceof PopupFactoryImpl.ActionItem item) {
-            AnAction action = item.getAction();
-            Presentation presentation = myPresentationFactory.getPresentation(action);
-            //noinspection DialogTitleCapitalization
-            String text = item.getText();
-            //noinspection DialogTitleCapitalization
-            String secondText = presentation.getClientProperty(LastAction.SECOND_TEXT);
-            if (secondText != null) {
-              JBLabel label = new JBLabel(presentation.getIcon());
-              label.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
+      return (list, value, index, isSelected, cellHasFocus) -> {
+        if (value instanceof PopupFactoryImpl.ActionItem item) {
+          AnAction action = item.getAction();
+          Presentation presentation = myPresentationFactory.getPresentation(action);
+          //noinspection DialogTitleCapitalization
+          String text = item.getText();
+          //noinspection DialogTitleCapitalization
+          String secondText = presentation.getClientProperty(LastAction.SECOND_TEXT);
+          if (secondText != null) {
+            JBLabel label = new JBLabel(presentation.getIcon());
+            label.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
 
-              JPanel panel = new OpaquePanel(new BorderLayout(), isSelected
-                                                                 ? JBUI.CurrentTheme.ManagedIde.MENU_ITEM_HOVER
-                                                                 : JBUI.CurrentTheme.Advertiser.background()) {
-                @Override
-                public AccessibleContext getAccessibleContext() {
-                  return label.getAccessibleContext();
-                }
-              };
-
-              float leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.getUnscaled();
-              Insets innerInsets = ((JBInsets)JBUI.CurrentTheme.Popup.Selection.innerInsets()).getUnscaled();
-              panel.setBorder(JBUI.Borders.empty(12, (int)(leftRightInset + innerInsets.left), 12, 14));
-
-              JPanel iconPanel = new NonOpaquePanel(new BorderLayout());
-              iconPanel.add(label, BorderLayout.NORTH);
-              panel.add(iconPanel, BorderLayout.WEST);
-
-              JPanel lines = new NonOpaquePanel(new BorderLayout(0, JBUI.scale(2)));
-              lines.add(new JBLabel(text), BorderLayout.NORTH);
-
-              JLabel secondLine = new JBLabel(secondText);
-              secondLine.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
-              lines.add(secondLine, BorderLayout.SOUTH);
-
-              panel.add(lines);
-
-              if (index > 0) {
-                //noinspection unchecked
-                PopupFactoryImpl.ActionItem prevIndex =
-                  ((ListPopupStep<PopupFactoryImpl.ActionItem>)getStep()).getValues().get(index - 1);
-                AnAction prevAction = prevIndex.getAction();
-                if (!(prevAction instanceof LastAction)) {
-                  JPanel wrapper = new OpaquePanel(new BorderLayout(), list.getBackground()) {
-                    @Override
-                    public AccessibleContext getAccessibleContext() {
-                      return label.getAccessibleContext();
-                    }
-                  };
-                  wrapper.setBorder(JBUI.Borders.emptyTop(JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd()));
-                  wrapper.add(panel);
-                  return wrapper;
-                }
+            JPanel panel = new OpaquePanel(new BorderLayout(), isSelected
+                                                               ? JBUI.CurrentTheme.ManagedIde.MENU_ITEM_HOVER
+                                                               : JBUI.CurrentTheme.Advertiser.background()) {
+              @Override
+              public AccessibleContext getAccessibleContext() {
+                return label.getAccessibleContext();
               }
+            };
 
-              return panel;
+            float leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.getUnscaled();
+            Insets innerInsets = ((JBInsets)JBUI.CurrentTheme.Popup.Selection.innerInsets()).getUnscaled();
+            panel.setBorder(JBUI.Borders.empty(12, (int)(leftRightInset + innerInsets.left), 12, 14));
+
+            JPanel iconPanel = new NonOpaquePanel(new BorderLayout());
+            iconPanel.add(label, BorderLayout.NORTH);
+            panel.add(iconPanel, BorderLayout.WEST);
+
+            JPanel lines = new NonOpaquePanel(new BorderLayout(0, JBUI.scale(2)));
+            lines.add(new JBLabel(text), BorderLayout.NORTH);
+
+            JLabel secondLine = new JBLabel(secondText);
+            secondLine.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
+            lines.add(secondLine, BorderLayout.SOUTH);
+
+            panel.add(lines);
+
+            if (index > 0) {
+              //noinspection unchecked
+              PopupFactoryImpl.ActionItem prevIndex =
+                ((ListPopupStep<PopupFactoryImpl.ActionItem>)getStep()).getValues().get(index - 1);
+              AnAction prevAction = prevIndex.getAction();
+              if (!(prevAction instanceof LastAction)) {
+                JPanel wrapper = new OpaquePanel(new BorderLayout(), list.getBackground()) {
+                  @Override
+                  public AccessibleContext getAccessibleContext() {
+                    return label.getAccessibleContext();
+                  }
+                };
+                wrapper.setBorder(JBUI.Borders.emptyTop(JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd()));
+                wrapper.add(panel);
+                return wrapper;
+              }
             }
+
+            return panel;
           }
-          return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
+        return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       };
     }
   }
@@ -582,7 +559,9 @@ public final class SettingsEntryPointAction extends DumbAwareAction
         myStatusBar.updateWidget(WIDGET_ID);
 
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
+        ListPopup popup = createMainPopup(
+          (ActionGroup)ActionManager.getInstance().getAction("SettingsEntryPoint"),
+          DataManager.getInstance().getDataContext(component));
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {
