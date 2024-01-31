@@ -149,13 +149,13 @@ public class AnnotateLocalFileAction {
         if (!fileAnnotationRef.isNull()) {
           AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), vcs);
         }
+        List<EventPair<?>> eventData = ActionsCollectorImpl.actionEventData(e);
+        activity.finished(() -> eventData);
       }
 
       @Override
       public void onFinished() {
         actionLock.unlock();
-        List<EventPair<?>> eventData = ActionsCollectorImpl.actionEventData(e);
-        activity.finished(() -> eventData);
       }
     };
     ProgressManager.getInstance().run(annotateTask);
