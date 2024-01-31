@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.low.level.api;
+package org.jetbrains.kotlin.idea.fir.analysis.providers.sealedInheritors;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,117 +14,117 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("fir-low-level-api-ide-impl")
+@TestRoot("base/fir/analysis-api-providers")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/sealedClassInheritors")
-public class FirSealedClassInheritorsTestGenerated extends AbstractFirSealedClassInheritorsTest {
+@TestMetadata("testData/sealedInheritors")
+public class SealedInheritorsProviderTestGenerated extends AbstractSealedInheritorsProviderTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("ambiguousLibrarySealedClass")
     public void testAmbiguousLibrarySealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/ambiguousLibrarySealedClass/");
+        runTest("testData/sealedInheritors/ambiguousLibrarySealedClass/");
     }
 
     @TestMetadata("ambiguousLibrarySealedInterface")
     public void testAmbiguousLibrarySealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/ambiguousLibrarySealedInterface/");
+        runTest("testData/sealedInheritors/ambiguousLibrarySealedInterface/");
     }
 
     @TestMetadata("ambiguousSealedClass")
     public void testAmbiguousSealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/ambiguousSealedClass/");
+        runTest("testData/sealedInheritors/ambiguousSealedClass/");
     }
 
     @TestMetadata("ambiguousSealedInterface")
     public void testAmbiguousSealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/ambiguousSealedInterface/");
+        runTest("testData/sealedInheritors/ambiguousSealedInterface/");
     }
 
     @TestMetadata("illegalDistributedSealedClass")
     public void testIllegalDistributedSealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/illegalDistributedSealedClass/");
+        runTest("testData/sealedInheritors/illegalDistributedSealedClass/");
     }
 
     @TestMetadata("illegalExtendedLibrarySealedClass")
     public void testIllegalExtendedLibrarySealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/illegalExtendedLibrarySealedClass/");
+        runTest("testData/sealedInheritors/illegalExtendedLibrarySealedClass/");
     }
 
     @TestMetadata("indirectInheritorsLibrarySealedClass")
     public void testIndirectInheritorsLibrarySealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/indirectInheritorsLibrarySealedClass/");
+        runTest("testData/sealedInheritors/indirectInheritorsLibrarySealedClass/");
     }
 
     @TestMetadata("indirectInheritorsLibrarySealedInterface")
     public void testIndirectInheritorsLibrarySealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/indirectInheritorsLibrarySealedInterface/");
+        runTest("testData/sealedInheritors/indirectInheritorsLibrarySealedInterface/");
     }
 
     @TestMetadata("indirectInheritorsSealedClass")
     public void testIndirectInheritorsSealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/indirectInheritorsSealedClass/");
+        runTest("testData/sealedInheritors/indirectInheritorsSealedClass/");
     }
 
     @TestMetadata("indirectInheritorsSealedInterface")
     public void testIndirectInheritorsSealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/indirectInheritorsSealedInterface/");
+        runTest("testData/sealedInheritors/indirectInheritorsSealedInterface/");
     }
 
     @TestMetadata("librarySealedClass")
     public void testLibrarySealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/librarySealedClass/");
+        runTest("testData/sealedInheritors/librarySealedClass/");
     }
 
     @TestMetadata("librarySealedInterface")
     public void testLibrarySealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/librarySealedInterface/");
+        runTest("testData/sealedInheritors/librarySealedInterface/");
     }
 
     @TestMetadata("nestedLibrarySealedClass")
     public void testNestedLibrarySealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/nestedLibrarySealedClass/");
+        runTest("testData/sealedInheritors/nestedLibrarySealedClass/");
     }
 
     @TestMetadata("nestedLibrarySealedInterface")
     public void testNestedLibrarySealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/nestedLibrarySealedInterface/");
+        runTest("testData/sealedInheritors/nestedLibrarySealedInterface/");
     }
 
     @TestMetadata("nestedSealedClass")
     public void testNestedSealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/nestedSealedClass/");
+        runTest("testData/sealedInheritors/nestedSealedClass/");
     }
 
     @TestMetadata("nestedSealedInterface")
     public void testNestedSealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/nestedSealedInterface/");
+        runTest("testData/sealedInheritors/nestedSealedInterface/");
     }
 
     @TestMetadata("otherModuleSealedClass")
     public void testOtherModuleSealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/otherModuleSealedClass/");
+        runTest("testData/sealedInheritors/otherModuleSealedClass/");
     }
 
     @TestMetadata("otherModuleSealedInterface")
     public void testOtherModuleSealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/otherModuleSealedInterface/");
+        runTest("testData/sealedInheritors/otherModuleSealedInterface/");
     }
 
     @TestMetadata("sameModuleSealedClass")
     public void testSameModuleSealedClass() throws Exception {
-        runTest("testData/sealedClassInheritors/sameModuleSealedClass/");
+        runTest("testData/sealedInheritors/sameModuleSealedClass/");
     }
 
     @TestMetadata("sameModuleSealedClassWithIrregularPackage")
     public void testSameModuleSealedClassWithIrregularPackage() throws Exception {
-        runTest("testData/sealedClassInheritors/sameModuleSealedClassWithIrregularPackage/");
+        runTest("testData/sealedInheritors/sameModuleSealedClassWithIrregularPackage/");
     }
 
     @TestMetadata("sameModuleSealedInterface")
     public void testSameModuleSealedInterface() throws Exception {
-        runTest("testData/sealedClassInheritors/sameModuleSealedInterface/");
+        runTest("testData/sealedInheritors/sameModuleSealedInterface/");
     }
 }
