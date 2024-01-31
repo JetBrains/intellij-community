@@ -15,10 +15,22 @@ class JvmLoggerFieldDelegate(
   override val loggerTypeName: String,
   override val priority: Int,
 ) : JvmLogger {
+  override fun insertLoggerAtClass(project: Project, clazz: PsiClass, logger: PsiElement): PsiElement? {
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(logger)
+    return clazz.add(logger)
+  }
+
+  override fun isAvailable(project: Project?): Boolean = JavaLibraryUtil.hasLibraryClass(project, loggerTypeName)
+
+  override fun isAvailable(module: Module?): Boolean = JavaLibraryUtil.hasLibraryClass(module, loggerTypeName)
+
+  override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz
+    .fields.any { it.name == LOGGER_IDENTIFIER || it.type.canonicalText == loggerTypeName }.not()
+
   override fun createLoggerElementText(project: Project, clazz: PsiClass): PsiField? {
     val factory = JavaPsiFacade.getElementFactory(project)
     val className = clazz.name ?: return null
-    val fieldText = "$loggerTypeName ${JvmLogger.LOGGER_IDENTIFIER} = ${factoryName}.$methodName(${
+    val fieldText = "$loggerTypeName $LOGGER_IDENTIFIER = ${factoryName}.$methodName(${
       String.format(classNamePattern, className)
     });"
     return factory.createFieldFromText(fieldText, clazz).apply {
@@ -28,12 +40,7 @@ class JvmLoggerFieldDelegate(
     }
   }
 
-  override fun insertLoggerAtClass(project: Project, clazz: PsiClass, logger: PsiElement): PsiElement? {
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(logger)
-    return clazz.add(logger)
+  companion object {
+    private const val LOGGER_IDENTIFIER = "LOGGER"
   }
-
-  override fun isAvailable(project: Project?): Boolean = JavaLibraryUtil.hasLibraryClass(project, loggerTypeName)
-
-  override fun isAvailable(module: Module?): Boolean = JavaLibraryUtil.hasLibraryClass(module, loggerTypeName)
 }

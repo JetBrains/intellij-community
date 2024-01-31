@@ -22,12 +22,14 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val currentElement = file.findElementAt(editor.caretModel.offset) ?: return
 
-    val places = getPossiblePlacesForLogger(currentElement)
 
-    val lastClass = places.lastOrNull() ?: return
     val module = ModuleUtil.findModuleForFile(file)
 
     val availableLoggers = findSuitableLoggers(module)
+
+    val places = getPossiblePlacesForLogger(currentElement, availableLoggers)
+
+    val lastClass = places.lastOrNull() ?: return
 
     val chosenLogger = getSelectedLogger(project, availableLoggers) ?: return
 
@@ -86,22 +88,13 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
   companion object {
     fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.getAllLoggers(false).filter { it.isAvailable(module) }
 
-    fun getPossiblePlacesForLogger(element: PsiElement): List<PsiClass> = element.parentsOfType(PsiClass::class.java, false)
-      .filter { clazz -> clazz !is PsiAnonymousClass && isPossibleToPlaceLogger(clazz) }
+    fun getPossiblePlacesForLogger(element: PsiElement, loggerList: List<JvmLogger>): List<PsiClass> = element.parentsOfType(
+      PsiClass::class.java, false)
+      .filter { clazz -> clazz !is PsiAnonymousClass && isPossibleToPlaceLogger(clazz, loggerList) }
       .toList()
 
-
-    private fun isPossibleToPlaceLogger(psiClass: PsiClass): Boolean {
-      for (psiField in psiClass.fields) {
-        val typeName = psiField.type.canonicalText
-
-        if (psiField.name == JvmLogger.LOGGER_IDENTIFIER) return false
-
-        for (logger in JvmLogger.getAllLoggers(false)) {
-          if (logger.loggerTypeName == typeName) return false
-        }
-      }
-      return true
+    private fun isPossibleToPlaceLogger(psiClass: PsiClass, loggerList: List<JvmLogger>): Boolean = loggerList.all {
+      it.isPossibleToPlaceLoggerAtClass(psiClass)
     }
   }
 }

@@ -23,17 +23,17 @@ interface JvmLogger {
     }
   }
 
+  fun insertLoggerAtClass(project: Project, clazz: PsiClass, logger: PsiElement): PsiElement?
+
   fun isAvailable(project: Project?) : Boolean
 
   fun isAvailable(module: Module?) : Boolean
 
-  fun insertLoggerAtClass(project: Project, clazz: PsiClass, logger: PsiElement): PsiElement?
+  fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass) : Boolean
 
   fun createLoggerElementText(project: Project, clazz: PsiClass): PsiElement?
 
   companion object {
-    const val LOGGER_IDENTIFIER = "LOGGER"
-
     private val EP_NAME = ExtensionPointName<JvmLogger>("com.intellij.jvm.logging")
 
     fun getAllLoggersNames(isOnlyOnStartup: Boolean): List<String> {

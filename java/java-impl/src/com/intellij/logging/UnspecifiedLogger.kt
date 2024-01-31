@@ -15,9 +15,11 @@ class UnspecifiedLogger : JvmLogger {
                                    clazz: PsiClass,
                                    logger: PsiElement): PsiElement = throw UnsupportedOperationException()
 
-  override fun isAvailable(project: Project?): Boolean = throw UnsupportedOperationException()
+  override fun isAvailable(project: Project?): Boolean = false
 
-  override fun isAvailable(module: Module?): Boolean = throw UnsupportedOperationException()
+  override fun isAvailable(module: Module?): Boolean = false
+
+  override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = false
 
   override fun createLoggerElementText(project: Project, clazz: PsiClass): PsiElement = throw UnsupportedOperationException()
 

@@ -12,7 +12,7 @@ class GenerateLoggerAction : BaseGenerateAction(GenerateLoggerHandler()) {
   override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean {
     val element = file.findElementAt(editor.caretModel.offset) ?: return false
     val module = ModuleUtil.findModuleForFile(file)
-    return GenerateLoggerHandler.findSuitableLoggers(module).isNotEmpty() && GenerateLoggerHandler.getPossiblePlacesForLogger(
-      element).isNotEmpty()
+    val availableLoggers = GenerateLoggerHandler.findSuitableLoggers(module)
+    return availableLoggers.isNotEmpty() && GenerateLoggerHandler.getPossiblePlacesForLogger(element, availableLoggers).isNotEmpty()
   }
 }

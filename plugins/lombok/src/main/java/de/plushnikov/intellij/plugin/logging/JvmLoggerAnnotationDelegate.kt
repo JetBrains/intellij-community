@@ -30,6 +30,8 @@ class JvmLoggerAnnotationDelegate(
     return module != null && JavaLibraryUtil.hasLibraryClass(module, fieldLoggerName) && LombokLibraryUtil.hasLombokClasses(module)
   }
 
+  override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz.hasAnnotation(loggerTypeName).not()
+
   override fun createLoggerElementText(project: Project, clazz: PsiClass): PsiAnnotation {
     val factory = JavaPsiFacade.getElementFactory(project)
     return factory.createAnnotationFromText("@$loggerTypeName", clazz)
