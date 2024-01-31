@@ -20,11 +20,10 @@ internal class AppStorageContentReader : JpsFileContentReader {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     val element: Element? = if (isApplicationLevelFile(filePath)) {
       val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
-
       @Suppress("UNCHECKED_CAST")
-      val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
-      val stateMap = storage.getStorageData()
-      stateMap.getElement(componentName)
+      (ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>)
+        .getStorageData()
+        .getElement(componentName)
     }
     else {
       null
@@ -32,9 +31,8 @@ internal class AppStorageContentReader : JpsFileContentReader {
     return@addMeasuredTimeMillis element
   }
 
-  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
-    return PathMacroManager.getInstance(ApplicationManager.getApplication()).expandMacroMap
-  }
+  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap =
+    PathMacroManager.getInstance(ApplicationManager.getApplication()).expandMacroMap
 
   private fun isApplicationLevelFile(filePath: String): Boolean =
     Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
@@ -44,7 +42,6 @@ internal class AppStorageContentReader : JpsFileContentReader {
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadComponentTimeCounter = meter.counterBuilder("jps.app.storage.content.reader.load.component.ms").buildObserver()
-
       meter.batchCallback({ loadComponentTimeCounter.record(loadComponentTimeMs.get()) }, loadComponentTimeCounter)
     }
 
@@ -59,19 +56,17 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (isApplicationLevelFile(filePath)) {
       val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
-
       @Suppress("UNCHECKED_CAST")
       val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
       session.getProducer(storage)?.setState(null, componentName, componentTag)
     }
   }
 
-  override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
-    return PathMacroManager.getInstance(ApplicationManager.getApplication()).replacePathMap
-  }
+  override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap =
+    PathMacroManager.getInstance(ApplicationManager.getApplication()).replacePathMap
 
   override suspend fun saveSession() {
-    session.save()
+    session.save(SaveResult())
   }
 
   private fun isApplicationLevelFile(filePath: String): Boolean =
@@ -82,7 +77,6 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val saveComponentTimeCounter = meter.counterBuilder("jps.app.storage.content.writer.save.component.ms").buildObserver()
-
       meter.batchCallback({ saveComponentTimeCounter.record(saveComponentTimeMs.get()) }, saveComponentTimeCounter)
     }
 
@@ -91,4 +85,3 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
     }
   }
 }
-

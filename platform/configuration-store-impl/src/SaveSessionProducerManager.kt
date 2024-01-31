@@ -24,32 +24,19 @@ open class SaveSessionProducerManager(private val isUseVfsForWrite: Boolean) {
   }
 
   internal fun collectSaveSessions(result: MutableCollection<SaveSession>) {
-    if (producers.isEmpty()) {
-      return
-    }
-
     for (session in producers.values) {
       result.add(session.createSaveSession() ?: continue)
     }
   }
 
-  suspend fun save(): SaveResult {
-    if (producers.isEmpty()) {
-      return SaveResult.EMPTY
+  suspend fun save(saveResult: SaveResult) {
+    if (producers.isNotEmpty()) {
+      val saveSessions = ArrayList<SaveSession>()
+      collectSaveSessions(saveSessions)
+      if (saveSessions.isNotEmpty()) {
+        saveSessions(saveSessions, saveResult)
+      }
     }
-
-    val saveSessions = ArrayList<SaveSession>()
-    for (session in producers.values) {
-      saveSessions.add(session.createSaveSession() ?: continue)
-    }
-
-    if (saveSessions.isEmpty()) {
-      return SaveResult.EMPTY
-    }
-
-    val saveResult = SaveResult()
-    saveSessions(saveSessions, saveResult)
-    return saveResult
   }
 
   protected suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {

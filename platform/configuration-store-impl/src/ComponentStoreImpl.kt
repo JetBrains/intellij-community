@@ -194,13 +194,13 @@ abstract class ComponentStoreImpl : IComponentStore {
   override suspend fun save(forceSavingAllSettings: Boolean) {
     val result = SaveResult()
     doSave(result, forceSavingAllSettings)
-    result.throwIfErrored()
+    result.rethrow()
   }
 
   internal open suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
     commitComponents(forceSavingAllSettings, saveSessionManager, saveResult)
-    saveSessionManager.save().appendTo(saveResult)
+    saveSessionManager.save(saveResult)
   }
 
   internal open suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
@@ -221,7 +221,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     for (name in names) {
       val start = System.currentTimeMillis()
       try {
-        val info = components.get(name) ?: continue
+        val info = components[name] ?: continue
         var currentModificationCount = -1L
 
         if (info.lastSaved != -1) {
@@ -255,7 +255,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        commitComponent(session = sessionManager, info = info, componentName = name, modificationCountChanged = modificationCountChanged)
+        commitComponent(sessionManager, info, name, modificationCountChanged)
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -285,19 +285,17 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }
     val saveManager = createSaveSessionProducerManager()
-    val absolutePath = storageManager.expandMacro(
-      findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path).toString()
+    val storages = getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)
+    val storage = storages.firstOrNull { !it.deprecated } ?: throw AssertionError("All storages are deprecated")
+    val absolutePath = storageManager.expandMacro(storage.path).toString()
     Disposer.newDisposable().use {
       VfsRootAccess.allowRootAccess(it, absolutePath)
       @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
-        commitComponent(session = saveManager,
-                        info = ComponentInfoImpl(component, stateSpec),
-                        componentName = null,
-                        modificationCountChanged = false)
-
-        val saveResult = saveManager.save()
-        saveResult.throwIfErrored()
+        commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), componentName = null, modificationCountChanged = false)
+        val saveResult = SaveResult()
+        saveManager.save(saveResult)
+        saveResult.rethrow()
       }
     }
   }
@@ -307,52 +305,44 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpec(component)
     val saveManager = createSaveSessionProducerManager()
 
-    commitComponent(session = saveManager,
-                    info = getComponents().entries.first { it.key == stateSpec.name }.value,
-                    componentName = null,
-                    modificationCountChanged = false)
+    val componentInfo = getComponents().entries.first { it.key == stateSpec.name }.value
+    commitComponent(saveManager, componentInfo, componentName = null, modificationCountChanged = false)
 
-    val saveResult = saveManager.save()
-    saveResult.throwIfErrored()
-    return saveResult != SaveResult.EMPTY
+    val saveResult = SaveResult()
+    saveManager.save(saveResult)
+    saveResult.rethrow()
+    return saveResult.readonlyFiles.isNotEmpty()
   }
 
   open fun createSaveSessionProducerManager() = SaveSessionProducerManager(false)
 
-  private suspend fun commitComponent(session: SaveSessionProducerManager,
-                                      info: ComponentInfo,
-                                      componentName: String?,
-                                      modificationCountChanged: Boolean) {
+  private suspend fun commitComponent(
+    sessionManager: SaveSessionProducerManager,
+    info: ComponentInfo,
+    componentName: String?,
+    modificationCountChanged: Boolean
+  ) {
     val component = info.component
     @Suppress("DEPRECATION")
     if (component is com.intellij.openapi.util.JDOMExternalizable) {
       val effectiveComponentName = componentName ?: getComponentName(component)
       storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
-        session.getProducer(it)?.setState(component, effectiveComponentName, component)
+        sessionManager.getProducer(it)?.setState(component, effectiveComponentName, component)
       }
       return
     }
 
     var state: Any? = null
-    // state can be null, so, we cannot compare to null to check is state was requested or not
-    var stateRequested = false
+    var stateRequested = false  // the state might be null, so we need an additional flag to keep track of whether the state was requested
 
     val stateSpec = info.stateSpec!!
     val effectiveComponentName = componentName ?: stateSpec.name
     val stateStorageChooser = component as? StateStorageChooserEx
 
     @Suppress("UNCHECKED_CAST")
-    val storageSpecs = getStorageSpecs(component = component as PersistentStateComponent<Any>,
-                                       stateSpec = stateSpec,
-                                       operation = StateStorageOperation.WRITE)
+    val storageSpecs = getStorageSpecs(component as PersistentStateComponent<Any>, stateSpec, StateStorageOperation.WRITE)
     for (storageSpec in storageSpecs) {
-      @Suppress("IfThenToElvis")
-      var resolution = if (stateStorageChooser == null) {
-        Resolution.DO
-      }
-      else {
-        stateStorageChooser.getResolution(storage = storageSpec, operation = StateStorageOperation.WRITE)
-      }
+      var resolution = stateStorageChooser?.getResolution(storageSpec, StateStorageOperation.WRITE) ?: Resolution.DO
       if (resolution == Resolution.SKIP) {
         continue
       }
@@ -366,25 +356,22 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
       }
 
-      val sessionProducer = session.getProducer(storage) ?: continue
+      val sessionProducer = sessionManager.getProducer(storage) ?: continue
       if (resolution == Resolution.CLEAR ||
           (storageSpec.deprecated && storageSpecs.none { !it.deprecated && it.value == storageSpec.value })) {
-        sessionProducer.setState(component = component, componentName = effectiveComponentName, state = null)
+        sessionProducer.setState(component, effectiveComponentName, state = null)
       }
       else {
         if (!stateRequested) {
           stateRequested = true
-          state = getStateForComponent(component = component, stateSpec = stateSpec)
+          state = getStateForComponent(component, stateSpec)
         }
 
         if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec, storageSpec)) {
           featureUsageSettingManager.logConfigurationChanged(effectiveComponentName, state)
         }
 
-        setStateToSaveSessionProducer(state = state,
-                                      info = info,
-                                      effectiveComponentName = effectiveComponentName,
-                                      sessionProducer = sessionProducer)
+        setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
       }
     }
   }
@@ -704,10 +691,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun toString() = storageManager.componentManager.toString()
-}
-
-private fun findNonDeprecated(storages: List<Storage>): Storage {
-  return storages.firstOrNull { !it.deprecated } ?: throw AssertionError("All storages are deprecated")
 }
 
 enum class StateLoadPolicy {
