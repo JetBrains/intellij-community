@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -15,18 +18,27 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.api.data.GHReactionContent
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHReactionsService
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsViewModel
 
 class GHPRDetailsTimelineViewModel internal constructor(private val project: Project,
                                                         parentCs: CoroutineScope,
                                                         private val dataContext: GHPRDataContext,
                                                         private val dataProvider: GHPRDataProvider) {
   private val cs = parentCs.childScope()
+
+  private val currentUser: GHUser = dataContext.securityService.currentUser
+  private val reactionsService: GHReactionsService = dataContext.reactionsService
+  private val reactionIconsProvider: IconsProvider<GHReactionContent> = dataContext.reactionIconsProvider
 
   val details: StateFlow<ComputedResult<GHPRDetailsFull>> = channelFlow<ComputedResult<GHPRDetailsFull>> {
     val disposable = Disposer.newDisposable()
@@ -50,6 +62,12 @@ class GHPRDetailsTimelineViewModel internal constructor(private val project: Pro
   private val _descriptionEditVm = MutableStateFlow<GHPREditDescriptionViewModel?>(null)
   val descriptionEditVm: StateFlow<GHPREditDescriptionViewModel?> = _descriptionEditVm.asStateFlow()
 
+  val reactionsVm: Flow<GHReactionsViewModel?> = details.mapScoped {
+    val details = details.value.getOrNull() ?: return@mapScoped null
+    val prId = details.id.id
+    GHReactionViewModelImpl(this, prId, MutableStateFlow(details.reactions), currentUser, reactionsService, reactionIconsProvider)
+  }.stateInNow(cs, null)
+
   private fun createDetails(data: GHPullRequest): GHPRDetailsFull = GHPRDetailsFull(
     dataProvider.id,
     data.url,
@@ -58,7 +76,9 @@ class GHPRDetailsTimelineViewModel internal constructor(private val project: Pro
     data.title.convertToHtml(project),
     data.body,
     data.body.convertToHtml(project),
-    data.viewerCanUpdate
+    data.viewerCanUpdate,
+    data.viewerCanReact,
+    data.reactions.nodes
   )
 
   fun editDescription() {

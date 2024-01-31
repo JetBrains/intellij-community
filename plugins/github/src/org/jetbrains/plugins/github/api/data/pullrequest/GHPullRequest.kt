@@ -6,10 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.plugins.github.api.data.GHActor
-import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.GHRefUpdateRule
-import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.*
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/pullRequestInfo.graphql")
@@ -31,6 +28,7 @@ class GHPullRequest(id: String,
                     val reviewDecision: GHPullRequestReviewDecision?,
                     mergeable: GHPullRequestMergeableState,
                     viewerCanUpdate: Boolean,
+                    viewerCanReact: Boolean,
                     viewerDidAuthor: Boolean,
                     @NlsSafe val body: String,
                     val baseRefName: String,
@@ -39,10 +37,11 @@ class GHPullRequest(id: String,
                     baseRef: BaseRef?,
                     val headRefName: String,
                     val headRefOid: String,
-                    val headRepository: HeadRepository?)
+                    val headRepository: HeadRepository?,
+                    override val reactions: GHReactable.ReactionConnection)
   : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, updatedAt, isReadByViewer,
                        assignees, labels, reviewRequests, reviewThreads,
-                       reviews, mergeable, viewerCanUpdate, viewerDidAuthor) {
+                       reviews, mergeable, viewerCanUpdate, viewerCanReact, viewerDidAuthor, reactions) {
 
   @JsonIgnore
   val baseRefUpdateRule: GHRefUpdateRule? = baseRef?.refUpdateRule

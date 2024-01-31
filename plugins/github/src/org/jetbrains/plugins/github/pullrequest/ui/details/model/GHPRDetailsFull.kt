@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.GHReaction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.*
 
@@ -13,4 +14,6 @@ data class GHPRDetailsFull(val id: GHPRIdentifier,
                            val titleHtml: @NlsSafe String,
                            val description: String?,
                            val descriptionHtml: @NlsSafe String?,
-                           val canEditDescription: Boolean)
+                           val canEditDescription: Boolean,
+                           val canReactDescription: Boolean,
+                           val reactions: List<GHReaction>)

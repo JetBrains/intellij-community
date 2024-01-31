@@ -14,6 +14,7 @@ import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindTextHtmlIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -40,6 +41,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import javax.swing.Action
 import javax.swing.JComponent
@@ -158,20 +161,36 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
 
   private fun createDescription(loadedDetailsState: StateFlow<GHPRDetailsFull>): JComponent {
     val canEdit = loadedDetailsState.value.canEditDescription
+    val canReact = loadedDetailsState.value.canReactDescription
     val author = loadedDetailsState.value.author
     val createdAt = loadedDetailsState.value.createdAt
 
     val textPane = SimpleHtmlPane(customImageLoader = timelineVm.htmlImageLoader).apply {
       bindTextIn(cs, loadedDetailsState.mapState { it.descriptionHtml ?: noDescriptionHtmlText })
     }
-    val contentPane = EditableComponentFactory.wrapTextComponent(cs, textPane, timelineVm.detailsVm.descriptionEditVm)
 
-    val actionsPanel = if (canEdit) HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
-      add(CodeReviewCommentUIUtil.createEditButton {
-        timelineVm.detailsVm.editDescription()
-      })
+    val reactionsVm = timelineVm.detailsVm.reactionsVm.filterNotNull()
+    val contentPane = VerticalListPanel(CodeReviewTimelineUIUtil.VERTICAL_GAP).apply {
+      add(EditableComponentFactory.wrapTextComponent(cs, textPane, timelineVm.detailsVm.descriptionEditVm))
+      bindChildIn(cs, reactionsVm, index = -1) { vm ->
+        GHReactionsComponentFactory.create(this, vm)
+      }
     }
-    else null
+    val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
+      if (canEdit) {
+        add(CodeReviewCommentUIUtil.createEditButton {
+          timelineVm.detailsVm.editDescription()
+        })
+      }
+      if (canReact) {
+        bindChildIn(cs, reactionsVm, index = -1) { vm ->
+          CodeReviewCommentUIUtil.createAddReactionButton {
+            val parentComponent = it.source as JComponent
+            GHReactionsPickerComponentFactory.showPopup(vm, parentComponent)
+          }
+        }
+      }
+    }
 
     return GHPRTimelineItemUIUtil.createTimelineItem(timelineVm.avatarIconsProvider, author, createdAt, contentPane, actionsPanel)
   }

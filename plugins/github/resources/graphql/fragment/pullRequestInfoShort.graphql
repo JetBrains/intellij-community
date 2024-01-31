@@ -45,9 +45,11 @@ fragment pullRequestInfoShort on PullRequest {
       ...pullRequestReview
     }
   }
+  ...reactions
 
   mergeable
 
   viewerCanUpdate
+  viewerCanReact
   viewerDidAuthor
 }
