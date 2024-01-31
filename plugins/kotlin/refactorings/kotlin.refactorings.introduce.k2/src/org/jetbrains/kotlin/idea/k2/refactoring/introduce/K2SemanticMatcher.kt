@@ -144,7 +144,30 @@ object K2SemanticMatcher {
 
         override fun visitBinaryWithTypeRHSExpression(expression: KtBinaryExpressionWithTypeRHS, data: KtElement): Boolean = false // TODO
 
-        override fun visitStringTemplateExpression(expression: KtStringTemplateExpression, data: KtElement): Boolean = false // TODO
+        override fun visitStringTemplateExpression(expression: KtStringTemplateExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtStringTemplateExpression ?: return false
+
+            if (expression.entries.size != patternExpression.entries.size) return false
+            for ((targetEntry, patternEntry) in expression.entries.zip(patternExpression.entries)) {
+                when {
+                    targetEntry is KtLiteralStringTemplateEntry && patternEntry is KtLiteralStringTemplateEntry -> {
+                        if (targetEntry.text != patternEntry.text) return false
+                    }
+
+                    targetEntry is KtStringTemplateEntryWithExpression && patternEntry is KtStringTemplateEntryWithExpression -> {
+                        if (!elementsMatchOrBothAreNull(targetEntry.expression, patternEntry.expression)) return false
+                    }
+
+                    targetEntry is KtEscapeStringTemplateEntry && patternEntry is KtEscapeStringTemplateEntry -> {
+                        if (targetEntry.unescapedValue != patternEntry.unescapedValue) return false
+                    }
+
+                    else -> return false
+                }
+            }
+
+            return true
+        }
 
         override fun visitIsExpression(expression: KtIsExpression, data: KtElement): Boolean = false // TODO
     }
