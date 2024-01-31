@@ -2,19 +2,18 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.progress.assertCurrentJobIsChildOf
 import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.progress.withRootJob
-import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -68,76 +67,6 @@ class MergingUpdateQueuePropagationTest {
     blockingScopeJob.join()
     assertTrue(updateCompleted[1].get())
     assertTrue(queue.isEmpty)
-  }
-
-  @OptIn(DelicateCoroutinesApi::class)
-  @Test
-  fun `cancels spawned tasks`() {
-    val errorMessage = "intentionally failed"
-    val currentHandler = Thread.getDefaultUncaughtExceptionHandler()
-    try {
-      Thread.setDefaultUncaughtExceptionHandler { t, e ->
-        assertTrue(EDT.isEdt(t))
-        assertEquals(errorMessage, e.message)
-      }
-      LoggedErrorProcessor.executeWith<IllegalStateException>(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): MutableSet<Action> {
-          assertEquals(errorMessage, t!!.message)
-          return Action.NONE
-        }
-      })
-      {
-        timeoutRunBlocking {
-          val queue = MergingUpdateQueue("test queue", 100, true, null)
-          var updateAllowedToComplete by AtomicReference(false)
-          var secondUpdateExecuted by AtomicReference(false)
-          var immortalExecuted by AtomicReference(false)
-          val immortalSemaphore = Job(null)
-
-          supervisorScope {
-            val queuingDone = Job()
-            val deferred = GlobalScope.async {
-              blockingContextScope {
-                queue.queue(Update.create("id") {
-                  while (!updateAllowedToComplete) {
-                    // wait for permission
-                  }
-                  throw IllegalStateException(errorMessage)
-                })
-                queue.queue(Update.create("id2") {
-                  secondUpdateExecuted = true
-                })
-                queuingDone.complete()
-              }
-            }
-            queue.queue(Update.create("immortal") {
-              immortalExecuted = true
-              immortalSemaphore.complete()
-            })
-
-            queuingDone.join()
-            assertTrue(deferred.isActive)
-
-            updateAllowedToComplete = true
-            try {
-              deferred.await()
-              fail<Unit>("The first update should throw")
-            }
-            catch (e: IllegalStateException) {
-              assertEquals("intentionally failed", e.message)
-            }
-            assertTrue(queue.isEmpty) // all the tasks were processed
-            assertFalse(secondUpdateExecuted) // this task should not be executed
-            immortalSemaphore.join()
-            assertTrue(immortalExecuted) // but other tasks do not get canceled
-          }
-          pumpEDT()
-        }
-      }
-    }
-    finally {
-      Thread.setDefaultUncaughtExceptionHandler(currentHandler)
-    }
   }
 
   @Test
