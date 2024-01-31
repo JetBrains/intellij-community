@@ -92,13 +92,13 @@ public final class XmlSerializerImpl {
   }
 
   static final class XmlSerializer extends XmlSerializerBase {
-    private Reference<Map<Type, Binding>> ourBindings;
+    private Reference<Map<Type, Binding>> bindings;
 
     private @NotNull Map<Type, Binding> getBindingCacheMap() {
-      Map<Type, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
+      Map<Type, Binding> map = bindings == null ? null : bindings.get();
       if (map == null) {
         map = new ConcurrentHashMap<>();
-        ourBindings = new SoftReference<>(map);
+        bindings = new SoftReference<>(map);
       }
       return map;
     }
