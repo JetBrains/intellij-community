@@ -1959,6 +1959,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullWithLambdaOnSequenceFake2.kt");
         }
 
+        @TestMetadata("MapNotNullWithLambdaPlatformType.kt")
+        public void testMapNotNullWithLambdaPlatformType() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullWithLambdaPlatformType.kt");
+        }
+
+        @TestMetadata("MapNotNullWithPlatformTypeReference.kt")
+        public void testMapNotNullWithPlatformTypeReference() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullWithPlatformTypeReference.kt");
+        }
+
         @TestMetadata("MapNotNullWithReference.kt")
         public void testMapNotNullWithReference() throws Exception {
             runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullWithReference.kt");

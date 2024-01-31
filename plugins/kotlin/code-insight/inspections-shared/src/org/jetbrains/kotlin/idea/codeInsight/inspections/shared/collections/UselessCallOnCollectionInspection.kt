@@ -44,13 +44,13 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     private fun KtExpression.isLambdaReturningNotNull(): Boolean {
         val expression = if (this is KtLabeledExpression) this.baseExpression else this
         if (expression !is KtLambdaExpression) return false
-        return expression.bodyExpression?.getKtType()?.isMarkedNullable == false
+        return expression.bodyExpression?.getKtType()?.canBeNull == false
     }
 
     context(KtAnalysisSession)
     private fun KtExpression.isMethodReferenceReturningNotNull(): Boolean {
         val type = getKtType() as? KtFunctionalType ?: return false
-        return !type.returnType.isMarkedNullable
+        return !type.returnType.canBeNull
     }
 
     context(KtAnalysisSession)
@@ -70,7 +70,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             if (receiverTypeArgumentType is KtFlexibleType || !receiverTypeArgumentType.isSubTypeOf(argumentType)) return
         } else {
             // xxxNotNull
-            if (receiverTypeArgumentType.isMarkedNullable) return
+            if (receiverTypeArgumentType.canBeNull) return
             if (calleeExpression.text != "filterNotNull") {
                 // Check if there is a function argument
                 resolvedCall.argumentMapping.toList().lastOrNull()?.first?.let { lastArgument ->
