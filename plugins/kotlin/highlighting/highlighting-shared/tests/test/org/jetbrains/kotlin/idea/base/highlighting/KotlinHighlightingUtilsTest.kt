@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
-import com.intellij.openapi.application.impl.RwLockHolder.runWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -44,7 +44,7 @@ class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
     fun testFileUnderContentRoot() {
         val file = createKotlinFileAtPath("src/main/kotlin/Main.kt")
         val containingFolder = file.virtualFile.parent
-        runWriteAction {
+        WriteAction.run<Throwable> {
             ModuleRootManager.getInstance(project.modules.first()).modifiableModel.apply {
                 addContentEntry(containingFolder).addSourceFolder(containingFolder, false)
             }.commit()

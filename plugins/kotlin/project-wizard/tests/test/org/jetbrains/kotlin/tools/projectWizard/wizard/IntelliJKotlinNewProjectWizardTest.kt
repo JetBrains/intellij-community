@@ -9,7 +9,7 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.impl.RwLockHolder.runWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.module.Module
@@ -452,7 +452,7 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
     }
 
     private fun Project.createKotlinLibrary(libraryName: String = "SomeOtherRuntimeName", addToModule: String?) {
-        runWriteAction {
+        WriteAction.run<Throwable> {
             val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(this).modifiableModel
             val newLibrary = libraryTable.createLibrary(libraryName)
             libraryTable.commit()
@@ -516,7 +516,7 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
 
     fun testNewModuleExistingModuleLevelKotlinLibrary() {
         createJavaProject().useProject { project ->
-            runWriteAction {
+            WriteAction.run<Throwable> {
                 val modifiableModel = ModuleRootManager.getInstance(project.modules.first()).modifiableModel
                 val moduleLibraryTable = modifiableModel.moduleLibraryTable
                 val library = moduleLibraryTable.createLibrary("ModuleLevelLib")

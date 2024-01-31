@@ -38,7 +38,7 @@ import javax.swing.JComponent
 import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
-object RwLockHolder: ThreadingSupport {
+internal object RwLockHolder: ThreadingSupport {
   private val logger = Logger.getInstance(RwLockHolder::class.java)
 
   @JvmField

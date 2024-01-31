@@ -10,7 +10,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
@@ -33,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 import javax.swing.JComponent
-import kotlin.coroutines.*
 
 private class ThreadState(var permit: Permit? = null, var inListener: Boolean = false, var impatientReader: Boolean = false) {
   fun release() {
@@ -49,7 +51,7 @@ private class ThreadState(var permit: Permit? = null, var inListener: Boolean = 
 
 @Suppress("SSBasedInspection")
 @ApiStatus.Internal
-object AnyThreadWriteThreadingSupport: ThreadingSupport {
+internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private val logger = Logger.getInstance(AnyThreadWriteThreadingSupport::class.java)
 
   @JvmField
