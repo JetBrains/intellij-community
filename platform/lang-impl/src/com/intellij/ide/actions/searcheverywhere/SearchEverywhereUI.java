@@ -693,7 +693,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       SEHeaderActionListener.Companion.getSE_HEADER_ACTION_TOPIC(), new SEHeaderActionListener() {
         @Override
         public void performed(@NotNull SEHeaderActionListener.SearchEverywhereActionEvent event) {
-          if (event.getActionID().equals("Preview")) {
+          if (event.getActionID().equals(PreviewActionKt.PREVIEW_ACTION_ID)) {
             updatePreviewVisibility();
           }
         }
@@ -1068,7 +1068,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   static boolean isPreviewEnabled() {
-    return Registry.is("search.everywhere.preview");
+    return PreviewExperiment.INSTANCE.isExperimentEnabled() || Registry.is("search.everywhere.preview");
   }
 
   private static boolean isPreviewActive() {

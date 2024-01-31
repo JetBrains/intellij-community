@@ -504,7 +504,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       return stub
     }
 
-    private val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
+    val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
     @Contract("null -> !null")
     private fun cannotPreviewMessage(infos: List<UsageInfo>?): @NlsContexts.StatusText String? {
       if (infos == null) {

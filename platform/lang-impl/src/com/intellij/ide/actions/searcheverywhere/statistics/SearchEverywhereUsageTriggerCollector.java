@@ -81,6 +81,10 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
     TIME_TO_FIRST_RESULT, FIRST_TAB_ID, TIME_TO_FIRST_RESULT_LAST_QUERY, LAST_TAB_ID, DURATION_MS,
     ML_EXPERIMENT_GROUP, ML_EXPERIMENT_VERSION
   );
+  public static final BooleanEventField PREVIEW_STATE = EventFields.Boolean("previewState");
+  public static final VarargEventId PREVIEW_SWITCHED = GROUP.registerVarargEvent("previewSwitched", PREVIEW_STATE);
+  public static final BooleanEventField PREVIEW_CLOSED_STATE = EventFields.Boolean("previewClosed");
+  public static final VarargEventId PREVIEW_CLOSED = GROUP.registerVarargEvent("previewClosed", PREVIEW_CLOSED_STATE);
 
   @Override
   public EventLogGroup getGroup() {
