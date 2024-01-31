@@ -7,6 +7,7 @@ import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.dependency.GraphConfiguration;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -19,6 +20,7 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   // className -> {imports; static_imports}
   private final Map<String, Pair<Collection<String>, Collection<String>>> myImportRefs = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Collection<Callbacks.ConstantRef>> myConstantRefs = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, Set<Usage>> myAdditionalUsages = Collections.synchronizedMap(new HashMap<>());
   private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
   private final GraphConfiguration myGraphConfig;
 
@@ -30,13 +32,21 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
     JvmClassNodeBuilder builder = JvmClassNodeBuilder.create(classFileName, cr, isGenerated);
 
-    String nodeName = builder.getReferenceID().getNodeName();
+    JvmNodeReferenceID nodeID = builder.getReferenceID();
+    String nodeName = nodeID.getNodeName();
     addConstantUsages(builder, nodeName, myConstantRefs.remove(nodeName));
     Pair<Collection<String>, Collection<String>> imports = myImportRefs.remove(nodeName);
     if (imports != null) {
       addImportUsages(builder, imports.getFirst(), imports.getSecond());
     }
-
+    Set<Usage> additional = myAdditionalUsages.remove(nodeName);
+    if (additional != null) {
+      for (Usage usage : additional) {
+        if (!nodeID.equals(usage.getElementOwner())) {
+          builder.addUsage(usage);
+        }
+      }
+    }
     var node = builder.getResult();
     if (!node.isPrivate()) {
       myNodes.add(new Pair<>(node, Iterators.collect(Iterators.map(sources, myGraphConfig.getPathMapper()::toNodeSource), new SmartList<>())));
@@ -67,6 +77,11 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
     else {
       myConstantRefs.remove(key);
     }
+  }
+
+  @Override
+  public void registerUsage(String className, Usage usage) {
+    myAdditionalUsages.computeIfAbsent(className.replace('.', '/'), k -> Collections.synchronizedSet(new HashSet<>())).add(usage);
   }
 
   private static void addImportUsages(JvmClassNodeBuilder builder, Collection<String> classImports, Collection<String> staticImports) {
