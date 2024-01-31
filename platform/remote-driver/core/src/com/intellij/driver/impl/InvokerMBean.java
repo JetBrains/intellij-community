@@ -27,6 +27,8 @@ public interface InvokerMBean {
 
   int newSession();
 
+  int newSession(int id);
+
   void cleanup(int sessionId);
 
   void takeScreenshot(@Nullable String outFolder);

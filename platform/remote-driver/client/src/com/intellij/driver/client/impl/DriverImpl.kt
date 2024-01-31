@@ -363,7 +363,7 @@ internal data class Session(
 private val NO_SESSION: Session = Session(0, OnDispatcher.DEFAULT, LockSemantics.NO_LOCK)
 
 @JmxName("com.intellij.driver:type=Invoker")
-internal interface Invoker : AutoCloseable {
+interface Invoker : AutoCloseable {
   fun getProductVersion(): ProductVersion
 
   fun isApplicationInitialized(): Boolean
@@ -373,6 +373,8 @@ internal interface Invoker : AutoCloseable {
   fun invoke(call: RemoteCall): RemoteCallResult
 
   fun newSession(): Int
+
+  fun newSession(id: Int): Int
 
   fun cleanup(sessionId: Int)
 

@@ -567,6 +567,12 @@ public class Invoker implements InvokerMBean {
   }
 
   @Override
+  public int newSession(int id) {
+    sessions.put(id, new Session(refIdPrefix));
+    return id;
+  }
+
+  @Override
   public void cleanup(int sessionId) {
     sessions.remove(sessionId);
 
