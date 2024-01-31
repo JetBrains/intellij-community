@@ -264,9 +264,9 @@ internal class CombinedEditorSearchSession(private val project: Project,
 
   private fun search(forward: Boolean, curSessionIdx: Int = currentSessionIndex, curSessionPosition: Position = currentSessionPosition) {
 
-    var curSession = holders[curSessionIdx].getOrNull(curSessionPosition) ?: return
+    var curSession = holders[curSessionIdx].getOrNull(curSessionPosition)
 
-    if (curSession.canSearch(forward)) {
+    if (curSession != null && curSession.canSearch(forward)) {
       curSession.search(forward)
       return
     }
@@ -275,9 +275,9 @@ internal class CombinedEditorSearchSession(private val project: Project,
 
     if (furtherIdx !in holders.indices) return
 
-    curSession = holders[furtherIdx].getOrNull(curSessionPosition) ?: return
+    curSession = holders[furtherIdx].getOrNull(curSessionPosition)
 
-    if (curSession.hasMatches()) {
+    if (curSession != null && curSession.hasMatches()) {
       listeners.multicaster.onSearch(forward, curSession.editor)
       if (forward) curSession.moveCaretToStart() else curSession.moveCaretToEnd() // these ensure the right position of SearchResults.myCursor
       updateCurrentState(furtherIdx, curSessionPosition)
