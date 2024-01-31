@@ -80,19 +80,19 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
           first = false
         }
 
-        val point = line.codePointAt(i)
-        if (start == -1 && isJavaIdentifierStart(point)) {
+        val ch = line.codePointAt(i)
+        if (start == -1 && isJavaIdentifierStart(ch)) {
           start = i
           continue
         }
-        if (start != -1 && point == POINT_CODE) {
+        if (start != -1 && ch == POINT_CODE) {
           pointCount++
           continue
         }
         if (start != -1 &&
-            ((line.codePointAt(i - 1) == POINT_CODE && isJavaIdentifierStart(point)) ||
-             (line.codePointAt(i - 1) != POINT_CODE && isJavaIdentifierPart(point)))) {
-          val charCount = Character.charCount(point)
+            ((line.codePointAt(i - 1) == POINT_CODE && isJavaIdentifierStart(ch)) ||
+             (line.codePointAt(i - 1) != POINT_CODE && isJavaIdentifierPart(ch)))) {
+          val charCount = Character.charCount(ch)
           if (i + charCount >= line.length && pointCount >= 2) {
             addProbableClass(line, start, line.length, result)
           }

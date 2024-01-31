@@ -37,7 +37,7 @@ class ClassInfoResolver(val project: Project, private val mySearchScope: GlobalS
      * @return True, if clazz package can be shortened to targetPackageName, false otherwise.
      * There are two popular ways to shorten:
      * 1. Keep only n last characters of the package: aaa.bbb.ccc -> b.ccc
-     * 2. Keep only the first n characters of each directory: aaa.bbb.ccc -> a.b.cc
+     * 2. Keep only the first n characters of each directory: abc.bcd.cef -> a.b.c
      */
     private fun canBeShortenedPackages(clazz: PsiClass, targetPackageName: String): Boolean {
       val qualifiedName = clazz.qualifiedName ?: return false
