@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -38,6 +39,7 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindowsBlocking
+import com.jetbrains.performancePlugin.jmxDriver.InvokerService
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
@@ -184,7 +186,7 @@ private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
 class ProjectLoaded : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
     if (System.getProperty("com.sun.management.jmxremote") == "true") {
-      InvokerMBean.register({ PerformanceTestSpan.TRACER },
+      service<InvokerService>().register({ PerformanceTestSpan.TRACER },
                             { PerformanceTestSpan.getContext() },
                             { takeScreenshotOfAllWindowsBlocking(it) })
     }
