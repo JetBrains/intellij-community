@@ -7,13 +7,15 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectChangesBuilder.Companion.merged
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.ParallelRunner
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -245,8 +247,10 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
   suspend fun updateProjects(specs: List<UpdateSpec>) {
     if (specs.isEmpty()) return
 
-    ParallelRunner.getInstance(tree.project).runInParallel(specs) {
-      update(it.mavenProjectFile, it.forceRead)
+    coroutineScope {
+      specs.forEach {
+        launch(CoroutineName("reading ${it.mavenProjectFile}")) { update(it.mavenProjectFile, it.forceRead) }
+      }
     }
   }
 
