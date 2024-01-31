@@ -128,20 +128,6 @@ public class Mappings {
     myObjectClassName = myContext.get("java/lang/Object");
   }
 
-  public Mappings() {
-    myLock = new Object();
-    myIsDelta = false;
-    myChangedClasses = null;
-    myChangedFiles = null;
-    myDeletedClasses = null;
-    myAddedClasses = null;
-    myRootDir = null;
-    myRelativizer = null;
-    myInitName = 1;
-    myEmptyName = 0;
-    myObjectClassName = -1;
-  }
-
   private void createImplementation() throws IOException {
     try {
       if (!myIsDelta) {

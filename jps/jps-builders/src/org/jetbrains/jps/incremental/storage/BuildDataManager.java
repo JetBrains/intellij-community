@@ -11,7 +11,6 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
-import org.jetbrains.jps.builders.java.dependencyView.DumbMappings;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -82,12 +81,7 @@ public final class BuildDataManager {
       myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
       File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
       if (JavaBuilderUtil.isDepGraphEnabled()) {
-        if(Boolean.parseBoolean(System.getProperty("kotlin.jps.workaround.tests", "false"))) {
-          myMappings = new DumbMappings();
-        }
-        else {
-          myMappings = null;
-        }
+        myMappings = null;
         createDependencyGraph(mappingsRoot, false);
         LOG.info("Using DependencyGraph-based build incremental analysis");
       }
