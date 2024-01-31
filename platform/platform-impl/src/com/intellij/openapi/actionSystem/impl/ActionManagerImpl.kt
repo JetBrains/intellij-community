@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.actionSystem.impl
@@ -63,7 +63,6 @@ import com.intellij.util.containers.with
 import com.intellij.util.containers.without
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.use
 import com.intellij.util.xml.dom.XmlElement
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -1138,8 +1137,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val project = event.project
     fireBeforeActionPerformed(action, event)
     val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-    val actionId = getId(action) ?: if (action is EmptyAction)
-      runnable.javaClass.name else action.javaClass.name
+    val actionId = getId(action)
+                   ?: if (action is EmptyAction) runnable.javaClass.name else action.javaClass.name
     if (component != null && !UIUtil.isShowing(component) &&
         event.place != ActionPlaces.TOUCHBAR_GENERAL &&
         ClientProperty.get(component, ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN) != true) {
@@ -1148,23 +1147,28 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       fireAfterActionPerformed(action, event, AnActionResult.IGNORED)
       return
     }
-    val cs = ((project ?: ApplicationManager.getApplication()) as ComponentManagerImpl)
+    val container = when (action.actionPerformScope) {
+      ActionPerformScope.APPLICATION -> ApplicationManager.getApplication()
+      ActionPerformScope.PROJECT -> project ?: ApplicationManager.getApplication()
+      ActionPerformScope.GUESS -> ApplicationManager.getApplication() // TODO
+    }
+    val cs = (container as ComponentManagerImpl)
       .pluginCoroutineScope(action.javaClass.classLoader)
     val coroutineName = CoroutineName("${action.javaClass.name}#actionPerformed@${event.place}")
-    // save stack frames using explicit continuation trick & inline blockingContext
+    // save stack frames using an explicit continuation trick & inline blockingContext
     lateinit var continuation: CancellableContinuation<Unit>
     cs.launch(Dispatchers.Unconfined + coroutineName, CoroutineStart.UNDISPATCHED) {
       suspendCancellableCoroutine { continuation = it }
     }
-    var result = try {
+    val result = try {
       val coroutineContext = continuation.context +
                              ModalityState.current().asContextElement() +
                              ClientId.coroutineContext() +
-                             ActionContextElement.create(actionId, event.place, event.inputEvent, component) +
-                             coroutineName
-      kotlin.Pair({ installThreadContext(coroutineContext.minusKey(ContinuationInterceptor), true) },
-                  { SlowOperations.startSection(SlowOperations.ACTION_PERFORM) }).use { _, _ ->
-        runnable.run()
+                             ActionContextElement.create(actionId, event.place, event.inputEvent, component)
+      installThreadContext(coroutineContext.minusKey(ContinuationInterceptor), replace = true).use { _ ->
+        SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
+          runnable.run()
+        }
       }
       AnActionResult.PERFORMED
     }
