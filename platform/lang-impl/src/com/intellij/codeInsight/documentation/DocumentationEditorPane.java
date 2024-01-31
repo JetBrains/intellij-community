@@ -171,8 +171,10 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   }
 
   private int definitionPreferredWidth() {
-    int preferredDefinitionWidth = getPreferredSectionWidth("definition");
-    int preferredLocationWidth = Math.max(getPreferredSectionWidth("bottom-no-content"), getPreferredSectionWidth("bottom"));
+    int preferredDefinitionWidth = Math.max(getPreferredSectionWidth("definition"),
+                                            getPreferredSectionWidth("definition-only"));
+    int preferredLocationWidth = Math.max(getPreferredSectionWidth("bottom-no-content"),
+                                          getPreferredSectionWidth("bottom"));
     if (preferredDefinitionWidth < 0) {
       return -1;
     }
