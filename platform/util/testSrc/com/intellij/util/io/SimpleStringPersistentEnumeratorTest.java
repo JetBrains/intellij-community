@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.AssumptionViolatedException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -17,6 +18,12 @@ public class SimpleStringPersistentEnumeratorTest extends StringEnumeratorTestBa
     super(/*valuesToTest: */ 1_000);
   }
 
+
+  @Override
+  @Ignore
+  public void runningMultiThreaded_valuesListedByForEach_alwaysKnownToTryEnumerate() throws Exception {
+    throw new AssumptionViolatedException("SimpleStringEnumerator doesn't satisfy the property (see comments in .forEach)");
+  }
 
   @Override
   public void nullValue_EnumeratedTo_NULL_ID() throws IOException {

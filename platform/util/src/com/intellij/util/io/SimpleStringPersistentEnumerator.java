@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -181,6 +181,10 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
 
   @Override
   public boolean forEach(@NotNull ValueReader<? super String> reader) throws IOException {
+    //RC: current implementation is lock-free, but it violates the invariant that value listed by forEach()
+    //    must be 'known' to enumerator methods tryEnumerate()/enumerate(). tryEnumerate checks .valueToId
+    //    map, which is updated (in enumerate) _after_ new .idToValue array is already set and visible, hence
+    //    it could be new value already appended to .idToValue, but not yet to .valueToId.
     checkNotClosed();
     String[] idToNameLocal = idToValue;
     for (int i = 0; i < idToNameLocal.length; i++) {

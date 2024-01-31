@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.util.io.StringEnumeratorTestBase;
@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AssumptionViolatedException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -34,6 +35,11 @@ public class PersistentStringEnumeratorTest extends StringEnumeratorTestBase<Per
     //super.nullValue_EnumeratedTo_NULL_ID();
   }
 
+  @Override
+  @Ignore
+  public void runningMultiThreaded_valuesListedByForEach_alwaysKnownToTryEnumerate() throws Exception {
+    throw new AssumptionViolatedException("Not satisfied now -- need to investigate");
+  }
   @Override
   protected PersistentStringEnumerator openEnumeratorImpl(final @NotNull Path storagePath) throws IOException {
     return new PersistentStringEnumerator(storagePath);

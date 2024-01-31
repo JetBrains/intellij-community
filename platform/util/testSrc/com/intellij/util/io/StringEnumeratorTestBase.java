@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.IntRef;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +15,14 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static com.intellij.util.io.DataEnumeratorEx.NULL_ID;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -412,6 +418,54 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
 
   @Test
+  public void runningMultiThreaded_valuesListedByForEach_alwaysKnownToTryEnumerate() throws Exception {
+    //not too many threads, 'cos we want to check .forEach values in the middle as many times as possible, and
+    // with many threads we fill the enumerator up too fast.
+    int enumeratingThreadsCount = 2;
+
+    int valuesPerThread = manyValues.length / enumeratingThreadsCount;
+    int actualValuesToEnumerate = enumeratingThreadsCount * valuesPerThread;
+
+    ExecutorService pool = Executors.newFixedThreadPool(enumeratingThreadsCount);
+    try {
+      Callable<Void>[] enumeratingTasks = new Callable[enumeratingThreadsCount];
+      for (int threadNo = 0; threadNo < enumeratingThreadsCount; threadNo++) {
+        int finalThreadNo = threadNo;
+        enumeratingTasks[threadNo] = () -> {
+          for (int i = 0; i < valuesPerThread; i++) {
+            String value = manyValues[i * enumeratingThreadsCount + finalThreadNo];
+            enumerator.enumerate(value);
+          }
+          return null;
+        };
+      }
+      for (Callable<Void> task : enumeratingTasks) {
+        pool.submit(task);
+      }
+
+      pool.shutdown();
+
+      int cycles = 0;
+      IntArrayList valuesCheckedByTurn = new IntArrayList();
+      do {
+        int valuesChecked = checkAllForEachValuesExist(enumerator);
+        valuesCheckedByTurn.add(valuesChecked);
+        cycles++;
+      }
+      while (!pool.isTerminated());
+
+      int valuesChecked = checkAllForEachValuesExist(enumerator);
+      System.out.println("cycles: " + cycles + ", values checked by turn: " + valuesCheckedByTurn
+                         + "\nvalues finally: " + valuesChecked + "/" + actualValuesToEnumerate);
+    }
+    finally {
+      pool.shutdown();
+      pool.awaitTermination(100, SECONDS);
+    }
+  }
+
+
+  @Test
   @Ignore("poor-man benchmark, not a test")
   public void manyValuesEnumerated_CouldBeGetBack_ByForEach_AfterReload_Benchmark() throws Exception {
     String[] values = manyValues;
@@ -454,7 +508,6 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   }
 
 
-
   protected void closeEnumerator(DataEnumerator<String> enumerator) throws Exception {
     if (enumerator instanceof Unmappable) {
       ((Unmappable)enumerator).closeAndUnsafelyUnmap();
@@ -486,5 +539,26 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
       .distinct()
       .limit(poolSize)
       .toArray(String[]::new);
+  }
+
+  protected int checkAllForEachValuesExist(@NotNull ScannableDataEnumeratorEx<String> enumerator) throws IOException {
+    IntRef valuesChecked = new IntRef(0);
+    enumerator.forEach((id, value) -> {
+      valuesChecked.inc();
+      try {
+        int valueId = enumerator.tryEnumerate(value);
+        if (valueId == NULL_ID) {
+          throw new AssertionError("value[" + value + "] enumerated to NULL");
+        }
+        if (valueId != id) {
+          throw new AssertionError("value[" + value + "] enumerated to " + valueId + " while must be " + id);
+        }
+        return true;
+      }
+      catch (Throwable t) {
+        throw new AssertionError("name[" + value + "] failed to enumerate", t);
+      }
+    });
+    return valuesChecked.get();
   }
 }
