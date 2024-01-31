@@ -285,4 +285,39 @@ public final class EmptySpringApplication {
       )
     )
   }
+
+  fun testNestedClasses() {
+    LoggingTestUtils.addSlf4J(myFixture)
+    checkColumnFinderJava(
+      fileName = "UpperClass",
+      classText = """
+package com.example;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public final class UpperClass {
+    public static class Inner{
+        private static final Logger log = org.slf4j.LoggerFactory.getLogger(Inner.class);
+    }
+
+    public static void main(String[] args) {
+        request1("1");
+    }
+
+
+    private static void request1(String number) {
+        System.out.println("com.example.UpperClass${"\$Inner"} test");
+        Inner.log.info("new request1 {}", number);
+    }
+}
+""".trimIndent(),
+      logItems = listOf(
+        LogItem("java.exe", null),
+        LogItem("1", null),
+        LogItem("com.example.UpperClass${"\$Inner"} test", LogicalPosition(6, 24)),
+        LogItem("[main] INFO com.example.UpperClass${"\$Inner"} -- new request1 1", LogicalPosition(17, 8)),
+      )
+    )
+  }
 }

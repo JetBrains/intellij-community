@@ -96,7 +96,8 @@ internal class LogFinderHyperlinkHandler(private val probableClassName: Probable
     val document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.containingFile) ?: return text
     val lineNumber = document.getLineNumber(element.textRange.endOffset)
     val textRange = element.textRange
-      .intersection(TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber))) ?: element.textRange
+                      .intersection(TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)))
+                    ?: element.textRange
     val trimmedText = document.getText(textRange).trim()
     return StringUtil.shortenTextWithEllipsis(trimmedText, 30, 0)
   }
@@ -105,11 +106,20 @@ internal class LogFinderHyperlinkHandler(private val probableClassName: Probable
 internal class LogVisitor(private val probableClassName: ProbableClassName) : PsiRecursiveElementVisitor() {
   val similarClasses = mutableSetOf<UClass>()
   val similarCalls = mutableSetOf<UCallExpression>()
-  val shortClassName = probableClassName.fullClassName.substringAfterLast('.')
+  private val shortClassNames = mutableSetOf<String>()
+
+  init {
+    val shortClassName = probableClassName.fullClassName.substringAfterLast('.')
+    shortClassNames.add(shortClassName)
+    val subclassName = ClassInfoResolver.findSubclassName(shortClassName)
+    if (subclassName != null) {
+      shortClassNames.add(subclassName)
+    }
+  }
 
   override fun visitElement(element: PsiElement) {
     val uClass = element.toUElementOfType<UClass>()
-    if (uClass != null && shortClassName == uClass.javaPsi.name) {
+    if (uClass != null && shortClassNames.contains(uClass.javaPsi.name)) {
       similarClasses.add(uClass)
     }
     val uCall = element.toUElementOfType<UCallExpression>()

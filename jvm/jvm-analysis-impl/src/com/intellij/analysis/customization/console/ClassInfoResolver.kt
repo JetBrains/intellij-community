@@ -13,6 +13,14 @@ import com.intellij.psi.search.PsiShortNamesCache
 class ClassInfoResolver(val project: Project, private val mySearchScope: GlobalSearchScope) {
 
   companion object {
+    internal fun findSubclassName(className: String): String? {
+      val probablySubclassIndex = className.lastIndexOf('$')
+      if (probablySubclassIndex != -1 && probablySubclassIndex != 0 && className.length > probablySubclassIndex + 1) {
+        return className.substring(probablySubclassIndex + 1)
+      }
+      return null
+    }
+
     private fun findClasses(project: Project,
                             scope: GlobalSearchScope,
                             shortClassName: String,
@@ -26,6 +34,13 @@ class ClassInfoResolver(val project: Project, private val mySearchScope: GlobalS
             continue
           }
           result.add(clazz)
+        }
+      }
+      if (result.isEmpty()) {
+        val newShortClassName = findSubclassName(shortClassName)
+        if (newShortClassName != null) {
+          val newTargetPackageName = targetPackageName + "." + shortClassName.substring(0, newShortClassName.length + 1)
+          return findClasses(project, scope, newShortClassName, newTargetPackageName)
         }
       }
       return result.toList()
