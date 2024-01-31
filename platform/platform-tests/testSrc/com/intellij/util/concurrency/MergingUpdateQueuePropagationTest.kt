@@ -41,7 +41,7 @@ class MergingUpdateQueuePropagationTest {
           while (!allowCompleteUpdate[i].get()) {
             // wait for permission
           }
-          assert(currentJob.isActive) // parent is not finished
+          assertTrue(currentJob.isActive) // parent is not finished
           assertCurrentJobIsChildOf(currentJob)
           updateCompleted[i].set(true)
         })
@@ -155,7 +155,7 @@ class MergingUpdateQueuePropagationTest {
       })
     }
     // so `blockingContextScope` exists after all its spawned tasks exit
-    assert(queue.isEmpty)
+    assertTrue(queue.isEmpty)
     assertFalse(firstExecuted) // eaten by the second
     assertTrue(secondExecuted) // not eaten and executed
   }
