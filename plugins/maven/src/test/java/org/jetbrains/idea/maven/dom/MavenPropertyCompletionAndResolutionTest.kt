@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
-import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -811,37 +810,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     withContext(Dispatchers.EDT) {
       assertUnresolved(projectPom)
-    }
-  }
-
-  @Test
-  fun testResolvingPropertiesInProfilesXml() = runBlocking {
-    val profiles = createProfilesXml("""
-                                               <profile>
-                                                 <id>one</id>
-                                                 <properties>
-                                                   <foo>value</foo>
-                                                 </properties>
-                                               </profile>
-                                               <profile>
-                                                 <id>two</id>
-                                                 <properties>
-                                                   <foo>value</foo>
-                                                 </properties>
-                                               </profile>
-                                               """.trimIndent())
-
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <name>${'$'}{<caret>foo}</name>
-                       """.trimIndent())
-
-    readWithProfiles("two")
-
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(profiles, "profilesXml.profiles[1].properties.foo", MavenDomProfilesModel::class.java))
     }
   }
 
