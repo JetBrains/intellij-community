@@ -35,28 +35,6 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.coroutines.*
 
-internal val ACTION_PERMIT_CONTEXT_KEY: CoroutineContext.Key<ActionPermitContext> = object : CoroutineContext.Key<ActionPermitContext> {}
-
-internal class ActionPermitContext(private var permitField : Permit) : AbstractCoroutineContextElement(ACTION_PERMIT_CONTEXT_KEY), CoroutineContext.Element {
-  val permit get() = permitField
-
-  fun replaceWriteIntent(newPermit: WriteIntentPermit) {
-    permitField = newPermit
-  }
-
-  fun replaceWrite(newPermit: WritePermit) {
-    permitField = newPermit
-  }
-}
-
-internal val IN_WRITE_LISTENER_CONTEXT_KEY: CoroutineContext.Key<InWriteListenerContext> = object : CoroutineContext.Key<InWriteListenerContext> {}
-
-internal class InWriteListenerContext : AbstractCoroutineContextElement(IN_WRITE_LISTENER_CONTEXT_KEY), CoroutineContext.Element
-
-internal val IMPATIENT_READER_CONTEXT_KEY: CoroutineContext.Key<ImpatientReaderContext> = object : CoroutineContext.Key<ImpatientReaderContext> {}
-
-internal class ImpatientReaderContext : AbstractCoroutineContextElement(IMPATIENT_READER_CONTEXT_KEY), CoroutineContext.Element
-
 private class ThreadState(var permit: Permit? = null, var inListener: Boolean = false, var impatientReader: Boolean = false) {
   fun release() {
     permit?.release()
@@ -88,7 +66,7 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private val myState = ThreadLocal.withInitial { ThreadState(null, false) }
 
   @Volatile
-  private var myWriteAcquired = false
+  private var myWriteAcquired: Thread? = null
 
   // @Throws(E::class)
   override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
@@ -357,7 +335,7 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
     else if (!ts.hasPermit) {
       ts.permit = measureWriteLock { getWritePermit() }
     }
-    myWriteAcquired = true
+    myWriteAcquired = Thread.currentThread()
     myWriteActionPending.decrementAndGet()
 
     myWriteActionsStack.push(clazz)
@@ -370,7 +348,7 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
     fireWriteActionFinished(ts, clazz)
     myWriteActionsStack.pop()
     if (state.second) {
-      myWriteAcquired = false
+      myWriteAcquired = null
       ts.release()
       fireAfterWriteActionFinished(ts, clazz)
     }
@@ -403,12 +381,11 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  override fun isWriteActionInProgress(): Boolean = myWriteAcquired
+  override fun isWriteActionInProgress(): Boolean = myWriteAcquired != null
 
-  override fun isWriteActionPending(): Boolean =
-    myWriteAcquired || myWriteActionPending.get() > 0
+  override fun isWriteActionPending(): Boolean = isWriteActionInProgress() || myWriteActionPending.get() > 0
 
-  override fun isWriteAccessAllowed(): Boolean = isWriteActionInProgress()
+  override fun isWriteAccessAllowed(): Boolean = myWriteAcquired == Thread.currentThread()
 
   @ApiStatus.Experimental
   override fun runWriteActionWithNonCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
@@ -468,7 +445,7 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   override fun prohibitWriteActionsInside(): AccessToken {
-    if (myWriteActionPending.get() > 0 || myWriteAcquired) {
+    if (isWriteActionPending()) {
       throwCannotWriteException()
     }
     myNoWriteActionCounter.incrementAndGet()
@@ -514,12 +491,6 @@ object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
     reportSlowWrite?.cancel(false)
     return permit
-  }
-
-  private suspend fun assertNotInsideListener() {
-    if (coroutineContext[IN_WRITE_LISTENER_CONTEXT_KEY] != null) {
-      throw IllegalStateException("Must not start write action from inside write action listener")
-    }
   }
 
   private fun fireBeforeReadActionStart(clazz: Class<*>) {
