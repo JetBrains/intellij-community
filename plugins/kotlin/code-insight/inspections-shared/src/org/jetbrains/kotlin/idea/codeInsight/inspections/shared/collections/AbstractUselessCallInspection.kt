@@ -8,6 +8,9 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -15,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 
 abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
-    protected abstract val uselessFqNames: Map<String, Conversion>
+    protected abstract val uselessFqNames: Map<CallableId, Conversion>
 
     protected abstract val uselessNames: Set<String>
 
@@ -35,8 +38,8 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
             analyze(calleeExpression) {
                 val resolvedCall = calleeExpression.resolveCall()?.singleFunctionCallOrNull() ?: return
-                val fqName = resolvedCall.symbol.callableIdIfNonLocal?.asSingleFqName() ?: return
-                val conversion = uselessFqNames[fqName.asString()] ?: return
+                val callableId = resolvedCall.symbol.callableIdIfNonLocal ?: return
+                val conversion = uselessFqNames[callableId] ?: return
                 suggestConversionIfNeeded(expression, calleeExpression, conversion)
             }
         }
@@ -51,7 +54,11 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
     protected companion object {
 
-        fun Set<String>.toShortNames() = mapTo(mutableSetOf()) { fqName -> fqName.takeLastWhile { it != '.' } }
+        fun topLevelCallableId(packagePath: String, functionName: String): CallableId {
+            return CallableId(FqName.topLevel(Name.identifier(packagePath)), Name.identifier(functionName))
+        }
+
+        fun Set<CallableId>.toShortNames() = mapTo(mutableSetOf()) { it.callableName.asString() }
 
         context(KtAnalysisSession)
         fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {

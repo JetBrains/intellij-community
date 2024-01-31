@@ -24,18 +24,18 @@ import org.jetbrains.kotlin.types.Variance
 
 class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
-        "kotlin.collections.filterNotNull" to Conversion.Delete,
-        "kotlin.sequences.filterNotNull" to Conversion.Delete,
-        "kotlin.collections.filterIsInstance" to Conversion.Delete,
-        "kotlin.sequences.filterIsInstance" to Conversion.Delete,
-        "kotlin.collections.mapNotNull" to Conversion.Replace("map"),
-        "kotlin.sequences.mapNotNull" to Conversion.Replace("map"),
-        "kotlin.collections.mapNotNullTo" to Conversion.Replace("mapTo"),
-        "kotlin.sequences.mapNotNullTo" to Conversion.Replace("mapTo"),
-        "kotlin.collections.mapIndexedNotNull" to Conversion.Replace("mapIndexed"),
-        "kotlin.sequences.mapIndexedNotNull" to Conversion.Replace("mapIndexed"),
-        "kotlin.collections.mapIndexedNotNullTo" to Conversion.Replace("mapIndexedTo"),
-        "kotlin.sequences.mapIndexedNotNullTo" to Conversion.Replace("mapIndexedTo")
+        topLevelCallableId("kotlin.collections", "filterNotNull") to Conversion.Delete,
+        topLevelCallableId("kotlin.sequences", "filterNotNull") to Conversion.Delete,
+        topLevelCallableId("kotlin.collections", "filterIsInstance") to Conversion.Delete,
+        topLevelCallableId("kotlin.sequences", "filterIsInstance") to Conversion.Delete,
+        topLevelCallableId("kotlin.collections", "mapNotNull") to Conversion.Replace("map"),
+        topLevelCallableId("kotlin.sequences", "mapNotNull") to Conversion.Replace("map"),
+        topLevelCallableId("kotlin.collections", "mapNotNullTo") to Conversion.Replace("mapTo"),
+        topLevelCallableId("kotlin.sequences", "mapNotNullTo") to Conversion.Replace("mapTo"),
+        topLevelCallableId("kotlin.collections", "mapIndexedNotNull") to Conversion.Replace("mapIndexed"),
+        topLevelCallableId("kotlin.sequences", "mapIndexedNotNull") to Conversion.Replace("mapIndexed"),
+        topLevelCallableId("kotlin.collections", "mapIndexedNotNullTo") to Conversion.Replace("mapIndexedTo"),
+        topLevelCallableId("kotlin.sequences", "mapIndexedNotNullTo") to Conversion.Replace("mapIndexedTo")
     )
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
@@ -63,7 +63,8 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         val receiverTypeArgument = receiverType.ownTypeArguments.singleOrNull() ?: return
         val receiverTypeArgumentType = receiverTypeArgument.type ?: return
         val resolvedCall = expression.resolveCall()?.singleFunctionCallOrNull() ?: return
-        if (calleeExpression.text == "filterIsInstance") {
+        val callableName = resolvedCall.symbol.callableIdIfNonLocal?.callableName?.asString() ?: return
+        if (callableName == "filterIsInstance") {
             if (receiverTypeArgument is KtTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return
             val typeParameterDescriptor = resolvedCall.symbol.typeParameters.singleOrNull() ?: return
             val argumentType = resolvedCall.typeArgumentsMapping[typeParameterDescriptor] ?: return
@@ -71,7 +72,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         } else {
             // xxxNotNull
             if (receiverTypeArgumentType.canBeNull) return
-            if (calleeExpression.text != "filterNotNull") {
+            if (callableName != "filterNotNull") {
                 // Check if there is a function argument
                 resolvedCall.argumentMapping.toList().lastOrNull()?.first?.let { lastArgument ->
                     // We do not have a problem if the lambda argument might return null
