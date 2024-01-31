@@ -246,7 +246,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
       return MethodHandleUtil.getPublicMethod(Font2D.class, methodName, MethodType.methodType(type));
     }
     catch (Throwable e) {
-      LOG.warn(e);
+      LOG.debug(e);
       return null;
     }
   }
