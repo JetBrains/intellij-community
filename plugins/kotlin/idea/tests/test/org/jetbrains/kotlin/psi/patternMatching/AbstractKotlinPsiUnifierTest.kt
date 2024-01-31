@@ -36,7 +36,10 @@ abstract class AbstractKotlinPsiUnifierTest : KotlinLightCodeInsightFixtureTestC
             val actualText = findPattern(file)
                 .getMatches(file)
                 .joinToString(separator = "\n\n") { "$it\n${it.substring(fileText)}" }
-            KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, "${fileName()}.match"), actualText)
+            val testName = getTestName(/* lowercaseFirstLetter = */ true)
+            val matchFile = File(testDataDirectory, "$testName.fir.kt.match").takeIf { isFirPlugin && it.exists() }
+                ?: File(testDataDirectory, "$testName.kt.match")
+            KotlinTestUtils.assertEqualsToFile(matchFile, actualText)
         }
     }
 

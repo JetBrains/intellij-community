@@ -450,6 +450,16 @@ public abstract class K2PsiUnifierTestGenerated extends AbstractK2PsiUnifierTest
                         runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/equals.kt");
                     }
 
+                    @TestMetadata("erroneousBinary.kt")
+                    public void testErroneousBinary() throws Exception {
+                        runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/erroneousBinary.kt");
+                    }
+
+                    @TestMetadata("erroneousUnary.kt")
+                    public void testErroneousUnary() throws Exception {
+                        runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/erroneousUnary.kt");
+                    }
+
                     @TestMetadata("getRuntime.kt")
                     public void testGetRuntime() throws Exception {
                         runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/getRuntime.kt");
@@ -460,9 +470,9 @@ public abstract class K2PsiUnifierTestGenerated extends AbstractK2PsiUnifierTest
                         runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/inc.kt");
                     }
 
-                    @TestMetadata("infixCall.kt")
-                    public void testInfixCall() throws Exception {
-                        runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/infixCall.kt");
+                    @TestMetadata("infix.kt")
+                    public void testInfix() throws Exception {
+                        runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/infix.kt");
                     }
 
                     @TestMetadata("lessThan.kt")
@@ -488,6 +498,11 @@ public abstract class K2PsiUnifierTestGenerated extends AbstractK2PsiUnifierTest
                     @TestMetadata("unaryMinus.kt")
                     public void testUnaryMinus() throws Exception {
                         runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/unaryMinus.kt");
+                    }
+
+                    @TestMetadata("unaryMinusOnVar.kt")
+                    public void testUnaryMinusOnVar() throws Exception {
+                        runTest("../../idea/tests/testData/unifier/equivalence/expressions/conventions/unaryMinusOnVar.kt");
                     }
                 }
             }

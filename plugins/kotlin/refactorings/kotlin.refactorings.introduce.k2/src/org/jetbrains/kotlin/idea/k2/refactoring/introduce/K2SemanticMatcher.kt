@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -45,6 +46,12 @@ object K2SemanticMatcher {
     }
 
     private class VisitingMatcher(private val analysisSession: KtAnalysisSession) : KtVisitor<Boolean, KtElement>() {
+        private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?): Boolean {
+            if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
+
+            return targetElement.accept(visitor = this, patternElement)
+        }
+
         override fun visitKtElement(element: KtElement, data: KtElement): Boolean = false
 
         override fun visitDeclaration(dcl: KtDeclaration, data: KtElement): Boolean = false // TODO
@@ -74,9 +81,31 @@ object K2SemanticMatcher {
             return expression.text == patternExpression.text
         }
 
-        override fun visitUnaryExpression(expression: KtUnaryExpression, data: KtElement): Boolean = false // TODO
+        override fun visitUnaryExpression(expression: KtUnaryExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtExpression ?: return false
+            if (patternExpression is KtUnaryExpression) {
+                if (expression::class != patternExpression::class) return false
+                if (expression.operationToken != patternExpression.operationToken) return false
+                with(analysisSession) {
+                    if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference)) return false
+                }
+                return elementsMatchOrBothAreNull(expression.baseExpression, patternExpression.baseExpression)
+            }
+            return visitExpression(expression, patternExpression)
+        }
 
-        override fun visitBinaryExpression(expression: KtBinaryExpression, data: KtElement): Boolean = false // TODO
+        override fun visitBinaryExpression(expression: KtBinaryExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtExpression ?: return false
+            if (patternExpression is KtBinaryExpression) {
+                if (expression.operationToken != patternExpression.operationToken) return false
+                with(analysisSession) {
+                    if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference)) return false
+                }
+                return elementsMatchOrBothAreNull(expression.left, patternExpression.left) &&
+                        elementsMatchOrBothAreNull(expression.right, patternExpression.right)
+            }
+            return visitExpression(expression, patternExpression)
+        }
 
         override fun visitExpressionWithLabel(expression: KtExpressionWithLabel, data: KtElement): Boolean? {
             val targetReference = (expression as? KtInstanceExpressionWithLabel)?.mainReference ?: return false
@@ -196,6 +225,8 @@ object K2SemanticMatcher {
         targetReference.resolveToSymbol()?.equals(patternReference.resolveToSymbol()) == true
 
     private val KtInstanceExpressionWithLabel.mainReference: KtReference get() = instanceReference.mainReference
+
+    private val KtOperationExpression.mainReference: KtSimpleNameReference get() = operationReference.mainReference
 
     private fun KtElement.deparenthesized(): KtElement = when (this) {
         is KtExpression -> this.safeDeparenthesize()
