@@ -391,24 +391,6 @@ interface DataWriterFilter {
     ZERO, FIRST
   }
 
-  companion object {
-    fun requireAttribute(name: String, onLevel: ElementLevel): DataWriterFilter {
-      return object: DataWriterFilter {
-        override fun toElementFilter(): JDOMUtil.ElementOutputFilter {
-          return JDOMUtil.ElementOutputFilter { childElement, level -> level != onLevel.ordinal || childElement.getAttribute(name) != null }
-        }
-
-        override fun hasData(element: Element): Boolean {
-          val elementFilter = toElementFilter()
-          if (onLevel == ElementLevel.ZERO && elementFilter.accept(element, 0)) {
-            return true
-          }
-          return element.children.any { elementFilter.accept(it, 1) }
-        }
-      }
-    }
-  }
-
   fun toElementFilter(): JDOMUtil.ElementOutputFilter
 
   fun hasData(element: Element): Boolean
