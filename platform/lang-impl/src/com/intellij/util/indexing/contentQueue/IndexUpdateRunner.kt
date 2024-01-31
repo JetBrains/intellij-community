@@ -192,16 +192,18 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
     catch (e: ProcessCanceledException) {
       // Push back the file.
       indexingJob.myQueueOfFiles.add(fileIndexingJob)
-      releaseFile(file, length)
+      doReleaseFile(file)
       throw e
     }
     catch (e: Throwable) {
       indexingJob.oneMoreFileProcessed()
-      releaseFile(file, length)
+      doReleaseFile(file)
       FileBasedIndexImpl.LOG.error("""
   Error while indexing ${file.presentableUrl}
   To reindex this file IDEA has to be restarted
   """.trimIndent(), e)
+    } finally {
+      signalThatFileIsUnloaded(length)
     }
   }
 
@@ -334,7 +336,6 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
                                     startTime: Long,
                                     length: Long,
                                     contentLoadingTime: Long) {
-      signalThatFileIsUnloaded(length)
       val preparingTime = System.nanoTime() - startTime
       applier.apply(fileIndexingJob.file, {
         val statistics = indexingJob.getStatistics(fileIndexingJob)
