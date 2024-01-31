@@ -57,6 +57,8 @@
   <depends optional="true" config-file="evaluationPlugin-php.xml">com.jetbrains.php</depends>
   <depends optional="true" config-file="evaluationPlugin-ruby.xml">org.jetbrains.plugins.ruby</depends>
   <depends optional="true" config-file="evaluationPlugin-kotlin.xml">org.jetbrains.kotlin</depends>
+  <depends optional="true" config-file="evaluationPlugin-cpp.xml">com.intellij.cidr.lang</depends>
+  <depends optional="true" config-file="evaluationPlugin-csharp.xml">rider.intellij.plugin.appender</depends>
   <depends optional="true" config-file="evaluationPlugin-statsCollector.xml">com.intellij.stats.completion</depends>
   <depends optional="true" config-file="evaluationPlugin-fullLine.xml">org.jetbrains.completion.full.line</depends>
   <depends optional="true" config-file="evaluationPlugin-llm.xml">com.intellij.ml.llm</depends>
