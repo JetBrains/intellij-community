@@ -42,17 +42,15 @@ public final class XmlSerializerImpl {
       }
 
       // do not cache because a client will cache it in any case
-      synchronized (this) {
-        Binding binding = createClassBinding(aClass, accessor, type);
-        if (binding == null) {
-          // BeanBinding doesn't depend on accessor, get from cache or compute
-          binding = getRootBinding(aClass, type);
-        }
-        else {
-          binding.init(type, this);
-        }
-        return binding;
+      Binding binding = createClassBinding(aClass, accessor, type);
+      if (binding == null) {
+        // BeanBinding doesn't depend on accessor, get from cache or compute
+        binding = getRootBinding(aClass, type);
       }
+      else {
+        binding.init(type, this);
+      }
+      return binding;
     }
 
     protected static @Nullable Binding createClassBinding(@NotNull Class<?> aClass,
