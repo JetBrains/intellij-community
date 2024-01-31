@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 import java.io.*
 
 class A : File("") {

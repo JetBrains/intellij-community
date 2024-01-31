@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.fir.low.level.api.ide
+package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
-import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.classId
-import org.jetbrains.kotlin.fir.declarations.utils.isSealed
-import org.jetbrains.kotlin.fir.psi
+import org.jetbrains.kotlin.analysis.providers.KotlinSealedInheritorsProvider
+import org.jetbrains.kotlin.analysis.providers.KotlinSealedInheritorsProviderFactory
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.name.ClassId
@@ -14,20 +13,21 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.util.concurrent.ConcurrentHashMap
 
-internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvider() {
+internal class FirIdeKotlinSealedInheritorsProviderFactory(val project: Project) : KotlinSealedInheritorsProviderFactory {
+    override fun createSealedInheritorsProvider(): KotlinSealedInheritorsProvider = FirIdeKotlinSealedInheritorsProvider()
+}
+
+private class FirIdeKotlinSealedInheritorsProvider : KotlinSealedInheritorsProvider {
     val cache = ConcurrentHashMap<ClassId, List<ClassId>>()
 
-    @OptIn(SealedClassInheritorsProviderInternals::class)
-    override fun getSealedClassInheritors(firClass: FirRegularClass): List<ClassId> {
-        require(firClass.isSealed)
-        firClass.sealedInheritorsAttr?.value?.let { return it }
-        return cache.computeIfAbsent(firClass.classId) { getInheritors(firClass) }
+    override fun getSealedInheritors(ktClass: KtClass): List<ClassId> {
+        require(ktClass.isSealed())
+        val classId = ktClass.classIdIfNonLocal ?: return emptyList() // Local classes cannot be sealed.
+        return cache.computeIfAbsent(classId) { getInheritors(classId, ktClass) }
     }
 
-    private fun getInheritors(firClass: FirRegularClass): List<ClassId> {
-        val sealedKtClass = firClass.psi as? KtClass ?: return emptyList()
-        val classId = sealedKtClass.getClassId() ?: return emptyList()
-        val ktModule = ProjectStructureProvider.getModule(sealedKtClass.project, sealedKtClass, contextualModule = null)
+    private fun getInheritors(classId: ClassId, ktClass: KtClass): List<ClassId> {
+        val ktModule = ProjectStructureProvider.getModule(ktClass.project, ktClass, contextualModule = null)
 
         // Some notes about the search:
         //  - A Java class cannot legally extend a sealed Kotlin class (even in the same package), so we don't need to search for Java class
@@ -40,7 +40,7 @@ internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvi
         //  - We ignore local classes to avoid lazy resolve contract violations. See KT-63795.
         //  - KMP is unlikely to be fully supported. See KTIJ-28421.
         val searchParameters = DirectKotlinClassInheritorsSearch.SearchParameters(
-            ktClass = sealedKtClass,
+            ktClass = ktClass,
             searchScope = ktModule.contentScope,
             includeLocal = false,
         )

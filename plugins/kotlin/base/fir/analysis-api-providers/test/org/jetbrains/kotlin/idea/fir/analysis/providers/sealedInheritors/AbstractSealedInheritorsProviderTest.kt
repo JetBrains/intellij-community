@@ -1,20 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.fir.low.level.api
+package org.jetbrains.kotlin.idea.fir.analysis.providers.sealedInheritors
 
 import com.google.gson.JsonObject
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
-import org.jetbrains.kotlin.fir.declarations.FirRegularClass
-import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.declarations.getSealedClassInheritors
-import org.jetbrains.kotlin.fir.declarations.utils.classId
-import org.jetbrains.kotlin.fir.declarations.utils.isSealed
-import org.jetbrains.kotlin.fir.symbols.SymbolInternals
+import org.jetbrains.kotlin.analysis.providers.KotlinSealedInheritorsProviderFactory
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getString
-import org.jetbrains.kotlin.idea.fir.resolveWithClearCaches
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
 import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
@@ -27,20 +21,20 @@ import org.jetbrains.kotlin.psi.KtClass
 import java.io.File
 import kotlin.io.path.Path
 
-abstract class AbstractFirSealedClassInheritorsTest : AbstractProjectStructureTest<FirSealedClassInheritorsTestProjectStructure>() {
+abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTest<SealedInheritorsProviderTestProjectStructure>() {
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File =
-        KotlinRoot.DIR.resolve("fir-low-level-api-ide-impl").resolve("testData").resolve("sealedClassInheritors")
+        KotlinRoot.DIR.resolve("fir-low-level-api-ide-impl").resolve("testData").resolve("sealedInheritors")
 
     protected fun doTest(testDirectory: String) {
-        val (testStructure, projectLibrariesByName, modulesByName) =
-            initializeProjectStructure(testDirectory, FirSealedClassInheritorsTestProjectStructureParser)
+        val (testStructure, _, modulesByName) =
+            initializeProjectStructure(testDirectory, SealedInheritorsProviderTestProjectStructureParser)
 
         testStructure.targets.forEach { checkTargetFile(it, modulesByName, testDirectory) }
     }
 
-    private fun checkTargetFile(testTarget: FirSealedClassInheritorsTestTarget, modulesByName: ModulesByName, testDirectory: String) {
+    private fun checkTargetFile(testTarget: SealedInheritorsProviderTestTarget, modulesByName: ModulesByName, testDirectory: String) {
         val module = modulesByName[testTarget.moduleName] ?: error("The target module `${testTarget.moduleName}` does not exist.")
         val ktFile = module.findSourceKtFile(testTarget.filePath)
 
@@ -53,47 +47,45 @@ abstract class AbstractFirSealedClassInheritorsTest : AbstractProjectStructureTe
         KotlinTestUtils.assertEqualsToFile(expectedFile, renderedInheritors)
     }
 
-    @OptIn(SymbolInternals::class)
     private fun resolveActualInheritors(targetClass: KtClass): List<ClassId> = runBlocking {
         readAction {
-            resolveWithClearCaches(targetClass) { resolveSession ->
-                val targetFirClass = targetClass.resolveToFirSymbol(resolveSession, phase = FirResolvePhase.RAW_FIR).fir as FirRegularClass
-                assertTrue("Expected the target type `${targetFirClass.classId}` to be sealed.", targetFirClass.isSealed)
-                targetFirClass.getSealedClassInheritors(resolveSession.useSiteFirSession)
-            }
+            assertTrue("Expected the target type `${targetClass.classIdIfNonLocal}` to be sealed.", targetClass.isSealed())
+            KotlinSealedInheritorsProviderFactory.getInstance(project)!!
+                .createSealedInheritorsProvider()
+                .getSealedInheritors(targetClass)
         }
     }
 }
 
-data class FirSealedClassInheritorsTestProjectStructure(
+data class SealedInheritorsProviderTestProjectStructure(
     override val libraries: List<TestProjectLibrary>,
     override val modules: List<TestProjectModule>,
-    val targets: List<FirSealedClassInheritorsTestTarget>,
+    val targets: List<SealedInheritorsProviderTestTarget>,
 ) : TestProjectStructure
 
 /**
  * The test target file identified by [moduleName] and [filePath] must contain a top-level property `target`. The test checks the sealed
  * inheritors of that property's type.
  */
-data class FirSealedClassInheritorsTestTarget(
+data class SealedInheritorsProviderTestTarget(
     val moduleName: String,
     val filePath: String,
 )
 
-object FirSealedClassInheritorsTestProjectStructureParser : TestProjectStructureParser<FirSealedClassInheritorsTestProjectStructure> {
+object SealedInheritorsProviderTestProjectStructureParser : TestProjectStructureParser<SealedInheritorsProviderTestProjectStructure> {
     override fun parse(
         libraries: List<TestProjectLibrary>,
         modules: List<TestProjectModule>,
         json: JsonObject,
-    ): FirSealedClassInheritorsTestProjectStructure {
+    ): SealedInheritorsProviderTestProjectStructure {
         val targetObjects = json.getAsJsonObjectList("targets") ?: error("Expected at least one target.")
         val targets = targetObjects.map { jsonObject ->
-            FirSealedClassInheritorsTestTarget(
+            SealedInheritorsProviderTestTarget(
                 moduleName = jsonObject.getString("module"),
                 filePath = jsonObject.getString("file"),
             )
         }
 
-        return FirSealedClassInheritorsTestProjectStructure(libraries, modules, targets)
+        return SealedInheritorsProviderTestProjectStructure(libraries, modules, targets)
     }
 }
