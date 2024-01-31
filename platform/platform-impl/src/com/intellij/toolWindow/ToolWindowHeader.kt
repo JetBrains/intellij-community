@@ -222,7 +222,7 @@ abstract class ToolWindowHeader internal constructor(
     }
     // Makes sure toolbar stays after the tab component
     val allowDnd = ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)
-    westPanel.add(contentUi.tabComponent, if (allowDnd) CC().grow().pushX() else CC().growY())
+    westPanel.add(contentUi.tabComponent, if (allowDnd) CC().grow() else CC().growY())
     toolbarWest?.apply { westPanel.add(component, CC().pushX()) }
   }
 
