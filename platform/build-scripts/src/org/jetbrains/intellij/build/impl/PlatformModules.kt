@@ -145,7 +145,8 @@ private fun addModule(relativeJarPath: String,
                       layout: PlatformLayout) {
   layout.withModules(moduleNames.asSequence()
                        .filter { !productLayout.excludedModuleNames.contains(it) }
-                       .map { ModuleItem(moduleName = it, relativeOutputFile = relativeJarPath, reason = "addModule") }.toList())
+                       .map { ModuleItem(moduleName = it, relativeOutputFile = relativeJarPath, reason = "addModule") }
+                       .toList())
 }
 
 suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -183,7 +183,8 @@ data class ModuleLibraryData(
   @JvmField val moduleName: String,
   @JvmField val libraryName: String,
   @JvmField val relativeOutputPath: String = "",
-  @JvmField val extraCopy: Boolean = false // set to true to have a library both packed to plugin and copied to plugin as additional JAR
+  // set to true to have a library both packed to a plugin and copied to the plugin as additional JAR
+  @JvmField val extraCopy: Boolean = false
 )
 
 class ModuleItem(
