@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -4501,13 +4502,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return true;
     }
 
+    // todo do not update actions manually on EDT
     ActionManager actionManager = ActionManager.getInstance();
     for (String mappedActionId : mappedActions) {
       if (actionId.equals(mappedActionId)) continue;
       AnAction action = actionManager.getAction(mappedActionId);
-      AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU,
-                                                                   DataManager.getInstance().getDataContext(e.getComponent()));
-      if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) return false;
+      DataContext dataContext = DataManager.getInstance().getDataContext(e.getComponent());
+      AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU, dataContext);
+      ActionUtil.performDumbAwareUpdate(action, actionEvent, false);
+      if (actionEvent.getPresentation().isEnabled()) return false;
     }
     return true;
   }

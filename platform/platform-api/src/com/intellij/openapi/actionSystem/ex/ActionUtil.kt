@@ -27,11 +27,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.CommonActionsPanel
 import com.intellij.util.ObjectUtils
+import com.intellij.util.SlowOperationCanceledException
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
@@ -127,6 +128,16 @@ object ActionUtil {
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false)
       return false
     }
+    var beforePerformedMode: String? = null // on|fast_only|old_only|off
+    if (beforeActionPerformed) {
+      beforePerformedMode = Registry.get("actionSystem.update.ignore.beforeActionPerformedUpdate").selectedOption
+      val updateThread = action.getActionUpdateThread()
+      if (beforePerformedMode == "off" || beforePerformedMode == "old_only" &&
+          (updateThread == ActionUpdateThread.BGT ||
+           updateThread == ActionUpdateThread.EDT)) {
+        return false
+      }
+    }
     val wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB)
     val dumbMode = isDumbMode(e.project)
     if (wasEnabledBefore != null && !dumbMode) {
@@ -160,9 +171,11 @@ object ActionUtil {
           }
         }
       }
-      val isLikeUpdate = !beforeActionPerformed
-      SlowOperations.startSection(if (isLikeUpdate) SlowOperations.ACTION_UPDATE
-                                  else SlowOperations.ACTION_PERFORM).use {
+      val sectionName =
+        if (beforeActionPerformed && beforePerformedMode == "fast_only") SlowOperations.FORCE_THROW
+        else if (beforeActionPerformed) SlowOperations.ACTION_PERFORM
+        else SlowOperations.ACTION_UPDATE
+      SlowOperations.startSection(sectionName).use {
         val startTime = System.nanoTime()
         runnable()
         val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime)
@@ -170,6 +183,9 @@ object ActionUtil {
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled)
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible)
+    }
+    catch (_: SlowOperationCanceledException) {
+      return false
     }
     catch (ex: IndexNotReadyException) {
       if (!allowed) {
@@ -236,11 +252,7 @@ object ActionUtil {
   @JvmStatic
   fun lastUpdateAndCheckDumb(action: AnAction, e: AnActionEvent, visibilityMatters: Boolean): Boolean {
     val project = e.project
-    if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
-      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-      }
-    }
+    PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, e)
     performDumbAwareUpdate(action, e, true)
     if (project != null && DumbService.getInstance(project).isDumb && !action.isDumbAware) {
       if (e.presentation.getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) == false) {

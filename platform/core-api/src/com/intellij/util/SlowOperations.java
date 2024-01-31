@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,6 +41,7 @@ public final class SlowOperations {
   public static final String GENERIC = "generic";                 // generic activity
 
   public static final String FORCE_ASSERT = "  force assert  ";   // assertion is thrown even if disabled
+  public static final String FORCE_THROW = "  force throw  ";     // assertion is turned into PCE
   public static final String RESET = "  reset  ";                 // resets the section stack in modal dialogs
 
   /**
@@ -98,6 +100,9 @@ public final class SlowOperations {
                    isAlwaysAllowed() ||
                    isSlowOperationAllowed() ? null : ERROR_EDT;
     if (error == null || isAlreadyReported()) return;
+    if (isInSection(FORCE_THROW) && !Cancellation.isInNonCancelableSection()) {
+      throw new SlowOperationCanceledException();
+    }
     LOG.error(error);
   }
 

@@ -1135,6 +1135,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                           event: AnActionEvent,
                                           runnable: Runnable) {
     val project = event.project
+    PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event)
     fireBeforeActionPerformed(action, event)
     val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     val actionId = getId(action)
