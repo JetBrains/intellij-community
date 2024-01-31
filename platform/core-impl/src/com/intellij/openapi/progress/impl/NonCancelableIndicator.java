@@ -20,7 +20,7 @@ final class NonCancelableIndicator implements StandardProgressIndicator {
   }
 
   @Override
-  public final void checkCanceled() {
+  public void checkCanceled() {
     ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(this);
   }
 
@@ -40,12 +40,12 @@ final class NonCancelableIndicator implements StandardProgressIndicator {
   }
 
   @Override
-  public final void cancel() {
+  public void cancel() {
 
   }
 
   @Override
-  public final boolean isCanceled() {
+  public boolean isCanceled() {
     return false;
   }
 
