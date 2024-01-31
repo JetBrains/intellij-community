@@ -63,11 +63,8 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
-            var isOpenAndAbstractByDefault = false
-            if (modifiersListOwner is JKElement) {
-                isOpenAndAbstractByDefault =
-                    modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE || (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE)
-            }
+            val isOpenAndAbstractByDefault =
+                (modifiersListOwner is JKDeclaration && modifiersListOwner.parentOfType<JKClass>()?.classKind == INTERFACE) || (modifiersListOwner is JKClass && modifiersListOwner.classKind == INTERFACE)
             val hasOverrideModifier = modifiersListOwner
                 .safeAs<JKOtherModifiersOwner>()
                 ?.hasOtherModifier(OVERRIDE) == true
