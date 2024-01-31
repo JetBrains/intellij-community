@@ -42,6 +42,7 @@ data class Config private constructor(
   data class ActionsInterpretation internal constructor(
     val experimentGroup: Int?,
     val sessionsLimit: Int?,
+    val actionsLimit: Int?,
     val sessionProbability: Double,
     val sessionSeed: Long?,
     val order: InterpretationOrder,
@@ -76,6 +77,7 @@ data class Config private constructor(
     var evaluationTitle: String = "BASIC"
     var experimentGroup: Int? = null
     var sessionsLimit: Int? = null
+    var actionsLimit: Int? = null
     var sessionProbability: Double = 1.0
     var sessionSeed: Long? = null
     var order: InterpretationOrder = InterpretationOrder.LINEAR
@@ -98,6 +100,7 @@ data class Config private constructor(
       trainTestSplit = config.interpret.trainTestSplit
       experimentGroup = config.interpret.experimentGroup
       sessionsLimit = config.interpret.sessionsLimit
+      actionsLimit = config.interpret.actionsLimit
       sessionProbability = config.interpret.sessionProbability
       sessionSeed = config.interpret.sessionSeed
       useReordering = config.reorder.useReordering
@@ -133,6 +136,7 @@ data class Config private constructor(
       ActionsInterpretation(
         experimentGroup,
         sessionsLimit,
+        actionsLimit,
         sessionProbability,
         sessionSeed,
         order,

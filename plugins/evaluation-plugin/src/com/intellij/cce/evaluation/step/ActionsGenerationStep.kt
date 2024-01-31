@@ -40,12 +40,12 @@ class ActionsGenerationStep(
     val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
       FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, language)
     }
-    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, progress)
+    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, config.interpret.actionsLimit, progress)
     return workspace
   }
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
-                              evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
+                              evaluationRootInfo: EvaluationRootInfo, actionLimit: Int?, indicator: Progress) {
     val actionsGenerator = ActionsGenerator(processor)
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName, config.strategy)
 
@@ -53,6 +53,10 @@ class ActionsGenerationStep(
     var totalSessions = 0
     val actionsSummarizer = ActionsSummarizer()
     for ((i, file) in files.sortedBy { it.name }.withIndex()) {
+      if (actionLimit != null && totalSessions > actionLimit) {
+        LOG.info("Generating actions is canceled by actions limit ($actionLimit). Done: $i/${files.size}. With error: ${errors.size}")
+        break
+      }
       if (indicator.isCanceled()) {
         LOG.info("Generating actions is canceled by user. Done: $i/${files.size}. With error: ${errors.size}")
         break
