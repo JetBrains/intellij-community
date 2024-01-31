@@ -56,12 +56,12 @@ class MergingUpdateQueuePropagationTest {
 
     delay(400)
     assertTrue(blockingScopeJob.isActive)
-    repeat(2) { assertFalse(updateCompleted[it].get()) } // updates are not finished even after queue starts processing
+    repeat(2) { assertFalse(updateCompleted[it].get()) } // updates are not finished even after the queue starts processing
 
     allowCompleteUpdate[0].set(true)
     delay(100)
-    assertTrue(updateCompleted[0].get()) // first activity should be finished
-    assertFalse(updateCompleted[1].get()) // second activity is running
+    assertTrue(updateCompleted[0].get()) // the first activity should be finished
+    assertFalse(updateCompleted[1].get()) // the second activity is running
     assertTrue(blockingScopeJob.isActive)
 
     allowCompleteUpdate[1].set(true)
@@ -129,7 +129,7 @@ class MergingUpdateQueuePropagationTest {
             assertTrue(queue.isEmpty) // all the tasks were processed
             assertFalse(secondUpdateExecuted) // this task should not be executed
             immortalSemaphore.join()
-            assertTrue(immortalExecuted) // but other tasks do not get cancelled
+            assertTrue(immortalExecuted) // but other tasks do not get canceled
           }
           pumpEDT()
         }
