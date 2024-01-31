@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
 import com.intellij.platform.ml.embeddings.search.services.SymbolEmbeddingStorage
 import com.intellij.psi.PsiClass
@@ -104,7 +105,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("handleScoresFile", "clearFileWithScores"), neighbours)
 
     WriteCommandAction.runWriteCommandAction(project) {
-      myFixture.editor.virtualFile.deleteRecursively() // deletes the currently open file: java/IndexProjectAction.java
+      myFixture.editor.virtualFile.deleteRecursively() // deletes the currently open file: java/ProjectIndexingTask.java
     }
 
     TimeoutUtil.sleep(2000) // wait for two seconds for index update
@@ -129,7 +130,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SearchEverywhereSemanticSettings.getInstance().enabledInSymbolsTab = true
-    storage.generateEmbeddingsIfNecessary().join()
-    SemanticSearchFileChangeListener.getInstance(project).changeEntityTracking(storage, true)
+    SymbolEmbeddingStorage.getInstance(project).index.clear()
+    FileBasedEmbeddingStoragesManager.getInstance(project).prepareForSearch().join()
   }
 }

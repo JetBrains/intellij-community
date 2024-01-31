@@ -39,6 +39,11 @@ class InMemoryEmbeddingSearchIndex(root: Path, limit: Int? = null) : EmbeddingSe
     id in idToEmbedding
   }
 
+  override fun clear() = lock.write {
+    idToEmbedding.clear()
+    uncheckedIds.clear()
+  }
+
   override fun onIndexingStart() {
     uncheckedIds.clear()
     uncheckedIds.addAll(idToEmbedding.keys)

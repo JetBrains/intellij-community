@@ -1,8 +1,9 @@
 package com.intellij.searchEverywhereMl.semantics.testCommands
 
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.searchEverywhereMl.semantics.services.IndexingLifecycleTracker
-import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
+import com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettings
+import com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettingsImpl
+import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.annotations.NonNls
 
@@ -13,11 +14,15 @@ class WaitSemanticSearchIndexing(text: @NonNls String, line: Int) : PerformanceC
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    SearchEverywhereSemanticSettings.getInstance().enabledInActionsTab = true
-    SearchEverywhereSemanticSettings.getInstance().enabledInFilesTab = true
-    SearchEverywhereSemanticSettings.getInstance().enabledInSymbolsTab = true
-    SearchEverywhereSemanticSettings.getInstance().enabledInClassesTab = true
-    IndexingLifecycleTracker.getInstance(context.project).waitIndicesReady()
+    EmbeddingIndexSettingsImpl.getInstance(context.project).registerClientSettings(
+      object : EmbeddingIndexSettings {
+        override val shouldIndexFiles: Boolean = true
+        override val shouldIndexClasses: Boolean = true
+        override val shouldIndexSymbols: Boolean = true
+      }
+    )
+
+    FileBasedEmbeddingStoragesManager.getInstance(context.project).prepareForSearch().join()
   }
 
   override fun getName() = NAME

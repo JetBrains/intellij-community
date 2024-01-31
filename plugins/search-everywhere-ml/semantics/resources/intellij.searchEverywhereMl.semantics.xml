@@ -40,7 +40,7 @@
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInClassesTab"/>
 
-    <postStartupActivity implementation="com.intellij.searchEverywhereMl.semantics.services.SemanticSearchInitializer"/>
+    <postStartupActivity implementation="com.intellij.searchEverywhereMl.semantics.SemanticSearchInitializer"/>
 
     <registryKey defaultValue="false"
                  description="Use remote server for the Actions tab"
@@ -57,26 +57,6 @@
     <registryKey defaultValue="false"
                  description="Highlight semantic items in Search Everywhere"
                  key="search.everywhere.ml.semantic.highlight.items"/>
-
-    <registryKey defaultValue="true"
-                 description="Show embedding indexing progress indicator"
-                 key="search.everywhere.ml.semantic.indexing.show.progress"/>
-
-    <registryKey defaultValue="50000"
-                 description="Semantic search indexable files limit"
-                 key="search.everywhere.ml.semantic.indexing.indexable.files.limit"/>
-
-    <registryKey defaultValue="100000"
-                 description="Semantic search indexable symbols limit"
-                 key="search.everywhere.ml.semantic.indexing.indexable.symbols.limit"/>
-
-    <registryKey defaultValue="50000"
-                 description="Semantic search indexable classes limit"
-                 key="search.everywhere.ml.semantic.indexing.indexable.classes.limit"/>
-
-    <registryKey defaultValue="true"
-                 description="Restrict memory usage of semantic search indexing"
-                 key="search.everywhere.ml.semantic.indexing.restrict.memory.usage"/>
   </extensions>
 
   <extensionPoints>
@@ -84,9 +64,4 @@
                     interface="com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider"
                     dynamic="true"/>
   </extensionPoints>
-  <projectListeners>
-    <listener
-      class="com.intellij.searchEverywhereMl.semantics.services.IndexingLifecycleListener"
-      topic="com.intellij.platform.ml.embeddings.search.listeners.SemanticIndexingFinishListener"/>
-  </projectListeners>
 </idea-plugin>

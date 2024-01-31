@@ -9,6 +9,7 @@ interface EmbeddingSearchIndex {
   var limit: Int?
 
   operator fun contains(id: String): Boolean
+  fun clear()
 
   fun onIndexingStart()
   fun onIndexingFinish()

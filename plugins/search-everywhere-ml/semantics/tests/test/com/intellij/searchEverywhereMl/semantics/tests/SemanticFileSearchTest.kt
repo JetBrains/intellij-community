@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.intellij.platform.ml.embeddings.search.services.FileEmbeddingsStorage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -149,7 +150,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SearchEverywhereSemanticSettings.getInstance().enabledInFilesTab = true
-    storage.generateEmbeddingsIfNecessary().join()
-    SemanticSearchFileChangeListener.getInstance(project).changeEntityTracking(storage, true)
+    FileEmbeddingsStorage.getInstance(project).index.clear()
+    FileBasedEmbeddingStoragesManager.getInstance(project).prepareForSearch().join()
   }
 }

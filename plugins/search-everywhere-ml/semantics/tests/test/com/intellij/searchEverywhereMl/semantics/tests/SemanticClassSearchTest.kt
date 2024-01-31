@@ -6,6 +6,7 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticClassSearchEverywhereContributor
@@ -14,9 +15,9 @@ import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.saveToDisk
-import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.kotlin.psi.KtClass
 import kotlinx.coroutines.test.runTest
@@ -100,10 +101,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).filterByModel()
     assertEquals(setOf("ScoresFileManager"), neighbours)
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      myFixture.editor.virtualFile.deleteRecursively() // deletes the currently open file: java/IndexProjectAction.java
-    }
-
+    VfsTestUtil.deleteFile(myFixture.editor.virtualFile) // deletes the currently open file: java/IndexProjectAction.java
     TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
     neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
@@ -126,7 +124,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     myFixture.configureByFiles(*filePaths)
     LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SearchEverywhereSemanticSettings.getInstance().enabledInClassesTab = true
-    storage.generateEmbeddingsIfNecessary().join()
-    SemanticSearchFileChangeListener.getInstance(project).changeEntityTracking(storage, true)
+    ClassEmbeddingsStorage.getInstance(project).index.clear()
+    FileBasedEmbeddingStoragesManager.getInstance(project).prepareForSearch().join()
   }
 }

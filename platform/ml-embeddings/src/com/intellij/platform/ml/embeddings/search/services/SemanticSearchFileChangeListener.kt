@@ -19,8 +19,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
@@ -28,12 +26,6 @@ import kotlin.time.Duration.Companion.milliseconds
 class SemanticSearchFileChangeListener(private val project: Project, cs: CoroutineScope) : AsyncFileListener {
   private val reindexRequest = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val reindexQueue = AtomicReference(ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>())
-
-  private var trackFiles = false
-  private var trackClasses = false
-  private var trackSymbols = false
-
-  private val mutex = ReentrantLock()
 
   init {
     cs.launch {
@@ -44,22 +36,11 @@ class SemanticSearchFileChangeListener(private val project: Project, cs: Corouti
     }
   }
 
-  fun changeEntityTracking(storage: DiskSynchronizedEmbeddingsStorage<*>, shouldTrack: Boolean) {
-    mutex.withLock {
-      when (storage) {
-        is FileEmbeddingsStorage -> trackFiles = shouldTrack
-        is ClassEmbeddingsStorage -> trackClasses = shouldTrack
-        is SymbolEmbeddingStorage -> trackSymbols = shouldTrack
-        else -> throw UnsupportedOperationException()
-      }
-    }
-  }
-
   @TestOnly
   fun clearEvents() = reindexQueue.get().clear()
 
   override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (mutex.withLock { !trackFiles && !trackClasses && !trackSymbols }) return null
+    if (!EmbeddingIndexSettingsImpl.getInstance(project).shouldIndexAnything) return null
     events.forEach { it.file?.let { file -> reindexQueue.get().add(file) } }
     return object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {
@@ -69,9 +50,7 @@ class SemanticSearchFileChangeListener(private val project: Project, cs: Corouti
   }
 
   private suspend fun processFiles(queue: Set<VirtualFile>) {
-    if (mutex.withLock { trackFiles }) project.serviceAsync<FileEmbeddingsStorage>().generateEmbeddingsIfNecessary(queue)
-    if (mutex.withLock { trackClasses }) project.serviceAsync<ClassEmbeddingsStorage>().generateEmbeddingsIfNecessary(queue)
-    if (mutex.withLock { trackSymbols }) project.serviceAsync<SymbolEmbeddingStorage>().generateEmbeddingsIfNecessary(queue)
+    project.serviceAsync<FileBasedEmbeddingStoragesManager>().indexFiles(queue.toList())
   }
 
   companion object {

@@ -11,10 +11,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
-import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
@@ -58,12 +58,7 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : EmbeddingsStorag
   suspend fun generateEmbeddingsIfNecessary(project: Project) = coroutineScope {
     val backgroundable = ActionEmbeddingsStorageSetup(index, indexSetupJob)
     try {
-      if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
-        withBackgroundProgress(project, setupTitle) {
-          backgroundable.run()
-        }
-      }
-      else {
+      withBackgroundProgress(project, setupTitle) {
         backgroundable.run()
       }
     }

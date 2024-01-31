@@ -111,9 +111,9 @@ class LocalArtifactsManager {
     private val ARTIFACTS_DOWNLOAD_TASK_NAME
       get() = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
     private val MODEL_VERSION
-      get() = Registry.stringValue("search.everywhere.ml.semantic.model.version")
+      get() = Registry.stringValue("intellij.platform.ml.embeddings.model.version")
     private val MAVEN_ROOT
-      get() = Registry.stringValue("search.everywhere.ml.semantic.model.artifacts.link").replace("%MODEL_VERSION%", MODEL_VERSION)
+      get() = Registry.stringValue("intellij.platform.ml.embeddings.model.artifacts.link").replace("%MODEL_VERSION%", MODEL_VERSION)
 
     private const val MODEL_ARTIFACTS_DIR = "models"
     private const val ARCHIVE_NAME = "semantic-text-search.jar"

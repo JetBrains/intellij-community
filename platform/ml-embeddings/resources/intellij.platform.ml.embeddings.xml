@@ -2,18 +2,38 @@
   <resource-bundle>messages.EmbeddingsBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <notificationGroup id="Semantic search" displayType="STICKY_BALLOON"
+    <notificationGroup id="Embedding-based search" displayType="STICKY_BALLOON"
                        bundle="messages.EmbeddingsBundle"
-                       key="search.everywhere.ml.semantic.notification.group.name"/>
+                       key="ml.embeddings.notification.group.name"/>
 
     <registryKey defaultValue="0.0.3"
                  description="Embeddings model version"
-                 key="search.everywhere.ml.semantic.model.version"/>
+                 key="intellij.platform.ml.embeddings.model.version"/>
 
     <registryKey
       defaultValue="https://packages.jetbrains.team/maven/p/ml-search-everywhere/local-models/org/jetbrains/intellij/searcheverywhereMl/semantics/semantic-text-search/%MODEL_VERSION%/semantic-text-search-%MODEL_VERSION%.jar"
       description="Semantic search artifacts template link"
-      key="search.everywhere.ml.semantic.model.artifacts.link"/>
+      key="intellij.platform.ml.embeddings.model.artifacts.link"/>
+
+    <registryKey
+      defaultValue="true"
+      description="Use embedding indexing per-project files limit"
+      key="intellij.platform.ml.embeddings.index.files.use.limit"/>
+
+    <registryKey
+      defaultValue="20000"
+      description="Embedding indexing per-project files limit"
+      key="intellij.platform.ml.embeddings.index.files.limit"/>
+
+    <registryKey
+      defaultValue="true"
+      description="Use embedding indexing per-application memory limit"
+      key="intellij.platform.ml.embeddings.index.use.memory.limit"/>
+
+    <registryKey
+      defaultValue="50"
+      description="Embedding indexing per-application memory limit (MB)"
+      key="intellij.platform.ml.embeddings.index.memory.limit"/>
   </extensions>
 
 </idea-plugin>
