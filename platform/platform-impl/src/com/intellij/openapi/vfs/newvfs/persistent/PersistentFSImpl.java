@@ -1723,6 +1723,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @Nullable NewVirtualFile findFileById(int fileId) {
+    if (fileId == FSRecords.NULL_FILE_ID) {
+      return null;
+    }
     VirtualFileSystemEntry cached = myIdToDirCache.getCachedDir(fileId);
     if (cached != null) {
       return cached;
@@ -1897,7 +1900,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
 
-          //MAYBE RC: dispite all the efforts the root entry wasn't found/loaded -- it means VFS is corrupted,
+          //MAYBE RC: despite all the efforts the root entry wasn't found/loaded -- it means VFS is corrupted,
           // and we should throw assertion (VFS rebuild?).
           // But (it seems) the method .findFileById() is used in an assumption it just returns null if 'incorrect'
           // fileId is passed in? -- so I keep that legacy behaviour (just log warning with diagnostic) until I'll
@@ -1954,7 +1957,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       int preRootIdFlags = vfsPeer.getFlags(currentId);
       int startingFileFlags = vfsPeer.getFlags(startingFileId);
 
-      THROTTLED_LOG.info(
+      THROTTLED_LOG.warn(
         () -> {
           //Check roots and cachedRoots are consistent
           IntOpenHashSet cachedRootsIds = new IntOpenHashSet();
@@ -2012,6 +2015,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     public NewVirtualFile find(int fileId) {
+      assert fileId != FSRecords.NULL_FILE_ID : "fileId=NULL_ID(0) must not be passed into find()";
       if (VfsLog.isVfsTrackingEnabled()) {
         int maxId = vfsPeer.connection().getRecords().maxAllocatedID();
         if (fileId > maxId) {
