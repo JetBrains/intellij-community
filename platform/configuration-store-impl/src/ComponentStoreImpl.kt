@@ -19,6 +19,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.Registry
@@ -71,6 +72,13 @@ internal fun restoreDefaultNotRoamableComponentSaveThreshold() {
 @TestOnly
 internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
   NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = thresholdInSeconds
+}
+
+class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
+  override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
+    val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
+    componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs)
+  }
 }
 
 @ApiStatus.Internal
