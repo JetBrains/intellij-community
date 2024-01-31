@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -111,7 +111,7 @@ val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layo
                       "intellij.platform.testFramework.impl",
                       "intellij.tools.testsBootstrap",
                       "intellij.java.rt")) {
-    layout.withModule(name, "testFramework.jar")
+    layout.withModule(name, TEST_FRAMEWORK_JAR)
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
@@ -7,6 +7,7 @@ import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
@@ -14,7 +15,7 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 
-private val excludedLibJars = setOf("testFramework.jar", "junit.jar")
+private val excludedLibJars = setOf(PlatformJarNames.TEST_FRAMEWORK_JAR, "junit.jar")
 
 private fun processClassReport(consumer: (String, String) -> Unit) {
   val osName = System.getProperty("os.name")

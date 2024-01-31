@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
@@ -17,13 +17,14 @@ object PlatformJarNames {
    * Used by default for modules and module-level libraries included in the platform part of the distribution, which are also used by 
    * JetBrains Client.
    */
-  internal const val APP_CLIENT_JAR: String = "app-client.jar"
+  private const val APP_CLIENT_JAR: String = "app-client.jar"
 
   /**
    * Returns name of the default JAR for a platform module.
    */
-  internal fun getPlatformModuleJarName(moduleName: String, buildContext: BuildContext) =
-    if (buildContext.jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) APP_CLIENT_JAR else APP_JAR
+  internal fun getPlatformModuleJarName(moduleName: String, buildContext: BuildContext): String {
+    return if (buildContext.jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) APP_CLIENT_JAR else APP_JAR
+  }
 
   /**
    * Used by default for project-level libraries included in the platform part of the distribution.

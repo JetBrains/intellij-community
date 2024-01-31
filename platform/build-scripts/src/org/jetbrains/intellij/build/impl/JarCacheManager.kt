@@ -182,7 +182,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
 
   override fun validateHash(source: Source) {
     if (source.hash == 0L && (source !is DirSource || Files.exists(source.dir))) {
-      Span.current().addEvent("Zero hash for $source")
+      Span.current().addEvent("zero hash for $source")
     }
   }
 }
