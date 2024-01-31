@@ -79,8 +79,8 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
           throw RuntimeException("Failed to run actions on the project: $exception")
         }
       }
-      catch (exception: Exception) {
-        fatalError("Project could not be loaded or processed: $exception")
+      catch (e: Exception) {
+        fatalError("Project could not be loaded or processed: $e. StackTrace: ${stackTraceToString(e)}")
       }
       finally {
         // Closes the project even if it is not fully opened, but started to
