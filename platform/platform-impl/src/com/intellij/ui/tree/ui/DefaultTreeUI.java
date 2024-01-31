@@ -462,7 +462,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
         @Override
         public void componentMoved(ComponentEvent event) {
           AbstractLayoutCache cache = treeState; // TODO: treeState ???
-          if (cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width")) {
+          if (cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width", true)) {
             listener.componentMoved(event);
           }
         }
@@ -476,7 +476,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
   protected void updateCachedPreferredSize() {
     JTree tree = getTree();
     AbstractLayoutCache cache = treeState;
-    if (tree != null && isValid(tree) && cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width")) {
+    if (tree != null && isValid(tree) && cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width", true)) {
       Rectangle paintBounds = tree.getVisibleRect();
       if (!paintBounds.isEmpty()) {
         JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
