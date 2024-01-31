@@ -44,7 +44,8 @@ public final class SpeedSearchUtil {
                                                   boolean selected) {
     // The bad thing is that SpeedSearch model is decoupled from UI presentation so we don't know the real matched text.
     // Our best guess is to get string from the ColoredComponent. We can only provide main-text-only option.
-    Iterable<TextRange> ranges = speedSearch.matchingFragments(coloredComponent.getCharSequence(mainTextOnly).toString());
+    String textFromUi = coloredComponent.getCharSequence(mainTextOnly).toString();
+    Iterable<TextRange> ranges = speedSearch.matchingFragments(textFromUi);
     applySpeedSearchHighlighting(coloredComponent, ranges, selected);
   }
 
