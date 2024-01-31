@@ -247,6 +247,9 @@
     <iconMapper mappingFile="LombokIconMappings.json"/>
 
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokSlf4jLogger"/>
+    <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokLog4j2Logger"/>
+    <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokLog4jLogger"/>
+    <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokApacheCommonsLogger"/>
   </extensions>
 
   <projectListeners>
