@@ -6,14 +6,16 @@ package com.intellij.ide.ui
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
+import com.intellij.ide.ui.customization.UIThemeCustomizer
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Color
 import java.util.*
 import java.util.function.BiFunction
-import kotlin.collections.LinkedHashMap
 
 internal class UIThemeBean {
   @JvmField
@@ -61,8 +63,35 @@ internal class UIThemeBean {
 }
 
 @VisibleForTesting
-fun readThemeBeanForTest(@Language("json") data: String, warn: (String, Throwable?) -> Unit): Map<String, String?> {
+fun readThemeBeanForTest(@Language("json") data: String,
+                         warn: (String, Throwable?) -> Unit,
+                         iconConsumer: ((String, Any?) -> Unit)? = null,
+                         awtColorConsumer: ((String, Color) -> Unit)? = null,
+                         namedColorConsumer: ((String, String) -> Unit)? = null):
+  Map<String, String?> {
   val bean = readTheme(JsonFactory().createParser(data), warn)
+  if (iconConsumer != null) {
+    val icons = bean.icons ?: return emptyMap()
+    for (key in icons.keys) {
+      iconConsumer(key, icons[key])
+    }
+  }
+  if (awtColorConsumer != null || namedColorConsumer != null) {
+    val rawColorMap = bean.colorMap.rawMap ?: return emptyMap()
+    if (rawColorMap.isNotEmpty()) {
+      for (key in rawColorMap.keys) {
+        val value = rawColorMap[key] ?: continue
+        when(value) {
+          is NamedColorValue -> if (namedColorConsumer != null) {
+            namedColorConsumer(key, value.name)
+          }
+          is AwtColorValue -> if (awtColorConsumer != null) {
+            awtColorConsumer(key, value.color)
+          }
+        }
+      }
+    }
+  }
   return hashMapOf(
     "author" to bean.author,
     "name" to bean.name,
@@ -125,7 +154,59 @@ internal fun readTheme(parser: JsonParser, warn: (String, Throwable?) -> Unit): 
   }
 
   putDefaultsIfAbsent(bean)
+  customize(bean)
+
   return bean
+}
+
+private fun customize(bean: UIThemeBean) {
+  val themeName = bean.name
+  if (themeName != null) {
+    val uiThemeCustomizer = serviceOrNull<UIThemeCustomizer>()
+    val iconCustomizer = uiThemeCustomizer?.createIconCustomizer(themeName)
+    val colorsCustomizer = uiThemeCustomizer?.createColorCustomizer(themeName)
+    val namedColorCustomizer = uiThemeCustomizer?.createNamedColorCustomizer(themeName)
+    if (iconCustomizer?.isNotEmpty() == true) {
+      val newIcons = LinkedHashMap<String, Any?>(iconCustomizer)
+      val originIcons = bean.icons
+      if (originIcons != null) {
+        for (key in originIcons.keys) {
+          newIcons[key] = originIcons[key]
+        }
+      }
+      for (key in iconCustomizer.keys) {
+        newIcons[key] = iconCustomizer[key]
+      }
+      bean.icons = newIcons
+    }
+    if (colorsCustomizer?.isNotEmpty() == true) {
+      val newRawColorMap = LinkedHashMap<String, ColorValue>()
+      val originRawColorMap = bean.colorMap.rawMap
+      if (originRawColorMap != null) {
+        for (key in originRawColorMap.keys) {
+          val value = originRawColorMap[key]
+          if (value != null) {
+            newRawColorMap[key] = value
+          }
+        }
+      }
+      for (key in colorsCustomizer.keys) {
+        val value = colorsCustomizer[key]
+        if (value != null) {
+          newRawColorMap[key] = AwtColorValue(value)
+        }
+      }
+      if (namedColorCustomizer?.isNotEmpty() == true) {
+        for (key in namedColorCustomizer.keys) {
+          val value = namedColorCustomizer[key]
+          if (value != null) {
+            newRawColorMap[key] = NamedColorValue(value)
+          }
+        }
+      }
+      bean.colorMap.rawMap = newRawColorMap
+    }
+  }
 }
 
 /**
