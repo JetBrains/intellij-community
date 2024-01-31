@@ -47,33 +47,39 @@ class StickyLinesCollector(private val project: Project, private val document: D
     // markup model could contain raised zombies on the first pass.
     // we should burn them all here, otherwise an empty panel will appear
     val removeExisting: Boolean = stickyModel.isFirstUpdate()
-    val outdatedLines: List<StickyLine> = findOutdatedLines(stickyModel, linesToAdd, removeExisting) // mutates linesToAdd
+    val outdatedLines: List<StickyLine> = if (removeExisting) {
+      removeExistingLines(stickyModel)
+    } else {
+      mergeWithExistingLines(stickyModel, linesToAdd) // mutates linesToAdd
+    }
     for (toRemove: StickyLine in outdatedLines) {
       stickyModel.removeStickyLine(toRemove)
     }
     for (toAdd: StickyLineInfo in linesToAdd) {
-      stickyModel.addStickyLine(toAdd.textOffset, toAdd.endOffset, STICKY_LINE_SOURCE, toAdd.debugText)
+      stickyModel.addStickyLine(STICKY_LINE_SOURCE, toAdd.textOffset, toAdd.endOffset, toAdd.debugText)
     }
     stickyModel.notifyListeners()
   }
 
-  private fun findOutdatedLines(
+  private fun removeExistingLines(stickyModel: StickyLinesModel): List<StickyLine> {
+    val toRemove: MutableList<StickyLine> = mutableListOf()
+    stickyModel.processStickyLines(null) { existingLine: StickyLine ->
+      toRemove.add(existingLine)
+      true
+    }
+    return toRemove
+  }
+
+  private fun mergeWithExistingLines(
     stickyModel: StickyLinesModel,
     linesToAdd: MutableSet<StickyLineInfo>,
-    removeExisting: Boolean,
   ): List<StickyLine> {
     val outdatedLines: MutableList<StickyLine> = mutableListOf()
     stickyModel.processStickyLines(STICKY_LINE_SOURCE) { existingLine: StickyLine ->
-      if (removeExisting) {
-        // remove all existing
+      val existing = StickyLineInfo(existingLine.textRange())
+      val keepExisting = linesToAdd.remove(existing)
+      if (!keepExisting) {
         outdatedLines.add(existingLine)
-      } else {
-        // merge with existing
-        val existing = StickyLineInfo(existingLine.textRange())
-        val keepExisting = linesToAdd.remove(existing)
-        if (!keepExisting) {
-          outdatedLines.add(existingLine)
-        }
       }
       true
     }
