@@ -592,13 +592,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     @Override
     protected void selectElementFromEditor(@NotNull FileEditor editor) {
       if (myProject.isDisposed() || !CoverageView.this.isShowing()) return;
-      if (myStateBean.myAutoScrollFromSource) {
+      if (!myStateBean.myAutoScrollFromSource) return;
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      ReadAction.nonBlocking(() -> {
         VirtualFile file = editor.getFile();
         if (file != null && canSelect(file)) {
           PsiElement e = null;
           if (editor instanceof TextEditor) {
             int offset = ((TextEditor)editor).getEditor().getCaretModel().getOffset();
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
             if (psiFile != null) {
               e = psiFile.findElementAt(offset);
@@ -606,7 +607,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
           }
           select(e != null ? e : file);
         }
-      }
+      }).submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 
