@@ -1605,6 +1605,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) {
       return;
     }
+    if (myView == null) {
+      // repaint may be called from EditorImpl.<init> IDEA-341841
+      return;
+    }
     assertIsDispatchThread();
     ReadAction.run(() -> {
       int minEndOffset = Math.min(endOffset, myDocument.getTextLength());
