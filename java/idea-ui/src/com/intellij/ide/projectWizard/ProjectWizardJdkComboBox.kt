@@ -6,8 +6,13 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
@@ -30,7 +35,7 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
-import org.jetbrains.concurrency.runAsync
+import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
 import java.util.*
@@ -68,7 +73,7 @@ fun Row.projectWizardJdkComboBox(
   sdkPropertyId: String,
   projectJdk: Sdk? = null
 ) {
-  val combo = ProjectWizardJdkComboBox(projectJdk)
+  val combo = ProjectWizardJdkComboBox(projectJdk, context.disposable)
 
   val selectedJdkProperty = "jdk.selected.$sdkPropertyId"
 
@@ -129,20 +134,31 @@ private fun updateGraphProperties(
 }
 
 class ProjectWizardJdkComboBox(
-  val projectJdk: Sdk? = null
+  val projectJdk: Sdk? = null,
+  disposable: Disposable
 ): ComboBox<ProjectWizardJdkIntent>() {
   val registered: MutableList<ExistingJdk> = mutableListOf()
   val detectedJDKs: MutableList<DetectedJdk> = mutableListOf()
-  var isUpdating: Boolean = true
+  var isLoadingDownloadItem: Boolean = false
+  var isLoadingExistingJdks: Boolean = true
   val progressIcon: JBLabel = JBLabel(AnimatedIcon.Default.INSTANCE)
 
   init {
     model = DefaultComboBoxModel(Vector(initialItems()))
 
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    disposable.whenDisposed { scope.cancel() }
+
     if (registered.isEmpty()) {
-      runAsync { addDownloadOpenJdkIntent() }
+      isLoadingDownloadItem = true
+      scope.launch {
+        addDownloadOpenJdkIntent()
+      }
     }
-    runAsync { addExistingJdks() }
+
+    scope.launch {
+      addExistingJdks()
+    }
 
     isSwingPopup = false
     ClientProperty.put(this, ANIMATION_IN_RENDERER_ALLOWED, true)
@@ -211,8 +227,7 @@ class ProjectWizardJdkComboBox(
                                                 isSelected: Boolean,
                                                 cellHasFocus: Boolean): Component {
         val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        if (index != -1 || !isUpdating) return component
-        else {
+        if (index == -1 && (isLoadingExistingJdks || isLoadingDownloadItem)) {
           val panel = object : CellRendererPanel(BorderLayout()) {
             override fun getAccessibleContext(): AccessibleContext = component.accessibleContext
           }
@@ -221,11 +236,14 @@ class ProjectWizardJdkComboBox(
           panel.add(progressIcon, BorderLayout.EAST)
           return panel
         }
+        else {
+          return component
+        }
       }
     }
   }
 
-  fun initialItems(): MutableList<ProjectWizardJdkIntent> {
+  private fun initialItems(): MutableList<ProjectWizardJdkIntent> {
     val items = mutableListOf<ProjectWizardJdkIntent>()
 
     // Add JDKs from the ProjectJdkTable
@@ -253,40 +271,53 @@ class ProjectWizardJdkComboBox(
     return items
   }
 
-  fun addDownloadOpenJdkIntent() {
-    JdkListDownloader.getInstance()
+  private suspend fun addDownloadOpenJdkIntent() {
+    val item = JdkListDownloader.getInstance()
       .downloadModelForJdkInstaller(null)
       .filter { it.matchesVendor("openjdk") }
       .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
       .maxByOrNull { it.jdkMajorVersion }
-      ?.let {
-        val jdkInstaller = JdkInstaller.getInstance()
-        val request = JdkInstallRequestInfo(it, jdkInstaller.defaultInstallDir(it))
-        val task = JdkDownloaderBase.newDownloadTask(it, request, null)
-        insertItemAt(DownloadJdk(task), 1)
-        if (selectedItem is NoJdk) selectedIndex = 1
+
+    if (item == null) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        isLoadingDownloadItem = false
       }
+      return
+    }
+
+    val jdkInstaller = JdkInstaller.getInstance()
+    val request = JdkInstallRequestInfo(item, jdkInstaller.defaultInstallDir(item))
+    val task = JdkDownloaderBase.newDownloadTask(item, request, null)
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      insertItemAt(DownloadJdk(task), lastRegisteredJdkIndex)
+      if (selectedItem is NoJdk) selectedIndex = 1
+      isLoadingDownloadItem = false
+    }
   }
 
-  fun addExistingJdks() {
+  private suspend fun addExistingJdks() {
     val javaSdk = JavaSdk.getInstance()
+    val detectedJDKs = mutableListOf<DetectedJdk>()
 
     JdkFinder.getInstance().suggestHomePaths().forEach { homePath: String ->
       val version = javaSdk.getVersionString(homePath)
       if (version != null && javaSdk.isValidSdkHome(homePath)) {
         val detected = DetectedJdk(version, homePath)
         detectedJDKs.add(detected)
-        addItem(detected)
       }
     }
 
-    if ((selectedItem is NoJdk || selectedItem is DownloadJdk) && detectedJDKs.any()) {
-      val regex = "(\\d+)".toRegex()
-      detectedJDKs
-        .maxBy { regex.find(it.version)?.value?.toInt() ?: 0 }
-        .let { selectedItem = it }
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      detectedJDKs.forEach { addItem(it) }
+      if ((selectedItem is NoJdk || selectedItem is DownloadJdk) && detectedJDKs.any()) {
+        val regex = "(\\d+)".toRegex()
+        detectedJDKs
+          .maxBy { regex.find(it.version)?.value?.toInt() ?: 0 }
+          .let { selectedItem = it }
+      }
+      isLoadingExistingJdks = false
     }
-    isUpdating = false
   }
 
   override fun setSelectedItem(anObject: Any?) {
