@@ -2,6 +2,7 @@ fragment issueCommentInfo on IssueComment {
     ...comment
     viewerCanUpdate
     viewerCanDelete
+    viewerCanReact
 }
 
 fragment prCommitInfo on PullRequestCommit {

@@ -17,6 +17,7 @@ object CodeReviewReactionsUIUtil {
 
     const val EMOJI_HEIGHT: Int = 40
     const val EMOJI_WIDTH: Int = 40
+    const val EMOJI_ICON_SIZE: Int = 24
 
     const val BUTTON_PADDING: Int = 4
     const val BUTTON_HEIGHT: Int = 24

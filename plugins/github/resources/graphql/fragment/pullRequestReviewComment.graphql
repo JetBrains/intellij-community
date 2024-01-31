@@ -15,4 +15,5 @@ fragment pullRequestReviewComment on PullRequestReviewComment {
   }
   viewerCanDelete
   viewerCanUpdate
+  viewerCanReact
 }

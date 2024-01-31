@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineItem
@@ -145,6 +146,12 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
       if (comment.canDelete) {
         add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
           comment.delete()
+        })
+      }
+      if (comment.canReact) {
+        add(CodeReviewCommentUIUtil.createAddReactionButton {
+          val parentComponent = it.source as JComponent
+          GHReactionsPickerComponentFactory.showPopup(comment.reactionsVm, parentComponent)
         })
       }
     }

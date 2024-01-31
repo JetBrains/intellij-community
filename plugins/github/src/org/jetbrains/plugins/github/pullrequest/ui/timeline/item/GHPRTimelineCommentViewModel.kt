@@ -35,6 +35,8 @@ interface GHPRTimelineCommentViewModel {
 
   val canEdit: Boolean
   val editVm: StateFlow<CodeReviewTextEditingViewModel?>
+
+  val canReact: Boolean
   val reactionsVm: GHReactionsViewModel
 
   fun editBody()
@@ -70,6 +72,7 @@ internal class UpdateableGHPRTimelineCommentViewModel(
 
   override val canDelete: Boolean = initialData.viewerCanDelete
   override val canEdit: Boolean = initialData.viewerCanUpdate
+  override val canReact: Boolean = initialData.viewerCanReact
 
   private val _editVm = MutableStateFlow<EditViewModel?>(null)
   override val editVm: StateFlow<CodeReviewTextEditingViewModel?> = _editVm.asStateFlow()

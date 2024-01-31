@@ -106,6 +106,17 @@ object CodeReviewCommentUIUtil {
     }
   }
 
+  fun createAddReactionButton(actionListener: (ActionEvent) -> Unit): InlineIconButton {
+    val icon = CollaborationToolsIcons.AddEmoji
+    val hoverIcon = CollaborationToolsIcons.AddEmojiHovered
+    val button = InlineIconButton(icon, hoverIcon, tooltip = CollaborationToolsBundle.message("review.comments.add.reaction.tooltip"))
+    button.actionListener = ActionListener {
+      actionListener(it)
+    }
+
+    return button
+  }
+
   fun createFoldedThreadControlsIn(cs: CoroutineScope,
                                    vm: CodeReviewFoldableThreadViewModel,
                                    avatarIconsProvider: IconsProvider<CodeReviewUser>): JComponent {

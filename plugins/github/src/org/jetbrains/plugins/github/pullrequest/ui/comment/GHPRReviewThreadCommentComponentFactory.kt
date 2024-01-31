@@ -17,6 +17,7 @@ import com.intellij.collaboration.ui.util.bindVisibilityIn
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import javax.swing.JComponent
 
 internal object GHPRReviewThreadCommentComponentFactory {
@@ -87,6 +88,14 @@ internal object GHPRReviewThreadCommentComponentFactory {
       if (vm.canDelete) {
         add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
           vm.delete()
+        }.apply {
+          bindDisabledIn(cs, vm.isBusy)
+        })
+      }
+      if (vm.canReact) {
+        add(CodeReviewCommentUIUtil.createAddReactionButton {
+          val parentComponent = it.source as JComponent
+          GHReactionsPickerComponentFactory.showPopup(vm.reactionsVm, parentComponent)
         }.apply {
           bindDisabledIn(cs, vm.isBusy)
         })

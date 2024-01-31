@@ -10,6 +10,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
+import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.data.GHReactionContent
@@ -28,7 +29,12 @@ internal object GHReactionsComponentFactory {
       reactionsVm.reactionsWithInfo.map { it.keys.toList() },
       gap = CodeReviewReactionsUIUtil.HORIZONTAL_GAP,
       componentFactory = { reaction -> createReactionLabel(this, reactionsVm, reaction) }
-    )
+    ).apply {
+      val reactionPicker = createReactionPickerButton(reactionsVm).apply {
+        bindVisibilityIn(cs, reactionsVm.reactionsWithInfo.map { it.isNotEmpty() })
+      }
+      add(reactionPicker, -1)
+    }
   }
 
   private fun createReactionLabel(cs: CoroutineScope, reactionsVm: GHReactionsViewModel, reaction: GHReactionContent): JComponent {
@@ -73,6 +79,31 @@ internal object GHReactionsComponentFactory {
         }
         else currentBorder
         component.background = if (isHovered) CodeReviewColorUtil.Reaction.backgroundHovered else currentBackground
+      })
+    }
+  }
+
+  private fun createReactionPickerButton(reactionsVm: GHReactionsViewModel): JComponent {
+    val layout = SizeRestrictedSingleComponentLayout().apply {
+      val dimension = DimensionRestrictions.ScalingConstant(
+        CodeReviewReactionsUIUtil.Picker.BUTTON_WIDTH,
+        CodeReviewReactionsUIUtil.Picker.BUTTON_HEIGHT
+      )
+      prefSize = dimension
+      maxSize = dimension
+    }
+    return ReactionLabel(
+      layout,
+      icon = CollaborationToolsIcons.AddEmoji,
+      onClick = { component -> GHReactionsPickerComponentFactory.showPopup(reactionsVm, component) },
+      labelInitializer = { border = JBUI.Borders.empty(CodeReviewReactionsUIUtil.Picker.BUTTON_PADDING) }
+    ).apply {
+      border = BORDER
+      background = CodeReviewColorUtil.Reaction.background
+      addHoverAndPressStateListener(this, hoveredStateCallback = { component, isHovered ->
+        component as JComponent
+        component.background = if (isHovered) CodeReviewColorUtil.Reaction.backgroundHovered else CodeReviewColorUtil.Reaction.background
+        component.border = if (isHovered) HOVERED_BORDER else BORDER
       })
     }
   }

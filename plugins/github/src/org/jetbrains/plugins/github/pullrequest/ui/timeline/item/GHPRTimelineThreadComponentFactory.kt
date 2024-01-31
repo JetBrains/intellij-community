@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
 import java.awt.event.ActionListener
 import javax.swing.JComponent
@@ -93,6 +94,14 @@ internal object GHPRTimelineThreadComponentFactory {
             if (commentVm.canDelete) {
               add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
                 commentVm.delete()
+              }.apply {
+                bindDisabledIn(this@supervisorScope, commentVm.isBusy)
+              })
+            }
+            if (commentVm.canReact) {
+              add(CodeReviewCommentUIUtil.createAddReactionButton {
+                val parentComponent = it.source as JComponent
+                GHReactionsPickerComponentFactory.showPopup(commentVm.reactionsVm, parentComponent)
               }.apply {
                 bindDisabledIn(this@supervisorScope, commentVm.isBusy)
               })
