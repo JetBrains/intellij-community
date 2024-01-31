@@ -612,9 +612,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
           // project dirty files are still in ChangedFilesCollector in case FileBasedIndex is restarted using Tumbler (projects are not closed)
           // we need to persist queues, so we can properly re-read them here and in FileBasedIndexDataInitialization
-          for (Pair<IndexableFileSet, Project> p : myIndexableSets) {
-            getChangedFilesCollector().persistDirtyFiles(p.second, vfsCreationStamp);
-          }
+          getChangedFilesCollector().persistProjectsDirtyFiles(vfsCreationStamp);
           // some deleted files were already saved to project queues and saved to disk during project closing
           // we need to read them to avoid false-positive errors in checkIndexForStaleRecords
           readAllProjectDirtyFilesQueues(allStaleIds);

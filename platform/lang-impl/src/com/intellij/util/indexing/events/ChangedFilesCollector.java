@@ -224,11 +224,23 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void onProjectClosing(@NotNull Project project, long vfsCreationStamp) {
-    persistDirtyFiles(project, vfsCreationStamp);
+    persistProjectsDirtyFiles(project, vfsCreationStamp);
     myDirtyFiles.removeIf(p -> p.first.equals(project));
   }
 
-  public void persistDirtyFiles(@NotNull Project project, long vfsCreationStamp) {
+  public void persistProjectsDirtyFiles(long vfsCreationStamp) {
+    for (Pair<Project, ConcurrentBitSet> p : myDirtyFiles) {
+      persistProjectsDirtyFiles(p.first, vfsCreationStamp);
+    }
+    // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
+    ReadAction.run(() -> {
+      processFilesInReadAction(info -> {
+        return true;
+      });
+    });
+  }
+
+  private void persistProjectsDirtyFiles(@NotNull Project project, long vfsCreationStamp) {
     Pair<Project, ConcurrentBitSet> p = getDirtyFilesWithoutProject(project);
     if (p == null) return;
     IntSet dirtyFileIds = toIntSet(p.second);
