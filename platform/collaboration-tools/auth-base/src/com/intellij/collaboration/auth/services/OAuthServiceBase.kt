@@ -55,6 +55,22 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
     return OAuthService.OAuthResult(request, isAccepted)
   }
 
+  override fun handleOAuthServerCredentialsCallback(
+    path: String,
+    parameters: Map<String, List<String>>
+  ): OAuthService.OAuthResultCredentials<T>? {
+    val currentRequest = currentRequest.get()
+    val request = currentRequest?.request ?: return null
+    val isAccepted = handleServerCallback(path, parameters)
+    return OAuthService.OAuthResultCredentials(
+      request,
+      if (isAccepted)
+        Result.success(currentRequest.result.get())
+      else
+        Result.failure(CallbackNotReadyException("Server callback is not ready or completed exceptionally"))
+    )
+  }
+
   protected open fun startAuthorization(request: OAuthRequest<T>) {
     val authUrl = request.authUrlWithParameters.toExternalForm()
     BrowserUtil.browse(authUrl)
@@ -81,3 +97,5 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
     val result: CompletableFuture<T>
   )
 }
+
+internal class CallbackNotReadyException(message: String) : Exception(message)

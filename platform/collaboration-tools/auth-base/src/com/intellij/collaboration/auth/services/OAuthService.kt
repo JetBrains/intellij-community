@@ -37,8 +37,20 @@ interface OAuthService<T : Credentials> {
     return OAuthResult(null, isAccepted)
   }
 
+  fun handleOAuthServerCredentialsCallback(path: String, parameters: Map<String, List<String>>): OAuthResultCredentials<T>? {
+    handleServerCallback(path, parameters)
+    return OAuthResultCredentials(null, Result.failure(UnsupportedOperationException()))
+  }
+
   class OAuthResult<T : Credentials>(
     val request: OAuthRequest<T>?,
     val isAccepted: Boolean
   )
+
+  class OAuthResultCredentials<T : Credentials>(
+    val request: OAuthRequest<T>?,
+    val callbackAnswer: Result<Credentials>
+  ) {
+    fun isAccepted(): Boolean = callbackAnswer.isSuccess
+  }
 }

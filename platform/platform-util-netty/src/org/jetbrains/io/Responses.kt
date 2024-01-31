@@ -34,6 +34,18 @@ fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): Fu
   return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset))
 }
 
+fun responseStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Channel) {
+  val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status)
+  HttpUtil.setContentLength(response, 0)
+  response.addCommonHeaders()
+  response.addNoCache()
+  if (keepAlive) {
+    HttpUtil.setKeepAlive(response, true)
+  }
+  response.headers().set("X-Frame-Options", "Deny")
+  response.send(channel, !keepAlive)
+}
+
 fun HttpResponse.addNoCache(): HttpResponse {
   headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")//NON-NLS
   headers().add(HttpHeaderNames.PRAGMA, "no-cache")//NON-NLS

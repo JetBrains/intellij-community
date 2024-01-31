@@ -92,6 +92,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.smart.update",
 
   "intellij.platform.collaborationTools",
+  "intellij.platform.collaborationTools.auth.base",
   "intellij.platform.collaborationTools.auth",
 
   "intellij.platform.markdown.utils",
