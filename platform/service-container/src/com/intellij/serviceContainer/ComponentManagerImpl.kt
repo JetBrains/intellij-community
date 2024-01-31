@@ -1527,7 +1527,9 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
     val className = isInsideClassInitializer()
     if (className != null) {
       // TODO make this an error
-      LOG.warn("${className} initializer requests ${debugString} instance")
+      LOG.warn("${className} <clinit> requests ${debugString} instance. " +
+               "Class initialization must not depend on services. " +
+               "Consider using instance of the service on-demand instead.")
       Cancellation.withNonCancelableSection().use {
         return getOrCreateInstanceBlocking(debugString, keyClass)
       }
