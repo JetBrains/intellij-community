@@ -17,6 +17,7 @@ const val GRADLE_PROPERTIES_FILE_NAME = "gradle.properties"
 const val GRADLE_JAVA_HOME_PROPERTY = "org.gradle.java.home"
 const val GRADLE_LOGGING_LEVEL_PROPERTY = "org.gradle.logging.level"
 const val GRADLE_PARALLEL_PROPERTY = "org.gradle.parallel"
+const val GRADLE_JVM_OPTIONS_PROPERTY = "org.gradle.jvmargs"
 
 object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
 
@@ -84,7 +85,9 @@ object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
     val logLevelProperty = logLevel?.let { Property(it, propertiesPath.toString()) }
     val parallel = properties.getProperty(GRADLE_PARALLEL_PROPERTY)?.toBoolean()
     val parallelProperty = parallel?.let { Property(it, propertiesPath.toString()) }
-    return GradlePropertiesImpl(javaHomeProperty, logLevelProperty, parallelProperty)
+    val jvmOptions = properties.getProperty(GRADLE_JVM_OPTIONS_PROPERTY)?.toString()
+    val jvmOptionsProperty = jvmOptions?.let { Property(it, propertiesPath.toString()) }
+    return GradlePropertiesImpl(javaHomeProperty, logLevelProperty, parallelProperty, jvmOptionsProperty)
   }
 
   private fun mergeGradleProperties(most: GradleProperties, other: GradleProperties): GradleProperties {
@@ -94,7 +97,8 @@ object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
       else -> GradlePropertiesImpl(
         most.javaHomeProperty ?: other.javaHomeProperty,
         most.gradleLoggingLevel ?: other.gradleLoggingLevel,
-        most.parallel ?: other.parallel
+        most.parallel ?: other.parallel,
+        most.jvmOptions ?: other.jvmOptions
       )
     }
   }

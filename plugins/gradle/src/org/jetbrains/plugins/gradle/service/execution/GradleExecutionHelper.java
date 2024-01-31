@@ -622,7 +622,7 @@ public class GradleExecutionHelper {
     return null;
   }
 
-  private static @Nullable String getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
+  public static @Nullable String getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
     if (buildEnvironment == null) {
       return null;
     }
