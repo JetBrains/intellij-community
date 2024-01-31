@@ -2,51 +2,86 @@
 package org.jetbrains.plugins.github.pullrequest.ui.emoji
 
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHReaction
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.GHUser
-
-private val LOG = logger<GHReactionsViewModel>()
+import org.jetbrains.plugins.github.pullrequest.data.GHReactionsService
 
 interface GHReactionsViewModel {
   val reactionIconsProvider: IconsProvider<GHReactionContent>
-  val reactions: SharedFlow<List<GHReaction>>
+  val reactionsWithInfo: StateFlow<Map<GHReactionContent, ReactionInfo>>
 
-  fun isReactedWithCurrentUser(reaction: GHReaction): Boolean
-  fun getReactionCount(reaction: GHReaction): Int
+  fun toggle(reactionContent: GHReactionContent)
 }
 
 internal class GHReactionViewModelImpl(
   parentCs: CoroutineScope,
-  ungroupedReactions: List<GHReaction>,
+  private val reactableId: String,
+  reactionsFlow: StateFlow<List<GHReaction>>,
   private val currentUser: GHUser,
+  private val reactionsService: GHReactionsService,
   override val reactionIconsProvider: IconsProvider<GHReactionContent>
 ) : GHReactionsViewModel {
   private val cs = parentCs.childScope(CoroutineName("GitHub Reactions View Model"))
 
-  private val dataState: StateFlow<List<GHReaction>> = MutableStateFlow(ungroupedReactions.toMutableList())
-  private val reactionsToUsers: StateFlow<Map<GHReactionContent, List<GHUser>>> = dataState.mapState(cs) {
-    it.groupBy(GHReaction::content, GHReaction::user)
-  }
-  override val reactions: SharedFlow<List<GHReaction>> = dataState.map { it.distinctBy(GHReaction::content) }
-    .modelFlow(cs, LOG)
+  private val localData = MutableStateFlow(reactionsFlow.value)
+  private val dataState = callbackFlow {
+    launch { localData.collect(::send) }
+    launch { reactionsFlow.collect(::send) }
+    awaitCancellation()
+  }.stateInNow(cs, emptyList())
 
-  override fun isReactedWithCurrentUser(reaction: GHReaction): Boolean {
-    val users = reactionsToUsers.value[reaction.content] ?: return false
-    return users.map(GHUser::id).contains(currentUser.id)
+  override val reactionsWithInfo: StateFlow<Map<GHReactionContent, ReactionInfo>> = dataState.mapState(cs) { data ->
+    val reactionToUsers = data.groupBy({ it.content }, { it.user })
+    reactionToUsers.mapValues { (_, users) ->
+      ReactionInfo(users.size, users.map(GHUser::id).contains(currentUser.id))
+    }
   }
 
-  override fun getReactionCount(reaction: GHReaction): Int {
-    return reactionsToUsers.value[reaction.content]?.size ?: 0
+  override fun toggle(reactionContent: GHReactionContent) {
+    cs.launch {
+      val isReacted = reactionsWithInfo.value[reactionContent]?.isReactedByCurrentUser ?: false
+      if (isReacted) {
+        val reaction = reactionsService.removeReaction(reactableId, reactionContent)
+        updateDataLocally(reaction, ReactionRequest.REMOVE)
+      }
+      else {
+        val reaction = reactionsService.addReaction(reactableId, reactionContent)
+        updateDataLocally(reaction, ReactionRequest.ADD)
+      }
+    }
+  }
+
+  private fun updateDataLocally(reaction: GHReaction, request: ReactionRequest) {
+    localData.update {
+      val updatedData = it.toMutableList()
+      when (request) {
+        ReactionRequest.ADD -> updatedData.add(reaction)
+        ReactionRequest.REMOVE -> updatedData.remove(reaction)
+      }
+
+      updatedData
+    }
   }
 }
+
+private enum class ReactionRequest {
+  ADD,
+  REMOVE
+}
+
+data class ReactionInfo(
+  val count: Int,
+  val isReactedByCurrentUser: Boolean
+)

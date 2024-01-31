@@ -32,4 +32,6 @@ object GHGQLQueries {
   const val addPullRequestReviewThread = "graphql/query/addPullRequestReviewThread.graphql"
   const val resolveReviewThread = "graphql/query/resolveReviewThread.graphql"
   const val unresolveReviewThread = "graphql/query/unresolveReviewThread.graphql"
+  const val addReaction = "graphql/query/addReaction.graphql"
+  const val removeReaction = "graphql/query/removeReaction.graphql"
 }

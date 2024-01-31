@@ -96,7 +96,7 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
 
   private val reactions: StateFlow<List<GHReaction>> = dataState.mapState { it.value.reactions.nodes }
   override val reactionsVm: GHReactionsViewModel = GHReactionViewModelImpl(
-    cs, reactions.value, currentUser, reactionIconsProvider
+    cs, id, reactions, currentUser, dataContext.reactionsService, reactionIconsProvider
   )
 
   override fun editBody() {

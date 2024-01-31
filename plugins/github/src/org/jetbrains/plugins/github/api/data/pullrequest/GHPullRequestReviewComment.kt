@@ -21,6 +21,6 @@ data class GHPullRequestReviewComment(override val id: String,
                                       @JsonProperty("pullRequestReview") private val pullRequestReview: GHNode?,
                                       val viewerCanDelete: Boolean,
                                       val viewerCanUpdate: Boolean)
-  : GHComment(id, author, body, createdAt), GHReactable {
+  : GHComment(id, author, body, createdAt, reactions) {
   val reviewId = pullRequestReview?.id
 }

@@ -110,7 +110,6 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
       val reactionIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, GHReactionImageLoader(cs, requestExecutor)))
 
-
       // repository might have been renamed/moved
       val apiRepositoryPath = repositoryInfo.path
       val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
@@ -131,6 +130,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                   remoteCoordinates, apiRepositoryCoordinates)
       val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, apiRepositoryCoordinates)
       val filesService = GHPRFilesServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
+      val reactionsService = GHReactionsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
 
       val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
       val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
@@ -158,7 +158,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
       ensureActive()
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
-                      securityService, repoDataService, creationService, detailsService, imageLoader, avatarIconsProvider, reactionIconsProvider,
+                      securityService, repoDataService, creationService, detailsService, reactionsService,
+                      imageLoader, avatarIconsProvider, reactionIconsProvider,
                       filesManager, interactionState,
                       GHPRDiffRequestModelImpl())
     }

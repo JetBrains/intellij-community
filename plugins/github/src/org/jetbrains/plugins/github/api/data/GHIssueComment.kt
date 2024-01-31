@@ -11,4 +11,4 @@ data class GHIssueComment(override val id: String,
                           override val reactions: GHReactable.ReactionConnection,
                           val viewerCanDelete: Boolean,
                           val viewerCanUpdate: Boolean)
-  : GHComment(id, author, body, createdAt), GHPRTimelineItem, GHReactable
+  : GHComment(id, author, body, createdAt, reactions), GHPRTimelineItem

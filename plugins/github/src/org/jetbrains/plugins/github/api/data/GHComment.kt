@@ -8,5 +8,6 @@ import java.util.*
 open class GHComment(id: String,
                      open val author: GHActor?,
                      open val body: String,
-                     open val createdAt: Date)
-  : GHNode(id)
+                     open val createdAt: Date,
+                     override val reactions: GHReactable.ReactionConnection)
+  : GHNode(id), GHReactable
