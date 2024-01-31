@@ -19,9 +19,9 @@ import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -63,7 +63,8 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
       try {
         println("Open and load project $projectPath. Operation may take a few minutes.")
-        project = runBlockingCancellable {
+        @Suppress("SSBasedInspection")
+        project = runBlocking {
           ProjectOpeningUtils.openProject(
             File(projectPath).toPath(),
             parentDisposable,
@@ -172,13 +173,15 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         val process = EvaluationProcess.build({
                                                 shouldGenerateReports = true
                                               },
-                                              BackgroundStepFactory(feature, config, project, workspacesToCompare, EvaluationRootInfo(true)))
+                                              BackgroundStepFactory(feature, config, project, workspacesToCompare,
+                                                                    EvaluationRootInfo(true)))
         process.startAsync(outputWorkspace)
       }
     }
   }
 
-  class MultipleEvaluations : MultipleEvaluationsBase(name = "multiple-evaluations", help = "Generate comparing report by multiple evaluations") {
+  class MultipleEvaluations : MultipleEvaluationsBase(name = "multiple-evaluations",
+                                                      help = "Generate comparing report by multiple evaluations") {
     private val workspacesArg by argument(name = "workspaces", help = "List of workspaces").multiple()
 
     override fun getWorkspaces(): List<String> = workspacesArg
