@@ -24,6 +24,8 @@ interface ImportSettingsController : BaseController {
 
   fun skipImport()
 
+  fun configChosen()
+
 }
 
 private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override val skipImportAction: () -> Unit) : ImportSettingsController, BaseControllerImpl(dialog) {
@@ -57,9 +59,11 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
     dialog.changePage(page)
   }
 
-
-
   override fun skipImport() {
     dialog.dialogClose()
+  }
+
+  override fun configChosen() {
+    SettingsService.getInstance().configChosen()
   }
 }

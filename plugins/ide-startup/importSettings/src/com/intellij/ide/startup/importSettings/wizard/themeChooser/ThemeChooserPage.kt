@@ -64,6 +64,7 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     val centralPane = JPanel(BorderLayout(0, 0)).apply {
       val pane = panel {
         row {
+          @Suppress("DialogTitleCapitalization")
           label(ImportSettingsBundle.message("theme.page.title")).applyToComponent {
             font = UiUtils.HEADER_FONT
             border = UiUtils.HEADER_BORDER

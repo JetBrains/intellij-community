@@ -11,7 +11,7 @@ import javax.swing.JPanel
 import javax.swing.border.Border
 import kotlin.math.max
 
-class RoundedPanel private constructor(val unscaledRadius: Int = RADIUS) : JPanel(BorderLayout()) {
+class RoundedPanel private constructor(unscaledRadius: Int = RADIUS) : JPanel(BorderLayout()) {
   companion object {
     const val RADIUS = 20
     const val THICKNESS = 1

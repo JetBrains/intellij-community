@@ -2,6 +2,8 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingDialog
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IProperty
@@ -18,8 +20,11 @@ import kotlin.random.Random
 
 internal const val IMPORT_SERVICE = "ImportService"
 
-class TestJbService : JbService {
+class TestJbService private constructor(): JbService {
   companion object {
+    private val service = TestJbService()
+
+    fun getInstance() = service
 
     private val LOG = logger<TestJbService>()
 
@@ -197,6 +202,9 @@ class TestJbService : JbService {
       }
     }
   }
+  fun configChosen() {
+    OnboardingController.getInstance().startWizard(isModal = false)
+  }
 
   override fun hasDataToImport() = true
 
@@ -212,6 +220,7 @@ class TestJbService : JbService {
   override fun getOldProducts(): List<Product> {
     return old
   }
+
 
   override fun getSettings(itemId: String): List<BaseSetting> {
     return if (itemId == main.id) settings1 else settings

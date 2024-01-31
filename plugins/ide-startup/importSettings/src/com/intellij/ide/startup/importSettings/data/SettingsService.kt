@@ -45,6 +45,8 @@ interface SettingsService {
 
   val doClose: ISignal<Unit>
 
+  fun configChosen()
+
   fun isLoggedIn(): Boolean = jbAccount.value != null
 }
 
@@ -57,7 +59,7 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
     else SyncServiceImpl.getInstance()
 
   override fun getJbService() =
-    if (shouldUseMockData) TestJbService()
+    if (shouldUseMockData) TestJbService.getInstance()
     else JbImportServiceImpl.getInstance()
 
   override fun getExternalService(): ExternalService =
@@ -80,6 +82,11 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
   override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
 
   override val doClose = Signal<Unit>()
+  override fun configChosen() {
+    if (shouldUseMockData) {
+      TestJbService.getInstance().configChosen()
+    }
+  }
 
   private fun unloggedSyncHide(): IPropertyView<Boolean> {
     fun getValue(): Boolean = Registry.`is`("import.setting.unlogged.sync.hide")
@@ -95,7 +102,8 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
     }
   }
 
-  override val isSyncEnabled = Property(shouldUseMockData) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  override val isSyncEnabled = Property(
+    shouldUseMockData) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
 
   init {
     if (shouldUseMockData) {

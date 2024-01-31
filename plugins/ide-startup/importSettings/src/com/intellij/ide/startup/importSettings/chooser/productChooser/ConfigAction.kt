@@ -27,7 +27,6 @@ class ConfigAction(val controller: ImportSettingsController) : DumbAwareAction()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    //TODO implement
-    //callback(JBrActionsDataProvider.getInstance(), config)
+    controller.configChosen()
   }
 }

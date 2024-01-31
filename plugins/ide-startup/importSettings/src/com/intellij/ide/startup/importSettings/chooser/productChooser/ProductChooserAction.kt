@@ -13,8 +13,8 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -67,7 +67,6 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
    /* JBPopupFactory.getInstance().createListPopup(step)*/
 
-
     val result = object : ListPopupImpl(null, step) {
       override fun getListElementRenderer(): ListCellRenderer<*> {
         return renderer
@@ -75,13 +74,12 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
       override fun createPopupComponent(content: JComponent?): JComponent {
         val popupComponent = super.createPopupComponent(content)
-        popupComponent.preferredWidth = JBUI.scale(UiUtils.DEFAULT_BUTTON_WIDTH)
+        popupComponent.preferredSize = Dimension(JBUI.scale (UiUtils.DEFAULT_BUTTON_WIDTH), popupComponent.preferredSize.height)
 
         return popupComponent
       }
 
     }
-    result.setRequestFocus(false)
     return result
   }
 

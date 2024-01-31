@@ -9,6 +9,7 @@ import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.rd.createLifetime
@@ -69,6 +70,7 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
           JBUI.size(UiUtils.DEFAULT_BUTTON_WIDTH, UiUtils.DEFAULT_BUTTON_HEIGHT)
         }
         setMiniMode(false)
+        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
       }
     }
     act.targetComponent = pane
@@ -91,7 +93,7 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
     add(accountLabel, BorderLayout.WEST)
     add(at.component, BorderLayout.EAST)
 
-    border = JBUI.Borders.empty(0, 20, 10, 0)
+    border = JBUI.Borders.empty(0, 20, 10, 7)
     preferredSize = Dimension(preferredSize.width, JBUI.scale(47))
   }
 

@@ -9,9 +9,12 @@ import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.ui.components.ActionLink
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.SwingConstants
 
 class OtherOptions(private val controller: ImportSettingsController) : ProductChooserAction() {
 
@@ -43,7 +46,7 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
       sync = addActionList(syncProducts, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
     }
 
-    sync?.let {
+/*    sync?.let {
       if (it.isNotEmpty()) {
         arr.addAll(it)
       }
@@ -53,7 +56,7 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
       if (it.isNotEmpty()) {
         arr.addAll(it)
       }
-    }
+    }*/
 
     if (arr.isNotEmpty()) {
       arr.add(Separator())
@@ -87,8 +90,10 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
   }
 
   override fun createButton(): JButton {
-    return OnboardingDialogButtons.createLinkButton().apply {
-      icon = AllIcons.General.LinkDropTriangle
+    return ActionLink().apply {
+      setHorizontalTextPosition(SwingConstants.LEFT)
+      setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED)
+      iconTextGap = 0
     }
   }
 
