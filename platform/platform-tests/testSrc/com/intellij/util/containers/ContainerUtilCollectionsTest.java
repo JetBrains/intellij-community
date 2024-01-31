@@ -17,6 +17,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -177,6 +179,24 @@ public class ContainerUtilCollectionsTest extends Assert {
   public void testConcurrentSoftValueMapTossed() {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftValueMap();
     checkValueTossedEventually(map);
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testValueTossedEvenInCaseOfSuccessfulPutIfAbsentInConcurrentSoftValueMap() {
+    ConcurrentSoftValueHashMap<Object, Object> map = new ConcurrentSoftValueHashMap<>();
+    Object value = new Object();
+    Reference<Object> ref = new SoftReference<>(value);
+    map.put(1, value);
+    assertEquals(1, map.size());
+    value = null;
+
+    do {
+      GCUtil.tryGcSoftlyReachableObjects();
+    }
+    while (ref.get()!=null);
+    Object old = map.putIfAbsent(2, new Object());
+    assertNull(old);
+    assertFalse(map.processQueue());
   }
 
   @SuppressWarnings("ConstantValue") // Map contract is tested, not implied here
