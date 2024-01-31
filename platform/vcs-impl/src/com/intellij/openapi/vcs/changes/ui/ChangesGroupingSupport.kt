@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -119,6 +120,9 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
         try {
           keyToFactory[key] = bean.getInstance()
           keyToWeight[key] = bean.weight
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
         }
         catch (e: Throwable) {
           logger<ChangesGroupingSupport>().error(e)
