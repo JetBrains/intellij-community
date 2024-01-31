@@ -803,7 +803,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
 
     @Override
     public void mouseClicked(MouseEvent e) {
-      if (myLinkListener.onClick(e, e.getClickCount())) {
+      if (getExpandableItemsHandler().isEnabled() && myLinkListener.onClick(e, e.getClickCount())) {
         return;
       }
 
@@ -857,11 +857,6 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
       if (isResizingColumns()) return;
       getExpandableItemsHandler().setEnabled(true);
 
-      if (myLinkListener.getTagAt(e) != null) {
-        swapCursor();
-        return;
-      }
-
       int row = rowAtPoint(e.getPoint());
       if (row >= 0 && row < getRowCount()) {
         VcsLogColumn<?> column = getVcsLogColumn(columnAtPoint(e.getPoint()));
@@ -871,12 +866,16 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
         if (controller != null) {
           VcsLogCellController.MouseMoveResult mouseMoveResult = controller.performMouseMove(row, e);
           handleCursor(mouseMoveResult.getCursor());
-          if(!mouseMoveResult.getContinueProcessing()) {
+          if (!mouseMoveResult.getContinueProcessing()) {
             return;
           }
         }
       }
 
+      if (myLinkListener.getTagAt(e) != null) {
+        swapCursor();
+        return;
+      }
       restoreCursor();
     }
 
