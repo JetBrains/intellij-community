@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
+import com.intellij.application.options.PathMacrosImpl
 import com.intellij.cce.core.Language
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
@@ -22,12 +23,18 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.util.PathUtil
+import com.intellij.util.SystemProperties
+import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.GradleWarmupConfigurator
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
@@ -126,7 +133,6 @@ private fun forceUseProjectJdkForImporter(project: Project) {
       val mavenManager = MavenProjectsManager.getInstance(project)
       mavenManager.importingSettings.jdkForImporter = ExternalSystemJdkUtil.USE_PROJECT_JDK
     }
-
     JvmBuildSystem.Gradle -> {
       val allGradleSettings = GradleManager.EP_NAME.extensionList.flatMap {
         val provider: AbstractExternalSystemSettings<*, *, *> = it.settingsProvider.`fun`(project)
@@ -139,6 +145,13 @@ private fun forceUseProjectJdkForImporter(project: Project) {
         settings.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK
       }
     }
+    JvmBuildSystem.JpsIntellij -> {
+      val projectHome = project.guessProjectDir()!!.path
+      val m2Repo = Paths.get(SystemProperties.getUserHome(), ".m2/repository").systemIndependentPath
+      val jpsProject = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo), true)
+      val outPath = Path.of(PathUtil.getJarPathForClass(PathUtil::class.java)).parent.parent
+      JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(jpsProject).outputUrl = outPath.toString()
+    }
   }
 }
 
@@ -148,12 +161,19 @@ enum class JvmBuildSystem {
       return gradleProjectOpenProcessor.canOpenProject(projectFile)
     }
   },
-
   Maven {
     override fun accepts(projectFile: VirtualFile): Boolean {
       return mavenProjectOpenProcessor.canOpenProject(projectFile)
     }
-  };
+  },
+  JpsIntellij {
+    override fun accepts(projectFile: VirtualFile): Boolean {
+      val ultimateMarker = Paths.get(projectFile.path, "intellij.idea.ultimate.main.iml").exists()
+      val communityMarker = Paths.get(projectFile.path, "intellij.idea.community.main.iml").exists()
+      return ultimateMarker || communityMarker
+    }
+  },
+  ;
 
   abstract fun accepts(projectFile: VirtualFile): Boolean
 
@@ -186,12 +206,13 @@ enum class JvmBuildSystem {
             ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
           }
         }
-
-
         Maven -> project.guessProjectDir()?.let { dir ->
           Logger.getInstance("#org.jetbrains.idea.maven").setLevel(LogLevel.ALL)
           Registry.get("external.system.auto.import.disabled").setValue(false) // prevent gradle interference
           mavenProjectOpenProcessor.importProjectAfterwardsAsync(project, dir)
+        }
+        JpsIntellij -> {
+          //TODO: consider to add logic? (move JpsJavaExtensionService.getInstance().getOrCreateProjectExtension?)
         }
       }
     }
