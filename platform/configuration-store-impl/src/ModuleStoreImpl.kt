@@ -31,7 +31,7 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
     ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
   override fun createSaveSessionProducerManager(): SaveSessionProducerManager =
-    SaveSessionProducerManager(storageManager.isUseVfsForWrite())
+    SaveSessionProducerManager(storageManager.isUseVfsForWrite)
 
   final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
@@ -169,7 +169,7 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
     override val isExternalSystemStorageEnabled: Boolean
       get() = (componentManager as Module?)?.project?.isExternalStorageEnabled == true
 
-    override fun isUseVfsForWrite(): Boolean = true
+    override val isUseVfsForWrite: Boolean = !useBackgroundSave
 
     override fun createFileBasedStorage(
       file: Path,

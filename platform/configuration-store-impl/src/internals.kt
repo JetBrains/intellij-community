@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
@@ -20,3 +21,6 @@ internal suspend fun ensureFilesWritable(project: Project, files: Collection<Vir
   withContext(Dispatchers.EDT) {
     ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
   }
+
+internal val useBackgroundSave: Boolean
+  get() = Registry.`is`("ide.background.save.settings", false)

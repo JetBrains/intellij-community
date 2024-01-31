@@ -70,7 +70,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
   }
 
   final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager =
-    ProjectWithModulesSaveSessionProducerManager(project, storageManager.isUseVfsForWrite())
+    ProjectWithModulesSaveSessionProducerManager(project, storageManager.isUseVfsForWrite)
 
   override fun createContentReader(): JpsFileContentReaderWithCache =
     StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)

@@ -381,7 +381,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   ) { }
 
   override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager =
-    ProjectSaveSessionProducerManager(project, storageManager.isUseVfsForWrite())
+    ProjectSaveSessionProducerManager(project, storageManager.isUseVfsForWrite)
 
   final override fun commitObsoleteComponents(sessionManager: SaveSessionProducerManager, isProjectLevel: Boolean) {
     if (isDirectoryBased) {
@@ -392,7 +392,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   private class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor, private val project: Project)
     : StateStorageManagerImpl("project", macroSubstitutor, componentManager = project)
   {
-    override fun isUseVfsForWrite(): Boolean = true
+    override val isUseVfsForWrite: Boolean = !useBackgroundSave
 
     override fun normalizeFileSpec(fileSpec: String): String =
       removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)

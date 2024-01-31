@@ -227,7 +227,7 @@ open class StateStorageManagerImpl(
     return storage
   }
 
-  internal open fun isUseVfsForWrite(): Boolean = false
+  internal open val isUseVfsForWrite: Boolean = false
 
   protected open fun createDirectoryBasedStorage(dir: Path, collapsedPath: String, @Suppress("DEPRECATION", "removal") splitter: StateSplitter): StateStorage =
     TrackedDirectoryStorage(storageManager = this, dir, splitter, macroSubstitutor)
@@ -256,7 +256,7 @@ open class StateStorageManagerImpl(
     macroSubstitutor: PathMacroSubstitutor?
   ) : DirectoryBasedStorage(dir, splitter, macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
     override val isUseVfsForWrite: Boolean
-      get() = storageManager.isUseVfsForWrite()
+      get() = storageManager.isUseVfsForWrite
   }
 
   internal class TrackedFileStorage(
@@ -272,7 +272,7 @@ open class StateStorageManagerImpl(
       get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)
 
     override val isUseVfsForWrite: Boolean
-      get() = storageManager.isUseVfsForWrite()
+      get() = storageManager.isUseVfsForWrite
 
     override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
       if (rootElementName != null) {
