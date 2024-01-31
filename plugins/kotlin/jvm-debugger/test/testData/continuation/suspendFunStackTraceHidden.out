@@ -8,6 +8,7 @@ Thread stack trace:
 CoroutineInfo: 1 coroutine RUNNING
 	CoroutineStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt (continuation)
 		()
+Coroutine Creation Stack Trace
 	CreationCoroutineStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt (continuation)
 		($result, this)
 	CreationCoroutineStackFrame FRAME:main:-1, SuspendFunStackTraceHiddenKt (continuation)

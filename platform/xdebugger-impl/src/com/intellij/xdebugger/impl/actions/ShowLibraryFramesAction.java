@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,11 @@ final class ShowLibraryFramesAction extends ToggleAction {
     if (Boolean.TRUE.equals(isSupported)) {
       presentation.setVisible(true);
       final boolean shouldShow = !Toggleable.isSelected(presentation);
-      presentation.setText(XDebuggerBundle.message(shouldShow ? "hide.library.frames.tooltip" : "show.all.frames.tooltip"));
+      presentation.setText(XDebuggerBundle.message(shouldShow
+                                                   ? (XFramesView.shouldFoldHiddenFrames()
+                                                      ? "fold.library.frames.tooltip"
+                                                      : "hide.library.frames.tooltip")
+                                                   : "show.all.frames.tooltip"));
     }
     else {
       presentation.setVisible(false);

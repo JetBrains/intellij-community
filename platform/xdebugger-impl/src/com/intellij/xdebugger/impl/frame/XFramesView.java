@@ -725,20 +725,25 @@ public final class XFramesView extends XDebugView {
     }
   }
 
-  private static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor,
-                                                                            XDebuggerFramesList.ItemWithSeparatorAbove {
+  /**
+   * Synthetic frame which encapsulates hidden library frames as a single fold.
+   *
+   * @see #shouldFoldHiddenFrames()
+   */
+  public static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor,
+                                                                           XDebuggerFramesList.ItemWithSeparatorAbove {
 
     private final int hiddenFrameCount;
     private final @NotNull XStackFrame firstHiddenFrame;
 
-    private HiddenStackFramesItem(int hiddenFrameCount, @NotNull XStackFrame firstHiddenFrame) {
+    public HiddenStackFramesItem(int hiddenFrameCount, @NotNull XStackFrame firstHiddenFrame) {
       this.hiddenFrameCount = hiddenFrameCount;
       this.firstHiddenFrame = firstHiddenFrame;
     }
 
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
-      component.append(XDebuggerBundle.message("label.hidden.frames", hiddenFrameCount), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      component.append(XDebuggerBundle.message("label.folded.frames", hiddenFrameCount), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       component.setIcon(EmptyIcon.ICON_16);
     }
 
@@ -764,10 +769,12 @@ public final class XFramesView extends XDebugView {
     }
   }
 
-  public static List<XStackFrame> createHiddenFramePlaceholder(int hiddenFrameCount, @NotNull XStackFrame firstHiddenFrame) {
-    return Registry.is("debugger.library.frames.fold.instead.of.hide")
-           ? Collections.singletonList(new HiddenStackFramesItem(hiddenFrameCount, firstHiddenFrame))
-           : Collections.emptyList();
+  /**
+   * Whether hidden frames are folded into a single-item placeholder.
+   * Otherwise, they completely disappear.
+   */
+  public static boolean shouldFoldHiddenFrames() {
+    return Registry.is("debugger.library.frames.fold.instead.of.hide");
   }
 
 

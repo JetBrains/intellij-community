@@ -426,6 +426,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   public interface ItemWithSeparatorAbove {
     boolean hasSeparatorAbove();
     @NlsContexts.Separator String getCaptionAboveOf();
+
+    default void setWithSeparator(boolean withSeparator) {
+    }
   }
 
   public interface ItemWithCustomBackgroundColor {

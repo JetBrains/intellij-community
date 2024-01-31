@@ -29,7 +29,7 @@ class CreationCoroutineStackFrameItem(
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
             val position = location.findPosition(debugProcess)
-            CreationCoroutineStackFrame(frame, position, first, location)
+            CreationCoroutineStackFrame(frame, position, withSepartor = first, location)
         }
     }
 }

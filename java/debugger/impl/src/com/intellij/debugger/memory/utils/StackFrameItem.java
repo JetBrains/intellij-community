@@ -228,9 +228,14 @@ public class StackFrameItem {
     return new CapturedStackFrame(debugProcess, this);
   }
 
-  public static void setWithSeparator(XStackFrame frame, boolean withSeparator) {
-    if (frame instanceof CapturedStackFrame) {
-      ((CapturedStackFrame)frame).setWithSeparator(withSeparator);
+  public static boolean hasSeparatorAbove(XStackFrame frame) {
+    return frame instanceof XDebuggerFramesList.ItemWithSeparatorAbove frameWithSeparator &&
+           frameWithSeparator.hasSeparatorAbove();
+  }
+
+  public static void setWithSeparator(XStackFrame frame) {
+    if (frame instanceof XDebuggerFramesList.ItemWithSeparatorAbove frameWithSeparator) {
+      frameWithSeparator.setWithSeparator(true);
     }
   }
 
@@ -328,6 +333,7 @@ public class StackFrameItem {
       return myWithSeparator;
     }
 
+    @Override
     public void setWithSeparator(boolean withSeparator) {
       myWithSeparator = withSeparator;
     }

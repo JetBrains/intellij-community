@@ -44,7 +44,7 @@ class CoroutinePreflightFrame(
 class CreationCoroutineStackFrame(
     frame: StackFrameProxyImpl,
     sourcePosition: XSourcePosition?,
-    val first: Boolean,
+    private var withSepartor: Boolean,
     location: Location? = frame.safeLocation()
 ) : CoroutineStackFrame(frame, sourcePosition, emptyList(), false, location), XDebuggerFramesList.ItemWithSeparatorAbove {
 
@@ -52,7 +52,11 @@ class CreationCoroutineStackFrame(
         KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
 
     override fun hasSeparatorAbove() =
-        first
+        withSepartor
+
+    override fun setWithSeparator(withSeparator: Boolean) {
+        this.withSepartor = withSeparator
+    }
 }
 
 open class CoroutineStackFrame(
