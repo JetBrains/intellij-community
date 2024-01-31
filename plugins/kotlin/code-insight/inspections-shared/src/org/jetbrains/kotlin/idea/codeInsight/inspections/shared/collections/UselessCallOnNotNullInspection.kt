@@ -24,12 +24,12 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
-        "kotlin.collections.orEmpty" to deleteConversion,
-        "kotlin.sequences.orEmpty" to deleteConversion,
-        "kotlin.text.orEmpty" to deleteConversion,
-        "kotlin.text.isNullOrEmpty" to Conversion("isEmpty"),
-        "kotlin.text.isNullOrBlank" to Conversion("isBlank"),
-        "kotlin.collections.isNullOrEmpty" to Conversion("isEmpty")
+        "kotlin.collections.orEmpty" to Conversion.Delete,
+        "kotlin.sequences.orEmpty" to Conversion.Delete,
+        "kotlin.text.orEmpty" to Conversion.Delete,
+        "kotlin.text.isNullOrEmpty" to Conversion.Replace("isEmpty"),
+        "kotlin.text.isNullOrBlank" to Conversion.Replace("isBlank"),
+        "kotlin.collections.isNullOrEmpty" to Conversion.Replace("isEmpty")
     )
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
@@ -40,7 +40,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         calleeExpression: KtExpression,
         conversion: Conversion
     ) {
-        val newName = conversion.replacementName
+        val newName = (conversion as? Conversion.Replace)?.replacementName
 
         val safeExpression = expression as? KtSafeQualifiedExpression
         val notNullType = expression.receiverExpression.isDefinitelyNotNull()

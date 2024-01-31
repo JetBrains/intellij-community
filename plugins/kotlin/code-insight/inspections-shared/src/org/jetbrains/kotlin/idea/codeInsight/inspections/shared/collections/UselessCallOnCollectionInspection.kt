@@ -24,18 +24,18 @@ import org.jetbrains.kotlin.types.Variance
 
 class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
-        "kotlin.collections.filterNotNull" to deleteConversion,
-        "kotlin.sequences.filterNotNull" to deleteConversion,
-        "kotlin.collections.filterIsInstance" to deleteConversion,
-        "kotlin.sequences.filterIsInstance" to deleteConversion,
-        "kotlin.collections.mapNotNull" to Conversion("map"),
-        "kotlin.sequences.mapNotNull" to Conversion("map"),
-        "kotlin.collections.mapNotNullTo" to Conversion("mapTo"),
-        "kotlin.sequences.mapNotNullTo" to Conversion("mapTo"),
-        "kotlin.collections.mapIndexedNotNull" to Conversion("mapIndexed"),
-        "kotlin.sequences.mapIndexedNotNull" to Conversion("mapIndexed"),
-        "kotlin.collections.mapIndexedNotNullTo" to Conversion("mapIndexedTo"),
-        "kotlin.sequences.mapIndexedNotNullTo" to Conversion("mapIndexedTo")
+        "kotlin.collections.filterNotNull" to Conversion.Delete,
+        "kotlin.sequences.filterNotNull" to Conversion.Delete,
+        "kotlin.collections.filterIsInstance" to Conversion.Delete,
+        "kotlin.sequences.filterIsInstance" to Conversion.Delete,
+        "kotlin.collections.mapNotNull" to Conversion.Replace("map"),
+        "kotlin.sequences.mapNotNull" to Conversion.Replace("map"),
+        "kotlin.collections.mapNotNullTo" to Conversion.Replace("mapTo"),
+        "kotlin.sequences.mapNotNullTo" to Conversion.Replace("mapTo"),
+        "kotlin.collections.mapIndexedNotNull" to Conversion.Replace("mapIndexed"),
+        "kotlin.sequences.mapIndexedNotNull" to Conversion.Replace("mapIndexed"),
+        "kotlin.collections.mapIndexedNotNullTo" to Conversion.Replace("mapIndexedTo"),
+        "kotlin.sequences.mapIndexedNotNullTo" to Conversion.Replace("mapIndexedTo")
     )
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
@@ -81,7 +81,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             }
         }
 
-        val newName = conversion.replacementName
+        val newName = (conversion as? Conversion.Replace)?.replacementName
         if (newName != null) {
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,

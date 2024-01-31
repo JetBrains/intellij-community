@@ -21,14 +21,13 @@ class RenameUselessCallFix(private val newName: String, private val invert: Bool
     override fun getFamilyName() = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        (descriptor.psiElement as? KtQualifiedExpression)?.let {
-            val psiFactory = KtPsiFactory(project)
-            val selectorCallExpression = it.selectorExpression as? KtCallExpression
-            val calleeExpression = selectorCallExpression?.calleeExpression ?: return
-            calleeExpression.replaced(psiFactory.createExpression(newName))
-            selectorCallExpression.renameGivenReturnLabels(psiFactory, calleeExpression.text, newName)
-            if (invert) it.invert()
-        }
+        val qualifiedExpression = descriptor.psiElement as? KtQualifiedExpression ?: return
+        val psiFactory = KtPsiFactory(project)
+        val selectorCallExpression = qualifiedExpression.selectorExpression as? KtCallExpression
+        val calleeExpression = selectorCallExpression?.calleeExpression ?: return
+        calleeExpression.replaced(psiFactory.createExpression(newName))
+        selectorCallExpression.renameGivenReturnLabels(psiFactory, calleeExpression.text, newName)
+        if (invert) qualifiedExpression.invert()
     }
 
     private fun KtCallExpression.renameGivenReturnLabels(factory: KtPsiFactory, labelName: String, newName: String) {
