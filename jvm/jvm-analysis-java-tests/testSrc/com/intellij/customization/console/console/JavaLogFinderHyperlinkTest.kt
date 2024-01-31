@@ -320,4 +320,41 @@ public final class UpperClass {
       )
     )
   }
+
+  fun testNestedClasses2() {
+    LoggingTestUtils.addSlf4J(myFixture)
+    checkColumnFinderJava(
+      fileName = "UpperClass",
+      classText = """
+package com.example;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public final class UpperClass {
+    public static class Inner{
+      public static class Inner2{
+        private static final Logger log = org.slf4j.LoggerFactory.getLogger(Inner2.class);
+      }
+    }
+
+    public static void main(String[] args) {
+        request1("1");
+    }
+
+
+    private static void request1(String number) {
+        System.out.println("com.example.UpperClass${"\$Inner"}${"\$Inner2"} test");
+        Inner.Inner2.log.info("new request1 {}", number);
+    }
+}
+""".trimIndent(),
+      logItems = listOf(
+        LogItem("java.exe", null),
+        LogItem("1", null),
+        LogItem("com.example.UpperClass${"\$Inner"}${"\$Inner2"} test", LogicalPosition(7, 26)),
+        LogItem("[main] INFO com.example.UpperClass${"\$Inner"}${"\$Inner2"} -- new request1 1", LogicalPosition(19, 8)),
+      )
+    )
+  }
 }

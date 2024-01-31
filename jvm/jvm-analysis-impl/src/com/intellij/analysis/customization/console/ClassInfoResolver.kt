@@ -30,7 +30,10 @@ class ClassInfoResolver(val project: Project, private val mySearchScope: GlobalS
       for (cache in list) {
         val classes = cache.getClassesByName(shortClassName, scope)
         for (clazz in classes) {
-          if (!canBeShortenedPackages(clazz, targetPackageName)) {
+          val qualifiedName = clazz.qualifiedName
+          if (!canBeShortenedPackages(qualifiedName, targetPackageName) &&
+              !(targetPackageName.contains("$") &&
+                canBeShortenedPackages(qualifiedName?.replace('$', '.'), targetPackageName.replace('$', '.')))) {
             continue
           }
           result.add(clazz)
@@ -38,8 +41,9 @@ class ClassInfoResolver(val project: Project, private val mySearchScope: GlobalS
       }
       if (result.isEmpty()) {
         val newShortClassName = findSubclassName(shortClassName)
-        if (newShortClassName != null) {
-          val newTargetPackageName = targetPackageName + "." + shortClassName.substring(0, newShortClassName.length + 1)
+        if (newShortClassName?.isNotBlank() == true) {
+          val newTargetPackageName = "$targetPackageName." +
+                                     shortClassName.substring(0, shortClassName.length - newShortClassName.length - 1)
           return findClasses(project, scope, newShortClassName, newTargetPackageName)
         }
       }
@@ -47,15 +51,15 @@ class ClassInfoResolver(val project: Project, private val mySearchScope: GlobalS
     }
 
     /**
-     * @param clazz The class to check.
+     * @param qualifiedName The class qualified name to check.
      * @param targetPackageName The target package name.
      * @return True, if clazz package can be shortened to targetPackageName, false otherwise.
      * There are two popular ways to shorten:
      * 1. Keep only n last characters of the package: aaa.bbb.ccc -> b.ccc
      * 2. Keep only the first n characters of each directory: abc.bcd.cef -> a.b.c
      */
-    private fun canBeShortenedPackages(clazz: PsiClass, targetPackageName: String): Boolean {
-      val qualifiedName = clazz.qualifiedName ?: return false
+    private fun canBeShortenedPackages(qualifiedName: String?, targetPackageName: String): Boolean {
+      if (qualifiedName == null) return false
       val actualPackageName = StringUtil.getPackageName(qualifiedName)
       if (actualPackageName.endsWith(targetPackageName)) return true
       val actualPackageNames = actualPackageName.split(".")
