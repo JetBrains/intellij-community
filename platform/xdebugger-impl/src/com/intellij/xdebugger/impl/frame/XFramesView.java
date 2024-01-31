@@ -156,7 +156,6 @@ public final class XFramesView extends XDebugView {
     });
 
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
-    ScrollingUtil.installActions(myFramesList, myMainPanel, false);
 
     myThreadComboBox = new XDebuggerEmbeddedComboBox<>();
     myThreadComboBox.setSwingPopup(false);
