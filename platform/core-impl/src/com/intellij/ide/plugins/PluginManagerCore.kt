@@ -10,6 +10,7 @@ import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.IdeaPluginPlatform.Companion.fromModuleId
+import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -35,6 +36,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.GraphicsEnvironment
 import java.io.IOException
@@ -44,6 +46,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.*
 import javax.swing.JOptionPane
+import kotlin.io.path.name
 import kotlin.streams.asSequence
 
 @Suppress("SpellCheckingInspection")
@@ -375,7 +378,9 @@ object PluginManagerCore {
                                 logDeferred: Deferred<Logger>?): Deferred<PluginSet> {
     var result = initFuture
     if (result == null) {
-      result = coroutineScope.scheduleLoading(zipFilePoolDeferred, mainClassLoaderDeferred, logDeferred)
+      result = coroutineScope.scheduleLoading(zipFilePoolDeferred = zipFilePoolDeferred,
+                                              mainClassLoaderDeferred = mainClassLoaderDeferred,
+                                              logDeferred = logDeferred)
       initFuture = result
     }
     return result
@@ -1046,4 +1051,25 @@ private fun findClassInPluginThatUsesCoreClassloader(className: @NonNls String, 
     }
   }
   return null
+}
+
+@Internal
+@Experimental
+fun getPluginDistDirByClass(aClass: Class<*>): Path? {
+  val pluginDir = (aClass.classLoader as? PluginClassLoader)?.pluginDescriptor?.pluginPath
+  if (pluginDir != null) {
+    return pluginDir
+  }
+
+  val jarInsideLib = PathManager.getJarForClass(aClass) ?: error("Can't find plugin dist home for ${aClass.simpleName}")
+  if (jarInsideLib.fileName.toString().endsWith("jar", ignoreCase = true)) {
+    return jarInsideLib
+      .parent
+      .also { check(it.name == "lib") { "$it should be lib directory" } }
+      .parent
+  }
+  else {
+    // for now, we support only plugins that for some reason pack plugin.xml into JAR (e.g., kotlin)
+    return null
+  }
 }

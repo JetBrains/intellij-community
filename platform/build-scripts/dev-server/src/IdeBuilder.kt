@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.devServer
@@ -7,8 +7,10 @@ import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.sha3_256
+import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
@@ -18,6 +20,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import java.lang.invoke.MethodHandles
@@ -29,11 +32,12 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.DayOfWeek
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import kotlin.String
 import kotlin.time.Duration.Companion.seconds
 
-private const val PLUGIN_CACHE_DIR_NAME = "plugin-cache"
+private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoolean()
 
 data class BuildRequest(
   @JvmField val platformPrefix: String,
@@ -61,6 +65,7 @@ data class BuildRequest(
   }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest): Path {
   val rootDir = withContext(Dispatchers.IO) {
     val rootDir = request.homePath.normalize().toAbsolutePath().resolve("out/dev-run")
@@ -74,21 +79,24 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
   }
 
-  val runDir = withContext(Dispatchers.IO) {
+  val runDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
     val classifier = if (request.isIdeProfileAware) computeAdditionalModulesFingerprint(request.additionalModules) else ""
     val productDirName = (if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier
 
     val runDir = rootDir.resolve("$productDirName/$productDirName")
     // on start, delete everything to avoid stale data
-    if (Files.isDirectory(runDir)) {
-      val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope {
-        checkBuildModulesModificationAndMark(productConfiguration = productConfiguration, outDir = request.productionClassOutput)
-      }
-      prepareExistingRunDirForProduct(runDir = runDir, usePluginCache = usePluginCache)
+    val files = try {
+      Files.newDirectoryStream(runDir).toList()
     }
-    else {
+    catch (ignored: NoSuchFileException) {
       Files.createDirectories(runDir)
-      Span.current().addEvent("plugin cache is not reused because run dir doesn't exist")
+      return@withContext runDir
+    }
+
+    for (child in files) {
+      launch {
+        NioFiles.deleteRecursively(child)
+      }
     }
     runDir
   }
@@ -142,6 +150,12 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                    artifactTask = artifactTask)
     }
 
+    if (isUnpackedDist) {
+      launch(Dispatchers.IO) {
+        writePluginClassPath(pluginEntries = pluginDistributionEntriesDeferred.await(), runDir = runDir)
+      }
+    }
+
     if (context.generateRuntimeModuleRepository) {
       launch {
         val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
@@ -166,6 +180,44 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     context.messages.close()
   }
   return runDir
+}
+
+private fun writePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, runDir: Path) {
+  val s = StringBuilder()
+  for ((buildDescriptor, entries) in pluginEntries) {
+    val files = entries.asSequence()
+      .filter {
+        val relativeOutputFile = it.relativeOutputFile
+        relativeOutputFile == null || !relativeOutputFile.contains('/')
+      }
+      .map { it.path }
+      .distinct()
+      .toMutableList()
+    if (files.size > 1) {
+      // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
+      var pluginDirIndex = files.indexOfFirst { Files.isDirectory(it) && Files.exists(it.resolve("META-INF/plugin.xml")) }
+      if (pluginDirIndex == -1) {
+        putMoreLikelyPluginJarsFirst(pluginDirName = buildDescriptor.dir.fileName.toString(), filesInLibUnderPluginDir = files)
+        pluginDirIndex = files.indexOfFirst {
+          !Files.isDirectory(it) && HashMapZipFile.load(it).use { zip ->
+            zip.getRawEntry("META-INF/plugin.xml") != null
+          }
+        }
+      }
+
+      check(pluginDirIndex != -1) { "plugin descriptor is not found among\n  ${files.joinToString(separator = "\n  ")}" }
+      if (pluginDirIndex != 0) {
+        files.add(0, files.removeAt(pluginDirIndex))
+      }
+    }
+
+    files.joinTo(buffer = s, separator = ";")
+    // plugin dir as the last item in the list
+    s.append(';').append(buildDescriptor.dir)
+    s.appendLine()
+  }
+
+  Files.writeString(runDir.resolve("plugin-classpath.txt"), s)
 }
 
 private suspend fun computeIdeFingerprint(
@@ -219,7 +271,6 @@ private suspend fun buildPlugins(request: BuildRequest,
   val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
 
   val pluginRootDir = runDir.resolve("plugins")
-  val pluginCacheRootDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
 
   val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
   val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
@@ -250,9 +301,7 @@ private suspend fun buildPlugins(request: BuildRequest,
   artifactTask.join()
 
   val pluginEntries = buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
-                                   outDir = request.productionClassOutput,
                                    platformLayout = platformLayout.await(),
-                                   pluginCacheRootDir = pluginCacheRootDir,
                                    context = context)
 
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
@@ -297,10 +346,8 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
         options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
         options.buildStepsToSkip.add(BuildOptions.FUS_METADATA_BUNDLE_STEP)
 
-        if (System.getProperty("idea.dev.build.unpacked").toBoolean()) {
-          if (options.enableEmbeddedJetBrainsClient) {
-            options.enableEmbeddedJetBrainsClient = false
-          }
+        if (isUnpackedDist && options.enableEmbeddedJetBrainsClient) {
+          options.enableEmbeddedJetBrainsClient = false
         }
 
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
@@ -333,6 +380,7 @@ private fun getBuildDateInSeconds(): Long {
   // licence expired - 30 days
   return now
     .with(if (now.dayOfMonth >= 30) TemporalAdjusters.previous(DayOfWeek.MONDAY) else TemporalAdjusters.firstDayOfMonth())
+    .truncatedTo(ChronoUnit.DAYS)
     .toEpochSecond()
 }
 
@@ -379,32 +427,6 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
   }
 }
 
-private fun checkBuildModulesModificationAndMark(productConfiguration: ProductConfiguration, outDir: Path): Boolean {
-  // intellij.platform.devBuildServer
-  var isApplicable = true
-  for (module in getBuildModules(productConfiguration) + sequenceOf("intellij.platform.devBuildServer",
-                                                                    "intellij.platform.buildScripts",
-                                                                    "intellij.platform.buildScripts.downloader",
-                                                                    "intellij.idea.community.build.tasks")) {
-    val markFile = outDir.resolve(module).resolve(UNMODIFIED_MARK_FILE_NAME)
-    if (Files.exists(markFile)) {
-      continue
-    }
-
-    if (isApplicable) {
-      Span.current().addEvent("plugin cache is not reused because at least $module is changed")
-      isApplicable = false
-    }
-
-    createMarkFile(markFile)
-  }
-
-  if (isApplicable) {
-    Span.current().addEvent("plugin cache will be reused (build modules were not changed)")
-  }
-  return isApplicable
-}
-
 private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> {
   return sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 }
@@ -429,7 +451,11 @@ private suspend fun layoutPlatform(runDir: Path,
       for (entry in entries) {
         val file = entry.path
         // exclude files like ext/platform-main.jar - if file in lib, take only direct children in an account
-        if (file.startsWith(libDir) && libDir.relativize(file).nameCount != 1) {
+        if ((entry.relativeOutputFile ?: "").contains('/')) {
+          continue
+        }
+        if (entry is ModuleOutputEntry &&
+            (entry.moduleName == "intellij.platform.testFramework" || entry.moduleName.startsWith("intellij.platform.unitTestMode"))) {
           continue
         }
 
@@ -461,44 +487,6 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
     return BigInteger(1, sha3_256().digest(additionalModules.sorted()
                                              .joinToString(separator = ",")
                                              .toByteArray())).toString(Character.MAX_RADIX)
-  }
-}
-
-private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePluginCache: Boolean) {
-  launch {
-    for (child in Files.newDirectoryStream(runDir).use { it.sorted() }) {
-      if (child.endsWith("plugins") || child.endsWith(PLUGIN_CACHE_DIR_NAME)) {
-        continue
-      }
-
-      if (Files.isDirectory(child)) {
-        Files.newDirectoryStream(child).use { stream ->
-          for (file in stream) {
-            NioFiles.deleteRecursively(file)
-          }
-        }
-      }
-      else {
-        Files.delete(child)
-      }
-    }
-  }
-
-  launch {
-    val pluginCacheDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
-    val pluginDir = runDir.resolve("plugins")
-    NioFiles.deleteRecursively(pluginCacheDir)
-    if (usePluginCache) {
-      // move to cache
-      try {
-        Files.move(pluginDir, pluginCacheDir)
-      }
-      catch (_: NoSuchFileException) {
-      }
-    }
-    else {
-      NioFiles.deleteRecursively(pluginDir)
-    }
   }
 }
 

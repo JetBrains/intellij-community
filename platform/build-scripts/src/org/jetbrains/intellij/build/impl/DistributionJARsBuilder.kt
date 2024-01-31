@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -44,6 +45,8 @@ import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
 import kotlin.io.path.useLines
 
 /**
@@ -638,10 +641,10 @@ fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture,
   return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 }
 
-fun checkOutputOfPluginModules(mainPluginModule: String,
-                               includedModules: Collection<ModuleItem>,
-                               moduleExcludes: Map<String, List<String>>,
-                               context: BuildContext) {
+private fun checkOutputOfPluginModules(mainPluginModule: String,
+                                       includedModules: Collection<ModuleItem>,
+                                       moduleExcludes: Map<String, List<String>>,
+                                       context: BuildContext) {
   // don't check modules which are not direct children of lib/ directory
   val modulesWithPluginXml = mutableListOf<String>()
   for (item in includedModules) {
@@ -649,7 +652,7 @@ fun checkOutputOfPluginModules(mainPluginModule: String,
       val moduleName = item.moduleName
       if (containsFileInOutput(moduleName = moduleName,
                                filePath = "META-INF/plugin.xml",
-                               excludes = moduleExcludes[moduleName] ?: emptyList(),
+                               excludes = moduleExcludes.get(moduleName) ?: emptyList(),
                                context = context)) {
         modulesWithPluginXml.add(moduleName)
       }
@@ -663,11 +666,12 @@ fun checkOutputOfPluginModules(mainPluginModule: String,
     "Multiple modules (${modulesWithPluginXml.joinToString()}) from \'$mainPluginModule\' plugin " +
     "contain plugin.xml files so the plugin won\'t work properly"
   }
+
   for (module in includedModules.asSequence().map { it.moduleName }.distinct()) {
     if (module == "intellij.java.guiForms.rt" ||
         !containsFileInOutput(moduleName = module,
                               filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
-                              excludes = moduleExcludes[module] ?: emptyList(),
+                              excludes = moduleExcludes.get(module) ?: emptyList(),
                               context = context)) {
       "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
@@ -681,14 +685,17 @@ private fun containsFileInOutput(moduleName: String,
                                  excludes: Collection<String>,
                                  context: BuildContext): Boolean {
   val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(moduleName))
-  val fileInOutput = moduleOutput.resolve(filePath)
-  if (Files.notExists(fileInOutput)) {
+  if (Files.notExists(moduleOutput.resolve(filePath))) {
     return false
   }
 
-  val set = FileSet(moduleOutput).include(filePath)
-  excludes.forEach(set::exclude)
-  return !set.isEmpty()
+  for (exclude in excludes) {
+    if (antToRegex(exclude).matches(FileUtilRt.toSystemIndependentName(filePath))) {
+      return false
+    }
+  }
+
+  return true
 }
 
 fun getPluginAutoUploadFile(context: BuildContext): Path? {
@@ -740,11 +747,14 @@ suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): L
     buildJar(targetFile = antTargetFile, sources = sources)
 
     sources.map { source ->
-      ProjectLibraryEntry(path = antTargetFile,
-                          data = libraryData,
-                          libraryFile = source.file,
-                          hash = source.hash,
-                          size = source.size)
+      ProjectLibraryEntry(
+        path = antTargetFile,
+        data = libraryData,
+        libraryFile = source.file,
+        hash = source.hash,
+        size = source.size,
+        relativeOutputFile = null,
+      )
     }
   }
 }
@@ -1017,6 +1027,7 @@ private suspend fun layoutAdditionalResources(layout: BaseLayout, context: Build
   }
 }
 
+@OptIn(ExperimentalPathApi::class)
 private suspend fun layoutArtifacts(layout: BaseLayout,
                                     context: BuildContext,
                                     copyFiles: Boolean,
@@ -1038,7 +1049,7 @@ private suspend fun layoutArtifacts(layout: BaseLayout,
     if (artifact.outputFilePath == artifact.outputPath) {
       if (copyFiles) {
         withContext(Dispatchers.IO) {
-          copyDir(sourcePath, artifactPath)
+          sourcePath.copyToRecursively(artifactPath, followLinks = false)
         }
       }
     }
@@ -1063,6 +1074,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
                                     moduleName = element.moduleReference.moduleName,
                                     size = 0,
                                     hash = 0,
+                                    relativeOutputFile = "",
                                     reason = "artifact: ${artifact.name}"))
     }
     else if (element is JpsTestModuleOutputPackagingElement) {
@@ -1081,7 +1093,12 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
       }
       else {
         val libraryData = ProjectLibraryData(library.name, LibraryPackMode.MERGED, reason = "<- artifact ${artifact.name}")
-        entries.add(ProjectLibraryEntry(path = artifactFile, data = libraryData, libraryFile = null, hash = 0, size = 0))
+        entries.add(ProjectLibraryEntry(path = artifactFile,
+                                        data = libraryData,
+                                        libraryFile = null,
+                                        hash = 0,
+                                        size = 0,
+                                        relativeOutputFile = null))
       }
     }
   }
@@ -1105,47 +1122,53 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
     stepId = BuildOptions.ARCHIVE_PLUGINS
   ) {
     val json by lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
-    withContext(Dispatchers.IO) {
-      for ((source, target, optimized) in items) {
-        launch {
-          spanBuilder("archive plugin")
-            .setAttribute("input", source.toString())
-            .setAttribute("outputFile", target.toString())
-            .setAttribute("optimizedZip", optimized)
-            .useWithScope {
-              if (optimized) {
-                writeNewZip(target, compress = compress, withOptimizedMetadataEnabled = false) { zipCreator ->
-                  ZipArchiver(zipCreator).use { archiver ->
-                    if (Files.isDirectory(source)) {
-                      archiver.setRootDir(source, source.fileName.toString())
-                      archiveDir(startDir = source, archiver = archiver, excludes = null)
-                    }
-                    else {
-                      archiver.setRootDir(source.parent)
-                      archiver.addFile(source)
-                    }
-                  }
-                }
-              }
-              else {
-                writeNewFile(target) { outFileChannel ->
-                  NoDuplicateZipArchiveOutputStream(outFileChannel, compress = context.options.compressZipFiles).use { out ->
-                    out.setUseZip64(Zip64Mode.Never)
-                    out.dir(source, "${source.fileName}/", entryCustomizer = { entry, file, _ ->
-                      if (Files.isExecutable(file)) {
-                        entry.unixMode = executableFileUnixMode
-                      }
-                    })
-                  }
-                }
-              }
-            }
-          if (withBlockMap) {
-            spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).useWithScope {
-              buildBlockMap(target, json)
-            }
+    for ((source, target, optimized) in items) {
+      launch {
+        spanBuilder("archive plugin")
+          .setAttribute("input", source.toString())
+          .setAttribute("outputFile", target.toString())
+          .setAttribute("optimizedZip", optimized)
+          .useWithScope {
+            archivePlugin(optimized = optimized, target = target, compress = compress, source = source, context = context)
+          }
+        if (withBlockMap) {
+          spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).useWithScope {
+            buildBlockMap(target, json)
           }
         }
+      }
+    }
+  }
+}
+
+private fun archivePlugin(optimized: Boolean,
+                      target: Path,
+                      compress: Boolean,
+                      source: Path,
+                      context: BuildContext) {
+  if (optimized) {
+    writeNewZip(target, compress = compress, withOptimizedMetadataEnabled = false) { zipCreator ->
+      ZipArchiver(zipCreator).use { archiver ->
+        if (Files.isDirectory(source)) {
+          archiver.setRootDir(source, source.fileName.toString())
+          archiveDir(startDir = source, archiver = archiver, excludes = null)
+        }
+        else {
+          archiver.setRootDir(source.parent)
+          archiver.addFile(source)
+        }
+      }
+    }
+  }
+  else {
+    writeNewFile(target) { outFileChannel ->
+      NoDuplicateZipArchiveOutputStream(outFileChannel, compress = context.options.compressZipFiles).use { out ->
+        out.setUseZip64(Zip64Mode.Never)
+        out.dir(source, "${source.fileName}/", entryCustomizer = { entry, file, _ ->
+          if (Files.isExecutable(file)) {
+            entry.unixMode = executableFileUnixMode
+          }
+        })
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
@@ -14,7 +14,7 @@ import kotlinx.coroutines.async
 import java.nio.file.Files
 import java.nio.file.Path
 
-class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
+internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
   private val productModules by lazy {
     val rootModuleName = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
     if (rootModuleName == null) {
@@ -86,27 +86,27 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
     val allResourceRoots = includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       loadDescriptorFromDir(
-        file = mainResourceRoot,
+        dir = mainResourceRoot,
         descriptorRelativePath = PluginManagerCore.PLUGIN_XML_PATH,
-        pluginPath = mainResourceRoot,
+        pluginDir = mainResourceRoot,
         context = context,
         isBundled = true,
         isEssential = false,
         useCoreClassLoader = false,
-        pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
+        pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
       )
     }
     else {
       loadDescriptorFromJar(
         file = mainResourceRoot,
-        fileName = PluginManagerCore.PLUGIN_XML,
+        descriptorRelativePath = PluginManagerCore.PLUGIN_XML_PATH,
         pathResolver = ModuleBasedPluginXmlPathResolver(allResourceRoots.toList(), includedModules),
         parentContext = context,
         isBundled = true,
         isEssential = false,
         useCoreClassLoader = false,
-        pluginPath = mainResourceRoot.parent.parent,
-        pool = zipFilePool
+        pluginDir = mainResourceRoot.parent.parent,
+        pool = zipFilePool,
       )
     }
     val requiredLibraries = collectRequiredLibraryModules(pluginModuleGroup)

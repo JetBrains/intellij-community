@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build
 
 import com.dynatrace.hash4j.hashing.Hashing
+import org.jetbrains.intellij.build.impl.computeHashForModuleOutput
 import java.nio.file.*
 import java.security.MessageDigest
 import java.util.*
@@ -105,7 +106,7 @@ private class ModuleOutputSourceAndCacheStrategy(override val source: DirSource,
   override fun getSize(): Long = 0
 
   override fun updateDigest(digest: MessageDigest) {
-    hash = computeHashForModuleOutput(source.dir)
+    hash = computeHashForModuleOutput(source)
     digest.update(ByteArray(Long.SIZE_BYTES) { (hash shr (8 * it)).toByte() })
   }
 }
@@ -121,21 +122,4 @@ private class InMemorySourceAndCacheStrategy(override val source: InMemoryConten
   override fun updateDigest(digest: MessageDigest) {
     digest.update(source.data)
   }
-}
-
-private fun computeHashForModuleOutput(dir: Path): Long {
-  val markFile = dir.resolve(UNMODIFIED_MARK_FILE_NAME)
-  val lastModified = try {
-    Files.getLastModifiedTime(markFile).toMillis()
-  }
-  catch (e: NoSuchFileException) {
-    if (createMarkFile(markFile)) {
-      Files.getLastModifiedTime(markFile).toMillis()
-    }
-    else {
-      // module doesn't exist at all
-      0
-    }
-  }
-  return lastModified
 }

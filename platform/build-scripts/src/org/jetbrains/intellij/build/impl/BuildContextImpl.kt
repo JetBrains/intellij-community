@@ -12,6 +12,10 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.jarCache.JarCacheManager
+import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
+import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
+import org.jetbrains.intellij.build.jarCache.SourceBuilder
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -311,7 +315,7 @@ class BuildContextImpl(
           digest.update(Byte.MIN_VALUE)
         }
 
-        override suspend fun produce() {
+        override suspend fun produce(targetFile: Path) {
           buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
         }
       },

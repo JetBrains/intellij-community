@@ -120,7 +120,9 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean = true): BuildContext
+  fun createCopyForProduct(productProperties: ProductProperties,
+                           projectHomeForCustomizers: Path,
+                           prepareForBuild: Boolean = true): BuildContext
 
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 }

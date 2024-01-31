@@ -46,7 +46,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
-    <orderEntry type="module" module-name="intellij.groovy.constants.rt" />
     <orderEntry type="module" module-name="intellij.groovy.jps" />
     <orderEntry type="module" module-name="intellij.platform.statistics.config" />
     <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />

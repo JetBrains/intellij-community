@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
@@ -917,7 +917,7 @@ private fun parseReleaseDate(dateString: String): LocalDate? {
 
   var formatter = dateTimeFormatter
   if (formatter == null) {
-    formatter = DateTimeFormatter.ofPattern("yyyyMMdd", Locale.US)
+    formatter = DateTimeFormatter.ofPattern("yyyyMMdd", Locale.US)!!
     dateTimeFormatter = formatter
   }
 

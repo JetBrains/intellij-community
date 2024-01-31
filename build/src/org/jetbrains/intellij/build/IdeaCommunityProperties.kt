@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 
 import java.nio.file.Path
@@ -90,13 +92,15 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
     super.copyAdditionalFiles(context, targetDirectory)
-    FileSet(context.paths.communityHomeDir)
-      .include("LICENSE.txt")
-      .include("NOTICE.txt")
-      .copyToDir(Path.of(targetDirectory))
-    FileSet(context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
-      .includeAll()
-      .copyToDir(Path.of(targetDirectory, "bin"))
+
+    val targetDir = Path.of(targetDirectory)
+    copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)
+    copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), targetDir)
+
+    copyDir(
+      sourceDir = context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"),
+      targetDir = targetDir.resolve("bin"),
+    )
     bundleExternalPlugins(context, targetDirectory)
   }
 

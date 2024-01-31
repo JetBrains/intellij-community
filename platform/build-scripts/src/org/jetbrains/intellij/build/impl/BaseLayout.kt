@@ -42,7 +42,8 @@ sealed class BaseLayout {
   /** module name to name of the module library */
   val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
 
-  val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
+  @JvmField
+  internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
 
   internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
     private set

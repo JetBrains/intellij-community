@@ -88,6 +88,8 @@ data class DirSource(@JvmField val dir: Path,
   override var size: Int = 0
   override var hash: Long = 0
 
+  var exist: Boolean? = null
+
   override fun toString(): String {
     val shortPath = if (dir.startsWith(USER_HOME)) "~/${USER_HOME.relativize(dir)}" else dir.toString()
     return "dir(dir=$shortPath, excludes=${excludes.size})"

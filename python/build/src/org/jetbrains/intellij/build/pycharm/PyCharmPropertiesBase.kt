@@ -1,8 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.JetBrainsProductProperties
+import org.jetbrains.intellij.build.TEST_FRAMEWORK_WITH_JAVA_RT
+import org.jetbrains.intellij.build.impl.copyDirWithFileFilter
 import java.nio.file.Path
+import java.util.function.Predicate
 
 const val PYDEVD_PACKAGE: String = "pydevd_package"
 
@@ -27,10 +32,12 @@ abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
     val tasks = BuildTasks.create(context)
     tasks.zipSourcesOfModulesBlocking(listOf("intellij.python.community", "intellij.python.psi"), Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"))
 
-    FileSet(Path.of(getKeymapReferenceDirectory(context)))
-      .include("*.pdf")
-      .copyToDir(Path.of(targetDirectory, "help"))
+    copyDirWithFileFilter(
+      fromDir = getKeymapReferenceDirectory(context),
+      targetDir = Path.of(targetDirectory, "help"),
+      fileFilter = Predicate { it.toString().endsWith(".pdf") }
+    )
   }
 
-  open fun getKeymapReferenceDirectory(context: BuildContext) = "${context.paths.projectHome}/python/help"
+  open fun getKeymapReferenceDirectory(context: BuildContext): Path = context.paths.projectHome.resolve("python/help")
 }

@@ -1,12 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.*
-import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -332,8 +331,9 @@ class PluginLayout private constructor(val mainModule: String,
      * Do not automatically include module libraries from `moduleNames`
      * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
      */
+    @Obsolete
     fun doNotCopyModuleLibrariesAutomatically(moduleNames: List<String>) {
-      layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
+      layout.modulesWithExcludedModuleLibraries = layout.modulesWithExcludedModuleLibraries.toPersistentSet().addAll(moduleNames)
     }
 
     /**

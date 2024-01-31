@@ -50,7 +50,6 @@ class CacheDirCleanup(private val cacheDir: Path, private val maxAccessTimeAge: 
            Files.getLastModifiedTime(lastCleanupMarkerFile).toMillis() < (System.currentTimeMillis() - CLEANUP_EVERY_DURATION.inWholeMilliseconds)
   }
 
-  @OptIn(ExperimentalPathApi::class)
   @Throws(IOException::class)
   private fun cleanupCacheDir() {
     val cacheFiles = try {
@@ -69,50 +68,61 @@ class CacheDirCleanup(private val cacheDir: Path, private val maxAccessTimeAge: 
     val maxTimeMs = maxAccessTimeAge.inWholeMilliseconds
     val currentTime = System.currentTimeMillis()
     for (file in cacheFiles) {
-      val fileName = file.fileName.toString()
-      if (fileName.endsWith(MARKED_FOR_CLEANUP_SUFFIX)) {
-        val realFile = cacheDir.resolve(fileName.substring(0, fileName.length - MARKED_FOR_CLEANUP_SUFFIX.length))
-        if (!cacheFiles.contains(realFile)) {
-          LOG.info("CACHE-CLEANUP: Removing orphan marker: $file")
-          Files.delete(file)
-        }
-        continue
+      cleanupCacheFile(file = file, cacheFiles = cacheFiles, currentTime = currentTime, maxTimeMs = maxTimeMs)
+    }
+  }
+
+  @OptIn(ExperimentalPathApi::class)
+  private fun cleanupCacheFile(file: Path, cacheFiles: HashSet<Path>, currentTime: Long, maxTimeMs: Long) {
+    val fileName = file.fileName.toString()
+    if (fileName.endsWith(MARKED_FOR_CLEANUP_SUFFIX)) {
+      val realFile = cacheDir.resolve(fileName.substring(0, fileName.length - MARKED_FOR_CLEANUP_SUFFIX.length))
+      if (!cacheFiles.contains(realFile)) {
+        LOG.info("CACHE-CLEANUP: Removing orphan marker: $file")
+        Files.deleteIfExists(file)
       }
+      return
+    }
 
-      val markFile = cacheDir.resolve(fileName + MARKED_FOR_CLEANUP_SUFFIX)
-      val lastAccessTime = Files.getLastModifiedTime(file)
-      if (lastAccessTime.toMillis() > (currentTime - maxTimeMs)) {
-        if (cacheFiles.contains(markFile)) {
-          // file was recently updated, un-mark it
-          Files.delete(markFile)
-        }
-        continue
-      }
+    val markFile = cacheDir.resolve(fileName + MARKED_FOR_CLEANUP_SUFFIX)
+    val lastAccessTime = try {
+      Files.getLastModifiedTime(file)
+    }
+    catch (ignore: NoSuchFileException) {
+      return
+    }
 
-      if (Files.exists(markFile)) {
-        // the file is old AND already marked for cleanup - delete
-        LOG.info("CACHE-CLEANUP: Deleting file/directory '$file': it's too old and marked for cleanup")
-
-        // renaming file to a temporary name to prevent deletion of currently opened files, just in case
-        val toRemove = cacheDir.resolve("$fileName.toRemove.${UUID.randomUUID()}")
-        try {
-          Files.move(file, toRemove)
-          toRemove.deleteRecursively()
-        }
-        catch (e: Throwable) {
-          val writer = StringWriter()
-          e.printStackTrace(PrintWriter(writer))
-          LOG.warning("""
-  Unable to delete file '$file': ${e.message}
-  $writer
-  """.trimIndent())
-        }
+    if (lastAccessTime.toMillis() > (currentTime - maxTimeMs)) {
+      if (cacheFiles.contains(markFile)) {
+        // file was recently updated, un-mark it
         Files.deleteIfExists(markFile)
       }
-      else {
-        LOG.info("CACHE-CLEANUP: Marking File '$file' for deletion, it'll be removed on the next cleanup run")
-        Files.newByteChannel(markFile, EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)).close()
+      return
+    }
+
+    if (Files.exists(markFile)) {
+      // the file is old AND already marked for cleanup - delete
+      LOG.info("CACHE-CLEANUP: Deleting file/directory '$file': it's too old and marked for cleanup")
+
+      // renaming file to a temporary name to prevent deletion of currently opened files, just in case
+      val toRemove = cacheDir.resolve("$fileName.toRm.${UUID.randomUUID()}".takeLast(255))
+      try {
+        Files.move(file, toRemove)
+        toRemove.deleteRecursively()
       }
+      catch (e: Throwable) {
+        val writer = StringWriter()
+        e.printStackTrace(PrintWriter(writer))
+        LOG.warning("""
+    Unable to delete file '$file': ${e.message}
+    $writer
+    """.trimIndent())
+      }
+      Files.deleteIfExists(markFile)
+    }
+    else {
+      LOG.info("CACHE-CLEANUP: Marking File '$file' for deletion, it'll be removed on the next cleanup run")
+      Files.newByteChannel(markFile, EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)).close()
     }
   }
 }

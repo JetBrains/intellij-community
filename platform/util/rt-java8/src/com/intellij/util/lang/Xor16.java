@@ -8,9 +8,10 @@ import java.nio.ByteBuffer;
  * <p>
  * It needs 1.23 log(1/fpp) bits per key. It is related to the BDZ algorithm [1]
  * (a minimal perfect hash function algorithm).
- * <p>
- * [1] paper: Simple and Space-Efficient Minimal Perfect Hash Functions -
- * https://cmph.sourceforge.net/papers/wads07.pdf
+ *
+ * @see <a href="https://cmph.sourceforge.net/papers/wads07.pdf">Simple and Space-Efficient Minimal Perfect Hash Functions</a>
+ * @see <a href="https://stackoverflow.com/a/67527508">StackOverflow post</a>
+ * @see <a href="https://github.com/FastFilter/fastfilter_java">fastfilter_java on GitHub</a>
  */
 public final class Xor16 {
   private static final int BITS_PER_FINGERPRINT = 16;

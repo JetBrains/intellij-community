@@ -1,16 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.ZipFilePool
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
- * This class is temporarily added to support two ways of loading the plugin descriptors: [the old one][PathBasedProductLoadingStrategy] 
+ * This class is temporarily added to support two ways of loading the plugin descriptors: [the old one][PathBasedProductLoadingStrategy]
  * which is based on layout of JAR files in the IDE installation directory and [the new one][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy]
  * which uses information from runtime module descriptors.
  */
@@ -19,7 +26,7 @@ abstract class ProductLoadingStrategy {
   companion object {
     @Volatile
     private var ourStrategy: ProductLoadingStrategy? = null
-    
+
     var strategy: ProductLoadingStrategy
       get() {
         if (ourStrategy == null) {
@@ -46,7 +53,7 @@ abstract class ProductLoadingStrategy {
   abstract fun isOptionalProductModule(moduleName: String): Boolean
 
   /**
-   * Returns `true` if the loader should search for META-INF/plugin.xml files in the core application classpath and load them.  
+   * Returns `true` if the loader should search for META-INF/plugin.xml files in the core application classpath and load them.
    */
   abstract val shouldLoadDescriptorsFromCoreClassPath: Boolean
 }
@@ -60,25 +67,114 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
                                             isUnitTestMode: Boolean,
                                             context: DescriptorListLoadingContext,
                                             zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
-    val effectiveBundledPluginDir = bundledPluginDir ?: if (isUnitTestMode) {
-      null
-    }
-    else {
-      Paths.get(PathManager.getPreInstalledPluginsPath())
+    if (bundledPluginDir != null) {
+      val classPathFile = bundledPluginDir.parent.resolve("plugin-classpath.txt")
+      if (Files.exists(classPathFile)) {
+        return loadFromPluginClasspathDescriptor(classPathFile = classPathFile,
+                                                 scope = scope,
+                                                 context = context,
+                                                 zipFilePool = zipFilePool!!)
+      }
     }
 
-    return if (effectiveBundledPluginDir == null) {
-      emptyList()
-    }
-    else {
-      scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
+    val effectiveBundledPluginDir = bundledPluginDir
+                                    ?: (if (isUnitTestMode) null else Paths.get(PathManager.getPreInstalledPluginsPath()))
+                                    ?: return emptyList()
+    return scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
+  }
+
+  private fun loadFromPluginClasspathDescriptor(classPathFile: Path?,
+                                                scope: CoroutineScope,
+                                                context: DescriptorListLoadingContext,
+                                                zipFilePool: ZipFilePool): List<Deferred<IdeaPluginDescriptorImpl?>> {
+    return Files.readAllLines(classPathFile).mapNotNull { line ->
+      if (line.isEmpty()) {
+        return@mapNotNull null
+      }
+
+      val files = line.splitToSequence(';').map { Paths.get(it) }.toList()
+      scope.asyncOrNull(files) {
+        val file = files.first()
+        val classPath = files.subList(0, files.size - 1)
+        val dataLoader = MixedDirAndJarDataLoader(files = classPath, pool = zipFilePool)
+        val pluginPathResolver = PluginXmlPathResolver(classPath)
+        val raw = readModuleDescriptor(
+          input = if (file.toString().endsWith(".jar")) {
+            dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH)!!
+          }
+          else {
+            Files.newInputStream(file.resolve(PluginManagerCore.PLUGIN_XML_PATH))
+          },
+          readContext = context,
+          pathResolver = pluginPathResolver,
+          dataLoader = dataLoader,
+          includeBase = null,
+          readInto = null,
+          locationSource = file.toString(),
+        )
+
+        val descriptor = IdeaPluginDescriptorImpl(
+          raw = raw,
+          path = files.last(),
+          isBundled = true,
+          id = null,
+          moduleName = null,
+        )
+        context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
+        descriptor.readExternal(raw = raw, pathResolver = pluginPathResolver, context = context, isSub = false, dataLoader = dataLoader)
+        descriptor.jarFiles = classPath
+        descriptor
+      }
     }
   }
 
-  override fun isOptionalProductModule(moduleName: String): Boolean {
-    return false
-  }
+  override fun isOptionalProductModule(moduleName: String): Boolean = false
 
   override val shouldLoadDescriptorsFromCoreClassPath: Boolean
     get() = true
-}  
+}
+
+private fun CoroutineScope.asyncOrNull(files: List<Path>, task: () -> IdeaPluginDescriptorImpl): Deferred<IdeaPluginDescriptorImpl?> {
+  return async {
+    try {
+      task()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      PluginManagerCore.logger.warn("Cannot load plugin descriptor, files:\n  ${files.joinToString(separator = "\n  ")}", e)
+      null
+    }
+  }
+}
+
+private class MixedDirAndJarDataLoader(private val files: List<Path>, override val pool: ZipFilePool) : DataLoader {
+  // load must return result for sub
+  override fun isExcludedFromSubSearch(jarFile: Path): Boolean = true
+
+  override val emptyDescriptorIfCannotResolve: Boolean
+    get() = true
+
+  override fun load(path: String): InputStream? {
+    val effectivePath = if (path[0] == '/') path.substring(1) else path
+    for (file in files) {
+      if (file.fileName.toString().endsWith(".jar")) {
+        pool.load(file).loadZipEntry(effectivePath)?.let {
+          return it
+        }
+      }
+      else {
+        try {
+          return Files.newInputStream(file.resolve(effectivePath))
+        }
+        catch (ignore: NoSuchFileException) {
+        }
+      }
+    }
+
+    return null
+  }
+
+  override fun toString(): String = "plugin-classpath.txt based data loader"
+}

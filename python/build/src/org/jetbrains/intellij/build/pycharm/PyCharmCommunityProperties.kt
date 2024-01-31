@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
 import kotlinx.collections.immutable.persistentMapOf
@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.PluginLayout
-
+import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -61,10 +61,9 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
   override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
     super.copyAdditionalFilesBlocking(context, targetDirectory)
 
-    FileSet(context.paths.communityHomeDir)
-      .include("LICENSE.txt")
-      .include("NOTICE.txt")
-      .copyToDir(Path.of(targetDirectory, "license"))
+    val targetDir = Path.of(targetDirectory, "license")
+    copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)
+    copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), targetDir)
   }
 
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {

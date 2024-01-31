@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.jarCache
 
 import com.intellij.util.io.sha3_224
 import io.opentelemetry.api.common.AttributeKey
@@ -10,6 +10,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
@@ -30,44 +31,6 @@ private const val metaSuffix = ".json"
 
 private const val cacheVersion: Byte = 6
 
-internal interface SourceBuilder {
-  val useCacheAsTargetFile: Boolean
-
-  // one module (source) can be included in different plugins - cache per plugin
-  fun updateDigest(digest: MessageDigest)
-
-  suspend fun produce()
-}
-
-internal sealed interface JarCacheManager {
-  suspend fun computeIfAbsent(sources: List<Source>,
-                              targetFile: Path,
-                              nativeFiles: MutableMap<ZipSource, List<String>>?,
-                              span: Span,
-                              producer: SourceBuilder): Path
-
-  fun validateHash(source: Source)
-
-  fun cleanup()
-}
-
-internal data object NonCachingJarCacheManager : JarCacheManager {
-  override suspend fun computeIfAbsent(sources: List<Source>,
-                                       targetFile: Path,
-                                       nativeFiles: MutableMap<ZipSource, List<String>>?,
-                                       span: Span,
-                                       producer: SourceBuilder): Path {
-    producer.produce()
-    return targetFile
-  }
-
-  override fun validateHash(source: Source) {
-  }
-
-  override fun cleanup() {
-  }
-}
-
 private val json by lazy {
   Json {
     ignoreUnknownKeys = true
@@ -82,8 +45,10 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
     Files.createDirectories(cacheDir)
   }
 
-  override fun cleanup() {
-    CacheDirCleanup(cacheDir = cacheDir, maxAccessTimeAge = 2.days).runCleanupIfRequired()
+  override suspend fun cleanup() {
+    withContext(Dispatchers.IO) {
+      CacheDirCleanup(cacheDir = cacheDir, maxAccessTimeAge = 2.days).runCleanupIfRequired()
+    }
   }
 
   override suspend fun computeIfAbsent(sources: List<Source>,
@@ -97,12 +62,9 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
     // xxh3 is not used as it is not secure and moreover, better to stick to JDK API
     val hash = sha3_224()
     hash.update(cacheVersion)
-    hash.update(items.size.toByte())
-    hash.update((items.size shr 8).toByte())
+    hashAsShort(hash, items.size)
     for (source in items) {
-      val pathLength = source.path.length
-      hash.update(pathLength.toByte())
-      hash.update((pathLength shr 8).toByte())
+      hashAsShort(hash, source.path.length)
       hash.update(source.path.encodeToByteArray())
 
       source.updateDigest(hash)
@@ -136,13 +98,31 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
       // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
 
-      if (producer.useCacheAsTargetFile) {
-        return cacheFile
-      }
-      return targetFile
+      return if (producer.useCacheAsTargetFile) cacheFile else targetFile
     }
 
-    producer.produce()
+    val tempFile = cacheDir.resolve("$cacheName.temp-${java.lang.Long.toUnsignedString(System.currentTimeMillis(), Character.MAX_RADIX)}"
+                                  .takeLast(255))
+    var fileMoved = false
+    try {
+      producer.produce(tempFile)
+      try {
+        Files.move(tempFile, cacheFile)
+        fileMoved = true
+      }
+      catch (e: FileAlreadyExistsException) {
+        // concurrent access?
+        span.addEvent("cache file $cacheFile already exists")
+        check(Files.size(tempFile) == Files.size(cacheFile)) {
+          "file=$targetFile, cacheFile=$cacheFile, sources=$sources"
+        }
+      }
+    }
+    finally {
+      if (!fileMoved) {
+        Files.deleteIfExists(tempFile)
+      }
+    }
 
     val sourceCacheItems = items.map { source ->
       SourceCacheItem(path = source.path,
@@ -152,16 +132,10 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
     }
 
     coroutineScope {
-      launch {
-        try {
-          Files.copy(targetFile, cacheFile)
-        }
-        catch (e: FileAlreadyExistsException) {
-          // concurrent access?
-          span.addEvent("Cache file $cacheFile already exists")
-          check(Files.size(targetFile) == Files.size(cacheFile)) {
-            "targetFile=$targetFile, cacheFile=$cacheFile, sources=$sources"
-          }
+      if (!producer.useCacheAsTargetFile) {
+        launch {
+          Files.createDirectories(targetFile.parent)
+          Files.copy(cacheFile, targetFile)
         }
       }
 
@@ -174,10 +148,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
       }
     }
 
-    if (producer.useCacheAsTargetFile) {
-      return cacheFile
-    }
-    return targetFile
+    return if (producer.useCacheAsTargetFile) cacheFile else targetFile
   }
 
   override fun validateHash(source: Source) {
@@ -187,13 +158,24 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
   }
 }
 
+private fun hashAsShort(hash: MessageDigest, value: Int) {
+  hash.update(value.toByte())
+  hash.update((value shr 8).toByte())
+}
+
 private fun checkCache(cacheMetadataFile: Path,
                        cacheFile: Path,
                        sources: List<Source>,
                        items: List<SourceAndCacheStrategy>,
                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                        span: Span): Boolean {
-  if (Files.notExists(cacheMetadataFile) || Files.notExists(cacheFile)) {
+  if (Files.notExists(cacheMetadataFile)) {
+    Files.deleteIfExists(cacheFile)
+    return false
+  }
+
+  if (Files.notExists(cacheFile)) {
+    Files.deleteIfExists(cacheMetadataFile)
     return false
   }
 
@@ -202,12 +184,21 @@ private fun checkCache(cacheMetadataFile: Path,
     json.decodeFromString<JarCacheItem>(metadataString)
   }
   catch (e: SerializationException) {
-    span.addEvent("Metadata $metadataString not equal to ${sources}", Attributes.of(AttributeKey.stringKey("error"), e.toString()))
+    span.addEvent("cannot decode metadata $metadataString", Attributes.of(
+      AttributeKey.stringArrayKey("sources"), sources.map { it.toString() },
+      AttributeKey.stringKey("error"), e.toString(),
+    ))
+
+    Files.deleteIfExists(cacheFile)
+    Files.deleteIfExists(cacheMetadataFile)
     return false
   }
 
   if (!checkSavedAndActualSources(metadata = metadata, sources = sources, items = items)) {
-    span.addEvent("Metadata $metadataString not equal to $sources")
+    span.addEvent("metadata $metadataString not equal to $sources")
+
+    Files.deleteIfExists(cacheFile)
+    Files.deleteIfExists(cacheMetadataFile)
     return false
   }
 

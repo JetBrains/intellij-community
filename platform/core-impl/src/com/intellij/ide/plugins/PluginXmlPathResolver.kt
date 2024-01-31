@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
@@ -11,35 +11,6 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
   companion object {
     // don't use Kotlin emptyList here
     @JvmField val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(Collections.emptyList())
-
-    private fun loadUsingZipFile(readInto: RawPluginDescriptor,
-                                 readContext: ReadModuleContext,
-                                 pathResolver: PathResolver,
-                                 dataLoader: DataLoader,
-                                 jarFile: Path,
-                                 relativePath: String,
-                                 includeBase: String?): Boolean {
-      val zipFile = ZipFile(jarFile.toFile())
-      try {
-        // do not use kotlin stdlib here
-        val entry = zipFile.getEntry(if (relativePath.startsWith("/")) relativePath.substring(1) else relativePath) ?: return false
-        readModuleDescriptor(input = zipFile.getInputStream(entry),
-                             readContext = readContext,
-                             pathResolver = pathResolver,
-                             dataLoader = dataLoader,
-                             includeBase = includeBase,
-                             readInto = readInto,
-                             locationSource = jarFile.toString())
-        return true
-      }
-      catch (e: IOException) {
-        Logger.getInstance(PluginXmlPathResolver::class.java).error("Corrupted jar file: $jarFile", e)
-        return false
-      }
-      finally {
-        zipFile.close()
-      }
-    }
 
     internal fun getParentPath(path: String): String {
       val end = path.lastIndexOf('/')
@@ -116,7 +87,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                            dataLoader: DataLoader,
                            relativePath: String,
                            readInto: RawPluginDescriptor?): RawPluginDescriptor? {
-    val path = toLoadPath(relativePath, null)
+    val path = toLoadPath(relativePath = relativePath, base = null)
     dataLoader.load(path)?.let {
       return readModuleDescriptor(input = it,
                                   readContext = readContext,
@@ -133,7 +104,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
     }
 
     if (relativePath.startsWith("intellij.")) {
-      // module in a new file name format must be always resolved
+      // module in a new file name format must always be resolved
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader)")
     }
     return null
@@ -152,6 +123,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       }
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
+
     return readModuleDescriptor(input = input,
                                 readContext = readContext,
                                 pathResolver = this,
@@ -205,5 +177,34 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       }
     }
     return false
+  }
+}
+
+private fun loadUsingZipFile(readInto: RawPluginDescriptor,
+                             readContext: ReadModuleContext,
+                             pathResolver: PathResolver,
+                             dataLoader: DataLoader,
+                             jarFile: Path,
+                             relativePath: String,
+                             includeBase: String?): Boolean {
+  val zipFile = ZipFile(jarFile.toFile())
+  try {
+    // do not use kotlin stdlib here
+    val entry = zipFile.getEntry(if (relativePath.startsWith("/")) relativePath.substring(1) else relativePath) ?: return false
+    readModuleDescriptor(input = zipFile.getInputStream(entry),
+                         readContext = readContext,
+                         pathResolver = pathResolver,
+                         dataLoader = dataLoader,
+                         includeBase = includeBase,
+                         readInto = readInto,
+                         locationSource = jarFile.toString())
+    return true
+  }
+  catch (e: IOException) {
+    Logger.getInstance(PluginXmlPathResolver::class.java).error("Corrupted jar file: $jarFile", e)
+    return false
+  }
+  finally {
+    zipFile.close()
   }
 }

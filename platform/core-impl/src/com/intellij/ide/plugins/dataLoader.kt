@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.util.lang.ZipFilePool
@@ -23,7 +23,7 @@ interface DataLoader {
 }
 
 @ApiStatus.Internal
-class LocalFsDataLoader(val basePath: Path) : DataLoader {
+class LocalFsDataLoader(@JvmField val basePath: Path) : DataLoader {
   override val pool: ZipFilePool?
     get() = ZipFilePool.POOL
 
@@ -37,6 +37,10 @@ class LocalFsDataLoader(val basePath: Path) : DataLoader {
     catch (e: NoSuchFileException) {
       null
     }
+  }
+
+  fun loadUnsafe(path: String): InputStream {
+    return Files.newInputStream(basePath.resolve(path))
   }
 
   override fun toString(): String = basePath.toString()

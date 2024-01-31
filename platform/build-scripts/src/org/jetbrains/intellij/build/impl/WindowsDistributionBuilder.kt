@@ -34,18 +34,18 @@ internal class WindowsDistributionBuilder(
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
     val distBinDir = targetPath.resolve("bin")
     withContext(Dispatchers.IO) {
-      Files.createDirectories(distBinDir)
-
       val sourceBinDir = context.paths.communityHomeDir.resolve("bin/win")
 
-      FileSet(sourceBinDir.resolve(arch.dirName))
-        .includeAll()
-        .copyToDir(distBinDir)
+      copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
 
-      @Suppress("SpellCheckingInspection")
       FileSet(sourceBinDir)
-        .include("*.*")
-        .also { if (!context.includeBreakGenLibraries()) it.exclude("breakgen*.dll") }
+        .includeAll()
+        .also {
+          if (!context.includeBreakGenLibraries()) {
+            @Suppress("SpellCheckingInspection")
+            it.exclude("breakgen*.dll")
+          }
+        }
         .copyToDir(distBinDir)
 
       generateBuildTxt(context, targetPath)
