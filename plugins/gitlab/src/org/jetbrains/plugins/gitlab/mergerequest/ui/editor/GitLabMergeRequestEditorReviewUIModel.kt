@@ -45,7 +45,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO> = fileVm.avatarIconsProvider
 
-  override var highlightDiffRanges: Boolean
+  override var shouldHighlightDiffRanges: Boolean
     get() = preferences.highlightDiffLinesInEditor
     set(value) {
       preferences.highlightDiffLinesInEditor = value

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 interface CodeReviewEditorGutterActionableChangesModel : CodeReviewEditorGutterChangesModel {
 
   @get:RequiresEdt
-  var highlightDiffRanges: Boolean
+  var shouldHighlightDiffRanges: Boolean
 
   @RequiresEdt
   fun getOriginalContent(lines: LineRange): String?

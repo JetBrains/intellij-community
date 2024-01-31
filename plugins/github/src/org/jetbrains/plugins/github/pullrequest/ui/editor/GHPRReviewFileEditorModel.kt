@@ -41,7 +41,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
   override fun getRanges(): List<LstRange>? = changesModel.getRanges()
   override fun findRange(range: LstRange): LstRange? = changesModel.findRange(range)
 
-  override var highlightDiffRanges: Boolean by settings::highlightDiffLinesInEditor
+  override var shouldHighlightDiffRanges: Boolean by settings::highlightDiffLinesInEditor
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     combine(changesModel.postReviewRanges, fileVm.linesWithComments) { postReviewRanges, linesWithComments ->

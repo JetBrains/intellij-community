@@ -154,9 +154,9 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
     }
 
     model.addDiffHighlightListener(disposable) {
-      update(model.highlightDiffRanges)
+      update(model.shouldHighlightDiffRanges)
     }
-    update(model.highlightDiffRanges)
+    update(model.shouldHighlightDiffRanges)
   }
 
   private inner class ShowNextChangeMarkerAction(range: Range)
@@ -227,10 +227,10 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-    override fun isSelected(e: AnActionEvent): Boolean = model.highlightDiffRanges
+    override fun isSelected(e: AnActionEvent): Boolean = model.shouldHighlightDiffRanges
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      model.highlightDiffRanges = state
+      model.shouldHighlightDiffRanges = state
     }
   }
 }
