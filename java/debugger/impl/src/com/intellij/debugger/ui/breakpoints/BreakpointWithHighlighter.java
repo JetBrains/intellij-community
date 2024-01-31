@@ -315,14 +315,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
    */
   @Override
   public final void updateUI() {
-    if (!isVisible() || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isVisible() || ApplicationManager.getApplication().isUnitTestMode() || !isValid()) {
       return;
     }
     DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
-      if (!isValid()) {
-        return;
-      }
-
       DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess == null || !debugProcess.isAttached()) {
