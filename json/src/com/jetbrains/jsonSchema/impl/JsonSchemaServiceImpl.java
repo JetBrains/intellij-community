@@ -365,9 +365,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return isMappedSchema(file)
-           || isSchemaByProvider(file)
-           || hasSchemaSchema(file);
+    return !file.isDirectory()
+           && (isMappedSchema(file)
+               || isSchemaByProvider(file)
+               || hasSchemaSchema(file));
   }
 
   @Override

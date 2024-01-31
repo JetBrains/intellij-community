@@ -58,7 +58,7 @@ public final class JsonFileResolver {
 
   public static @Nullable VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
                                                                @Nullable String schemaUrl) {
-    if (schemaUrl == null) return null;
+    if (schemaUrl == null || StringUtil.isEmpty(schemaUrl)) return null;
 
     boolean isHttpPath = isHttpPath(schemaUrl);
 
