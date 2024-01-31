@@ -223,7 +223,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
 
   @Override
   public void writeExternal(final Element element) throws WriteExternalException {
-    String absolutePath = getCoverageDataFileName();
+    String absolutePath = myCoverageDataFileProvider.getCoverageDataFilePath();
     String pathInSystemDir = FileUtil.getRelativePath(new File(PathManager.getSystemPath()), new File(absolutePath));
     element.setAttribute(FILE_PATH, pathInSystemDir != null ? FileUtil.toSystemIndependentName(pathInSystemDir) : absolutePath);
     element.setAttribute(NAME_ATTRIBUTE, myName);
