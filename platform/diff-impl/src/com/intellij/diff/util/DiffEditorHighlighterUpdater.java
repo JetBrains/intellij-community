@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,19 +60,24 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
   private static void restartHighlighterFor(@Nullable Project project, @NotNull Editor editor) {
     if (project == null) return;
 
-    // rely on com.intellij.codeInsight.daemon.impl.EditorTracker if in focused window
+    // Rely on com.intellij.codeInsight.daemon.impl.EditorTracker and EditorTrackerListener.TOPIC in a focused window
     Window window = UIUtil.getWindow(editor.getComponent());
     if (window == null || !window.isShowing() || UIUtil.isFocusAncestor(window)) return;
-
-    PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(project);
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
 
     VirtualFile file = editor.getVirtualFile();
     if (file == null) return;
 
-    PsiFile psiFile = ReadAction.compute(() -> psiManager.getFileManager().getCachedPsiFile(file));
-    if (psiFile != null) {
-      codeAnalyzer.restart(psiFile);
-    }
+    ReadAction.nonBlocking(() -> {
+        PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(project);
+        return psiManager.getFileManager().getCachedPsiFile(file);
+      })
+      .coalesceBy(DiffEditorHighlighterUpdater.class, editor)
+      .expireWith(project)
+      .submit(NonUrgentExecutor.getInstance())
+      .onSuccess(psiFile -> {
+        if (psiFile != null) {
+          DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+        }
+      });
   }
 }
