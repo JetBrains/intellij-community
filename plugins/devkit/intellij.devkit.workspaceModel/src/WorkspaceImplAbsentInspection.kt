@@ -28,6 +28,7 @@ internal class WorkspaceImplGenerationInspection: LocalInspectionTool() {
       val highlightType: ProblemHighlightType
       val descriptionTemplate: String
       if (superTypeFqn == WorkspaceEntity::class.qualifiedName) { //is WorkspaceEntity implementation
+        if (!klass.isInterface()) return
         if (klass.name in SKIPPED_TYPES) return
         if (klass.isAbstractEntity()) return
         if (klass.name == "Builder") return

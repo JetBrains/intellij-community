@@ -38,6 +38,7 @@ internal fun KtClass.getWorkspaceModelSuperType(): String? {
 }
 
 internal fun KtClass.isWorkspaceEntity(): Boolean {
+  if (!isInterface()) return false
   val superTypeFqn = getWorkspaceModelSuperType() ?: return false
   return superTypeFqn == WorkspaceEntity::class.qualifiedName
 }
