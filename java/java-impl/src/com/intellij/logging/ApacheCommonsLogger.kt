@@ -8,7 +8,7 @@ class ApacheCommonsLogger : JvmLogger by JvmLoggerFieldDelegate(
   "getLog",
   "%s.class",
   JavaLoggingUtils.COMMONS_LOGGING,
-  20,
+  100,
 ) {
   override fun toString(): String = "Apache Commons Logging"
 }

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 
 class UnspecifiedLogger : JvmLogger {
   override val loggerTypeName: String = "Unspecified"
-  override val priority: Int = 100
+  override val priority: Int = 1000
 
   override fun isOnlyOnStartup() = true
   override fun insertLoggerAtClass(project: Project,
