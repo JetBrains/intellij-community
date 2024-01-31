@@ -217,7 +217,7 @@ public class EditorSearchSession implements SearchSession,
         new RemoveOccurrenceAction(),
         new SelectAllAction(),
         new Separator(),
-        new ToggleSelectionOnlyAction(),
+        new ToggleFindInSelectionAction(),
         filterPopupGroup
       };
     }
@@ -233,7 +233,7 @@ public class EditorSearchSession implements SearchSession,
 
     group.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
     group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_SEARCH_FILTER_RESULTS), Constraints.FIRST);
-    group.add(new ToggleSelectionOnlyAction(), Constraints.FIRST);
+    group.add(new ToggleFindInSelectionAction(), Constraints.FIRST);
     return group;
   }
 

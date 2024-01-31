@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
@@ -13,9 +13,10 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class ToggleSelectionOnlyAction extends ToggleAction implements ContextAwareShortcutProvider, DumbAware, LightEditCompatible,
-                                                                             ActionRemoteBehaviorSpecification.Frontend {
-  public ToggleSelectionOnlyAction() {
+public final class ToggleFindInSelectionAction extends ToggleAction implements ContextAwareShortcutProvider, DumbAware,
+                                                                               LightEditCompatible,
+                                                                               ActionRemoteBehaviorSpecification.Frontend {
+  public ToggleFindInSelectionAction() {
     super(FindBundle.message("find.selection.only"), null, AllIcons.Actions.InSelection);
   }
 
