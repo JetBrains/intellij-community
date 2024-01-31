@@ -23,7 +23,7 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.win32.StdCallLibrary;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ public final class NativeFileManager {
     }
   }
 
-  @ApiStatus.Internal
+  @VisibleForTesting
   public static List<Process> getProcessesUsing(File file, int initialBufferSize) {
     // If the DLL was not present (XP or other OS), do not try to find it again.
     if (!ourFailed) {
