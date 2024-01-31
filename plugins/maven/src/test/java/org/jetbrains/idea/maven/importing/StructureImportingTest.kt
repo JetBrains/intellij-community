@@ -253,7 +253,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
     assertModules("project", "m2", "userModule")
     assertMavenizedModule("project")
     assertMavenizedModule("m2")
