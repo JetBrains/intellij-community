@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -34,27 +34,30 @@ public final class XmlSerializerImpl {
     }
 
     @Override
-    public final synchronized @NotNull Binding getRootBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @NotNull MutableAccessor accessor) {
-      // do not cache because a client will cache it in any case
-      Binding binding = createClassBinding(aClass, accessor, originalType);
-      if (binding == null) {
-        // BeanBinding doesn't depend on accessor, get from cache or compute
-        binding = getRootBinding(aClass, originalType);
-      }
-      else {
-        binding.init(originalType, this);
-      }
-      return binding;
-    }
-
-    @Override
     public final @Nullable Binding getBinding(@NotNull MutableAccessor accessor) {
       Type type = accessor.getGenericType();
       Class<?> aClass = ClassUtil.typeToClass(type);
-      return ClassUtil.isPrimitive(aClass) ? null : getRootBinding(aClass, type, accessor);
+      if (ClassUtil.isPrimitive(aClass)) {
+        return null;
+      }
+
+      // do not cache because a client will cache it in any case
+      synchronized (this) {
+        Binding binding = createClassBinding(aClass, accessor, type);
+        if (binding == null) {
+          // BeanBinding doesn't depend on accessor, get from cache or compute
+          binding = getRootBinding(aClass, type);
+        }
+        else {
+          binding.init(type, this);
+        }
+        return binding;
+      }
     }
 
-    protected static @Nullable Binding createClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
+    protected static @Nullable Binding createClassBinding(@NotNull Class<?> aClass,
+                                                          @Nullable MutableAccessor accessor,
+                                                          @NotNull Type originalType) {
       if (aClass.isArray()) {
         if (Element.class.isAssignableFrom(aClass.getComponentType())) {
           assert accessor != null;
@@ -64,7 +67,7 @@ public final class XmlSerializerImpl {
           return new ArrayBinding(aClass, accessor);
         }
       }
-      if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+      else if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
         if (accessor != null) {
           CollectionBean listBean = accessor.getAnnotation(CollectionBean.class);
           if (listBean != null) {
@@ -73,13 +76,11 @@ public final class XmlSerializerImpl {
         }
         return new CollectionBinding((ParameterizedType)originalType, accessor);
       }
-
-      if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+      else if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
         //noinspection unchecked
         return new MapBinding(accessor, (Class<? extends Map<?, ?>>)aClass);
       }
-
-      if (accessor != null) {
+      else if (accessor != null) {
         if (Element.class.isAssignableFrom(aClass)) {
           return new JDOMElementBinding(accessor);
         }

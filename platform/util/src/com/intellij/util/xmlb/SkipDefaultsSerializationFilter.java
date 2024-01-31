@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
@@ -50,7 +50,7 @@ public class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializat
         BeanBinding classBinding = (BeanBinding)referencedBinding;
         ThreeState compareByFields = classBinding.compareByFields;
         if (compareByFields == ThreeState.UNSURE) {
-          compareByFields = ReflectionUtil.getDeclaredMethod(classBinding.myBeanClass, "equals", Object.class) == null ? ThreeState.YES : ThreeState.NO;
+          compareByFields = ReflectionUtil.getDeclaredMethod(classBinding.beanClass, "equals", Object.class) == null ? ThreeState.YES : ThreeState.NO;
           classBinding.compareByFields = compareByFields;
         }
 

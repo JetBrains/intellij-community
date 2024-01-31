@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -27,20 +27,20 @@ import java.util.*;
 public class BeanBinding extends NotNullDeserializeBinding {
   private static final XmlSerializerPropertyCollector PROPERTY_COLLECTOR = new XmlSerializerPropertyCollector(new MyPropertyCollectorConfiguration());
 
-  private final String myTagName;
+  private final String tagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   protected NestedBinding[] bindings;
 
-  protected final Class<?> myBeanClass;
+  protected final Class<?> beanClass;
 
   ThreeState compareByFields = ThreeState.UNSURE;
 
   public BeanBinding(@NotNull Class<?> beanClass) {
     assert !beanClass.isArray() : "Bean is an array: " + beanClass;
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
-    myBeanClass = beanClass;
-    myTagName = getTagName(beanClass);
-    assert !StringUtilRt.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
+    this.beanClass = beanClass;
+    tagName = getTagName(beanClass);
+    assert !StringUtilRt.isEmptyOrSpaces(tagName) : "Bean name is empty: " + beanClass;
   }
 
   private static final class XmlSerializerPropertyCollector extends PropertyCollector {
@@ -63,12 +63,14 @@ public class BeanBinding extends NotNullDeserializeBinding {
   public final synchronized void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     assert bindings == null;
 
-    Property classAnnotation = myBeanClass.getAnnotation(Property.class);
+    Property classAnnotation = beanClass.getAnnotation(Property.class);
 
-    List<MutableAccessor> accessors = getAccessors(myBeanClass);
+    List<MutableAccessor> accessors = getAccessors(beanClass);
     NestedBinding[] result = accessors.isEmpty() ? NestedBinding.EMPTY_ARRAY : new NestedBinding[accessors.size()];
     for (int i = 0; i < result.length; i++) {
-      NestedBinding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OPTION_TAG : classAnnotation.style());
+      NestedBinding binding = createBinding(accessors.get(i),
+                                            serializer,
+                                            classAnnotation == null ? Property.Style.OPTION_TAG : classAnnotation.style());
       binding.init(originalType, serializer);
       result[i] = binding;
     }
@@ -77,11 +79,11 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @Override
   public final @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    return serializeInto(o, context == null ? null : new Element(myTagName), filter);
+    return serializeInto(o, context == null ? null : new Element(tagName), filter);
   }
 
   public final Element serialize(@NotNull Object object, boolean createElementIfEmpty, @Nullable SerializationFilter filter) {
-    return serializeInto(object, createElementIfEmpty ? new Element(myTagName) : null, filter);
+    return serializeInto(object, createElementIfEmpty ? new Element(tagName) : null, filter);
   }
 
   public NestedBinding[] getBindings() {
@@ -126,7 +128,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (element == null) {
-      element = new Element(myTagName);
+      element = new Element(tagName);
     }
 
     Object node = binding.serialize(o, element, filter);
@@ -156,7 +158,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   public @NotNull Object newInstance() {
-    return ReflectionUtil.newInstance(myBeanClass, false);
+    return ReflectionUtil.newInstance(beanClass, false);
   }
 
   final boolean equalByFields(@NotNull Object currentValue, @NotNull Object defaultValue, @NotNull SkipDefaultsSerializationFilter filter) {
@@ -338,12 +340,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @Override
   public final boolean isBoundTo(@NotNull Element element) {
-    return element.getName().equals(myTagName);
+    return element.getName().equals(tagName);
   }
 
   @Override
   public final boolean isBoundTo(@NotNull XmlElement element) {
-    return element.name.equals(myTagName);
+    return element.name.equals(tagName);
   }
 
   private static @NotNull String getTagName(@NotNull Class<?> aClass) {
@@ -416,10 +418,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   public String toString() {
-    return "BeanBinding[" + myBeanClass.getName() + ", tagName=" + myTagName + "]";
+    return "BeanBinding[" + beanClass.getName() + ", tagName=" + tagName + "]";
   }
 
-  private static @NotNull NestedBinding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer, @NotNull Property.Style propertyStyle) {
+  private static @NotNull NestedBinding createBinding(@NotNull MutableAccessor accessor,
+                                                      @NotNull Serializer serializer,
+                                                      @NotNull Property.Style propertyStyle) {
     Attribute attribute = accessor.getAnnotation(Attribute.class);
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute);

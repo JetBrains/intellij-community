@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -66,7 +66,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     }
     else {
       Object deserializedValue;
-      if (beanStyle == Property.Style.ATTRIBUTE && binding instanceof BeanBinding && ((BeanBinding)binding).myBeanClass == Rectangle.class) {
+      if (beanStyle == Property.Style.ATTRIBUTE && binding instanceof BeanBinding && ((BeanBinding)binding).beanClass == Rectangle.class) {
         String xA = element.getAttributeValue("x");
         String yA = element.getAttributeValue("y");
         String wA = element.getAttributeValue("width");
@@ -103,7 +103,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     }
     else {
       Object deserializedValue;
-      if (beanStyle == Property.Style.ATTRIBUTE && binding instanceof BeanBinding && ((BeanBinding)binding).myBeanClass == Rectangle.class) {
+      if (beanStyle == Property.Style.ATTRIBUTE && binding instanceof BeanBinding && ((BeanBinding)binding).beanClass == Rectangle.class) {
         String xA = element.getAttributeValue("x");
         String yA = element.getAttributeValue("y");
         String wA = element.getAttributeValue("width");
