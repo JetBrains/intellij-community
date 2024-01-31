@@ -4,11 +4,9 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
@@ -89,16 +87,15 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         if (expression.parent.safeAs<KtPrefixExpression>()?.operationToken != KtTokens.EXCL) {
             return nonInvertedFix
         }
-        // Here we create a copy of the file and attempt to change the expression to the inverted function
-        val copiedFile = expression.containingFile.copy() as? PsiFile ?: return nonInvertedFix
-        val copiedExpression = PsiTreeUtil.findSameElementInCopy(expression, copiedFile) ?: return nonInvertedFix
-        val changedCopy = copiedExpression.apply {
+        val copiedExpression = expression.copied().apply {
             callExpression?.calleeExpression?.replace(KtPsiFactory(expression.project).createExpression(newFunctionName))
         }
-        return analyzeCopy(changedCopy, DanglingFileResolutionMode.PREFER_SELF) {
+        val codeFragment = KtPsiFactory(expression.project).createExpressionCodeFragment(copiedExpression.text, expression)
+        val contentElement = codeFragment.getContentElement() as? KtQualifiedExpression ?: return nonInvertedFix
+        return analyze(codeFragment) {
             // After changing to the inverted name, we make sure that if the function is inverted, we are calling the correct function.
             // (Relevant if for example a different List.isEmpty() is already defined in the same scope, we do not want to use it)
-            val invertedName = changedCopy.invertSelectorFunction()?.callExpression?.calleeExpression?.text
+            val invertedName = contentElement.invertSelectorFunction()?.callExpression?.calleeExpression?.text
             if (invertedName != null) {
                 RenameUselessCallFix(invertedName, invert = true)
             } else {
