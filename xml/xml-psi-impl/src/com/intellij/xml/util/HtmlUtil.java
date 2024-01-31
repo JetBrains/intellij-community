@@ -64,6 +64,7 @@ public final class HtmlUtil {
   public static final @NlsSafe String TEMPLATE_TAG_NAME = "template";
   public static final @NlsSafe String TEXTAREA_TAG_NAME = "textarea";
   public static final @NlsSafe String TITLE_TAG_NAME = "title";
+  public static final @NlsSafe String SLOT_TAG_NAME = "slot";
 
   public static final @NlsSafe String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
   public static final @NlsSafe String SRC_ATTRIBUTE_NAME = "src";
