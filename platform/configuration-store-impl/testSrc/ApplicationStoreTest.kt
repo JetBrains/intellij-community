@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.ApplicationStoreImpl.ApplicationStateStorageManager
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -44,12 +45,12 @@ class ApplicationStoreTest {
   @JvmField @Rule val disposableRule = DisposableRule()
 
   private var testAppConfig: Path by Delegates.notNull()
-  private var componentStore: MyComponentStore by Delegates.notNull()
+  private var componentStore: TestComponentStore by Delegates.notNull()
 
   @Before
   fun setUp() {
     testAppConfig = fsRule.fs.getPath("/app-config")
-    componentStore = MyComponentStore(testAppConfig)
+    componentStore = TestComponentStore(testAppConfig)
   }
 
   @Test
@@ -661,11 +662,11 @@ class ApplicationStoreTest {
     }
   }
 
-  private class MyComponentStore(testAppConfigPath: Path) : ComponentStoreWithExtraComponents() {
+  private class TestComponentStore(testAppConfigPath: Path) : ComponentStoreWithExtraComponents() {
     override val serviceContainer: ComponentManagerImpl
       get() = ApplicationManager.getApplication() as ComponentManagerImpl
 
-    override val storageManager = ApplicationStorageManager(pathMacroManager = null, settingsController = service<SettingsController>())
+    override val storageManager = ApplicationStateStorageManager(pathMacroManager = null, service<SettingsController>())
 
     init {
       setPath(testAppConfigPath)

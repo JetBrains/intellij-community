@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -25,19 +24,17 @@ import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
-private class ApplicationPathMacroManager : PathMacroManager(null)
+const val APP_CONFIG = "\$APP_CONFIG\$"
 
-@NonNls const val APP_CONFIG = "\$APP_CONFIG$"
-
+@ApiStatus.Internal
 @Suppress("NonDefaultConstructor")
-open class ApplicationStoreImpl(private val app: Application)
-  : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
-  override val storageManager = ApplicationStorageManager(pathMacroManager = PathMacroManager.getInstance(app),
-                                                          settingsController = app.getService(SettingsController::class.java))
+open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
+  override val storageManager: ApplicationStateStorageManager =
+    ApplicationStateStorageManager(PathMacroManager.getInstance(app), app.getService(SettingsController::class.java))
 
   override val serviceContainer: ComponentManagerImpl
     get() = app as ComponentManagerImpl
@@ -84,35 +81,33 @@ open class ApplicationStoreImpl(private val app: Application)
   override fun createContentReader(): JpsFileContentReader = AppStorageContentReader()
 
   override fun toString() = "app"
-}
 
-@VisibleForTesting
-class ApplicationStorageManager(pathMacroManager: PathMacroManager? = null, settingsController: SettingsController?)
-  : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, settingsController)
-{
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
-    @Suppress("DEPRECATION")
-    return when (component) {
-      is com.intellij.openapi.util.NamedJDOMExternalizable -> "${component.externalFileName}${PathManager.DEFAULT_EXT}"
-      else -> StoragePathMacros.NON_ROAMABLE_FILE
-    }
-  }
+  @VisibleForTesting
+  class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, settingsController: SettingsController?)
+    : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, settingsController)
+  {
+    override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
+      @Suppress("DEPRECATION")
+      if (component is com.intellij.openapi.util.NamedJDOMExternalizable) "${component.externalFileName}${PathManager.DEFAULT_EXT}"
+      else StoragePathMacros.NON_ROAMABLE_FILE
 
-  override val isUseXmlProlog: Boolean
-    get() = false
+    override val isUseXmlProlog: Boolean
+      get() = false
 
-  override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
-    if (storage.fileSpec == "path.macros.xml" || storage.fileSpec == "applicationLibraries.xml") {
-      LOG.runAndLogException {
-        writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+    override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
+      if (storage.fileSpec == "path.macros.xml" || storage.fileSpec == "applicationLibraries.xml") {
+        LOG.runAndLogException {
+          writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+        }
       }
     }
-  }
 
-  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
+    override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-  override fun expandMacro(collapsedPath: String): Path {
-    // APP_CONFIG is the first macro
-    return if (collapsedPath[0] == '$') super.expandMacro(collapsedPath) else macros.get(0).value.resolve(collapsedPath)
+    override fun expandMacro(collapsedPath: String): Path =
+      if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
+      else macros[0].value.resolve(collapsedPath)  // APP_CONFIG is the first macro
   }
 }
+
+private class ApplicationPathMacroManager : PathMacroManager(null)
