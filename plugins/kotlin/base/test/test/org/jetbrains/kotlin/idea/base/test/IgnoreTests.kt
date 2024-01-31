@@ -9,7 +9,10 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.createFile
+import kotlin.io.path.notExists
+import kotlin.io.path.useLines
+import kotlin.io.path.writeLines
 
 object IgnoreTests {
     private const val INSERT_DIRECTIVE_AUTOMATICALLY = false // TODO use environment variable instead
@@ -144,12 +147,12 @@ object IgnoreTests {
                 addAll(additionalFiles)
             }
             throw AssertionError(
-                "Looks like the test was ${directive.fixDirectiveMessage}(e)d to the ${modifiedFiles.joinToString()}"
+                "Looks like the test was ${directive.fixDirectiveMessage}(e)d to ${modifiedFiles.joinToString()}"
             )
         }
 
         throw AssertionError(
-            "Looks like the test $verb, please ${directive.fixDirectiveMessage} the ${testFile.fileName}"
+            "Looks like the test $verb, please ${directive.fixDirectiveMessage} ${testFile.fileName} (see $testFile)"
         )
     }
 
@@ -235,26 +238,26 @@ object IgnoreTests {
 
     object DIRECTIVES {
         @Deprecated(message = "use IGNORE_K2 instead")
-        const val FIR_COMPARISON = "// FIR_COMPARISON"
+        const val FIR_COMPARISON: String = "// FIR_COMPARISON"
         @Deprecated(message = "use IGNORE_K2 instead")
-        const val FIR_COMPARISON_MULTILINE_COMMENT = "/* FIR_COMPARISON */"
+        const val FIR_COMPARISON_MULTILINE_COMMENT: String = "/* FIR_COMPARISON */"
 
-        const val IGNORE_K2 = "// IGNORE_K2"
-        const val IGNORE_K2_MULTILINE_COMMENT = "/* IGNORE_K2 */"
-        const val IGNORE_K2_LOG = "// IGNORE_K2_LOG"
+        const val IGNORE_K2: String = "// IGNORE_K2"
+        const val IGNORE_K2_MULTILINE_COMMENT: String = "/* IGNORE_K2 */"
+        const val IGNORE_K2_LOG: String = "// IGNORE_K2_LOG"
 
         @Deprecated(message = "use IGNORE_K2 instead")
-        const val IGNORE_FIR = "// IGNORE_FIR"
+        const val IGNORE_FIR: String = "// IGNORE_FIR"
         @Deprecated(message = "use IGNORE_K2_MULTILINE_COMMENT instead")
-        const val IGNORE_FIR_MULTILINE_COMMENT = "/* IGNORE_FIR */"
+        const val IGNORE_FIR_MULTILINE_COMMENT: String = "/* IGNORE_FIR */"
 
-        const val FIX_ME = "// FIX_ME: "
+        const val FIX_ME: String = "// FIX_ME: "
 
-        const val FIR_IDENTICAL = "// FIR_IDENTICAL"
+        const val FIR_IDENTICAL: String = "// FIR_IDENTICAL"
 
-        const val IGNORE_FE10_BINDING_BY_FIR = "// IGNORE_FE10_BINDING_BY_FIR"
+        const val IGNORE_FE10_BINDING_BY_FIR: String = "// IGNORE_FE10_BINDING_BY_FIR"
 
-        const val IGNORE_K1 = "// IGNORE_K1"
+        const val IGNORE_K1: String = "// IGNORE_K1"
     }
 
     enum class DirectivePosition {
