@@ -1864,6 +1864,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapIndexedNotNullToOnSequence.kt");
         }
 
+        @TestMetadata("MapNotNullFakeAlias.kt")
+        public void testMapNotNullFakeAlias() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullFakeAlias.kt");
+        }
+
+        @TestMetadata("MapNotNullFakeLocalFunction.kt")
+        public void testMapNotNullFakeLocalFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullFakeLocalFunction.kt");
+        }
+
         @TestMetadata("MapNotNullOnGeneratedSequence.kt")
         public void testMapNotNullOnGeneratedSequence() throws Exception {
             runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullOnGeneratedSequence.kt");
@@ -2030,6 +2040,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("NullOrEmptyFake.kt")
         public void testNullOrEmptyFake() throws Exception {
             runTest("../testData/inspectionsLocal/uselessCallOnNotNull/NullOrEmptyFake.kt");
+        }
+
+        @TestMetadata("NullOrEmptyFakeAlias.kt")
+        public void testNullOrEmptyFakeAlias() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnNotNull/NullOrEmptyFakeAlias.kt");
+        }
+
+        @TestMetadata("NullOrEmptyFakeLocalFunction.kt")
+        public void testNullOrEmptyFakeLocalFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnNotNull/NullOrEmptyFakeLocalFunction.kt");
         }
 
         @TestMetadata("NullOrEmptySafe.kt")
