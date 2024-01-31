@@ -141,7 +141,7 @@ internal open class ModuleStoreImpl(module: Module) : ChildlessComponentStore(),
       val optionElement = Element("component").setAttribute("name", "DeprecatedModuleOptionManager")
       val iterator = element.attributes.iterator()
       for (attribute in iterator) {
-        if (attribute.name != ProjectStateStorageManager.VERSION_OPTION) {
+        if (attribute.name != VERSION_OPTION) {
           iterator.remove()
           optionElement.addContent(Element("option").setAttribute("key", attribute.name).setAttribute("value", attribute.value))
         }
@@ -163,7 +163,7 @@ internal open class ModuleStoreImpl(module: Module) : ChildlessComponentStore(),
       }
 
       // need be last for compat reasons
-      rootAttributes.put(ProjectStateStorageManager.VERSION_OPTION, "4")
+      rootAttributes.put(VERSION_OPTION, "4")
     }
 
     override val isExternalSystemStorageEnabled: Boolean

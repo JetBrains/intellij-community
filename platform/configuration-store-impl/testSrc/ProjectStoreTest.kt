@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -110,7 +110,7 @@ class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", out.toByteArray())
       it.toNioPath()
     }) { project ->
-      val store = project.stateStore as ProjectStoreBase
+      val store = project.stateStore as ProjectStoreImpl
       assertThat(store.getNameFile()).doesNotExist()
       val newName = "Foo"
       val oldName = project.name
@@ -146,7 +146,7 @@ class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/.name", name)
       it.toNioPath()
     }) { project ->
-      val store = project.stateStore as ProjectStoreBase
+      val store = project.stateStore as ProjectStoreImpl
       assertThat(store.getNameFile()).hasContent(name)
 
       project.stateStore.save()
