@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -158,7 +159,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
           }
           if (applyStatus == ApplyPatchStatus.SUCCESS && canResolvedThread.value) {
             indeterminateStep(GithubBundle.message("pull.request.comment.suggested.changes.resolving")) {
-              reviewData.resolveThread(EmptyProgressIndicator(), threadId).await()
+              reviewData.resolveThread(EmptyProgressIndicator(), threadId).asDeferred().await()
             }
           }
         }
@@ -178,7 +179,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
             val applyStatus = GHSuggestedChangeApplier.commitSuggestedChanges(project, repository, patch, commitMessage)
             if (applyStatus == ApplyPatchStatus.SUCCESS && canResolvedThread.value) {
               reporter.indeterminateStep(GithubBundle.message("pull.request.comment.suggested.changes.resolving"))
-              reviewData.resolveThread(EmptyProgressIndicator(), threadId).await()
+              reviewData.resolveThread(EmptyProgressIndicator(), threadId).asDeferred().await()
             }
           }
         }

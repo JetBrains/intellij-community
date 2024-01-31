@@ -9,7 +9,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHOAuthService
@@ -58,7 +58,7 @@ internal class GHOAuthCredentialsUi(
   private suspend fun acquireToken(): String {
     val credentialsFuture = GHOAuthService.instance.authorize()
     try {
-      return credentialsFuture.await().accessToken
+      return credentialsFuture.asDeferred().await().accessToken
     }
     catch (ce: CancellationException) {
       credentialsFuture.completeExceptionally(ProcessCanceledException(ce))

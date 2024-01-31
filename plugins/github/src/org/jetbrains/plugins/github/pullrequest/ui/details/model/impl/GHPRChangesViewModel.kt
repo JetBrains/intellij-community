@@ -17,7 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
@@ -51,7 +51,7 @@ internal class GHPRChangesViewModelImpl(
       prev?.cancel()
       prev = launch {
         val result = runCatching {
-          it.await()
+          it.asDeferred().await()
         }
         send(result)
       }
@@ -70,7 +70,7 @@ internal class GHPRChangesViewModelImpl(
         isUpdatingChanges.value = isUpdate
         try {
           val result = runCatching {
-            it.await()
+            it.asDeferred().await()
           }
           send(result)
         }

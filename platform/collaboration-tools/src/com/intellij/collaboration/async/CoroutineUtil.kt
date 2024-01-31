@@ -12,7 +12,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
@@ -512,7 +512,7 @@ fun <T> Flow<CompletableFuture<T>>.computationState(): Flow<ComputedResult<T>> =
       emit(ComputedResult.loading())
     }
     try {
-      val value = request.await()
+      val value = request.asDeferred().await()
       emit(ComputedResult.success(value))
     }
     catch (e: Exception) {
@@ -548,7 +548,7 @@ fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
  */
 fun <T> Flow<CompletableFuture<T>>.values(): Flow<T> = mapNotNull {
   try {
-    it.await()
+    it.asDeferred().await()
   }
   catch (_: Throwable) {
     null

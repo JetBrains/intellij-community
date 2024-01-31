@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
@@ -180,7 +180,7 @@ private class GHServerVersionsCollector(
 
           //TODO: load with auth to avoid rate-limit
           try {
-            val metadata = service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).await()
+            val metadata = service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).asDeferred().await()
             GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, metadata)
           }
           catch (ignore: Exception) {

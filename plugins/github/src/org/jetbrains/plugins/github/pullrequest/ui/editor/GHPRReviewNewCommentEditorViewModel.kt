@@ -18,7 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
@@ -96,7 +96,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
     submit {
       val thread = createThreadDTO(it)
       val commitSha = position.change.revisionNumberAfter.asString()
-      reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha, listOf(thread)).await()
+      reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha, listOf(thread)).asDeferred().await()
       settings.reviewCommentsPreferred = false
       cancel()
     }
@@ -106,7 +106,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
     submit {
       val thread = createThreadDTO(it)
       val commitSha = position.change.revisionNumberAfter.asString()
-      reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha, listOf(thread)).await()
+      reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha, listOf(thread)).asDeferred().await()
       settings.reviewCommentsPreferred = true
       cancel()
     }
@@ -124,7 +124,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
       else {
         val commitSha = position.change.revisionNumberAfter.asString()
         reviewDataProvider.addComment(EmptyProgressIndicator(), reviewId, it, commitSha, filePath, location.side, line)
-      }.await()
+      }.asDeferred().await()
       cancel()
     }
   }

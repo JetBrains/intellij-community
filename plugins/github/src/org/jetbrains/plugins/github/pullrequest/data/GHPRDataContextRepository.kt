@@ -16,7 +16,7 @@ import com.intellij.util.ui.ImageUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.*
@@ -168,7 +168,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     private val avatarsLoader = CachingGHUserAvatarLoader.getInstance()
 
     override suspend fun load(key: String): Image? =
-      avatarsLoader.requestAvatar(requestExecutor, key).await()
+      avatarsLoader.requestAvatar(requestExecutor, key).asDeferred().await()
 
     override fun createBaseIcon(key: String?, iconSize: Int): Icon =
       IconUtil.resizeSquared(CollaborationToolsIcons.Review.DefaultAvatar, iconSize)

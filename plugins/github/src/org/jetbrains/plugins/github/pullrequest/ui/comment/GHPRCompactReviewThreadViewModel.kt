@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -120,7 +120,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
         }
         else {
           reviewData.resolveThread(EmptyProgressIndicator(), id)
-        }.await()
+        }.asDeferred().await()
       }
       catch (e: Exception) {
         if (e is ProcessCanceledException || e is CancellationException) return@launch
@@ -147,7 +147,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
     override fun submit() {
       val replyId = dataState.value.comments.firstOrNull()?.id ?: return
       submit {
-        reviewData.addComment(EmptyProgressIndicator(), replyId, it).await()
+        reviewData.addComment(EmptyProgressIndicator(), replyId, it).asDeferred().await()
         text.value = ""
       }
     }
