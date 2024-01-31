@@ -1,7 +1,9 @@
 @file:Suppress("UnstableApiUsage")
 
-import SupportedIJVersion.IJ_232
-import SupportedIJVersion.IJ_233
+import gradle.kotlin.dsl.accessors._7527f81e50bfbc9f72561cc0d0801284.dokkaHtml
+import gradle.kotlin.dsl.accessors._7527f81e50bfbc9f72561cc0d0801284.kotlin
+import gradle.kotlin.dsl.accessors._7527f81e50bfbc9f72561cc0d0801284.main
+import gradle.kotlin.dsl.accessors._7527f81e50bfbc9f72561cc0d0801284.publishing
 
 plugins {
     kotlin("jvm")
@@ -25,17 +27,19 @@ publishing {
     configureJewelRepositories()
 
     publications {
-        register<MavenPublication>("IdeMain") {
-            from(components["kotlin"])
-            artifact(javadocJar)
-            artifact(sourcesJar)
-            val ijVersionRaw = when (supportedIJVersion()) {
-                IJ_232 -> "232"
-                IJ_233 -> "233"
+        val ijpVersion = supportedIJVersion()
+
+        if (ijpVersion.hasBridgeArtifact) {
+            register<MavenPublication>("IdeMain") {
+                from(components["kotlin"])
+                artifact(javadocJar)
+                artifact(sourcesJar)
+
+                val ijVersionRaw = ijpVersion.rawPlatformVersion
+                version = project.version.toString().withVersionSuffix("ij-$ijVersionRaw")
+                artifactId = "jewel-${project.name}"
+                pom { configureJewelPom() }
             }
-            version = project.version.toString().withVersionSuffix("ij-$ijVersionRaw")
-            artifactId = "jewel-${project.name}"
-            pom { configureJewelPom() }
         }
     }
 }

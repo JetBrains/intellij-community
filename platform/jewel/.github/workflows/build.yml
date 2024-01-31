@@ -13,6 +13,7 @@ jobs:
         supported-ij-version:
           - 232
           - 233
+          - 241
 
     steps:
       - uses: actions/checkout@v3
@@ -36,6 +37,7 @@ jobs:
         supported-ij-version:
           - 232
           - 233
+          - 241
 
     steps:
       - uses: actions/checkout@v3

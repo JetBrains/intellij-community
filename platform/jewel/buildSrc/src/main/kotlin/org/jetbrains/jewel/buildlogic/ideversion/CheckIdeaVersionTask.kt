@@ -24,14 +24,8 @@ open class CheckIdeaVersionTask : DefaultTask() {
         group = "jewel"
 
         val currentPlatformVersion = project.supportedIJVersion()
-        enabled = project.name.endsWith(getPlatformSuffix(currentPlatformVersion))
+        enabled = project.name.endsWith(currentPlatformVersion.rawPlatformVersion)
     }
-
-    private fun getPlatformSuffix(currentPlatformVersion: SupportedIJVersion) =
-        when (currentPlatformVersion) {
-            SupportedIJVersion.IJ_232 -> "232"
-            SupportedIJVersion.IJ_233 -> "233"
-        }
 
     @TaskAction
     fun generate() {
@@ -62,7 +56,7 @@ open class CheckIdeaVersionTask : DefaultTask() {
         check(icReleases.releases.isNotEmpty()) { "Was expecting to have releases but the list is empty" }
 
         val currentPlatformVersion = project.supportedIJVersion()
-        val majorPlatformVersion = getRawPlatformVersion(currentPlatformVersion)
+        val majorPlatformVersion = currentPlatformVersion.majorPlatformVersion
         val rawPlatformBuild = readPlatformBuild(currentPlatformVersion)
 
         val isCurrentBuildStable = !rawPlatformBuild.contains("EAP")
@@ -92,19 +86,9 @@ open class CheckIdeaVersionTask : DefaultTask() {
         logger.lifecycle("No IntelliJ Platform version updates available. Current: $currentPlatformBuild")
     }
 
-    private fun getRawPlatformVersion(currentPlatformVersion: SupportedIJVersion) =
-        when (currentPlatformVersion) {
-            SupportedIJVersion.IJ_232 -> "2023.2"
-            SupportedIJVersion.IJ_233 -> "2023.3"
-        }
-
     private fun readPlatformBuild(platformVersion: SupportedIJVersion): String {
         val catalogFile = project.rootProject.file("gradle/libs.versions.toml")
-        val dependencyName =
-            when (platformVersion) {
-                SupportedIJVersion.IJ_232 -> "idea232"
-                SupportedIJVersion.IJ_233 -> "idea233"
-            }
+        val dependencyName = "idea${platformVersion.rawPlatformVersion}"
 
         val catalogDependencyLine =
             catalogFile.useLines { lines -> lines.find { it.startsWith(dependencyName) } }

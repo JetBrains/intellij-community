@@ -19,14 +19,14 @@ version = when {
 java {
     toolchain {
         vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = 17
+        languageVersion = supportedIJVersion().jdkVersion
     }
 }
 
 kotlin {
     jvmToolchain {
         vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = 17
+        languageVersion = supportedIJVersion().jdkVersion
     }
 
     target {

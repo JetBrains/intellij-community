@@ -1,17 +1,18 @@
 [versions]
-composeDesktop = "1.6.0-dev1369"
-detekt = "1.23.1"
+composeDesktop = "1.6.0-dev1397"
+detekt = "1.23.4"
 dokka = "1.8.20"
 idea232 = "232.10227.8"
-idea233 = "233.13135.103"
-ideaGradlePlugin = "1.16.1"
-jna = "5.13.0"
+idea233 = "233.14015.106"
+idea241 = "241.9959.31-EAP-SNAPSHOT"
+ideaGradlePlugin = "1.17.0"
+jna = "5.14.0"
 kotlin = "1.8.21"
 kotlinSarif = "0.4.0"
 kotlinpoet = "1.14.2"
 kotlinterGradlePlugin = "3.16.0"
 kotlinxSerialization = "1.5.1"
-kotlinxBinaryCompat = "0.13.2"
+kotlinxBinaryCompat = "0.14.0"
 poko = "0.13.1"
 
 [libraries]
@@ -27,6 +28,10 @@ ij-platform-ide-core-233 = { module = "com.jetbrains.intellij.platform:ide-core"
 ij-platform-ide-impl-233 = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea233" }
 ij-platform-core-ui-233 = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea233" }
 
+ij-platform-ide-core-241 = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea241" }
+ij-platform-ide-impl-241 = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea241" }
+ij-platform-core-ui-241 = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea241" }
+
 jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
@@ -41,6 +46,7 @@ poko-gradlePlugin = { module = "dev.drewhamilton.poko:poko-gradle-plugin", versi
 [bundles]
 idea232 = ["ij-platform-ide-core-232", "ij-platform-ide-impl-232", "ij-platform-core-ui-232"]
 idea233 = ["ij-platform-ide-core-233", "ij-platform-ide-impl-233", "ij-platform-core-ui-233"]
+idea241 = ["ij-platform-ide-core-241", "ij-platform-ide-impl-241", "ij-platform-core-ui-241"]
 
 [plugins]
 composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }

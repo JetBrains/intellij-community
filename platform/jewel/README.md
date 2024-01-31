@@ -1,6 +1,5 @@
 [![JetBrains incubator](https://img.shields.io/badge/JetBrains-incubator-yellow?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMzIuMDAwMDEiIHZpZXdCb3g9IjAgMCAzMiAzMi4wMDAwMSIgd2lkdGg9IjMyIj48c2NyaXB0IHhtbG5zPSIiLz48cGF0aCBkPSJtMCAwaDMydjMyLjAwMDAxaC0zMnoiLz48cGF0aCBkPSJtNCAyNi4wMDAwMWgxMnYyaC0xMnoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=)](https://github.com/JetBrains#jetbrains-on-github) [![CI checks](https://img.shields.io/github/actions/workflow/status/JetBrains/jewel/build.yml?logo=github)](https://github.com/JetBrains/jewel/actions/workflows/build.yml) [![Licensed under Apache 2.0](https://img.shields.io/github/license/JetBrains/jewel?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRiIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTMgNiAzIDFtMCAwLTMgOWE1LjAwMiA1LjAwMiAwIDAgMCA2LjAwMSAwTTYgN2wzIDlNNiA3bDYtMm02IDIgMy0xbS0zIDEtMyA5YTUuMDAyIDUuMDAyIDAgMCAwIDYuMDAxIDBNMTggN2wzIDltLTMtOS02LTJtMC0ydjJtMCAxNlY1bTAgMTZIOW0zIDBoMyIvPjwvc3ZnPg==)](https://github.com/JetBrains/jewel/blob/main/LICENSE) [![Latest release](https://img.shields.io/github/v/release/JetBrains/jewel?include_prereleases&label=Latest%20Release&logo=github)](https://github.com/JetBrains/jewel/releases/latest) ![Compose for Desktop version](https://img.shields.io/badge/Compose%20for%20Desktop-1.6.0-dev1369?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB2aWV3Qm94PSIwIDAgNjcgNzQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI%2BPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0zNS45OTkgMi42NjNhNS4wMSA1LjAxIDAgMCAwLTQuOTk4IDBsLTI2LjUgMTUuMjUzYTQuOTk0IDQuOTk0IDAgMCAwLTEuMTk4Ljk2MmwxMS4xMDggNi4zNjZjLjI2OC0uMjkuNTgtLjU0LjkzMS0uNzQ0bDE2LjE1Ni05LjM0MmE0IDQgMCAwIDEgNC4wMDQgMEw1MS42NTcgMjQuNWMuMzUxLjIwMy42NjQuNDU1LjkzMi43NDRsMTEuMTA4LTYuMzY2YTQuOTkxIDQuOTkxIDAgMCAwLTEuMTk4LS45NjJsLTI2LjUtMTUuMjUzWm0yOC43MjMgMTcuOTMzLTExLjE4MyA2LjQwOGMuMDc2LjMxLjExNi42MzIuMTE2Ljk1OXYxNy43OTRhNCA0IDAgMCAxLTEuOTU4IDMuNDRsLTE2LjIzNSA5LjYzOGEzLjk5OCAzLjk5OCAwIDAgMS0uOTYyLjQxMnYxMi42M2E1LjAwNSA1LjAwNSAwIDAgMCAxLjQyOC0uNTY5bDI2LjYyLTE1LjczQTQuOTg2IDQuOTg2IDAgMCAwIDY1IDUxLjI4NFYyMi4yMzdjMC0uNTY3LS4wOTctMS4xMi0uMjc4LTEuNjRaTTIgMjIuMjM3YzAtLjU2Ny4wOTctMS4xMi4yNzgtMS42NGwxMS4xODMgNi40MDdjLS4wNzYuMzEtLjExNi42MzItLjExNi45NTl2MTguNjMzYTQgNCAwIDAgMCAyLjA4IDMuNTA5bDE2LjA3NCA4LjhjLjMyLjE3NC42NTYuMzAyIDEuMDAxLjM4NHYxMi42MzhhNS4wMDUgNS4wMDUgMCAwIDEtMS41MTctLjUzM0w0LjYwMyA1Ny4wMkE0Ljk4NyA0Ljk4NyAwIDAgMSAyIDUyLjY0MlYyMi4yMzdaTTMwLjAwMi45MzVhNy4wMTQgNy4wMTQgMCAwIDEgNi45OTYgMGwyNi41IDE1LjI1M0E2Ljk4IDYuOTggMCAwIDEgNjcgMjIuMjM4djI5LjA0N2E2Ljk4IDYuOTggMCAwIDEtMy40MzMgNi4wMDlsLTI2LjYyIDE1LjczMWE3LjAxNCA3LjAxNCAwIDAgMS02LjkyMy4xMkwzLjY0NCA1OC43NzFBNi45ODEgNi45ODEgMCAwIDEgMCA1Mi42NDFWMjIuMjM4YTYuOTggNi45OCAwIDAgMSAzLjUwMi02LjA1TDMwLjAwMi45MzZabS04LjYwNCAyNy41NTIgMTAuNTgyLTYuMTFjLjk0LS41NDIgMi4xLS41NDIgMy4wNCAwbDEwLjU4MiA2LjExYTIuOTk2IDIuOTk2IDAgMCAxIDEuNTAzIDIuNTkzdjExLjY1M2MwIDEuMDU2LS41NiAyLjAzNC0xLjQ3MyAyLjU3NmwtMTAuNjQzIDYuMzA4YTMuMDQ0IDMuMDQ0IDAgMCAxLTMuMDA5LjA1MmwtMTAuNTItNS43NWEyLjk5NiAyLjk5NiAwIDAgMS0xLjU2NS0yLjYyN1YzMS4wOGMwLTEuMDY4LjU3My0yLjA1NiAxLjUwMy0yLjU5M1oiIGZpbGw9IiNmZmYiLz48L3N2Zz4%3D)
 
-
 # Jewel: a Compose for Desktop theme
 
 <img alt="Jewel logo" src="art/jewel-logo.svg" width="20%"/>
@@ -56,6 +55,7 @@ dependencies {
     implementation("org.jetbrains.jewel:jewel-ide-laf-bridge:[jewel version]-ij-[platform version]")
 }
 ```
+
 <br/>
 
 > [!TIP]
@@ -63,7 +63,8 @@ dependencies {
 > <img src="https://i.vimeocdn.com/video/1749849437-f275e0337faca5cedab742ea157abbafe5a0207d3a59db891a72b6180ce13a6c-d?mh=120" align="left" />
 > </a>
 >
-> If you want to learn more about Jewel and Compose for Desktop and why they're a great, modern solution for your desktop
+> If you want to learn more about Jewel and Compose for Desktop and why they're a great, modern solution for your
+> desktop
 > UI needs, check out [this talk](https://www.droidcon.com/2023/11/15/meet-jewelcreate-ide-plugins-in-compose/) by Jewel
 > contributors Sebastiano and Chris.
 >
@@ -104,6 +105,46 @@ The project is split in modules:
 
 The standalone theme can be used in any Compose for Desktop app. You use it as a normal theme, and you can customise it
 to your heart's content. By default, it matches the official Int UI specs.
+
+Your setup in `build.gradle.kts` should look something like this, assuming you use version catalogs:
+
+```kotlin
+plugins {
+    kotlin("jvm")
+    alias(libs.plugins.composeDesktop)
+}
+
+java {
+    toolchain {
+        vendor = JvmVendorSpec.JETBRAINS
+        languageVersion = 21
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        vendor = JvmVendorSpec.JETBRAINS
+        languageVersion = 21
+    }
+}
+
+repositories {
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    mavenCentral()
+}
+
+dependencies {
+    implementation(libs.jewel.intUi.standalone)
+    implementation(libs.jewel.intUi.decoratedWindow) // Optional
+
+    implementation(compose.desktop.currentOs) {
+        // Exclude Material components — we don't need them
+        exclude(group = "org.jetbrains.compose.material")
+    }
+}
+```
+
+For further information, you can refer to the [`standalone` sample](samples/standalone/build.gradle.kts).
 
 > [!WARNING]
 > Note that Jewel **requires** the JetBrains Runtime to work correctly. Some features like font loading depend on it,
@@ -151,7 +192,7 @@ IntUiTheme(
 }
 ```
 
-### The Swing Bridge
+### Running on the IntelliJ Platform: the Swing bridge
 
 Jewel includes a crucial element for proper integration with the IDE: a bridge between the Swing components — theme
 and LaF — and the Compose world.
@@ -172,6 +213,69 @@ SwingBridgeTheme {
     // ...
 }
 ```
+
+#### Supported IntelliJ Platform versions
+
+To use Jewel in the IntelliJ Platform, you should depend on the appropriate `ide-laf-bridge-*` artifact, which will
+bring in the necessary transitive dependencies.
+
+| IntelliJ Platform version(s) | Artifact to use      |
+ |------------------------------|----------------------|
+| 2023.3 and 2024.1            | `ide-laf-bridge-233` |
+| 2023.2                       | `ide-laf-bridge-232` |
+| 2023.1 or older              | **Not supported**    |
+
+> [!CAUTION]
+> In the IntelliJ Platform 2024.1, to be able to use Jewel, you need to shadow both Jewel and Compose, due to
+> potential clashes with the versions bundled in the platform. You can use the
+> [Package Search plugin](https://github.com/JetBrains/package-search-intellij-plugin) as a reference on how to do it.
+
+Your setup in `build.gradle.kts` should look something like this, assuming you use version catalogs:
+
+```kotlin
+plugins {
+    kotlin("jvm")
+    alias(libs.plugins.composeDesktop)
+    alias(libs.plugins.ideaGradlePlugin)
+}
+
+java {
+    toolchain {
+        vendor = JvmVendorSpec.JETBRAINS
+        languageVersion = 17 // Or 21, if you're targeting IJ 2024.1 or later
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        vendor = JvmVendorSpec.JETBRAINS
+        languageVersion = 17 // Or 21, if you're targeting IJ 2024.1 or later
+    }
+}
+
+repositories {
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    maven("https://www.jetbrains.com/intellij-repository/snapshots")
+    maven("https://www.jetbrains.com/intellij-repository/releases")
+    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
+    mavenCentral()
+}
+
+dependencies {
+    implementation(libs.jewel.ideLafBridge) {
+        // Exclude any coroutines dependency that might be coming through — the IDE has its own
+        exclude(group = "org.jetbrains.kotlinx")
+    }
+
+    implementation(compose.desktop.currentOs) {
+        // Exclude Material components — we don't need them
+        exclude(group = "org.jetbrains.compose.material")
+        exclude(group = "org.jetbrains.kotlinx")
+    }
+}
+```
+
+For further information, you can refer to the [`ide-plugin` sample](samples/ide-plugin/build.gradle.kts).
 
 #### Accessing icons
 
@@ -242,6 +346,7 @@ right path based on the state. If you want to learn more about this system, look
 implementations.
 
 ### Fonts
+
 To load a system font, you can obtain it by its family name:
 
 ```kotlin
@@ -291,7 +396,9 @@ you. However, if you want to also enable it in other scenarios and in standalone
 > runtime to fix. Once the required changes are made in the JetBrains Runtime, we'll remove this notice.
 
 ## Written with Jewel
+
 Here is a small selection of projects that use Compose for Desktop and Jewel:
+
 * [Package Search](https://github.com/JetBrains/package-search-intellij-plugin) (IntelliJ Platform plugin)
 * [Kotlin Explorer](https://github.com/romainguy/kotlin-explorer) (standalone app)
 * ...and more to come!

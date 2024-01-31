@@ -1,5 +1,6 @@
 import SupportedIJVersion.IJ_232
 import SupportedIJVersion.IJ_233
+import SupportedIJVersion.IJ_241
 
 plugins {
     jewel
@@ -14,6 +15,7 @@ intellij {
     val versionRaw = when (supportedIJVersion()) {
         IJ_232 -> libs.versions.idea232.get()
         IJ_233 -> libs.versions.idea233.get()
+        IJ_241 -> libs.versions.idea241.get()
     }
     version.set(versionRaw)
 }
@@ -22,7 +24,6 @@ intellij {
 // See https://github.com/JetBrains/gradle-intellij-plugin/issues/776
 repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    maven("https://androidx.dev/storage/compose-compiler/repository/")
     maven("https://www.jetbrains.com/intellij-repository/releases")
     maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     mavenCentral()

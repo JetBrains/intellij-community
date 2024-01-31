@@ -1,5 +1,6 @@
 import SupportedIJVersion.IJ_232
 import SupportedIJVersion.IJ_233
+import SupportedIJVersion.IJ_241
 
 plugins {
     jewel
@@ -22,6 +23,11 @@ dependencies {
         IJ_233 -> {
             api(projects.ideLafBridge.ideLafBridge233)
             compileOnly(libs.bundles.idea233)
+        }
+
+        IJ_241 -> {
+            api(projects.ideLafBridge.ideLafBridge233)
+            compileOnly(libs.bundles.idea241)
         }
     }
 

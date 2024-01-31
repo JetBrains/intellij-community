@@ -3,11 +3,6 @@ import org.gradle.api.provider.Property
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import java.util.concurrent.atomic.AtomicBoolean
 
-enum class SupportedIJVersion {
-    IJ_232,
-    IJ_233
-}
-
 private var warned = AtomicBoolean(false)
 
 fun Project.supportedIJVersion(): SupportedIJVersion {
@@ -20,21 +15,23 @@ fun Project.supportedIJVersion(): SupportedIJVersion {
         if (!warned.getAndSet(true)) {
             logger.warn(
                 """
-                No 'supported.ij.version' property provided. Falling back to IJ 233.
+                No 'supported.ij.version' property provided. Falling back to IJ 241.
                 It is recommended to provide it using the local.properties file or 
                 -Psupported.ij.version to avoid unexpected behavior.
                 """.trimIndent()
             )
         }
-        return SupportedIJVersion.IJ_233
+        return SupportedIJVersion.IJ_241
     }
 
     return when (prop) {
         "232" -> SupportedIJVersion.IJ_232
         "233" -> SupportedIJVersion.IJ_233
+        "241" -> SupportedIJVersion.IJ_241
         else -> error(
             "Invalid 'supported.ij.version' with value '$prop' is provided. " +
-                "It should be one of these values: ('232', '233')"
+                "It should be one of these values: " +
+                SupportedIJVersion.values().joinToString(", ") { it.rawPlatformVersion }
         )
     }
 }
