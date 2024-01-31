@@ -36,6 +36,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.dsl.builder.HyperlinkEventAction;
+import com.intellij.ui.dsl.builder.UtilsKt;
 import com.intellij.ui.dsl.builder.components.DslLabel;
 import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.ui.scale.JBUIScale;
@@ -309,6 +310,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
     };
     final DslLabel label = new DslLabel(DslLabelType.LABEL);
+    label.setMaxLineLength(UtilsKt.MAX_LINE_LENGTH_WORD_WRAP);
+    @NlsSafe String text = "<span>Foo</span>";
+    label.setText(text);
+    label.setMinimumSize(label.getPreferredSize());
     label.setText(IdeBundle.message("plugins.configurable.plugin.feedback"));
     label.setAction(action);
 
