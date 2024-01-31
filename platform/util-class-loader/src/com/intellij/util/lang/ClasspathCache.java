@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -139,7 +139,7 @@ public final class ClasspathCache {
   }
 
   public static long getPackageNameHash(@NotNull String resourcePath, int endIndex) {
-    return endIndex <= 0 ? 0 : Xx3UnencodedString.hashUnencodedStringRange(resourcePath, endIndex);
+    return endIndex <= 0 ? 0 : Xxh3Impl.hash(resourcePath, CharSequenceAccess.INSTANCE, 0, endIndex * 2, 0);
   }
 
   private static void addPackages(long[] hashes, StrippedLongToObjectMap<Loader[]> map, Loader loader, @Nullable LongPredicate hashFilter) {
