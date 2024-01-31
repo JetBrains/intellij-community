@@ -1,5 +1,6 @@
 package git4idea.performanceTesting
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.FileStatus
@@ -9,9 +10,13 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.vcs.commit.ChangeListCommitState
 import com.intellij.vcs.commit.LocalChangesCommitter
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.waitForRefresh
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Command for committing file changes to git
@@ -42,6 +47,10 @@ class GitCommitCommand(text: String, line: Int) : PerformanceCommandCoroutineAda
     val listCommitState = ChangeListCommitState(changeList, listOf(change), commitMessage)
 
     LocalChangesCommitter(context.project, listCommitState, CommitContext()).runCommit("", true)
+    withContext(Dispatchers.EDT) {
+      (VcsProjectLog.getInstance(context.project).logManager ?: throw RuntimeException("VcsLogManager instance is null")).waitForRefresh()
+    }
+
   }
 
   override fun getName(): String = NAME
