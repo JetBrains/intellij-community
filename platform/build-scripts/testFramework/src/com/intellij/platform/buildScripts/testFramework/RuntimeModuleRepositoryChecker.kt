@@ -157,7 +157,11 @@ class RuntimeModuleRepositoryChecker private constructor(
         val more = if (rest > 0) " and $rest more ${StringUtil.pluralize("module", rest)}" else ""
         softly.collectAssertionError(AssertionError("""
           |Module '${moduleId.stringId}' is not part of '$productModulesModule', but it's packed in ${included.pathString},
-          |which is included in classpath because $firstIncludedModuleData$more are also packed in it. 
+          |which is included in classpath because $firstIncludedModuleData$more are also packed in it, so '${moduleId.stringId}' will be
+          |included in the classpath as well. Unnecessary code and resources in the classpath may cause performance problems, also, they
+          |may cause '$productModulesModule' to behave differently in a standalone installation and when invoked from '${context.applicationInfo.fullProductName}'
+          |so it's better to fix the problem. Usually, to do that you need to change build scripts to put '${moduleId.stringId}' in a 
+          |separate JAR.
         """.trimMargin()))
       }
     }
