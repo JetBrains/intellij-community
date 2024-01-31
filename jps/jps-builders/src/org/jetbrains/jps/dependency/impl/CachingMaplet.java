@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -9,7 +9,7 @@ import org.jetbrains.jps.dependency.Maplet;
 
 import java.io.IOException;
 
-public class CachingMaplet<K, V> implements Maplet<K, V> {
+public final class CachingMaplet<K, V> implements Maplet<K, V> {
   private static final Object NULL_OBJECT = new Object();
   private final LoadingCache<K, V> myCache;
   private final Maplet<K, V> myDelegate;

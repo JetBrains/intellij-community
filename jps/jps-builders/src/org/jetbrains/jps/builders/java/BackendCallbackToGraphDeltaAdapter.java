@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.Pair;
@@ -13,7 +13,7 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.util.*;
 
-class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
+final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   // className -> {imports; static_imports}

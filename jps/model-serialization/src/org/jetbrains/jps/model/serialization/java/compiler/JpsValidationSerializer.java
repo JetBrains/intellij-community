@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.java.compiler;
 
 import com.intellij.util.xmlb.XmlSerializer;
@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class JpsValidationSerializer extends JpsProjectExtensionSerializer {
+public final class JpsValidationSerializer extends JpsProjectExtensionSerializer {
   public static final String COMPONENT_NAME = "ValidationConfiguration";
   public static final String CONFIG_FILE_NAME = "validation.xml";
 
@@ -33,7 +33,7 @@ public class JpsValidationSerializer extends JpsProjectExtensionSerializer {
     configuration.setValidationConfiguration(state.VALIDATE_ON_BUILD, disabledValidators);
   }
 
-  public static class ValidationConfigurationState {
+  public static final class ValidationConfigurationState {
     public boolean VALIDATE_ON_BUILD = false;
     public Map<String, Boolean> VALIDATORS = new HashMap<>();
   }

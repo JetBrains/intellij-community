@@ -171,7 +171,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     });
   }
 
-  private static class PropertyDescriptor{
+  private static final class PropertyDescriptor{
     @NotNull
     final String name;
     @NotNull

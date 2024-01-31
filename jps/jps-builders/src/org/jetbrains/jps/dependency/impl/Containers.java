@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -68,7 +68,7 @@ public final class Containers {
     };
   }
 
-  private static class PersistentMapletFactory implements MapletFactory, Closeable {
+  private static final class PersistentMapletFactory implements MapletFactory, Closeable {
     private static final int BASE_CACHE_SIZE = 128;
     private final String myRootDirPath;
     private final PersistentStringEnumerator myStringTable;
@@ -188,7 +188,7 @@ public final class Containers {
     }
   }
 
-  private static class GraphKeyDescriptor<T> extends GraphDataExternalizer<T> implements KeyDescriptor<T> {
+  private static final class GraphKeyDescriptor<T> extends GraphDataExternalizer<T> implements KeyDescriptor<T> {
 
     GraphKeyDescriptor(Externalizer<T> externalizer, @Nullable Enumerator enumerator) {
       super(externalizer, enumerator, null);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.build;
 
 import com.intellij.openapi.util.LowMemoryWatcherManager;
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class Standalone {
+public final class Standalone {
   @Argument(value = "config", prefix = "--", description = "Path to directory containing global options (idea.config.path)")
   public String configPath;
 
@@ -207,7 +207,7 @@ public class Standalone {
     }
   }
 
-  private static class ConsoleMessageHandler implements MessageHandler {
+  private static final class ConsoleMessageHandler implements MessageHandler {
     private boolean hasErrors = false;
 
     @Override

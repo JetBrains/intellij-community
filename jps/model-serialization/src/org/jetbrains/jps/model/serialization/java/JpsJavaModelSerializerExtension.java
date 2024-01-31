@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
+public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
   private static final Logger LOG = Logger.getInstance(JpsJavaModelSerializerExtension.class);
 
   public static final String EXPORTED_ATTRIBUTE = "exported";
@@ -234,7 +234,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     return defaultLevel;
   }
 
-  private static class JavaProjectExtensionSerializer extends JpsProjectExtensionSerializer {
+  private static final class JavaProjectExtensionSerializer extends JpsProjectExtensionSerializer {
     JavaProjectExtensionSerializer() {
       super(null, "ProjectRootManager");
     }
@@ -306,7 +306,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static class JpsRepositoryLibraryPropertiesSerializer extends JpsLibraryPropertiesSerializer<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
+  private static final class JpsRepositoryLibraryPropertiesSerializer extends JpsLibraryPropertiesSerializer<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
     private static final String MAVEN_ID_ATTRIBUTE = "maven-id";
     private static final String INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE = "include-transitive-deps";
     private static final String EXCLUDE_TAG = "exclude";

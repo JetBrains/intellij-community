@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-public class NullabilityAnnotationChangesTracker implements AnnotationChangesTracker {
+public final class NullabilityAnnotationChangesTracker implements AnnotationChangesTracker {
   private static final Set<String> ourTrackedAnnotations = Set.of(
     "org/jetbrains/annotations/Nullable",
     "androidx/annotation/Nullable",

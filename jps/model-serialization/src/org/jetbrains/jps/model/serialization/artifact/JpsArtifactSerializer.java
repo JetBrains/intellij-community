@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.artifact;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -139,7 +139,7 @@ public final class JpsArtifactSerializer {
     return STANDARD_TYPE_SERIALIZERS[0];
   }
 
-  private static class ArtifactRootElementSerializer extends JpsPackagingElementSerializer<JpsArtifactRootElement> {
+  private static final class ArtifactRootElementSerializer extends JpsPackagingElementSerializer<JpsArtifactRootElement> {
     ArtifactRootElementSerializer() {
       super("root", JpsArtifactRootElement.class);
     }
@@ -150,7 +150,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class DirectoryElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryPackagingElement> {
+  private static final class DirectoryElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryPackagingElement> {
     DirectoryElementSerializer() {
       super("directory", JpsDirectoryPackagingElement.class);
     }
@@ -161,7 +161,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class ArchiveElementSerializer extends JpsPackagingElementSerializer<JpsArchivePackagingElement> {
+  private static final class ArchiveElementSerializer extends JpsPackagingElementSerializer<JpsArchivePackagingElement> {
     ArchiveElementSerializer() {
       super("archive", JpsArchivePackagingElement.class);
     }
@@ -172,7 +172,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class FileCopyElementSerializer extends JpsPackagingElementSerializer<JpsFileCopyPackagingElement> {
+  private static final class FileCopyElementSerializer extends JpsPackagingElementSerializer<JpsFileCopyPackagingElement> {
     FileCopyElementSerializer() {
       super("file-copy", JpsFileCopyPackagingElement.class);
     }
@@ -184,7 +184,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class DirectoryCopyElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryCopyPackagingElement> {
+  private static final class DirectoryCopyElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryCopyPackagingElement> {
     DirectoryCopyElementSerializer() {
       super("dir-copy", JpsDirectoryCopyPackagingElement.class);
     }
@@ -195,7 +195,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class ExtractedDirectoryElementSerializer
+  private static final class ExtractedDirectoryElementSerializer
     extends JpsPackagingElementSerializer<JpsExtractedDirectoryPackagingElement> {
     ExtractedDirectoryElementSerializer() {
       super("extracted-dir", JpsExtractedDirectoryPackagingElement.class);
@@ -208,7 +208,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class LibraryFilesElementSerializer extends JpsPackagingElementSerializer<JpsLibraryFilesPackagingElement> {
+  private static final class LibraryFilesElementSerializer extends JpsPackagingElementSerializer<JpsLibraryFilesPackagingElement> {
     LibraryFilesElementSerializer() {
       super("library", JpsLibraryFilesPackagingElement.class);
     }
@@ -230,7 +230,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class ArtifactOutputElementSerializer extends JpsPackagingElementSerializer<JpsArtifactOutputPackagingElement> {
+  private static final class ArtifactOutputElementSerializer extends JpsPackagingElementSerializer<JpsArtifactOutputPackagingElement> {
     ArtifactOutputElementSerializer() {
       super("artifact", JpsArtifactOutputPackagingElement.class);
     }

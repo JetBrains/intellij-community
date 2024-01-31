@@ -15,7 +15,7 @@ import java.util.function.Predicate;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
-public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
+public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
 
   private static final Iterable<AnnotationChangesTracker> ourAnnotationChangeTrackers = collect(
     ServiceLoader.load(AnnotationChangesTracker.class, JavaDifferentiateStrategy.class.getClassLoader()),
