@@ -91,7 +91,7 @@ interface MavenAsyncProjectsManager {
                                                    previewModule: Module?): List<Module>
 }
 
-private val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("mavenSync")) }
+internal val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("maven")) }
 
 open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project) {
   override suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,

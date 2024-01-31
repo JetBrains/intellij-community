@@ -13,6 +13,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.CollectionFactory
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
@@ -25,7 +28,6 @@ import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.Maven
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.ParallelRunner
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -169,8 +171,12 @@ class MavenProjectResolver(private val myProject: Project) {
       .mapKeys { it.key!! }
     val projectsWithUnresolvedPlugins = ConcurrentLinkedQueue<MavenProjectWithHolder>()
 
-    ParallelRunner.getInstance(myProject).runInParallel(results) {
-      collectProjectWithUnresolvedPlugins(it, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
+    coroutineScope {
+      results.forEach {
+        launch {
+          collectProjectWithUnresolvedPlugins(it, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
+        }
+      }
     }
     MavenLog.LOG.debug("Project resolution finished: ${projectsWithUnresolvedPlugins.size}")
     return projectsWithUnresolvedPlugins
@@ -244,8 +250,16 @@ class MavenProjectResolver(private val myProject: Project) {
     val resolverResults: MutableCollection<MavenProjectResolverResult> = ArrayList()
     val readingProblems = mutableListOf<MavenProjectProblem>()
     try {
-      val executionResults = embedder.resolveProject(
-        fileToDependencyHash, explicitProfiles, progressReporter, eventHandler, workspaceMap, updateSnapshots, userProperties)
+      val executionResults = withContext(tracer.span("embedder.resolveProject")) {
+        embedder.resolveProject(
+          fileToDependencyHash,
+          explicitProfiles,
+          progressReporter,
+          eventHandler,
+          workspaceMap,
+          updateSnapshots,
+          userProperties)
+      }
       val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
       filesMap.putAll(files.associateBy { it.path })
       for (result in executionResults) {
