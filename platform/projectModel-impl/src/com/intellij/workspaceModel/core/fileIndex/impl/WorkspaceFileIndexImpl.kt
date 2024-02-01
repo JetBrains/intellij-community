@@ -20,16 +20,14 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PathUtil
 import com.intellij.util.Query
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.TreeNodeProcessingResult
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
@@ -246,6 +244,23 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     val unwrappedFile = BackedVirtualFile.getOriginFileIfBacked((file as? VirtualFileWindow)?.delegate ?: file)
     return getMainIndexData().getFileInfo(unwrappedFile, honorExclusion, includeContentSets,
                                           includeExternalSets, includeExternalSourceSets, includeCustomKindSets)
+  }
+
+  override fun <E : WorkspaceEntity> findContainingEntities(file: VirtualFile, entityClass: Class<E>, honorExclusion: Boolean, includeContentSets: Boolean, includeExternalSets: Boolean, includeExternalSourceSets: Boolean, includeCustomKindSets: Boolean): Collection<E> {
+    return when (val fileInfo = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)) {
+      is WorkspaceFileSetImpl -> listOfNotNull(resolveEntity(fileInfo, entityClass))
+      is MultipleWorkspaceFileSets -> fileInfo.fileSets.mapNotNull { fileSet ->
+        (fileSet as? StoredFileSet?)?.let { resolveEntity(it, entityClass) }
+      }
+      is NonWorkspace -> return emptyList()
+    }
+  }
+
+  private fun <E> resolveEntity(fileSet: StoredFileSet, entityClass: Class<E>): E? {
+    if (fileSet.entityStorageKind != EntityStorageKind.MAIN) return null
+    val entity = fileSet.entityPointer.resolve(WorkspaceModel.getInstance(project).currentSnapshot)
+    @Suppress("UNCHECKED_CAST")
+    return entity?.takeIf { it.getEntityInterface() == entityClass } as E?
   }
 
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {

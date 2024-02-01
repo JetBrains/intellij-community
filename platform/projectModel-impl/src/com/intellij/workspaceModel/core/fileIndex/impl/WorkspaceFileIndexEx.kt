@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import org.jetbrains.annotations.ApiStatus
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
@@ -29,6 +30,22 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean,
                   includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
+
+  /**
+   * Searches for the first parent of [file] (or [file] itself), which has an associated [WorkspaceFileSet]s (taking into account
+   * passed flags), and returns entities of type [E] from which these filesets were contributed.
+   * 
+   * Note that the result of this function depends on how exactly [com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor]
+   * for entities of type [E] are implemented.
+   * If the contributor is actually registered for a child entity of [E], the function will return nothing.
+   */
+  fun <E: WorkspaceEntity> findContainingEntities(file: VirtualFile, 
+                                                  entityClass: Class<E>, 
+                                                  honorExclusion: Boolean, 
+                                                  includeContentSets: Boolean, 
+                                                  includeExternalSets: Boolean,
+                                                  includeExternalSourceSets: Boolean,
+                                                  includeCustomKindSets: Boolean): Collection<E>
 
   /**
    * Holds references to the currently stored data.
