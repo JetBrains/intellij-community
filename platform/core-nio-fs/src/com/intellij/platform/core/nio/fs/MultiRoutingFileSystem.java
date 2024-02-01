@@ -1,159 +1,159 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.UserPrincipalLookupService;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
-public class MultiRoutingFileSystem extends FileSystem {
+/**
+ * @see MultiRoutingFileSystemProvider
+ */
+public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFileSystemProvider> {
   private final MultiRoutingFileSystemProvider myProvider;
-  private final FileSystem                    myLocalFS;
+  private final FileSystem myLocalFS;
 
-  private volatile FileSystem myMountedFS;
-  private volatile MultiRoutingFileSystemDelegate myDelegate;
-  private static volatile String ourMountedFSPrefix;
+  private static class Backend {
+    @NotNull final String root;
+    final boolean prefix;
+    final boolean caseSensitive;
+    @NotNull final FileSystem fileSystem;
+
+    Backend(@NotNull String root, boolean prefix, boolean caseSensitive, @NotNull FileSystem fileSystem) {
+      this.root = root;
+      this.prefix = prefix;
+      this.caseSensitive = caseSensitive;
+      this.fileSystem = fileSystem;
+    }
+
+    boolean matchRoot(@NotNull String candidate) {
+      if (!prefix && candidate.length() != root.length()) {
+        return false;
+      }
+      return candidate.regionMatches(!caseSensitive, 0, root, 0, root.length());
+    }
+  }
+
+  private final AtomicReference<@NotNull List<@NotNull Backend>> myBackends = new AtomicReference<>(Collections.emptyList());
 
   public MultiRoutingFileSystem(MultiRoutingFileSystemProvider provider, FileSystem localFS) {
     myProvider = provider;
     myLocalFS = localFS;
   }
 
-  public void initialize(@NotNull String filesystemClassName, @Nullable Class<? extends MultiRoutingFileSystemDelegate> routingFilesystemDelegateClass) {
-    myMountedFS = myProvider.createInstance(
-      filesystemClassName,
-      new Class[]{FileSystemProvider.class},
-      myProvider);
-    if (routingFilesystemDelegateClass != null) {
-      try {
-        myDelegate = routingFilesystemDelegateClass.getConstructor().newInstance();
+  /**
+   * @see MultiRoutingFileSystemProvider#computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)
+   */
+  void computeBackend(
+    @NotNull String root,
+    boolean isPrefix,
+    boolean caseSensitive,
+    BiFunction<? super @NotNull FileSystemProvider, ? super @Nullable FileSystem, @Nullable FileSystem> compute
+  ) {
+    myBackends.updateAndGet(oldList -> {
+      List<@NotNull Backend> newList = new ArrayList<>(oldList);
+      ListIterator<@NotNull Backend> iter = newList.listIterator();
+      FileSystem newFs = null;
+      while (iter.hasNext()) {
+        Backend current = iter.next();
+        if (current.root.equals(root)) {
+          iter.remove();
+          newFs = compute.apply(myProvider.myLocalProvider, current.fileSystem);
+          if (newFs == null) {
+            return newList;
+          }
+          break;
+        }
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+
+      if (newFs == null) {
+        newFs = compute.apply(myProvider.myLocalProvider, null);
+        if (newFs == null) {
+          return newList;
+        }
       }
-    }
-  }
 
-  public static void setMountedFSPrefix(@NotNull String mountedFSPrefix) {
-    ourMountedFSPrefix = mountedFSPrefix;
-  }
+      iter.add(new Backend(root, isPrefix, caseSensitive, newFs));
 
-  public boolean isInitialized() {
-    return myMountedFS != null;
+      // To ease finding the appropriate backend for a specific root, the roots should be ordered by their lengths in the descending order.
+      // This operation is quite rare and the list is quite small. There's no reason to deal with error-prone bisecting.
+      newList.sort((r1, r2) -> r2.root.length() - r1.root.length());
+
+      return newList;
+    });
   }
 
   @Override
-  public FileSystemProvider provider() {
+  public @NotNull MultiRoutingFileSystemProvider provider() {
     return myProvider;
   }
 
   @Override
-  public void close() {
-    throw new UnsupportedOperationException();
+  protected @NotNull FileSystem getDelegate() {
+    return myLocalFS;
   }
 
   @Override
-  public boolean isOpen() {
-    return myLocalFS.isOpen() || myMountedFS != null && myMountedFS.isOpen();
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return myLocalFS.isReadOnly() && (myMountedFS == null || myMountedFS.isReadOnly());
-  }
-
-  @Override
-  public String getSeparator() {
-    return myLocalFS.getSeparator();
+  protected @NotNull FileSystem getDelegate(@NotNull String root) {
+    return getBackend(root);
   }
 
   @Override
   public Iterable<Path> getRootDirectories() {
-    Iterable<Path> roots = concat(myLocalFS.getRootDirectories(), myMountedFS == null ? Collections.emptyList() : myMountedFS.getRootDirectories());
-
-    return new Iterable<Path>() {
-      @Override
-      public Iterator<Path> iterator() {
-        Iterator<Path> iterator = roots.iterator();
-        return new Iterator<Path>() {
-          @Override
-          public boolean hasNext() {
-            return iterator.hasNext();
-          }
-
-          @Override
-          public Path next() {
-            return MultiRoutingFileSystemProvider.path(MultiRoutingFileSystem.this, iterator.next());
-          }
-        };
+    Map<String, Path> rootDirectories = new LinkedHashMap<>();
+    for (Path root : myLocalFS.getRootDirectories()) {
+      rootDirectories.put(root.toString(), root);
+    }
+    // Some of the backend file systems may override the roots.
+    // However, it's important to check that they override only the registered paths.
+    for (Backend backend : myBackends.get()) {
+      for (Path candidate : backend.fileSystem.getRootDirectories()) {
+        if (backend.matchRoot(candidate.toString())) {
+          rootDirectories.put(candidate.toString(), candidate);
+          break;
+        }
       }
-    };
+    }
+    return rootDirectories.values();
   }
 
   @Override
   public Iterable<FileStore> getFileStores() {
-    return concat(myLocalFS.getFileStores(), myMountedFS == null ? Collections.emptyList() : myMountedFS.getFileStores());
+    Collection<FileStore> result = new LinkedHashSet<>();
+    for (FileStore fileStore : myLocalFS.getFileStores()) {
+      result.add(fileStore);
+    }
+    for (Backend backend : myBackends.get()) {
+      for (FileStore fileStore : backend.fileSystem.getFileStores()) {
+        result.add(fileStore);
+      }
+    }
+    return result;
   }
 
   @Override
   public Set<String> supportedFileAttributeViews() {
     Set<String> result = new HashSet<>(myLocalFS.supportedFileAttributeViews());
-    if (myMountedFS != null) result.addAll(myMountedFS.supportedFileAttributeViews());
+    for (Backend backend : myBackends.get()) {
+      result.addAll(backend.fileSystem.supportedFileAttributeViews());
+    }
     return result;
   }
 
-  @Override
-  public Path getPath(String first, String... more) {
-    FileSystem fs = myMountedFS != null && isMountedFSFile(first) ? myMountedFS : myLocalFS;
-    Path result = MultiRoutingFileSystemProvider.path(this, fs.getPath(first, more));
-
-    MultiRoutingFileSystemDelegate delegate = myDelegate;
-    return delegate == null ? result : delegate.wrap(result);
-  }
-
-  @Override
-  public PathMatcher getPathMatcher(String syntaxAndPattern) {
-    return myLocalFS.getPathMatcher(syntaxAndPattern);
-  }
-
-  @Override
-  public UserPrincipalLookupService getUserPrincipalLookupService() {
-    return myLocalFS.getUserPrincipalLookupService();
-  }
-
-  @Override
-  public WatchService newWatchService() throws IOException {
-    return myLocalFS.newWatchService();
-  }
-
-  public boolean isMountedFSPath(MultiRoutingFsPath path) {
-    if (path.isMountedFS()) return true;
-    MultiRoutingFileSystemDelegate delegate = myDelegate;
-    return delegate != null && delegate.isMountedFSPath(path);
-  }
-
-  public static boolean isMountedFSFile(String virtualFilePath) {
-    return MultiRoutingFileSystemProvider.normalizePath(virtualFilePath).startsWith(ourMountedFSPrefix);
-  }
-
-  private static <T> Iterable<T> concat(Iterable<T> first, Iterable<T> second) {
-    Stream<T> firstStream = StreamSupport.stream(first.spliterator(), false);
-    Stream<T> secondStream = StreamSupport.stream(second.spliterator(), false);
-    Stream<T> concat = Stream.concat(firstStream, secondStream);
-    return new Iterable<T>() {
-      @Override
-      public Iterator<T> iterator() {
-        return concat.iterator();
+  @NotNull
+  FileSystem getBackend(@NotNull String root) {
+    // It's important that the backends are sorted by the root length in the reverse order. Otherwise, prefixes won't work correctly.
+    for (Backend backend : myBackends.get()) {
+      if (backend.matchRoot(root)) {
+        return backend.fileSystem;
       }
-    };
+    }
+    return myLocalFS;
   }
 }

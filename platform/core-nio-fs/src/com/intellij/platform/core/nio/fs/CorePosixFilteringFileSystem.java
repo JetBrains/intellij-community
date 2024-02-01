@@ -23,6 +23,11 @@ class CorePosixFilteringFileSystem extends DelegatingFileSystem<CorePosixFilteri
   }
 
   @Override
+  protected @NotNull FileSystem getDelegate(@NotNull String root) {
+    return myDelegate;
+  }
+
+  @Override
   public CorePosixFilteringFileSystemProvider provider() {
     return myProvider;
   }

@@ -1,357 +1,193 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.UncheckedIOException;
 import java.net.URI;
-import java.nio.channels.AsynchronousFileChannel;
-import java.nio.channels.FileChannel;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.BiFunction;
 
-public class MultiRoutingFileSystemProvider extends FileSystemProvider {
-  public static final String SEPARATOR = "/";
-
-  /** Key for signaling to {@link MultiRoutingFileSystemProvider} that it should initialize itself. */
-  private static final String INITIALIZATION_KEY = "MultiRoutingFSInitialization";
+/**
+ * A file system that can delegate specific paths to other file systems.
+ * <p>
+ * Although this filesystem routes requests to different filesystems, it doesn't mangle paths.
+ * It's the responsibility of the backend filesystem to convert a path passed to {@link MultiRoutingFileSystem}
+ * into some other specific path.
+ *
+ * @see #computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)
+ * @see RoutingAwareFileSystemProvider
+ */
+public final class MultiRoutingFileSystemProvider
+  extends DelegatingFileSystemProvider<MultiRoutingFileSystemProvider, MultiRoutingFileSystem> {
   /**
-   * Key for signaling to {@link MultiRoutingFileSystemProvider} that it should eagerly initialize the mounted FS provider under lock as
-   * well.
+   * The fallback provider for requests to roots
+   * not registered via {@link #computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)}.
    */
-  private static final String INITIALIZATION_MOUNTED_FS_PROVIDER_KEY = "RoutingFilesystemInitialization_MountedFSProvider";
-  private static final String PROVIDER_CLASS_NAME = "ProviderClassName";
-  private static final String PATH_CLASS_NAME = "PathClassName";
-  private static final String MOUNTED_FS_PREFIX = "MountedFSPrefix";
-  private static final String FILESYSTEM_CLASS_NAME = "FilesystemClassName";
-  private static final String ROUTING_FILESYSTEM_DELEGATE_CLASS = "RoutingFilesystemDelegateClass";
+  final FileSystemProvider myLocalProvider;
 
-  private final Object myLock = new Object();
-  private final FileSystemProvider myLocalProvider;
   private final MultiRoutingFileSystem myFileSystem;
-  private final boolean myUseContextClassLoader;
 
-  private volatile FileSystemProvider myProvider;
-  private volatile String myProviderClassName;
+  /**
+   * Adds a new backend filesystem that handles requests to specific roots.
+   * <p>
+   * If there's already a file system assigned to the specified root, it will be replaced with the new one. Otherwise, the new will be
+   * just added.
+   * <p>
+   * The function is defined as static and requires an instance of {@link MultiRoutingFileSystem}
+   * because there may be more than one class {@link MultiRoutingFileSystem} loaded different classloaders.
+   *
+   * @param provider      Provider <b>must</b> be an instance of {@link MultiRoutingFileSystemProvider}.
+   * @param root          The first directory of an absolute path.
+   *                      On Windows, it can be {@code C:}, {@code \\wsl.localhost\Ubuntu-22.04}, etc.
+   * @param isPrefix      If true, {@code root} will be matched not exactly, but as a prefix for queried root paths.
+   * @param caseSensitive Defines if the whole filesystem is case-sensitive. This flag is used for finding a specific root.
+   * @param function      A function that either defines a new backend, or deletes an existing one by returning {@code null}.
+   *                      The function gets as the first argument {@link #myLocalProvider} and gets as the second the previous filesystem
+   *                      assigned to the root, if it has been assigned.
+   */
+  public static void computeBackend(
+    @NotNull FileSystemProvider provider,
+    @NotNull String root,
+    boolean isPrefix,
+    boolean caseSensitive,
+    @NotNull BiFunction<@NotNull FileSystemProvider, @Nullable FileSystem, @Nullable FileSystem> function
+  ) {
+    if (provider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
+      Map<String, Object> arguments = new HashMap<>();
+      arguments.put(KEY_ROOT, root);
+      arguments.put(KEY_PREFIX, isPrefix);
+      arguments.put(KEY_CASE_SENSITIVE, caseSensitive);
+      arguments.put(KEY_FUNCTION, function);
 
-  public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
-    this(localFSProvider, true);
+      try {
+        //noinspection resource
+        provider.newFileSystem(URI.create("file:/"), arguments);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+    else {
+      throw new IllegalArgumentException(String.format("%s is not an instance of %s", provider, MultiRoutingFileSystemProvider.class));
+    }
   }
 
-  /**
-   * @param useContextClassLoader Force {@link #createInstance(String, Class[], Object...)} use system class loader which is required when this class is used as default system provider
-   */
-  public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider, boolean useContextClassLoader) {
-    FileSystem fileSystem = localFSProvider.getFileSystem(URI.create("file:///"));
-    myLocalProvider = fileSystem.supportedFileAttributeViews().contains("posix")
+  public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
+    // TODO I wouldn't force using CorePosixFilteringFileSystemProvider at the top level.
+    myLocalProvider = localFSProvider.getFileSystem(URI.create("file:///")).supportedFileAttributeViews().contains("posix")
                       ? localFSProvider
                       : new CorePosixFilteringFileSystemProvider(localFSProvider);
-    myFileSystem = new MultiRoutingFileSystem(this, fileSystem);
-    myUseContextClassLoader = useContextClassLoader;
+    myFileSystem = new MultiRoutingFileSystem(this, myLocalProvider.getFileSystem(URI.create("file:///")));
   }
 
   @Override
-  public FileSystem getFileSystem(URI uri) {
+  protected @NotNull MultiRoutingFileSystem wrapDelegateFileSystem(@NotNull FileSystem delegateFs) {
+    return new MultiRoutingFileSystem(this, delegateFs);
+  }
+
+  @Override
+  public @NotNull MultiRoutingFileSystem newFileSystem(Path path, Map<String, ?> env) {
+    return getFileSystem(path.toUri());
+  }
+
+  @Override
+  public @Nullable MultiRoutingFileSystem newFileSystem(URI uri, @Nullable Map<String, ?> env) {
+    if (env == null) {
+      return getFileSystem(uri);
+    }
+
+    String root = Objects.requireNonNull((String)env.get(KEY_ROOT));
+    Boolean isPrefix = Objects.requireNonNull((Boolean)env.get(KEY_PREFIX));
+    Boolean caseSensitive = Objects.requireNonNull((Boolean)env.get(KEY_CASE_SENSITIVE));
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    BiFunction<@NotNull FileSystemProvider, @Nullable FileSystem, @Nullable FileSystem> function =
+      Objects.requireNonNull((BiFunction)env.get(KEY_FUNCTION));
+
+    myFileSystem.computeBackend(root, isPrefix, caseSensitive, function);
+    return null;
+  }
+
+  private static final String KEY_ROOT = "KEY_ROOT";
+  private static final String KEY_PREFIX = "KEY_PREFIX";
+  private static final String KEY_CASE_SENSITIVE = "KEY_CASE_SENSITIVE";
+  private static final String KEY_FUNCTION = "KEY_FUNCTION";
+
+  @Override
+  public @NotNull MultiRoutingFileSystem getFileSystem(@NotNull URI uri) {
+    if (!uri.getScheme().equals("file") || uri.getAuthority() != null && !uri.getAuthority().isEmpty()) {
+      throw new UnsupportedOperationException(String.format(
+        "Unexpected URI: %s\nThis class is supposed to replace the local file system.",
+        uri
+      ));
+    }
     return myFileSystem;
   }
 
   @Override
-  public String getScheme() {
-    return getProvider().getScheme();
+  protected @NotNull FileSystemProvider getDelegate(@Nullable Path path1, @Nullable Path path2) {
+    if (path1 == null) {
+      if (path2 == null) {
+        return myLocalProvider;
+      }
+      path1 = path2;
+      path2 = null;
+    }
+
+    FileSystemProvider provider1 = myFileSystem.getBackend(path1.getRoot().toString()).provider();
+    if (path2 == null) {
+      return provider1;
+    }
+
+    FileSystemProvider provider2 = myFileSystem.getBackend(path2.getRoot().toString()).provider();
+
+    if (provider1.equals(provider2)) {
+      return provider1;
+    }
+    else if (provider1 instanceof RoutingAwareFileSystemProvider && ((RoutingAwareFileSystemProvider)provider1).canHandleRouting()) {
+      return provider1;
+    }
+    else if (provider2 instanceof RoutingAwareFileSystemProvider && ((RoutingAwareFileSystemProvider)provider2).canHandleRouting()) {
+      return provider2;
+    }
+    else {
+      throw new IllegalArgumentException(String.format("Provider mismatch: %s != %s", provider1, provider2));
+    }
   }
 
+  @Contract("null -> null; !null -> !null")
   @Override
-  public FileSystem newFileSystem(URI uri, Map<String, ?> env) {
-    if (env.get(INITIALIZATION_KEY) == Boolean.TRUE) {
-      MultiRoutingFileSystem.setMountedFSPrefix((String)env.get(MOUNTED_FS_PREFIX));
-      MultiRoutingFsPath.setMountedDelegateClassName((String)env.get(PATH_CLASS_NAME));
-      myProviderClassName = (String)env.get(PROVIDER_CLASS_NAME);
-      if (env.get(INITIALIZATION_MOUNTED_FS_PROVIDER_KEY) == Boolean.TRUE) {
-        synchronized (myLock) {
-          //noinspection unchecked
-          myFileSystem.initialize((String)env.get(FILESYSTEM_CLASS_NAME),
-                                  (Class<? extends MultiRoutingFileSystemDelegate>)env.get(ROUTING_FILESYSTEM_DELEGATE_CLASS));
-          getMountedFSProvider();
-          return null;
-        }
-      }
-      //noinspection unchecked
-      myFileSystem.initialize((String)env.get(FILESYSTEM_CLASS_NAME),
-                              (Class<? extends MultiRoutingFileSystemDelegate>)env.get(ROUTING_FILESYSTEM_DELEGATE_CLASS));
+  @VisibleForTesting
+  public @Nullable Path toDelegatePath(@Nullable Path path) {
+    if (path == null) {
       return null;
     }
-    throw new IllegalStateException("File system already exists");
-  }
-
-
-  /**
-   * Initializes the passed {@link MultiRoutingFileSystemProvider} using the current context class loader.
-   *
-   * @param provider                    The {@link MultiRoutingFileSystemProvider}, which may have been loaded by a different class loader.
-   * @param initializeMountedFSProvider Specifies whether to eagerly initialize the mounted FS provider under lock as well,
-   *                                    e.g., in order to ensure the same class loader is used.
-   * @see MultiRoutingFileSystemProvider#INITIALIZATION_KEY
-   * @see MultiRoutingFileSystemProvider#INITIALIZATION_MOUNTED_FS_PROVIDER_KEY
-   */
-  public static void initialize(FileSystemProvider provider,
-                                String providerClassName,
-                                String pathClassName,
-                                String mountedFSPrefix,
-                                String filesystemClassName,
-                                @Nullable Class<? extends MultiRoutingFileSystemDelegate> routingFilesystemDelegateClass,
-                                boolean initializeMountedFSProvider) throws IOException {
-    // Now we can use our provider. Initializing in such a hacky way because of different classloaders.
-    Map<String, Object> map = new HashMap<>();
-    map.put(INITIALIZATION_KEY, true);
-    map.put(INITIALIZATION_MOUNTED_FS_PROVIDER_KEY, initializeMountedFSProvider);
-    map.put(PROVIDER_CLASS_NAME, providerClassName);
-    map.put(PATH_CLASS_NAME, pathClassName);
-    map.put(MOUNTED_FS_PREFIX, mountedFSPrefix);
-    map.put(FILESYSTEM_CLASS_NAME, filesystemClassName);
-    map.put(ROUTING_FILESYSTEM_DELEGATE_CLASS, routingFilesystemDelegateClass);
-    //noinspection resource
-    provider.newFileSystem(URI.create("file:///"), map);
-  }
-
-
-  @Override
-  public Path getPath(URI uri) {
-    return path(getProvider(uri).getPath(uri));
-  }
-
-  @Override
-  public Path readSymbolicLink(Path link) throws IOException {
-    return path(getProvider(link).readSymbolicLink(unwrap(link)));
-  }
-
-  @Override
-  public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-    return getProvider(path).newByteChannel(unwrap(path), options, attrs);
-  }
-
-  @Override
-  public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
-    DirectoryStream.Filter<? super Path> wrappedFilter = filter != null ? path -> filter.accept(path(path)) : null;
-    @SuppressWarnings("resource") DirectoryStream<Path> stream = getProvider(dir).newDirectoryStream(unwrap(dir), wrappedFilter);
-    return stream == null ? null : new DirectoryStream<Path>() {
-      @Override
-      public void close() throws IOException {
-        stream.close();
-      }
-
-      @Override
-      public Iterator<Path> iterator() {
-        Iterator<Path> iterator = stream.iterator();
-        return new Iterator<Path>() {
-          @Override
-          public boolean hasNext() {
-            return iterator.hasNext();
-          }
-
-          @Override
-          public Path next() {
-            return path(iterator.next());
-          }
-        };
-      }
-    };
-  }
-
-  @Override
-  public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
-    getProvider(dir).createDirectory(unwrap(dir), attrs);
-  }
-
-  @Override
-  public void delete(Path path) throws IOException {
-    getProvider(path).delete(unwrap(path));
-  }
-
-  @Override
-  public void copy(Path source, Path target, CopyOption... options) throws IOException {
-    getProvider(source, target).copy(unwrap(source), unwrap(target), options);
-  }
-
-  @Override
-  public void move(Path source, Path target, CopyOption... options) throws IOException {
-    getProvider(source, target).move(unwrap(source), unwrap(target), options);
-  }
-
-  @Override
-  public boolean isSameFile(Path path, Path path2) throws IOException {
-    return getProvider(path, path2).isSameFile(unwrap(path), unwrap(path2));
-  }
-
-  @Override
-  public boolean isHidden(Path path) throws IOException {
-    return getProvider(path).isHidden(unwrap(path));
-  }
-
-  @Override
-  public FileStore getFileStore(Path path) throws IOException {
-    return getProvider(path).getFileStore(unwrap(path));
-  }
-
-  @Override
-  public void checkAccess(Path path, AccessMode... modes) throws IOException {
-    getProvider(path).checkAccess(unwrap(path), modes);
-  }
-
-  @Override
-  public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
-    return getProvider(path).getFileAttributeView(unwrap(path), type, options);
-  }
-
-  @Override
-  public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
-    return getProvider(path).readAttributes(unwrap(path), type, options);
-  }
-
-  @Override
-  public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
-    return getProvider(path).readAttributes(unwrap(path), attributes, options);
-  }
-
-  @Override
-  public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
-    getProvider(path).setAttribute(unwrap(path), attribute, value, options);
-  }
-
-  @Override
-  public AsynchronousFileChannel newAsynchronousFileChannel(Path path,
-                                                            Set<? extends OpenOption> options,
-                                                            ExecutorService executor,
-                                                            FileAttribute<?>... attrs) throws IOException {
-    return tryGetLocalProvider(path).newAsynchronousFileChannel(unwrap(path), options, executor, attrs);
-  }
-
-  @Override
-  public void createSymbolicLink(Path link, Path target, FileAttribute<?>... attrs) throws IOException {
-    tryGetLocalProvider(link).createSymbolicLink(unwrap(link), unwrap(target), attrs);
-  }
-
-  @Override
-  public void createLink(Path link, Path existing) throws IOException {
-    tryGetLocalProvider(link).createLink(unwrap(link), unwrap(existing));
-  }
-
-  @Override
-  public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-    return getProvider(path).newFileChannel(unwrap(path), options, attrs);
-  }
-
-  /** Used in {@link sun.nio.ch.UnixDomainSockets#getPathBytes}. */
-  @SuppressWarnings("unused")
-  public byte[] getSunPathForSocketFile(Path path) {
-    if (isMountedFSPath(path)) {
-      throw new IllegalArgumentException(path.toString());
+    else if (path instanceof MultiRoutingFsPath) {
+      return path;
     }
-    String jnuEncoding = System.getProperty("sun.jnu.encoding");
-    try {
-      return path.toString().getBytes(jnuEncoding);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new IllegalStateException("sun.jnu.encoding=" + jnuEncoding, e);
+    else {
+      return new MultiRoutingFsPath(myFileSystem, path);
     }
   }
 
-  private boolean isInitialized() {
-    return myFileSystem.isInitialized();
-  }
-
-  private FileSystemProvider tryGetLocalProvider(Path path) {
-    if (isMountedFSPath(path)) throw new UnsupportedOperationException();
-    return myLocalProvider;
-  }
-
-  private FileSystemProvider getProvider() {
-    return isInitialized() ? getMountedFSProvider() : myLocalProvider;
-  }
-
-  private FileSystemProvider getProvider(URI uri) {
-    return isInitialized() && isMountedFSURI(uri) ? getMountedFSProvider() : myLocalProvider;
-  }
-
-  private FileSystemProvider getProvider(Path path) {
-    return isInitialized() && isMountedFSPath(path) ? getMountedFSProvider() : myLocalProvider;
-  }
-
-  private FileSystemProvider getProvider(Path... path) {
-    FileSystemProvider provider = null;
-    for (Path p : path) {
-      FileSystemProvider current = getProvider(p);
-      if (provider == null) {
-        provider = current;
-        continue;
-      }
-      if (current != provider) throw new IllegalArgumentException("Provider mismatch");
+  @Contract("null -> null; !null -> !null")
+  @Override
+  protected @Nullable Path fromDelegatePath(@Nullable Path path) {
+    if (path instanceof MultiRoutingFsPath) {
+      return ((MultiRoutingFsPath)path).getDelegate();
     }
-    return Objects.requireNonNull(provider);
-  }
-
-  public FileSystemProvider getMountedFSProvider() {
-    if (myProvider == null) {
-      synchronized (myLock) {
-        if (myProvider == null) {
-          myProvider = createInstance(
-            myProviderClassName,
-            new Class[]{FileSystem.class},
-            myFileSystem);
-        }
-      }
+    else {
+      return path;
     }
-    return myProvider;
-  }
-
-  protected Path path(Path path) {
-    return path == null ? null : path(myFileSystem, path);
-  }
-
-  public static Path path(MultiRoutingFileSystem fileSystem, Path path) {
-    return path instanceof MultiRoutingFsPath ? path : new MultiRoutingFsPath(fileSystem, path);
-  }
-
-  protected boolean isMountedFSPath(Path path) {
-    return path instanceof MultiRoutingFsPath && myFileSystem.isMountedFSPath((MultiRoutingFsPath)path);
-  }
-
-  private static boolean isMountedFSURI(URI uri) {
-    return uri != null && MultiRoutingFileSystem.isMountedFSFile(uri.getPath());
-  }
-
-  public static Path unwrap(Path path) {
-    return path == null ? null : ((MultiRoutingFsPath)path).getDelegate();
-  }
-
-  public <T> T createInstance(String className,
-                              Class<?>[] paramClasses,
-                              Object... params) {
-    try {
-      ClassLoader loader = (myUseContextClassLoader ? Thread.currentThread().getContextClassLoader()
-                                                    : MultiRoutingFileSystemProvider.class.getClassLoader());
-      String loaderName = loader.getClass().getName();
-      if (!("com.intellij.util.lang.PathClassLoader").equals(loaderName) &&
-          !("com.intellij.util.lang.UrlClassLoader").equals(loaderName) &&
-          !("com.intellij.ide.plugins.cl.PluginClassLoader" /* Downburst */).equals(loaderName)) {
-        throw new RuntimeException("Trying to initialize a mounted file system with wrong classloader: " + loader);
-      }
-      Class<?> loaded = loader.loadClass(className);
-      //noinspection unchecked
-      return (T)loaded.getConstructor(paramClasses).newInstance(params);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static String normalizePath(String path) {
-    return path.replace("\\", SEPARATOR);
   }
 }

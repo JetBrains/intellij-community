@@ -17,6 +17,16 @@ import java.util.Set;
 public abstract class DelegatingFileSystem<P extends DelegatingFileSystemProvider<P, ?>> extends FileSystem {
   protected abstract @NotNull FileSystem getDelegate();
 
+  /**
+   * This method can choose a backend file system if the inheritor is able to delegate calls to different file systems.
+   *
+   * @param root The first directory of an absolute path. On Windows, it can be {@code C:}, {@code \\wsl.localhost\Ubuntu-22.04}, etc.
+   * @return A specialized filesystem for the specific root, or a fallback filesystem like returned by {@link #getDelegate()}.
+   */
+  protected @NotNull FileSystem getDelegate(@NotNull String root) {
+    return getDelegate();
+  }
+
   @Override
   public String toString() {
     return String.format("%s(delegate=%s)", getClass().getName(), getDelegate());
@@ -83,7 +93,7 @@ public abstract class DelegatingFileSystem<P extends DelegatingFileSystemProvide
   @NotNull
   @Override
   public Path getPath(@NotNull String first, @NotNull String @NotNull ... more) {
-    return provider().toDelegatePath(getDelegate().getPath(first, more));
+    return provider().toDelegatePath(getDelegate(first).getPath(first, more));
   }
 
   @Override

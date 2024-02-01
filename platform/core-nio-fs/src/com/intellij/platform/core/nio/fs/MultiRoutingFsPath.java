@@ -1,5 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
+
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,13 +11,10 @@ import java.nio.file.*;
 import java.util.Iterator;
 import java.util.Objects;
 
-import static com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider.unwrap;
-
 
 public class MultiRoutingFsPath implements Path {
-  private final Path                  myDelegate;
+  private final Path myDelegate;
   private final MultiRoutingFileSystem myFileSystem;
-  private static volatile String      ourMountedDelegateClassName;
 
   public MultiRoutingFsPath(MultiRoutingFileSystem fileSystem, Path delegate) {
     myDelegate = delegate;
@@ -67,7 +67,7 @@ public class MultiRoutingFsPath implements Path {
 
   @Override
   public boolean startsWith(Path other) {
-    if (!(other instanceof MultiRoutingFsPath))return false;
+    if (!(other instanceof MultiRoutingFsPath)) return false;
     return myDelegate.startsWith(unwrap(other));
   }
 
@@ -78,7 +78,7 @@ public class MultiRoutingFsPath implements Path {
 
   @Override
   public boolean endsWith(Path other) {
-    if (!(other instanceof MultiRoutingFsPath))return false;
+    if (!(other instanceof MultiRoutingFsPath)) return false;
     return myDelegate.endsWith(unwrap(other));
   }
 
@@ -134,7 +134,13 @@ public class MultiRoutingFsPath implements Path {
 
   @Override
   public File toFile() {
-    return isMountedFS() ? myDelegate.toFile() : new File(myDelegate.toString());
+    if (getFileSystem().provider().getScheme().equals("file")) {
+      return new File(myDelegate.toString());
+    }
+    else {
+      // It will likely fail because the local file system should be handled with the other branch.
+      return myDelegate.toFile();
+    }
   }
 
   @Override
@@ -173,16 +179,22 @@ public class MultiRoutingFsPath implements Path {
     return myDelegate.toString();
   }
 
-  private Path wrap(Path path) {
-    return path == null ? null : MultiRoutingFileSystemProvider.path(myFileSystem, path);
+  @Contract("null -> null; !null -> !null")
+  private @Nullable MultiRoutingFsPath wrap(@Nullable Path path) {
+    if (path == null) {
+      return null;
+    }
+    else if (path instanceof MultiRoutingFsPath) {
+      return (MultiRoutingFsPath)path;
+    }
+    else {
+      return new MultiRoutingFsPath(myFileSystem, path);
+    }
   }
 
-  static void setMountedDelegateClassName(String mountedDelegateClassName) {
-    ourMountedDelegateClassName = mountedDelegateClassName;
-  }
-
-  public boolean isMountedFS() {
-    return myDelegate.getClass().getSimpleName().equals(ourMountedDelegateClassName);
+  @Contract("null -> null; !null -> !null")
+  private static @Nullable Path unwrap(@Nullable Path path) {
+    return path == null ? null : ((MultiRoutingFsPath)path).getDelegate();
   }
 
   @Override
