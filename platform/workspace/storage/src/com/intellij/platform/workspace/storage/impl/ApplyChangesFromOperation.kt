@@ -10,7 +10,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import java.util.*
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal class ApplyChanesFromOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
+internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
 
   internal val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()
   private val diffLog = diff.changeLog.changeLog
@@ -437,6 +437,6 @@ internal class ApplyChanesFromOperation(val target: MutableEntityStorageImpl, va
   }
 
   companion object {
-    private val LOG = logger<ApplyChanesFromOperation>()
+    private val LOG = logger<ApplyChangesFromOperation>()
   }
 }

@@ -126,7 +126,7 @@ private class ApplyChangesFromCheckChangelog(val preBuilder: MutableEntityStorag
     env.executeCommands(getEntityManipulation(another))
 
     try {
-      var applyChangesFromEngineStolen: ApplyChanesFromOperation? = null
+      var applyChangesFromEngineStolen: ApplyChangesFromOperation? = null
       storage.changeLog.clear()
       storage.upgradeApplyChangesFromEngine = { applyChangesFromEngineStolen = it }
       storage.applyChangesFrom(another)

@@ -179,7 +179,7 @@ internal class MutableEntityStorageImpl(
   internal var upgradeEngine: ((ReplaceBySourceAsTree) -> Unit)? = null
 
   @set:TestOnly
-  internal var upgradeApplyChangesFromEngine: ((ApplyChanesFromOperation) -> Unit)? = null
+  internal var upgradeApplyChangesFromEngine: ((ApplyChangesFromOperation) -> Unit)? = null
 
   // --------------- Replace By Source stuff -----------
 
@@ -675,7 +675,7 @@ internal class MutableEntityStorageImpl(
       lockWrite()
       builder as MutableEntityStorageImpl
       applyChangesFromProtection(builder)
-      val applyChangesFromOperation = ApplyChanesFromOperation(this, builder)
+      val applyChangesFromOperation = ApplyChangesFromOperation(this, builder)
       upgradeApplyChangesFromEngine?.invoke(applyChangesFromOperation)
       applyChangesFromOperation.applyChangesFrom()
     }
