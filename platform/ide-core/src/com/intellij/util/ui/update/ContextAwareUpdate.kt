@@ -25,7 +25,8 @@ internal class ContextAwareUpdate(
   override fun executeInWriteAction(): Boolean = original.executeInWriteAction()
   override fun isRejected(): Boolean = original.isRejected
 
-  private val equalityObjects = arrayOf(*original.equalityObjects, getContextSkeleton(childContext.context))
+  private val contextSkeleton: Set<CoroutineContext.Element> = getContextSkeleton(childContext.context)
+  private val equalityObjects = arrayOf(*original.equalityObjects, contextSkeleton)
 
   override fun getEqualityObjects(): Array<Any> = equalityObjects
 
@@ -33,9 +34,8 @@ internal class ContextAwareUpdate(
     if (update !is ContextAwareUpdate) {
       return false
     }
-    val thisSkeleton: Set<CoroutineContext.Element> = getContextSkeleton(childContext.context)
-    val otherSkeleton: Set<CoroutineContext.Element> = getContextSkeleton(update.childContext.context)
-    return thisSkeleton == otherSkeleton && original.canEat(update.original)
+    return contextSkeleton == update.contextSkeleton &&
+           original.canEat(update.original)
   }
 
   override fun setRejected() {
