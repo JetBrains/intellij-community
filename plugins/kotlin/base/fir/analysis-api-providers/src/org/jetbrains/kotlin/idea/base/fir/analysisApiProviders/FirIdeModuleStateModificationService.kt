@@ -123,7 +123,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     }
 
     internal class NonWorkspaceModuleRootListener(private val project: Project) : ModuleRootListener {
-        override fun beforeRootsChange(event: ModuleRootEvent) {
+        override fun rootsChanged(event: ModuleRootEvent) {
             if (event.isCausedByWorkspaceModelChangesOnly) return
 
             // The cases described in `isCausedByWorkspaceModelChangesOnly` are rare enough to publish global module state modification
