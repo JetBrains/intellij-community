@@ -13,6 +13,7 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.isSupportScreenReadersOverridden
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
@@ -34,6 +35,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
@@ -60,6 +62,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.RenderingHints
@@ -651,7 +654,8 @@ private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
   )
 }
 
-private class LafComboBoxModelWrapper(private val lafComboBoxModel: CollectionComboBoxModel<LafReference>): ComboBoxModel<LafReference> {
+@Internal
+class LafComboBoxModelWrapper(private val lafComboBoxModel: CollectionComboBoxModel<LafReference>): ComboBoxModel<LafReference> {
   private val moreAction = LafReference(name = message("link.get.more.themes"), themeId = "")
   private val additionalItems = listOf(moreAction)
   var comboBoxComponent: JComponent? = null
@@ -672,8 +676,18 @@ private class LafComboBoxModelWrapper(private val lafComboBoxModel: CollectionCo
 
   override fun setSelectedItem(anItem: Any?) {
     if (anItem == moreAction) {
+      val themeTag = "/tag:Theme"
       val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(comboBoxComponent))
-      settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+
+      if (settings == null) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject,
+                                                          PluginManagerConfigurable::class.java) { c: PluginManagerConfigurable ->
+          c.enableSearch(themeTag)
+        }
+      }
+      else {
+        settings.select(settings.find("preferences.pluginManager"), themeTag)
+      }
     }
     else lafComboBoxModel.selectedItem = anItem
   }

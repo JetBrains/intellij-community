@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
+import com.intellij.application.options.colors.ColorAndFontOptions
+import com.intellij.application.options.colors.SchemesPanel
+import com.intellij.application.options.colors.SchemesPanelFactory
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.actions.ShowSettingsUtilImpl
@@ -24,6 +27,7 @@ import com.intellij.openapi.keymap.impl.keymapComparator
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -38,6 +42,8 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.ui.layout.selected
 import com.intellij.ui.scale.JBUIScale
@@ -77,7 +83,7 @@ private fun getIdeFontName(): @NlsSafe String? {
 
 private fun getDefaultIdeFont() = (LafManager.getInstance() as? LafManagerImpl)?.defaultFont ?: JBFont.label()
 
-private class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
+private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
@@ -185,22 +191,55 @@ private class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenT
 
   override fun buildComponent(): JComponent {
     return panel {
+      val autodetectSupportedPredicate = ComponentPredicate.fromValue(laf.autodetectSupported)
+      val syncThemeAndEditorSchemePredicate = autodetectSupportedPredicate.and(
+        ComponentPredicate.fromObservableProperty(syncThemeProperty, parentDisposable))
+
       header(IdeBundle.message("welcome.screen.color.theme.header"), true)
-      row {
-        val themeBuilder = comboBox(laf.lafComboBoxModel)
+      row(IdeBundle.message("combobox.look.and.feel")) {
+        val themeBuilder = comboBox(LafComboBoxModelWrapper(laf.lafComboBoxModel))
           .bindItem(lafProperty)
           .accessibleName(IdeBundle.message("welcome.screen.color.theme.header"))
+        themeBuilder.component.isSwingPopup = false
         themeBuilder.component.renderer = laf.getLookAndFeelCellRenderer(themeBuilder.component)
+
         colorThemeComboBox = themeBuilder.component
-        val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"))
+        checkBox(IdeBundle.message("preferred.theme.autodetect.selector"))
           .bindSelected(syncThemeProperty)
           .applyToComponent {
             isOpaque = false
             isVisible = laf.autodetectSupported
           }
 
-        themeBuilder.enabledIf(syncCheckBox.selected.not())
-        cell(laf.settingsToolbar).visibleIf(syncCheckBox.selected)
+        themeBuilder.enabledIf(syncThemeAndEditorSchemePredicate.not())
+        cell(laf.settingsToolbar).visibleIf(syncThemeAndEditorSchemePredicate)
+      }
+
+      indent {
+        val colorAndFontsOptions = ColorAndFontOptions().apply {
+          setSchemesPanelFactory(object : SchemesPanelFactory {
+            override fun createSchemesPanel(options: ColorAndFontOptions): SchemesPanel {
+              return EditorSchemesPanel(options)
+            }
+          })
+        }
+        val editorSchemeCombo = colorAndFontsOptions.createComponent(true)
+        editorSchemeCombo.isOpaque = false
+        colorAndFontsOptions.reset()
+
+        row {
+          cell(editorSchemeCombo).onIsModified {
+            colorAndFontsOptions.isModified
+          }.onApply {
+            colorAndFontsOptions.apply()
+          }.onReset {
+            colorAndFontsOptions.reset()
+          }.enabledIf(syncThemeAndEditorSchemePredicate.not())
+        }
+
+        parentDisposable.whenDisposed {
+          colorAndFontsOptions.disposeUIResources()
+        }
       }
 
       header(IdeBundle.message("title.accessibility"))

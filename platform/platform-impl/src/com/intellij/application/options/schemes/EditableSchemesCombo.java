@@ -43,6 +43,7 @@ public final class EditableSchemesCombo<T extends Scheme> {
     mySchemesPanel = schemesPanel;
     myLayout = new CardLayout();
     myRootPanel = new JPanel(myLayout);
+    myRootPanel.setOpaque(false);
     createCombo();
     myRootPanel.add(myComboBox);
     myNameEditorField = createNameEditorField();
@@ -173,6 +174,7 @@ public final class EditableSchemesCombo<T extends Scheme> {
         mySchemesPanel.getActions().onSchemeChanged(getSelectedScheme());
       }
     });
+    myComboBox.setOpaque(false);
   }
 
   public void startEdit(@NotNull String initialName, boolean isProjectScheme, @NotNull Consumer<? super String> nameConsumer) {

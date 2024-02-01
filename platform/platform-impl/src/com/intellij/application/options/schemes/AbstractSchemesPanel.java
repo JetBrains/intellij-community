@@ -105,6 +105,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private @NotNull JPanel createControlsPanel() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
+    controlsPanel.setOpaque(false);
     String label = getComboBoxLabel();
     if (label != null) {
       controlsPanel.add(new JLabel(label));
@@ -116,6 +117,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     ActionToolbar toolbar = createToolbar();
     toolbar.setTargetComponent(mySchemesCombo.getComponent());
     myToolbar = toolbar.getComponent();
+    myToolbar.setOpaque(false);
     controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
     controlsPanel.add(myToolbar);
     controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
