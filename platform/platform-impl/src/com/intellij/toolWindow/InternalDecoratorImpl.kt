@@ -172,6 +172,7 @@ class InternalDecoratorImpl internal constructor(
   private var secondDecorator: InternalDecoratorImpl? = null
   private var splitter: Splitter? = null
   private val componentsWithEditorLikeBackground = SmartList<Component>()
+  private var tabActions: List<AnAction> = emptyList()
 
   init {
     isFocusable = false
@@ -249,9 +250,9 @@ class InternalDecoratorImpl internal constructor(
       contentManager.addContent(content, dropIndex)
       return
     }
-    firstDecorator = toolWindow.createCellDecorator()
+    firstDecorator = toolWindow.createCellDecorator().also { it.setTabActions(tabActions) }
     attach(firstDecorator)
-    secondDecorator = toolWindow.createCellDecorator()
+    secondDecorator = toolWindow.createCellDecorator().also { it.setTabActions(tabActions) }
     attach(secondDecorator)
     val contents = contentManager.contents.toMutableList()
     if (!contents.contains(content)) {
@@ -470,7 +471,10 @@ class InternalDecoratorImpl internal constructor(
   }
 
   fun setTabActions(actions: List<AnAction>) {
+    tabActions = actions
     header.setTabActions(actions)
+    firstDecorator?.setTabActions(actions)
+    secondDecorator?.setTabActions(actions)
   }
 
   private inner class InnerPanelBorder(private val window: ToolWindowImpl) : Border {
