@@ -71,7 +71,7 @@
       "description": "The button background for already assigned bookmark mnemonics."
     },
     {
-      "key": "BookmarkMnemonicAssigned.borderColor",
+      "key": "Bookmark.MnemonicAssigned.borderColor",
       "description": "The button border color for already assigned bookmark mnemonics.",
       "deprecated": true
     },
