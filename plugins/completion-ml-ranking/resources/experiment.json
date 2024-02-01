@@ -126,7 +126,7 @@
     {
       "id": "java",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 13, 22, 24 ],
+      "includeGroups": [ 8, 22, 24 ],
       "shouldLogElementFeatures": false
     },
     {
@@ -150,13 +150,13 @@
     {
       "id": "php",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 13, 22, 24 ],
+      "includeGroups": [ 8, 22, 24 ],
       "shouldLogElementFeatures": false
     },
     {
       "id": "javascript",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 13, 22, 23, 24 ],
+      "includeGroups": [ 8, 22, 23, 24 ],
       "shouldLogElementFeatures": true
     },
     {
@@ -168,7 +168,7 @@
     {
       "id": "go",
       "experimentBucketsCount": 2,
-      "includeGroups": [ 13, 24 ],
+      "includeGroups": [ 8, 24 ],
       "shouldLogElementFeatures": true
     },
     {
@@ -210,7 +210,7 @@
     {
       "id": "css",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 13, 22, 23, 24 ],
+      "includeGroups": [ 7, 22, 23, 24 ],
       "shouldLogElementFeatures": true
     }
   ]
