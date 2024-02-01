@@ -13,7 +13,8 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.toolbarLayout.*;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -500,6 +501,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       add(getCustomComponent(action), CUSTOM_COMPONENT_CONSTRAINT, index);
     }
     else {
+      if (action instanceof ActionWithDelegate<?> wrapper &&
+          wrapper.getDelegate() instanceof CustomComponentAction) {
+        LOG.error("`CustomComponentAction` component is ignored due to wrapping: " +
+                  Utils.operationName(action, null, myPlace));
+      }
       add(createToolbarButton(action), ACTION_BUTTON_CONSTRAINT, index);
     }
   }
