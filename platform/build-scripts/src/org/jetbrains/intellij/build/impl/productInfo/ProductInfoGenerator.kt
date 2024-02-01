@@ -32,6 +32,12 @@ internal fun generateProductInfoJson(relativePathToBin: String,
                                      launch: List<ProductInfoLaunchData>,
                                      context: BuildContext): String {
   val appInfo = context.applicationInfo
+  val flavors = if (launch.any { it.javaExecutablePath != null } && context.bundledRuntime.build.startsWith("21.")) {
+    listOf(ProductFlavorData("jbr21"))
+  }
+  else {
+    emptyList()
+  }
   val json = ProductInfoData(
     name = appInfo.fullProductName,
     version = appInfo.fullVersion,
@@ -46,6 +52,7 @@ internal fun generateProductInfoJson(relativePathToBin: String,
     bundledPlugins = builtinModules?.plugins ?: emptyList(),
     fileExtensions = builtinModules?.fileExtensions ?: emptyList(),
     modules = builtinModules?.modules ?: emptyList(),
+    flavors = flavors
   )
   return jsonEncoder.encodeToString(serializer(), json)
 }
@@ -75,7 +82,11 @@ data class ProductInfoData(
   val bundledPlugins: List<String>,
   val modules: List<String>,
   val fileExtensions: List<String>,
+  val flavors: List<ProductFlavorData> = emptyList(),
 )
+
+@Serializable
+data class ProductFlavorData(val id: String)
 
 @Serializable
 data class ProductInfoLaunchData(
