@@ -28,7 +28,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   private fun findThisComponent(): Component {
     waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
-            errorMessage = "Can't find component with '${data.xpath}' in ${data.parentSearchContext.context}") {
+            errorMessage = "Can't find component with '${data.xpath}' in ${data.parentSearchContext.context.takeIf { it.isNotEmpty() } ?: "whole hierarchy"}") {
       data.parentSearchContext.findAll(data.xpath).size == 1
     }
     return data.parentSearchContext.findAll(data.xpath).first()
@@ -69,7 +69,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun present(): Boolean {
-   return robotService.findAll(data.xpath).isNotEmpty()
+    return robotService.findAll(data.xpath).isNotEmpty()
   }
 
   fun notPresent(): Boolean {
