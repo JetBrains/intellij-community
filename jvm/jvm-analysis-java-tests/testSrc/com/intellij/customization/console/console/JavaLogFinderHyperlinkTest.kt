@@ -357,4 +357,37 @@ public final class UpperClass {
       )
     )
   }
+
+  fun testLocalClasses() {
+    LoggingTestUtils.addSlf4J(myFixture)
+    checkColumnFinderJava(
+      fileName = "UpperClass",
+      classText = """
+package com.example;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public final class UpperClass {
+	private static final Logger logger = LoggerFactory.getLogger(UpperClass.class);
+
+  
+    public static void main(String[] args) {
+		class LocalClass{
+			public LocalClass() {
+				System.out.println(this.getClass().getCanonicalName());
+			}
+		}
+		new LocalClass();
+		System.out.println("class com.example.UpperClass${'$'}1LocalClass");
+    }
+}
+""".trimIndent(),
+      logItems = listOf(
+        LogItem("java.exe", null),
+        LogItem("1", null),
+        LogItem("class com.example.UpperClass${'$'}1LocalClass", LogicalPosition(5, 19)),
+      )
+    )
+  }
 }

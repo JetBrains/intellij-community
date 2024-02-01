@@ -112,8 +112,11 @@ internal class LogVisitor(private val probableClassName: ProbableClassName) : Ps
     val shortClassName = probableClassName.fullClassName.substringAfterLast('.')
     shortClassNames.add(shortClassName)
     val subclassName = ClassInfoResolver.findSubclassName(shortClassName)
-    if (subclassName != null) {
+    if (!subclassName.isNullOrEmpty()) {
       shortClassNames.add(subclassName)
+      if (subclassName[0].isDigit()) {
+        shortClassNames.add(shortClassName.substring(0, shortClassName.length - subclassName.length - 1))
+      }
     }
   }
 

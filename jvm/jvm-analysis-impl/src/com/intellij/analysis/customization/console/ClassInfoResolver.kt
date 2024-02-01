@@ -40,11 +40,17 @@ class ClassInfoResolver(val project: Project, private val mySearchScope: GlobalS
         }
       }
       if (result.isEmpty()) {
-        val newShortClassName = findSubclassName(shortClassName)
+        var newShortClassName = findSubclassName(shortClassName)
         if (newShortClassName?.isNotBlank() == true) {
-          val newTargetPackageName = "$targetPackageName." +
-                                     shortClassName.substring(0, shortClassName.length - newShortClassName.length - 1)
-          return findClasses(project, scope, newShortClassName, newTargetPackageName)
+          if (!newShortClassName[0].isDigit()) {
+            val newTargetPackageName = "$targetPackageName." +
+                                       shortClassName.substring(0, shortClassName.length - newShortClassName.length - 1)
+            return findClasses(project, scope, newShortClassName, newTargetPackageName)
+          }
+          else {
+            newShortClassName = shortClassName.take(shortClassName.length - newShortClassName.length - 1)
+            return findClasses(project, scope, newShortClassName, targetPackageName)
+          }
         }
       }
       return result.toList()
