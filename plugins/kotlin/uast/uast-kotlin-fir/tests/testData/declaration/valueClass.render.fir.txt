@@ -45,6 +45,9 @@ public final class Alignment {
         private fun Horizontal(@org.jetbrains.annotations.NotNull value: int) = UastEmptyExpression
         public static final class Companion {
             private fun Companion() = UastEmptyExpression
+            public fun getStart() : int = UastEmptyExpression
+            public fun getCenterHorizontally() : int = UastEmptyExpression
+            public fun getEnd() : int = UastEmptyExpression
         }
     }
     public static final class Vertical {
@@ -56,10 +59,15 @@ public final class Alignment {
         private fun Vertical(@org.jetbrains.annotations.NotNull value: int) = UastEmptyExpression
         public static final class Companion {
             private fun Companion() = UastEmptyExpression
+            public fun getTop() : int = UastEmptyExpression
+            public fun getCenterVertically() : int = UastEmptyExpression
+            public fun getBottom() : int = UastEmptyExpression
         }
     }
     public static final class Companion {
         public final fun getTopStart() : Alignment = UastEmptyExpression
         private fun Companion() = UastEmptyExpression
+        public fun getTop() : int = UastEmptyExpression
+        public fun getStart() : int = UastEmptyExpression
     }
 }
