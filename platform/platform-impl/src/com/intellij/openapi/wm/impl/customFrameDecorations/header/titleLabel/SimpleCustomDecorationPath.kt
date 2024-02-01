@@ -7,6 +7,7 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.GridBagConstraints
 import java.beans.PropertyChangeListener
@@ -58,6 +59,7 @@ internal class SimpleCustomDecorationPath(@JvmField val frame: JFrame, private v
   private val frameTitleListener = PropertyChangeListener { updateTitle() }
   private val label = JBLabel().apply {
     horizontalAlignment = SwingConstants.CENTER
+    font = JBFont.create(font, false)
   }
 
   private val insets = JBUI.insetsTop(2)
