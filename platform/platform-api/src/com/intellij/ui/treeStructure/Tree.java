@@ -1207,17 +1207,28 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         ++count;
         shouldAllParentsBeExpanded(path, toExpand, toNotExpand);
       }
+      Set<TreePath> expandRoots = new LinkedHashSet<>();
       try {
         beginBulkOperation();
+        suspendExpandCollapseAccessibilityAnnouncements();
         for (TreePath path : toExpand) {
           expandedState.put(path, Boolean.TRUE);
           fireTreeExpanded(path);
+          var parent = path.getParentPath();
+          if (parent == null || !toExpand.contains(parent)) {
+            expandRoots.add(path);
+          }
         }
       }
       finally {
+        resumeExpandCollapseAccessibilityAnnouncements();
         endBulkOperation();
       }
       if (accessibleContext != null) {
+        // Only announce the topmost expanded nodes, to avoid spamming announcements.
+        for (TreePath expandRoot : expandRoots) {
+          ((AccessibleJTree)accessibleContext).treeExpanded(new TreeExpansionEvent(Tree.this, expandRoot));
+        }
         ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
       }
       if (LOG.isDebugEnabled()) {
