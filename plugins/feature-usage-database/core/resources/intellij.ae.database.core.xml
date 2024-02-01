@@ -7,11 +7,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- TODO: current usage is allowed, but will be removed after proper API from FUS team -->
-    <applicationService
-      serviceImplementation="com.intellij.ae.database.core.baseEvents.fus.AddStatisticsEventLogListenerTemporary"
-      preload="true"
-    />
+    <statistic.eventLog.externalListenerProvider implementation="com.intellij.ae.database.core.baseEvents.fus.FusExternalEventLogListenerProvider"/>
     <postStartupActivity implementation="com.intellij.ae.database.core.IdServiceTempPreloader"/>
   </extensions>
 </idea-plugin>
