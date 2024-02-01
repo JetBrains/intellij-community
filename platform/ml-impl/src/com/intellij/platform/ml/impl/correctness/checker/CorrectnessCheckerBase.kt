@@ -12,11 +12,19 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.PairProcessor
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Finds [CorrectnessError]s in the completion suggestions using [semanticCheckers].
+ * @see [checkSemantic]
+ */
 @ApiStatus.Internal
 open class CorrectnessCheckerBase(private val semanticCheckers: List<SemanticChecker> = emptyList()) : CorrectnessChecker {
   @Suppress("PropertyName")
   protected val LOG = thisLogger()
 
+  /**
+   * @return a file to be passed to [semanticCheckers].
+   * @see [checkSemantic]
+   */
   protected open fun buildPsiForSemanticChecks(file: PsiFile, suggestion: String, offset: Int, prefix: String): PsiFile {
     return file
   }
