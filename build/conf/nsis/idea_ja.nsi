@@ -10,7 +10,7 @@ LangString create_desktop_shortcut ${LANG_JAPANESE} "デスクトップショー
 LangString update_path_var_group ${LANG_JAPANESE} "PATH 変数の更新 (再起動が必要です)"
 LangString update_path_var_label ${LANG_JAPANESE} 'PATH に "bin" フォルダーを追加'
 LangString update_context_menu_group ${LANG_JAPANESE} "コンテキストメニューの更新"
-LangString update_context_menu_label ${LANG_JAPANESE} '"プロジェクトとしてフォルダーを開く" の追加’
+LangString update_context_menu_label ${LANG_JAPANESE} '"プロジェクトとしてフォルダーを開く" の追加'
 LangString create_associations_group ${LANG_JAPANESE} "関連付けの作成"
 ; Rider-specific
 LangString additional_features ${LANG_JAPANESE} "追加機能"
