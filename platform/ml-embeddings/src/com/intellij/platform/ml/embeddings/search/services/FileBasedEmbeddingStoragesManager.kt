@@ -87,7 +87,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
 
   private suspend fun indexProject() {
     logger.debug { "Started full project embedding indexing" }
-    SEMANTIC_SEARCH_TRACER.spanBuilder("embeddingIndexing").useWithScope {
+    SEMANTIC_SEARCH_TRACER.spanBuilder(INDEXING_SPAN_NAME).useWithScope {
       try {
         indexFiles(scanFiles().toList())
       }
@@ -165,7 +165,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     val scanLimit = filesLimit?.let { it * 2 } // do not scan all files if there is a limit
     var filteredFiles = 0
     return channelFlow {
-      SEMANTIC_SEARCH_TRACER.spanBuilder("embeddingFilesScanning").useWithScope(coroutineContext) {
+      SEMANTIC_SEARCH_TRACER.spanBuilder(SCANNING_SPAN_NAME).useWithScope(coroutineContext) {
         withBackgroundProgress(project, EmbeddingsBundle.getMessage("ml.embeddings.indices.scanning.label")) {
           // ProjectFileIndex.getInstance(project).iterateContent { file ->
           ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->
@@ -237,5 +237,8 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     fun getInstance(project: Project): FileBasedEmbeddingStoragesManager = project.service()
 
     private val logger = Logger.getInstance(FileBasedEmbeddingStoragesManager::class.java)
+
+    const val SCANNING_SPAN_NAME = "embeddingFilesScanning"
+    const val INDEXING_SPAN_NAME = "embeddingIndexing"
   }
 }
