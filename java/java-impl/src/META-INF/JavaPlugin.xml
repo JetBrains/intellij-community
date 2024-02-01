@@ -1222,6 +1222,7 @@
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.VariableJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.FieldJoinLinesHandler"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.LiteralJoinLinesHandler"/>
+    <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.TextBlockJoinLinesHandler"/>
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider" id="editor.preferences.javadocOptions"/>
     <wordBoundaryFilter language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.JavaWordBoundaryFilter"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaPrevParameterHandler"/>
