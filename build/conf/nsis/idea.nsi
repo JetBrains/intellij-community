@@ -478,8 +478,12 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "SimpChinese"
+!insertmacro MUI_LANGUAGE "Japanese"
+!insertmacro MUI_LANGUAGE "Korean"
 !include "idea_en.nsi"
 !include "idea_zh_CN.nsi"
+!include "idea_ja.nsi"
+!include "idea_ko.nsi"
 
 
 Function .onInstSuccess
