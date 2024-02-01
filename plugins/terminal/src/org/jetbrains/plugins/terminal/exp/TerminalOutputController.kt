@@ -248,7 +248,7 @@ class TerminalOutputController(
     else editor.document.addDocumentListener(listener)
   }
 
-  private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
+  internal data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
 
   companion object {
     val KEY: DataKey<TerminalOutputController> = DataKey.create("TerminalOutputController")

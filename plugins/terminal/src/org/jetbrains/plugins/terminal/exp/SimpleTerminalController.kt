@@ -128,7 +128,7 @@ class SimpleTerminalController(
 
   private fun updateEditor(content: TerminalContent) {
     document.setText(content.text)
-    editor.highlighter = TerminalTextHighlighter(AllHighlightingsSnapshot(content.highlightings))
+    editor.highlighter = TerminalTextHighlighter(AllHighlightingsSnapshot(editor.document, content.highlightings))
 
     val line = terminalModel.historyLinesCount + terminalModel.cursorY - 1
     editor.caretModel.moveToLogicalPosition(LogicalPosition(line, terminalModel.cursorX))

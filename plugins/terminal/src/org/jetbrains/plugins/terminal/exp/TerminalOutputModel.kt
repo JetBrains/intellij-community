@@ -10,8 +10,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -139,7 +137,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   internal fun getHighlightingsSnapshot(): AllHighlightingsSnapshot {
     var snapshot: AllHighlightingsSnapshot? = allHighlightingsSnapshot
     if (snapshot == null) {
-      snapshot = AllHighlightingsSnapshot(highlightings.flatMap { it.value })
+      snapshot = AllHighlightingsSnapshot(editor.document, highlightings.flatMap { it.value })
       allHighlightingsSnapshot = snapshot
     }
     return snapshot
@@ -188,23 +186,51 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 }
 
-internal class AllHighlightingsSnapshot(highlightings: List<HighlightingInfo>) {
+internal class AllHighlightingsSnapshot(private val document: Document, highlightings: List<HighlightingInfo>) {
+  private val allSortedHighlightings: List<HighlightingInfo> = buildAndSortHighlightings(highlightings)
 
-  val allSortedHighlightings: ImmutableList<HighlightingInfo>
+  val size: Int
+    get() = allSortedHighlightings.size
 
-  init {
-    val sortedHighlightings = highlightings.sortedBy { it.startOffset }
-    val result : MutableList<HighlightingInfo> = ArrayList(sortedHighlightings.size * 2)
-    var offset = 0
-    for (highlighting in sortedHighlightings) {
-      if (offset < highlighting.startOffset) {
-        result.add(HighlightingInfo(offset, highlighting.startOffset, TextAttributes.ERASE_MARKER))
-      }
-      result.add(highlighting)
-      offset = highlighting.endOffset
+  operator fun get(index: Int): HighlightingInfo = allSortedHighlightings[index]
+
+  /**
+   * @return index of a highlighting containing the `documentOffset` (`highlighting.startOffset <= documentOffset < highlighting.endOffset`).
+   *         If no such highlighting is found:
+   *           - returns 0 for negative `documentOffset`
+   *           - total count of highlightings for `documentOffset >= document.textLength`
+   */
+  fun findHighlightingIndex(documentOffset: Int): Int {
+    if (documentOffset <= 0) return 0
+    val searchKey = HighlightingInfo(documentOffset, documentOffset, TextAttributes.ERASE_MARKER)
+    val binarySearchInd = Collections.binarySearch(allSortedHighlightings, searchKey) { a, b ->
+      a.startOffset.compareTo(b.startOffset)
     }
-    allSortedHighlightings = result.toImmutableList()
+    return if (binarySearchInd >= 0) binarySearchInd
+    else {
+      val insertionIndex = -binarySearchInd - 1
+      if (insertionIndex == 0 || insertionIndex == allSortedHighlightings.size && documentOffset >= document.textLength) {
+        insertionIndex
+      }
+      else {
+        insertionIndex - 1
+      }
+    }
   }
+}
+
+private fun buildAndSortHighlightings(highlightings: List<HighlightingInfo>): List<HighlightingInfo> {
+  val sortedHighlightings = highlightings.sortedBy { it.startOffset }
+  val result: MutableList<HighlightingInfo> = ArrayList(sortedHighlightings.size * 2)
+  var offset = 0
+  for (highlighting in sortedHighlightings) {
+    if (offset < highlighting.startOffset) {
+      result.add(HighlightingInfo(offset, highlighting.startOffset, TextAttributes.ERASE_MARKER))
+    }
+    result.add(highlighting)
+    offset = highlighting.endOffset
+  }
+  return result
 }
 
 data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, val range: RangeMarker) {
