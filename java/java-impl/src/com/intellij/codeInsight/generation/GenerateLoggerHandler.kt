@@ -35,10 +35,14 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
     CommandProcessor.getInstance().executeCommand(project, {
       try {
-        val appendedField = chosenLogger.insertLoggerAtClass(project, lastClass) as? PsiField
-                            ?: return@executeCommand // TODO: determine logger type
-        val identifier = appendedField.nameIdentifier
-        editor.caretModel.moveToOffset(identifier.endOffset)
+        val insertedLogger = chosenLogger.insertLoggerAtClass(project, lastClass) ?: return@executeCommand
+        val offset = if (insertedLogger is PsiField) {
+          insertedLogger.nameIdentifier.endOffset
+        }
+        else {
+          insertedLogger.endOffset
+        }
+        editor.caretModel.moveToOffset(offset)
         editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
       }
       catch (e: Exception) {
