@@ -3,6 +3,7 @@ package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -1077,12 +1078,17 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     if (myCurrentLexeme < myLexemeCount) {
       List<IElementType> missed = ContainerUtil.subArrayAsList(myLexTypes, myCurrentLexeme, myLexemeCount);
-      LOG.error("Tokens " + missed + " were not inserted into the tree. " +(myFile != null? myFile.getLanguage()+", ":"")+"Text:\n" + myText);
+      LOG.error("Tokens " + missed + " were not inserted into the tree. "
+                + (myFile == null
+                   ? ""
+                   : myFile.getLanguage()),
+                new Attachment("missedTokensFragment.txt", myText.toString()));
     }
 
     if (rootMarker.getEndIndex() < myLexemeCount) {
       List<IElementType> missed = ContainerUtil.subArrayAsList(myLexTypes, rootMarker.getEndIndex(), myLexemeCount);
-      LOG.error("Tokens " + missed + " are outside of root element \"" + rootMarker.myType + "\". Text:\n" + myText);
+      LOG.error("Tokens " + missed + " are outside of root element \"" + rootMarker.myType + "\".",
+                new Attachment("outsideTokensFragment.txt", myText.toString()));
     }
 
     assertMarkersBalanced(curNode == rootMarker, curNode);
