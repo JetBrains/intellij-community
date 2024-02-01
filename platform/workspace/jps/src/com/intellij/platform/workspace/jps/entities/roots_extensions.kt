@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("RootsExtensions")
+
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -10,6 +12,7 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 
 /**
  * Stores order of excluded roots in iml file.
@@ -56,6 +59,50 @@ fun MutableEntityStorage.modifyEntity(entity: SourceRootOrderEntity,
 val ContentRootEntity.sourceRootOrder: @Child SourceRootOrderEntity?
   by WorkspaceEntity.extension()
 
+
+/**
+ * Describes custom properties of [SourceFolder][com.intellij.openapi.roots.SourceFolder].
+ */
+interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
+  val sourceRoot: SourceRootEntity
+
+  val propertiesXmlTag: @NonNls String
+
+  //region generated code
+  @GeneratedCodeApiVersion(2)
+  interface Builder : CustomSourceRootPropertiesEntity, WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
+    override var entitySource: EntitySource
+    override var sourceRoot: SourceRootEntity
+    override var propertiesXmlTag: String
+  }
+
+  companion object : EntityType<CustomSourceRootPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(propertiesXmlTag: String,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
+      val builder = builder()
+      builder.propertiesXmlTag = propertiesXmlTag
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: CustomSourceRootPropertiesEntity,
+                                      modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit): CustomSourceRootPropertiesEntity = modifyEntity(
+  CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
+//endregion
+
+@get:ApiStatus.Internal
+val SourceRootEntity.customSourceRootProperties: @Child CustomSourceRootPropertiesEntity?
+  by WorkspaceEntity.extension()
 
 /**
  * Stores order of excluded roots in iml file.

@@ -18,9 +18,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
-import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
-import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
@@ -34,13 +32,9 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
   private companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java,
                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                                              CustomSourceRootPropertiesEntity::class.java,
-                                                                                              ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
-      CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID,
     )
 
   }
@@ -59,9 +53,6 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
       readField("rootType")
       return dataSource.rootType
     }
-
-  override val customSourceRootProperties: CustomSourceRootPropertiesEntity?
-    get() = snapshot.extractOneToOneChild(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
     get() {
@@ -204,41 +195,6 @@ open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : 
         checkModificationAllowed()
         getEntityData(true).rootType = value
         changedProperty.add("rootType")
-      }
-
-    override var customSourceRootProperties: CustomSourceRootPropertiesEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                                    CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] as? CustomSourceRootPropertiesEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] as? CustomSourceRootPropertiesEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = value
-        }
-        changedProperty.add("customSourceRootProperties")
       }
 
     override fun getEntityClass(): Class<SourceRootEntity> = SourceRootEntity::class.java

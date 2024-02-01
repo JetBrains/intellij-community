@@ -81,8 +81,6 @@ interface SourceRootEntity : WorkspaceEntity {
     val url: VirtualFileUrl
     val rootType: @NonNls String
 
-    @Child val customSourceRootProperties: CustomSourceRootPropertiesEntity?
-
   //region generated code
   @GeneratedCodeApiVersion(2)
   interface Builder : SourceRootEntity, WorkspaceEntity.Builder<SourceRootEntity> {
@@ -90,7 +88,6 @@ interface SourceRootEntity : WorkspaceEntity {
     override var contentRoot: ContentRootEntity
     override var url: VirtualFileUrl
     override var rootType: String
-    override var customSourceRootProperties: CustomSourceRootPropertiesEntity?
   }
 
   companion object : EntityType<SourceRootEntity, Builder>() {
@@ -117,45 +114,7 @@ interface SourceRootEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: SourceRootEntity,
                                       modification: SourceRootEntity.Builder.() -> Unit): SourceRootEntity = modifyEntity(
   SourceRootEntity.Builder::class.java, entity, modification)
-//endregion
 
-
-/**
- * Describes custom properties of [SourceFolder][com.intellij.openapi.roots.SourceFolder].
- */
-interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
-    val sourceRoot: SourceRootEntity
-
-    val propertiesXmlTag: @NonNls String
-
-  //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : CustomSourceRootPropertiesEntity, WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
-    override var entitySource: EntitySource
-    override var sourceRoot: SourceRootEntity
-    override var propertiesXmlTag: String
-  }
-
-  companion object : EntityType<CustomSourceRootPropertiesEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(propertiesXmlTag: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
-      val builder = builder()
-      builder.propertiesXmlTag = propertiesXmlTag
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
-
-}
-
-//region generated code
-fun MutableEntityStorage.modifyEntity(entity: CustomSourceRootPropertiesEntity,
-                                      modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit): CustomSourceRootPropertiesEntity = modifyEntity(
-  CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
+var SourceRootEntity.Builder.customSourceRootProperties: @Child CustomSourceRootPropertiesEntity?
+  by WorkspaceEntity.extension()
 //endregion
