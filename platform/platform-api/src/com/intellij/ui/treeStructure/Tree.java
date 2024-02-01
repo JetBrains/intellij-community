@@ -1254,22 +1254,31 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       Set<TreePath> toExpand = new LinkedHashSet<>();
       Set<TreePath> toNotExpand = new HashSet<>();
       Set<TreePath> toCollapse = new LinkedHashSet<>();
+      Set<TreePath> collapseRoots = new LinkedHashSet<>();
       for (TreePath path : pathList) {
         ++count;
         TreePath parent = path.getParentPath();
-        if (parent == null || toExpand.contains(parent) || toCollapse.contains(parent)) {
+        boolean parentWillBeCollapsed = toCollapse.contains(parent);
+        boolean pathWillBeCollapsed = false;
+        if (parent == null || toExpand.contains(parent) || parentWillBeCollapsed) {
           toCollapse.add(path);
+          pathWillBeCollapsed = true;
         }
         else if (!toNotExpand.contains(parent)) {
           if (shouldAllParentsBeExpanded(parent, toExpand, toNotExpand)) {
             toCollapse.add(path);
+            pathWillBeCollapsed = true;
           }
+        }
+        if (!parentWillBeCollapsed && pathWillBeCollapsed) {
+          collapseRoots.add(path);
         }
       }
       List<TreePath> toCollapseList = new ArrayList<>(toCollapse);
       Collections.reverse(toCollapseList);
       try {
         beginBulkOperation();
+        suspendExpandCollapseAccessibilityAnnouncements();
         for (TreePath path : toExpand) {
           expandedState.put(path, Boolean.TRUE);
           fireTreeExpanded(path);
@@ -1283,9 +1292,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         }
       }
       finally {
+        resumeExpandCollapseAccessibilityAnnouncements();
         endBulkOperation();
       }
       if (accessibleContext != null) {
+        // Only announce the topmost collapsed nodes, to avoid spamming announcements.
+        for (TreePath collapseRoot : collapseRoots) {
+          ((AccessibleJTree)accessibleContext).treeCollapsed(new TreeExpansionEvent(Tree.this, collapseRoot));
+        }
         ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
       }
       if (LOG.isDebugEnabled()) {
