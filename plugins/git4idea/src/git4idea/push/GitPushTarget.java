@@ -20,6 +20,7 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 
+import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 import static git4idea.GitUtil.findRemoteBranch;
 import static git4idea.GitUtil.getDefaultOrFirstRemote;
@@ -105,6 +106,12 @@ public class GitPushTarget implements PushTarget {
     if (targetRef == null) return null;
 
     String remotePrefix = REFS_REMOTES_PREFIX + remote.getName() + "/";
+    if (targetRef.startsWith(REFS_HEADS_PREFIX)) {
+      targetRef = targetRef.substring(REFS_HEADS_PREFIX.length());
+      GitRemoteBranch remoteBranch = GitUtil.findOrCreateRemoteBranch(repository, remote, targetRef);
+      boolean existingBranch = repository.getBranches().getRemoteBranches().contains(remoteBranch);
+      return new GitPushTarget(remoteBranch, !existingBranch, false);
+    }
     if (targetRef.startsWith(remotePrefix)) {
       targetRef = targetRef.substring(remotePrefix.length());
       GitRemoteBranch remoteBranch = GitUtil.findOrCreateRemoteBranch(repository, remote, targetRef);

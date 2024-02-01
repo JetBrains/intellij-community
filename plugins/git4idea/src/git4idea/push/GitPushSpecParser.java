@@ -3,6 +3,7 @@ package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
@@ -33,23 +34,29 @@ final class GitPushSpecParser {
     if (parts.length != 2) {
       return null;
     }
-    String source = parts[0].trim();
-    String target = parts[1].trim();
-    source = StringUtil.trimStart(source, "+");
+    String specSource = parts[0].trim();
+    String specTarget = parts[1].trim();
+    specSource = StringUtil.trimStart(specSource, "+");
 
-    if (!isStarPositionValid(source, target)) {
+    if (!isStarPositionValid(specSource, specTarget)) {
       return null;
     }
 
-    source = GitBranchUtil.stripRefsPrefix(source);
-    sourceBranch = GitBranchUtil.stripRefsPrefix(sourceBranch);
-    if (source.equals(GitUtil.HEAD) || source.equals(sourceBranch)) return target;
+    String strippedSpecSource = GitBranchUtil.stripRefsPrefix(specSource);
+    String strippedSourceBranch = GitBranchUtil.stripRefsPrefix(sourceBranch);
+    sourceBranch = GitBranch.REFS_HEADS_PREFIX + strippedSourceBranch;
 
-    if (source.endsWith("*")) {
-      String sourceWoStar = source.substring(0, source.length() - 1);
+    if (strippedSpecSource.equals(GitUtil.HEAD) ||
+        specSource.equals(sourceBranch) ||
+        specSource.equals(strippedSourceBranch)) {
+      return specTarget;
+    }
+
+    if (specSource.endsWith("*")) {
+      String sourceWoStar = specSource.substring(0, specSource.length() - 1);
       if (sourceBranch.startsWith(sourceWoStar)) {
         String starMeaning = sourceBranch.substring(sourceWoStar.length());
-        return target.replace("*", starMeaning);
+        return specTarget.replace("*", starMeaning);
       }
     }
     return null;

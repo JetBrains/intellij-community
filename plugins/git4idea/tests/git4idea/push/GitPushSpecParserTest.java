@@ -62,6 +62,24 @@ public class GitPushSpecParserTest {
     assertNull(getTargetRef("feature", specs));
   }
 
+  @Test
+  public void test_tag_specs_ignored() {
+    List<String> specs = Arrays.asList("+refs/heads/master:refs/remotes/origin/master",
+                                       "refs/tags/*:refs/tags/*");
+    assertNull(getTargetRef("qa/ticket1", specs));
+    assertEquals("refs/remotes/origin/master", getTargetRef("master", specs));
+    assertNull(getTargetRef("feature", specs));
+  }
+
+  @Test
+  public void test_refs_heads_matches() {
+    List<String> specs = Arrays.asList("refs/heads/master:refs/heads/qa/master",
+                                       "refs/tags/*:refs/tags/*",
+                                       "refs/heads/*:refs/heads/pr/*");
+    assertEquals("refs/heads/pr/qa/ticket1", getTargetRef("qa/ticket1", specs));
+    assertEquals("refs/heads/qa/master", getTargetRef("master", specs));
+  }
+
   @Nullable
   private static String getTargetRef(@NotNull String sourceBranch, @NotNull List<String> specs) {
     GitRepository myRepo = Mockito.mock(GitRepository.class);
