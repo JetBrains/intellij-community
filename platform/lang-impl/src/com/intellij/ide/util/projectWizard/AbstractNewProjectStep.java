@@ -42,10 +42,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
@@ -61,10 +58,12 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   private static final Key<Boolean> CREATED_KEY = new Key<>("abstract.new.project.step.created");
 
   private final Customization<T> myCustomization;
+  private WizardContext myWizardContext;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
     super(Presentation.NULL_STRING, true);
     myCustomization = customization;
+    myCustomization.setProjectStep(this);
     updateActions();
     EP_NAME.addChangeListener(this::updateActions, null);
   }
@@ -108,6 +107,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   protected abstract static class Customization<T> {
+
+    private AbstractNewProjectStep<T> myProjectStep;
+
     protected @NotNull ProjectSpecificAction createProjectSpecificAction(final @NotNull AbstractCallback<T> callback) {
       DirectoryProjectGenerator<T> emptyProjectGenerator = createEmptyProjectGenerator();
       return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
@@ -151,6 +153,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       else {
         step = createProjectSpecificSettingsStep(generator, callback);
       }
+      step.setProjectStep(Objects.requireNonNull(myProjectStep));
 
       ProjectSpecificAction projectSpecificAction = new ProjectSpecificAction(generator, step);
       return projectSpecificAction.getChildren(null);
@@ -162,6 +165,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
     public boolean showUserDefinedProjects() {
       return false;
+    }
+
+    void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
+      myProjectStep = projectStep;
     }
   }
 
@@ -263,5 +270,13 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
+  }
+
+  void setWizardContext(@NotNull WizardContext wizardContext) {
+    myWizardContext = wizardContext;
+  }
+
+  @Nullable WizardContext getWizardContext() {
+    return myWizardContext;
   }
 }

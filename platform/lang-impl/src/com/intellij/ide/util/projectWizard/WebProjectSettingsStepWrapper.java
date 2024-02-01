@@ -37,9 +37,8 @@ public final class WebProjectSettingsStepWrapper implements SettingsStep {
   }
 
   @Override
-  @Nullable
-  public WizardContext getContext() {
-    return null;
+  public @Nullable WizardContext getContext() {
+    return myStepBase != null ? myStepBase.getWizardContext() : null;
   }
 
   public List<LabeledComponent<? extends JComponent>> getFields() {

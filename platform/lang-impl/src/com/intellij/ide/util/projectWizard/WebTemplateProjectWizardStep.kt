@@ -12,9 +12,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import javax.swing.JLabel
 
-class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
-                                   val template: WebProjectTemplate<T>) : AbstractNewProjectWizardStep(parent) {
-  val peer: NotNullLazyValue<ProjectGeneratorPeer<T>> = template.createLazyPeer()
+class WebTemplateProjectWizardStep<T>(
+  val parent: NewProjectWizardBaseStep,
+  val template: WebProjectTemplate<T>
+) : AbstractNewProjectWizardStep(parent), WebTemplateProjectWizardData<T> {
+
+  override val peer: NotNullLazyValue<ProjectGeneratorPeer<T>> = template.createLazyPeer()
 
   override fun setupUI(builder: Panel) {
     peer.value.buildUI(PanelBuilderSettingsStep(parent.context, builder, parent))
@@ -41,5 +44,9 @@ class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
     builder.contentEntryPath = "${parent.path}/${parent.name}"
     builder.name = parent.name
     builder.commitModule(project, null)
+  }
+  
+  init {
+    data.putUserData(WebTemplateProjectWizardData.KEY, this)
   }
 }
