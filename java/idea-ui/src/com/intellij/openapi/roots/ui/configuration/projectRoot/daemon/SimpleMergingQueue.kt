@@ -72,7 +72,7 @@ class SimpleMergingQueue<T : Runnable>(
 
   private fun flush() {
     val tasks: Set<T>
-    synchronized(taskHolder) {
+    synchronized(lock) {
       if (!isActive) return
       tasks = taskHolder
       taskHolder = LinkedHashSet()
