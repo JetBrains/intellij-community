@@ -42,11 +42,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String,
-                        tableId: LibraryTableId,
-                        roots: List<LibraryRoot>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): LibraryEntity {
+    operator fun invoke(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryEntity {
       val builder = builder()
       builder.name = name
       builder.tableId = tableId
@@ -61,9 +57,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit): LibraryEntity = modifyEntity(
-  LibraryEntity.Builder::class.java, entity, modification)
-
+fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit): LibraryEntity = modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
 var LibraryEntity.Builder.libraryProperties: @Child LibraryPropertiesEntity?
   by WorkspaceEntity.extension()
 //endregion

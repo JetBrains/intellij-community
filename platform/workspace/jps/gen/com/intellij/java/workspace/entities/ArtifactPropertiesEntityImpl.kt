@@ -30,13 +30,10 @@ import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactPropertiesEntityData) : ArtifactPropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+open class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactPropertiesEntityData) : ArtifactPropertiesEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
-                                                                            ArtifactPropertiesEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       ARTIFACT_CONNECTION_ID,
@@ -70,8 +67,7 @@ open class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactProperti
   }
 
 
-  class Builder(result: ArtifactPropertiesEntityData?) : ModifiableWorkspaceEntityBase<ArtifactPropertiesEntity, ArtifactPropertiesEntityData>(
-    result), ArtifactPropertiesEntity.Builder {
+  class Builder(result: ArtifactPropertiesEntityData?) : ModifiableWorkspaceEntityBase<ArtifactPropertiesEntity, ArtifactPropertiesEntityData>(result), ArtifactPropertiesEntity.Builder {
     constructor() : this(ArtifactPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -145,8 +141,8 @@ open class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactProperti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                    ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity
+          _diff.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this)
+          ?: this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity
         }
         else {
           this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity

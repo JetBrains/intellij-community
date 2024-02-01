@@ -26,12 +26,10 @@ import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPathEntityData) : ModuleGroupPathEntity, WorkspaceEntityBase(
-  dataSource) {
+open class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPathEntityData) : ModuleGroupPathEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -59,8 +57,7 @@ open class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPathEnti
   }
 
 
-  class Builder(result: ModuleGroupPathEntityData?) : ModifiableWorkspaceEntityBase<ModuleGroupPathEntity, ModuleGroupPathEntityData>(
-    result), ModuleGroupPathEntity.Builder {
+  class Builder(result: ModuleGroupPathEntityData?) : ModifiableWorkspaceEntityBase<ModuleGroupPathEntity, ModuleGroupPathEntityData>(result), ModuleGroupPathEntity.Builder {
     constructor() : this(ModuleGroupPathEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -140,8 +137,8 @@ open class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPathEnti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                 MODULE_CONNECTION_ID)]!! as ModuleEntity
+          _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this)
+          ?: this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
         }
         else {
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity

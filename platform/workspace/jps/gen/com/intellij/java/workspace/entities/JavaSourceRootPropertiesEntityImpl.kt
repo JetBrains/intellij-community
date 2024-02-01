@@ -25,13 +25,10 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSourceRootPropertiesEntityData) : JavaSourceRootPropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+open class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSourceRootPropertiesEntityData) : JavaSourceRootPropertiesEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                              JavaSourceRootPropertiesEntity::class.java,
-                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java, JavaSourceRootPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       SOURCEROOT_CONNECTION_ID,
@@ -64,8 +61,7 @@ open class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSource
   }
 
 
-  class Builder(result: JavaSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(
-    result), JavaSourceRootPropertiesEntity.Builder {
+  class Builder(result: JavaSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(result), JavaSourceRootPropertiesEntity.Builder {
     constructor() : this(JavaSourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -139,8 +135,8 @@ open class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSource
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                      SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
+          _diff.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this)
+          ?: this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
         }
         else {
           this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity

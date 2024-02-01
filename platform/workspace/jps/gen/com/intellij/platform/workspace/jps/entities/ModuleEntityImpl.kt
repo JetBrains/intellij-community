@@ -33,10 +33,8 @@ import org.jetbrains.annotations.NonNls
 open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
@@ -218,8 +216,8 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(
-            true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity> ?: emptyList())
+          _diff.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity>
+                                                                                                            ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity> ?: emptyList()
@@ -263,8 +261,7 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                            FACETS_CONNECTION_ID)] as? List<FacetEntity>
+          _diff.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntity>
                                                                                                 ?: emptyList())
         }
         else {

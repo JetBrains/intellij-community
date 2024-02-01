@@ -40,10 +40,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(inheritedCompilerOutput: Boolean,
-                        excludeOutput: Boolean,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): JavaModuleSettingsEntity {
+    operator fun invoke(inheritedCompilerOutput: Boolean, excludeOutput: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): JavaModuleSettingsEntity {
       val builder = builder()
       builder.inheritedCompilerOutput = inheritedCompilerOutput
       builder.excludeOutput = excludeOutput
@@ -57,10 +54,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: JavaModuleSettingsEntity,
-                                      modification: JavaModuleSettingsEntity.Builder.() -> Unit): JavaModuleSettingsEntity = modifyEntity(
-  JavaModuleSettingsEntity.Builder::class.java, entity, modification)
-
+fun MutableEntityStorage.modifyEntity(entity: JavaModuleSettingsEntity, modification: JavaModuleSettingsEntity.Builder.() -> Unit): JavaModuleSettingsEntity = modifyEntity(JavaModuleSettingsEntity.Builder::class.java, entity, modification)
 var ModuleEntity.Builder.javaSettings: @Child JavaModuleSettingsEntity?
   by WorkspaceEntity.extension()
 //endregion

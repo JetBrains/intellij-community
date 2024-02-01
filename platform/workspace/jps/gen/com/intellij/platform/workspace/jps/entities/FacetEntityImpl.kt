@@ -30,10 +30,8 @@ import org.jetbrains.annotations.NonNls
 open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java,
-                                                                                   ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -182,8 +180,8 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                  MODULE_CONNECTION_ID)]!! as ModuleEntity
+          _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this)
+          ?: this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
         }
         else {
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
@@ -237,8 +235,8 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                           UNDERLYINGFACET_CONNECTION_ID)] as? FacetEntity
+          _diff.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this)
+          ?: this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] as? FacetEntity
         }
         else {
           this.entityLinks[EntityLink(false, UNDERLYINGFACET_CONNECTION_ID)] as? FacetEntity

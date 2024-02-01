@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls
  * Stores order of excluded roots in iml file.
  * This is needed to ensure that corresponding tags are saved in the same order to avoid unnecessary modifications of iml file.
  */
+@ApiStatus.Internal
 interface SourceRootOrderEntity : WorkspaceEntity {
   val contentRootEntity: ContentRootEntity
 
@@ -35,9 +36,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(orderOfSourceRoots: List<VirtualFileUrl>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
+    operator fun invoke(orderOfSourceRoots: List<VirtualFileUrl>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
       val builder = builder()
       builder.orderOfSourceRoots = orderOfSourceRoots.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -50,9 +49,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceRootOrderEntity,
-                                      modification: SourceRootOrderEntity.Builder.() -> Unit): SourceRootOrderEntity = modifyEntity(
-  SourceRootOrderEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SourceRootOrderEntity, modification: SourceRootOrderEntity.Builder.() -> Unit): SourceRootOrderEntity = modifyEntity(SourceRootOrderEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:ApiStatus.Internal
@@ -63,6 +60,7 @@ val ContentRootEntity.sourceRootOrder: @Child SourceRootOrderEntity?
 /**
  * Describes custom properties of [SourceFolder][com.intellij.openapi.roots.SourceFolder].
  */
+@ApiStatus.Internal
 interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
   val sourceRoot: SourceRootEntity
 
@@ -80,9 +78,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(propertiesXmlTag: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
+    operator fun invoke(propertiesXmlTag: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
       val builder = builder()
       builder.propertiesXmlTag = propertiesXmlTag
       builder.entitySource = entitySource
@@ -95,9 +91,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: CustomSourceRootPropertiesEntity,
-                                      modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit): CustomSourceRootPropertiesEntity = modifyEntity(
-  CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: CustomSourceRootPropertiesEntity, modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit): CustomSourceRootPropertiesEntity = modifyEntity(CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:ApiStatus.Internal
@@ -108,6 +102,7 @@ val SourceRootEntity.customSourceRootProperties: @Child CustomSourceRootProperti
  * Stores order of excluded roots in iml file.
  * This is needed to ensure that corresponding tags are saved in the same order to avoid unnecessary modifications of iml file.
  */
+@ApiStatus.Internal
 interface ExcludeUrlOrderEntity : WorkspaceEntity {
   val order: List<VirtualFileUrl>
 
@@ -125,9 +120,7 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(order: List<VirtualFileUrl>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ExcludeUrlOrderEntity {
+    operator fun invoke(order: List<VirtualFileUrl>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExcludeUrlOrderEntity {
       val builder = builder()
       builder.order = order.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -139,9 +132,7 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ExcludeUrlOrderEntity,
-                                      modification: ExcludeUrlOrderEntity.Builder.() -> Unit): ExcludeUrlOrderEntity = modifyEntity(
-  ExcludeUrlOrderEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ExcludeUrlOrderEntity, modification: ExcludeUrlOrderEntity.Builder.() -> Unit): ExcludeUrlOrderEntity = modifyEntity(ExcludeUrlOrderEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:ApiStatus.Internal

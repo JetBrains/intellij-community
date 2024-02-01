@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NonNls
 /**
  * Describes custom [library properties][com.intellij.openapi.roots.libraries.LibraryProperties].
  */
+@ApiStatus.Internal
 interface LibraryPropertiesEntity : WorkspaceEntity {
   val library: LibraryEntity
 
@@ -45,9 +46,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity,
-                                      modification: LibraryPropertiesEntity.Builder.() -> Unit): LibraryPropertiesEntity = modifyEntity(
-  LibraryPropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity, modification: LibraryPropertiesEntity.Builder.() -> Unit): LibraryPropertiesEntity = modifyEntity(LibraryPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
 @get:ApiStatus.Internal

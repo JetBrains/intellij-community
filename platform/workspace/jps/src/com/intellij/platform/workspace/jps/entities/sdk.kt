@@ -39,12 +39,7 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String,
-                        type: String,
-                        roots: List<SdkRoot>,
-                        additionalData: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SdkEntity {
+    operator fun invoke(name: String, type: String, roots: List<SdkRoot>, additionalData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SdkEntity {
       val builder = builder()
       builder.name = name
       builder.type = type
@@ -59,8 +54,7 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit): SdkEntity = modifyEntity(
-  SdkEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit): SdkEntity = modifyEntity(SdkEntity.Builder::class.java, entity, modification)
 //endregion
 
 
