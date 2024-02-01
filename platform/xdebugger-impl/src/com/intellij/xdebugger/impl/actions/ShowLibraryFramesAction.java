@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,8 +17,25 @@ final class ShowLibraryFramesAction extends ToggleAction {
   private volatile boolean myShouldShow;
 
   ShowLibraryFramesAction() {
-    super("", "", AllIcons.General.Filter);
+    super(XDebuggerBundle.message("hide.library.frames.tooltip"), "", AllIcons.General.Filter);
     myShouldShow = XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowLibraryStackFrames();
+  }
+
+  private static boolean isLibraryFrameFilterSupported(@NotNull AnActionEvent e, Presentation presentation) {
+    Object isSupported = presentation.getClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED);
+    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+    if (isSupported == null) {
+      if (session == null) {
+        // if session is null and isSupported is null - just return, it means that action created initially not in the xdebugger tab
+        presentation.setVisible(false);
+        return false;
+      }
+
+      isSupported = session.getDebugProcess().isLibraryFrameFilterSupported();
+      presentation.putClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED, isSupported);
+    }
+
+    return Boolean.TRUE.equals(isSupported);
   }
 
   @Override
@@ -28,25 +44,15 @@ final class ShowLibraryFramesAction extends ToggleAction {
 
     Presentation presentation = e.getPresentation();
 
-    Object isSupported = presentation.getClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED);
-    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
-    if (isSupported == null) {
-      if (session == null) {
-        // if session is null and isSupported is null - just return, it means that action created initially not in the xdebugger tab
-        presentation.setVisible(false);
-        return;
-      }
-
-      isSupported = session.getDebugProcess().isLibraryFrameFilterSupported();
-      presentation.putClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED, isSupported);
-    }
-
-    if (Boolean.TRUE.equals(isSupported)) {
+    if (isLibraryFrameFilterSupported(e, presentation)) {
       presentation.setVisible(true);
-      final boolean shouldShow = !Toggleable.isSelected(presentation);
-      presentation.setText(XDebuggerBundle.message(shouldShow
-                                                   ? "hide.library.frames.tooltip"
-                                                   : "show.all.frames.tooltip"));
+      // Change the tooltip of a button in a toolbar and don't change anything for a context menu.
+      if (e.isFromActionToolbar()) {
+        final boolean shouldShow = !Toggleable.isSelected(presentation);
+        presentation.setText(XDebuggerBundle.message(shouldShow
+                                                     ? "hide.library.frames.tooltip"
+                                                     : "show.all.frames.tooltip"));
+      }
     }
     else {
       presentation.setVisible(false);

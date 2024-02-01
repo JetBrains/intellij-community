@@ -452,6 +452,9 @@
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
+      <action id="Debugger.LibraryFramesToggle" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
+      </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
