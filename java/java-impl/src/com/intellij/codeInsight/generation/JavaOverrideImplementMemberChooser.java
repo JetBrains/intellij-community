@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -232,11 +233,13 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     super.fillToolbarActions(group);
     if (myToImplement) return;
 
-    ToggleAction sortByOverridingAction = new MySortByOverridingAction();
-    if (mySortedByOverriding) {
-      changeSortComparator(PsiMethodWithOverridingPercentMember.COMPARATOR);
+    if (Registry.is("java.override.methods.enable.sort.by.overriding.action")) {
+      ToggleAction sortByOverridingAction = new MySortByOverridingAction();
+      if (mySortedByOverriding) {
+        changeSortComparator(PsiMethodWithOverridingPercentMember.COMPARATOR);
+      }
+      group.add(sortByOverridingAction, Constraints.FIRST);
     }
-    group.add(sortByOverridingAction, Constraints.FIRST);
 
     myMergeAction = new MyMergeAction();
     group.add(myMergeAction);
