@@ -12,7 +12,7 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 7)
+  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 8)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
   private val MESSAGE_KIND = EventFields.Enum<Message.Kind>("message_kind")
@@ -43,6 +43,8 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_GROUP,
     Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP,
     Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP,
+
+    Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP,
 
     Messages.DEPENDENCY_ACCESSOR_MODEL_GROUP,
     Messages.DEPENDENCY_GRAPH_MODEL_GROUP,

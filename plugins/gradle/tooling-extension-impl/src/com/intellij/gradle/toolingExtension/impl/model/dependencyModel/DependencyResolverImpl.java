@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -35,11 +36,10 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
@@ -53,7 +53,6 @@ import static java.util.stream.Collectors.*;
  * @author Vladislav.Soroka
  */
 public final class DependencyResolverImpl implements DependencyResolver {
-  private static final Logger LOG = LoggerFactory.getLogger(DependencyResolverImpl.class);
 
   private static final boolean IS_83_OR_BETTER = GradleVersionUtil.isCurrentGradleAtLeast("8.3");
   private static final Pattern PUNCTUATION_IN_SUFFIX_PATTERN = Pattern.compile("[\\p{Punct}\\s]+$");
@@ -148,8 +147,17 @@ public final class DependencyResolverImpl implements DependencyResolver {
       try {
         return ((AbstractCompile)compileTask).getClasspath();
       } catch (Exception e) {
-        LOG.warn("Error obtaining compile classpath for java compilation task for [{}] in project [{}]", sourceSet.getName(),
-                 myProject.getPath(), e);
+        myContext.getMessageReporter().createMessage()
+          .withGroup(Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP)
+          .withKind(Message.Kind.INTERNAL)
+          .withTitle("Compile classpath resolution error")
+          .withText(String.format(
+            "Error obtaining compile classpath for java compilation task for [%s] in project [%s]",
+            sourceSet.getName(),
+            myProject.getPath()
+          ))
+          .withException(e)
+          .reportMessage(myProject);
       }
     }
     return sourceSet.getCompileClasspath();
