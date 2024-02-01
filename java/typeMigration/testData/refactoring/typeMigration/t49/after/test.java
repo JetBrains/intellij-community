@@ -1,7 +1,7 @@
 import java.util.*;
 class Test {
   Set<B> f;
-  void foo(AbstractSet<B> s) {
+  void foo(AbstractSet<E> s) {
     f = s;
   }
 

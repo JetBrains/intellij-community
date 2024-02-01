@@ -528,16 +528,17 @@ public class TypeMigrationLabeler {
             getTypeEvaluator().setType(new TypeMigrationUsageInfo(expr), migrationType);
           }
           return;
-        } else if (migrationType instanceof PsiClassType && originalType instanceof PsiClassType &&
-                   ((PsiClassType)migrationType).rawType().isAssignableFrom(((PsiClassType)originalType).rawType())) {
+        }
+        else if (migrationType instanceof PsiClassType migrationClassType && originalType instanceof PsiClassType originalClassType &&
+                 migrationClassType.rawType().isAssignableFrom(originalClassType.rawType())) {
           final PsiClass originalClass = PsiUtil.resolveClassInType(originalType);
-          if (originalClass instanceof PsiAnonymousClass) {
-            originalType = ((PsiAnonymousClass)originalClass).getBaseClassType();
+          if (originalClass instanceof PsiAnonymousClass anonymousClass) {
+            originalClassType = anonymousClass.getBaseClassType();
           }
-          final PsiType type =
-            TypeEvaluator.substituteType(migrationType, originalType, true, ((PsiClassType)originalType).resolveGenerics().getElement(),
-                                         JavaPsiFacade.getElementFactory(expr.getProject())
-                                           .createType(((PsiClassType)originalType).resolve(), PsiSubstitutor.EMPTY));
+          final PsiType type = TypeEvaluator.substituteType(migrationClassType, originalClassType, true,
+                                                            originalClassType.resolveGenerics().getElement(),
+                                                            JavaPsiFacade.getElementFactory(expr.getProject())
+                                                              .createType(originalClassType.resolve(), PsiSubstitutor.EMPTY));
           if (type != null) {
             final TypeMigrationUsageInfo usageInfo = new TypeMigrationUsageInfo(expr);
             usageInfo.setOwnerRoot(myCurrentRoot);
@@ -618,25 +619,23 @@ public class TypeMigrationLabeler {
           if (!substitutor.getSubstitutionMap().isEmpty()) {
             final PsiMethod superMethod = superSignature.getMethod();
 
-            final PsiType superReturnType = superMethod.getReturnType();
-            if (superReturnType instanceof PsiClassType) {
-              final PsiClass resolvedClass = ((PsiClassType)superReturnType).resolve();
-              if (resolvedClass instanceof PsiTypeParameter) {
-                final PsiType expectedReturnType = substitutor.substitute((PsiTypeParameter)resolvedClass);
-                if (Comparing.equal(expectedReturnType, method.getReturnType())) {
-                  final PsiClassType baseClassType = ((PsiAnonymousClass)containingClass).getBaseClassType();
-                  final PsiClassType.ClassResolveResult result = baseClassType.resolveGenerics();
-                  final PsiClass anonymousBaseClass = result.getElement();
+            if (superMethod.getReturnType() instanceof PsiClassType superReturnType &&
+                superReturnType.resolve() instanceof PsiTypeParameter returnTypeParameter) {
+              final PsiType expectedReturnType = substitutor.substitute(returnTypeParameter);
+              if (Comparing.equal(expectedReturnType, method.getReturnType())) {
+                final PsiClassType baseClassType = anonymousClass.getBaseClassType();
+                final PsiClassType.ClassResolveResult result = baseClassType.resolveGenerics();
+                final PsiClass anonymousBaseClass = result.getElement();
 
+                if (anonymousBaseClass != null) {
                   final PsiSubstitutor superHierarchySubstitutor = TypeConversionUtil
                     .getClassSubstitutor(superMethod.getContainingClass(), anonymousBaseClass, PsiSubstitutor.EMPTY);
-                  final PsiType maybeTypeParameter = superHierarchySubstitutor.substitute((PsiTypeParameter)resolvedClass);
+                  final PsiType maybeTypeParameter = superHierarchySubstitutor.substitute(returnTypeParameter);
 
-                  if (maybeTypeParameter instanceof PsiClassType &&
-                      ((PsiClassType)maybeTypeParameter).resolve() instanceof PsiTypeParameter) {
-                    final PsiSubstitutor newSubstitutor = result.getSubstitutor().put(
-                      (PsiTypeParameter)((PsiClassType)maybeTypeParameter).resolve(), type);
-                    addRoot(new TypeMigrationUsageInfo(((PsiAnonymousClass)containingClass).getBaseClassReference().getParameterList()),
+                  if (maybeTypeParameter instanceof PsiClassType classType &&
+                      classType.resolve() instanceof PsiTypeParameter typeParameter) {
+                    final PsiSubstitutor newSubstitutor = result.getSubstitutor().put(typeParameter, type);
+                    addRoot(new TypeMigrationUsageInfo(anonymousClass.getBaseClassReference().getParameterList()),
                             new PsiImmediateClassType(anonymousBaseClass, newSubstitutor),
                             place,
                             alreadyProcessed);
@@ -647,7 +646,6 @@ public class TypeMigrationLabeler {
           }
         }
       }
-
 
       final PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
@@ -672,10 +670,8 @@ public class TypeMigrationLabeler {
 
       return !alreadyProcessed;
     }
-    else if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getDeclarationScope() instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)((PsiParameter)resolved).getDeclarationScope();
-
-      final int index = method.getParameterList().getParameterIndex(((PsiParameter)resolved));
+    else if (resolved instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod method) {
+      final int index = method.getParameterList().getParameterIndex(parameter);
       final PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
 
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
