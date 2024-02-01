@@ -16,7 +16,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -27,12 +26,13 @@ import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.io.File
+import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 import java.util.regex.Pattern
 
@@ -102,7 +102,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     private fun createTestFile(testFile: TestFile): VirtualFile {
         return runWriteAction {
             val vFile = myFixture.tempDirFixture.createFile(testFile.path)
-            vFile.charset = CharsetToolkit.UTF8_CHARSET
+            vFile.charset = StandardCharsets.UTF_8
             VfsUtil.saveText(vFile, testFile.content)
             vFile
         }
@@ -199,8 +199,8 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
 
     }
 
-    private fun doTest(beforeFileName: String) {
-        val mainFile = File(beforeFileName)
+    private fun doTest(beforeFilePath: String) {
+        val mainFile = File(beforeFilePath)
         val originalFileText = FileUtil.loadFile(mainFile, true)
         val mainFileDir = mainFile.parentFile!!
 
@@ -237,26 +237,26 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                         file,
                         editor,
                         actionShouldBeAvailable,
-                        beforeFileName,
+                        beforeFilePath,
                         this::availableActions,
                         myFixture::doHighlighting,
                         checkAvailableActionsAreExpected = this::checkAvailableActionsAreExpected
                     )
 
                     if (actionShouldBeAvailable) {
-                        fun replaceBeforeFileName(newValue: String) = beforeFileName.replace(".before.Main.", newValue)
+                        fun replaceBeforeFileName(beforeFilePath: String, newValue: String) = beforeFilePath.replace(".before.Main.", newValue)
 
                         val afterFilePathToken = if (isFirPlugin) {
-                            val afterFirFilePath = replaceBeforeFileName(".after.fir.")
+                            val afterFirFilePath = replaceBeforeFileName(beforeFilePath, ".after.fir.")
                             if (FileUtil.exists(afterFirFilePath)) ".after.fir."
                             else ".after."
                         } else {
                             ".after."
                         }
 
-                        val afterFilePath = replaceBeforeFileName(afterFilePathToken)
+                        val afterFilePath = replaceBeforeFileName(beforeFilePath, afterFilePathToken)
                         try {
-                            myFixture.checkResultByFile(mainFile.name.replace(".before.Main.", afterFilePathToken))
+                            myFixture.checkResultByFile(replaceBeforeFileName(mainFile.name, afterFilePathToken))
                         } catch (e: AssertionError) {
                             if (e !is FileComparisonData) throw e
                             KotlinTestUtils.assertEqualsToFile(File(afterFilePath), editor)
@@ -272,7 +272,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                                 )
                             ) continue
 
-                            val extraFileFullPath = beforeFileName.replace(myFixture.file.name, fileName)
+                            val extraFileFullPath = beforeFilePath.replace(myFixture.file.name, fileName)
                             val afterFile = File(extraFileFullPath.replace(".before.", afterFilePathToken))
                             if (afterFile.exists()) {
                                 KotlinTestUtils.assertEqualsToFile(afterFile, file.text)
