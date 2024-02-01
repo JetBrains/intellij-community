@@ -9,7 +9,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.proguard.OptimizeLibraryContext
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -144,15 +143,14 @@ internal interface NativeFileHandler {
 }
 
 suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
-  buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null, optimizeLibraryContext = null)
+  buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null)
 }
 
 internal suspend fun buildJar(targetFile: Path,
                               sources: List<Source>,
                               compress: Boolean = false,
                               notify: Boolean = true,
-                              nativeFileHandler: NativeFileHandler? = null,
-                              optimizeLibraryContext: OptimizeLibraryContext?) {
+                              nativeFileHandler: NativeFileHandler? = null) {
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(channel = outChannel,
@@ -190,7 +188,7 @@ internal suspend fun buildJar(targetFile: Path,
           }
 
           is ZipSource -> {
-            var sourceFile = source.file
+            val sourceFile = source.file
             try {
               //if (source.optimizeConfigId != null) {
               //  TraceManager.spanBuilder("optimize").setAttribute("library", source.optimizeConfigId).useWithoutActiveScope {
@@ -222,6 +220,7 @@ internal suspend fun buildJar(targetFile: Path,
                               compress = compress)
             }
             finally {
+              @Suppress("KotlinConstantConditions")
               if (sourceFile !== source.file) {
                 Files.deleteIfExists(sourceFile)
               }

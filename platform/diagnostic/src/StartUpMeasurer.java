@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.LongBinaryOperator;
 
 public final class StartUpMeasurer {
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
@@ -237,7 +238,7 @@ public final class StartUpMeasurer {
                                      @NotNull Map<String, Object2LongOpenHashMap<String>> pluginCostMap) {
     Object2LongMap<String> costPerPhaseMap = pluginCostMap.computeIfAbsent(pluginId, __ -> new Object2LongOpenHashMap<>());
     synchronized (costPerPhaseMap) {
-      costPerPhaseMap.mergeLong(phase, time, Math::addExact);
+      costPerPhaseMap.mergeLong(phase, time, (LongBinaryOperator)Math::addExact);
     }
   }
 }

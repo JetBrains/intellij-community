@@ -686,7 +686,7 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
     return emptyMap()
   }
 
-  val optimizeLibraryContext = OptimizeLibraryContext(tempDir = context.paths.tempDir, javaHome = context.getStableJdkHome())
+  //val optimizeLibraryContext = OptimizeLibraryContext(tempDir = context.paths.tempDir, javaHome = context.getStableJdkHome())
   val list = withContext(Dispatchers.IO) {
     descriptors.map { item ->
       async {
@@ -730,8 +730,7 @@ private suspend fun buildJars(descriptors: Collection<AssetDescriptor>,
                   buildJar(targetFile = file,
                            sources = sources,
                            nativeFileHandler = nativeFileHandler,
-                           notify = false,
-                           optimizeLibraryContext = optimizeLibraryContext)
+                           notify = false)
                 }
               }
             )

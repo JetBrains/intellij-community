@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.util.containers.CollectionFactory
@@ -17,7 +19,7 @@ internal class BidirectionalLongMultiMap<V> {
 
   constructor() {
     keyToValues = Long2ObjectOpenHashMap()
-    valueToKeys = CollectionFactory.createSmallMemoryFootprintMap()
+    valueToKeys = HashMap()
   }
 
   private constructor(
@@ -40,8 +42,7 @@ internal class BidirectionalLongMultiMap<V> {
   fun containsValue(value: V): Boolean = valueToKeys.containsKey(value)
 
   fun put(key: Long, value: V): Boolean {
-    val keys: Any? = valueToKeys[value]
-    when (keys) {
+    when (val keys = valueToKeys.get(value)) {
       null -> {
         valueToKeys[value] = key
       }
@@ -56,7 +57,7 @@ internal class BidirectionalLongMultiMap<V> {
     if (values == null) {
       @Suppress("SSBasedInspection")
       values = ObjectOpenHashSet()
-      keyToValues[key] = values
+      keyToValues.put(key, values)
     }
     return values.add(value)
   }
@@ -64,8 +65,7 @@ internal class BidirectionalLongMultiMap<V> {
   fun removeKey(key: Long): Boolean {
     val values = keyToValues[key] ?: return false
     for (v in values) {
-      val keys: Any = valueToKeys[v]!!
-      when (keys) {
+      when (val keys = valueToKeys.get(v)!!) {
         is LongOpenHashSet -> {
           keys.remove(key)
           if (keys.isEmpty()) {

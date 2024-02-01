@@ -1,62 +1,63 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.proguard
+package com.intellij.platform.buildScripts.codeOptimizer
 
-import com.intellij.openapi.util.text.Formats
-import com.intellij.util.io.DigestUtil.updateContentHash
-import com.intellij.util.io.bytesToHex
-import com.intellij.util.io.sha3_224
 import org.apache.logging.log4j.core.LoggerContext
 import org.apache.logging.log4j.core.config.ConfigurationFactory
 import org.apache.logging.log4j.core.config.ConfigurationSource
 import org.apache.logging.log4j.core.config.NullConfiguration
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.io.ZipFileWriter
-import org.jetbrains.intellij.build.io.readZipFile
 import proguard.*
-import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardCopyOption
 import java.util.*
 import kotlin.time.measureTime
 
 internal data class OptimizeLibraryContext(@JvmField val tempDir: Path, @JvmField val javaHome: Path)
 
+// The Maven Java API can appear somewhat complex and broad, making certain tasks cumbersome.
+// Hence, we depend on the prerequisite that the original library is already resolved and stored in the local Maven repository.
 internal object LibraryCodeOptimizer {
   @JvmStatic
   fun main(args: Array<String>) {
-    val userHome = Path.of(System.getProperty("user.home"))
-    val m2 = userHome.resolve(".m2/repository")
-    val output = userHome.resolve("projects/jsvg.jar")
+    val m2 = Path.of(System.getProperty("user.home")).resolve(".m2/repository")
+    val outDir = Path.of("out").toAbsolutePath()
+    val output = outDir.resolve("fastutil.jar")
     if (Files.isRegularFile(output)) {
       Files.deleteIfExists(output)
     }
 
-    val input = m2.resolve("com/github/weisj/jsvg/1.3.0-jb.3/jsvg-1.3.0-jb.3.jar")
+    //val input = m2.resolve("com/github/weisj/jsvg/1.3.0-jb.3/jsvg-1.3.0-jb.3.jar")
+    val version = "8.5.13-jb.1"
+    val input = m2.resolve("it/unimi/dsi/fastutil/$version/fastutil-$version.jar")
+    val mapping = outDir.resolve("fastutil-map.txt")
     val duration = measureTime {
-      optimizeLibrary(name = "jsvg",
+      optimizeLibrary(name = "fastutil",
                       input = input,
                       output = output,
                       javaHome = System.getProperty("java.home"),
-                      mapping = null)
+                      mapping = mapping)
     }
-    println(Formats.formatDuration(duration.inWholeMilliseconds))
+    println(duration.inWholeMilliseconds)
 
-    val digest = sha3_224()
-    updateContentHash(digest, cleanZip(output))
-    println(bytesToHex(digest.digest()))
+    Files.copy(m2.resolve("it/unimi/dsi/fastutil/$version/fastutil-$version-sources.jar"),
+               outDir.resolve("fastutil-sources.jar"),
+               StandardCopyOption.REPLACE_EXISTING)
+
+    //val digest = sha3_224()
+    //updateContentHash(digest, cleanZip(output))
+    //println(bytesToHex(digest.digest()))
   }
 }
 
-private fun cleanZip(file: Path): Path {
-  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".jar")
-  ZipFileWriter(channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE))).use { zipFileWriter ->
-    readZipFile(file) { name, data ->
-      zipFileWriter.uncompressedData(name, data())
-    }
-  }
-  return tempFile
-}
+//private fun cleanZip(file: Path): Path {
+//  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".jar")
+//  ZipFileWriter(channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE))).use { zipFileWriter ->
+//    readZipFile(file) { name, data ->
+//      zipFileWriter.uncompressedData(name, data())
+//    }
+//  }
+//  return tempFile
+//}
 
 // See LibraryCodeOptimizer above — it confirms that ProGuard produces the same result for the same input.
 // Thus, it is safe to apply ProGuard - builds are reproducible.
@@ -65,7 +66,7 @@ internal fun optimizeLibrary(name: String, input: Path, output: Path, javaHome: 
   val properties = Properties()
   properties.setProperty("java.home", javaHome)
   val configFileName = "$name.conf"
-  val configText = BuildTasks::class.java.classLoader.getResourceAsStream("org/jetbrains/intellij/build/proguard/$configFileName")?.use {
+  val configText = OptimizeLibraryContext::class.java.classLoader.getResourceAsStream(configFileName)?.use {
     it.readAllBytes().decodeToString()
   }
   ConfigurationParser(configText, configFileName, output.parent.toFile(), properties).use {

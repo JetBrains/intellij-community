@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -8,7 +8,6 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PagedStorage;
 import com.intellij.util.io.pagecache.PagedStorageWithPageUnalignedAccess;
-import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -372,7 +371,7 @@ public final class AppendableStorageBackedByPagedStorageLockFree<Data> implement
     }
 
     public @NotNull AppendMemoryBuffer copy() {
-      return new AppendMemoryBuffer(ByteArrays.copy(buffer), bufferPosition, startingOffsetInFile);
+      return new AppendMemoryBuffer(buffer.clone(), bufferPosition, startingOffsetInFile);
     }
 
     public @NotNull AppendMemoryBuffer rewind(int offsetInFile) {

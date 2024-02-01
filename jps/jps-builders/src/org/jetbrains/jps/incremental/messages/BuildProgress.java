@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.diagnostic.Logger;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.jps.FreezeDetector;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
@@ -158,7 +159,10 @@ public final class BuildProgress {
       LOG.debug("update expected build time for " + myTotalBuildTimeForFullyRebuiltTargets.size() + " target types");
     }
 
-    myTotalBuildTimeForFullyRebuiltTargets.object2LongEntrySet().fastForEach(entry -> {
+    ObjectIterator<Object2LongMap.Entry<BuildTargetType<?>>> iterator =
+      myTotalBuildTimeForFullyRebuiltTargets.object2LongEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Object2LongMap.Entry<BuildTargetType<?>> entry = iterator.next();
       BuildTargetType<?> type = entry.getKey();
       long totalTime = entry.getLongValue();
       BuildTargetsState targetsState = myDataManager.getTargetsState();
@@ -176,7 +180,7 @@ public final class BuildProgress {
                   + " of " + myTotalTargets.getInt(type) + " targets)");
       }
       targetsState.setAverageBuildTime(type, newAverageTime);
-    });
+    }
   }
 
   public synchronized long getAbsoluteBuildTime() {

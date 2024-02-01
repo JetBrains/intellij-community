@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,19 +16,19 @@ final class FileId2ValueMapping<Value> {
   FileId2ValueMapping(@NotNull ValueContainerImpl<Value> valueContainer) {
     this.valueContainer = valueContainer;
 
-    List<Pair<Value, Integer>> cleanupDeletions = new SmartList<>();
+    List<ObjectIntImmutablePair<Value>> cleanupDeletions = new SmartList<>();
 
     valueContainer.forEach((id, value) -> {
       Value previousValue = associateFileIdToValueSkippingContainer(id, value);
       if (previousValue != null) {
-        cleanupDeletions.add(Pair.of(previousValue, id));
+        cleanupDeletions.add(ObjectIntImmutablePair.of(previousValue, id));
         //ValueContainerImpl.LOG.error("Duplicated value for id = " + id + " in " + valueContainer.getDebugMessage());
       }
       return true;
     });
 
-    for (Pair<Value, Integer> deletion : cleanupDeletions) {
-      valueContainer.removeValue(deletion.second(), ValueContainerImpl.unwrap(deletion.first()));
+    for (ObjectIntImmutablePair<Value> deletion : cleanupDeletions) {
+      valueContainer.removeValue(deletion.rightInt(), ValueContainerImpl.unwrap(deletion.left()));
     }
   }
 

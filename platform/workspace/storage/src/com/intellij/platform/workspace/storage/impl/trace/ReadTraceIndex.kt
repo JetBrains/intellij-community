@@ -32,7 +32,7 @@ internal class ReadTraceIndex<T> private constructor(
   fun set(traces: ReadTraceHashSet, obj: T) {
     val existingTraces = objToTrace.remove(obj)
     if (existingTraces != null) {
-      val existingTracesIterator = existingTraces.longIterator()
+      val existingTracesIterator = existingTraces.iterator()
       while (existingTracesIterator.hasNext()) {
         val trace = existingTracesIterator.nextLong()
         val objs = traceToObj.get(trace)
@@ -45,7 +45,7 @@ internal class ReadTraceIndex<T> private constructor(
       }
     }
 
-    val tracesIterator = traces.longIterator()
+    val tracesIterator = traces.iterator()
     while (tracesIterator.hasNext()) {
       val trace = tracesIterator.nextLong()
       if (existingTraces == null || trace !in existingTraces) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.lexer;
 
 import com.intellij.lexer.LexerBase;
@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,8 @@ public class BasicJavaLexer extends LexerBase {
   private static final int STATE_TEXT_BLOCK_TEMPLATE = 1;
 
   private final _JavaLexer myFlexLexer;
-  private final IntStack myStateStack = new IntArrayList(1);
+  @SuppressWarnings("SSBasedInspection")
+  private final IntArrayList myStateStack = new IntArrayList(1);
   private CharSequence myBuffer;
   private char @Nullable [] myBufferArray;
   private int myBufferIndex;

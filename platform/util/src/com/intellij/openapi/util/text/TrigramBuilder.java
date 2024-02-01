@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.text.CharArrayUtil;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.IntPredicate;
 
 public final class TrigramBuilder {
@@ -31,7 +30,7 @@ public final class TrigramBuilder {
     if (!consumer.consumeTrigramsCount(trigrams.size())) {
       return false;
     }
-    IntIterator iterator = trigrams.intIterator();
+    IntIterator iterator = trigrams.iterator();
     while (iterator.hasNext()) {
       int trigram = iterator.nextInt();
       if (!consumer.test(trigram)) {
@@ -62,7 +61,7 @@ public final class TrigramBuilder {
 
       @Override
       public void forEach(BiConsumer<? super Integer, ? super Void> consumer) {
-        trigrams.forEach((Consumer<Integer>)integer -> {
+        trigrams.forEach(integer -> {
           consumer.accept(integer, null);
         });
       }
@@ -72,7 +71,7 @@ public final class TrigramBuilder {
         return new AbstractObjectSet<Entry<Void>>() {
           @Override
           public ObjectIterator<Entry<Void>> iterator() {
-            IntIterator iterator = trigrams.intIterator();
+            IntIterator iterator = trigrams.iterator();
             return new AbstractObjectIterator<Entry<Void>>() {
               @Override
               public boolean hasNext() {
