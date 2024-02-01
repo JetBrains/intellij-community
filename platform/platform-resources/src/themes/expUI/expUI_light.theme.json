@@ -633,7 +633,7 @@
       "codeBorderColor": "Grey6",
       "linkForeground": "Blue8",
       "linkUnderlineHoveredColor": "Blue8",
-      "linkUnderlineDefaultColor": "FFFFFF00",
+      "linkUnderlineDefaultColor": "#FFFFFF00",
       "imageBorderColor": "Grey4",
       "animationBackground": "Grey13",
       "Button": {
@@ -1052,7 +1052,7 @@
     "ManagedIdeMenuItemHover": "Grey12",
 
     "InlineBanner.hoverBackground": "#0000000F",
-    "InlineBanner.pressedBackground": "00000019"
+    "InlineBanner.pressedBackground": "#00000019"
   },
 
   "icons": {
