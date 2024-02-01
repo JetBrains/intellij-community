@@ -6,24 +6,22 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.junit.Assert
 
-class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationEventTest<ModuleOutOfBlockModificationEventTracker>() {
-    override fun constructTracker(module: KtModule): ModuleOutOfBlockModificationEventTracker = ModuleOutOfBlockModificationEventTracker(module)
+class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationEventTest() {
+    override val expectedEventKind: KotlinModificationEventKind
+        get() = KotlinModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION
 
     fun `test that source module out-of-block modification affects a single module`() {
         val moduleA = createModuleInTmpDir("a") {
@@ -560,17 +558,5 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
     private fun KtFile.getSingleMemberInClassOffset(): Int {
         val singleMember = (declarations[0] as KtClass).declarations.single()
         return singleMember.startOffset
-    }
-}
-
-class ModuleOutOfBlockModificationEventTracker(module: KtModule) : ModuleModificationEventTracker(
-    module,
-    eventKind = "module out-of-block modification",
-) {
-    override fun configureSubscriptions(busConnection: MessageBusConnection) {
-        busConnection.subscribe(
-            KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION,
-            KotlinModuleOutOfBlockModificationListener(::handleEvent),
-        )
     }
 }

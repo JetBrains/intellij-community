@@ -2,15 +2,13 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.modificationEvents
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.messages.MessageBusConnection
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinGlobalSourceOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
 import org.jetbrains.kotlin.idea.util.sourceRoots
 
-class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModificationEventTest<GlobalSourceOutOfBlockModificationEventTracker>() {
-    override fun constructTracker() = GlobalSourceOutOfBlockModificationEventTracker(myProject)
+class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModificationEventTest() {
+    override val expectedEventKind: KotlinModificationEventKind
+        get() = KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION
 
     fun `test that global source out-of-block modification occurs after a file is added to a module content root`() {
         val moduleA = createModuleInTmpDir("a")
@@ -51,7 +49,10 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         val destination = getVirtualFile(createTempDirectory())
         PsiTestUtil.addContentRoot(moduleB, destination)
 
-        val tracker = createTracker()
+        val tracker = createTracker(
+            // Moving the file constitutes removal of the single-file module.
+            additionalAllowedEventKind = KotlinModificationEventKind.MODULE_STATE_MODIFICATION
+        )
 
         move(scriptA.virtualFile, destination)
 
@@ -62,7 +63,10 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         val scriptA = createScript("a")
         val destination = getVirtualFile(createTempDirectory())
 
-        val tracker = createTracker()
+        val tracker = createTracker(
+            // Moving the file constitutes removal of the single-file module.
+            additionalAllowedEventKind = KotlinModificationEventKind.MODULE_STATE_MODIFICATION
+        )
 
         move(scriptA.virtualFile, destination)
 
@@ -87,7 +91,10 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         val destination = getVirtualFile(createTempDirectory())
         PsiTestUtil.addContentRoot(moduleB, destination)
 
-        val tracker = createTracker()
+        val tracker = createTracker(
+            // Moving the file constitutes removal of the single-file module.
+            additionalAllowedEventKind = KotlinModificationEventKind.MODULE_STATE_MODIFICATION
+        )
 
         move(fileA.virtualFile, destination)
 
@@ -98,7 +105,10 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
         val fileA = createNotUnderContentRootFile("a")
         val destination = getVirtualFile(createTempDirectory())
 
-        val tracker = createTracker()
+        val tracker = createTracker(
+            // Moving the file constitutes removal of the single-file module.
+            additionalAllowedEventKind = KotlinModificationEventKind.MODULE_STATE_MODIFICATION
+        )
 
         // Note that the "not-under-content-root" file is under the content root of the project, and so moving it outside the content root
         // of the project does have an effect.
@@ -110,24 +120,13 @@ class KotlinGlobalSourceOutOfBlockModificationTest : AbstractKotlinGlobalModific
     fun `test that global source out-of-block modification occurs after deleting a not-under-content-root file`() {
         val fileA = createNotUnderContentRootFile("a")
 
-        val tracker = createTracker()
+        val tracker = createTracker(
+            // Deleting the file constitutes removal of the single-file module.
+            additionalAllowedEventKind = KotlinModificationEventKind.MODULE_STATE_MODIFICATION
+        )
 
         delete(fileA.virtualFile)
 
         tracker.assertModified("the project after a not-under-content-root file is deleted")
-    }
-}
-
-class GlobalSourceOutOfBlockModificationEventTracker(project: Project) : GlobalModificationEventTracker(
-    project,
-    eventKind = "global source out-of-block modification",
-) {
-    override fun configureSubscriptions(busConnection: MessageBusConnection) {
-        busConnection.subscribe(
-            KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
-            KotlinGlobalSourceOutOfBlockModificationListener {
-                 receivedEvents.add(ReceivedEvent(isRemoval = false))
-            },
-        )
     }
 }

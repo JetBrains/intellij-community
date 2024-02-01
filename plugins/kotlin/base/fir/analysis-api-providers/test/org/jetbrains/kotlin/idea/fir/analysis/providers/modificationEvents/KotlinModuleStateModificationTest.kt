@@ -9,18 +9,22 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.messages.MessageBusConnection
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.providers.topics.KotlinModificationEventKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.idea.test.addEmptyClassesRoot
 
-class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventTest<ModuleStateModificationEventTracker>() {
-    override fun constructTracker(module: KtModule): ModuleStateModificationEventTracker = ModuleStateModificationEventTracker(module)
+class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventTest() {
+    override val expectedEventKind: KotlinModificationEventKind
+        get() = KotlinModificationEventKind.MODULE_STATE_MODIFICATION
+
+    override val defaultAllowedEventKinds: Set<KotlinModificationEventKind>
+        get() = setOf(
+            // Module state modification can easily trigger global source out-of-block modification through module roots changes.
+            KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION
+        )
 
     fun `test source module state modification after adding module dependency`() {
         val moduleA = createModuleInTmpDir("a")
@@ -375,18 +379,5 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         trackerA.assertModifiedOnce("module A language level is changed")
         trackerB.assertNotModified("unchanged module B")
-    }
-
-}
-
-class ModuleStateModificationEventTracker(module: KtModule) : ModuleModificationEventTracker(
-    module,
-    eventKind = "module state modification",
-) {
-    override fun configureSubscriptions(busConnection: MessageBusConnection) {
-        busConnection.subscribe(
-            KotlinTopics.MODULE_STATE_MODIFICATION,
-            KotlinModuleStateModificationListener(::handleEvent),
-        )
     }
 }
