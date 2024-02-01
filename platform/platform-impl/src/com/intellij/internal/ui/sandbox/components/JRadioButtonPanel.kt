@@ -2,12 +2,12 @@
 package com.intellij.internal.ui.sandbox.components
 
 import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.internal.ui.sandbox.applyStateText
 import com.intellij.openapi.Disposable
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import javax.swing.JComponent
 
-@Suppress("DialogTitleCapitalization")
 internal class JRadioButtonPanel : UISandboxPanel {
 
   override val title: String = "JRadioButton"
@@ -15,23 +15,29 @@ internal class JRadioButtonPanel : UISandboxPanel {
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
       group("States") {
-        buttonsGroup("Enabled:") {
+        buttonsGroup {
           row {
-            radioButton("radioButton")
+            radioButton("")
               .comment(
                 "To focus radioButton without selection press left mouse button, move mouse outside of the radioButton and release the button")
+              .applyStateText()
           }
           row {
-            radioButton("radioButtonSelected").selected(true)
+            radioButton("")
+              .selected(true)
+              .applyStateText()
           }
         }
-      }
-      buttonsGroup("Disabled:") {
-        row {
-          radioButton("radioButtonDisabled").enabled(false)
-        }
-        row {
-          radioButton("radioButtonSelectedDisabled").selected(true).enabled(false)
+
+        buttonsGroup {
+          for (isSelected in listOf(false, true)) {
+            row {
+              radioButton("")
+                .selected(isSelected)
+                .enabled(false)
+                .applyStateText()
+            }
+          }
         }
       }
     }

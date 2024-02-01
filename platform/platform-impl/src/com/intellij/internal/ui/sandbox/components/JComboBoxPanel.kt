@@ -2,7 +2,10 @@
 package com.intellij.internal.ui.sandbox.components
 
 import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.internal.ui.sandbox.withStateLabel
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
@@ -11,37 +14,63 @@ internal class JComboBoxPanel : UISandboxPanel {
   override val title: String = "JComboBox"
 
   override fun createContent(disposable: Disposable): JComponent {
-    return panel {
-      val items = (1..10).map { "Item $it" }.toList()
+    val items = (1..10).map { "Item $it" }.toList()
 
-      row("Not editable:") {
+    val result = panel {
+      withStateLabel {
         comboBox(items)
       }
-      row("Not editable, error:") {
-        comboBox(items).applyToComponent {
-          putClientProperty("JComponent.outline", "error")
-        }
-      }
-      row("Not editable, warning:") {
-        comboBox(items).applyToComponent {
-          putClientProperty("JComponent.outline", "warning")
-        }
-      }
-      row("Not editable, disabled:") {
+      withStateLabel {
         comboBox(items).enabled(false)
       }
-      row("Editable:") {
+      withStateLabel {
         comboBox(items).applyToComponent {
           isEditable = true
         }
       }
-      row("Editable, disabled:") {
+      withStateLabel {
         comboBox(items)
           .enabled(false)
           .applyToComponent {
             isEditable = true
           }
       }
+
+      group("Validation") {
+        withStateLabel("Error") {
+          comboBox(items).validationOnInput {
+            validate(it, true)
+          }.validationOnApply {
+            validate(it, true)
+          }
+        }
+
+        withStateLabel("Warning") {
+          comboBox(items).validationOnInput {
+            validate(it, false)
+          }.validationOnApply {
+            validate(it, false)
+          }
+        }
+      }
+    }
+
+    result.registerValidators(disposable)
+    result.validateAll()
+
+    return result
+  }
+
+  private fun validate(comboBox: ComboBox<*>, isError: Boolean): ValidationInfo? {
+    if (comboBox.selectedItem == "Item 2") {
+      return null
+    }
+
+    return if (isError) {
+      ValidationInfo("Item 2 must be selected")
+    }
+    else {
+      ValidationInfo("Item 2 should be selected").asWarning()
     }
   }
 }

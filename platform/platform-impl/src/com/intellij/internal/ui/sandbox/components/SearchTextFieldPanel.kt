@@ -4,21 +4,23 @@ package com.intellij.internal.ui.sandbox.components
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.internal.ui.sandbox.withStateLabel
 import com.intellij.openapi.Disposable
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
-internal class JSpinnerPanel : UISandboxPanel {
+internal class SearchTextFieldPanel : UISandboxPanel {
 
-  override val title: String = "JSpinner"
+  override val title: String = "SearchTextField"
 
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
       withStateLabel {
-        spinner(0.0..10.0)
+        cell(SearchTextField())
       }
       withStateLabel {
-        spinner(0.0..10.0)
-          .enabled(false)
+        cell(SearchTextField()).applyToComponent {
+          textEditor.isEnabled = false
+        }
       }
     }
   }

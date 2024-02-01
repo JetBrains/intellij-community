@@ -7,17 +7,17 @@ import com.intellij.openapi.Disposable
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
-internal class JSpinnerPanel : UISandboxPanel {
+internal class JBIntSpinnerPanel : UISandboxPanel {
 
-  override val title: String = "JSpinner"
+  override val title: String = "JBIntSpinner"
 
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
       withStateLabel {
-        spinner(0.0..10.0)
+        spinner(0..10)
       }
       withStateLabel {
-        spinner(0.0..10.0)
+        spinner(0..10)
           .enabled(false)
       }
     }

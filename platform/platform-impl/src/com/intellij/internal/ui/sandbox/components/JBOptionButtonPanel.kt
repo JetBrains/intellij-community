@@ -3,6 +3,7 @@ package com.intellij.internal.ui.sandbox.components
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.internal.ui.sandbox.applyStateText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.messages.MessageDialog
 import com.intellij.ui.components.JBOptionButton
@@ -19,22 +20,26 @@ internal class JBOptionButtonPanel : UISandboxPanel {
 
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
-      optionsRow(true, true)
-      optionsRow(true, false)
-      optionsRow(false, true)
-      optionsRow(false, false)
+      group("Single Action") {
+        optionsRow(true, true)
+        optionsRow(false, true)
+      }
+      group("Multiple Actions") {
+        optionsRow(true, false)
+        optionsRow(false, false)
+      }
     }
   }
 
   private fun Panel.optionsRow(enabled: Boolean, singleAction: Boolean) {
-    val label = "${if (enabled) "Enabled" else "Disabled"}, ${if (singleAction) "single action" else "multiple actions"}"
-    val options = if (singleAction) emptyArray<Action>() else arrayOf(action("Action 1"), action("Action 2"), action("Action 3"))
-    row(label) {
-      cell(JBOptionButton(action("Some Long Action").apply { isEnabled = enabled }, options))
-      cell(JBOptionButton(action("Some Long Action").apply { isEnabled = enabled }, options))
+    row {
+      val options = if (singleAction) emptyArray<Action>() else arrayOf(action("Action 1"), action("Action 2"), action("Action 3"))
+      cell(JBOptionButton(action("").apply { isEnabled = enabled }, options))
+        .applyStateText()
+      cell(JBOptionButton(action("").apply { isEnabled = enabled }, options))
         .applyToComponent {
           putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true)
-        }
+        }.applyStateText()
     }
   }
 
