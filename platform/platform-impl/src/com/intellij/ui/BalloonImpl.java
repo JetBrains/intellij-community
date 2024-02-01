@@ -166,7 +166,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
           }
         }
 
-        if (myEnableButtons && id == MouseEvent.MOUSE_MOVED) {
+        if (id == MouseEvent.MOUSE_MOVED) {
           final boolean moveChanged = insideBalloon != myLastMoveWasInsideBalloon;
           myLastMoveWasInsideBalloon = insideBalloon;
           if (moveChanged) {
