@@ -251,14 +251,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
           }
 
           ProjectComponentIdentifier projectComponentIdentifier = (ProjectComponentIdentifier)artifact.getId().getComponentIdentifier();
-          BuildIdentifier buildIdentifier = projectComponentIdentifier.getBuild();
-          String buildName;
-          if (IS_83_OR_BETTER) {
-            buildName = buildIdentifier.getBuildPath();
-          }
-          else {
-            buildName = buildIdentifier.getName();
-          }
+          String buildName = getBuildName(projectComponentIdentifier);
           String projectPath = projectComponentIdentifier.getProjectPath();
           String key = buildName + "_" + projectPath + "_" + resolvedDependency.getConfiguration();
           DefaultExternalProjectDependency projectDependency = resolvedProjectDependencies.get(key);
@@ -687,6 +680,15 @@ public final class DependencyResolverImpl implements DependencyResolver {
       return ((ExternalProjectDependency)dependency).getProjectDependencyArtifacts();
     }
     return emptySet();
+  }
+
+  private static @NotNull String getBuildName(@NotNull ProjectComponentIdentifier projectComponentIdentifier) {
+    BuildIdentifier buildIdentifier = projectComponentIdentifier.getBuild();
+    if (IS_83_OR_BETTER) {
+      return buildIdentifier.getBuildPath();
+    }
+    //noinspection deprecation
+    return buildIdentifier.getName();
   }
 
   private static final class MyModuleVersionSelector {
