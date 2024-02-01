@@ -250,6 +250,7 @@ class JpsBootstrapMain(args: Array<String>?) {
 
     val args: MutableList<String> = ArrayList()
     args.add("-ea")
+    args.add("-XX:ReservedCodeCacheSize=512m")
     args.add("-Xmx$buildTargetXmx")
     if (debugOption) {
       args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005")
