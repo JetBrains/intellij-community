@@ -448,7 +448,6 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
 "ARCHIVES_UNDER_ROOT",
 "ARCHIVES_UNDER_ROOT_RECURSIVELY"))), withDefault = false)), supertypes = listOf("java.io.Serializable")))), primitive = primitiveTypeListNotNullable), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "excludedRoots", valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_MANY, entityFqName = "com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity", isChild = true, isNullable = false), withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "libraryProperties", valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE, entityFqName = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", isChild = true, isNullable = true), withDefault = false),
 OwnPropertyMetadata(isComputable = true, isKey = false, isOpen = false, name = "symbolicId", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.jps.entities.LibraryId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "codeCache", valueType = primitiveTypeIntNotNullable, withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
@@ -466,7 +465,7 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", entityDataFqName = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "library", valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE, entityFqName = "com.intellij.platform.workspace.jps.entities.LibraryEntity", isChild = false, isNullable = false), withDefault = false),
 OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "libraryType", valueType = primitiveTypeStringNotNullable, withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "propertiesXmlTag", valueType = primitiveTypeStringNullable, withDefault = false)), extProperties = listOf(), isAbstract = false)
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "propertiesXmlTag", valueType = primitiveTypeStringNullable, withDefault = false)), extProperties = listOf(ExtPropertyMetadata(isComputable = false, isOpen = false, name = "libraryProperties", receiverFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity", valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE, entityFqName = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", isChild = true, isNullable = true), withDefault = false)), isAbstract = false)
         
         addMetadata(typeMetadata)
         
@@ -602,8 +601,8 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity", metadataHash = 1113105028)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetEntity", metadataHash = 2025153625)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.FacetsOrderEntity", metadataHash = 351485456)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity", metadataHash = 926320716)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", metadataHash = -436113477)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryEntity", metadataHash = 311438336)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity", metadataHash = -31768321)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity", metadataHash = -917110778)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity", metadataHash = -1158387731)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity", metadataHash = -371618300)
