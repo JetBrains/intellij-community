@@ -3,6 +3,7 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntIntrospector;
 import com.intellij.lang.ant.ReflectedProject;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -303,6 +304,9 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
       return AntIntrospector.getInstance(c);
     }
     catch (Throwable e) {
+      if (e instanceof ControlFlowException) {
+        throw e;
+      }
       LOG.warn("Unable to get Ant introspector", e);
     }
     return null;
