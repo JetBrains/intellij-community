@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
@@ -221,18 +222,24 @@ internal class AllHighlightingsSnapshot(private val document: Document, highligh
 
 private fun buildAndSortHighlightings(document: Document, highlightings: List<HighlightingInfo>): List<HighlightingInfo> {
   val sortedHighlightings = highlightings.sortedBy { it.startOffset }
-  val result: MutableList<HighlightingInfo> = ArrayList(sortedHighlightings.size * 2)
-  var offset = 0
+  val documentLength = document.textLength
+  val result: MutableList<HighlightingInfo> = ArrayList(sortedHighlightings.size * 2 + 1)
+  var startOffset = 0
   for (highlighting in sortedHighlightings) {
-    if (offset < highlighting.startOffset) {
-      result.add(HighlightingInfo(offset, highlighting.startOffset, TextAttributes.ERASE_MARKER))
+    if (highlighting.startOffset < 0 || highlighting.endOffset > documentLength) {
+      logger<TerminalOutputModel>().error("Terminal highlightings range should be within document")
+    }
+    if (startOffset > highlighting.startOffset) {
+      logger<TerminalOutputModel>().error("Terminal highlightings should not overlap")
+    }
+    if (startOffset < highlighting.startOffset) {
+      result.add(HighlightingInfo(startOffset, highlighting.startOffset, TextAttributes.ERASE_MARKER))
     }
     result.add(highlighting)
-    offset = highlighting.endOffset
+    startOffset = highlighting.endOffset
   }
-  val documentLength = document.textLength
-  if (offset < documentLength) {
-    result.add(HighlightingInfo(offset, documentLength, TextAttributes.ERASE_MARKER))
+  if (startOffset < documentLength) {
+    result.add(HighlightingInfo(startOffset, documentLength, TextAttributes.ERASE_MARKER))
   }
   return result
 }
