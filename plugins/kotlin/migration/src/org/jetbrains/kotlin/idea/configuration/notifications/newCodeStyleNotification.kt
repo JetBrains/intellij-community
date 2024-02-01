@@ -52,16 +52,20 @@ fun notifyKotlinStyleUpdateIfNeeded(project: Project) {
         )
         .setSuggestionType(true)
         .addAction(readBlogPost())
-        .setImportant(true)
+        .addAction(dismiss())
         .setIcon(KotlinIcons.SMALL_LOGO)
         .notify(project)
 }
 
-private fun readBlogPost() = NotificationAction.create(
+private fun readBlogPost() = NotificationAction.createSimpleExpiring(
     KotlinMigrationBundle.message("kotlin.code.style.default.changed.action"),
-) { _ ->
+) {
     BrowserUtil.open(KotlinMigrationBundle.message("kotlin.code.style.default.changed.action.url"))
 }
+
+private fun dismiss() = NotificationAction.createSimpleExpiring(
+    KotlinMigrationBundle.message("kotlin.code.style.default.changed.dismiss"),
+) { }
 
 private fun applyKotlinCodeStyleSetting(project: Project) {
     runWriteAction {
