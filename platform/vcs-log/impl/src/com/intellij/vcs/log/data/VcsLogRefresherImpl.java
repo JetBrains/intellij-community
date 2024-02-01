@@ -284,40 +284,40 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     private @NotNull DataPack doRefresh(@NotNull Collection<? extends VirtualFile> roots, boolean supportsIncrementalRefresh) {
-      return computeWithSpanThrows(myTracer, LogData.Refreshing.getName(), span -> {
-        try {
-          PermanentGraph<Integer> permanentGraph = myCurrentDataPack.isFull() ? myCurrentDataPack.getPermanentGraph() : null;
+      try {
+        PermanentGraph<Integer> permanentGraph = myCurrentDataPack.isFull() ? myCurrentDataPack.getPermanentGraph() : null;
+        if (permanentGraph == null || !supportsIncrementalRefresh) return loadFullLog();
+
+        return computeWithSpanThrows(myTracer, LogData.Refreshing.getName(), span -> {
           Map<VirtualFile, CompressedRefs> currentRefs = myCurrentDataPack.getRefsModel().getAllRefsByRoot();
-          if (permanentGraph != null && supportsIncrementalRefresh) {
-            int commitCount = myRecentCommitCount;
-            for (int attempt = 0; attempt <= 1; attempt++) {
-              loadLogAndRefs(roots, currentRefs, commitCount);
-              List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
-              Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
-              List<? extends GraphCommit<Integer>> joinedFullLog = join(compoundLog, new ArrayList<>(permanentGraph.getAllCommits()),
-                                                                        currentRefs, allNewRefs);
-              if (joinedFullLog == null) {
-                commitCount *= 5;
-              }
-              else {
-                return DataPack.build(joinedFullLog, allNewRefs, myProviders, myStorage, true);
-              }
+          int commitCount = myRecentCommitCount;
+          for (int attempt = 0; attempt <= 1; attempt++) {
+            loadLogAndRefs(roots, currentRefs, commitCount);
+            List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
+            Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
+            List<? extends GraphCommit<Integer>> joinedFullLog = join(compoundLog, new ArrayList<>(permanentGraph.getAllCommits()),
+                                                                      currentRefs, allNewRefs);
+            if (joinedFullLog == null) {
+              commitCount *= 5;
             }
-            // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
-            LOG.info("Couldn't join " + commitCount / 5 + " recent commits to the log (" +
-                     permanentGraph.getAllCommits().size() + " commits)");
+            else {
+              return DataPack.build(joinedFullLog, allNewRefs, myProviders, myStorage, true);
+            }
           }
+          // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
+          LOG.info("Couldn't join " + commitCount / 5 + " recent commits to the log (" +
+                   permanentGraph.getAllCommits().size() + " commits)");
 
           return loadFullLog();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.info(e);
-          return new DataPack.ErrorDataPack(e);
-        }
-      });
+        });
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.info(e);
+        return new DataPack.ErrorDataPack(e);
+      }
     }
 
     private static @NotNull Map<VirtualFile, CompressedRefs> getAllNewRefs(@NotNull LogInfo newInfo,
