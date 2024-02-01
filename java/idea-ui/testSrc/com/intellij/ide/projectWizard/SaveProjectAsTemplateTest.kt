@@ -15,6 +15,7 @@ import com.intellij.openapi.module.BasePackageParameterFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -138,6 +139,9 @@ public class Bar {
 
   override fun tearDown() {
     try {
+      ProjectJdkTable.getInstance().apply {
+        allJdks.forEach { removeJdk(it) }
+      }
       (FileTemplateManager.getDefaultInstance() as FileTemplateManagerImpl).setTestDate(null)
       PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE)
     }
