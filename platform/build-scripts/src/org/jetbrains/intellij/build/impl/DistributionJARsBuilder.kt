@@ -1000,7 +1000,9 @@ private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): B
 }
 
 private suspend fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
-  layoutResourcePaths(layout = layout, context = context, targetDirectory = targetDirectory, overwrite = false)
+  // quick fix for a very annoying FileAlreadyExistsException in CLion dev build
+  val overwrite = ("clion-radler" == (layout as? PluginLayout)?.directoryName)
+  layoutResourcePaths(layout = layout, context = context, targetDirectory = targetDirectory, overwrite = overwrite)
   if (layout !is PluginLayout) {
     return
   }
