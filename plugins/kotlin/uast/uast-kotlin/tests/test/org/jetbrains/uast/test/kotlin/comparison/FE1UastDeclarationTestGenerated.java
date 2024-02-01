@@ -63,6 +63,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_accessors.kt");
     }
 
+    @TestMetadata("deprecatedHiddenProperty_constructor.kt")
+    public void testDeprecatedHiddenProperty_constructor() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_constructor.kt");
+    }
+
     @TestMetadata("deprecatedHiddenProperty_getter.kt")
     public void testDeprecatedHiddenProperty_getter() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_getter.kt");
