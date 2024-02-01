@@ -56,7 +56,7 @@ public final class CustomisedActionGroup extends ActionGroupWrapper {
   }
 
   /** @deprecated Use {@link #getDelegate()} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ActionGroup getOrigin() { return getDelegate(); }
 
   public void resetChildren() {

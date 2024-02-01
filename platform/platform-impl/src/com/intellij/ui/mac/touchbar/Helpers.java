@@ -187,8 +187,7 @@ public final class Helpers {
   }
 
   static @NotNull String getActionId(@NotNull AnAction action) {
-    String actionId =
-      ActionManager.getInstance().getId(action instanceof CustomisedActionGroup ? ((CustomisedActionGroup)action).getOrigin() : action);
+    String actionId = ActionManager.getInstance().getId(action instanceof CustomisedActionGroup o ? o.getDelegate() : action);
     return actionId == null ? action.toString() : actionId;
   }
 
