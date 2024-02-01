@@ -7,7 +7,7 @@ import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingSto
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.annotations.NonNls
 
-class WaitSemanticSearchIndexing(text: @NonNls String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+class WaitEmbeddingIndexing(text: @NonNls String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME = "waitSemanticSearchIndexing"
     const val PREFIX = CMD_PREFIX + NAME
