@@ -5640,6 +5640,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           // Status component: NonOpaquePanel
           Dimension d = c.getPreferredSize();
           c.setBounds(r.width - d.width, 0, d.width, d.height);
+          MyScrollBar vsb = myVerticalScrollBar;
+          if (vsb.getY() != d.height) {
+            vsb.setBounds(vsb.getX(), d.height, vsb.getWidth(), vsb.getHeight() - d.height);
+          }
         }
       }
     }
