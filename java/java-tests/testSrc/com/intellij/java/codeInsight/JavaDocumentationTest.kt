@@ -326,7 +326,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
       // Here we check that the covering module (SDK in this case) is rendered in decorated info
       assertTrue(
-        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\"/>&nbsp;&lt; java 1.7 &gt;</div>"))
+        component.decoratedText.contains("<div class=\"separator-container\"><div class=\"separator\"/></div><icon src=\"AllIcons.Nodes.PpLibFolder\"/>&nbsp;&lt; java 1.7 &gt;"))
       return@getDocumentationText null
     }
   }

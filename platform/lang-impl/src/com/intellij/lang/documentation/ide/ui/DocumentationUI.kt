@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
@@ -184,14 +185,43 @@ internal class DocumentationUI(
     return presentation.locationText?.let { locationText ->
       presentation.locationIcon?.let { locationIcon ->
         val iconKey = registerIcon(locationIcon)
-        HtmlChunk.fragment(
-          HtmlChunk.tag("icon").attr("src", iconKey),
-          HtmlChunk.nbsp(),
-          HtmlChunk.text(locationText)
-        )
+        getLocationChunk(locationText, iconKey)
       } ?: HtmlChunk.text(locationText)
     }
   }
+
+  private fun getLocationChunk(text: String, icon: String): HtmlChunk {
+    val separatorIndex = text.indexOfFirst { it == ':' } + 1
+    return if (separatorIndex > 0) {
+      return getLocationChunkWithProviderInfo(
+        text.substring(0, separatorIndex),
+        text.substring(separatorIndex),
+        icon
+      )
+    }
+    else {
+      getLocationChunkWithoutProviderInfo(text, icon)
+    }
+  }
+
+  private fun getLocationChunkWithProviderInfo(provider: @NlsSafe String, @NlsSafe location: String, icon: String) = HtmlChunk.div()
+    .setClass("location")
+    .children(
+      HtmlChunk.tag("icon").attr("src", icon),
+      HtmlChunk.nbsp(),
+      HtmlChunk.text(provider),
+      HtmlChunk.div().setClass("spacer"),
+      HtmlChunk.text(location)
+    )
+
+  private fun getLocationChunkWithoutProviderInfo(text: @NlsSafe String, icon: String) = HtmlChunk
+    .div()
+    .setClass("location")
+    .children(
+      HtmlChunk.tag("icon").attr("src", icon),
+      HtmlChunk.nbsp(),
+      HtmlChunk.text(text)
+    )
 
   private fun registerIcon(icon: Icon): String {
     val key = icons.size.toString()

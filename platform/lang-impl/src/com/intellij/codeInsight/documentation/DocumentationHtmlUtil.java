@@ -43,7 +43,7 @@ public final class DocumentationHtmlUtil {
   }
 
   public static @NotNull List<String> getDocumentationPaneDefaultCssRules(Color background) {
-    int leftPadding = 8;
+    int leftPadding = 13;
     int definitionTopPadding = 4;
     String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED);
     String borderColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor());
@@ -51,12 +51,12 @@ public final class DocumentationHtmlUtil {
 
     // When updating styles here, consider updating styles in DocRenderer#getStyleSheet
     var result = ContainerUtil.newLinkedList(
-      "html { padding-bottom: 8px; }",
+      "html { padding: 10px; }",
       "pre  {white-space: pre-wrap}",  // supported by JetBrains Runtime
       "a { color: " + linkColor + "; text-decoration: none;}",
       ".definition { padding: " + definitionTopPadding + "px 17px 1px " + leftPadding + "px;" +
       "              border-bottom: thin solid " + borderColor + "; }",
-      ".definition-only { padding: " + definitionTopPadding + "px 17px 0 " + leftPadding + "px; }",
+      ".definition-only { padding: " + definitionTopPadding + "px 10px 0 " + leftPadding + "px; }",
       ".definition-only pre { margin-bottom: 0 }",
       ".content { padding: 5px 16px 0 " + leftPadding + "px; max-width: 100% }",
       ".content-separated { padding: 5px 16px 5px " + leftPadding + "px; max-width: 100%;" +
@@ -65,8 +65,11 @@ public final class DocumentationHtmlUtil {
       ".separated { padding: 0 0 4px 0; margin: 0; max-width: 100%;" +
       "             border-bottom: thin solid " + borderColor + "; }",
       ".bottom { padding: 3px 16px 0 " + leftPadding + "px; }",
+      ".separator-container { padding: 18px " + leftPadding + "px 0px; }",
+      ".separator-container .separator { border-top: thin solid " + borderColor + "; }",
       ".bottom-no-content { padding: 5px 16px 0 " + leftPadding + "px; }",
       ".grayed { color: #909090; display: inline;}",
+      ".location .spacer { padding-top: 8px }",
 
       // sections table
       ".sections { padding: 0 16px 0 " + leftPadding + "px; border-spacing: 0; }",
