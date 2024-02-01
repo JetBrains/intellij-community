@@ -11,6 +11,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DefaultProjectFactory
@@ -27,12 +29,14 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.COLUMNS_LARGE
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.columns
+import com.intellij.util.application
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
@@ -133,6 +137,13 @@ private fun updateGraphProperties(
   sdkDownloadTaskProperty.set(downloadTask)
 }
 
+@Service(Service.Level.APP)
+internal class ProjectWizardJdkComboBoxService(
+  private val coroutineScope: CoroutineScope
+) {
+  fun childScope(name: String): CoroutineScope = coroutineScope.namedChildScope(name)
+}
+
 class ProjectWizardJdkComboBox(
   val projectJdk: Sdk? = null,
   disposable: Disposable
@@ -142,21 +153,21 @@ class ProjectWizardJdkComboBox(
   var isLoadingDownloadItem: Boolean = false
   var isLoadingExistingJdks: Boolean = true
   val progressIcon: JBLabel = JBLabel(AnimatedIcon.Default.INSTANCE)
+  val coroutineScope = application.service<ProjectWizardJdkComboBoxService>().childScope("ProjectWizardJdkComboBox")
 
   init {
     model = DefaultComboBoxModel(Vector(initialItems()))
 
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    disposable.whenDisposed { scope.cancel() }
+    disposable.whenDisposed { coroutineScope.cancel() }
 
     if (registered.isEmpty()) {
       isLoadingDownloadItem = true
-      scope.launch {
+      coroutineScope.launch {
         addDownloadOpenJdkIntent()
       }
     }
 
-    scope.launch {
+    coroutineScope.launch {
       addExistingJdks()
     }
 
