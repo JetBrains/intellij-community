@@ -2,54 +2,49 @@
 package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import org.gradle.api.artifacts.ModuleIdentifier;
+import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
-public class ModuleComponentIdentifierImpl implements ModuleComponentIdentifier {
-  @NotNull
-  private final String group;
-  @NotNull
-  private final String module;
-  @NotNull
-  private final String version;
-  @NotNull
-  private final ModuleIdentifier moduleIdentifier;
+public class DefaultModuleComponentIdentifier implements ModuleComponentIdentifier {
 
-  public ModuleComponentIdentifierImpl(@NotNull String group, @NotNull String module, @NotNull String version) {
+  private final @NotNull String group;
+  private final @NotNull String module;
+  private final @NotNull String version;
+  private final @NotNull ModuleIdentifier moduleIdentifier;
+
+  public DefaultModuleComponentIdentifier(@NotNull String group, @NotNull String module, @NotNull String version) {
     this.group = group;
     this.module = module;
     this.version = version;
-    this.moduleIdentifier = new ModuleIdentifierImpl(group, module);
+    this.moduleIdentifier = new DefaultModuleIdentifier(group, module);
   }
 
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return group + ":" + module + ":" + version;
   }
 
   @Override
-  @NotNull
-  public String getGroup() {
+  public @NotNull String getGroup() {
     return group;
   }
 
   @Override
-  @NotNull
-  public String getModule() {
+  public @NotNull String getModule() {
     return module;
   }
 
   @Override
-  @NotNull
-  public String getVersion() {
+  public @NotNull String getVersion() {
     return version;
   }
 
-  @NotNull
-  public ModuleIdentifier getModuleIdentifier() {
+  @Override
+  public @NotNull ModuleIdentifier getModuleIdentifier() {
     return moduleIdentifier;
   }
 
@@ -78,5 +73,9 @@ public class ModuleComponentIdentifierImpl implements ModuleComponentIdentifier 
   @Override
   public String toString() {
     return getDisplayName();
+  }
+
+  public static ModuleComponentIdentifier create(ModuleVersionIdentifier id) {
+    return new DefaultModuleComponentIdentifier(id.getGroup(), id.getName(), id.getVersion());
   }
 }

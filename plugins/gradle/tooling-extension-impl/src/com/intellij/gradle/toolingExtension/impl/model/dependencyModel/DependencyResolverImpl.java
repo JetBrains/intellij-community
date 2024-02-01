@@ -181,7 +181,8 @@ public final class DependencyResolverImpl implements DependencyResolver {
         Set<ResolvedArtifact> moduleArtifacts = dependency.getModuleArtifacts();
         for (ResolvedArtifact artifact : moduleArtifacts) {
           if ((artifact.getId().getComponentIdentifier() instanceof ProjectComponentIdentifier)) continue;
-          components.add(toComponentIdentifier(artifact.getModuleVersion().getId()));
+          ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
+          components.add(DefaultModuleComponentIdentifier.create(id));
         }
         resolvedArtifacts.put(dependency, moduleArtifacts);
       }
@@ -678,10 +679,6 @@ public final class DependencyResolverImpl implements DependencyResolver {
       return ((ExternalProjectDependency)dependency).getProjectDependencyArtifacts();
     }
     return emptySet();
-  }
-
-  public static ModuleComponentIdentifier toComponentIdentifier(ModuleVersionIdentifier id) {
-    return new ModuleComponentIdentifierImpl(id.getGroup(), id.getName(), id.getVersion());
   }
 
   private static final class MyModuleVersionSelector {

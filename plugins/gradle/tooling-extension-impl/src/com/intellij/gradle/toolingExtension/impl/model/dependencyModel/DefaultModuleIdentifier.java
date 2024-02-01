@@ -4,22 +4,23 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 import org.gradle.api.artifacts.ModuleIdentifier;
 import org.jetbrains.annotations.NotNull;
 
-class ModuleIdentifierImpl implements ModuleIdentifier {
-  @NotNull private final String myGroup;
-  @NotNull private final String myModule;
+class DefaultModuleIdentifier implements ModuleIdentifier {
 
-  ModuleIdentifierImpl(@NotNull String group, @NotNull String module) {
+  private final @NotNull String myGroup;
+  private final @NotNull String myModule;
+
+  DefaultModuleIdentifier(@NotNull String group, @NotNull String module) {
     myGroup = group;
     myModule = module;
   }
 
   @Override
-  public String getGroup() {
+  public @NotNull String getGroup() {
     return myGroup;
   }
 
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myModule;
   }
 }
