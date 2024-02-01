@@ -297,12 +297,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
             Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
             List<? extends GraphCommit<Integer>> joinedFullLog = join(compoundLog, new ArrayList<>(permanentGraph.getAllCommits()),
                                                                       currentRefs, allNewRefs);
-            if (joinedFullLog == null) {
-              commitCount *= 5;
-            }
-            else {
+            if (joinedFullLog != null) {
               return DataPack.build(joinedFullLog, allNewRefs, myProviders, myStorage, true);
             }
+            commitCount *= 5;
           }
           // couldn't join => need to reload everything; if 5000 commits is still not enough, it's worth reporting:
           LOG.info("Couldn't join " + commitCount / 5 + " recent commits to the log (" +
