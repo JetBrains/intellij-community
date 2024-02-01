@@ -45,9 +45,7 @@ final class ShowLibraryFramesAction extends ToggleAction {
       presentation.setVisible(true);
       final boolean shouldShow = !Toggleable.isSelected(presentation);
       presentation.setText(XDebuggerBundle.message(shouldShow
-                                                   ? (XFramesView.shouldFoldHiddenFrames()
-                                                      ? "fold.library.frames.tooltip"
-                                                      : "hide.library.frames.tooltip")
+                                                   ? "hide.library.frames.tooltip"
                                                    : "show.all.frames.tooltip"));
     }
     else {
