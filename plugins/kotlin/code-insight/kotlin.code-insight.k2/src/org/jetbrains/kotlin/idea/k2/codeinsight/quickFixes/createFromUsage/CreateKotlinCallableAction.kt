@@ -34,7 +34,7 @@ internal class CreateKotlinCallableAction(
     private val myText: String,
     private val pointerToContainer: SmartPsiElementPointer<*>,
 ) : CreateKotlinElementAction(request, pointerToContainer), JvmGroupIntentionAction {
-    private val candidatesOfParameterNames: List<MutableCollection<String>> = request.expectedParameters.map { it.semanticNames }
+    private val candidatesOfParameterNames: List<Collection<String>> = request.expectedParameters.map { it.semanticNames }
 
     private val candidatesOfRenderedParameterTypes: List<List<String>> = renderCandidatesOfParameterTypes()
 
