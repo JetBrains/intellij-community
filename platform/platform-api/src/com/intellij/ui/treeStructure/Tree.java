@@ -529,6 +529,40 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     suspendedExpandAccessibilityAnnouncements.decrementAndGet();
   }
 
+  /**
+   * Fires a tree expanded event to the accessibility subsystem.
+   * <p>
+   *   Intended to be used together with {@link #suspendExpandCollapseAccessibilityAnnouncements()}
+   *   and {@link #resumeExpandCollapseAccessibilityAnnouncements()} for complex expand/collapse operations:
+   *   first announcements are suspended, then they're resumed and this method
+   *   (or {@link #fireAccessibleTreeCollapsed(TreePath)} is called for the paths that are actually supposed to be announced.
+   * </p>
+   * @param path the path that has been expanded
+   */
+  @ApiStatus.Internal
+  public void fireAccessibleTreeExpanded(@NotNull TreePath path) {
+    if (accessibleContext != null) {
+      ((AccessibleJTree)accessibleContext).treeExpanded(new TreeExpansionEvent(Tree.this, path));
+    }
+  }
+
+  /**
+   * Fires a tree collapsed event to the accessibility subsystem.
+   * <p>
+   *   Intended to be used together with {@link #suspendExpandCollapseAccessibilityAnnouncements()}
+   *   and {@link #resumeExpandCollapseAccessibilityAnnouncements()} for complex expand/collapse operations:
+   *   first announcements are suspended, then they're resumed and this method
+   *   (or {@link #fireAccessibleTreeExpanded(TreePath)} is called for the paths that are actually supposed to be announced.
+   * </p>
+   * @param path the path that has been collapsed
+   */
+  @ApiStatus.Internal
+  public void fireAccessibleTreeCollapsed(@NotNull TreePath path) {
+    if (accessibleContext != null) {
+      ((AccessibleJTree)accessibleContext).treeCollapsed(new TreeExpansionEvent(Tree.this, path));
+    }
+  }
+
   @Override
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
     var model = treeModel;
@@ -1227,7 +1261,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (accessibleContext != null) {
         // Only announce the topmost expanded nodes, to avoid spamming announcements.
         for (TreePath expandRoot : expandRoots) {
-          ((AccessibleJTree)accessibleContext).treeExpanded(new TreeExpansionEvent(Tree.this, expandRoot));
+          fireAccessibleTreeExpanded(expandRoot);
         }
         ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
       }
@@ -1309,7 +1343,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (accessibleContext != null) {
         // Only announce the topmost collapsed nodes, to avoid spamming announcements.
         for (TreePath collapseRoot : collapseRoots) {
-          ((AccessibleJTree)accessibleContext).treeCollapsed(new TreeExpansionEvent(Tree.this, collapseRoot));
+          fireAccessibleTreeCollapsed(collapseRoot);
         }
         ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
       }
