@@ -4,8 +4,7 @@ package org.jetbrains.plugins.gradle.service.project.data
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
@@ -151,9 +150,11 @@ fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<Anno
           }
         }
         if ((diff as MutableEntityStorageInstrumentation).hasChanges()) {
-          runInEdt {
-            runWriteAction { project.workspaceModel.updateProjectModel("Applying resolved annotations") { it.applyChangesFrom(diff) } }
-          }
+          ApplicationManager.getApplication().invokeLater(Runnable {
+            ApplicationManager.getApplication().runWriteAction {
+              project.workspaceModel.updateProjectModel("Applying resolved annotations") { it.applyChangesFrom(diff) }
+            }
+          }, project.disposed)
         }
       }
       finally {
