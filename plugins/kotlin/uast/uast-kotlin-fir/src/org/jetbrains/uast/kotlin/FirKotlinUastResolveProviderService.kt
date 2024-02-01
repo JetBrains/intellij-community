@@ -650,6 +650,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun hasTypeForValueClassInSignature(ktDeclaration: KtDeclaration): Boolean {
+        analyzeForUast(ktDeclaration) {
+            val symbol = ktDeclaration.getSymbol() as? KtCallableSymbol ?: return false
+            if (symbol.returnType.typeForValueClass) return true
+            if (symbol.receiverType?.typeForValueClass == true) return true
+            if (symbol is KtFunctionLikeSymbol) {
+                return symbol.valueParameters.any { it.returnType.typeForValueClass }
+            }
+            return false
+        }
+    }
+
     override fun getSuspendContinuationType(
         suspendFunction: KtFunction,
         containingLightDeclaration: PsiModifierListOwner?,
