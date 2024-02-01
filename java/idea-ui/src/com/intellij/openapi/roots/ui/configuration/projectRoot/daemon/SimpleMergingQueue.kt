@@ -57,8 +57,9 @@ class SimpleMergingQueue<T : Runnable>(
 
   fun queue(tasks: List<T>) {
     synchronized(lock) {
+      val hasTasks = taskHolder.isNotEmpty()
       taskHolder.addAll(tasks)
-      if (isActive) {
+      if (!hasTasks && isActive) {
         waitAndRun()
       }
     }
