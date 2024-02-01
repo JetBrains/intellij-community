@@ -37,6 +37,7 @@ import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
@@ -74,6 +75,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private final Timer autoScrollUnblockTimer = TimerUtil.createNamedTimer("TreeAutoscrollUnblock", 500, e -> unblockAutoScrollFromSource());
 
   private final @Nullable Tree.ExpandImpl expandImpl;
+  private final @NotNull AtomicInteger suspendedExpandAccessibilityAnnouncements = new AtomicInteger();
   private transient boolean settingUI;
   private transient TreeExpansionListener uiTreeExpansionListener;
 
@@ -494,6 +496,39 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return path != null && TreeUtil.getNodeDepth(this, path) <= 0;
   }
 
+  /**
+   * Suspends expand/collapse accessibility announcements.
+   * <p>
+   *   Normally, the tree fires "node expanded/collapsed" events for every expanded/collapsed node.
+   *   However, if a lot of nodes are collapsed/expanded at the same time, it may make more sense to stop
+   *   announcing every single operation and only announce the result in a more meaningful way once the operation
+   *   is over. This method, along with {@link #resumeExpandCollapseAccessibilityAnnouncements()} is indended for such cases.
+   * </p>
+   * <p>
+   *   To support recursive/reentrant expand/collapse operations, this method
+   *   may be called multiple times, but then {@link #resumeExpandCollapseAccessibilityAnnouncements()} must
+   *   be called exactly the same number of times, so both are best used in a try-finally block to avoid unpleasant
+   *   surprises.
+   * </p>
+   */
+  @ApiStatus.Internal
+  public void suspendExpandCollapseAccessibilityAnnouncements() {
+    suspendedExpandAccessibilityAnnouncements.incrementAndGet();
+  }
+
+  /**
+   * Resumes expand/collapse accessibility announcements.
+   * <p>
+   *   To support recursive/reentrant expand/collapse operation, this method
+   *   must be called exactly the same number of times as {@link #suspendExpandCollapseAccessibilityAnnouncements()},
+   *   so both are best used in a try-finally block to avoid unpleasant surprises.
+   * </p>
+   */
+  @ApiStatus.Internal
+  public void resumeExpandCollapseAccessibilityAnnouncements() {
+    suspendedExpandAccessibilityAnnouncements.decrementAndGet();
+  }
+
   @Override
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
     var model = treeModel;
@@ -516,7 +551,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (
         listeners[i] == TreeExpansionListener.class &&
-        listeners[i + 1] != uiTreeExpansionListener
+        listeners[i + 1] != uiTreeExpansionListener &&
+        (listeners[i + 1] != accessibleContext || expandAccessibilityAnnouncementsAllowed())
       ) {
         ((TreeExpansionListener)listeners[i + 1]).treeExpanded(e);
       }
@@ -533,11 +569,16 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     for (int i = listeners.length - 2; i>=0; i-=2) {
       if (
         listeners[i] == TreeExpansionListener.class &&
-        listeners[i + 1] != uiTreeExpansionListener
+        listeners[i + 1] != uiTreeExpansionListener &&
+        (listeners[i + 1] != accessibleContext || expandAccessibilityAnnouncementsAllowed())
       ) {
         ((TreeExpansionListener)listeners[i + 1]).treeCollapsed(e);
       }
     }
+  }
+
+  private boolean expandAccessibilityAnnouncementsAllowed() {
+    return suspendedExpandAccessibilityAnnouncements.get() == 0;
   }
 
   public @NotNull Set<TreePath> getExpandedPaths() {
