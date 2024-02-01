@@ -4,10 +4,12 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastLazyPart
@@ -18,7 +20,7 @@ import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethodBase
 
 sealed class KotlinUMethodWithFakeLightDelegateBase<T : KtDeclaration>(
-    private val original: T,
+    protected val original: T,
     fakePsi: UastFakeSourceLightMethodBase<T>,
     givenParent: UElement?
 ) : KotlinUMethod(fakePsi, original, givenParent) {
@@ -27,10 +29,16 @@ sealed class KotlinUMethodWithFakeLightDelegateBase<T : KtDeclaration>(
 
     override val uAnnotations: List<UAnnotation>
         get() = uAnnotationsPart.getOrBuild {
-            original.annotationEntries.map {
-                baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
-            }
+            val annotations = SmartSet.create<UAnnotation>()
+            computeAnnotations(annotations)
+            annotations.toList()
         }
+
+    protected open fun computeAnnotations(annotations: SmartSet<UAnnotation>) {
+        original.annotationEntries.mapTo(annotations) {
+            baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
+        }
+    }
 
     override fun getTextRange(): TextRange {
         return original.textRange
@@ -55,20 +63,53 @@ internal class KotlinUMethodWithFakeLightDelegateMethod(
             : this(original, UastFakeSourceLightMethod(original, containingLightClass), givenParent)
 }
 
+private interface KotlinUMethodWithFakeLightDelegateAccessorBase {
+    fun computeAnnotationsFromProperty(
+        annotations: SmartSet<UAnnotation>,
+        accessor: KotlinUMethod,
+        property: KtProperty,
+        useSiteTarget: AnnotationUseSiteTarget,
+    ) {
+        property.annotationEntries
+            .filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == useSiteTarget }
+            .mapTo(annotations) { entry ->
+                accessor.baseResolveProviderService.baseKotlinConverter.convertAnnotation(entry, accessor)
+            }
+    }
+}
+
 internal class KotlinUMethodWithFakeLightDelegateDefaultAccessor(
     original: KtProperty,
-    fakePsi: UastFakeSourceLightDefaultAccessor,
+    private val fakePsi: UastFakeSourceLightDefaultAccessor,
     givenParent: UElement?
-) : KotlinUMethodWithFakeLightDelegateBase<KtProperty>(original, fakePsi, givenParent) {
+) : KotlinUMethodWithFakeLightDelegateBase<KtProperty>(original, fakePsi, givenParent),
+    KotlinUMethodWithFakeLightDelegateAccessorBase {
     constructor(original: KtProperty, containingLightClass: PsiClass, isSetter: Boolean, givenParent: UElement?)
             : this(original, UastFakeSourceLightDefaultAccessor(original, containingLightClass, isSetter), givenParent)
+
+    override fun computeAnnotations(annotations: SmartSet<UAnnotation>) {
+        // Annotations on property accessor
+        super.computeAnnotations(annotations)
+        // Annotations on property, along with use-site target
+        val useSiteTarget = if (fakePsi.isSetter) AnnotationUseSiteTarget.PROPERTY_SETTER else AnnotationUseSiteTarget.PROPERTY_GETTER
+        computeAnnotationsFromProperty(annotations, this, original, useSiteTarget)
+    }
 }
 
 internal class KotlinUMethodWithFakeLightDelegateAccessor(
     original: KtPropertyAccessor,
     fakePsi: UastFakeSourceLightAccessor,
     givenParent: UElement?
-) : KotlinUMethodWithFakeLightDelegateBase<KtPropertyAccessor>(original, fakePsi, givenParent) {
+) : KotlinUMethodWithFakeLightDelegateBase<KtPropertyAccessor>(original, fakePsi, givenParent),
+    KotlinUMethodWithFakeLightDelegateAccessorBase {
     constructor(original: KtPropertyAccessor, containingLightClass: PsiClass, givenParent: UElement?)
             : this(original, UastFakeSourceLightAccessor(original, containingLightClass), givenParent)
+
+    override fun computeAnnotations(annotations: SmartSet<UAnnotation>) {
+        // Annotations on property accessor
+        super.computeAnnotations(annotations)
+        // Annotations on property, along with use-site target
+        val useSiteTarget = if (original.isSetter) AnnotationUseSiteTarget.PROPERTY_SETTER else AnnotationUseSiteTarget.PROPERTY_GETTER
+        computeAnnotationsFromProperty(annotations, this, original.property, useSiteTarget)
+    }
 }

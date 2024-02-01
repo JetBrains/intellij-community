@@ -64,6 +64,14 @@ UFile (package = test.pkg)
             UParameter (name = <set-?>)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
         UMethod (name = getPOld_getter_deprecatedOnGetter)
+            UAnnotation (fqName = kotlin.Deprecated)
+                UNamedExpression (name = message)
+                    UPolyadicExpression (operator = +)
+                        ULiteralExpression (value = "no more getter")
+                UNamedExpression (name = level)
+                    UQualifiedReferenceExpression
+                        USimpleNameReferenceExpression (identifier = DeprecationLevel)
+                        USimpleNameReferenceExpression (identifier = HIDDEN)
             UBlockExpression
                 UReturnExpression
                     UExpressionList (elvis)
