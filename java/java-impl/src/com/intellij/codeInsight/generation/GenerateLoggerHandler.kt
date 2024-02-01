@@ -3,6 +3,7 @@ package com.intellij.codeInsight.generation
 
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
+import com.intellij.java.JavaBundle
 import com.intellij.logging.JvmLogger
 import com.intellij.logging.UnspecifiedLogger
 import com.intellij.openapi.command.CommandProcessor
@@ -12,8 +13,11 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.parentsOfType
+import com.intellij.refactoring.IntroduceTargetChooser
+import com.intellij.refactoring.introduce.PsiIntroduceTarget
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.settings.JavaSettingsStorage
 import org.jetbrains.java.generate.GenerationUtil
@@ -22,20 +26,38 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val currentElement = file.findElementAt(editor.caretModel.offset) ?: return
 
-
     val module = ModuleUtil.findModuleForFile(file)
-
     val availableLoggers = findSuitableLoggers(module)
 
     val places = getPossiblePlacesForLogger(currentElement, availableLoggers)
-
-    val lastClass = places.lastOrNull() ?: return
-
     val chosenLogger = getSelectedLogger(project, availableLoggers) ?: return
 
+    when (places.size) {
+      0 -> return
+      1 -> insertLogger(places.first(), chosenLogger, project, editor)
+      else -> {
+        val targetInfo = places.map { PsiTargetClassInfo(it) }
+        IntroduceTargetChooser.showIntroduceTargetChooser(
+          editor,
+          targetInfo,
+          {
+            val clazz = it.place ?: return@showIntroduceTargetChooser
+            insertLogger(clazz, chosenLogger, project, editor)
+          },
+          JavaBundle.message("generate.logger.specify.place.popup.title"),
+          0
+        )
+      }
+    }
+  }
+
+  private fun insertLogger(clazz: PsiClass,
+                           chosenLogger: JvmLogger,
+                           project: Project,
+                           editor: Editor) {
     CommandProcessor.getInstance().executeCommand(project, {
       try {
-        val insertedLogger = chosenLogger.insertLoggerAtClass(project, lastClass) ?: return@executeCommand
+        val insertedLogger = chosenLogger.insertLoggerAtClass(project, clazz) ?: return@executeCommand
         val offset = if (insertedLogger is PsiField) {
           insertedLogger.nameIdentifier.endOffset
         }
@@ -93,12 +115,22 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.getAllLoggers(false).filter { it.isAvailable(module) }
 
     fun getPossiblePlacesForLogger(element: PsiElement, loggerList: List<JvmLogger>): List<PsiClass> = element.parentsOfType(
-      PsiClass::class.java, false)
+      PsiClass::class.java, true)
       .filter { clazz -> clazz !is PsiAnonymousClass && isPossibleToPlaceLogger(clazz, loggerList) }
       .toList()
+      .reversed()
 
     private fun isPossibleToPlaceLogger(psiClass: PsiClass, loggerList: List<JvmLogger>): Boolean = loggerList.all {
       it.isPossibleToPlaceLoggerAtClass(psiClass)
     }
   }
+}
+
+private class PsiTargetClassInfo(clazz: PsiClass) : PsiIntroduceTarget<PsiClass>(clazz) {
+  private val classIdentifier: PsiElement
+    get() = place?.identifyingElement ?: throw IllegalStateException("Unable to fetch identifier of the class")
+
+  override fun render(): String = "class ${classIdentifier.text}"
+
+  override fun getTextRange(): TextRange = classIdentifier.textRange
 }
