@@ -46,10 +46,10 @@ class SimpleMergeQueueTest {
 
   @ParameterizedTest
   @EnumSource(ThreadToUse::class, names = ["SWING_THREAD", "POOLED_THREAD"])
-  fun duplicateIsNotRemovedAfterTimeout() {
+  fun duplicateIsNotRemovedAfterTimeout(threadToUse: ThreadToUse) {
     val list = mutableListOf<String>()
 
-    val queue = SimpleMergingQueue<Runnable>("test", 100, false, ThreadToUse.POOLED_THREAD, disposable)
+    val queue = SimpleMergingQueue<Runnable>("test", 100, false, threadToUse, disposable)
     queue.queue(Task("0", "0", list))
     queue.queue(Task("1", "1", list))
     waitForQueue(queue)
@@ -64,13 +64,13 @@ class SimpleMergeQueueTest {
 
   @ParameterizedTest
   @EnumSource(ThreadToUse::class, names = ["SWING_THREAD", "POOLED_THREAD"])
-  fun errorInTaskDoesNotPreventConsequentTasksFromExecuting() {
+  fun errorInTaskDoesNotPreventConsequentTasksFromExecuting(threadToUse: ThreadToUse) {
     val list = mutableListOf<String>()
 
     val error = RuntimeException()
     // testLogger usually throws. Instead, let's intercept the error. In this case, the test works the same way as in production
     val loggerError = LoggedErrorProcessor.executeAndReturnLoggedError {
-      executeInQueue(ThreadToUse.POOLED_THREAD) { queue ->
+      executeInQueue(threadToUse) { queue ->
         queue.queue(Task("0", "0", list))
         queue.queue {
           throw error // this error should not prevent the next task from execution
