@@ -167,9 +167,9 @@
     },
     {
       "id": "go",
-      "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13 ],
-      "shouldLogElementFeatures": false
+      "experimentBucketsCount": 2,
+      "includeGroups": [ 13, 24 ],
+      "shouldLogElementFeatures": true
     },
     {
       "id": "rust",
