@@ -529,6 +529,9 @@ public final class NewMappings implements Disposable {
     }
     else if (haveDefaultMapping() != null) {
       LOG.info("Mapped Roots: " + myMappedRoots.size());
+      for (MappedRoot root : ContainerUtil.getFirstItems(myMappedRoots, 5)) {
+        LOG.debug(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.root.getPath()));
+      }
     }
   }
 
