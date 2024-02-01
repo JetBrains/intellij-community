@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.ConfigurationContainer
@@ -18,7 +19,6 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.InvocationTargetException

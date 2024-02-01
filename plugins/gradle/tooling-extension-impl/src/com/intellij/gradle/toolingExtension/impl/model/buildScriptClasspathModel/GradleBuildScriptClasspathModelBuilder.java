@@ -16,8 +16,8 @@ import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
-import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
-import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyTraverser;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl;
 
 import java.io.File;
 import java.util.Collection;

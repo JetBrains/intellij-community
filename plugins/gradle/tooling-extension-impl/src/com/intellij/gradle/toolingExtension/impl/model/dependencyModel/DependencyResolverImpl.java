@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.tooling.util.resolve;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
-import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -37,8 +36,6 @@ import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
-import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
-import org.jetbrains.plugins.gradle.tooling.util.ModuleComponentIdentifierImpl;
 import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -546,7 +543,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
    * @return best match, null otherwise
    */
   @VisibleForTesting
-  static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
+  public static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
     Iterator<File> auxiliariesIterator = auxiliaries.iterator();
     if (!auxiliariesIterator.hasNext()) {
       return null;

@@ -22,8 +22,8 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
-import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolver
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl
 
 import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile
 import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFileName

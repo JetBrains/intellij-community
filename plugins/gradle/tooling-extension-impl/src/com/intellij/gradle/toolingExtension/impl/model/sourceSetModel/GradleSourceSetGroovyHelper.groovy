@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl
 
 import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.cleanupSharedSourceFolders
 import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.containsAllSourceSetOutput

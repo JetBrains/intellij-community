@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImport
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolver
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl
 
 interface HasDependencyResolver {
     val dependencyResolver: DependencyResolver
