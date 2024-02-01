@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.highlighting
 
@@ -13,12 +13,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.highlighter.BeforeResolveHighlightingVisitor
-import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinBeforeResolveHighlightingPass(file: KtFile, document: Document) : AbstractHighlightingPassBase(file, document) {
+class KotlinBeforeResolveHighlightingPass(file: PsiFile, document: Document) : AbstractHighlightingPassBase(file, document) {
     override fun runAnnotatorWithContext(element: PsiElement, holder: HighlightInfoHolder) {
         val visitor = BeforeResolveHighlightingVisitor(holder)
         val extensions = EP_NAME.extensionList.map { it.createVisitor(holder) }
@@ -34,7 +34,7 @@ class KotlinBeforeResolveHighlightingPass(file: KtFile, document: Document) : Ab
 
     class Factory : TextEditorHighlightingPassFactory, DumbAware {
         override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-            if (file !is KtFile) return null
+            if (file.fileType != KotlinFileType.INSTANCE) return null
             return KotlinBeforeResolveHighlightingPass(file, editor.document)
         }
     }

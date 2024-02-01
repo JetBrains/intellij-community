@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.base.highlighting.beforeResolve
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
-import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
+import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.psiUtil.endOffset

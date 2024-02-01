@@ -11,14 +11,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.psi.KtFile
 
 /**
  * Single thread model only (as any other [TextEditorHighlightingPass])
  */
 abstract class AbstractHighlightingPassBase(
-    protected val file: KtFile,
+    protected val file: PsiFile,
     document: Document
 ) : TextEditorHighlightingPass(file.project, document), DumbAware {
 

@@ -1,24 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeHighlighting.RainbowHighlighter
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.util.match
 
 class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder) {
     override fun visitElement(element: PsiElement) {
@@ -49,7 +47,7 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
     }
 
     override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-        if (isUnitTestMode()) return
+        if (ApplicationManager.getApplication().isUnitTestMode()) return
 
         val functionLiteral = lambdaExpression.functionLiteral
         highlightName(functionLiteral.lBrace, KotlinHighlightInfoTypeSemanticNames.FUNCTION_LITERAL_BRACES_AND_ARROW)
@@ -68,9 +66,10 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
     override fun visitArgument(argument: KtValueArgument) {
         val argumentName = argument.getArgumentName() ?: return
         val eq = argument.equalsToken ?: return
+        val parent = argument.parent
         highlightName(argument.project,
             TextRange(argumentName.startOffset, eq.endOffset),
-            if (argument.parents.match(KtValueArgumentList::class, last = KtAnnotationEntry::class) != null)
+            if (parent is KtValueArgumentList && parent.parent is KtAnnotationEntry)
                 KotlinHighlightInfoTypeSemanticNames.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES
             else
                 KotlinHighlightInfoTypeSemanticNames.NAMED_ARGUMENT
