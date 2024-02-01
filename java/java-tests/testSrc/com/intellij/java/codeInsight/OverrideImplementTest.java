@@ -291,7 +291,7 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         class C implements I {
             @Override
             public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(3) [] @TA(2) [] p2) throws @TA IllegalArgumentException {
-                return null;
+                return Collections.emptyList();
             }
         }""".stripIndent());
   }
@@ -338,7 +338,7 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
             @TA
             @Override
             public List<@TA String> i(@TA String p1, @TA(1) int @TA(3) [] @TA(2) [] p2) throws @TA IllegalArgumentException {
-                return null;
+                return Collections.emptyList();
             }
         }""".stripIndent());
   }
@@ -455,7 +455,7 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         class C implements I {
             @Override
             public List<String> i(String p) {
-                return null;
+                return Collections.emptyList();
             }
         }""".stripIndent());
   }
@@ -503,7 +503,7 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
             @A("")
             @Override
             public List<String> i(@A("a") String p) {
-                return null;
+                return Collections.emptyList();
             }
         }""".stripIndent());
   }

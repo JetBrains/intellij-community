@@ -5,6 +5,6 @@ class X {
   @NotNull String x;
 
     X() {
-        x = null;
+        x = "";
     }
 }

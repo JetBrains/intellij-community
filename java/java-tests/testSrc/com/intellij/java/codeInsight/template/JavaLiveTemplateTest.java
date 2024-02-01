@@ -555,7 +555,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
                             class A {
                               {
-                                String s = "null";
+                                String s = "";
                                 s.toString();
                               }
                             }""");
