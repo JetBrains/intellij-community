@@ -1590,13 +1590,25 @@ public final class TreeUtil {
   }
 
   private static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull AsyncPromise<?> promise) {
-    return promiseVisit(tree, new MakeVisibleVisitor(tree, visitor, promise));
+    MakeVisibleVisitor makeVisibleVisitor = new MakeVisibleVisitor(tree, visitor, promise);
+    if (tree instanceof Tree jbTree) {
+      jbTree.suspendExpandCollapseAccessibilityAnnouncements();
+    }
+    return promiseVisit(tree, makeVisibleVisitor).onProcessed(path -> {
+      if (tree instanceof Tree jbTree) {
+        jbTree.resumeExpandCollapseAccessibilityAnnouncements();
+        for (TreePath expandRoot : makeVisibleVisitor.expandRoots) {
+          jbTree.fireAccessibleTreeExpanded(expandRoot);
+        }
+      }
+    });
   }
 
   private static class MakeVisibleVisitor extends DelegatingEdtBgtTreeVisitor {
 
     private final JTree tree;
     private final @NotNull AsyncPromise<?> promise;
+    final @NotNull Set<@NotNull TreePath> expandRoots = new LinkedHashSet<>();
 
     private MakeVisibleVisitor(@NotNull JTree tree, @NotNull TreeVisitor delegate, @NotNull AsyncPromise<?> promise) {
       super(delegate);
@@ -1620,9 +1632,26 @@ public final class TreeUtil {
           }
           return TreeVisitor.Action.SKIP_SIBLINGS;
         }
-        if (action == TreeVisitor.Action.CONTINUE) expandPathWithDebug(tree, path);
+        var model = tree.getModel();
+        if (action == TreeVisitor.Action.CONTINUE && model != null && !model.isLeaf(path.getLastPathComponent()) && !tree.isExpanded(path)) {
+          if (!isUnderExpandRoot(path)) {
+            expandRoots.add(path);
+          }
+          expandPathWithDebug(tree, path);
+        }
       }
       return action;
+    }
+
+    private boolean isUnderExpandRoot(@NotNull TreePath path) {
+      var parent = path.getParentPath();
+      while (parent != null) {
+        if (expandRoots.contains(parent)) {
+          return true;
+        }
+        parent = parent.getParentPath();
+      }
+      return false;
     }
   }
 
