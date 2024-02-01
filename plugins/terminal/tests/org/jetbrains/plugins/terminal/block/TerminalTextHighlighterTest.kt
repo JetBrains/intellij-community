@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block
 
 import com.intellij.execution.process.ConsoleHighlighter
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -41,14 +42,15 @@ class TerminalTextHighlighterTest {
     editor.document.insertString(0, output.text)
     outputModel.putHighlightings(block, output.highlightings)
     val textHighlighter = editor.highlighter as TerminalTextHighlighter
-    checkHighlighter(textHighlighter, listOf(TextRange(0, 1),
-                                             TextRange(1, 2),
-                                             TextRange(2, 5),
-                                             TextRange(5, 6)))
+    checkHighlighter(editor.document, textHighlighter, listOf(TextRange(0, 1),
+                                                              TextRange(1, 2),
+                                                              TextRange(2, 5),
+                                                              TextRange(5, 6),
+                                                              TextRange(6, editor.document.textLength)))
   }
 
-  private fun checkHighlighter(highlighter: TerminalTextHighlighter, ranges: List<TextRange>) {
-    for (documentOffset in 0 until ranges.last().endOffset) {
+  private fun checkHighlighter(document: Document, highlighter: TerminalTextHighlighter, ranges: List<TextRange>) {
+    for (documentOffset in 0 until document.textLength) {
       val iterator = highlighter.createIterator(documentOffset)
       Assert.assertTrue(!iterator.atEnd())
       val expectedTextRange = ranges.find { it.startOffset <= documentOffset && documentOffset < it.endOffset }

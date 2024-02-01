@@ -187,7 +187,7 @@ class TerminalOutputModel(val editor: EditorEx) {
 }
 
 internal class AllHighlightingsSnapshot(private val document: Document, highlightings: List<HighlightingInfo>) {
-  private val allSortedHighlightings: List<HighlightingInfo> = buildAndSortHighlightings(highlightings)
+  private val allSortedHighlightings: List<HighlightingInfo> = buildAndSortHighlightings(document, highlightings)
 
   val size: Int
     get() = allSortedHighlightings.size
@@ -219,7 +219,7 @@ internal class AllHighlightingsSnapshot(private val document: Document, highligh
   }
 }
 
-private fun buildAndSortHighlightings(highlightings: List<HighlightingInfo>): List<HighlightingInfo> {
+private fun buildAndSortHighlightings(document: Document, highlightings: List<HighlightingInfo>): List<HighlightingInfo> {
   val sortedHighlightings = highlightings.sortedBy { it.startOffset }
   val result: MutableList<HighlightingInfo> = ArrayList(sortedHighlightings.size * 2)
   var offset = 0
@@ -229,6 +229,10 @@ private fun buildAndSortHighlightings(highlightings: List<HighlightingInfo>): Li
     }
     result.add(highlighting)
     offset = highlighting.endOffset
+  }
+  val documentLength = document.textLength
+  if (offset < documentLength) {
+    result.add(HighlightingInfo(offset, documentLength, TextAttributes.ERASE_MARKER))
   }
   return result
 }
