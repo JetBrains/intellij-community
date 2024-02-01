@@ -28,9 +28,7 @@ import sun.swing.SwingUtilities2;
 
 import javax.swing.Timer;
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
-import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.text.Position;
 import javax.swing.tree.*;
@@ -76,6 +74,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private final Timer autoScrollUnblockTimer = TimerUtil.createNamedTimer("TreeAutoscrollUnblock", 500, e -> unblockAutoScrollFromSource());
 
   private final @Nullable Tree.ExpandImpl expandImpl;
+  private transient boolean settingUI;
+  private transient TreeExpansionListener uiTreeExpansionListener;
 
   @ApiStatus.Internal
   public static boolean isBulkExpandCollapseSupported() {
@@ -145,7 +145,33 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void setUI(TreeUI ui) {
-    super.setUI(ui);
+    // We have to repeat what JTree does here, because uiTreeExpansionListener is private in JTree.
+    if (this.ui != ui) {
+      settingUI = true;
+      uiTreeExpansionListener = null;
+      try {
+        super.setUI(ui);
+      }
+      finally {
+        settingUI = false;
+      }
+    }
+  }
+
+  @Override
+  public void addTreeExpansionListener(TreeExpansionListener listener) {
+    if (settingUI) {
+      uiTreeExpansionListener = listener;
+    }
+    super.addTreeExpansionListener(listener);
+  }
+
+  @Override
+  public void removeTreeExpansionListener(TreeExpansionListener listener) {
+    super.removeTreeExpansionListener(listener);
+    if (uiTreeExpansionListener == listener) {
+      uiTreeExpansionListener = null;
+    }
   }
 
   @Override
@@ -478,6 +504,40 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     super.firePropertyChange(propertyName, oldValue, newValue);
+  }
+
+  @Override
+  public void fireTreeExpanded(@NotNull TreePath path) {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = new TreeExpansionEvent(this, path);
+    if (uiTreeExpansionListener != null) {
+      uiTreeExpansionListener.treeExpanded(e);
+    }
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class &&
+        listeners[i + 1] != uiTreeExpansionListener
+      ) {
+        ((TreeExpansionListener)listeners[i + 1]).treeExpanded(e);
+      }
+    }
+  }
+
+  @Override
+  public void fireTreeCollapsed(@NotNull TreePath path) {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = new TreeExpansionEvent(this, path);
+    if (uiTreeExpansionListener != null) {
+      uiTreeExpansionListener.treeCollapsed(e);
+    }
+    for (int i = listeners.length - 2; i>=0; i-=2) {
+      if (
+        listeners[i] == TreeExpansionListener.class &&
+        listeners[i + 1] != uiTreeExpansionListener
+      ) {
+        ((TreeExpansionListener)listeners[i + 1]).treeCollapsed(e);
+      }
+    }
   }
 
   public @NotNull Set<TreePath> getExpandedPaths() {
