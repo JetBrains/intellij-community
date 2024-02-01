@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
-import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
-import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
@@ -50,9 +48,6 @@ class GradleSourceSetGroovyHelper {
     def ideaResourceDirs = null
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
-
-    GradleDependencyDownloadPolicy dependencyDownloadPolicy = GradleDependencyDownloadPolicyCache.getInstance(context)
-      .getDependencyDownloadPolicy(project)
 
     def testSourceSets = []
 
@@ -298,7 +293,7 @@ class GradleSourceSetGroovyHelper {
       }
 
       if (resolveSourceSetDependencies) {
-        def dependencies = new DependencyResolverImpl(context, project, dependencyDownloadPolicy)
+        def dependencies = new DependencyResolverImpl(context, project)
           .resolveDependencies(sourceSet)
         externalSourceSet.dependencies.addAll(dependencies)
       }

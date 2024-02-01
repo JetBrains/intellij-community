@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel;
 
-import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import org.gradle.api.Project;
@@ -54,9 +52,7 @@ public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilder
 
     Configuration classpathConfiguration = project.getBuildscript().getConfigurations().findByName(CLASSPATH_CONFIGURATION_NAME);
     if (classpathConfiguration != null) {
-      GradleDependencyDownloadPolicy dependencyDownloadPolicy = GradleDependencyDownloadPolicyCache.getInstance(context)
-        .getDependencyDownloadPolicy(project);
-      Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project, dependencyDownloadPolicy)
+      Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project)
         .resolveDependencies(classpathConfiguration);
 
       for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {

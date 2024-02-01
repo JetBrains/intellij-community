@@ -12,11 +12,11 @@ class GradleDependencySourcesImportingTest : GradleDependencySourcesImportingTes
   fun testDependencyPoliciesWorksWithGenericProjects() {
     importProject {
       withJavaPlugin()
-      withIdeaPlugin()
       withMavenCentral()
       addTestImplementationDependency(DEPENDENCY)
+      withIdeaPlugin()
       withPrefix {
-        settings.ideaPluginValue?.let { downloadSources ->
+        settings.ideaPluginValue?.let<Boolean, Unit> { downloadSources ->
           call("idea.module") {
             assign("downloadJavadoc", false)
             assign("downloadSources", downloadSources)
@@ -47,8 +47,11 @@ class GradleDependencySourcesImportingTest : GradleDependencySourcesImportingTes
     importProject {
       withIdeaPlugin()
       withPrefix {
-        settings.ideaPluginValue?.let { downloadSources ->
-          assign("idea.module.downloadSources", downloadSources)
+        settings.ideaPluginValue?.let<Boolean, Unit> { downloadSources ->
+          call("idea.module") {
+            assign("downloadJavadoc", false)
+            assign("downloadSources", downloadSources)
+          }
         }
       }
     }

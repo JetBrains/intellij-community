@@ -6,30 +6,21 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Internal
 public class DefaultGradleDependencyDownloadPolicy implements GradleDependencyDownloadPolicy {
 
-  private boolean downloadSources;
+  private final boolean isDownloadSources;
+  private final boolean isDownloadJavadoc;
 
-  private boolean downloadJavadoc;
-
-  public DefaultGradleDependencyDownloadPolicy() {
-    downloadSources = false;
-    downloadJavadoc = false;
+  public DefaultGradleDependencyDownloadPolicy(boolean isDownloadSources, boolean isDownloadJavadoc) {
+    this.isDownloadSources = isDownloadSources;
+    this.isDownloadJavadoc = isDownloadJavadoc;
   }
 
   @Override
   public boolean isDownloadSources() {
-    return downloadSources;
-  }
-
-  public void setDownloadSources(boolean downloadSources) {
-    this.downloadSources = downloadSources;
+    return isDownloadSources;
   }
 
   @Override
   public boolean isDownloadJavadoc() {
-    return downloadJavadoc;
-  }
-
-  public void setDownloadJavadoc(boolean downloadJavadoc) {
-    this.downloadJavadoc = downloadJavadoc;
+    return isDownloadJavadoc;
   }
 }

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl
 import org.gradle.api.Project
@@ -280,7 +281,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         if (kotlinStdlib.dependencies.isEmpty()) {
             return
         }
-        DependencyResolverImpl(context, project, /*download javadoc*/ false, /*download sources*/ true)
+        DependencyResolverImpl(context, project, GradleDependencyDownloadPolicy.SOURCES)
             .resolveDependencies(kotlinStdlib)
     }
 

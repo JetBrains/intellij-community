@@ -9,4 +9,8 @@ public interface GradleDependencyDownloadPolicy {
   boolean isDownloadSources();
 
   boolean isDownloadJavadoc();
+
+  GradleDependencyDownloadPolicy NONE = new DefaultGradleDependencyDownloadPolicy(false, false);
+
+  GradleDependencyDownloadPolicy SOURCES = new DefaultGradleDependencyDownloadPolicy(true, false);
 }

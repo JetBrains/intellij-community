@@ -27,9 +27,10 @@ public class GradleDependencyDownloadPolicyBuilder extends AbstractModelBuilderS
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    DefaultGradleDependencyDownloadPolicy dependencyDownloadPolicy = new DefaultGradleDependencyDownloadPolicy();
-    dependencyDownloadPolicy.setDownloadSources(shouldDownloadSources(context, project));
-    dependencyDownloadPolicy.setDownloadJavadoc(shouldDownloadJavadocs(context, project));
+    GradleDependencyDownloadPolicy dependencyDownloadPolicy = new DefaultGradleDependencyDownloadPolicy(
+      shouldDownloadSources(context, project),
+      shouldDownloadJavadocs(context, project)
+    );
 
     setIdeaPluginDependencyDownloadPolicy(project, dependencyDownloadPolicy);
 

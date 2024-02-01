@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -59,27 +60,20 @@ public final class DependencyResolverImpl implements DependencyResolver {
 
   private final @NotNull ModelBuilderContext myContext;
   private final @NotNull Project myProject;
-  private final boolean myDownloadJavadoc;
-  private final boolean myDownloadSources;
+  private final @NotNull GradleDependencyDownloadPolicy myDownloadPolicy;
 
   public DependencyResolverImpl(
     @NotNull ModelBuilderContext context,
     @NotNull Project project,
-    @NotNull GradleDependencyDownloadPolicy dependencyDownloadPolicy
-  ) {
-    this(context, project, dependencyDownloadPolicy.isDownloadJavadoc(), dependencyDownloadPolicy.isDownloadSources());
-  }
-
-  public DependencyResolverImpl(
-    @NotNull ModelBuilderContext context,
-    @NotNull Project project,
-    boolean downloadJavadoc,
-    boolean downloadSources
+    @NotNull GradleDependencyDownloadPolicy downloadPolicy
   ) {
     myContext = context;
     myProject = project;
-    myDownloadJavadoc = downloadJavadoc;
-    myDownloadSources = downloadSources;
+    myDownloadPolicy = downloadPolicy;
+  }
+
+  public DependencyResolverImpl(@NotNull ModelBuilderContext context, @NotNull Project project) {
+    this(context, project, GradleDependencyDownloadPolicyCache.getInstance(context).getDependencyDownloadPolicy(project));
   }
 
   @Override
@@ -374,10 +368,10 @@ public final class DependencyResolverImpl implements DependencyResolver {
     Map<ComponentIdentifier, ComponentArtifactsResult> artifactsResultMap;
     if (!components.isEmpty()) {
       List<Class<? extends Artifact>> artifactTypes = new ArrayList<>(2);
-      if (myDownloadSources) {
+      if (myDownloadPolicy.isDownloadSources()) {
         artifactTypes.add(SourcesArtifact.class);
       }
-      if (myDownloadJavadoc) {
+      if (myDownloadPolicy.isDownloadJavadoc()) {
         artifactTypes.add(JavadocArtifact.class);
       }
       boolean isBuildScriptConfiguration = myProject.getBuildscript().getConfigurations().contains(configuration);

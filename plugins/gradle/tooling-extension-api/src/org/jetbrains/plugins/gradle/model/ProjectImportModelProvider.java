@@ -47,13 +47,17 @@ public interface ProjectImportModelProvider extends Serializable {
 
   interface BuildModelConsumer {
 
-    void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz);
+    default void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) { }
 
-    void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz);
+    default void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) { }
+
+    BuildModelConsumer NOOP = new BuildModelConsumer() {};
   }
 
   interface ProjectModelConsumer {
 
-    void consume(@NotNull Object object, @NotNull Class<?> clazz);
+    default void consume(@NotNull Object object, @NotNull Class<?> clazz) { }
+
+    ProjectModelConsumer NOOP = new ProjectModelConsumer() {};
   }
 }

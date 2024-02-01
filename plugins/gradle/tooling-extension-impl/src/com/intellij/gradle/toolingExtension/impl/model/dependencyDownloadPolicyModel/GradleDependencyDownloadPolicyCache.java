@@ -36,7 +36,7 @@ public class GradleDependencyDownloadPolicyCache {
         .withStackTrace()
         .withKind(Message.Kind.INTERNAL)
         .reportMessage(project);
-      return new DefaultGradleDependencyDownloadPolicy();
+      return GradleDependencyDownloadPolicy.NONE;
     }
     return policy;
   }
@@ -62,7 +62,7 @@ public class GradleDependencyDownloadPolicyCache {
    */
   public void markDependencyDownloadPolicyAsError(@NotNull Project project) {
     ProjectIdentifier projectIdentifier = GradleProjectUtil.getProjectIdentifier(project);
-    policies.put(projectIdentifier, new DefaultGradleDependencyDownloadPolicy());
+    policies.put(projectIdentifier, GradleDependencyDownloadPolicy.NONE);
   }
 
   private static final @NotNull ModelBuilderContext.DataProvider<GradleDependencyDownloadPolicyCache> INSTANCE_PROVIDER =

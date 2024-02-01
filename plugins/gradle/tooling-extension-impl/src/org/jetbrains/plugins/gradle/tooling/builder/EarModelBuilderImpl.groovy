@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
@@ -56,7 +57,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
     def deployConfiguration = project.configurations.findByName(EarPlugin.DEPLOY_CONFIGURATION_NAME)
     def earlibConfiguration = project.configurations.findByName(EarPlugin.EARLIB_CONFIGURATION_NAME)
 
-    DependencyResolver dependencyResolver = new DependencyResolverImpl(context, project, false, false)
+    DependencyResolver dependencyResolver = new DependencyResolverImpl(context, project, GradleDependencyDownloadPolicy.NONE)
 
     def deployDependencies = dependencyResolver.resolveDependencies(deployConfiguration)
     def earlibDependencies = dependencyResolver.resolveDependencies(earlibConfiguration)
