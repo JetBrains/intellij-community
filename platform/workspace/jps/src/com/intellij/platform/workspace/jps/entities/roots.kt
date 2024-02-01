@@ -22,11 +22,10 @@ interface ContentRootEntity : WorkspaceEntity {
 
     @EqualsBy
     val url: VirtualFileUrl
-    val excludedUrls: List<@Child ExcludeUrlEntity>
     val excludedPatterns: List<@NlsSafe String>
+
     val sourceRoots: List<@Child SourceRootEntity>
-    @Child val sourceRootOrder: SourceRootOrderEntity?
-    @Child val excludeUrlOrder: ExcludeUrlOrderEntity?
+    val excludedUrls: List<@Child ExcludeUrlEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(2)
@@ -34,11 +33,9 @@ interface ContentRootEntity : WorkspaceEntity {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var url: VirtualFileUrl
-    override var excludedUrls: List<ExcludeUrlEntity>
     override var excludedPatterns: MutableList<String>
     override var sourceRoots: List<SourceRootEntity>
-    override var sourceRootOrder: SourceRootOrderEntity?
-    override var excludeUrlOrder: ExcludeUrlOrderEntity?
+    override var excludedUrls: List<ExcludeUrlEntity>
   }
 
   companion object : EntityType<ContentRootEntity, Builder>() {
@@ -65,6 +62,11 @@ interface ContentRootEntity : WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: ContentRootEntity,
                                       modification: ContentRootEntity.Builder.() -> Unit): ContentRootEntity = modifyEntity(
   ContentRootEntity.Builder::class.java, entity, modification)
+
+var ContentRootEntity.Builder.excludeUrlOrder: @Child ExcludeUrlOrderEntity?
+  by WorkspaceEntity.extension()
+var ContentRootEntity.Builder.sourceRootOrder: @Child SourceRootOrderEntity?
+  by WorkspaceEntity.extension()
 //endregion
 
 val ExcludeUrlEntity.contentRoot: ContentRootEntity? by WorkspaceEntity.extension()
@@ -117,46 +119,6 @@ fun MutableEntityStorage.modifyEntity(entity: SourceRootEntity,
   SourceRootEntity.Builder::class.java, entity, modification)
 //endregion
 
-/**
- * Stores order of excluded roots in iml file.
- * This is needed to ensure that corresponding tags are saved in the same order to avoid unnecessary modifications of iml file.
- */
-interface SourceRootOrderEntity : WorkspaceEntity {
-    val contentRootEntity: ContentRootEntity
-
-    val orderOfSourceRoots: List<VirtualFileUrl>
-
-  //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SourceRootOrderEntity, WorkspaceEntity.Builder<SourceRootOrderEntity> {
-    override var entitySource: EntitySource
-    override var contentRootEntity: ContentRootEntity
-    override var orderOfSourceRoots: MutableList<VirtualFileUrl>
-  }
-
-  companion object : EntityType<SourceRootOrderEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(orderOfSourceRoots: List<VirtualFileUrl>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
-      val builder = builder()
-      builder.orderOfSourceRoots = orderOfSourceRoots.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
-
-}
-
-//region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceRootOrderEntity,
-                                      modification: SourceRootOrderEntity.Builder.() -> Unit): SourceRootOrderEntity = modifyEntity(
-  SourceRootOrderEntity.Builder::class.java, entity, modification)
-//endregion
 
 /**
  * Describes custom properties of [SourceFolder][com.intellij.openapi.roots.SourceFolder].
