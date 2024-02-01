@@ -3,9 +3,11 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +71,19 @@ public final class FileNestingBuilder {
     }
 
     return myNestingRules;
+  }
+
+  public boolean isNestedFile(Project project, VirtualFile file) {
+    if (!ProjectViewState.getInstance(project).getUseFileNestingRules()) return false;
+    String fileName = file.getName();
+    for (ProjectViewFileNestingService.NestingRule rule : getNestingRules()) {
+      if (!StringUtil.endsWithIgnoreCase(fileName, rule.getChildFileSuffix())) continue;
+      VirtualFile directory = file.getParent();
+      if (directory == null || !directory.isDirectory()) return false;
+      String parentName = StringUtil.trimEnd(fileName, rule.getChildFileSuffix()) + rule.getParentFileSuffix();
+      if (directory.findChild(parentName) != null) return true;
+    }
+    return false;
   }
 
   /*
