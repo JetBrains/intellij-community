@@ -144,11 +144,14 @@ class CompilationContextImpl private constructor(
   }
 
   companion object {
-    suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRoot,
-                                         projectHome: Path,
-                                         buildOutputRootEvaluator: (JpsProject) -> Path,
-                                         options: BuildOptions,
-                                         setupTracer: Boolean): CompilationContextImpl {
+    suspend fun createCompilationContext(
+      communityHome: BuildDependenciesCommunityRoot,
+      projectHome: Path,
+      buildOutputRootEvaluator: (JpsProject) -> Path,
+      options: BuildOptions,
+      setupTracer: Boolean,
+      enableCoroutinesDump: Boolean = true,
+    ): CompilationContextImpl {
       check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
         Files.exists(communityHome.communityRoot.resolve(it))
       }) {
@@ -199,7 +202,12 @@ class CompilationContextImpl private constructor(
         defineJavaSdk(context)
       }
       spanBuilder("enabled coroutines dump").useWithScope {
-        context.enableCoroutinesDump()
+        if (enableCoroutinesDump) {
+          context.enableCoroutinesDump(it)
+        }
+        else {
+          it.addEvent("Coroutines dump is disabled")
+        }
       }
       spanBuilder("prepare for build").useWithScope {
         context.prepareForBuild()
@@ -334,7 +342,7 @@ class CompilationContextImpl private constructor(
     messages.artifactBuilt(pathToReport)
   }
 
-  private fun enableCoroutinesDump() {
+  private fun enableCoroutinesDump(span: Span) {
     try {
       enableCoroutineDump()
       JBR.getJstack()?.includeInfoFrom {
@@ -345,7 +353,7 @@ class CompilationContextImpl private constructor(
       }
     }
     catch (e: NoClassDefFoundError) {
-      messages.warning("Cannot enable coroutines dump, JetBrains Runtime is required: ${e.message}")
+      span.addEvent("Cannot enable coroutines dump, JetBrains Runtime is required: ${e.message}")
     }
   }
 }

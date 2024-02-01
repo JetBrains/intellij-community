@@ -310,6 +310,10 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
           projectHome = request.homePath,
           buildOutputRootEvaluator = { _ -> runDir },
           setupTracer = false,
+          /**
+           * Will be enabled later in [com.intellij.platform.ide.bootstrap.enableJstack] instead
+           */
+          enableCoroutinesDump = false,
           options = options,
         )
       }
