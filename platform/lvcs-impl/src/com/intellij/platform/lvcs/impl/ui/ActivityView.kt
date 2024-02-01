@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBPanel
@@ -85,11 +86,11 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         model.setSelection(selection)
       }
       override fun onEnter(): Boolean {
-        editorDiffPreview.openPreview(true)
+        openDiff()
         return true
       }
       override fun onDoubleClick(): Boolean {
-        editorDiffPreview.openPreview(true)
+        openDiff()
         return true
       }
     }, this)
@@ -149,6 +150,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_ESCAPE), searchTextArea.textArea)
     searchTextArea.textArea.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
+        if (!model.isFilterSet) LocalHistoryCounter.logFilterUsed(activityScope)
         model.setFilter(searchTextArea.textArea.getText())
       }
     })
@@ -171,6 +173,11 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return LocalHistoryBundle.message("activity.list.empty.text.in.scope", activityScope.presentableName)
   }
 
+  private fun openDiff() {
+    LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.Diff, activityScope)
+    editorDiffPreview.openPreview(true)
+  }
+
   override fun dispose() {
     coroutineScope.cancel()
   }
@@ -178,6 +185,8 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   companion object {
     @JvmStatic
     fun show(project: Project, gateway: IdeaGateway, activityScope: ActivityScope) {
+      LocalHistoryCounter.logLocalHistoryOpened(activityScope)
+
       if (ActivityToolWindow.showTab(project) { content -> (content.component as? ActivityView)?.activityScope == activityScope }) {
         return
       }

@@ -9,6 +9,7 @@ import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import com.intellij.platform.lvcs.impl.USE_OLD_CONTENT
 import com.intellij.platform.lvcs.impl.operations.createReverter
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 
 class RevertAction : ChangeSetSelectionAction() {
 
@@ -17,6 +18,8 @@ class RevertAction : ChangeSetSelectionAction() {
                                gateway: IdeaGateway,
                                activityScope: ActivityScope,
                                selection: ChangeSetSelection) {
+    LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.RevertRevisions, activityScope)
+
     val reverter = facade.createReverter(project, gateway, activityScope, selection, USE_OLD_CONTENT)
     if (reverter == null || reverter.checkCanRevert().isNotEmpty()) return
     reverter.revert()

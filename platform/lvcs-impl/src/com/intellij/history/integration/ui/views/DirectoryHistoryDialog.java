@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.ScrollPaneFactory;
@@ -94,6 +95,9 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     field.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
+        if (myModel.myFilter() == null) {
+          LocalHistoryCounter.INSTANCE.logFilterUsed(LocalHistoryCounter.Kind.Directory);
+        }
         scheduleRevisionsUpdate(m -> {
           m.setFilter(field.getText());
           ApplicationManager.getApplication().invokeLater(() -> {
@@ -161,6 +165,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected) {
+      LocalHistoryCounter.INSTANCE.logActionInvoked(LocalHistoryCounter.ActionKind.Diff, LocalHistoryCounter.Kind.Directory);
+
       final Set<DirectoryChange> selectedSet = new HashSet<>(selected);
 
       int index = 0;
@@ -190,6 +196,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     @Override
     protected void doPerform(@NotNull DirectoryHistoryDialogModel model, @NotNull List<DirectoryChange> selected) {
+      LocalHistoryCounter.INSTANCE.logActionInvoked(LocalHistoryCounter.ActionKind.RevertChanges, LocalHistoryCounter.Kind.Directory);
+
       List<Difference> diffs = new ArrayList<>();
       for (DirectoryChange each : selected) {
         diffs.add(each.getModel().getDifference());

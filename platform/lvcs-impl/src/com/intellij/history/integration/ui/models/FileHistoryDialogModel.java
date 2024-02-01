@@ -23,6 +23,7 @@ import com.intellij.history.integration.revertion.DifferenceReverter;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,5 +45,10 @@ public abstract class FileHistoryDialogModel extends HistoryDialogModel {
 
   public @NotNull Set<Long> filterContents(@NotNull String filter) {
     return RevisionDataKt.filterContents(myVcs, myGateway, myFile, ContainerUtil.map(getRevisions(), item -> item.revision), filter, myBefore);
+  }
+
+  @Override
+  public @NotNull LocalHistoryCounter.Kind getKind() {
+    return LocalHistoryCounter.Kind.File;
   }
 }

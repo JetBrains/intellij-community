@@ -23,6 +23,7 @@ import com.intellij.history.integration.revertion.SelectionReverter;
 import com.intellij.history.integration.ui.models.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -72,5 +73,10 @@ public final class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   @Override
   public @NotNull Set<Long> filterContents(@NotNull String filter) {
     return RevisionDataKt.filterContents(getCalculator(), filter);
+  }
+
+  @Override
+  public @NotNull LocalHistoryCounter.Kind getKind() {
+    return LocalHistoryCounter.Kind.Selection;
   }
 }

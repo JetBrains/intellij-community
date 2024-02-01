@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -463,6 +464,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     @Override
     protected void doPerform(T model) {
+      LocalHistoryCounter.INSTANCE.logActionInvoked(LocalHistoryCounter.ActionKind.RevertRevisions, myModel.getKind());
       revert();
     }
 
@@ -479,6 +481,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     @Override
     protected void doPerform(T model) {
+      LocalHistoryCounter.INSTANCE.logActionInvoked(LocalHistoryCounter.ActionKind.CreatePatch, myModel.getKind());
       createPatch();
     }
 

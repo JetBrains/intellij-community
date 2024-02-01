@@ -16,6 +16,7 @@ import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import com.intellij.platform.lvcs.impl.USE_OLD_CONTENT
 import com.intellij.platform.lvcs.impl.diff.getChanges
 import com.intellij.platform.lvcs.impl.diff.getDiff
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 
 class CreatePatchAction : ChangeSetSelectionAction() {
 
@@ -24,6 +25,8 @@ class CreatePatchAction : ChangeSetSelectionAction() {
                                gateway: IdeaGateway,
                                activityScope: ActivityScope,
                                selection: ChangeSetSelection) {
+    LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.CreatePatch, activityScope)
+
     val changes = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
       val diff = facade.getDiff(gateway, activityScope, selection, USE_OLD_CONTENT)
       if (diff.any { it.left?.hasUnavailableContent() == true || it.right?.hasUnavailableContent() == true }) {

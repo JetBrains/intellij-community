@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
@@ -127,7 +128,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @RequiresEdt
   private void applyFilterText(@Nullable String filter, @NotNull LoadingDecorator decorator) {
     decorator.stopLoading();
-    if (myFilterFuture != null) {
+    boolean hasPreviousSearch = myFilterFuture != null;
+    if (hasPreviousSearch) {
       myFilterFuture.cancel(true);
       myFilterFuture = null;
     }
@@ -135,6 +137,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
       applyFilteredRevisions(null);
     }
     else {
+      if (!hasPreviousSearch) LocalHistoryCounter.INSTANCE.logFilterUsed(myModel.getKind());
+
       decorator.startLoading(false);
       updateEditorSearch();
       myFilterFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.lvcs.impl.ActivityScope;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.platform.lvcs.impl.ui.ActivityView;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
@@ -29,6 +30,7 @@ public final class ShowSelectionHistoryAction extends ShowHistoryAction {
       ActivityView.show(p, gw, new ActivityScope.Selection(f, from, to));
     }
     else {
+      LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.Selection);
       new SelectionHistoryDialog(p, gw, f, from, to).show();
     }
   }

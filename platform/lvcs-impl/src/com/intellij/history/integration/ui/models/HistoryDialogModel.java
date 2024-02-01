@@ -14,8 +14,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +71,10 @@ public abstract class HistoryDialogModel {
 
   public void processContents(@NotNull PairProcessor<? super Revision, ? super String> processor) {
     RevisionDataKt.processContents(myVcs, myGateway, myFile, ContainerUtil.map(getRevisions(), item -> item.revision), myBefore, processor);
+  }
+
+  public @Nullable String myFilter() {
+    return myFilter;
   }
 
   public void setFilter(@Nullable String filter) {
@@ -177,4 +183,7 @@ public abstract class HistoryDialogModel {
   public boolean canPerformCreatePatch() {
     return !getLeftEntry().hasUnavailableContent() && !getRightEntry().hasUnavailableContent();
   }
+
+  @ApiStatus.Internal
+  public abstract @NotNull LocalHistoryCounter.Kind getKind();
 }

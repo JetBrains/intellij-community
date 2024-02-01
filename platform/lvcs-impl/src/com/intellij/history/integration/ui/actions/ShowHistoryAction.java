@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.lvcs.impl.ActivityScope;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.platform.lvcs.impl.ui.ActivityView;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +53,11 @@ public class ShowHistoryAction extends LocalHistoryAction {
       ActivityView.show(p, gw, ActivityScope.fromFile(f));
     }
     else if (f.isDirectory()) {
+      LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.Directory);
       new DirectoryHistoryDialog(p, gw, f).show();
     }
     else {
+      LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.File);
       new FileHistoryDialog(p, gw, f).show();
     }
   }
