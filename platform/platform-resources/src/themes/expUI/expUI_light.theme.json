@@ -1044,6 +1044,17 @@
       }
     },
 
+    "ParameterInfo": {
+      "background": "Grey12",
+      "currentOverloadBackground": "Blue9",
+      "borderColor": "Grey8",
+      "foreground": "Grey3",
+      "currentParameterForeground": "Grey3",
+      "disabledForeground": "Grey8",
+      "infoForeground": "Grey3",
+      "lineSeparatorColor": "Grey12"
+    },
+
     "DataSummary.Chart.barColor": "Blue4",
 
     "ManagedIdeBadgeBorder": "Grey5",
