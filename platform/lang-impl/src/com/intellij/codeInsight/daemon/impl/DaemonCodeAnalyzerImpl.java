@@ -1366,7 +1366,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (maybeIdeFrame instanceof IdeFrame ideFrame) {
         return ideFrame.getProject();
       }
-      maybeIdeFrame = window.getOwner();
+      maybeIdeFrame = maybeIdeFrame.getOwner();
     }
     return null;
   }
