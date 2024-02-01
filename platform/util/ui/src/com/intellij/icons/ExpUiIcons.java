@@ -117,6 +117,7 @@ public final class ExpUiIcons {
   public static final class Build {
     /** 16x16 */ public static final @NotNull Icon Build = load("expui/build/build.svg", 836120547, 2);
     /** 16x16 */ public static final @NotNull Icon DependencyAnalyzer = load("expui/build/dependencyAnalyzer.svg", -674999446, 2);
+    /** 16x16 */ public static final @NotNull Icon Rebuild = load("expui/build/rebuild.svg", 440140345, 2);
     /** 16x16 */ public static final @NotNull Icon Task = load("expui/build/task.svg", 374995429, 2);
     /** 16x16 */ public static final @NotNull Icon TaskGroup = load("expui/build/taskGroup.svg", 2031908318, 2);
     /** 16x16 */ public static final @NotNull Icon ToggleOfflineMode = load("expui/build/toggleOfflineMode.svg", -911127086, 2);
