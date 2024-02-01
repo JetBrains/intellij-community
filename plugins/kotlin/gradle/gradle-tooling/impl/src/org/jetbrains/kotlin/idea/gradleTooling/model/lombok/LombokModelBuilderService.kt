@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradleTooling.model.lombok
 
 import org.gradle.api.Project
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import java.io.File
 import java.io.Serializable
@@ -29,9 +29,14 @@ class LombokModelBuilderService : AbstractModelBuilderService() {
         return LombokModelImpl(configurationFile)
     }
 
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(project, e, "Gradle import errors")
-            .withDescription("Unable to build lombok plugin configuration")
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Gradle import errors")
+            .withText("Unable to build lombok plugin configuration")
+            .withException(exception)
+            .reportMessage(project)
     }
 
     private fun Any.getFieldValue(fieldName: String, clazz: Class<*> = this.javaClass): Any? {

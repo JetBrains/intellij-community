@@ -9,7 +9,7 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.internal.build.BuildState
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import java.io.Serializable
 
@@ -95,9 +95,14 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
         }
     }
 
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(project, e, "prepareKotlinIdeImport")
-            .withDescription(Messages.unknownFailure)
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("prepareKotlinIdeImport")
+            .withText(Messages.unknownFailure)
+            .withException(exception)
+            .reportMessage(project)
     }
 
     companion object {

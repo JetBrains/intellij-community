@@ -20,6 +20,9 @@ public interface MessageReportBuilder {
   @NotNull MessageReportBuilder withGroup(String group);
 
   @CheckReturnValue
+  @NotNull MessageReportBuilder withGroup(ModelBuilderService group);
+
+  @CheckReturnValue
   @NotNull MessageReportBuilder withException(Exception e);
 
   @CheckReturnValue

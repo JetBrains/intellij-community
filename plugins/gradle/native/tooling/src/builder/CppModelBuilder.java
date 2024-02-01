@@ -38,7 +38,8 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 import java.io.File;
@@ -314,12 +315,20 @@ public class CppModelBuilder implements ModelBuilderService {
     return null;
   }
 
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "C++ project import errors"
-    ).withDescription("Unable to import C++ project");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(this)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("C++ project import errors")
+      .withText("Unable to import C++ project")
+      .withException(exception)
+      .reportMessage(project);
   }
 
   @Nullable

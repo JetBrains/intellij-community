@@ -8,7 +8,7 @@ import org.gradle.api.logging.Logging
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.PREPARATION_TASK_NAME
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
 class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
@@ -31,10 +31,14 @@ class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
         return null
     }
 
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(
-            project, e, "Kotlin DSL script model errors"
-        ).withDescription("Unable to set $PREPARATION_TASK_NAME sync task.")
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Kotlin DSL script model errors")
+            .withText("Unable to set $PREPARATION_TASK_NAME sync task.")
+            .withException(exception)
+            .reportMessage(project)
     }
 
     private fun kotlinDslScriptsModelImportSupported(gradleVersion: String): Boolean {

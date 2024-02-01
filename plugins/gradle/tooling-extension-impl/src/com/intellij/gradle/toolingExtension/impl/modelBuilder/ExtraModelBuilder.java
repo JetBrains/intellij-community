@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
@@ -122,7 +123,7 @@ public class ExtraModelBuilder implements ParameterizedToolingModelBuilder<Model
         //Probably checked exception might still pop from poorly behaving implementation
         throw asRuntimeException(exception);
       }
-      service.reportErrorMessage(modelName, project, context, exception);
+      reportErrorMessage(modelName, project, context, service, exception);
       return null;
     }
     finally {
@@ -130,6 +131,23 @@ public class ExtraModelBuilder implements ParameterizedToolingModelBuilder<Model
         final long timeInMs = (System.currentTimeMillis() - startTime);
         reportPerformanceStatistic(project, service, modelName, timeInMs);
       }
+    }
+  }
+
+  private static void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull ModelBuilderService service,
+    @NotNull Exception exception
+  ) {
+    @SuppressWarnings("deprecation")
+    ErrorMessageBuilder builder = service.getErrorMessageBuilder(project, exception);
+    if (builder != null) {
+      context.getMessageReporter().reportMessage(project, builder.buildMessage());
+    }
+    else {
+      service.reportErrorMessage(modelName, project, context, exception);
     }
   }
 

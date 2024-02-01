@@ -5,7 +5,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.util.ArrayList;
@@ -43,13 +43,22 @@ public class GradleConfigurationModelBuilder extends AbstractModelBuilderService
         return modelName.equals(GradleConfigurationReportModel.class.getName());
     }
 
-    @NotNull
     @Override
-    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-        return ErrorMessageBuilder
-                .create(project, e, "Gradle import errors")
-                .withDescription("Unable to import resolved versions " +
-                        "from configurations in project ''${project.name}'' for" +
-                        " the Dependencies toolwindow.");
+    public void reportErrorMessage(
+            @NotNull String modelName,
+            @NotNull Project project,
+            @NotNull ModelBuilderContext context,
+            @NotNull Exception exception
+    ) {
+        context.getMessageReporter().createMessage()
+                .withGroup(this)
+                .withKind(Message.Kind.WARNING)
+                .withTitle("Gradle import errors")
+                .withText(String.format(
+                        "Unable to import resolved versions from configurations in project ''%s'' for the Dependencies toolwindow.",
+                        project.getName()
+                ))
+                .withException(exception)
+                .reportMessage(project);
     }
 }

@@ -56,16 +56,20 @@ public interface ModelBuilderService extends Serializable {
     @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
-    @SuppressWarnings("deprecation")
-    ErrorMessageBuilder builder = getErrorMessageBuilder(project, exception);
-    context.getMessageReporter().reportMessage(project, builder.buildMessage());
+    context.getMessageReporter().createMessage()
+      .withGroup(this)
+      .withKind(Message.Kind.INTERNAL)
+      .withTitle("Gradle sync execution issue")
+      .withText("Unable to load " + modelName + " model for project " + project.getDisplayName())
+      .withException(exception)
+      .reportMessage(project);
   }
 
   /**
-   * @deprecated use buildErrorMessage instead
+   * @deprecated use {@link ModelBuilderService#reportErrorMessage} instead
    */
   @Deprecated
-  default @NotNull ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    throw new UnsupportedOperationException("Please, implement reportErrorMessage method");
+  default @Nullable ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    return null;
   }
 }
