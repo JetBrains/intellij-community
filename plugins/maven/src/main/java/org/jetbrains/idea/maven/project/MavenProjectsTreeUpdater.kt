@@ -7,9 +7,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -248,8 +246,10 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     if (specs.isEmpty()) return
 
     coroutineScope {
-      specs.forEach {
-        launch(CoroutineName("reading ${it.mavenProjectFile}")) { update(it.mavenProjectFile, it.forceRead) }
+      withContext(Dispatchers.IO) {
+        specs.forEach {
+          launch(CoroutineName("reading ${it.mavenProjectFile}")) { update(it.mavenProjectFile, it.forceRead) }
+        }
       }
     }
   }
