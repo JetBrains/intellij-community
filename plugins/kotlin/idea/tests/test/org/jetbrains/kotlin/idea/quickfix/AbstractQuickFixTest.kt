@@ -28,6 +28,8 @@ import com.intellij.psi.util.PsiUtilBase
 import com.intellij.testFramework.*
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
@@ -36,8 +38,6 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.statistic.FilterableTestStatisticsEventLoggerProvider
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
@@ -238,7 +238,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
                 // The script configuration must not be loaded during highlighting. It should also be loaded as soon as possible, so we run
                 // it together with the fixture's file configuration in the EDT.
-                loadScriptConfiguration(myFixture.file as KtFile)
+                if (myFixture.file is KtFile) {
+                    loadScriptConfiguration(myFixture.file as KtFile)
+                }
 
                 checkForUnexpectedActions()
             }
@@ -380,7 +382,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     private fun checkForUnexpectedActions() {
         val text = myFixture.editor.document.text
         val actionHint = myFixture.file.actionHint(text)
-        if (actionHint.shouldPresent() && !InTextDirectivesUtils.isDirectiveDefined(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE)) {
+        if (!InTextDirectivesUtils.isDirectiveDefined(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE)) {
             return
         }
 

@@ -1,8 +1,4 @@
 // "Create parameter 'foo'" "false"
-// ACTION: Create extension property 'A.foo'
-// ACTION: Create member property 'A.foo'
-// ACTION: Create property 'foo' as constructor parameter
-// ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 
 class A

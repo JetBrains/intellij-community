@@ -1,6 +1,4 @@
 // "Create class 'BookKeeper'" "false"
-// ACTION: Create function 'BookKeeper'
-// ACTION: Rename reference
 // ERROR: Unresolved reference: BookKeeper
 package pack
 

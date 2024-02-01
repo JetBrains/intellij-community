@@ -1,5 +1,4 @@
 // "Add method 'qq' to 'CollectionsKt'" "false"
-// ACTION: Rename reference
 // WITH_STDLIB
 import kotlin.collections.CollectionsKt;
 

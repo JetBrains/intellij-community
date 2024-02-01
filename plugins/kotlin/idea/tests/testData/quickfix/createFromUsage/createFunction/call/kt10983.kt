@@ -1,12 +1,4 @@
 // "Create function" "false"
-// ACTION: Create extension function 'Unit.equals'
-// ACTION: Create local variable 'maximumSizeOfGroup'
-// ACTION: Create object 'maximumSizeOfGroup'
-// ACTION: Create parameter 'maximumSizeOfGroup'
-// ACTION: Create property 'maximumSizeOfGroup'
-// ACTION: Expand boolean expression to 'if else'
-// ACTION: Introduce local variable
-// ACTION: Rename reference
 // ERROR: A 'return' expression required in a function with a block body ('{...}')
 // ERROR: The expression cannot be a selector (occur after a dot)
 // ERROR: Type mismatch: inferred type is () -> Boolean but Boolean was expected

@@ -1,9 +1,4 @@
 // "Create function 'operate'" "false"
-// ACTION: Add 'p =' to argument
-// ACTION: Create extension function 'Operated.plus'
-// ACTION: Create member function 'Operated.plus'
-// ACTION: Flip '+'
-// ACTION: Replace overloaded operator with function call
 // DISABLE-ERRORS
 class OperandA
 class OperandB
