@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
+import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
@@ -63,6 +65,7 @@ internal class JsonSchemaObjectStorage {
   private fun parseSchemaFileSafe(schemaFile: VirtualFile): JsonNode? {
     val suitableReader = when (val providedFileTypeId = schemaFile.fileType.name) {
       "JSON" -> jsonObjectMapper
+      "JSON5" -> json5ObjectMapper
       "YAML" -> yamlObjectMapper
       else -> {
         Logger.getInstance("JsonSchemaReader").warn("Unsupported json schema file type: $providedFileTypeId")
@@ -80,6 +83,20 @@ internal class JsonSchemaObjectStorage {
 
 internal val jsonObjectMapper = JsonMapper()
   .enable(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION)
+
+internal val json5ObjectMapper = JsonMapper(
+  JsonFactory.builder()
+    .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+    .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+    .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+    .enable(JsonReadFeature.ALLOW_MISSING_VALUES)
+    .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+    .enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
+    .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+    .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
+    .build()
+)
+
 internal val yamlObjectMapper = ObjectMapper(
   YAMLFactory.builder()
     .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
