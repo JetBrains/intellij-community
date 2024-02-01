@@ -76,8 +76,8 @@ object ConfigFactory {
     if (map.containsKey("sessionsLimit")) {
       builder.sessionsLimit = map.getAs<Double?>("sessionsLimit")?.toInt()
     }
-    if (map.containsKey("actionsLimit")) {
-      builder.actionsLimit = map.getAs<Double?>("actionsLimit")?.toInt()
+    if (map.containsKey("filesLimit")) {
+      builder.filesLimit = map.getAs<Double?>("filesLimit")?.toInt()
     }
     builder.sessionProbability = map.getAs("sessionProbability")
     builder.sessionSeed = map.getAs<Double?>("sessionSeed")?.toLong()

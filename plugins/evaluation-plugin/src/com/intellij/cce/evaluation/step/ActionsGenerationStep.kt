@@ -40,21 +40,22 @@ class ActionsGenerationStep(
     val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
       FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, language)
     }
-    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, config.interpret.actionsLimit, progress)
+    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, config.interpret.filesLimit, progress)
     return workspace
   }
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
-                              evaluationRootInfo: EvaluationRootInfo, actionLimit: Int?, indicator: Progress) {
+                              evaluationRootInfo: EvaluationRootInfo, filesLimit: Int?, indicator: Progress) {
     val actionsGenerator = ActionsGenerator(processor)
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName, config.strategy)
 
     val errors = mutableListOf<FileErrorInfo>()
     var totalSessions = 0
+    var totalFiles = 0
     val actionsSummarizer = ActionsSummarizer()
     for ((i, file) in files.sortedBy { it.name }.withIndex()) {
-      if (actionLimit != null && totalSessions > actionLimit) {
-        LOG.info("Generating actions is canceled by actions limit ($actionLimit). Done: $i/${files.size}. With error: ${errors.size}")
+      if (filesLimit != null && totalFiles > filesLimit) {
+        LOG.info("Generating actions is canceled by files limit ($totalFiles). Done: $i/${files.size}. With error: ${errors.size}")
         break
       }
       if (indicator.isCanceled()) {
@@ -78,6 +79,9 @@ class ActionsGenerationStep(
         actionsSummarizer.update(fileActions)
         workspace.actionsStorage.saveActions(fileActions)
         totalSessions += fileActions.sessionsCount
+        if (fileActions.sessionsCount > 0) {
+          totalFiles++
+        }
         indicator.setProgress(filename, "${totalSessions.toString().padStart(4)} sessions | $filename", progress)
       }
       catch (e: Throwable) {
