@@ -101,9 +101,12 @@ public final class TextMateServiceImpl extends TextMateService {
         }
       }
 
-      Map<String, TextMatePersistentBundle> userBundles = settings.getBundles();
-      if (!userBundles.isEmpty()) {
-        List<@NotNull TextMateBundleToLoad> paths = ContainerUtil.mapNotNull(userBundles.entrySet(), entry -> {
+      Map<String, TextMatePersistentBundle> nonBuiltInBundles = new HashMap<>();
+      nonBuiltInBundles.putAll(TextMateServiceImplExtensions.Companion.getPluginBundles());
+      nonBuiltInBundles.putAll(settings.getBundles());
+
+      if (!nonBuiltInBundles.isEmpty()) {
+        List<@NotNull TextMateBundleToLoad> paths = ContainerUtil.mapNotNull(nonBuiltInBundles.entrySet(), entry -> {
           return entry.getValue().getEnabled() ? new TextMateBundleToLoad(entry.getValue().getName(), entry.getKey()) : null;
         });
         TextMateBundlesLoader.registerBundlesInParallel(myScope, paths, bundleToLoad -> {

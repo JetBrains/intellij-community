@@ -10,6 +10,11 @@
 
   <depends>com.intellij.modules.lang</depends>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.textmate.bundleProvider"
+                    interface="org.jetbrains.plugins.textmate.TextMateBundleProvider"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="textmate.line.highlighting.limit" defaultValue="20000"
                  description="The maximum length of the line to be highlighted by TextMate lexer."/>
