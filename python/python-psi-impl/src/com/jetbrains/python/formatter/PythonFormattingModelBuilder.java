@@ -122,7 +122,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .before(PATTERN_ARGUMENT_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES)
 
       .around(DECORATOR_CALL).spacing(1, Integer.MAX_VALUE, 0, true, 0)
-      .after(DECORATOR_LIST).spacing(1, Integer.MAX_VALUE, 0, true, 0)
+      .after(DECORATOR_LIST).spacing(1, Integer.MAX_VALUE, 1, true, 0)
 
       .aroundInside(EQ, ASSIGNMENT_STATEMENT).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
       .aroundInside(EQ, TYPE_ALIAS_STATEMENT).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
