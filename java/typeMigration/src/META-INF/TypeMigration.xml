@@ -4,6 +4,7 @@
         implementation="com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ListArrayConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.AtomicConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.OptionalConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.BoxingTypeConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ElementToArrayConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule"/>

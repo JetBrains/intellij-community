@@ -35,6 +35,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.*;
 
@@ -450,11 +451,11 @@ public class TypeMigrationLabeler {
         markFailedConversion(migrationType, expr);
         return;
       }
-      if (place instanceof PsiVariable) {
-        PsiType type = ((PsiVariable)place).getType();
-        if (((PsiVariable)place).getInitializer() == expr && myRules.shouldConvertNull(type, migrationType, expr)) {
-          convertExpression(expr, migrationType, type, isCovariant);
-        }
+      PsiType expectedType = ExpectedTypeUtils.findExpectedType(expr, false);
+      if (expectedType != null &&
+          !expectedType.equals(PsiTypes.nullType()) &&
+          myRules.shouldConvertNull(expectedType, migrationType, expr)) {
+        convertExpression(expr, migrationType, expectedType, isCovariant);
       }
       return;
     }
@@ -600,19 +601,13 @@ public class TypeMigrationLabeler {
     }
     else if (typeContainsTypeParameters(originalType, getTypeParameters(type))) return false;
 
-    if (type instanceof PsiCapturedWildcardType) {
-      return false;
-    }
+    if (type instanceof PsiCapturedWildcardType) return false;
 
-    if (resolved instanceof PsiMethod) {
-      final PsiMethod method = ((PsiMethod)resolved);
-
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass instanceof PsiAnonymousClass) {
+    if (resolved instanceof PsiMethod method) {
+      if (method.getContainingClass() instanceof PsiAnonymousClass anonymousClass) {
         final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
         final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
         if (!superSignatures.isEmpty()) {
-
           final HierarchicalMethodSignature superSignature = superSignatures.get(0);
 
           final PsiSubstitutor substitutor = superSignature.getSubstitutor();

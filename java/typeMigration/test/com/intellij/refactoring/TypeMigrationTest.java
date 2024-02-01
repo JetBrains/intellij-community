@@ -867,6 +867,14 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testGetterToBoolean() {
     doTestFieldType("fooMigrateName", PsiTypes.booleanType());
   }
+  
+  public void testInt2OptionalInt() {
+    doTestFirstParamType("test", myFactory.createTypeFromText("java.util.OptionalInt", null));
+  }
+  
+  public void testString2OptionalString() {
+    doTestFirstParamType("testString", myFactory.createTypeFromText("java.util.Optional<java.lang.String>", null));
+  }
 
   public void testGetterToBoolean2() {
     doTestFieldType("fooDontMigrateName", PsiTypes.booleanType());
