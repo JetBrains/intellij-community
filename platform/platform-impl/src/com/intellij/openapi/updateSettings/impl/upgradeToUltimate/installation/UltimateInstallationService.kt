@@ -56,10 +56,8 @@ import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
-private const val TOOLBOX_INSTALL_BASE_URL = "http://localhost:52829/install/IDEA-U"
-private const val TOOLBOX_ORIGIN = "https://toolbox.app"
-
-private val ultimateInstallationLogger = logger<UltimateInstallationService>()
+private const val TOOLBOX_INSTALL_BASE_URL: String = "http://localhost:52829/install/IDEA-U"
+private const val TOOLBOX_ORIGIN: String = "https://toolbox.app"
 
 @Service(Service.Level.PROJECT)
 class UltimateInstallationService(
@@ -169,7 +167,7 @@ class UltimateInstallationService(
   private fun <T> Result<T>.getOrNullLogged(): T? {
     if (isFailure) {
       val exception = exceptionOrNull()
-      ultimateInstallationLogger.warn("Exception while trying upgrade to Ultimate: ${exception?.message}")
+      logger<UltimateInstallationService>().warn("Exception while trying upgrade to Ultimate: ${exception?.message}")
       if (exception is CancellationException) throw exception
     }
 
@@ -258,11 +256,10 @@ internal abstract class UltimateInstaller(
     val notification = NotificationGroupManager.getInstance().getNotificationGroup("Ultimate Installed")
       .createNotification(
         IdeBundle.message("notification.group.advertiser.try.ultimate.installed"),
-        IdeBundle.message("notification.plugin.advertiser.try.ultimate.started", suggestedIde.name),
         NotificationType.INFORMATION
       )
       .setSuggestionType(true)
-      .addAction(object : NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.switch.ide")) {
+      .addAction(object : NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.switch.ide", suggestedIde.name)) {
         override fun actionPerformed(e: AnActionEvent, notification: com.intellij.notification.Notification) {
           scope.launch {
             val openActivity = FUSEventSource.EDITOR.logTryUltimateIdeOpened(project, pluginId)
@@ -288,7 +285,7 @@ internal abstract class UltimateInstaller(
   protected fun deleteInBackground(directory: Path) {
     val result = scope.runCatching { directory.deleteRecursively() }
     if (result.isFailure) {
-      ultimateInstallationLogger.warn("Could not clear directories: ${result.exceptionOrNull()?.suppressedExceptions}")
+      logger<UltimateInstallationService>().warn("Could not clear directories: ${result.exceptionOrNull()?.suppressedExceptions}")
     }
   }
 
@@ -307,10 +304,11 @@ internal fun runCommand(command: GeneralCommandLine): Boolean {
     val output = ExecUtil.execAndGetOutput(command)
     if (output.exitCode == 0) return true
 
-    ultimateInstallationLogger.warn(output.stderr)
+    logger<UltimateInstallationService>().warn(output.stderr)
     false
-  } catch (e: Exception) {
-    ultimateInstallationLogger.warn(e)
+  }
+  catch (e: Exception) {
+    logger<UltimateInstallationService>().warn(e)
     false
   }
 }
