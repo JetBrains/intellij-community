@@ -193,8 +193,8 @@ fun setupPoetrySdkUnderProgress(project: Project?,
   }
 
   return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {
-    isPoetry = true
     associateWithModule(module ?: project?.modules?.firstOrNull(), newProjectPath)
+    isPoetry = true
     //        project?.let { project ->
     //            existingSdks.find {
     //                it.associatedModulePath == projectPath && isPoetry(project, it) && it.homePath == homePath
