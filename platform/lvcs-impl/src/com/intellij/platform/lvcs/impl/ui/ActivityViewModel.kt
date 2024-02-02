@@ -58,6 +58,11 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
     if (activityProvider.isActivityFilterSupported(activityScope)) {
       coroutineScope.launch {
         combine(activityFilterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }.collect { (filter, data) ->
+          if (filter.isNullOrEmpty()) {
+            withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(null) }
+            return@collect
+          }
+
           thisLogger<ActivityViewModel>().debug("Filtering activity items for $activityScope by $filter")
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStarted() }
           val result = activityProvider.filterActivityList(activityScope, data, filter)
