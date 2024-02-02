@@ -52,3 +52,18 @@ class CustomLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() 
     return projectModel.addLibrary(name, libraryTable, setup)
   }
 }
+
+class ModuleLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() {
+  override val worksViaWorkspaceModel: Boolean
+    get() = true
+  
+  override val libraryTable: LibraryTable?
+    get() = null
+
+  override fun createLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit): LibraryEx {
+    return projectModel.addModuleLevelLibrary(module, name, setup)
+  }
+
+  override fun addDependency(library: LibraryEx) {
+  }
+}
