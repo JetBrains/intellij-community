@@ -58,21 +58,23 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
     if (expressions.isEmpty()) {
       return null;
     }
+    LanguageLevel languageLevel = LanguageLevel.forElement(element);
+    TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(context.project(), context.file());
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
     for (PyExpression expression: expressions) {
       if (expression == null) {
         return null;
       }
-      if (expression instanceof PyStringLiteralExpression)
+      if (expression instanceof PyStringLiteralExpression) {
         continue;
-      final PyType type = TypeEvalContext.codeAnalysis(context.project(), context.file()).getType(expression);
-      final boolean isStringReference = PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(expression)),
-                                                            type, TypeEvalContext.codeAnalysis(context.project(), context.file())) && type != null;
+      }
+      final PyType type = typeEvalContext.getType(expression);
+      final boolean isStringReference = type != null && PyTypeChecker.match(cache.getStringType(languageLevel), type, typeEvalContext);
       if (!isStringReference) {
         return null;
       }
     }
-    if (LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON27))
+    if (languageLevel.isAtLeast(LanguageLevel.PYTHON27))
       return Presentation.of(PyPsiBundle.message("INTN.replace.plus.with.str.format"));
     else
       return Presentation.of(PyPsiBundle.message("INTN.replace.plus.with.format.operator"));
