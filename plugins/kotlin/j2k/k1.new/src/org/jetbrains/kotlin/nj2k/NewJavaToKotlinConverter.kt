@@ -37,16 +37,16 @@ class NewJavaToKotlinConverter(
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progress: ProgressIndicator
-    ): FilesResult = filesToKotlin(files, postProcessor, progress, null)
+        progressIndicator: ProgressIndicator
+    ): FilesResult = filesToKotlin(files, postProcessor, progressIndicator, bodyFilter = null)
 
     fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progress: ProgressIndicator,
+        progressIndicator: ProgressIndicator,
         bodyFilter: ((PsiElement) -> Boolean)?,
     ): FilesResult {
-        val withProgressProcessor = NewJ2kWithProgressProcessor(progress, files, postProcessor.phasesCount + phasesCount)
+        val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
         return withProgressProcessor.process {
             val (results, externalCodeProcessing, context) =
                 ApplicationManager.getApplication().runReadAction(Computable {

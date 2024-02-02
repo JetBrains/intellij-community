@@ -14,7 +14,7 @@ abstract class JavaToKotlinConverter {
     abstract fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progress: ProgressIndicator = EmptyProgressIndicator()
+        progressIndicator: ProgressIndicator = EmptyProgressIndicator()
     ): FilesResult
 
     abstract fun elementsToKotlin(inputElements: List<PsiElement>): Result

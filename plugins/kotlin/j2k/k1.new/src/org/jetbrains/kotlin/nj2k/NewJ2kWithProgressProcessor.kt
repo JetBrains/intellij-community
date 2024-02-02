@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.j2k.WithProgressProcessor
 
 @ApiStatus.Internal
 class NewJ2kWithProgressProcessor(
-    private val progress: ProgressIndicator?,
+    private val progressIndicator: ProgressIndicator?,
     private val files: List<PsiJavaFile>?,
     private val phasesCount: Int
 ) : WithProgressProcessor {
@@ -18,7 +18,7 @@ class NewJ2kWithProgressProcessor(
     }
 
     init {
-        progress?.isIndeterminate = false
+        progressIndicator?.isIndeterminate = false
     }
 
     override fun updateState(fileIndex: Int?, phase: Int, description: String) {
@@ -36,7 +36,7 @@ class NewJ2kWithProgressProcessor(
         description: String
     ) {
         ProgressManager.checkCanceled()
-        progress?.checkCanceled()
+        progressIndicator?.checkCanceled()
         val singlePhaseFraction = 1.0 / phasesCount.toDouble()
         val singleSubPhaseFraction = singlePhaseFraction / subPhaseCount.toDouble()
 
@@ -45,10 +45,10 @@ class NewJ2kWithProgressProcessor(
             val fileFraction = singleSubPhaseFraction / files.size.toDouble()
             resultFraction += fileFraction * fileIndex
         }
-        progress?.fraction = resultFraction
+        progressIndicator?.fraction = resultFraction
 
         if (subPhaseCount > 1) {
-            progress?.text = KotlinNJ2KBundle.message(
+            progressIndicator?.text = KotlinNJ2KBundle.message(
                 "subphase.progress.text",
                 description,
                 subPhase,
@@ -57,10 +57,12 @@ class NewJ2kWithProgressProcessor(
                 phasesCount
             )
         } else {
-            progress?.text = KotlinNJ2KBundle.message("progress.text", description, phase + 1, phasesCount)
+            progressIndicator?.text = KotlinNJ2KBundle.message("progress.text", description, phase + 1, phasesCount)
         }
-        progress?.text2 = when {
-            !files.isNullOrEmpty() && fileIndex != null -> files[fileIndex].virtualFile.presentableUrl + if (files.size > 1) " ($fileIndex/${files.size})" else ""
+        progressIndicator?.text2 = when {
+            !files.isNullOrEmpty() && fileIndex != null ->
+                files[fileIndex].virtualFile.presentableUrl + if (files.size > 1) " ($fileIndex/${files.size})" else ""
+
             else -> ""
         }
     }
