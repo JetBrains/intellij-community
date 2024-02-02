@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.statistics
 
+import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.ActivityScope
 
 object LocalHistoryCounter : CounterUsagesCollector() {
@@ -16,6 +18,10 @@ object LocalHistoryCounter : CounterUsagesCollector() {
   private val ACTION_EVENT = GROUP.registerEvent("event.action", EventFields.Enum<ActionKind>("actionKind"), KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD)
   private val FILTER_EVENT = GROUP.registerEvent("event.filter", KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD)
 
+  private val LOAD_REVISIONS_ACTIVITY = GROUP.registerIdeActivity(activityName = "activity.load.items", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
+  private val LOAD_DIFFS_ACTIVITY = GROUP.registerIdeActivity(activityName = "activity.load.diff", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
+  private val FILTER_ACTIVITY = GROUP.registerIdeActivity(activityName = "activity.filter", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
+
   override fun getGroup(): EventLogGroup = GROUP
 
   fun logLocalHistoryOpened(scope: ActivityScope) = OPEN_EVENT.log(scope.kind, true)
@@ -24,6 +30,40 @@ object LocalHistoryCounter : CounterUsagesCollector() {
   fun logActionInvoked(actionKind: ActionKind, kind: Kind) = ACTION_EVENT.log(actionKind, kind, false)
   fun logFilterUsed(scope: ActivityScope) = FILTER_EVENT.log(scope.kind, true)
   fun logFilterUsed(kind: Kind) = FILTER_EVENT.log(kind, false)
+
+  fun <R> logLoadItems(project: Project, scope: ActivityScope, function: () -> R): R {
+    return LOAD_REVISIONS_ACTIVITY.log(project, scope.kind, true, function)
+  }
+
+  fun <R> logLoadItems(project: Project, kind: Kind, function: () -> R): R {
+    return LOAD_REVISIONS_ACTIVITY.log(project, kind, false, function)
+  }
+
+  fun <R> logLoadDiff(project: Project, scope: ActivityScope, function: () -> R): R {
+    return LOAD_DIFFS_ACTIVITY.log(project, scope.kind, true, function)
+  }
+
+  fun <R> logLoadDiff(project: Project, kind: Kind, function: () -> R): R {
+    return LOAD_DIFFS_ACTIVITY.log(project, kind, false, function)
+  }
+
+  fun <R> logFilter(project: Project, scope: ActivityScope, function: () -> R): R {
+    return FILTER_ACTIVITY.log(project, scope.kind, true, function)
+  }
+
+  fun <R> logFilter(project: Project, kind: Kind, function: () -> R): R {
+    return FILTER_ACTIVITY.log(project, kind, false, function)
+  }
+
+  private fun <R> IdeActivityDefinition.log(project: Project, kind: Kind, isNewUi: Boolean, function: () -> R): R {
+    val ideActivity = started(project) { listOf(KIND_FIELD.with(kind), IS_TOOL_WINDOW_UI_FIELD.with(isNewUi)) }
+    try {
+      return function()
+    }
+    finally {
+      ideActivity.finished()
+    }
+  }
 
   private val ActivityScope.kind: Kind
     get() = when (this) {

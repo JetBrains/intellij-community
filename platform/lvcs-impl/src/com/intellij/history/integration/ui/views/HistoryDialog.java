@@ -126,7 +126,9 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       synchronized (myModel) {
         if (configRunnable != null) configRunnable.consume(myModel);
         myModel.clearRevisions();
-        myModel.getRevisions();// force load
+        LocalHistoryCounter.INSTANCE.logLoadItems(myProject, myModel.getKind(), () -> {
+          return myModel.getRevisions();// force load
+        });
       }
       return () -> myRevisionsList.updateData(myModel);
     });
@@ -237,7 +239,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         boolean changed = toSelect == null ? myModel.resetSelection() : myModel.selectRevisions(toSelect.first, toSelect.second);
         changed |= myForceUpdateDiff;
         myForceUpdateDiff = false;
-        return changed ? doUpdateDiffs(myModel) : EmptyRunnable.getInstance();
+        if (changed) {
+          return LocalHistoryCounter.INSTANCE.logLoadDiff(myProject, myModel.getKind(), () -> {
+            return doUpdateDiffs(myModel);
+          });
+        }
+        return EmptyRunnable.getInstance();
       }
     });
   }

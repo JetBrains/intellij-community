@@ -7,6 +7,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -36,7 +37,9 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
           thisLogger<ActivityViewModel>().debug("Loading activity items for $activityScope and filter $filter")
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
           val activityItems = withContext(Dispatchers.Default) {
-            activityProvider.loadActivityList(activityScope, filter)
+            LocalHistoryCounter.logLoadItems(project, activityScope) {
+              activityProvider.loadActivityList(activityScope, filter)
+            }
           }
           withContext(Dispatchers.EDT) {
             val activityData = ActivityData(activityItems)
@@ -48,7 +51,13 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
     coroutineScope.launch {
       selectionFlow.collectLatest { selection ->
         thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope")
-        val diffData = selection?.let { withContext(Dispatchers.Default) { activityProvider.loadDiffData(activityScope, selection) } }
+        val diffData = selection?.let {
+          withContext(Dispatchers.Default) {
+            LocalHistoryCounter.logLoadDiff(project, activityScope) {
+              activityProvider.loadDiffData(activityScope, selection)
+            }
+          }
+        }
         withContext(Dispatchers.EDT) {
           eventDispatcher.multicaster.onDiffDataLoaded(diffData)
         }
@@ -65,7 +74,9 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
 
           thisLogger<ActivityViewModel>().debug("Filtering activity items for $activityScope by $filter")
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStarted() }
-          val result = activityProvider.filterActivityList(activityScope, data, filter)
+          val result = LocalHistoryCounter.logFilter(project, activityScope) {
+            activityProvider.filterActivityList(activityScope, data, filter)
+          }
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(result) }
         }
       }

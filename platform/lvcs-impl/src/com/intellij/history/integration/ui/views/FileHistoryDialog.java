@@ -145,7 +145,9 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
         FileHistoryDialogModel model = myModel;
         Set<Long> revisions;
         if (model != null) {
-          revisions = model.filterContents(filter);
+          revisions = LocalHistoryCounter.INSTANCE.logFilter(myProject, myModel.getKind(), () -> {
+            return model.filterContents(filter);
+          });
         } else {
           revisions = Collections.emptySet();
         }

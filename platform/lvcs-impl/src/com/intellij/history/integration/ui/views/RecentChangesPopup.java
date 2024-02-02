@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +29,11 @@ public final class RecentChangesPopup {
                                                                                     true) {
       @Override
       protected List<RecentChange> compute(@NotNull ProgressIndicator indicator) {
-        return vcs.getRecentChanges(ReadAction.compute(() -> {
-          return gw.createTransientRootEntry();
-        }));
+        return LocalHistoryCounter.INSTANCE.logLoadItems(project, LocalHistoryCounter.Kind.Recent, () -> {
+          return vcs.getRecentChanges(ReadAction.compute(() -> {
+            return gw.createTransientRootEntry();
+          }));
+        });
       }
     });
     String title = LocalHistoryBundle.message("recent.changes.popup.title");
@@ -49,7 +52,7 @@ public final class RecentChangesPopup {
   }
 
   private static final class RecentChangesListCellRenderer implements ListCellRenderer<RecentChange> {
-    private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,UIUtil.DEFAULT_HGAP,2));
+    private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, UIUtil.DEFAULT_HGAP, 2));
     private final JLabel myActionLabel = new JLabel("", JLabel.LEFT);
     private final JLabel myDateLabel = new JLabel("", JLabel.LEFT);
     private final JPanel mySpacePanel = new JPanel();
