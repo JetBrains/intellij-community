@@ -36,6 +36,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 )?.takeUnless {
                     it is KtFunction
                 }
+
             else -> null
         } as? KtExpression ?: return null
         return OnExitUsagesHandler(editor, file, null, expression, false)
@@ -117,10 +118,12 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                         targetOccurrenceAdded = true
                         addOccurrence(it)
                     }
+
                     is KtPropertyAccessor -> relevantFunction.namePlaceholder.let {
                         targetOccurrenceAdded = true
                         addOccurrence(it)
                     }
+
                     is KtFunctionLiteral -> {
                         targetOccurrenceAdded = true
                         addOccurrence(relevantFunction.lBrace)
@@ -141,7 +144,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                         }
 
                         override fun visitExpression(expression: KtExpression) {
-                            when(expression) {
+                            when (expression) {
                                 is KtBinaryExpression -> {
                                     expression.left?.let {
                                         lastStatements.addIfNotNullAndNotBlock(it)
@@ -152,34 +155,39 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                                         visitExpression(it)
                                     }
                                 }
+
                                 is KtCallExpression -> {
                                     expression.calleeExpression?.let {
                                         lastStatements.addIfNotNullAndNotBlock(it)
                                         visitExpression(it)
                                     }
                                 }
+
                                 is KtBlockExpression -> {
                                     expression.lastStatementOrNull()?.let {
                                         lastStatements.addIfNotNullAndNotBlock(it)
                                         visitExpression(it)
                                     }
                                 }
+
                                 is KtIfExpression -> {
                                     expression.then?.let {
                                         lastStatements.addIfNotNullAndNotBlock(it)
                                         visitExpression(it)
                                     }
-                                    expression.`else`?.let{
+                                    expression.`else`?.let {
                                         lastStatements.addIfNotNullAndNotBlock(it)
                                         visitExpression(it)
                                     }
                                 }
+
                                 is KtWhenExpression -> {
                                     expression.entries.mapNotNull { it.expression }.forEach {
                                         lastStatements.addIfNotNullAndNotBlock(it)
                                         visitExpression(it)
                                     }
                                 }
+
                                 else -> super.visitExpression(expression)
                             }
                         }
@@ -321,7 +329,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
         }
 
         override fun computeUsages(targets: MutableList<out PsiElement>) {
-            val labelName = when (target) {
+            val targetLabelName = when (target) {
                 is KtExpressionWithLabel -> target.getLabelName()
                 is KtLoopExpression -> (target.parent as? KtLabeledExpression)?.getLabelName()
                 else -> null
@@ -333,7 +341,10 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     var targetLoop: KtLoopExpression? = null
                     while (element != null) {
                         val parent = element.parent
-                        if (element is KtLoopExpression && (labelName == null || (parent as? KtLabeledExpression)?.getLabelName() == labelName)) {
+                        if (
+                            element is KtLoopExpression &&
+                            (targetLabelName == null || (parent as? KtLabeledExpression)?.getLabelName() == targetLabelName)
+                        ) {
                             targetLoop = element
                             break
                         }
@@ -342,8 +353,9 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     targetLoop
                 }
             } ?: return
+            val loopLabelName = (relevantLoop.parent as? KtLabeledExpression)?.getLabelName()
 
-            when(relevantLoop) {
+            when (relevantLoop) {
                 is KtForExpression -> addOccurrence(relevantLoop.forKeyword)
                 is KtDoWhileExpression -> relevantLoop.node.findChildByType(KtTokens.DO_KEYWORD)?.psi?.let(::addOccurrence)
                 is KtWhileExpression -> relevantLoop.node.findChildByType(KtTokens.WHILE_KEYWORD)?.psi?.let(::addOccurrence)
@@ -361,9 +373,9 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
                 override fun visitExpression(expression: KtExpression) {
                     val nestedLoopFound = if (expression != relevantLoop && expression is KtLoopExpression) {
-                        val loopLabelName = (expression.parent as? KtLabeledExpression)?.getLabelName()
+                        val nestedLoopLabelName = (expression.parent as? KtLabeledExpression)?.getLabelName()
                         // no reasons to step into another loop with the same label name or no label name
-                        if (labelName == null || labelName == loopLabelName) return
+                        if (loopLabelName == null || loopLabelName == nestedLoopLabelName) return
 
                         nestedLoopExpressions.push(expression)
                         true
@@ -374,10 +386,10 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     if (expression is KtBreakExpression || expression is KtContinueExpression) {
                         val expressionLabelName = (expression as? KtExpressionWithLabel)?.getLabelName()
                         if (nestedLoopExpressions.isEmpty()) {
-                            if (expressionLabelName == null || expressionLabelName == labelName) {
+                            if (expressionLabelName == null || expressionLabelName == loopLabelName) {
                                 addOccurrence(expression)
                             }
-                        } else if (expressionLabelName == labelName) {
+                        } else if (expressionLabelName == loopLabelName) {
                             addOccurrence(expression)
                         }
                     }

@@ -63,6 +63,11 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
         runTest("../../idea/tests/testData/exitPoints/forLoopNestedLabeledBreak.kt");
     }
 
+    @TestMetadata("forLoopNestedLabeledBreak2.kt")
+    public void testForLoopNestedLabeledBreak2() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/forLoopNestedLabeledBreak2.kt");
+    }
+
     @TestMetadata("forLoopNestedLabeledBreakOnLoop.kt")
     public void testForLoopNestedLabeledBreakOnLoop() throws Exception {
         runTest("../../idea/tests/testData/exitPoints/forLoopNestedLabeledBreakOnLoop.kt");
