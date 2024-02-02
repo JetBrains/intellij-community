@@ -65,7 +65,7 @@ class BlockTerminalController(
 
   @RequiresEdt(generateAssertion = false)
   private fun startCommandBlock(command: String) {
-    outputController.startCommandBlock(command, promptController.promptRenderingInfo)
+    outputController.startCommandBlock(command, promptController.model.renderingInfo)
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.
     // So it will look like it was not hidden at all.

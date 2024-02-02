@@ -20,7 +20,7 @@ class TerminalEnterHandler(private val originalHandler: EditorActionHandler) : B
     if (promptController != null && session != null) {
       val offset = editor.caretModel.offset
       val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType)
-      if (offset == 0
+      if (offset == promptController.model.commandStartOffset
           || shellSupport == null
           || editor.document.getText(TextRange(offset - 1, offset)) != shellSupport.lineContinuationChar.toString()) {
         promptController.handleEnterPressed()

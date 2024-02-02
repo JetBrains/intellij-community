@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSessi
 class TerminalClearPrompt : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     e.terminalFocusModel?.focusPrompt()
-    e.promptController?.reset()
+    e.promptController?.model?.reset()
   }
 
   override fun update(e: AnActionEvent) {

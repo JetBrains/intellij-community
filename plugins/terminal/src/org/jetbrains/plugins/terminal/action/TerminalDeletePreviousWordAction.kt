@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.DocumentUtil
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
+import kotlin.math.max
 
 /**
  * Deletes the word before the caret position.
@@ -28,8 +30,10 @@ class TerminalDeletePreviousWordAction : TerminalPromotedEditorAction(Handler())
         text.indexOfLastBefore(letterOrDigitIndex) { !it.isLetterOrDigit() }
       }
 
+      val promptModel = dataContext.promptController?.model ?: error("Prompt controller should be in the context")
       DocumentUtil.writeInRunUndoTransparentAction {
-        editor.document.deleteString(delimiterIndex + 1, caretOffset)
+        val startOffset = max(delimiterIndex + 1, promptModel.commandStartOffset)
+        editor.document.deleteString(startOffset, caretOffset)
       }
     }
 

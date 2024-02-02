@@ -1,11 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
@@ -22,8 +19,9 @@ class TerminalPromptController(
   private val commandExecutor: TerminalCommandExecutor
 ) {
   private val commandHistoryManager: CommandHistoryManager
-  private val promptModel: TerminalPromptModel = TerminalPromptModel(session)
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
+
+  val model: TerminalPromptModel = TerminalPromptModel(editor, session)
 
   val commandHistory: List<String>
     get() = commandHistoryManager.history
@@ -33,14 +31,9 @@ class TerminalPromptController(
     if (newValue != oldValue) listeners.forEach { it.promptVisibilityChanged(newValue) }
   }
 
-  val promptRenderingInfo: PromptRenderingInfo
-    get() = promptModel.renderingInfo
-
-  val commandText: String
-    get() = editor.document.text
-
   init {
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
+    editor.putUserData(TerminalPromptModel.KEY, model)
     editor.putUserData(BlockTerminalSession.KEY, session)
 
     val shellCommandExecutor = ShellCommandExecutorImpl(session)
@@ -50,7 +43,7 @@ class TerminalPromptController(
 
     commandHistoryManager = CommandHistoryManager(session)
 
-    promptModel.addListener(object : TerminalPromptModelListener {
+    model.addListener(object : TerminalPromptModelListener {
       override fun promptStateUpdated(renderingInfo: PromptRenderingInfo) {
         listeners.forEach { it.promptContentUpdated(renderingInfo) }
       }
@@ -62,15 +55,8 @@ class TerminalPromptController(
   }
 
   @RequiresEdt
-  fun reset() {
-    runWriteAction {
-      editor.document.setText("")
-    }
-  }
-
-  @RequiresEdt
   fun handleEnterPressed() {
-    commandExecutor.startCommandExecution(editor.document.text)
+    commandExecutor.startCommandExecution(model.commandText)
   }
 
   @RequiresEdt
@@ -92,13 +78,6 @@ class TerminalPromptController(
   @RequiresEdt
   fun showCommandSearch() {
     listeners.forEach { it.commandSearchRequested() }
-  }
-
-  fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
-    if (disposable != null) {
-      editor.document.addDocumentListener(listener, disposable)
-    }
-    else editor.document.addDocumentListener(listener)
   }
 
   interface PromptStateListener {

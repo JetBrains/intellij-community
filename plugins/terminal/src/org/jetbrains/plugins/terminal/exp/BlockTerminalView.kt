@@ -78,7 +78,7 @@ class BlockTerminalView(
     })
     promptView.controller.promptIsVisible = false
 
-    promptView.controller.addDocumentListener(object : DocumentListener {
+    promptView.controller.model.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (promptView.component.preferredHeight != promptView.component.height) {
           component.revalidate()
