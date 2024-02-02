@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -55,17 +56,24 @@ public interface WorkspaceModel {
   /**
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
    *
-   * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
+   * Use [description] to briefly describe what you update. This message will be logged and can be used for debugging purposes.
    *   For testing there is an extension method that doesn't require a description [com.intellij.testFramework.workspaceModel.updateProjectModel].
+   *
+   * **N.B** This method has to be used only in the place where compatibility with the old codebase is needed, e.g. old contracts that rely
+   * on synchronous data modification executed under WA. For all other proposes and for the newly written code, use [update]
    */
+  @Obsolete
   public fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
-   * **Asynchronous** modification of the current model by calling [updater] and applying it to the storage.
+   * **Asynchronous** modification of the current model by calling [updater] and applying it to the storage. Has to be called outside any locks
    *
-   * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
+   * Use [description] to briefly describe what you update. This message will be logged and can be used for debugging purposes.
+   *
+   * **N.B** There is no guarantee that after the execution, all *Bridges(that used for the compatibility with the old codebase) will be
+   * up-to-date and [WorkspaceFileIndex][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex] will be updated.
+   * So the client code should not rely on this.
    */
-  @ApiStatus.Experimental
   public suspend fun update(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
