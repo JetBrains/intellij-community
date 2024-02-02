@@ -190,7 +190,7 @@ private class DeprecatedSegmentedButton(
                      preferredSize.height + JBUIScale.scale(spacingConfiguration.segmentedButtonVerticalGap) * 2)
   }
 
-  fun setSelected(selected: Boolean) {
+  override fun setSelected(selected: Boolean) {
     Toggleable.setSelected(myPresentation, selected)
   }
 }

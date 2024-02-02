@@ -7,7 +7,6 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -66,6 +65,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
 
   public static final Key<HelpTooltip> CUSTOM_HELP_TOOLTIP = Key.create("CUSTOM_HELP_TOOLTIP");
+
+  private static final String IS_SELECTED_BUTTON = "IS_SELECTED_BUTTON";
 
   private JBDimension myMinimumButtonSize;
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
@@ -177,7 +178,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public final boolean isSelected() {
-    return Toggleable.isSelected(myPresentation);
+    return Toggleable.isSelected(myPresentation) || Boolean.TRUE.equals(getClientProperty(IS_SELECTED_BUTTON));
+  }
+
+  public void setSelected(Boolean value) {
+    putClientProperty(IS_SELECTED_BUTTON, value);
   }
 
   @Override
@@ -210,7 +215,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
-        ApplicationManager.getApplication().invokeLater(() -> toolbar.updateActionsAsync());
+        toolbar.updateActionsAsync();
       }
     }
   }

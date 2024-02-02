@@ -2,7 +2,10 @@
 package com.intellij.ui.codeFloatingToolbar
 
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -18,7 +21,7 @@ class GotoNextFloatingToolbarMenu: AnAction() {
       val hintComponent = floatingToolbar.hintComponent ?: return
       val allButtons = UIUtil.findComponentsOfType(hintComponent, ActionButton::class.java)
       val navigatableButtons = allButtons.filter { it.presentation.isEnabledAndVisible }
-      val selectedIndex = navigatableButtons.indexOfFirst { button -> Toggleable.isSelected(button.presentation) }
+      val selectedIndex = navigatableButtons.indexOfFirst { button -> button.isSelected }
       if (selectedIndex < 0) return
       val nextIndex = if (isForwardDirection) selectedIndex + 1 else selectedIndex - 1
       val button = navigatableButtons[nextIndex.mod(navigatableButtons.size)]
