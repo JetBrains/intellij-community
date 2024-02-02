@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -251,11 +252,11 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       return Collections.emptyList(); // It's useless to have overridden markers for object.
     }
 
+    boolean overridden = !aClass.isInterface();
+    boolean shouldSearch = overridden ? shouldSearchOverriddenMethods() : shouldSearchImplementedMethods();
+    if (!shouldSearch) return Collections.emptyList();
     PsiClass subClass = DirectClassInheritorsSearch.search(aClass).findFirst();
-    if (subClass != null || LambdaUtil.isFunctionalClass(aClass)) {
-      boolean overridden = !aClass.isInterface();
-      boolean shouldSearch = overridden ? shouldSearchOverriddenMethods() : shouldSearchImplementedMethods();
-      if (!shouldSearch) return Collections.emptyList();
+    if (subClass != null || (LambdaUtil.isFunctionalClass(aClass) && ReferencesSearch.search(aClass).findFirst() != null)) {
       PsiElement range = aClass.getNameIdentifier();
       if (range == null) {
         range = aClass;
@@ -297,7 +298,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     if (!methodSet.isEmpty()) {
       PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(containingClass);
       if (interfaceMethod != null && methodSet.contains(interfaceMethod)) {
-        overridden.put(interfaceMethod, true);
+        if (ReferencesSearch.search(containingClass).findFirst() != null) {
+          overridden.put(interfaceMethod, true);
+        }
       }
     }
 

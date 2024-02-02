@@ -9,15 +9,29 @@ import java.util.List;
 
 public final class JavaLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testOverrideFunctionalInterface() {
-    // Gutter icons on functional interfaces are always present, as function search can be slow
+    // Gutter icons on used functional interfaces are always present, as function search can be slow
     myFixture.configureByText("Test.java", """
       interface Test {
         void doSomething();
+      
+        static void m() {
+          Test test;
+        }
       }""");
     List<GutterMark> gutters = myFixture.findAllGutters();
     assertEquals(2, gutters.size());
     assertEquals(AllIcons.Gutter.ImplementedMethod, gutters.get(0).getIcon());
     assertEquals(AllIcons.Gutter.ImplementedMethod, gutters.get(1).getIcon());
+  }
+
+  public void testOverrideFunctionalInterfaceUnused() {
+    // Gutter icons are absent if the interface is unused completely
+    myFixture.configureByText("Test.java", """
+      interface Test {
+        void doSomething();
+      }""");
+    List<GutterMark> gutters = myFixture.findAllGutters();
+    assertTrue(gutters.isEmpty());
   }
 
   public void testOverrideNormalInterface() {
