@@ -5,12 +5,14 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -166,6 +168,13 @@ public interface ProjectFileIndex extends FileIndex {
    */
   @RequiresReadLock
   boolean isExcluded(@NotNull VirtualFile file);
+
+  /**
+   * Returns libraries used in the project which have {@code fileOrDir} under their classes or source roots.
+   * <strong>Currently this method doesn't search for global libraries.</strong>
+   */
+  @ApiStatus.Experimental
+  @NotNull Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
 
   /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is ignored

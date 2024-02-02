@@ -37,6 +37,7 @@ abstract class LibraryInProjectFileIndexTestCase {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
 
+  protected abstract val worksViaWorkspaceModel: Boolean
   protected abstract val libraryTable: LibraryTable
   protected abstract fun createLibrary(name: String = "lib", setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx
 
@@ -78,6 +79,12 @@ abstract class LibraryInProjectFileIndexTestCase {
     
     fileIndex.assertScope(excludedRoot, EXCLUDED)
     assertNull(fileIndex.getClassRootForFile(excludedRoot))
+    if (worksViaWorkspaceModel) {
+      assertEquals(library.name, fileIndex.findContainingLibraries(root).single().name)
+      assertEquals(library.name, fileIndex.findContainingLibraries(srcRoot).single().name)
+      assertEquals(0, fileIndex.findContainingLibraries(docRoot).size)
+      assertEquals(0, fileIndex.findContainingLibraries(excludedRoot).size)
+    }
   }
 
   @Test
@@ -238,11 +245,31 @@ abstract class LibraryInProjectFileIndexTestCase {
       val innerLibrary = createLibrary("inner") { it.addRoot(innerSourceRoot, OrderRootType.SOURCES) }
       ModuleRootModificationUtil.addDependency(module, innerLibrary)
       ModuleRootModificationUtil.addDependency(module, outerLibrary)
+      if (worksViaWorkspaceModel) {
+        assertEquals("inner", fileIndex.findContainingLibraries(innerSourceRoot).single().name)
+        assertEquals("outer", fileIndex.findContainingLibraries(outerClassesRoot).single().name)
+      }
     }
     fileIndex.assertScope(innerFile, IN_LIBRARY_SOURCE_AND_CLASSES)
     fileIndex.assertScope(outerFile, IN_LIBRARY)
     assertEquals(innerSourceRoot, fileIndex.getSourceRootForFile(innerFile))
     assertEquals(outerClassesRoot, fileIndex.getClassRootForFile(innerFile))
+  }
+  
+  @Test
+  fun `same root in two libraries`() {
+    val library1 = createLibrary("lib1") {
+      it.addRoot(root, OrderRootType.CLASSES)
+    }
+    val library2 = createLibrary("lib2") {
+      it.addRoot(root, OrderRootType.CLASSES)
+    }
+    ModuleRootModificationUtil.addDependency(module, library1)
+    ModuleRootModificationUtil.addDependency(module, library2)
+    fileIndex.assertScope(root, IN_LIBRARY)
+    if (worksViaWorkspaceModel) {
+      assertEquals(setOf("lib1", "lib2"), fileIndex.findContainingLibraries(root).mapTo(HashSet()) { it.name })
+    }
   }
 
   private fun VirtualFile.findJarRootByRelativePath(path: String): VirtualFile {

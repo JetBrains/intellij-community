@@ -12,6 +12,8 @@ import com.intellij.testFramework.junit5.TestDisposable
 import org.junit.jupiter.api.BeforeEach
 
 class ProjectLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() {
+  override val worksViaWorkspaceModel: Boolean
+    get() = true
   override val libraryTable: LibraryTable
     get() = projectModel.projectLibraryTable
 
@@ -21,6 +23,8 @@ class ProjectLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase()
 }
 
 class ApplicationLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() {
+  override val worksViaWorkspaceModel: Boolean
+    get() = false
   override val libraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().libraryTable
 
@@ -32,7 +36,9 @@ class ApplicationLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCa
 class CustomLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() {
   @TestDisposable
   lateinit var disposable: Disposable
-  
+  override val worksViaWorkspaceModel: Boolean
+    get() = false
+
   override val libraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().getCustomLibraryTableByLevel("mock")!!
 
