@@ -516,7 +516,7 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
     invokeAction(true);
     PsiTestUtil.checkStubsMatchText(getFile());
-    assert getFile().getText().contains("run()");
+    assertTrue(getFile().getText().contains("run()"));
   }
 
   private void doTest(boolean toImplement) {
@@ -529,7 +529,7 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   private void invokeAction(boolean toImplement) {
     int offset = myFixture.getEditor().getCaretModel().getOffset();
     PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false);
-    assert psiClass != null;
+    assertNotNull(psiClass);
     OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
