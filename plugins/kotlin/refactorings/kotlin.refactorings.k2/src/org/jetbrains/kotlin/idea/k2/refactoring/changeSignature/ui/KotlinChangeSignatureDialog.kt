@@ -218,7 +218,16 @@ internal class KotlinChangeSignatureDialog(
 
             if (methodDescriptor.kind == Kind.FUNCTION) {
                 receiverParameterInfo?.let {
-                    buffer.append(it.originalType.text).append('.')
+                    val typeText = it.typeText
+                    if (typeText.contains("->") || typeText.contains("&")) {
+                        buffer.append("(")
+                        buffer.append(typeText)
+                        buffer.append(")")
+                    }
+                    else {
+                        buffer.append(typeText)
+                    }
+                    buffer.append('.')
                 }
                 buffer.append(newName)
             }

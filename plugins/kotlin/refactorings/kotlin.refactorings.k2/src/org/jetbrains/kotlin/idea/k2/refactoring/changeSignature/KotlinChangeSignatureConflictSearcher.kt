@@ -118,7 +118,7 @@ class KotlinChangeSignatureConflictSearcher(
 
     context(KtAnalysisSession)
     private fun KtPsiFactory.createContextType(text: String, context: KtElement): KtType? {
-        return createExpressionCodeFragment("p as $text", context).getContentElement()?.getKtType()
+        return createTypeCodeFragment(text, context).getContentElement()?.getKtType()
     }
     context(KtAnalysisSession)
     private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KtDeclarationSymbol): Boolean {

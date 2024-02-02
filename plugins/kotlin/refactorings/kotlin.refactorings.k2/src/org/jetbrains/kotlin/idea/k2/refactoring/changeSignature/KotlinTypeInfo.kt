@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.psi.*
@@ -51,9 +53,13 @@ internal fun KtPsiFactory.createType(
 
                     val ktSubstitutor = createSubstitutor(inheritedCallable, baseFunction)
                     if (ktSubstitutor != null) {
-                        val ktType = createExpressionCodeFragment("p as $typeText", baseFunction).getContentElement()?.getKtType()
+                        val ktType = createTypeCodeFragment(typeText, baseFunction).getContentElement()?.getKtType()
                         if (ktType != null) {
-                            val substitutedType = ktSubstitutor.substitute(ktType).render(position = variance)
+                            val type = ktSubstitutor.substitute(ktType)
+                            val substitutedType = type.render(position = variance)
+                            if (type is KtDefinitelyNotNullType) {
+                                return createType("($substitutedType)")
+                            }
                             return createType(substitutedType)
                         }
                     }

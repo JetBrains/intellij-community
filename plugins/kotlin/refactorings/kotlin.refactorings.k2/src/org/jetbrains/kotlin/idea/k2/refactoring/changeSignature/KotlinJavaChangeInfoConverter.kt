@@ -156,9 +156,9 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
 
     private fun createPsiType(ktTypeText: String, originalFunction: KtCallableDeclaration): PsiType {
         val project = originalFunction.project
-        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("p as $ktTypeText", originalFunction)
+        val codeFragment = KtPsiFactory(project).createTypeCodeFragment(ktTypeText, originalFunction)
         return analyze(codeFragment) {
-            val ktType = codeFragment.getContentElement()!!.getKtType()!!
+            val ktType = codeFragment.getContentElement()?.getKtType()!!
             val type = ktType.asPsiType(originalFunction, true)!!
             if (type is PsiPrimitiveType) return@analyze type
             val anno = when (ktType.nullability) {
