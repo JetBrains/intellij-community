@@ -2,6 +2,7 @@
 package com.intellij.maven.server.m40;
 
 import com.intellij.maven.server.m40.utils.*;
+import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
@@ -256,6 +257,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
+    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.of(longRunningTaskInput);
     PomHashMap pomHashMap = request.getPomHashMap();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
@@ -279,6 +281,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
           pomHashMap,
           activeProfiles,
           inactiveProfiles);
+        telemetry.shutdown();
         return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token));
       }
       finally {

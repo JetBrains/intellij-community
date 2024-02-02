@@ -10,5 +10,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.maven.server" />
   </component>
 </module>

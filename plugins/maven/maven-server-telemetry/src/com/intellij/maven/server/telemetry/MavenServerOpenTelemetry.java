@@ -5,10 +5,7 @@ import com.intellij.util.ArrayUtilRt;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
-import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.*;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
@@ -20,22 +17,45 @@ import io.opentelemetry.sdk.trace.data.SpanData;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.server.LongRunningTaskInput;
 
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class MavenServerOpenTelemetry {
+public interface MavenServerOpenTelemetry {
+  MavenServerOpenTelemetry NOOP = new MavenServerOpenTelemetryNoop();
+
+  byte[] shutdown();
+
+  static MavenServerOpenTelemetry of(@NotNull LongRunningTaskInput input) {
+    String traceId = input.getTelemetryTraceId();
+    String parentSpanId = input.getTelemetryParentSpanId();
+    if (null == traceId || null == parentSpanId) {
+      return NOOP;
+    }
+    return new MavenServerOpenTelemetryImpl(traceId, parentSpanId);
+  }
+}
+
+final class MavenServerOpenTelemetryNoop implements MavenServerOpenTelemetry {
+  @Override
+  public byte[] shutdown() {
+    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+  }
+}
+
+final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
 
   private static final String INSTRUMENTATION_NAME = "MavenServer";
 
-  private @NotNull OpenTelemetry myOpenTelemetry = OpenTelemetry.noop();
+  private final @NotNull OpenTelemetry myOpenTelemetry;
+  private final @NotNull MavenFilteringSpanDataCollector mySpanDataCollector = new MavenFilteringSpanDataCollector();
+  private final @NotNull Span rootSpan;
   private @Nullable Scope myScope = null;
-  private @Nullable MavenFilteringSpanDataCollector mySpanDataCollector = null;
 
-  public void start(@NotNull MavenTracingContext context) {
-    mySpanDataCollector = new MavenFilteringSpanDataCollector();
+  MavenServerOpenTelemetryImpl(@NotNull String traceId, @NotNull String parentSpanId) {
     myOpenTelemetry = OpenTelemetrySdk.builder()
       .setTracerProvider(SdkTracerProvider.builder()
                            .addSpanProcessor(BatchSpanProcessor.builder(mySpanDataCollector)
@@ -46,6 +66,20 @@ public final class MavenServerOpenTelemetry {
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
       .build();
 
+    SpanContext parentSpanContext = SpanContext.createFromRemoteParent(
+      traceId,
+      parentSpanId,
+      TraceFlags.getSampled(),
+      TraceState.getDefault());
+
+    Tracer tracer = myOpenTelemetry.getTracer(INSTRUMENTATION_NAME);
+
+    rootSpan = tracer.spanBuilder("MavenServerRootSpan")
+      .setParent(Context.root().with(Span.wrap(parentSpanContext)))
+      .startSpan();
+  }
+
+  public void start(@NotNull MavenTracingContext context) {
     myScope = injectTracingContext(myOpenTelemetry, context);
   }
 
@@ -65,8 +99,7 @@ public final class MavenServerOpenTelemetry {
   public <T> T callWithSpan(@NotNull String spanName,
                             @NotNull Consumer<SpanBuilder> configurator,
                             @NotNull Function<Span, T> fn) {
-    SpanBuilder spanBuilder = getTracer()
-      .spanBuilder(spanName);
+    SpanBuilder spanBuilder = getTracer().spanBuilder(spanName);
     configurator.accept(spanBuilder);
     Span span = spanBuilder.startSpan();
     try (Scope ignore = span.makeCurrent()) {
@@ -89,8 +122,12 @@ public final class MavenServerOpenTelemetry {
     });
   }
 
+  @Override
   public byte[] shutdown() {
     try {
+      if (null != rootSpan) {
+        rootSpan.end();
+      }
       if (myScope != null) {
         myScope.close();
       }

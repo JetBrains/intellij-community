@@ -2,16 +2,13 @@
 package org.jetbrains.idea.maven.maven4;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.roots.ui.distribution.DistributionInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.BundledMaven3;
 import org.jetbrains.idea.maven.project.BundledMaven4;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
@@ -73,6 +70,14 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(PathUtil.getJarPathForClass(MavenServer.class)));
 
+    classpath.add(new File(root, "maven-server-telemetry.jar"));
+    try {
+      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.sdk.trace.export.SpanExporter"))));
+    }
+    catch (ClassNotFoundException e) {
+      MavenLog.LOG.error(e);
+    }
+
     addDir(classpath, new File(root, "maven4-server-lib"), f -> true);
 
     classpath.add(new File(root, "maven40-server.jar"));
@@ -84,6 +89,17 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
 
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
+
+    classpath.add(new File(root, "intellij.maven.server.telemetry"));
+    try {
+      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.sdk.trace.export.SpanExporter"))));
+      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.context.propagation.TextMapPropagator"))));
+      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.api.OpenTelemetry"))));
+    }
+    catch (ClassNotFoundException e) {
+      MavenLog.LOG.error(e);
+    }
+
     File parentFile = MavenUtil.getMavenPluginParentFile();
     addDir(classpath, new File(parentFile, "maven40-server-impl/lib"), f -> true);
 

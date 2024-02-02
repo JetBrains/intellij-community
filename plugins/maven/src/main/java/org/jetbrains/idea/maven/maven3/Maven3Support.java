@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.maven3;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.roots.ui.distribution.DistributionInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +69,14 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(PathUtil.getJarPathForClass(MavenServer.class)));
 
+    classpath.add(new File(root, "maven-server-telemetry.jar"));
+    try {
+      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.sdk.trace.export.SpanExporter"))));
+    }
+    catch (ClassNotFoundException e) {
+      MavenLog.LOG.error(e);
+    }
+
     classpath.add(new File(root, "maven3-server-common.jar"));
     addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
 
@@ -85,6 +92,17 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
 
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));
+
+    classpath.add(new File(root, "intellij.maven.server.telemetry"));
+    try {
+      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.sdk.trace.export.SpanExporter"))));
+      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.context.propagation.TextMapPropagator"))));
+      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.api.OpenTelemetry"))));
+    }
+    catch (ClassNotFoundException e) {
+      MavenLog.LOG.error(e);
+    }
+
     File parentFile = MavenUtil.getMavenPluginParentFile();
     classpath.add(new File(root, "intellij.maven.server.m3.common"));
     addDir(classpath, new File(parentFile, "maven3-server-common/lib"), f -> true);
