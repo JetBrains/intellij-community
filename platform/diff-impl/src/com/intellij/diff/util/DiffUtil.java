@@ -1637,7 +1637,11 @@ public final class DiffUtil {
         Project project = ((IdeFrame)window).getProject();
         IdeFrame projectFrame = WindowManager.getInstance().getIdeFrame(project);
         if (projectFrame != null) {
-          return !projectFrame.isInFullScreen();
+          JComponent projectFrameComponent = projectFrame.getComponent();
+          if (projectFrameComponent != null) {
+            return !projectFrame.isInFullScreen() ||
+                   window.getGraphicsConfiguration().getDevice() != projectFrameComponent.getGraphicsConfiguration().getDevice();
+          }
         }
       }
     }
