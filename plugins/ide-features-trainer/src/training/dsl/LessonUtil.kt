@@ -105,7 +105,7 @@ object LessonUtil {
   fun hideStandardToolwindows(project: Project) {
     val windowManager = ToolWindowManagerEx.getInstanceEx(project)
     for (window in windowManager.toolWindows) {
-      if (window.id != LearnToolWindowFactory.LEARN_TOOL_WINDOW) {
+      if (window.id != LEARN_TOOL_WINDOW_ID) {
         window.hide()
       }
     }

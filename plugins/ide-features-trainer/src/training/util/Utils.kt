@@ -41,8 +41,8 @@ import training.learn.LearnBundle
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.learn.lesson.LessonStateManager
+import training.ui.LEARN_TOOL_WINDOW_ID
 import training.ui.LearnToolWindow
-import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import java.awt.BorderLayout
 import java.awt.Component
@@ -193,7 +193,7 @@ fun scaledRigid(width: Int, height: Int): Component {
 }
 
 internal fun getLearnToolWindowForProject(project: Project): LearnToolWindow? {
-  val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW) ?: return null
+  val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(LEARN_TOOL_WINDOW_ID) ?: return null
   val jComponent = toolWindow.contentManagerIfCreated?.contents?.singleOrNull()?.component
   return jComponent as? LearnToolWindow
 }
@@ -237,7 +237,7 @@ fun learningProgressString(lessons: List<Lesson>): String {
 }
 
 fun learningToolWindow(project: Project): ToolWindow? {
-  return ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
+  return ToolWindowManager.getInstance(project).getToolWindow(LEARN_TOOL_WINDOW_ID)
 }
 
 fun Any?.toNullableString(): String? {

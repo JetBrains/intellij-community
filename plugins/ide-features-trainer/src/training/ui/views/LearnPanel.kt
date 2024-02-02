@@ -213,7 +213,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           CloseProjectWindowHelper().windowClosing(project)
         } else {
           LearningUiManager.resetModulesView()
-          ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.hide()
+          ToolWindowManager.getInstance(project).getToolWindow(LEARN_TOOL_WINDOW_ID)?.hide()
         }
       }
     })

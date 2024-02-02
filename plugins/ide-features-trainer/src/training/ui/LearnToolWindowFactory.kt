@@ -13,6 +13,8 @@ import training.lang.LangManager
 import training.util.LEARNING_PANEL_OPENED_IN
 import training.util.findLanguageSupport
 
+const val LEARN_TOOL_WINDOW_ID: String = "Learn"
+
 internal class LearnToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
     toolWindow.isShowStripeButton = findLanguageSupport(toolWindow.project) != null
@@ -33,9 +35,5 @@ internal class LearnToolWindowFactory : ToolWindowFactory, DumbAware {
     val content = contentManager.factory.createContent(LearnToolWindow(project, toolWindow), null, false)
     content.isCloseable = false
     contentManager.addContent(content)
-  }
-
-  companion object {
-    const val LEARN_TOOL_WINDOW: String = "Learn"
   }
 }
