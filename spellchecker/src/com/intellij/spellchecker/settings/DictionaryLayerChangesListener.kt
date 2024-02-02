@@ -8,19 +8,21 @@ import com.intellij.util.messages.Topic
 
 @Service(Service.Level.PROJECT)
 class DictionaryLayersChangesDispatcher {
-  @Topic.ProjectLevel
-  private val topic = Topic(DictionaryLayerChangesSubscriber::class.java)
+  val publisher: DictionaryLayerChangesListener
+    get() = application.messageBus.syncPublisher(DictionaryLayerChangesListener.topic)
 
-  val publisher: DictionaryLayerChangesSubscriber
-    get() = application.messageBus.syncPublisher(topic)
-
-  fun register(subscriber: DictionaryLayerChangesSubscriber): MessageBusConnection {
+  fun register(subscriber: DictionaryLayerChangesListener): MessageBusConnection {
     val connection = application.messageBus.connect()
-    connection.subscribe(topic, subscriber)
+    connection.subscribe(DictionaryLayerChangesListener.topic, subscriber)
     return connection
   }
 }
 
-interface DictionaryLayerChangesSubscriber {
+interface DictionaryLayerChangesListener {
+  companion object {
+    @Topic.ProjectLevel
+    val topic = Topic(DictionaryLayerChangesListener::class.java)
+  }
+
   fun layersChanged()
 }

@@ -43,7 +43,7 @@ public final class CustomDictionariesPanel extends JPanel {
     defaultDictionaries = project.isDefault() ? new ArrayList<>() : asList(SpellCheckerBundle.message("app.dictionary"), SpellCheckerBundle
       .message("project.dictionary"));
     builtInDictionaries = new HashMap<>();
-    BuiltInDictionariesProvider.Companion.getAll().stream()
+    BuiltInDictionariesProvider.getAll().stream()
       .map(BuiltInDictionariesProvider::getDictionaries).flatMap(List::stream)
       .forEach(dictionary -> builtInDictionaries.put(dictionary.getName(), dictionary));
     myCustomDictionariesTableView = new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()),

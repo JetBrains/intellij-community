@@ -2,8 +2,9 @@
 package com.intellij.spellchecker.settings
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 
 interface BuiltInDictionary {
   fun openDictionaryInEditor(project: Project)
-  val name: String
+  val name: @Nls String
 }

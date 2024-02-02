@@ -77,7 +77,7 @@ public final class SpellCheckerSettingsPane implements Disposable {
         myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
       }
     });
-    DictionaryLayersProvider.Companion.getAllLayers(project).forEach(it -> myDictionariesComboBox.addItem(it.getName()));
+    DictionaryLayersProvider.getAllLayers(project).forEach(it -> myDictionariesComboBox.addItem(it.getName()));
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
 

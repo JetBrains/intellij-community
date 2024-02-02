@@ -28,20 +28,20 @@ import javax.swing.*;
 public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   private static final String DICTIONARY = " dictionary";
   private static final String DOTS = "...";
-  @Nullable private DictionaryLayer myLevel = null;
+  @Nullable private DictionaryLayer myLayer = null;
   private String myWord;
 
-  public SaveTo(@NotNull DictionaryLayer level) {
-    myLevel = level;
+  public SaveTo(@NotNull DictionaryLayer layer) {
+    myLayer = layer;
   }
 
   public SaveTo(String word) {
     myWord = word;
   }
 
-  public SaveTo(String word, @NotNull DictionaryLayer level) {
+  public SaveTo(String word, @NotNull DictionaryLayer layer) {
     myWord = word;
-    myLevel = level;
+    myLayer = layer;
   }
 
   @Override
@@ -51,7 +51,7 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
 
   @Override
   public @NotNull String getFamilyName() {
-    final String dictionary = myLevel != null ? myLevel.getName() + DICTIONARY : DOTS;
+    final String dictionary = myLayer != null ? myLayer.getName() + DICTIONARY : DOTS;
     return SpellCheckerBundle.message("save.0.to.1", "", dictionary);
   }
 
@@ -66,9 +66,9 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
       .getDataContextFromFocusAsync()
       .onSuccess(context -> {
         final String wordToSave = myWord != null ? myWord : ProblemDescriptorUtil.extractHighlightedText(descriptor, descriptor.getPsiElement());
-        if (myLevel == null) {
+        if (myLayer == null) {
           final JBList<String> dictList = new JBList<>(
-            ContainerUtil.map(DictionaryLayersProvider.Companion.getAllLayers(project), it -> it.getName())
+            ContainerUtil.map(DictionaryLayersProvider.getAllLayers(project), it -> it.getName())
           );
 
           JBPopupFactory.getInstance()
@@ -78,7 +78,7 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
               () ->
                 CommandProcessor.getInstance().executeCommand(
                   project,
-                  () -> acceptWord(wordToSave, DictionaryLayersProvider.Companion.getLayer(project, dictList.getSelectedValue()), descriptor),
+                  () -> acceptWord(wordToSave, DictionaryLayersProvider.getLayer(project, dictList.getSelectedValue()), descriptor),
                   getName(),
                   null
                 )
@@ -87,18 +87,18 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
             .showInBestPositionFor(context);
         }
         else {
-          acceptWord(wordToSave, myLevel, descriptor);
+          acceptWord(wordToSave, myLayer, descriptor);
         }
       });
   }
 
-  private static void acceptWord(String word, @Nullable DictionaryLayer level, ProblemDescriptor descriptor) {
+  private static void acceptWord(String word, @Nullable DictionaryLayer layer, ProblemDescriptor descriptor) {
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
 
     PsiElement psi = descriptor.getPsiElement();
     PsiFile file = psi.getContainingFile();
     Project project = file.getProject();
-    SpellCheckerManager.getInstance(project).acceptWordAsCorrect$intellij_spellchecker(word, file.getViewProvider().getVirtualFile(), project, level);
+    SpellCheckerManager.getInstance(project).acceptWordAsCorrect$intellij_spellchecker(word, file.getViewProvider().getVirtualFile(), project, layer);
 
     TextRange range = descriptor.getTextRangeInElement().shiftRight(psi.getTextRange().getStartOffset());
     UpdateHighlightersUtil.removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, range);

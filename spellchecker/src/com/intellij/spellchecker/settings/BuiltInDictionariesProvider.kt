@@ -3,12 +3,13 @@ package com.intellij.spellchecker.settings
 
 import com.intellij.openapi.extensions.ExtensionPointName
 
-abstract class BuiltInDictionariesProvider {
-  abstract fun getDictionaries(): List<BuiltInDictionary>
+interface BuiltInDictionariesProvider {
+  fun getDictionaries(): List<BuiltInDictionary>
 
   companion object {
     val EP_NAME = ExtensionPointName.create<BuiltInDictionariesProvider>("com.intellij.spellchecker.builtInDictionariesProvider")
 
+    @JvmStatic
     fun getAll(): List<BuiltInDictionariesProvider> {
       return EP_NAME.extensionList
     }
