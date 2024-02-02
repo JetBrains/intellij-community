@@ -56,8 +56,12 @@ class CodeFragmentAnalyzer(
                     expectedType = expectedType,
                     expressionTypingServices = expressionTypingServices
                 )
-                analyzeControlFlow(resolveSession, contentElement, bindingTrace)
+
+                // mark the fragment expression (or the last expression in the fragment's body) as used,
+                // so it's not reported as unused by CFG analysis
                 bindingTrace.record(USED_AS_EXPRESSION, contentElement.lastBlockStatementOrThis())
+
+                analyzeControlFlow(resolveSession, contentElement, bindingTrace)
             }
 
             is KtTypeReference -> {
