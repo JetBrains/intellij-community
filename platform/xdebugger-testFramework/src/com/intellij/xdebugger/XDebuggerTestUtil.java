@@ -242,7 +242,7 @@ public class XDebuggerTestUtil {
         return future.get(remaining, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException e) {
-        return null;
+        throw new InterruptedException();
       }
       catch (ExecutionException e) {
         Throwable cause = e.getCause();
@@ -255,8 +255,12 @@ public class XDebuggerTestUtil {
   }
 
   public static boolean waitFor(@NotNull Semaphore semaphore, long timeoutInMillis) {
-    return waitFor(remaining -> semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS) ? Boolean.TRUE : null,
-                   timeoutInMillis) == Boolean.TRUE;
+    return waitFor(remaining -> {
+      if (semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS)) {
+        return true;
+      }
+      throw new InterruptedException();
+    }, timeoutInMillis) == Boolean.TRUE;
   }
 
   private static <T> @Nullable T waitFor(@NotNull ThrowableConvertor<? super Long, T, ? extends InterruptedException> waitFunction,
@@ -266,10 +270,7 @@ public class XDebuggerTestUtil {
     for (long remaining = timeoutInMillis; remaining > 0; remaining = end - System.currentTimeMillis()) {
       try {
         // 10ms is the sleep interval used by ProgressIndicatorUtils for busy-waiting.
-        T result = waitFunction.convert(Math.min(10, remaining));
-        if (result != null) {
-          return result;
-        }
+        return waitFunction.convert(Math.min(10, remaining));
       }
       catch (InterruptedException ignored) {
       }
