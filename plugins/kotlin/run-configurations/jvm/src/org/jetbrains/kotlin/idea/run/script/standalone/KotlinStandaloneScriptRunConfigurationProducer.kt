@@ -40,5 +40,5 @@ class KotlinStandaloneScriptRunConfigurationProducer :
         }
     }
 
-    override fun getConfigurationFactory(): ConfigurationFactory = KotlinStandaloneScriptRunConfigurationType.instance
+    override fun getConfigurationFactory(): ConfigurationFactory = kotlinStandaloneScriptRunConfigurationType()
 }
