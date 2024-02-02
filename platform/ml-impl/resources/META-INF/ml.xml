@@ -6,6 +6,9 @@
 
     <projectService serviceInterface="com.intellij.internal.statistic.local.LanguageUsageStatisticsProvider"
                     serviceImplementation="com.intellij.internal.statistic.local.LanguageUsageStatisticsProviderImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ml.impl.logger.MLEventsLogger"/>
+    <registryKey defaultValue="false" description="Log features that were computed but missing in an ObsoleteTierDescriptor's declaration"
+                 key="ml.description.logMissing"/>
   </extensions>
 
   <projectListeners>
@@ -17,9 +20,14 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.ml.impl.turboComplete.smartPipelineRunner"
-                    interface="com.intellij.platform.ml.impl.turboComplete.SmartPipelineRunner" dynamic="true"/>
+                    interface="com.intellij.platform.ml.impl.turboComplete.SmartPipelineRunner"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.impl.approach"
+                    interface="com.intellij.platform.ml.impl.MLTaskApproachInitializer"
+                    dynamic="true"/>
 
-    <extensionPoint name="mlCompletionCorrectnessSupporter" beanClass="com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporterEP" dynamic="true">
+    <extensionPoint name="mlCompletionCorrectnessSupporter"
+                    beanClass="com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporterEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporter"/>
     </extensionPoint>
   </extensionPoints>
