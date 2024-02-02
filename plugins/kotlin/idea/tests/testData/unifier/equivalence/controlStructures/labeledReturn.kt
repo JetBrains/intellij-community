@@ -1,4 +1,3 @@
-// IGNORE_K2
 inline fun run(f: () -> Unit) = f()
 
 fun foo(a: Int) {
@@ -8,5 +7,8 @@ fun foo(a: Int) {
             if (a < 0) return
             return@foo
         }
+        return
+        (return)
+        return@run
     }
 }

@@ -16,6 +16,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.util.Consumer
+import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -329,30 +330,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
         }
 
         override fun computeUsages(targets: MutableList<out PsiElement>) {
-            val targetLabelName = when (target) {
-                is KtExpressionWithLabel -> target.getLabelName()
-                is KtLoopExpression -> (target.parent as? KtLabeledExpression)?.getLabelName()
-                else -> null
-            }
-            val relevantLoop: KtLoopExpression = when (target) {
-                is KtLoopExpression -> target
-                else -> {
-                    var element: PsiElement? = target
-                    var targetLoop: KtLoopExpression? = null
-                    while (element != null) {
-                        val parent = element.parent
-                        if (
-                            element is KtLoopExpression &&
-                            (targetLabelName == null || (parent as? KtLabeledExpression)?.getLabelName() == targetLabelName)
-                        ) {
-                            targetLoop = element
-                            break
-                        }
-                        element = parent
-                    }
-                    targetLoop
-                }
-            } ?: return
+            val relevantLoop = findRelevantLoopForExpression(target) ?: return
             val loopLabelName = (relevantLoop.parent as? KtLabeledExpression)?.getLabelName()
 
             when (relevantLoop) {

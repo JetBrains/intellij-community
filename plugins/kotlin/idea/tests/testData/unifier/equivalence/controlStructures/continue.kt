@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(a: Int) {
     A@
     while (true) {
@@ -13,5 +12,7 @@ fun foo(a: Int) {
             if (a > 0) continue@A
             if (a < 0) continue@B
         }
+        continue
+        (continue)
     }
 }

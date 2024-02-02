@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.mapArgumentsToParameterIndices
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
+import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -81,6 +82,8 @@ object K2SemanticMatcher {
             return expression.text == patternExpression.text
         }
 
+        override fun visitLabeledExpression(expression: KtLabeledExpression, data: KtElement): Boolean = false // TODO()
+
         override fun visitUnaryExpression(expression: KtUnaryExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtExpression ?: return false
             if (patternExpression is KtUnaryExpression) {
@@ -107,14 +110,27 @@ object K2SemanticMatcher {
             return visitExpression(expression, patternExpression)
         }
 
-        override fun visitExpressionWithLabel(expression: KtExpressionWithLabel, data: KtElement): Boolean? {
-            val targetReference = (expression as? KtInstanceExpressionWithLabel)?.mainReference ?: return false
-            val patternReference = (data.deparenthesized() as? KtInstanceExpressionWithLabel)?.mainReference ?: return false
-
-            return with(analysisSession) { areReferencesMatchingByResolve(targetReference, patternReference) }
+        override fun visitReturnExpression(expression: KtReturnExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtReturnExpression ?: return false
+            with(analysisSession) {
+                if (!areReturnTargetsMatchingByResolve(expression, patternExpression)) return false
+            }
+            return elementsMatchOrBothAreNull(expression.returnedExpression, patternExpression.returnedExpression)
         }
 
         override fun visitThrowExpression(expression: KtThrowExpression, data: KtElement): Boolean = false // TODO()
+
+        override fun visitBreakExpression(expression: KtBreakExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtBreakExpression ?: return false
+
+            return findRelevantLoopForExpression(expression) == findRelevantLoopForExpression(patternExpression)
+        }
+
+        override fun visitContinueExpression(expression: KtContinueExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtContinueExpression ?: return false
+
+            return findRelevantLoopForExpression(expression) == findRelevantLoopForExpression(patternExpression)
+        }
 
         override fun visitIfExpression(expression: KtIfExpression, data: KtElement): Boolean = false // TODO
 
@@ -138,6 +154,22 @@ object K2SemanticMatcher {
         override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression, data: KtElement): Boolean = false // TODO()
 
         override fun visitBlockExpression(expression: KtBlockExpression, data: KtElement): Boolean = false
+
+        override fun visitThisExpression(expression: KtThisExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtThisExpression ?: return false
+            with(analysisSession) {
+                if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference)) return false
+            }
+            return true
+        }
+
+        override fun visitSuperExpression(expression: KtSuperExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtSuperExpression ?: return false
+            with(analysisSession) {
+                if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference)) return false
+            }
+            return true
+        }
 
         override fun visitParenthesizedExpression(expression: KtParenthesizedExpression, data: KtElement): Boolean =
             expression.deparenthesized().accept(visitor = this, data)
@@ -246,6 +278,10 @@ object K2SemanticMatcher {
     context(KtAnalysisSession)
     private fun areReferencesMatchingByResolve(targetReference: KtReference, patternReference: KtReference): Boolean =
         targetReference.resolveToSymbol()?.equals(patternReference.resolveToSymbol()) == true
+
+    context(KtAnalysisSession)
+    private fun areReturnTargetsMatchingByResolve(targetExpression: KtReturnExpression, patternExpression: KtReturnExpression): Boolean =
+        targetExpression.getReturnTargetSymbol() == patternExpression.getReturnTargetSymbol()
 
     private val KtInstanceExpressionWithLabel.mainReference: KtReference get() = instanceReference.mainReference
 

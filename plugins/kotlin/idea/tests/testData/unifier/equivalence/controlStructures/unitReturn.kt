@@ -1,4 +1,3 @@
-// IGNORE_K2
 // DISABLE-ERRORS
 fun foo(a: Int) {
     if (a > 0) <selection>return</selection>
