@@ -103,16 +103,14 @@ public final class TextMateServiceImpl extends TextMateService {
       }
 
       Map<String, TextMatePersistentBundle> userBundles = settings.getBundles();
-      List<TextMateBundleToLoad> pluginBundles = getPluginBundles(this);
-      if (!userBundles.isEmpty() || !pluginBundles.isEmpty()) {
-        List<@NotNull TextMateBundleToLoad> bundleToLoads = new ArrayList<>();
-        if (!userBundles.isEmpty()) {
-          bundleToLoads.addAll(ContainerUtil.mapNotNull(userBundles.entrySet(), entry -> {
-            return entry.getValue().getEnabled() ? new TextMateBundleToLoad(entry.getValue().getName(), entry.getKey()) : null;
-          }));
-        }
-        bundleToLoads.addAll(pluginBundles);
-        TextMateBundlesLoader.registerBundlesInParallel(myScope, bundleToLoads, bundleToLoad -> {
+      List<@NotNull TextMateBundleToLoad> bundlesToLoad = getPluginBundles(this);
+      if (!userBundles.isEmpty()) {
+        bundlesToLoad.addAll(ContainerUtil.mapNotNull(userBundles.entrySet(), entry -> {
+          return entry.getValue().getEnabled() ? new TextMateBundleToLoad(entry.getValue().getName(), entry.getKey()) : null;
+        }));
+      }
+      if (!bundlesToLoad.isEmpty()){
+        TextMateBundlesLoader.registerBundlesInParallel(myScope, bundlesToLoad, bundleToLoad -> {
           return registerBundle(Path.of(bundleToLoad.getPath()), newExtensionsMapping);
         }, bundleToLoad -> {
           String bundleName = bundleToLoad.getName();
