@@ -1124,7 +1124,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement) {
+  public @NotNull IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement) {
     return new UnnecessaryDefaultInspection.DeleteDefaultFix().asIntention();
   }
 

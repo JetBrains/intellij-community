@@ -363,9 +363,7 @@ public class SwitchBlockHighlightingModel {
     PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(duplicateElement, PsiSwitchLabelStatementBase.class);
     if (labelStatement != null && labelStatement.isDefaultCase()) {
       IntentionAction action = getFixFactory().createDeleteDefaultFix(myFile, duplicateElement);
-      if (action != null) {
-        info.registerFix(action, null, null, null, null);
-      }
+      info.registerFix(action, null, null, null, null);
     }
     return info;
   }
@@ -978,9 +976,7 @@ public class SwitchBlockHighlightingModel {
       PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(duplicateElement, PsiSwitchLabelStatementBase.class);
       if (labelStatement != null && labelStatement.isDefaultCase()) {
         IntentionAction action = getFixFactory().createDeleteDefaultFix(myFile, duplicateElement);
-        if (action != null) {
-          info.registerFix(action, null, null, null, null);
-        }
+        info.registerFix(action, null, null, null, null);
       }
       else {
         IntentionAction action = getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)duplicateElement);
@@ -1341,9 +1337,7 @@ public class SwitchBlockHighlightingModel {
         return;
       }
       IntentionAction action = getFixFactory().createDeleteDefaultFix(myFile, duplicateElement);
-      if (action != null) {
-        info.registerFix(action, null, null, null, null);
-      }
+      info.registerFix(action, null, null, null, null);
     }
 
     @Nullable
