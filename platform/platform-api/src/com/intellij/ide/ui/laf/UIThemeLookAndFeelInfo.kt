@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf
 
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.util.NlsSafe
@@ -58,4 +59,4 @@ fun EditorColorsScheme.isDefaultForTheme(theme: UIThemeLookAndFeelInfo?): Boolea
 
 private fun defaultNonLaFSchemeName() = if (StartupUiUtil.isDarkTheme) "Darcula" else "Default"
 
-val UIThemeLookAndFeelInfo.isThemeFromJetBrains: Boolean get() = author == "JetBrains"
+val UIThemeLookAndFeelInfo.isThemeFromPlugin: Boolean get() = providerClassLoader is PluginAwareClassLoader

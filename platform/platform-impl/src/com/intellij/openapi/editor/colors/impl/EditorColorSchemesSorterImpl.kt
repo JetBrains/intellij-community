@@ -6,7 +6,7 @@ import com.intellij.ide.ui.TargetUIType
 import com.intellij.ide.ui.ThemeListProvider
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
-import com.intellij.ide.ui.laf.isThemeFromJetBrains
+import com.intellij.ide.ui.laf.isThemeFromPlugin
 import com.intellij.openapi.editor.colors.EditorColorSchemesSorter
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.Groups
@@ -26,7 +26,7 @@ class EditorColorSchemesSorterImpl: EditorColorSchemesSorter {
     // Sort schemes from available themes
     themeGroups.infos.forEach { themes ->
       findSchemesFromThemes(themes, unhandledSchemes, orphanedSchemeNames).takeIf { it.isNotEmpty() }?.let {
-        if (!hasCustomSchemesGroup && themes.items.firstOrNull()?.isThemeFromJetBrains == false) hasCustomSchemesGroup = true
+        if (!hasCustomSchemesGroup && themes.items.firstOrNull()?.isThemeFromPlugin == true) hasCustomSchemesGroup = true
         schemesGroups.add(it)
       }
     }
@@ -64,7 +64,7 @@ class EditorColorSchemesSorterImpl: EditorColorSchemesSorter {
     themes.items.forEach { theme ->
       val schemeId = theme.editorSchemeId
 
-      if (schemeId == null && theme.isThemeFromJetBrains && theme.name == "Darcula") {
+      if (schemeId == null && !theme.isThemeFromPlugin && theme.name == "Darcula") {
         // Darcula theme doesn't have specified editorSchemeId. We do things manually here
         orphanedSchemeNames.forEach { orphanSchemeId ->
           findAndAddToSchemesGroup(orphanSchemeId, schemes, result)
@@ -95,7 +95,7 @@ class EditorColorSchemesSorterImpl: EditorColorSchemesSorter {
     if (!ExperimentalUI.isNewUI()) {
       // Remove schemes from newUI themes
       val newUiSchemeIds = UiThemeProviderListManager.getInstance().getThemeListForTargetUI(TargetUIType.NEW).mapNotNull { theme ->
-        theme.editorSchemeId.takeIf { theme.isThemeFromJetBrains }
+        theme.editorSchemeId.takeIf { !theme.isThemeFromPlugin }
       }
       schemesToFilterOut.addAll(newUiSchemeIds)
     }
