@@ -32,11 +32,12 @@ private const val READ_TIMEOUT_MS = 50000
 
 internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : SettingsSyncRemoteCommunicator {
 
-  protected open val _userId = resettableLazy { SettingsSyncAuthService.getInstance().getUserData()?.id }
-  protected open val _idToken = resettableLazy { SettingsSyncAuthService.getInstance().getAccountInfoService()?.idToken }
-  internal val userId get() = _userId.value
-  private val idToken get() = _idToken.value
   protected val clientVersionContext = CloudConfigVersionContext()
+
+  @VisibleForTesting
+  @Volatile
+  internal var _currentIdTokenVar: String? = null
+
   internal var _client = resettableLazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
     @TestOnly set
   internal open val client get() = _client.value
@@ -47,12 +48,15 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     SettingsSyncEvents.getInstance().addListener(
       object : SettingsSyncEventListener {
         override fun loginStateChanged() {
-          _userId.reset()
-          _idToken.reset()
           _client.reset()
         }
       }
     )
+  }
+
+  private fun getCurrentIdToken(): String? {
+    _client.value // init lazy, if necessary
+    return _currentIdTokenVar
   }
 
   @VisibleForTesting
@@ -159,7 +163,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
   }
 
   override fun checkServerState(): ServerState {
-    val userIdInRequest = userId
+    val idTokenInRequest = getCurrentIdToken()
     try {
       val snapshotFilePath = currentSnapshotFilePath() ?: return ServerState.Error("Unknown error during checkServerState")
       val latestVersion = client.getLatestVersion(snapshotFilePath)
@@ -172,14 +176,14 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       }
     }
     catch (e: Throwable) {
-      val message = handleRemoteError(e, userIdInRequest)
+      val message = handleRemoteError(e, idTokenInRequest)
       return ServerState.Error(message)
     }
   }
 
   override fun receiveUpdates(): UpdateResult {
     LOG.info("Receiving settings snapshot from the cloud config server...")
-    val userIdInRequest = userId
+    val idTokenInRequest = getCurrentIdToken()
     try {
       val snapshotFilePath = currentSnapshotFilePath() ?: return UpdateResult.Error("Unknown error during receiveUpdates")
       val (stream, version) = receiveSnapshotFile(snapshotFilePath)
@@ -196,7 +200,8 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
         if (snapshot == null) {
           LOG.info("cannot extract snapshot from tempFile ${tempFile.toPath()}. Implying there's no snapshot")
           return UpdateResult.NoFileOnServer
-        } else {
+        }
+        else {
           return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version)
         }
       }
@@ -205,7 +210,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       }
     }
     catch (e: Throwable) {
-      val message = handleRemoteError(e, userIdInRequest)
+      val message = handleRemoteError(e, idTokenInRequest)
       return UpdateResult.Error(message)
     }
   }
@@ -220,7 +225,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       return SettingsSyncPushResult.Error(e.message ?: "Couldn't prepare zip file")
     }
 
-    val userIdInRequest = userId
+    val idTokenInRequest = getCurrentIdToken()
     try {
       val pushResult = sendSnapshotFile(zip.inputStream(), expectedServerVersionId, force)
       clearLastRemoteError()
@@ -231,7 +236,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       return SettingsSyncPushResult.Rejected
     }
     catch (e: Throwable) {
-      val message = handleRemoteError(e, userIdInRequest)
+      val message = handleRemoteError(e, idTokenInRequest)
       return SettingsSyncPushResult.Error(message)
     }
     finally {
@@ -251,7 +256,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     lastRemoteErrorRef.set(null)
   }
 
-  private fun handleRemoteError(e: Throwable, userIdInRequest: String?): String {
+  private fun handleRemoteError(e: Throwable, idTokenInRequest: String?): String {
     val defaultMessage = "Error during communication with server"
     if (e is IOException) {
       if (lastRemoteErrorRef.get()?.message != e.message) {
@@ -260,9 +265,11 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       }
     }
     else if (e is UnauthorizedException) {
-      if (userIdInRequest != null) {
-        SettingsSyncAuthService.getInstance().invalidateJBA(userIdInRequest)
+      if (idTokenInRequest != null) {
+        SettingsSyncAuthService.getInstance().invalidateJBA(idTokenInRequest)
       }
+      SettingsSyncSettings.getInstance().syncEnabled = false
+      LOG.warn("Got \"Unauthorized\" from Settings Sync server. Settings Sync will be disabled. Please login to JBA again")
     }
     else {
       LOG.error(e)
@@ -306,14 +313,22 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     return client.getVersions(filePath)
   }
 
-  internal fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
+  @VisibleForTesting
+  internal open fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
     val conf = createConfiguration()
     return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
   }
 
   private fun createConfiguration(): Configuration {
-    return Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS)
-      .auth(JbaJwtTokenAuthProvider(idToken ?: throw SettingsSyncAuthException("Authentication required")))
+    val configuration = Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS)
+    val idToken = SettingsSyncAuthService.getInstance().idToken
+    _currentIdTokenVar = idToken
+    if (idToken == null) {
+      LOG.warn("No idToken provided! Setting Sync will be disabled")
+    } else {
+      configuration.auth(JbaJwtTokenAuthProvider(idToken))
+    }
+    return configuration
   }
 
   companion object {

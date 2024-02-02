@@ -3,7 +3,6 @@ package com.intellij.settingsSync
 import com.intellij.settingsSync.auth.DummyJBAccountInfoService
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBAccountInfoService
-import java.util.function.Consumer
 
 internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
   override fun isLoggedIn(): Boolean {
@@ -16,12 +15,15 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
     val email = "testEmail@example.com"
     return if (id != null)
       JBAccountInfoService.JBAData(id, loginName, email)
-      else null
+    else null
   }
 
   override fun getAccountInfoService(): JBAccountInfoService {
     return DummyJBAccountInfoService
   }
+
+  override val idToken: String?
+    get() = getAccountInfoService().idToken
 
   override fun login() {
   }
@@ -30,6 +32,7 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
     return false
   }
 
-  override fun invalidateJBA(userId: String) {
+  override fun invalidateJBA(idToken: String) {
+    // do nothing
   }
 }
