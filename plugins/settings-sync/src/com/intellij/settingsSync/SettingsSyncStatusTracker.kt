@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -10,6 +11,8 @@ import java.util.*
 internal class SettingsSyncStatusTracker : SettingsSyncEnabledStateListener, SettingsChangeListener {
   private var lastSyncTime = -1L
   private var errorMessage: String? = null
+
+  val idTokenMissing: Boolean = JBAccountInfoService.getInstance()?.idToken == null
 
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
@@ -20,6 +23,7 @@ internal class SettingsSyncStatusTracker : SettingsSyncEnabledStateListener, Set
 
   companion object {
     fun getInstance(): SettingsSyncStatusTracker = ApplicationManager.getApplication().getService(SettingsSyncStatusTracker::class.java)
+    const val ID_TOKEN_MISSING_MESSAGE = "Please open Help - Register, relogin to the JetBrains Account and restart the IDE"
   }
 
   fun updateOnSuccess() {
