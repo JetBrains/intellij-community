@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import java.io.File;
@@ -8,14 +8,15 @@ import java.nio.file.*;
 import java.util.Iterator;
 import java.util.Objects;
 
-import static com.intellij.platform.core.nio.fs.CoreRoutingFileSystemProvider.unwrap;
+import static com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider.unwrap;
 
-public class CorePath implements Path {
+
+public class MultiRoutingFsPath implements Path {
   private final Path                  myDelegate;
-  private final CoreRoutingFileSystem myFileSystem;
+  private final MultiRoutingFileSystem myFileSystem;
   private static volatile String      ourMountedDelegateClassName;
 
-  public CorePath(CoreRoutingFileSystem fileSystem, Path delegate) {
+  public MultiRoutingFsPath(MultiRoutingFileSystem fileSystem, Path delegate) {
     myDelegate = delegate;
     myFileSystem = fileSystem;
   }
@@ -66,7 +67,7 @@ public class CorePath implements Path {
 
   @Override
   public boolean startsWith(Path other) {
-    if (!(other instanceof CorePath))return false;
+    if (!(other instanceof MultiRoutingFsPath))return false;
     return myDelegate.startsWith(unwrap(other));
   }
 
@@ -77,7 +78,7 @@ public class CorePath implements Path {
 
   @Override
   public boolean endsWith(Path other) {
-    if (!(other instanceof CorePath))return false;
+    if (!(other instanceof MultiRoutingFsPath))return false;
     return myDelegate.endsWith(unwrap(other));
   }
 
@@ -173,7 +174,7 @@ public class CorePath implements Path {
   }
 
   private Path wrap(Path path) {
-    return path == null ? null : CoreRoutingFileSystemProvider.path(myFileSystem, path);
+    return path == null ? null : MultiRoutingFileSystemProvider.path(myFileSystem, path);
   }
 
   static void setMountedDelegateClassName(String mountedDelegateClassName) {
@@ -188,7 +189,7 @@ public class CorePath implements Path {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    CorePath paths = (CorePath)o;
+    MultiRoutingFsPath paths = (MultiRoutingFsPath)o;
     return Objects.equals(myDelegate, paths.myDelegate) &&
            Objects.equals(myFileSystem, paths.myFileSystem);
   }

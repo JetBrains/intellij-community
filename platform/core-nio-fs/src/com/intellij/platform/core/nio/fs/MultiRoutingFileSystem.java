@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,20 +15,20 @@ import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class CoreRoutingFileSystem extends FileSystem {
-  private final CoreRoutingFileSystemProvider myProvider;
+public class MultiRoutingFileSystem extends FileSystem {
+  private final MultiRoutingFileSystemProvider myProvider;
   private final FileSystem                    myLocalFS;
 
   private volatile FileSystem myMountedFS;
-  private volatile CoreRoutingFileSystemDelegate myDelegate;
+  private volatile MultiRoutingFileSystemDelegate myDelegate;
   private static volatile String ourMountedFSPrefix;
 
-  public CoreRoutingFileSystem(CoreRoutingFileSystemProvider provider, FileSystem localFS) {
+  public MultiRoutingFileSystem(MultiRoutingFileSystemProvider provider, FileSystem localFS) {
     myProvider = provider;
     myLocalFS = localFS;
   }
 
-  public void initialize(@NotNull String filesystemClassName, @Nullable Class<? extends CoreRoutingFileSystemDelegate> routingFilesystemDelegateClass) {
+  public void initialize(@NotNull String filesystemClassName, @Nullable Class<? extends MultiRoutingFileSystemDelegate> routingFilesystemDelegateClass) {
     myMountedFS = myProvider.createInstance(
       filesystemClassName,
       new Class[]{FileSystemProvider.class},
@@ -92,7 +92,7 @@ public class CoreRoutingFileSystem extends FileSystem {
 
           @Override
           public Path next() {
-            return CoreRoutingFileSystemProvider.path(CoreRoutingFileSystem.this, iterator.next());
+            return MultiRoutingFileSystemProvider.path(MultiRoutingFileSystem.this, iterator.next());
           }
         };
       }
@@ -114,9 +114,9 @@ public class CoreRoutingFileSystem extends FileSystem {
   @Override
   public Path getPath(String first, String... more) {
     FileSystem fs = myMountedFS != null && isMountedFSFile(first) ? myMountedFS : myLocalFS;
-    Path result = CoreRoutingFileSystemProvider.path(this, fs.getPath(first, more));
+    Path result = MultiRoutingFileSystemProvider.path(this, fs.getPath(first, more));
 
-    CoreRoutingFileSystemDelegate delegate = myDelegate;
+    MultiRoutingFileSystemDelegate delegate = myDelegate;
     return delegate == null ? result : delegate.wrap(result);
   }
 
@@ -135,14 +135,14 @@ public class CoreRoutingFileSystem extends FileSystem {
     return myLocalFS.newWatchService();
   }
 
-  public boolean isMountedFSPath(CorePath path) {
+  public boolean isMountedFSPath(MultiRoutingFsPath path) {
     if (path.isMountedFS()) return true;
-    CoreRoutingFileSystemDelegate delegate = myDelegate;
+    MultiRoutingFileSystemDelegate delegate = myDelegate;
     return delegate != null && delegate.isMountedFSPath(path);
   }
 
   public static boolean isMountedFSFile(String virtualFilePath) {
-    return CoreRoutingFileSystemProvider.normalizePath(virtualFilePath).startsWith(ourMountedFSPrefix);
+    return MultiRoutingFileSystemProvider.normalizePath(virtualFilePath).startsWith(ourMountedFSPrefix);
   }
 
   private static <T> Iterable<T> concat(Iterable<T> first, Iterable<T> second) {

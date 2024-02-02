@@ -244,6 +244,9 @@ public abstract class DelegatingFileSystemProvider<
     if (path1 instanceof CorePath) {
       path1 = ((CorePath)path1).getDelegate();
     }
+    else if (path1 instanceof MultiRoutingFsPath) {
+      path1 = ((MultiRoutingFsPath)path1).getDelegate();
+    }
     try {
       Method method = provider.getClass().getMethod("getSunPathForSocketFile", Path.class);
       method.setAccessible(true);

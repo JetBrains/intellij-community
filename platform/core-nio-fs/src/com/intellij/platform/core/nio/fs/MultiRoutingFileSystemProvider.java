@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.Nullable;
@@ -17,41 +17,43 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
-public class CoreRoutingFileSystemProvider extends FileSystemProvider {
+public class MultiRoutingFileSystemProvider extends FileSystemProvider {
   public static final String SEPARATOR = "/";
 
-  /** Key for signaling to {@link CoreRoutingFileSystemProvider} that it should initialize itself. */
-  private static final String INITIALIZATION_KEY                     = "CoreRoutingFSInitialization";
-  /** Key for signaling to {@link CoreRoutingFileSystemProvider} that it should eagerly initialize the mounted FS provider under lock as
-   * well. */
+  /** Key for signaling to {@link MultiRoutingFileSystemProvider} that it should initialize itself. */
+  private static final String INITIALIZATION_KEY = "MultiRoutingFSInitialization";
+  /**
+   * Key for signaling to {@link MultiRoutingFileSystemProvider} that it should eagerly initialize the mounted FS provider under lock as
+   * well.
+   */
   private static final String INITIALIZATION_MOUNTED_FS_PROVIDER_KEY = "RoutingFilesystemInitialization_MountedFSProvider";
-  private static final String PROVIDER_CLASS_NAME                    = "ProviderClassName";
-  private static final String PATH_CLASS_NAME                        = "PathClassName";
-  private static final String MOUNTED_FS_PREFIX                      = "MountedFSPrefix";
-  private static final String FILESYSTEM_CLASS_NAME                  = "FilesystemClassName";
-  private static final String ROUTING_FILESYSTEM_DELEGATE_CLASS      = "RoutingFilesystemDelegateClass";
+  private static final String PROVIDER_CLASS_NAME = "ProviderClassName";
+  private static final String PATH_CLASS_NAME = "PathClassName";
+  private static final String MOUNTED_FS_PREFIX = "MountedFSPrefix";
+  private static final String FILESYSTEM_CLASS_NAME = "FilesystemClassName";
+  private static final String ROUTING_FILESYSTEM_DELEGATE_CLASS = "RoutingFilesystemDelegateClass";
 
   private final Object myLock = new Object();
-  private final FileSystemProvider    myLocalProvider;
-  private final CoreRoutingFileSystem myFileSystem;
+  private final FileSystemProvider myLocalProvider;
+  private final MultiRoutingFileSystem myFileSystem;
   private final boolean myUseContextClassLoader;
 
   private volatile FileSystemProvider myProvider;
   private volatile String myProviderClassName;
 
-  public CoreRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
+  public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
     this(localFSProvider, true);
   }
 
   /**
    * @param useContextClassLoader Force {@link #createInstance(String, Class[], Object...)} use system class loader which is required when this class is used as default system provider
    */
-  public CoreRoutingFileSystemProvider(FileSystemProvider localFSProvider, boolean useContextClassLoader) {
+  public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider, boolean useContextClassLoader) {
     FileSystem fileSystem = localFSProvider.getFileSystem(URI.create("file:///"));
     myLocalProvider = fileSystem.supportedFileAttributeViews().contains("posix")
                       ? localFSProvider
                       : new CorePosixFilteringFileSystemProvider(localFSProvider);
-    myFileSystem = new CoreRoutingFileSystem(this, fileSystem);
+    myFileSystem = new MultiRoutingFileSystem(this, fileSystem);
     myUseContextClassLoader = useContextClassLoader;
   }
 
@@ -68,21 +70,21 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
   @Override
   public FileSystem newFileSystem(URI uri, Map<String, ?> env) {
     if (env.get(INITIALIZATION_KEY) == Boolean.TRUE) {
-      CoreRoutingFileSystem.setMountedFSPrefix((String)env.get(MOUNTED_FS_PREFIX));
-      CorePath.setMountedDelegateClassName((String)env.get(PATH_CLASS_NAME));
+      MultiRoutingFileSystem.setMountedFSPrefix((String)env.get(MOUNTED_FS_PREFIX));
+      MultiRoutingFsPath.setMountedDelegateClassName((String)env.get(PATH_CLASS_NAME));
       myProviderClassName = (String)env.get(PROVIDER_CLASS_NAME);
       if (env.get(INITIALIZATION_MOUNTED_FS_PROVIDER_KEY) == Boolean.TRUE) {
         synchronized (myLock) {
           //noinspection unchecked
           myFileSystem.initialize((String)env.get(FILESYSTEM_CLASS_NAME),
-                                  (Class<? extends CoreRoutingFileSystemDelegate>)env.get(ROUTING_FILESYSTEM_DELEGATE_CLASS));
+                                  (Class<? extends MultiRoutingFileSystemDelegate>)env.get(ROUTING_FILESYSTEM_DELEGATE_CLASS));
           getMountedFSProvider();
           return null;
         }
       }
       //noinspection unchecked
       myFileSystem.initialize((String)env.get(FILESYSTEM_CLASS_NAME),
-                              (Class<? extends CoreRoutingFileSystemDelegate>)env.get(ROUTING_FILESYSTEM_DELEGATE_CLASS));
+                              (Class<? extends MultiRoutingFileSystemDelegate>)env.get(ROUTING_FILESYSTEM_DELEGATE_CLASS));
       return null;
     }
     throw new IllegalStateException("File system already exists");
@@ -90,20 +92,20 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
 
 
   /**
-   * Initializes the passed {@link CoreRoutingFileSystemProvider} using the current context class loader.
+   * Initializes the passed {@link MultiRoutingFileSystemProvider} using the current context class loader.
    *
-   * @param provider                    The {@link CoreRoutingFileSystemProvider}, which may have been loaded by a different class loader.
+   * @param provider                    The {@link MultiRoutingFileSystemProvider}, which may have been loaded by a different class loader.
    * @param initializeMountedFSProvider Specifies whether to eagerly initialize the mounted FS provider under lock as well,
    *                                    e.g., in order to ensure the same class loader is used.
-   * @see CoreRoutingFileSystemProvider#INITIALIZATION_KEY
-   * @see CoreRoutingFileSystemProvider#INITIALIZATION_MOUNTED_FS_PROVIDER_KEY
+   * @see MultiRoutingFileSystemProvider#INITIALIZATION_KEY
+   * @see MultiRoutingFileSystemProvider#INITIALIZATION_MOUNTED_FS_PROVIDER_KEY
    */
   public static void initialize(FileSystemProvider provider,
                                 String providerClassName,
                                 String pathClassName,
                                 String mountedFSPrefix,
                                 String filesystemClassName,
-                                @Nullable Class<? extends CoreRoutingFileSystemDelegate> routingFilesystemDelegateClass,
+                                @Nullable Class<? extends MultiRoutingFileSystemDelegate> routingFilesystemDelegateClass,
                                 boolean initializeMountedFSProvider) throws IOException {
     // Now we can use our provider. Initializing in such a hacky way because of different classloaders.
     Map<String, Object> map = new HashMap<>();
@@ -312,20 +314,20 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
     return path == null ? null : path(myFileSystem, path);
   }
 
-  public static Path path(CoreRoutingFileSystem fileSystem, Path path) {
-    return path instanceof CorePath ? path : new CorePath(fileSystem, path);
+  public static Path path(MultiRoutingFileSystem fileSystem, Path path) {
+    return path instanceof MultiRoutingFsPath ? path : new MultiRoutingFsPath(fileSystem, path);
   }
 
   protected boolean isMountedFSPath(Path path) {
-    return path instanceof CorePath && myFileSystem.isMountedFSPath((CorePath)path);
+    return path instanceof MultiRoutingFsPath && myFileSystem.isMountedFSPath((MultiRoutingFsPath)path);
   }
 
   private static boolean isMountedFSURI(URI uri) {
-    return uri != null && CoreRoutingFileSystem.isMountedFSFile(uri.getPath());
+    return uri != null && MultiRoutingFileSystem.isMountedFSFile(uri.getPath());
   }
 
   public static Path unwrap(Path path) {
-    return path == null ? null : ((CorePath)path).getDelegate();
+    return path == null ? null : ((MultiRoutingFsPath)path).getDelegate();
   }
 
   public <T> T createInstance(String className,
@@ -333,7 +335,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
                               Object... params) {
     try {
       ClassLoader loader = (myUseContextClassLoader ? Thread.currentThread().getContextClassLoader()
-                                                    : CoreRoutingFileSystemProvider.class.getClassLoader());
+                                                    : MultiRoutingFileSystemProvider.class.getClassLoader());
       String loaderName = loader.getClass().getName();
       if (!("com.intellij.util.lang.PathClassLoader").equals(loaderName) &&
           !("com.intellij.util.lang.UrlClassLoader").equals(loaderName) &&

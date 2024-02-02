@@ -3,8 +3,12 @@ package com.intellij.platform.core.nio.fs;
 
 import java.nio.file.Path;
 
-public interface CoreRoutingFileSystemDelegate {
+
+/**
+ * A temporary entity. It will disappear soon.
+ */
+public interface MultiRoutingFileSystemDelegate {
   Path wrap(Path result);
 
-  boolean isMountedFSPath(CorePath path);
+  boolean isMountedFSPath(MultiRoutingFsPath path);
 }
