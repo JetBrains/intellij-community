@@ -8,7 +8,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   KOTLIN("Kotlin", listOf("kt"), "kotlin", needSdk = true),
   RUBY("Ruby", listOf("rb"), "ruby", needSdk = true),
   SCALA("Scala", listOf("scala"), "Scala", needSdk = true),
-  CPP("C++", listOf("cpp"), "ObjectiveC"),
+  CPP("C++", listOf("cpp", "c", "cc"), "ObjectiveC"),
   PHP("PHP", listOf("php"), "PHP"),
   JS("JavaScript", listOf("js", "jsx"), "JavaScript"),
   VUE("Vue", listOf("vue"), "Vue"),
