@@ -186,7 +186,11 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     }
   }
 
-  protected static void assertContent(String expected, Entry e) {
-    assertEquals(expected, new String(e.getContent().getBytes(), StandardCharsets.UTF_8));
+  protected static void assertContent(String expected, @NotNull Entry e) {
+    assertEquals(expected, getContentAsString(e));
+  }
+
+  protected static @NotNull String getContentAsString(@NotNull Entry e) {
+    return new String(e.getContent().getBytes(), StandardCharsets.UTF_8);
   }
 }

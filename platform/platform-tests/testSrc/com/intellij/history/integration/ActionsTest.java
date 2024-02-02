@@ -17,12 +17,16 @@ package com.intellij.history.integration;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.history.core.revisions.CurrentRevision;
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -34,17 +38,16 @@ public class ActionsTest extends IntegrationTestCase {
 
     setDocumentTextFor(f, "doc1");
 
-    LocalHistoryAction a = LocalHistory.getInstance().startAction("name");
+    LocalHistoryAction a = LocalHistory.getInstance().startAction("action");
     setDocumentTextFor(f, "doc2");
     a.finish();
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(5, rr.size());
-    assertContent("doc2", rr.get(0).findEntry());
-    assertEquals("name", rr.get(1).getChangeSetName());
-    assertContent("doc1", rr.get(1).findEntry());
-    assertContent("file2", rr.get(2).findEntry());
-    assertContent("file1", rr.get(3).findEntry());
+    assertEquals("current: doc2\n" +
+                 "action: doc1\n" +
+                 "null: file2\n" +
+                 "null: file1\n" +
+                 "External change: null", getNameAndOldContent(rr));
   }
 
   /**
@@ -54,7 +57,7 @@ public class ActionsTest extends IntegrationTestCase {
    */
   public void testActionInsideCommand() throws Exception {
     final VirtualFile f = createFile("f.txt");
-    setContent(f, "file");
+    setContent(f, "initial");
     setDocumentTextFor(f, "doc1");
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
@@ -64,12 +67,11 @@ public class ActionsTest extends IntegrationTestCase {
     }, "command", null);
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(5, rr.size());
-    assertContent("doc2", rr.get(0).findEntry());
-    assertEquals("command", rr.get(1).getChangeSetName());
-    assertContent("doc1", rr.get(1).findEntry());
-    assertContent("file", rr.get(2).findEntry());
-    assertContent("", rr.get(3).findEntry());
+    assertEquals("current: doc2\n" +
+                 "command: doc1\n" +
+                 "null: initial\n" +
+                 "null: \n" +
+                 "External change: null", getNameAndOldContent(rr));
   }
 
   public void testActionInsideCommandSurroundedWithSomeChanges() throws Exception {
@@ -92,14 +94,19 @@ public class ActionsTest extends IntegrationTestCase {
     }, "command", null);
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(4, rr.size());
+    assertEquals("current: doc3\n" +
+                 "command: doc1\n" +
+                 "null: \n" +
+                 "External change: null", getNameAndOldContent(rr));
+  }
 
-    assertContent("doc3", rr.get(0).findEntry());
-    assertContent("doc1", rr.get(1).findEntry());
-    assertContent("", rr.get(2).findEntry());
-
-    assertEquals("command", rr.get(1).getChangeSetName());
-    assertNull(rr.get(2).getChangeSetName());
+  private static @NotNull String getNameAndOldContent(@NotNull List<Revision> revisions) {
+    return StringUtil.join(revisions, revision -> {
+      String name = revision instanceof CurrentRevision ? "current" : revision.getChangeSetName();
+      Entry entry = revision.findEntry();
+      String content = entry == null ? "null" : getContentAsString(entry);
+      return name + ": " + content;
+    }, "\n");
   }
 
   private static void saveDocument(VirtualFile f) {
