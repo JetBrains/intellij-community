@@ -21,7 +21,7 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
   @JvmField
   val ANNOTATE_ACTIVITY = GROUP.registerIdeActivity("annotate",
                                                     finishEventAdditionalFields = arrayOf(ActionsEventLogGroup.CONTEXT_MENU,
-                                                                                          EventFields.ActionPlace, EventFields.InputEvent))
+                                                                                          EventFields.ActionPlace))
   val FETCH_ACTIVITY = GROUP.registerIdeActivity("fetch")
   val COMMIT_ACTIVITY = GROUP.registerIdeActivity("commit")
 

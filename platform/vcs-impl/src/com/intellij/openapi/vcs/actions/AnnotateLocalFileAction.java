@@ -2,8 +2,10 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -149,7 +152,10 @@ public class AnnotateLocalFileAction {
         if (!fileAnnotationRef.isNull()) {
           AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), vcs);
         }
-        List<EventPair<?>> eventData = ActionsCollectorImpl.actionEventData(e);
+        List<EventPair<?>> eventData = new ArrayList<>();
+        String place = e.getPlace();
+        eventData.add(EventFields.ActionPlace.with(place));
+        eventData.add(ActionsEventLogGroup.CONTEXT_MENU.with(ActionPlaces.isPopupPlace(place)));
         activity.finished(() -> eventData);
       }
 
