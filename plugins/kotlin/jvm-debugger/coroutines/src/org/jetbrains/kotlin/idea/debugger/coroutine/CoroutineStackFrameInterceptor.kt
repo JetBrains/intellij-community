@@ -6,6 +6,7 @@ import com.intellij.debugger.actions.AsyncStacksToggleAction
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
@@ -54,7 +55,8 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
     }
 
     override fun extractContinuationFilter(suspendContext: SuspendContextImpl): ContinuationFilter? {
-        val defaultExecutionContext = suspendContext.executionContext() ?: return null
+        val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
+        val defaultExecutionContext = DefaultExecutionContext(EvaluationContextImpl(suspendContext, frameProxy))
 
         if (!useContinuationObjectFilter.get(suspendContext.debugProcess, false)) {
             val coroutineId = DebugProbesImpl.instance(defaultExecutionContext)?.getCurrentThreadCoroutineId(defaultExecutionContext)
@@ -76,7 +78,7 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
         suspendContext: SuspendContextImpl,
         defaultExecutionContext: DefaultExecutionContext
     ): ContinuationObjectFilter? {
-        val frameProxy = suspendContext.frameProxy ?: return null
+        val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
         val suspendExitMode = frameProxy.location().getSuspendExitMode()
 
         val continuation = extractContinuation(suspendExitMode, frameProxy) ?: return null
@@ -107,6 +109,9 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
             loopContinuation = nextContinuation
         }
     }
+
+    private fun SuspendContextImpl.getStackFrameProxyImpl(): StackFrameProxyImpl? =
+        activeExecutionStack?.threadProxy?.frame(0) ?: this.frameProxy
 
     private data class ContinuationIdFilter(val id: Long) : ContinuationFilter
 

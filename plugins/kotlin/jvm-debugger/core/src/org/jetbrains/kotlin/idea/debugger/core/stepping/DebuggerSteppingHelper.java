@@ -129,11 +129,9 @@ public final class DebuggerSteppingHelper {
         return debugProcess.new RunToCursorCommand(suspendContext, position, ignoreBreakpoints) {
             @Override
             public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
-                if (myContextThread != null) {
-                    LightOrRealThreadInfo result = CoroutineJobInfo.extractJobInfo(suspendContext);
-                    if (result != null) {
-                        return result;
-                    }
+                LightOrRealThreadInfo result = CoroutineJobInfo.extractJobInfo(suspendContext);
+                if (result != null) {
+                    return result;
                 }
                 return super.getThreadFilterFromContext(suspendContext);
             }

@@ -32,6 +32,7 @@ import com.jetbrains.jdi.ThreadGroupReferenceImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,8 +123,8 @@ public class JavaExecutionStack extends XExecutionStack {
     });
   }
 
-  @NotNull
-  ThreadReferenceProxyImpl getThreadProxy() {
+  @ApiStatus.Internal
+  public @NotNull ThreadReferenceProxyImpl getThreadProxy() {
     return myThreadProxy;
   }
 
