@@ -251,7 +251,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
     private fun createConfiguration(): Configuration {
       val idToken = JBAccountInfoService.getInstance()?.idToken
       if (idToken == null) {
-        throw SettingsSyncAuthException("Authentication required")
+        throw SettingsSyncAuthException(SettingsSyncStatusTracker.ID_TOKEN_MISSING_MESSAGE)
       }
       return Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS).auth(JbaJwtTokenAuthProvider(idToken))
     }
