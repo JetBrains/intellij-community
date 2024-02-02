@@ -25,7 +25,7 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
+    return JAVA_21_ANNOTATED;
   }
 
   public void testReturnStringLiteral() {
@@ -240,7 +240,6 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
 
   public void testReassignedInSwitch() {
     assertEquals(Nullability.UNKNOWN,
-
                  inferNullability(parse("""
                                           String foo(int foo) {
                                             String res = "bar";
@@ -254,7 +253,6 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
 
   public void testNullCheckWithReturn() {
     assertEquals(Nullability.NOT_NULL,
-
                  inferNullability(parse("""
                                           String foo() {
                                             String res = getUnknown();
@@ -265,7 +263,6 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
 
   public void testIfNullReassign() {
     assertEquals(Nullability.UNKNOWN,
-
                  inferNullability(parse("""
                                           String test() {
                                             String result = getFoo();
@@ -281,7 +278,6 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
 
   public void testNestedIfs() {
     assertEquals(Nullability.NOT_NULL,
-
                  inferNullability(parse("""
                                           String test() {
                                             String result = "foo";
@@ -296,7 +292,6 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
 
   public void testNullOrEmpty() {
     assertEquals(Nullability.NULLABLE,
-
                  inferNullability(parse("""
                                           String test() {
                                             String p = isFoo() ? null : getFoo();
@@ -306,17 +301,104 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
   }
 
   public void testSetToNullInIfBranch() {
-    assertNotEquals(Nullability.NOT_NULL, inferNullability(parse("""
-                                                                   String test(String r) {
-                                                                     String p;
-                                                                     if(r == null) {
-                                                                       p = null;
-                                                                     } else {
-                                                                       p = " foo ".trim();
-                                                                     }
-                                                                     return p;
-                                                                   }""")));
+    assertNotEquals(Nullability.NOT_NULL,
+                    inferNullability(parse("""
+                                             String test(String r) {
+                                               String p;
+                                               if(r == null) {
+                                                 p = null;
+                                               } else {
+                                                 p = " foo ".trim();
+                                               }
+                                               return p;
+                                             }""")));
   }
+
+  public void testNullSwitchExpression() {
+    assertEquals(Nullability.NULLABLE,
+                 inferNullability(
+                   parse("""
+                           private static String test(Object t) {
+                               return switch (t) {
+                                   case String a -> {
+                                       if (t.hashCode() == 1) {
+                                           yield "t1";
+                                       } else {
+                                           yield null;
+                                       }
+                                   }
+                                   case final Integer l -> "t2";
+                                   default -> throw new IllegalStateException("Unexpected value: " + t);
+                               };
+                           }""")));
+  }
+
+  public void testNotNullSwitchExpression() {
+    assertNotEquals(Nullability.NULLABLE,
+                    inferNullability(
+                      parse("""
+                              private static String test(Object t) {
+                                  return switch (t) {
+                                      case String a -> "notnull";
+                                      case final Integer l -> throw new UnsupportedOperationException();
+                                      default -> throw new IllegalStateException("Unexpected value: " + t);
+                                  };
+                              }""")));
+  }
+
+  public void testNullRuleSwitchExpression() {
+    assertEquals(Nullability.NULLABLE,
+                 inferNullability(
+                   parse("""
+                           private static String test(Object t) {
+                               return switch (t) {
+                                   case String a -> null;
+                                   case final Integer l -> throw new UnsupportedOperationException();
+                                   default -> "1";
+                               };
+                           }""")));
+  }
+
+  public void testNullOldSwitchExpression() {
+    assertEquals(Nullability.NULLABLE,
+                 inferNullability(
+                   parse("""
+                           private static String test(Object t) {
+                               return switch (t) {
+                                   case String a:
+                                       if (t.hashCode() == 1) {
+                                           yield  "t1";
+                                       } else {
+                                           yield null;
+                                       }
+                                   case final Integer l:
+                                       yield "t2";
+                                   default:
+                                       throw new IllegalArgumentException();
+                               };
+                           }""")));
+  }
+
+  public void testNotNullOldSwitchExpression() {
+    assertEquals(Nullability.NOT_NULL,
+                 inferNullability(
+                   parse("""
+                           private static String test(Object t) {
+                               return switch (t) {
+                                   case String a:
+                                       if (t.hashCode() == 1) {
+                                           yield  "t1";
+                                       } else {
+                                           yield "notnull";
+                                       }
+                                   case final Integer l:
+                                       yield "t2";
+                                   default:
+                                       throw new IllegalArgumentException();
+                               };
+                           }""")));
+  }
+
 
   protected abstract Nullability inferNullability(PsiMethod method);
 
