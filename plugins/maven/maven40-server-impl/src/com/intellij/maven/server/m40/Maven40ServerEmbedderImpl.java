@@ -251,10 +251,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
   @NotNull
   @Override
-  public MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(@NotNull String longRunningTaskId,
+  public MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(@NotNull LongRunningTaskInput longRunningTaskInput,
                                                                                     @NotNull ProjectResolutionRequest request,
                                                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
+    String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
     PomHashMap pomHashMap = request.getPomHashMap();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
@@ -653,12 +654,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
 
   @Override
-  public MavenServerResponse<ArrayList<PluginResolutionResponse>> resolvePlugins(@NotNull String longRunningTaskId,
+  public MavenServerResponse<ArrayList<PluginResolutionResponse>> resolvePlugins(@NotNull LongRunningTaskInput longRunningTaskInput,
                                                                                  @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
                                                                                  boolean forceUpdateSnapshots,
                                                                                  MavenToken token) {
     MavenServerUtil.checkToken(token);
-
+    String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
     boolean runInParallel = canResolveDependenciesInParallel();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size(), myConsoleWrapper)) {
       MavenExecutionRequest request = createRequest(null, null, null);
@@ -778,11 +779,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   @Override
-  public MavenServerResponse<ArrayList<MavenGoalExecutionResult>> executeGoal(@NotNull String longRunningTaskId,
+  public MavenServerResponse<ArrayList<MavenGoalExecutionResult>> executeGoal(@NotNull LongRunningTaskInput longRunningTaskInput,
                                                                               @NotNull ArrayList<MavenGoalExecutionRequest> requests,
                                                                               @NotNull String goal,
                                                                               MavenToken token) {
     MavenServerUtil.checkToken(token);
+    String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       return new MavenServerResponse<>(executeGoal(task, requests, goal), getLongRunningTaskStatus(longRunningTaskId, token));
     }
@@ -912,10 +914,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   @Override
-  public MavenServerResponse<ArrayList<MavenArtifact>> resolveArtifacts(@NotNull String longRunningTaskId,
+  public MavenServerResponse<ArrayList<MavenArtifact>> resolveArtifacts(@NotNull LongRunningTaskInput longRunningTaskInput,
                                                                         @NotNull ArrayList<MavenArtifactResolutionRequest> requests,
                                                                         MavenToken token) {
     MavenServerUtil.checkToken(token);
+    String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       return new MavenServerResponse<>(doResolveArtifacts(task, requests), getLongRunningTaskStatus(longRunningTaskId, token));
     }

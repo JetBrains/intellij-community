@@ -34,19 +34,19 @@ public interface MavenServerEmbedder extends Remote {
 
   @NotNull
   MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(
-    @NotNull String longRunningTaskId,
+    @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull ProjectResolutionRequest request,
     MavenToken token) throws RemoteException;
 
   MavenServerResponse<ArrayList<PluginResolutionResponse>> resolvePlugins(
-    @NotNull String longRunningTaskId,
+    @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
     boolean forceUpdateSnapshots,
     MavenToken token) throws RemoteException;
 
   @NotNull
   MavenServerResponse<ArrayList<MavenArtifact>> resolveArtifacts(
-    @NotNull String longRunningTaskId,
+    @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull ArrayList<MavenArtifactResolutionRequest> requests,
     MavenToken token) throws RemoteException;
 
@@ -67,7 +67,7 @@ public interface MavenServerEmbedder extends Remote {
 
   @NotNull
   MavenServerResponse<ArrayList<MavenGoalExecutionResult>> executeGoal(
-    @NotNull String longRunningTaskId,
+    @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull ArrayList<MavenGoalExecutionRequest> requests,
     @NotNull String goal,
     MavenToken token) throws RemoteException;

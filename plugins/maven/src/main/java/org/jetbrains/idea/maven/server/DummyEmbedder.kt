@@ -19,7 +19,7 @@ abstract class DummyEmbedder : MavenServerEmbedder {
     return null
   }
 
-  override fun resolveArtifacts(longRunningTaskId: String,
+  override fun resolveArtifacts(longRunningTaskInput: LongRunningTaskInput,
                                 requests: ArrayList<MavenArtifactResolutionRequest>,
                                 token: MavenToken?): MavenServerResponse<ArrayList<MavenArtifact>> {
     return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
@@ -31,14 +31,14 @@ abstract class DummyEmbedder : MavenServerEmbedder {
     return MavenArtifactResolveResult(emptyList(), null)
   }
 
-  override fun resolvePlugins(longRunningTaskId: String,
+  override fun resolvePlugins(longRunningTaskInput: LongRunningTaskInput,
                               pluginResolutionRequests: ArrayList<PluginResolutionRequest>,
                               forceUpdateSnapshots: Boolean,
                               token: MavenToken?): MavenServerResponse<ArrayList<PluginResolutionResponse>> {
     return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
-  override fun executeGoal(longRunningTaskId: String,
+  override fun executeGoal(longRunningTaskInput: LongRunningTaskInput,
                            requests: ArrayList<MavenGoalExecutionRequest>,
                            goal: String,
                            token: MavenToken?): MavenServerResponse<ArrayList<MavenGoalExecutionResult>> {
@@ -79,7 +79,7 @@ abstract class DummyEmbedder : MavenServerEmbedder {
 }
 
 class UntrustedDummyEmbedder(val myProject: Project) : DummyEmbedder() {
-  override fun resolveProjects(longRunningTaskId: String,
+  override fun resolveProjects(longRunningTaskInput: LongRunningTaskInput,
                                request: ProjectResolutionRequest,
                                token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
     showUntrustedProjectNotification(myProject)
@@ -94,7 +94,7 @@ class MisconfiguredPlexusDummyEmbedder(private val myProject: Project,
                                        private val myMultimoduleDirectories: MutableSet<String>,
                                        private val myMavenVersion: String?,
                                        private val myUnresolvedId: MavenId?) : DummyEmbedder() {
-  override fun resolveProjects(longRunningTaskId: String,
+  override fun resolveProjects(longRunningTaskInput: LongRunningTaskInput,
                                request: ProjectResolutionRequest,
                                token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
 

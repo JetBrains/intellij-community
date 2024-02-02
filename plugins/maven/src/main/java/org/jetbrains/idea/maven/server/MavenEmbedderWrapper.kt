@@ -79,7 +79,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     )
 
     val results = runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
+      LongRunningEmbedderTask { embedder, taskInput -> embedder.resolveProjects(taskInput, request, ourToken) },
       progressReporter, eventHandler)
     if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
       for (result in results) {
@@ -124,7 +124,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                                progressReporter: RawProgressReporter?,
                                eventHandler: MavenEventHandler): List<MavenArtifact> {
     return runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken) },
+      LongRunningEmbedderTask { embedder, taskInput -> embedder.resolveArtifacts(taskInput, ArrayList(requests), ourToken) },
       progressReporter, eventHandler)
   }
 
@@ -160,8 +160,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       }
     }
     return runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId ->
-        embedder.resolvePlugins(taskId, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
+      LongRunningEmbedderTask { embedder, taskInput ->
+        embedder.resolvePlugins(taskInput, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
       },
       progressReporter, eventHandler)
   }
@@ -188,7 +188,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                           progressReporter: RawProgressReporter,
                           eventHandler: MavenEventHandler): List<MavenGoalExecutionResult> {
     return runLongRunningTask(
-      LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, ArrayList(requests), goal, ourToken) },
+      LongRunningEmbedderTask { embedder, taskInput -> embedder.executeGoal(taskInput, ArrayList(requests), goal, ourToken) },
       progressReporter, eventHandler)
   }
 
@@ -270,7 +270,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       try {
         withContext(Dispatchers.IO) {
           blockingContext {
-            val response = task.run(embedder, longRunningTaskId)
+            val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, null, null)
+            val response = task.run(embedder, longRunningTaskInput)
             val status = response.status
             eventHandler.handleConsoleEvents(status.consoleEvents())
             eventHandler.handleDownloadEvents(status.downloadEvents())
@@ -288,6 +289,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   protected fun interface LongRunningEmbedderTask<R : Serializable> {
-    fun run(embedder: MavenServerEmbedder, longRunningTaskId: String): MavenServerResponse<R>
+    fun run(embedder: MavenServerEmbedder, longRunningTaskInput: LongRunningTaskInput): MavenServerResponse<R>
   }
 }
