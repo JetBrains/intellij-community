@@ -33,6 +33,7 @@ class NewJavaToKotlinConverter(
 ) : JavaToKotlinConverter() {
     val phasesCount = J2KConversionPhase.entries.size
     val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher
+    private val phaseDescription: String = KotlinNJ2KBundle.message("phase.converting.j2k")
 
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
@@ -56,7 +57,7 @@ class NewJavaToKotlinConverter(
             val kotlinFiles = results.mapIndexed { i, result ->
                 runUndoTransparentActionInEdt(inWriteAction = true) {
                     val javaFile = files[i]
-                    withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES)
+                    withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
                     KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                         .also { it.addImports(result.importsToAdd) }
                 }
@@ -102,7 +103,7 @@ class NewJavaToKotlinConverter(
         }
 
         val elementsWithAsts = inputElements.mapIndexed { i, element ->
-            processor.updateState(fileIndex = i, phase = BUILD_AST)
+            processor.updateState(fileIndex = i, phase = BUILD_AST, phaseDescription)
             element to treeBuilder.buildTree(element, saveImports)
         }
 
@@ -133,7 +134,7 @@ class NewJavaToKotlinConverter(
         }
 
         val results = elementsWithAsts.mapIndexed { i, elementWithAst ->
-            processor.updateState(fileIndex = i, phase = PRINT_CODE)
+            processor.updateState(fileIndex = i, phase = PRINT_CODE, phaseDescription)
             val (element, ast) = elementWithAst
             if (ast == null) return@mapIndexed null
             val code = JKCodeBuilder(context).run { printCodeOut(ast) }
@@ -214,9 +215,7 @@ class NewJavaToKotlinConverter(
     }
 }
 
-private val phaseDescription: String = KotlinNJ2KBundle.message("phase.converting.j2k")
-
-private fun WithProgressProcessor.updateState(fileIndex: Int?, phase: J2KConversionPhase) {
+private fun WithProgressProcessor.updateState(fileIndex: Int?, phase: J2KConversionPhase, phaseDescription: String) {
     updateState(fileIndex, phase.phaseNumber, phaseDescription)
 }
 
