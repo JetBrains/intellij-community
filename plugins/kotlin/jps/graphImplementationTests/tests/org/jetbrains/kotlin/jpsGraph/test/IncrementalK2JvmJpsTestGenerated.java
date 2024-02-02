@@ -2968,6 +2968,41 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         }
     }
 
+    @TestMetadata("resolution")
+    @TestDataPath(".")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class ResolutionTests extends AbstractIncrementalK2JvmJpsTest {
+        @Override
+        protected void setUp() {
+            super.setUp();
+            setUpTests();
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+        }
+
+        @TestMetadata("classOverFun")
+        public void testClassShadowsFunction() throws Exception {
+            runTest("resolution/classOverFun");
+        }
+
+        @TestMetadata("addMethodDirectly_implicitThis")
+        public void testAddMethodDirectly() throws Exception {
+            runTest("resolution/addMethodDirectly_implicitThis");
+        }
+
+        @TestMetadata("addMethodToParent_implicitThis")
+        public void testAddMethodToParent() throws Exception {
+            runTest("resolution/addMethodToParent_implicitThis");
+        }
+
+        @TestMetadata("invokeOverFun")
+        public void testInvokeShadowsFunction() throws Exception {
+            runTest("resolution/invokeOverFun");
+        }
+    }
+
     @TestMetadata("multiModule/withJavaUsedInKotlin")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
