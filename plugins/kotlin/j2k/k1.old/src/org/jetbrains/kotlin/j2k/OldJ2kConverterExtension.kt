@@ -17,7 +17,7 @@ class OldJ2kConverterExtension : J2kConverterExtension() {
         OldJavaToKotlinConverter(project, settings)
 
     override fun createPostProcessor(formatCode: Boolean): PostProcessor =
-        J2kPostProcessor(formatCode)
+        OldJ2kPostProcessor(formatCode)
 
     override fun createWithProgressProcessor(
         progress: ProgressIndicator?,

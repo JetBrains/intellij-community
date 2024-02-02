@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures.NewJ2k
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.j2k.J2kPostProcessor
+import org.jetbrains.kotlin.j2k.OldJ2kPostProcessor
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -70,7 +70,7 @@ class JavaToKotlinAction : AnAction() {
                     if (forceUsingOldJ2k) OldJavaToKotlinConverter(project, settings)
                     else J2kConverterExtension.extension(NewJ2k.isEnabled).createJavaToKotlinConverter(project, module, settings)
                 val postProcessor =
-                    if (forceUsingOldJ2k) J2kPostProcessor()
+                    if (forceUsingOldJ2k) OldJ2kPostProcessor()
                     else J2kConverterExtension.extension(NewJ2k.isEnabled).createPostProcessor()
                 val progressIndicator = ProgressManager.getInstance().progressIndicator!!
 
