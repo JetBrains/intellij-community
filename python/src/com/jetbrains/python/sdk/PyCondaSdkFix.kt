@@ -11,6 +11,7 @@ import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.io.path.pathString
 
 
@@ -20,7 +21,8 @@ import kotlin.io.path.pathString
  */
 @Suppress("DEPRECATION")
 @JvmOverloads
-internal fun fixPythonCondaSdk(sdk: Sdk, additionalData: SdkAdditionalData, suggestedCondaPath: FullPathOnTarget? = null) {
+@Internal
+fun fixPythonCondaSdk(sdk: Sdk, additionalData: SdkAdditionalData, suggestedCondaPath: FullPathOnTarget? = null) {
   if (additionalData !is PythonSdkAdditionalData) return
   if (sdk.isTargetBased) return
   if (additionalData.flavor is CondaEnvSdkFlavor) return
