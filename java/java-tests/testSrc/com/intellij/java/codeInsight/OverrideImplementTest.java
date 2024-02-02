@@ -1,308 +1,357 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.codeInsight
+package com.intellij.java.codeInsight;
 
-import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
-import com.intellij.codeInsight.generation.OverrideImplementUtil
-import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
-import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.command.CommandProcessor
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.ServiceContainerUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
+public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement"
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement";
   }
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST
+    return JAVA_LATEST;
   }
-  
+
   private void addRecordClass() {
     myFixture.addClass("package java.lang;public abstract class Record {" +
                        "public abstract boolean equals(Object obj);" +
                        "public abstract int hashCode();" +
-                       "public abstract String toString();}")
+                       "public abstract String toString();}");
   }
 
-  void testImplementRecordMethods() { addRecordClass();doTest(true) }
-
-  void testImplementInterfaceMethodsInRecord() { addRecordClass();doTest(true) }
-
-  void testOverrideRecordMethods() { addRecordClass();doTest(false) }
-
-  void testImplementExtensionMethods() { doTest(true) }
-
-  void testOverrideExtensionMethods() { doTest(false) }
-  void testMultipleSuperMethodsThroughGenerics() { doTest(true) }
-
-  void testDoNotImplementExtensionMethods() { doTest(true) }
-  
-  void testExtensionMethods1() { doTest(true) }
-
-  void testExtensionMethods2() { doTest(true) }
-
-  void testSkipUnknownAnnotations() { doTest(true) }
-
-  void testMultipleInheritedThrows() { doTest(false) }
-
-  void testOverrideInInterface() { doTest(false) }
-
-  void testMultipleInheritanceWithThrowables() { doTest(true) }
-
-  void testBrokenMethodDeclaration() {
-    myFixture.addClass("interface A { m();}")
-    def psiClass = myFixture.addClass("class B implements A {<caret>}")
-    assertEmpty(OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass))
+  public void testImplementRecordMethods() {
+    addRecordClass();
+    doTest(true);
   }
 
-  void testImplementInInterface() {
-    myFixture.addClass """\
-interface A {
-    void foo();
-}
-"""
-    def file = myFixture.addClass("""\
-interface B extends A {
-    <caret>
-}
-""").containingFile.virtualFile
-    myFixture.configureFromExistingVirtualFile(file)
-
-    Presentation presentation = new Presentation()
-    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
-    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
-
-    myFixture.checkResult """\
-interface B extends A {
-    @Override
-    default void foo() {
-        <caret>
-    }
-}
-"""
+  public void testImplementInterfaceMethodsInRecord() {
+    addRecordClass();
+    doTest(true);
   }
 
-  void testImplementInAnnotation() {
-    def file = myFixture.addClass("""\
-@interface A {
-    <caret>
-}
-""").containingFile.virtualFile
-    myFixture.configureFromExistingVirtualFile(file)
-
-    Presentation presentation = new Presentation()
-    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
-    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
-
-    myFixture.checkResult """\
-@interface A {
-    <caret>
-}
-"""
+  public void testOverrideRecordMethods() {
+    addRecordClass();
+    doTest(false);
   }
 
-  void testImplementInterfaceWhenClassProvidesProtectedImplementation() {
-    myFixture.addClass """\
-interface A {
-  void f();
-}
-"""
-    myFixture.addClass """\
-class B {
-  protected void f() {}
-}
-"""
+  public void testImplementExtensionMethods() { doTest(true); }
 
-    def file = myFixture.addClass("""\
-class C extends B implements A {
-   <caret>
-}
-""").containingFile.virtualFile
-    myFixture.configureFromExistingVirtualFile(file)
+  public void testOverrideExtensionMethods() { doTest(false); }
 
-    Presentation presentation = new Presentation()
-    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
-    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
+  public void testMultipleSuperMethodsThroughGenerics() { doTest(true); }
 
-    myFixture.checkResult """\
-class C extends B implements A {
-    @Override
-    public void f() {
-        <caret>
-    }
-}
-"""
+  public void testDoNotImplementExtensionMethods() { doTest(true); }
+
+  public void testExtensionMethods1() { doTest(true); }
+
+  public void testExtensionMethods2() { doTest(true); }
+
+  public void testSkipUnknownAnnotations() { doTest(true); }
+
+  public void testMultipleInheritedThrows() { doTest(false); }
+
+  public void testOverrideInInterface() { doTest(false); }
+
+  public void testMultipleInheritanceWithThrowables() { doTest(true); }
+
+  public void testBrokenMethodDeclaration() {
+    myFixture.addClass("interface A { m();}");
+    PsiClass psiClass = myFixture.addClass("class B implements A {<caret>}");
+    UsefulTestCase.assertEmpty(OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass));
   }
 
-  void testImplementSameNamedInterfaces() {
-    myFixture.addClass """\
-class Main1 {
-   interface I {
-      void foo();
-   }
-}
-"""
-    myFixture.addClass """\
-class Main2 {
-   interface I {
-      void bar();
-   }
-}
-"""
+  public void testImplementInInterface() {
+    myFixture.addClass(
+      """
+        interface A {
+            void foo();
+        }""");
+    VirtualFile file = myFixture.addClass(
+      """
+        interface B extends A {
+            <caret>
+        }
+        """).getContainingFile().getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
 
-    def file = myFixture.addClass("""\
-class B implements Main1.I, Main2.I {
-    <caret>
-}
-""").containingFile.virtualFile
-    myFixture.configureFromExistingVirtualFile(file)
+    Presentation presentation = new Presentation();
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"));
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> invokeAction(true), presentation.getText(), null);
 
-    Presentation presentation = new Presentation()
-    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"))
-    CommandProcessor.instance.executeCommand(project, { invokeAction(true) }, presentation.text, null)
-
-    myFixture.checkResult """\
-class B implements Main1.I, Main2.I {
-    @Override
-    public void foo() {
-        <caret>
-    }
-
-    @Override
-    public void bar() {
-
-    }
-}
-"""
+    myFixture.checkResult(
+      """
+        interface B extends A {
+            @Override
+            default void foo() {
+                <caret>
+            }
+        }
+        """);
   }
 
-  void "test overriding overloaded method"() {
-    myFixture.addClass """\
-package bar;
-interface A {
-    void foo(Foo2 f);
-    void foo(Foo1 f);
-}
-"""
-    myFixture.addClass "package bar; class Foo1 {}"
-    myFixture.addClass "package bar; class Foo2 {}"
-    def file = myFixture.addClass("""\
-package bar;
-class Test implements A {
-    public void foo(Foo1 f) {}
-    <caret>
-}
-""").containingFile.virtualFile
-    myFixture.configureFromExistingVirtualFile(file)
+  public void testImplementInAnnotation() {
+    VirtualFile file = myFixture.addClass(
+      """
+        @interface A {
+            <caret>
+        }"""
+    ).getContainingFile().getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
 
-    invokeAction(true)
+    Presentation presentation = new Presentation();
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"));
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> invokeAction(true), presentation.getText(), null);
 
-    myFixture.checkResult """\
-package bar;
-class Test implements A {
-    public void foo(Foo1 f) {}
-
-    @Override
-    public void foo(Foo2 f) {
-        <caret>
-    }
-}
-"""
+    myFixture.checkResult(
+      """
+        @interface A {
+            <caret>
+        }""");
   }
 
-  void testTypeAnnotationsInImplementedMethod() {
-    def handler = new OverrideImplementsAnnotationsHandler() { @Override String[] getAnnotations(@NotNull PsiFile file) { return ["TA"] } }
-    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, testRootDisposable)
 
-    myFixture.addClass """\
-      import java.lang.annotation.*;
-      @Target(ElementType.TYPE_USE)
-      public @interface TA { }""".stripIndent()
+  public void testImplementInterfaceWhenClassProvidesProtectedImplementation() {
+    myFixture.addClass(
+      """
+        interface A {
+          void f();
+        }
+        """);
+    myFixture.addClass(
+      """
+        class B {
+          protected void f() {}
+        }
+        """);
 
-    myFixture.configureByText "test.java", """\
-      import java.util.*;
+    VirtualFile file = myFixture.addClass(
+      """
+        class C extends B implements A {
+           <caret>
+        }
+        """
+    ).getContainingFile().getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
 
-      interface I {
-          @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] p2 @TA(3) []) throws @TA IllegalArgumentException;
-      }
+    Presentation presentation = new Presentation();
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"));
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> invokeAction(true), presentation.getText(), null);
 
-      class C implements I {
-          <caret>
-      }""".stripIndent()
-
-    invokeAction(true)
-
-    myFixture.checkResult """\
-      import java.util.*;
-
-      interface I {
-          @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] p2 @TA(3) []) throws @TA IllegalArgumentException;
-      }
-
-      class C implements I {
-          @Override
-          public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(3) [] @TA(2) [] p2) throws @TA IllegalArgumentException {
-              return null;
-          }
-      }""".stripIndent()
+    myFixture.checkResult(
+      """
+        class C extends B implements A {
+            @Override
+            public void f() {
+                <caret>
+            }
+        }
+        """
+    );
   }
 
-  void testNoCustomOverrideImplementsHandler() {
-    myFixture.addClass """package a; public @interface A { }"""
+  public void testImplementSameNamedInterfaces() {
+    myFixture.addClass(
+      """
+        class Main1 {
+           interface I {
+              void foo();
+           }
+        }
+        """);
+    myFixture.addClass(
+      """
+        class Main2 {
+           interface I {
+              void bar();
+           }
+        }
+        """);
 
-    myFixture.configureByText "test.java", """\
-      import java.util.*;
-      import a.*;
+    VirtualFile file = myFixture.addClass(
+      """
+        class B implements Main1.I, Main2.I {
+            <caret>
+        }
+        """).getContainingFile().getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
 
-      interface I {
-          @A List<String> i(@A String p);
-      }
+    Presentation presentation = new Presentation();
+    presentation.setText(ActionsBundle.message("action.ImplementMethods.text"));
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> invokeAction(true), presentation.getText(), null);
 
-      class C implements I {
-          <caret>
-      }""".stripIndent()
+    myFixture.checkResult(
+      """
+        class B implements Main1.I, Main2.I {
+            @Override
+            public void foo() {
+                <caret>
+            }
 
-    invokeAction(true)
+            @Override
+            public void bar() {
 
-    myFixture.checkResult """\
-      import java.util.*;
-      import a.*;
-
-      interface I {
-          @A List<String> i(@A String p);
-      }
-
-      class C implements I {
-          @Override
-          public List<String> i(String p) {
-              return null;
-          }
-      }""".stripIndent()
+            }
+        }
+        """);
   }
 
-  void testCustomOverrideImplementsHandler() throws Exception {
-    myFixture.addClass """package a; public @interface A { String value();}"""
+  public void test_overriding_overloaded_method() {
+    myFixture.addClass(
+      """
+        package bar;
+        interface A {
+            void foo(Foo2 f);
+            void foo(Foo1 f);
+        }
+        """);
+    myFixture.addClass("package bar; class Foo1 {}");
+    myFixture.addClass("package bar; class Foo2 {}");
+    VirtualFile file = myFixture.addClass(
+      """                                            
+        package bar;
+        class Test implements A {
+            public void foo(Foo1 f) {}
+            <caret>
+        }
+        """
+    ).getContainingFile().getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
 
-    ServiceContainerUtil.registerExtension(ApplicationManager.application, OverrideImplementsAnnotationsHandler.EP_NAME, new OverrideImplementsAnnotationsHandler() {
+    invokeAction(true);
+
+    myFixture.checkResult(
+      """
+        package bar;
+        class Test implements A {
+            public void foo(Foo1 f) {}
+
+            @Override
+            public void foo(Foo2 f) {
+                <caret>
+            }
+        }
+        """);
+  }
+
+  public void testTypeAnnotationsInImplementedMethod() {
+    OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
       @Override
-      String[] getAnnotations(@NotNull PsiFile file) {
-        return ["a.A"]
+      public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"TA"}; }
+    };
+    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+
+    myFixture.addClass(
+      """
+        import java.lang.annotation.*;
+        @Target(ElementType.TYPE_USE)
+        public @interface TA {
+        }
+        """.stripIndent());
+
+    myFixture.configureByText("test.java", """
+      import java.util.*;
+
+      interface I {
+          @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] p2 @TA(3) []) throws @TA IllegalArgumentException;
       }
-    }, myFixture.getTestRootDisposable())
-    myFixture.configureByText "test.java", """\
+
+      class C implements I {
+          <caret>
+      }""".stripIndent());
+
+    invokeAction(true);
+
+    myFixture.checkResult(
+      """
+        import java.util.*;
+
+        interface I {
+            @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(2) [] p2 @TA(3) []) throws @TA IllegalArgumentException;
+        }
+
+        class C implements I {
+            @Override
+            public @TA List<@TA String> i(@TA String p1, @TA(1) int @TA(3) [] @TA(2) [] p2) throws @TA IllegalArgumentException {
+                return null;
+            }
+        }""".stripIndent());
+  }
+
+  public void testNoCustomOverrideImplementsHandler() {
+    myFixture.addClass(
+      """
+        package a;
+        public @interface A {
+        }
+        """);
+
+    myFixture.configureByText("test.java", """
+      import java.util.*;
+      import a.*;
+
+      interface I {
+          @A List<String> i(@A String p);
+      }
+
+      class C implements I {
+          <caret>
+      }""".stripIndent());
+
+    invokeAction(true);
+
+    myFixture.checkResult(
+      """
+        import java.util.*;
+        import a.*;
+
+        interface I {
+            @A List<String> i(@A String p);
+        }
+
+        class C implements I {
+            @Override
+            public List<String> i(String p) {
+                return null;
+            }
+        }""".stripIndent());
+  }
+
+  public void testCustomOverrideImplementsHandler() throws Exception {
+    myFixture.addClass(
+      """
+        package a;
+        public @interface A {
+          String value();
+        }
+        """);
+
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), OverrideImplementsAnnotationsHandler.EP_NAME,
+                                           new OverrideImplementsAnnotationsHandler() {
+                                             @Override
+                                             public String[] getAnnotations(@NotNull PsiFile file) {
+                                               return new String[]{"a.A"};
+                                             }
+                                           }, myFixture.getTestRootDisposable());
+    myFixture.configureByText("test.java", """
       import java.util.*;
       import a.*;
 
@@ -312,49 +361,51 @@ class Test implements A {
 
       class C implements I {
           <caret>
-      }""".stripIndent()
+      }""".stripIndent());
 
-    invokeAction(true)
+    invokeAction(true);
 
-    myFixture.checkResult """\
-      import java.util.*;
-      import a.*;
+    myFixture.checkResult(
+      """
+        import java.util.*;
+        import a.*;
 
-      interface I {
-          @A("") List<String> i(@A("a") String p);
-      }
+        interface I {
+            @A("") List<String> i(@A("a") String p);
+        }
 
-      class C implements I {
-          @A("")
-          @Override
-          public List<String> i(@A("a") String p) {
-              return null;
-          }
-      }""".stripIndent()
+        class C implements I {
+            @A("")
+            @Override
+            public List<String> i(@A("a") String p) {
+                return null;
+            }
+        }""".stripIndent());
   }
 
-  void "test invocation before orphan type parameters does not lead to stub-AST mismatches"() {
-    myFixture.configureByText 'a.java', '''
-public class Test implements Runnable{
-    int i = ; <caret><X>
-}'''
-    invokeAction(true)
-    PsiTestUtil.checkStubsMatchText(file)
-    assert file.text.contains('run()')
+  public void test_invocation_before_orphan_type_parameters_does_not_lead_to_stub_AST_mismatches() {
+    myFixture.configureByText("a.java", """
+      public class Test implements Runnable{
+          int i = ; <caret><X>
+      }""");
+
+    invokeAction(true);
+    PsiTestUtil.checkStubsMatchText(getFile());
+    assert getFile().getText().contains("run()");
   }
 
   private void doTest(boolean toImplement) {
-    String name = getTestName(false)
-    myFixture.configureByFile("before${name}.java")
-    invokeAction(toImplement)
-    myFixture.checkResultByFile("after${name}.java")
+    final String name = getTestName(false);
+    myFixture.configureByFile("before" + name + ".java");
+    invokeAction(toImplement);
+    myFixture.checkResultByFile("after" + name + ".java");
   }
 
   private void invokeAction(boolean toImplement) {
-    int offset = myFixture.getEditor().getCaretModel().getOffset()
-    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false)
-    assert psiClass != null
-    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement)
+    int offset = myFixture.getEditor().getCaretModel().getOffset();
+    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false);
+    assert psiClass != null;
+    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 }
