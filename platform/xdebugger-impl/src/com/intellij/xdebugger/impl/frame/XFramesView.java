@@ -43,6 +43,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAbove;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -731,19 +732,19 @@ public final class XFramesView extends XDebugView {
    * @see #shouldFoldHiddenFrames()
    */
   public static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor,
-                                                                           XDebuggerFramesList.ItemWithSeparatorAbove {
+                                                                           ItemWithSeparatorAbove {
+    private final List<XStackFrame> hiddenFrames;
 
-    private final int hiddenFrameCount;
-    private final @NotNull XStackFrame firstHiddenFrame;
-
-    public HiddenStackFramesItem(int hiddenFrameCount, @NotNull XStackFrame firstHiddenFrame) {
-      this.hiddenFrameCount = hiddenFrameCount;
-      this.firstHiddenFrame = firstHiddenFrame;
+    public HiddenStackFramesItem(List<XStackFrame> hiddenFrames) {
+      this.hiddenFrames = List.copyOf(hiddenFrames);
+      if (hiddenFrames.isEmpty()) {
+        throw new IllegalArgumentException();
+      }
     }
 
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
-      component.append(XDebuggerBundle.message("label.folded.frames", hiddenFrameCount), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      component.append(XDebuggerBundle.message("label.folded.frames", hiddenFrames.size()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       component.setIcon(EmptyIcon.ICON_16);
     }
 
@@ -752,20 +753,22 @@ public final class XFramesView extends XDebugView {
       return null;
     }
 
+    private Optional<ItemWithSeparatorAbove> findFrameWithSeparator() {
+      // We check only the first frame; otherwise, it's not clear what to do.
+      // Might be reconsidered in the future.
+      return hiddenFrames.get(0) instanceof ItemWithSeparatorAbove frame
+             ? Optional.of(frame)
+             : Optional.empty();
+    }
+
     @Override
     public boolean hasSeparatorAbove() {
-      if (firstHiddenFrame instanceof XDebuggerFramesList.ItemWithSeparatorAbove item) {
-        return item.hasSeparatorAbove();
-      }
-      return false;
+      return findFrameWithSeparator().map(ItemWithSeparatorAbove::hasSeparatorAbove).orElse(false);
     }
 
     @Override
     public String getCaptionAboveOf() {
-      if (firstHiddenFrame instanceof XDebuggerFramesList.ItemWithSeparatorAbove item) {
-        return item.getCaptionAboveOf();
-      }
-      return null;
+      return findFrameWithSeparator().map(ItemWithSeparatorAbove::getCaptionAboveOf).orElse(null);
     }
   }
 
