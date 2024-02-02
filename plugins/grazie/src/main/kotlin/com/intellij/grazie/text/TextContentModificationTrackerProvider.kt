@@ -10,5 +10,5 @@ interface TextContentModificationTrackerProvider {
     val EP_NAME: LanguageExtension<TextContentModificationTrackerProvider> = LanguageExtension("com.intellij.grazie.textContentModificationTrackerProvider")
   }
 
-  fun get(psiElement: PsiElement): ModificationTracker?
+  fun getModificationTracker(psiElement: PsiElement): ModificationTracker?
 }
