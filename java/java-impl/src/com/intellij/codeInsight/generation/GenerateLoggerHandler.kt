@@ -134,7 +134,9 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 }
 
 private class PsiTargetClassInfo(clazz: PsiClass) : PsiIntroduceTarget<PsiClass>(clazz) {
-  override fun render(): String = "class ${place?.name ?: throw IllegalStateException("Unable to fetch class name")}"
+  private val className : String = clazz.name ?: throw IllegalStateException("Unable to fetch class name")
+
+  override fun render(): String = "class $className"
 
   override fun getTextRange(): TextRange = place?.identifyingElement?.textRange ?: throw IllegalStateException(
     "Unable to fetch identifier of the class"
