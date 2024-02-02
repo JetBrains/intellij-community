@@ -43,7 +43,7 @@ internal class CreateKotlinCallableAction(
     private val containerClassFqName: FqName? = (getContainer() as? KtClassOrObject)?.fqName
 
     // Note that this property must be initialized after initializing above properties, because it has dependency on them.
-    private val callableDefinitionAsString = buildCallableAsString()
+    private val callableDefinitionAsString: String? = buildCallableAsString()
 
     override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
@@ -65,9 +65,9 @@ internal class CreateKotlinCallableAction(
     override fun getText(): String = myText
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        callableDefinitionAsString?.let { callableDefinition ->
+        if (callableDefinitionAsString != null) {
             val callableInfo = NewCallableInfo(
-                callableDefinition,
+                callableDefinitionAsString,
                 candidatesOfParameterNames,
                 candidatesOfRenderedParameterTypes,
                 candidatesOfRenderedReturnType,
