@@ -96,18 +96,24 @@ class StickyLinesCollector(private val project: Project, private val document: D
 
   private fun isInBanList(element: PsiElement): Boolean {
     // TODO: provide extension point for suppressing/including psi elements
-    if (element.language.displayName == "Kotlin") {
-      // special handling for kotlin to exclude if/else, try/catch
-      // see org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider.Holder,
-      // org.jetbrains.kotlin.KtNodeTypes.THEN, org.jetbrains.kotlin.KtNodeTypes.ELSE, etc
-      val debugName = element.toString()
-      return when (debugName) {
-        "THEN", "ELSE", "WHEN", "FINALLY" -> true
-        "BLOCK", "BODY" -> when (element.parent?.toString()) {
-          "TRY", "FOR", "DO_WHILE", "WHEN_ENTRY" -> true
+    when (element.language.displayName) {
+      "Kotlin" -> {
+        // special handling for kotlin to exclude if/else, try/catch
+        // see org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider.Holder,
+        // org.jetbrains.kotlin.KtNodeTypes.THEN, org.jetbrains.kotlin.KtNodeTypes.ELSE, etc
+        val debugName = element.toString()
+        return when (debugName) {
+          "THEN", "ELSE", "WHEN", "FINALLY" -> true
+          "BLOCK", "BODY" -> when (element.parent?.toString()) {
+            "TRY", "FOR", "DO_WHILE", "WHEN_ENTRY" -> true
+            else -> false
+          }
           else -> false
         }
-        else -> false
+      }
+      "YAML" -> {
+        // exclude root element IDEA-344788
+        return element.toString() == "YAML document"
       }
     }
     return false
