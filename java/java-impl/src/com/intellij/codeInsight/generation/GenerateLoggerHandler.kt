@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.parentsOfType
@@ -96,18 +97,18 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
             availableLoggers.first()
           }).toString(),
         )
-
-        if (!chooseLoggerDialog.showAndGet()) return null
+        chooseLoggerDialog.show()
+        if (chooseLoggerDialog.exitCode != DialogWrapper.OK_EXIT_CODE) return null
 
         JvmLogger.getLoggerByName(chooseLoggerDialog.selectedLogger)
       }
     }
-    saveLoggerOnTheFirstTime(project, selectedLogger)
+    saveLoggerAfterFirstTime(project, selectedLogger)
 
     return selectedLogger
   }
 
-  private fun saveLoggerOnTheFirstTime(project: Project, logger: JvmLogger?) {
+  private fun saveLoggerAfterFirstTime(project: Project, logger: JvmLogger?) {
     if (logger == null) return
     val settings = project.service<JavaSettingsStorage>().state
     if (settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME) {

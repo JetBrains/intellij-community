@@ -12,6 +12,8 @@ import com.intellij.settings.JavaSettingsStorage
 import com.intellij.settings.JvmLoggingConfigurable
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import javax.swing.JComponent
 
 class ChooseLoggerDialogWrapper(
@@ -28,6 +30,11 @@ class ChooseLoggerDialogWrapper(
   init {
     title = JavaBundle.message("dialog.title.choose.logger")
     init()
+  }
+
+  @TestOnly
+  fun setComboBoxItem(@Nls item: String) {
+    comboBox.component.item = item
   }
 
   override fun createCenterPanel(): JComponent {
