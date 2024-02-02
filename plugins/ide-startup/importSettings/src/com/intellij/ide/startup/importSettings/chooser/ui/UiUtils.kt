@@ -14,7 +14,7 @@ object UiUtils {
   const val DEFAULT_BUTTON_HEIGHT: Int = 40
   val POPUP = Key<Boolean>("ImportSetting_OtherOptions_POPUP")
   val DESCRIPTION = Key<@NlsSafe String>("ImportSetting_ProductDescription")
-  val HEADER_FONT: JBFont =  JBFont.label().biggerOn(7f)
+  val HEADER_FONT: JBFont = JBFont.label().biggerOn(7f)
   val HEADER_BORDER = JBUI.Borders.empty(18, 0, 17, 0)
   val CARD_BORDER = JBUI.Borders.empty(0, 19, 13, 19)
 

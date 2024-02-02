@@ -9,13 +9,13 @@ import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
@@ -48,7 +48,7 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
 
   private val pane = JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)).apply {
     add(JLabel(ImportSettingsBundle.message("choose.product.title")).apply {
-      font = Font(font.fontName, Font.PLAIN, JBUIScale.scaleFontSize(24f))
+      font = JBFont.h1()
     })
   }
 
@@ -70,7 +70,7 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
           JBUI.size(UiUtils.DEFAULT_BUTTON_WIDTH, UiUtils.DEFAULT_BUTTON_HEIGHT)
         }
         setMiniMode(false)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
       }
     }
     act.targetComponent = pane

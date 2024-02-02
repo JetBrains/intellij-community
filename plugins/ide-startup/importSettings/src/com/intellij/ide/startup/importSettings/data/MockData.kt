@@ -3,7 +3,6 @@ package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
-import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingDialog
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IProperty

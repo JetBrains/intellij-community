@@ -4,8 +4,10 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
-import com.intellij.ide.startup.importSettings.data.*
-import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
+import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.JBrActionsDataProvider
+import com.intellij.ide.startup.importSettings.data.Product
+import com.intellij.ide.startup.importSettings.data.SyncActionsDataProvider
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Separator
@@ -46,7 +48,7 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
       sync = addActionList(syncProducts, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
     }
 
-/*    sync?.let {
+    sync?.let {
       if (it.isNotEmpty()) {
         arr.addAll(it)
       }
@@ -56,7 +58,7 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
       if (it.isNotEmpty()) {
         arr.addAll(it)
       }
-    }*/
+    }
 
     if (arr.isNotEmpty()) {
       arr.add(Separator())

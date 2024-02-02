@@ -72,6 +72,7 @@ class WizardProgressPage(val progress: PluginImportProgress, val controller: Wiz
                                       ImportSettingsBundle.message("exit.confirm.prompt"))
       .yesText(ImportSettingsBundle.message("stop.import"))
       .noText(CommonBundle.getCancelButtonText())
+      .asWarning()
       .ask(parentComponent)
   }
 }

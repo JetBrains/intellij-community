@@ -55,6 +55,7 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
                                       ApplicationBundle.message("exit.confirm.prompt"))
       .yesText(ApplicationBundle.message("command.exit"))
       .noText(CommonBundle.getCancelButtonText())
+      .asWarning()
       .ask(parentComponent)
   }
 

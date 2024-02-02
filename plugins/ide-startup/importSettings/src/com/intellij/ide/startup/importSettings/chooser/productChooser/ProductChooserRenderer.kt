@@ -3,7 +3,6 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserItemAction
-import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
@@ -22,7 +21,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Dimension
 import javax.swing.*
 
 class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {

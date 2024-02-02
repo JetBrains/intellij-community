@@ -32,6 +32,7 @@ class ImportProgressPage(importFromProduct: DialogImportData, controller: Import
                                       ImportSettingsBundle.message("exit.confirm.prompt"))
       .yesText(ImportSettingsBundle.message("stop.import"))
       .noText(CommonBundle.getCancelButtonText())
+      .asWarning()
       .ask(parentComponent)
   }
 
