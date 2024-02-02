@@ -12,7 +12,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.textmate.bundleProvider"
-                    interface="org.jetbrains.plugins.textmate.TextMateBundleProvider"/>
+                    interface="org.jetbrains.plugins.textmate.api.TextMateBundleProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
