@@ -50,6 +50,8 @@
 
     <supportAvailability implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.MultiplatformSupportAvailability"/>
     <supportAvailability implementation="org.jetbrains.kotlin.idea.highlighter.ScriptingSupportAvailability"/>
+
+    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.ModuleScriptAdditionalIdeaDependenciesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
