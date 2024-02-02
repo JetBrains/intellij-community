@@ -37,7 +37,7 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForS
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyForStatement element) {
-    if (!LanguageLevel.forElement(element.getContainingFile()).isPython2()) {
+    if (!LanguageLevel.forElement(element).isPython2()) {
       final PyTargetExpression forTarget = findSingleForLoopTarget(element);
       final PyReferenceExpression yieldValue = findSingleYieldValue(element);
       if (forTarget != null && yieldValue != null) {
@@ -56,7 +56,7 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForS
       if (source != null) {
         final PyElementGenerator generator = PyElementGenerator.getInstance(context.project());
         final String text = "yield from foo";
-        final PyExpressionStatement exprStmt = generator.createFromText(LanguageLevel.forElement(element.getContainingFile()), PyExpressionStatement.class, text);
+        final PyExpressionStatement exprStmt = generator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class, text);
         final PyExpression expr = exprStmt.getExpression();
         if (expr instanceof PyYieldExpression) {
           final PyExpression yieldValue = ((PyYieldExpression)expr).getExpression();
