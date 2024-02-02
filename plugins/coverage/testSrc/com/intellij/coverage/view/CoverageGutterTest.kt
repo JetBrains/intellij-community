@@ -140,6 +140,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
   private suspend fun getHighlighters(className: String): List<RangeHighlighter>? = withTimeout(1000) {
     CoverageDataAnnotationsManager.getInstance(myProject).allRequestsCompletion.await()
     withContext(Dispatchers.EDT) {
+      CoverageDataAnnotationsManager.getInstance(myProject).allRequestsCompletion.await()
       findEditor(myProject, className).getUserData(CoverageEditorAnnotatorImpl.COVERAGE_HIGHLIGHTERS)
     }
   }
