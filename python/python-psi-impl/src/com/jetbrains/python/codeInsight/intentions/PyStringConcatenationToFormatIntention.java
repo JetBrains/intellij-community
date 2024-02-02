@@ -61,7 +61,7 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
     LanguageLevel languageLevel = LanguageLevel.forElement(element);
     TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(context.project(), context.file());
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
-    for (PyExpression expression: expressions) {
+    for (PyExpression expression : expressions) {
       if (expression == null) {
         return null;
       }
@@ -74,10 +74,12 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
         return null;
       }
     }
-    if (languageLevel.isAtLeast(LanguageLevel.PYTHON27))
+    if (languageLevel.isAtLeast(LanguageLevel.PYTHON27)) {
       return Presentation.of(PyPsiBundle.message("INTN.replace.plus.with.str.format"));
-    else
+    }
+    else {
       return Presentation.of(PyPsiBundle.message("INTN.replace.plus.with.format.operator"));
+    }
   }
 
   @Override
@@ -91,7 +93,7 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
     final LanguageLevel languageLevel = LanguageLevel.forElement(binaryExpression);
     final boolean useFormatMethod = languageLevel.isAtLeast(LanguageLevel.PYTHON27);
 
-    NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"'\\");
+    NotNullFunction<String, String> escaper = StringUtil.escaper(false, "\"'\\");
     StringBuilder stringLiteral = new StringBuilder();
     List<String> parameters = new ArrayList<>();
     Pair<String, String> quotes = Pair.create("\"", "\"");
@@ -116,17 +118,20 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
           value = value.replace("%", "%%");
         }
         stringLiteral.append(escaper.fun(value));
-      } else {
+      }
+      else {
         addParamToString(stringLiteral, paramCount, useFormatMethod);
         parameters.add(expression.getText());
         ++paramCount;
       }
     }
-    if (quotes == null)
+    if (quotes == null) {
       quotes = Pair.create("\"", "\"");
+    }
     stringLiteral.insert(0, quotes.getFirst());
-    if (isUnicode && !StringUtil.toLowerCase(quotes.getFirst()).contains("u"))
+    if (isUnicode && !StringUtil.toLowerCase(quotes.getFirst()).contains("u")) {
       stringLiteral.insert(0, "u");
+    }
     stringLiteral.append(quotes.getSecond());
 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(actionContext.project());
@@ -134,15 +139,15 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
     if (!parameters.isEmpty()) {
       if (useFormatMethod) {
         stringLiteral.append(".format(").append(StringUtil.join(parameters, ",")).append(")");
-
       }
       else {
-        final String paramString = parameters.size() > 1? "(" + StringUtil.join(parameters, ",") +")"
-                                                        : StringUtil.join(parameters, ",");
+        final String paramString = parameters.size() > 1 ? "(" + StringUtil.join(parameters, ",") + ")"
+                                                         : StringUtil.join(parameters, ",");
         stringLiteral.append(" % ").append(paramString);
       }
       final PyExpression expression = elementGenerator.createFromText(LanguageLevel.getDefault(),
-                                                                      PyExpressionStatement.class, stringLiteral.toString()).getExpression();
+                                                                      PyExpressionStatement.class, stringLiteral.toString())
+        .getExpression();
       binaryExpression.replace(expression);
     }
     else {
@@ -156,14 +161,15 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
   private static Collection<PyExpression> getSimpleExpressions(@NotNull PyBinaryExpression expression) {
     List<PyExpression> res = new ArrayList<>();
     if (expression.getLeftExpression() instanceof PyBinaryExpression) {
-      res.addAll(getSimpleExpressions((PyBinaryExpression) expression.getLeftExpression()));
+      res.addAll(getSimpleExpressions((PyBinaryExpression)expression.getLeftExpression()));
     }
     else {
       res.add(expression.getLeftExpression());
     }
     if (expression.getRightExpression() instanceof PyBinaryExpression) {
-      res.addAll(getSimpleExpressions((PyBinaryExpression) expression.getRightExpression()));
-    } else {
+      res.addAll(getSimpleExpressions((PyBinaryExpression)expression.getRightExpression()));
+    }
+    else {
       res.add(expression.getRightExpression());
     }
     return res;
@@ -182,9 +188,11 @@ public final class PyStringConcatenationToFormatIntention extends PsiUpdateModCo
   }
 
   private static void addParamToString(StringBuilder stringLiteral, int i, boolean useFormatMethod) {
-    if (useFormatMethod)
+    if (useFormatMethod) {
       stringLiteral.append("{").append(i).append("}");
-    else
+    }
+    else {
       stringLiteral.append("%s");
+    }
   }
 }
