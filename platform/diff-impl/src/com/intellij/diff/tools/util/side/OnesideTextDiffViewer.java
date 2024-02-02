@@ -199,7 +199,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     }
 
     @Override
-    protected boolean doScrollToLine() {
+    protected boolean doScrollToLine(boolean onSlowRediff) {
       if (myScrollToLine == null) return false;
       Side side = myScrollToLine.first;
       if (side != getSide()) return false;

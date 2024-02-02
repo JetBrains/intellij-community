@@ -1164,7 +1164,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     }
 
     @Override
-    protected boolean doScrollToLine() {
+    protected boolean doScrollToLine(boolean onSlowRediff) {
       if (myScrollToLine == null) return false;
       doScrollToLine(myScrollToLine.first, new LogicalPosition(myScrollToLine.second, 0));
       return true;

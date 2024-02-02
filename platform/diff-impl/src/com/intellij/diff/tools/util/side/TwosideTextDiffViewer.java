@@ -280,6 +280,9 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   @RequiresEdt
   protected void scrollToLine(@NotNull Side side, int line) {
+    LineCol otherCol = transferPosition(side, new LineCol(line));
+    DiffUtil.moveCaret(getEditor(side.other()), otherCol.line);
+
     DiffUtil.scrollEditor(getEditor(side), line, false);
     setCurrentSide(side);
   }
@@ -375,6 +378,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   }
 
   protected abstract class MyInitialScrollPositionHelper extends InitialScrollPositionSupport.TwosideInitialScrollHelper {
+    private boolean myShouldUpdateCaretAfterRediff = false;
+
     @NotNull
     @Override
     protected List<? extends Editor> getEditors() {
@@ -387,11 +392,29 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     }
 
     @Override
-    protected boolean doScrollToLine() {
+    protected boolean doScrollToLine(boolean onSlowRediff) {
       if (myScrollToLine == null) return false;
 
       scrollToLine(myScrollToLine.first, myScrollToLine.second);
+      myShouldUpdateCaretAfterRediff = onSlowRediff; // move other caret to correct position when we know it
+
       return true;
+    }
+
+    @Override
+    public void onRediff() {
+      super.onRediff();
+
+      if (myShouldUpdateCaretAfterRediff && myScrollToLine != null) {
+        myShouldUpdateCaretAfterRediff = false;
+        Side currentSide = getCurrentSide();
+        Side side = myScrollToLine.first;
+        int line = myScrollToLine.second;
+        if (currentSide == side) {
+          LineCol otherCol = transferPosition(side, new LineCol(line));
+          DiffUtil.moveCaret(getEditor(side.other()), otherCol.line);
+        }
+      }
     }
   }
 }
