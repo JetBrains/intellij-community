@@ -7,11 +7,14 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.BeanBinding
 import com.jetbrains.python.testing.PyAbstractTestConfiguration
 import com.jetbrains.python.testing.PyAbstractTestSettingsEditor
 import com.jetbrains.python.testing.PyTestSharedForm
 import com.jetbrains.python.reflection.getProperties
+import com.jetbrains.python.testing.PyAbstractTestConfigurationFragmentedEditor
+
 
 class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionConfigurationFactory)
   : PyAbstractTestConfiguration(project, factory) {
@@ -47,7 +50,12 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
   }
 
   override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> {
-    return object : PyAbstractTestSettingsEditor(PyTestSharedForm.create(this)) {}
+    return if (Registry.`is`("pytest.new.run.config", false)) {
+      PyAbstractTestConfigurationFragmentedEditor(this)
+    } else {
+      object : PyAbstractTestSettingsEditor(PyTestSharedForm.create(this)) {}
+    }
   }
 
+  override fun isNewUiSupported(): Boolean = true
 }

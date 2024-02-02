@@ -71,7 +71,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
 
   override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> {
     return if (Registry.`is`("pytest.new.run.config", false)) {
-      PyTestConfigurationFragmentedEditor(this)
+      PyAbstractTestConfigurationFragmentedEditor(this)
     } else {
       PyTestSettingsEditor(this)
     }

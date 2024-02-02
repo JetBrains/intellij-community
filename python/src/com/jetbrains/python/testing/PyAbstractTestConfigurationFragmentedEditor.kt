@@ -11,18 +11,29 @@ import com.intellij.ui.components.TextComponentEmptyText
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.configuration.AbstractPyRunConfigTargetChooserFragment
 import com.jetbrains.python.run.configuration.AbstractPythonConfigurationFragmentedEditor
+import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectTestConfiguration
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 
 
-class PyTestConfigurationFragmentedEditor(runConfiguration: PyAbstractTestConfiguration) :
+class PyAbstractTestConfigurationFragmentedEditor(runConfiguration: PyAbstractTestConfiguration) :
   AbstractPythonConfigurationFragmentedEditor<PyAbstractTestConfiguration>(runConfiguration) {
 
-  @Nls private val groupName = "PyTest"
+  @Nls private val groupName = when (runConfiguration) {
+    is PyTestConfiguration -> PyBundle.message("runcfg.pytest.parameters.group.name")
+    is PyAutoDetectTestConfiguration -> PyBundle.message("runcfg.autodetect.parameters.group.name")
+    else -> PyBundle.message("runcfg.test.unknown.group")
+  }
 
   init {
     // Inherited from 'PyAbstractTestConfiguration' to maintain compatibility with older UI.
-    require(runConfiguration is PyTestConfiguration) { "Configuration is not PyTestConfiguration" }
+    require(
+      runConfiguration is PyTestConfiguration
+      || runConfiguration is PyAutoDetectTestConfiguration)
+    {
+      "PyAbstractTestConfigurationFragmentedEditor is supported only" +
+      "for PyTestConfiguration and PyAutoDetectTestConfiguration"
+    }
   }
 
   override fun customizeFragments(fragments: MutableList<SettingsEditorFragment<PyAbstractTestConfiguration, *>>) {
@@ -32,10 +43,11 @@ class PyTestConfigurationFragmentedEditor(runConfiguration: PyAbstractTestConfig
     val additionalOptionsFragment = createAdditionalArgumentsFragment()
     fragments.add(additionalOptionsFragment)
 
-    val keywordsFragment = createKeywordsFragment()
-    fragments.add(keywordsFragment)
-
-    addParametersFragment(fragments)
+    if (runConfiguration is PyTestConfiguration) {
+      val keywordsFragment = createKeywordsFragment()
+      fragments.add(keywordsFragment)
+      addParametersFragment(fragments)
+    }
   }
 
   private fun createAdditionalArgumentsFragment(): SettingsEditorFragment<PyAbstractTestConfiguration, *> {
