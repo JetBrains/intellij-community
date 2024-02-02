@@ -8,7 +8,7 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
 
 class TerminalPromptModel(private val session: BlockTerminalSession) {
-  private val listeners: MutableList<TerminalPromptStateListener> = CopyOnWriteArrayList()
+  private val listeners: MutableList<TerminalPromptModelListener> = CopyOnWriteArrayList()
   private val renderer: TerminalPromptRenderer = BuiltInPromptRenderer(session)
 
   var renderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
@@ -28,12 +28,12 @@ class TerminalPromptModel(private val session: BlockTerminalSession) {
     })
   }
 
-  fun addListener(listener: TerminalPromptStateListener, disposable: Disposable) {
+  fun addListener(listener: TerminalPromptModelListener, disposable: Disposable) {
     TerminalUtil.addItem(listeners, listener, disposable)
   }
 }
 
-interface TerminalPromptStateListener {
+interface TerminalPromptModelListener {
   fun promptStateUpdated(renderingInfo: PromptRenderingInfo)
 }
 

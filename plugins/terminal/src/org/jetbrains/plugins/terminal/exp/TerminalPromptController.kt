@@ -50,7 +50,7 @@ class TerminalPromptController(
 
     commandHistoryManager = CommandHistoryManager(session)
 
-    promptModel.addListener(object : TerminalPromptStateListener {
+    promptModel.addListener(object : TerminalPromptModelListener {
       override fun promptStateUpdated(renderingInfo: PromptRenderingInfo) {
         listeners.forEach { it.promptContentUpdated(renderingInfo) }
       }
