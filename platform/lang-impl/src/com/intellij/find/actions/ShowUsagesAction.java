@@ -110,6 +110,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
+import static com.intellij.find.actions.SearchOptionsService.SearchVariant.SHOW_USAGES;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.actions.ShowUsagesUtilsKt.getEditorFor;
 import static com.intellij.find.actions.ShowUsagesUtilsKt.navigateAndHint;
@@ -294,6 +295,15 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                        createActionHandler(handler, options, title));
   }
 
+  @ApiStatus.Internal
+  public static @NotNull Future<Collection<Usage>> startFindUsagesWithResult(@NotNull Project project,
+                                                                             @NotNull SearchTarget target,
+                                                                             @NotNull RelativePoint popupPosition,
+                                                                             @Nullable Editor editor,
+                                                                             @NotNull SearchScope searchScope) {
+    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), createActionHandler(project, searchScope, target));
+  }
+
   public static void startFindUsages(@NotNull PsiElement element, @NotNull RelativePoint popupPosition, @Nullable Editor editor) {
     ReadAction.nonBlocking(() -> getUsagesTitle(element))
       .expireWhen(() -> editor != null && editor.isDisposed())
@@ -471,6 +481,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         return true;
       }
     };
+  }
+
+  private static @NotNull ShowUsagesActionHandler createActionHandler(@NotNull Project project, @NotNull SearchScope searchScope, @NotNull SearchTarget target) {
+    return new ShowTargetUsagesActionHandler(project, target, SearchOptionsServiceKt.getSearchOptions(SHOW_USAGES, target, searchScope));
   }
 
   static void showElementUsages(@NotNull ShowUsagesParameters parameters, @NotNull ShowUsagesActionHandler actionHandler) {

@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.find.usages.impl.searchTargets
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -10,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.usages.Usage
 import com.jetbrains.performancePlugin.PerformanceTestSpan
@@ -40,6 +42,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
     val options = FindUsagesArguments()
     Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit= 2) }.toTypedArray())
 
+    val project = context.project
     val position = options.position
     val elementName = options.expectedName
     if (position != null) {
@@ -51,53 +54,69 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
     }
 
     val currentOTContext = Context.current()
-    var findUsagesFuture: Future<Collection<Usage>>
+    var findUsagesFuture: Future<Collection<Usage>>? = null
     val storedPageSize = AdvancedSettings.getInt("ide.usages.page.size")
     val spanBuilder = PerformanceTestSpan.getTracer(isWarmupMode).spanBuilder(PARENT_SPAN_NAME).setParent(PerformanceTestSpan.getContext())
     var spanRef: Span? = null
     var scopeRef: Scope? = null
     withContext(Dispatchers.EDT) {
       currentOTContext.makeCurrent().use {
-        val editor = FileEditorManager.getInstance(context.project).selectedTextEditor
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor
         if (editor == null) {
           throw Exception("No editor is opened")
         }
+
         val offset = editor.caretModel.offset
-        val element = smartReadAction(context.project) {
+
+        AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100; we need to find all usages to compare
+        val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
+        val scope = FindUsagesOptions.findScopeByName(project, null, options.scope)
+
+        val element = smartReadAction(project) {
           if (GotoDeclarationAction.findElementToShowUsagesOf(editor, offset) == null) {
-            GotoDeclarationAction.findTargetElement(context.project, editor, offset)
+            GotoDeclarationAction.findTargetElement(project, editor, offset)
           }
           else {
             GotoDeclarationAction.findElementToShowUsagesOf(editor, offset)
           }
         }
-        if (element == null) {
-          throw Exception("Can't find an element under $offset offset.")
+        if (element != null) {
+          LOG.info("Command find usages is called on element $element")
+
+          if (!elementName.isNullOrEmpty()) {
+            val foundElementName = (element as PsiNamedElement).name
+            check(foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
+          }
+
+          spanRef = spanBuilder.startSpan()
+          scopeRef = spanRef!!.makeCurrent()
+
+          findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(element, popupPosition, editor, scope)
         }
 
-        val foundElementName = (element as PsiNamedElement).name
-        if (!elementName.isNullOrEmpty()) {
-          check(
-            foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
+        val searchTargets = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, offset) }
+        if (!searchTargets.isNullOrEmpty()) {
+          val target = searchTargets.first()
+
+          LOG.info("Command find usages is called on target $target")
+
+          spanRef = spanBuilder.startSpan()
+          scopeRef = spanRef!!.makeCurrent()
+
+          findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(project, target, popupPosition, editor, scope)
         }
-        LOG.info("Command find usages is called on element $element")
 
-        val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
-
-        //configuration for find usages
-        AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100; we need to find all usages to compare
-        val scope = FindUsagesOptions.findScopeByName(context.project, null, options.scope)
-        spanRef = spanBuilder.startSpan()
-        scopeRef = spanRef!!.makeCurrent()
-        findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(element, popupPosition, editor, scope)
+        if (findUsagesFuture == null) {
+          throw Exception("Can't find an element or search target under $offset offset.")
+        }
       }
-
     }
-    val results = findUsagesFuture.get()
+
+    val results = findUsagesFuture!!.get()
     spanRef!!.end()
     scopeRef!!.close()
     AdvancedSettings.setInt("ide.usages.page.size", storedPageSize)
-    FindUsagesDumper.storeMetricsDumpFoundUsages(results.toMutableList(), context.project)
+    FindUsagesDumper.storeMetricsDumpFoundUsages(results.toMutableList(), project)
   }
 
   override fun getName(): String = PREFIX
