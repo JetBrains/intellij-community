@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.plugins.textmate.configuration.TextMatePersistentBundle
 
@@ -9,8 +10,12 @@ class TextMateServiceImplExtensions {
       val bundleProviders = TextMateBundleProvider.EP_NAME.extensionList
       val bundles = mutableMapOf<String, TextMatePersistentBundle>()
       for (provider in bundleProviders) {
-        provider.provideBundles().forEach {
-          bundles[it.key] = TextMatePersistentBundle(it.value.name, true)
+        try {
+          provider.provideBundles().forEach {
+            bundles[it.key] = TextMatePersistentBundle(it.value.name, true)
+          }
+        } catch (e: Exception) {
+          thisLogger().error("${provider} failed", e)
         }
       }
       return bundles
