@@ -33,7 +33,7 @@ class BlackFormatterActionOnSave : ActionOnSave() {
 
   override fun isEnabledForProject(project: Project): Boolean = Registry.`is`("black.formatter.support.enabled")
 
-  override fun processDocuments(project: Project, documents: Array<Document?>) {
+  override fun processDocuments(project: Project, documents: Array<Document>) {
     val blackConfig = BlackFormatterConfiguration.getBlackConfiguration(project)
     if (!blackConfig.enabledOnSave) return
 
@@ -43,7 +43,7 @@ class BlackFormatterActionOnSave : ActionOnSave() {
       return
     }
 
-    formatMultipleDocuments(project, sdk, blackConfig, documents.filterNotNull().toList())
+    formatMultipleDocuments(project, sdk, blackConfig, documents.toList())
   }
 
   private fun formatMultipleDocuments(project: Project,
