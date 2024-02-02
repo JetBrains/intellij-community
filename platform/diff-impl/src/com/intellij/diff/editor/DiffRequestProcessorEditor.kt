@@ -6,9 +6,13 @@ import com.intellij.diff.impl.DiffRequestProcessorListener
 import com.intellij.diff.tools.combined.editors
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.FileEditorWithTextEditors
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.text.TextEditorState
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
 
@@ -36,6 +40,20 @@ open class DiffRequestProcessorEditor(
     super.dispose()
   }
 
+  override fun getState(level: FileEditorStateLevel): FileEditorState {
+    if (!Registry.`is`(DIFF_IN_NAVIGATION_HISTORY_KEY)) {
+      return FileEditorState.INSTANCE
+    }
+
+    return processor.getState(level)
+  }
+
+  override fun setState(state: FileEditorState) {
+    if (!Registry.`is`(DIFF_IN_NAVIGATION_HISTORY_KEY) || state !is DiffRequestProcessorEditorState) return
+
+    processor.setState(state)
+  }
+
   override fun getPreferredFocusedComponent(): JComponent? = processor.preferredFocusedComponent
 
   override fun selectNotify() {
@@ -54,4 +72,14 @@ open class DiffRequestProcessorEditor(
   override fun getEmbeddedEditors(): List<Editor> {
     return processor.activeViewer?.editors.orEmpty()
   }
+}
+
+data class DiffRequestProcessorEditorState(
+  val embeddedEditorStates: List<TextEditorState>
+) : FileEditorState {
+  override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean =
+    otherState is DiffRequestProcessorEditorState &&
+    embeddedEditorStates.zip(otherState.embeddedEditorStates).all { (l, r) -> l.canBeMergedWith(r, level) }
+
+  override fun toString(): String = embeddedEditorStates.joinToString()
 }

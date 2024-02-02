@@ -7,6 +7,8 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
+import com.intellij.diff.editor.DiffRequestProcessorEditor;
+import com.intellij.diff.editor.DiffRequestProcessorEditorState;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
@@ -38,6 +40,9 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -676,6 +681,30 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   public @NotNull DiffContext getContext() {
     return myContext;
+  }
+
+  public void setState(@NotNull DiffRequestProcessorEditorState state) {
+    DiffViewer viewer = getActiveViewer();
+    if (!(viewer instanceof EditorDiffViewer)) return;
+
+    var editors = ((EditorDiffViewer)viewer).getEditors();
+    var editorStates = state.getEmbeddedEditorStates();
+
+    TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
+    for (int i = 0; i < Math.min(editorStates.size(), editors.size()); i++) {
+      textEditorProvider.setStateImpl(myProject, editors.get(i), editorStates.get(i), true);
+    }
+  }
+
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    DiffViewer viewer = getActiveViewer();
+    if (!(viewer instanceof EditorDiffViewer)) return FileEditorState.INSTANCE;
+
+    List<? extends Editor> editors = ((EditorDiffViewer)viewer).getEditors();
+
+    TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
+    return new DiffRequestProcessorEditorState(ContainerUtil.map(editors, (editor) ->
+      textEditorProvider.getStateImpl(null, editor, level)));
   }
 
   public @Nullable DiffViewer getActiveViewer() {

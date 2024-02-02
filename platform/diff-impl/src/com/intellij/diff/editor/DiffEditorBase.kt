@@ -25,6 +25,7 @@ abstract class DiffEditorBase(
 ) : FileEditorBase() {
   companion object {
     private val LOG = logger<DiffEditorBase>()
+    const val DIFF_IN_NAVIGATION_HISTORY_KEY = "include.diffs.in.navigation.history"
   }
 
   private val panel = MyPanel(component)

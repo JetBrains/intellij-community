@@ -11,6 +11,9 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Dimension
@@ -47,6 +50,31 @@ open class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   internal fun getPreferredFocusedComponent() = mainUi.getPreferredFocusedComponent()
 
   internal fun getMainComponent() = mainUi.getComponent()
+
+  internal fun getState(level: FileEditorStateLevel): FileEditorState {
+    val viewer = combinedViewer
+    if (viewer == null) return FileEditorState.INSTANCE
+
+    val textEditorProvider = TextEditorProvider.getInstance()
+    return CombinedDiffEditorState(
+      model.requests.map { it.id }.toSet(),
+      viewer.getCurrentBlockId(),
+      viewer.getCurrentDiffViewer()?.editors?.map { textEditorProvider.getStateImpl(null, it, level) } ?: listOf()
+    )
+  }
+
+  internal fun setState(state: CombinedDiffEditorState) {
+    val viewer = combinedViewer ?: return
+    if (model.requests.map { it.id }.toSet() != state.currentBlockIds) return
+
+    val textEditorProvider = TextEditorProvider.getInstance()
+    state.activeEditorStates.zip(viewer.getDiffViewerForId(state.activeBlockId)?.editors ?: listOf()) { st, editor ->
+      textEditorProvider.setStateImpl(null, editor, st, true)
+    }
+
+    viewer.selectDiffBlock(state.activeBlockId, true)
+    viewer.scrollToCaret()
+  }
 
   private fun createMainUI(): CombinedDiffMainUI {
     return CombinedDiffMainUI(model, createGoToChangeAction()).also { ui ->

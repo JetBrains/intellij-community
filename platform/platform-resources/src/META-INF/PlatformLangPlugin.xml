@@ -148,6 +148,9 @@
     <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
   </extensions>
 
+  <xi:include href="/META-INF/diff-impl.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/VCS.xml">
     <xi:fallback/>
   </xi:include>
