@@ -144,7 +144,8 @@ fun Project.guessProjectDir() : VirtualFile? {
     return null
   }
 
-  val baseDirectory = getBaseDirectories().firstOrNull()
+  val baseDirectories = getBaseDirectories()
+  val baseDirectory = baseDirectories.firstOrNull { it.fileSystem is LocalFileSystem } ?: baseDirectories.firstOrNull()
   if (baseDirectory != null) {
     return baseDirectory
   }
