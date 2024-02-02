@@ -72,6 +72,8 @@ internal object ConversionsRunner {
         updateProgress: (conversionIndex: Int, conversionCount: Int, fileIndex: Int, description: String) -> Unit
     ) {
         val conversions = createConversions(context)
+        val applyingConversionsMessage: String = KotlinNJ2KBundle.message("j2k.applying.conversions")
+
         for ((conversionIndex, conversion) in conversions.withIndex()) {
             val treeSequence = trees.asSequence().onEachIndexed { index, _ ->
                 updateProgress(conversionIndex, conversions.size, index, applyingConversionsMessage)
@@ -81,5 +83,3 @@ internal object ConversionsRunner {
         }
     }
 }
-
-private val applyingConversionsMessage: String = KotlinNJ2KBundle.message("j2k.applying.conversions")

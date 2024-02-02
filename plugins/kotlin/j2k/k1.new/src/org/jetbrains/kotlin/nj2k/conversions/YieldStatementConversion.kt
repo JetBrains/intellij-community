@@ -10,12 +10,12 @@ import org.jetbrains.kotlin.nj2k.tree.*
 internal class YieldStatementConversion(context: NewJ2kConverterContext) :
     RecursiveConversionWithData<Boolean>(context, initialData = false) {
 
-    override fun applyToElementWithData(element: JKTreeElement, data: Boolean /* is yield allowed */): JKTreeElement {
+    override fun applyToElement(element: JKTreeElement, data: Boolean /* is yield allowed */): JKTreeElement {
         when (element) {
-            is JKKtWhenExpression -> return recurseWithData(element, data = true)
-            is JKMethod -> return recurseWithData(element, data = false)
-            is JKLambdaExpression -> return recurseWithData(element, data = false)
-            !is JKJavaYieldStatement -> return recurseWithData(element, data)
+            is JKKtWhenExpression -> return recurse(element, data = true)
+            is JKMethod -> return recurse(element, data = false)
+            is JKLambdaExpression -> return recurse(element, data = false)
+            !is JKJavaYieldStatement -> return recurse(element, data)
         }
         element.invalidate()
 
@@ -26,6 +26,6 @@ internal class YieldStatementConversion(context: NewJ2kConverterContext) :
             JKErrorStatement(element.psi, "yield is not allowed outside switch expression")
         }
 
-        return recurseWithData(newElement, data = false)
+        return recurse(newElement, data = false)
     }
 }
