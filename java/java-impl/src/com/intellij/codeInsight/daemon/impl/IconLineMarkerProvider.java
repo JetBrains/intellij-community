@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.ProjectIconsAccessor;
@@ -88,13 +89,15 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   private static boolean hasIconTypeExpressions(@NotNull List<? extends PsiElement> elements) {
-    Set<PsiType> uniqueValues = new HashSet<>();
+    Set<PsiClassType> uniqueValues = new HashSet<>();
     for (PsiElement e : elements) {
       UCallExpression element = UastContextKt.toUElement(e, UCallExpression.class);
       if (element != null) {
         PsiType type = element.getExpressionType();
-        if (uniqueValues.add(type)) {
-          if (ProjectIconsAccessor.isIconClassType(type)) {
+        if (type instanceof PsiClassType) {
+          if (uniqueValues.add((PsiClassType)type)
+              && type.isValid()
+              && ProjectIconsAccessor.isIconClassType(type)) {
             return true;
           }
         }
