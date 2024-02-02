@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static git4idea.GitNotificationIdsHolder.UNSTASH_WITH_CONFLICTS;
+import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabAvailable;
+import static git4idea.stash.ui.GitStashContentProviderKt.showStashes;
 
 public class GitStashChangesSaver extends GitChangesSaver {
 
@@ -113,7 +115,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   public void showSavedChanges() {
-    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
+    if (isStashTabAvailable()) {
+      showStashes(myProject);
+    } else {
+      GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
+    }
   }
 
   @Override
@@ -152,8 +158,12 @@ public class GitStashChangesSaver extends GitChangesSaver {
         .setDisplayId(UNSTASH_WITH_CONFLICTS)
         .addAction(NotificationAction.createSimple(
           GitBundle.messagePointer("stash.unstash.unresolved.conflict.warning.notification.show.stash.action"), () -> {
-            // we don't use #showSavedChanges to specify unmerged root first
-            GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
+            if (isStashTabAvailable()) {
+              showStashes(myProject);
+            } else {
+              // we don't use #showSavedChanges to specify unmerged root first
+              GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
+            }
           }))
         .addAction(NotificationAction.createSimple(
           GitBundle.messagePointer("stash.unstash.unresolved.conflict.warning.notification.resolve.conflicts.action"), () -> {
