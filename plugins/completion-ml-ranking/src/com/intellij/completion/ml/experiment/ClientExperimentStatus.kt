@@ -11,45 +11,45 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ResourceUtil
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-class ClientExperimentStatus : ExperimentStatus {
-  companion object {
-    private const val EXPERIMENT_DISABLED_PROPERTY_KEY = "ml.completion.experiment.disabled"
-    private const val EXPERIMENT_DISABLED_BY_EVALUATION_ENV = "EVALUATION_ML_EXPERIMENT_DISABLED"
+private const val EXPERIMENT_DISABLED_PROPERTY_KEY = "ml.completion.experiment.disabled"
+private const val EXPERIMENT_DISABLED_BY_EVALUATION_ENV = "EVALUATION_ML_EXPERIMENT_DISABLED"
 
-    fun loadExperimentInfo(): ExperimentConfig {
-      try {
-        if (!ApplicationManager.getApplication().isEAP) {
-          return ExperimentConfig.disabledExperiment()
-        }
-
-        val data = ResourceUtil.getResourceAsBytes("experiment.json", ClientExperimentStatus::class.java.classLoader)!!
-        val experimentInfo = Json.Default.decodeFromString(ExperimentConfig.serializer(), data.toString(Charsets.UTF_8))
-        checkExperimentGroups(experimentInfo)
-        return experimentInfo
-      }
-      catch (e: Throwable) {
-        logger<ClientExperimentStatus>().error("Error on loading ML Completion experiment info", e)
-        return ExperimentConfig.disabledExperiment()
-      }
+@ApiStatus.Internal
+fun loadExperimentInfo(): ExperimentConfig {
+  try {
+    if (!ApplicationManager.getApplication().isEAP) {
+      return ExperimentConfig.disabledExperiment()
     }
 
-    private fun checkExperimentGroups(experimentInfo: ExperimentConfig) {
-      for (group in experimentInfo.groups) {
-        if (group.showArrows) assert(group.useMLRanking) { "Showing arrows requires ML ranking" }
-        if (group.useMLRanking) assert(group.calculateFeatures) { "ML ranking requires calculating features" }
-      }
-      for (language in experimentInfo.languages) {
-        assert(language.includeGroups.size <= language.experimentBucketsCount)
-        { "Groups count must be less than the total number of buckets (${language.id})" }
-        assert(language.includeGroups.all { number ->
-          experimentInfo.groups.any { it.number == number }
-        }) { "Group included for language (${language.id}) should be among general list of groups" }
-      }
-    }
+    val data = ResourceUtil.getResourceAsBytes("experiment.json", ClientExperimentStatus::class.java.classLoader)!!
+    val experimentInfo = Json.Default.decodeFromString(ExperimentConfig.serializer(), data.toString(Charsets.UTF_8))
+    checkExperimentGroups(experimentInfo)
+    return experimentInfo
   }
+  catch (e: Throwable) {
+    logger<ClientExperimentStatus>().error("Error on loading ML Completion experiment info", e)
+    return ExperimentConfig.disabledExperiment()
+  }
+}
 
+private fun checkExperimentGroups(experimentInfo: ExperimentConfig) {
+  for (group in experimentInfo.groups) {
+    if (group.showArrows) assert(group.useMLRanking) { "Showing arrows requires ML ranking" }
+    if (group.useMLRanking) assert(group.calculateFeatures) { "ML ranking requires calculating features" }
+  }
+  for (language in experimentInfo.languages) {
+    assert(language.includeGroups.size <= language.experimentBucketsCount)
+    { "Groups count must be less than the total number of buckets (${language.id})" }
+    assert(language.includeGroups.all { number ->
+      experimentInfo.groups.any { it.number == number }
+    }) { "Group included for language (${language.id}) should be among general list of groups" }
+  }
+}
+
+internal class ClientExperimentStatus : ExperimentStatus {
   private val experimentConfig: ExperimentConfig = loadExperimentInfo()
   private val languageToGroup: MutableMap<String, ExperimentInfo> = HashMap()
   private val isDisabledByEvaluation: Boolean = System.getenv(EXPERIMENT_DISABLED_BY_EVALUATION_ENV)?.toBooleanStrictOrNull() ?: false

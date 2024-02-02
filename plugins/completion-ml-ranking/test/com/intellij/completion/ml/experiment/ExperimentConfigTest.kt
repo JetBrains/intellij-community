@@ -8,7 +8,7 @@ import org.assertj.core.api.Assertions
 class ExperimentConfigTest : LightIdeaTestCase() {
 
   fun `test experiment info is correct`() {
-    val experimentConfig = ClientExperimentStatus.loadExperimentInfo()
+    val experimentConfig = loadExperimentInfo()
 
     if (!ApplicationManager.getApplication().isEAP) {
       Assertions.assertThat(experimentConfig).isEqualTo(ExperimentConfig.disabledExperiment())
