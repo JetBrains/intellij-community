@@ -96,7 +96,7 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     context: PsiElement,
 ): KtNamedDeclaration {
     val converterExtension = J2kConverterExtension.extension(useNewJ2k = true)
-    val postProcessor = converterExtension.createPostProcessor(formatCode = true)
+    val postProcessor = converterExtension.createPostProcessor()
     val processor = converterExtension.createWithProgressProcessor(
         progress = ProgressManager.getInstance().progressIndicator,
         files = listOf(referenced.containingFile as PsiJavaFile),

@@ -342,7 +342,7 @@ fun runPostProcessing(
     converterContext: ConverterContext?,
     useNewJ2k: Boolean
 ) {
-    val postProcessor = J2kConverterExtension.extension(useNewJ2k).createPostProcessor(formatCode = true)
+    val postProcessor = J2kConverterExtension.extension(useNewJ2k).createPostProcessor()
     if (useNewJ2k) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             {

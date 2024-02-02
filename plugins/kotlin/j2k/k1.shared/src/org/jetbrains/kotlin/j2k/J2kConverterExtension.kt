@@ -18,7 +18,7 @@ abstract class J2kConverterExtension {
         settings: ConverterSettings
     ): JavaToKotlinConverter
 
-    abstract fun createPostProcessor(formatCode: Boolean): PostProcessor
+    abstract fun createPostProcessor(formatCode: Boolean = true): PostProcessor
 
     open fun doCheckBeforeConversion(project: Project, module: Module): Boolean =
         true

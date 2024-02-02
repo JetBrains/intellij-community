@@ -70,8 +70,8 @@ class JavaToKotlinAction : AnAction() {
                     if (forceUsingOldJ2k) OldJavaToKotlinConverter(project, settings)
                     else J2kConverterExtension.extension(NewJ2k.isEnabled).createJavaToKotlinConverter(project, module, settings)
                 val postProcessor =
-                    if (forceUsingOldJ2k) J2kPostProcessor(formatCode = true)
-                    else J2kConverterExtension.extension(NewJ2k.isEnabled).createPostProcessor(formatCode = true)
+                    if (forceUsingOldJ2k) J2kPostProcessor()
+                    else J2kConverterExtension.extension(NewJ2k.isEnabled).createPostProcessor()
                 val progressIndicator = ProgressManager.getInstance().progressIndicator!!
 
                 val conversionTime = measureTimeMillis {

@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
-class J2kPostProcessor(private val formatCode: Boolean) : PostProcessor {
+class J2kPostProcessor(private val formatCode: Boolean = true) : PostProcessor {
 
     override val phasesCount: Int = 1
 
