@@ -307,7 +307,7 @@ public final class UpperClass {
 
 
     private static void request1(String number) {
-        System.out.println("com.example.UpperClass${"\$Inner"} test");
+        System.out.println("com.example.UpperClass${'$'}Inner test");
         Inner.log.info("new request1 {}", number);
     }
 }
@@ -315,8 +315,8 @@ public final class UpperClass {
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
-        LogItem("com.example.UpperClass${"\$Inner"} test", LogicalPosition(6, 24)),
-        LogItem("[main] INFO com.example.UpperClass${"\$Inner"} -- new request1 1", LogicalPosition(17, 8)),
+        LogItem("com.example.UpperClass\$Inner test", LogicalPosition(6, 24)),
+        LogItem("[main] INFO com.example.UpperClass\$Inner -- new request1 1", LogicalPosition(17, 8)),
       )
     )
   }
@@ -344,7 +344,7 @@ public final class UpperClass {
 
 
     private static void request1(String number) {
-        System.out.println("com.example.UpperClass${"\$Inner"}${"\$Inner2"} test");
+        System.out.println("com.example.UpperClass${'$'}Inner${'$'}Inner2 test");
         Inner.Inner2.log.info("new request1 {}", number);
     }
 }
@@ -352,8 +352,8 @@ public final class UpperClass {
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
-        LogItem("com.example.UpperClass${"\$Inner"}${"\$Inner2"} test", LogicalPosition(7, 26)),
-        LogItem("[main] INFO com.example.UpperClass${"\$Inner"}${"\$Inner2"} -- new request1 1", LogicalPosition(19, 8)),
+        LogItem("com.example.UpperClass\$Inner\$Inner2 test", LogicalPosition(7, 26)),
+        LogItem("[main] INFO com.example.UpperClass\$Inner\$Inner2 -- new request1 1", LogicalPosition(19, 8)),
       )
     )
   }
@@ -369,24 +369,68 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class UpperClass {
-	private static final Logger logger = LoggerFactory.getLogger(UpperClass.class);
+  private static final Logger logger = LoggerFactory.getLogger(UpperClass.class);
 
-  
+
+  public static void main(String[] args) {
+    class LocalClass{
+      public LocalClass() {
+        System.out.println(this.getClass().getCanonicalName());
+      }
+    }
+    new LocalClass();
+    System.out.println("class com.example.UpperClass${'$'}1LocalClass");
+  }
+}
+""".trimIndent(),
+      logItems = listOf(
+        LogItem("java.exe", null),
+        LogItem("1", null),
+        LogItem("class com.example.UpperClass\$1LocalClass", LogicalPosition(5, 19)),
+      )
+    )
+  }
+
+
+  fun `testSimpleSlf4jWith$`() {
+    LoggingTestUtils.addSlf4J(myFixture)
+    checkColumnFinderJava(
+      fileName = "Slf4J",
+      classText = """
+package com.example.loggingjava.java;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public final class Slf4J$ {
+    private final static Logger log = LoggerFactory.getLogger(Slf4J$.class);
+
     public static void main(String[] args) {
-		class LocalClass{
-			public LocalClass() {
-				System.out.println(this.getClass().getCanonicalName());
-			}
-		}
-		new LocalClass();
-		System.out.println("class com.example.UpperClass${'$'}1LocalClass");
+        System.out.println(2);
+        log1(1);
+        log2(2);
+    }
+
+    private static void log1(int i) {
+        String msg = getMsg(i);
+        log.info(msg);
+    }
+
+    private static void log2(int i) {
+        String msg = "log2" + i;
+        log.info(msg);
+    }
+
+    private static String getMsg(int i) {
+        return "test" + i;
     }
 }
 """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
-        LogItem("class com.example.UpperClass${'$'}1LocalClass", LogicalPosition(5, 19)),
+        LogItem("20:37:13.351 [main] INFO com.example.loggingjava.java.Slf4J\$ - test1", LogicalPosition(5, 19)),
+        LogItem("20:37:13.356 [main] INFO com.e.l.j.Slf4J\$ - log22", LogicalPosition(21, 8)),
       )
     )
   }
