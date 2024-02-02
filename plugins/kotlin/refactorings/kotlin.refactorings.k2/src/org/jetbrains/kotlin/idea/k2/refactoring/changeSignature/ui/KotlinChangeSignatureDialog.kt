@@ -44,9 +44,9 @@ internal class KotlinChangeSignatureDialog(
     commandName
 ) {
     override fun PsiCodeFragment?.isValidType(): Boolean {
-        if (this !is KtCodeFragment) return false
-        val typeRef = findChildByClass(KtExpression::class.java) ?: return false
-        allowAnalysisOnEdt {
+        if (this !is KtTypeCodeFragment) return false
+        val typeRef = getContentElement() ?: return false
+        return allowAnalysisOnEdt {
             analyze(typeRef) {
                 val ktType = typeRef.getKtType()
                 return ktType !is KtErrorType
@@ -77,7 +77,7 @@ internal class KotlinChangeSignatureDialog(
                 )
 
             val psiFactory = KtPsiFactory(myDefaultValueContext.project)
-            val paramTypeCodeFragment: PsiCodeFragment = psiFactory.createExpressionCodeFragment(
+            val paramTypeCodeFragment: PsiCodeFragment = psiFactory.createTypeCodeFragment(
                 resultParameterInfo.typeText,
                 typeContext,
             )
@@ -167,7 +167,7 @@ internal class KotlinChangeSignatureDialog(
 
     override fun createReturnTypeCodeFragment(): PsiCodeFragment {
         val method = myMethod.method
-        return KtPsiFactory(project).createExpressionCodeFragment(
+        return KtPsiFactory(project).createTypeCodeFragment(
             allowAnalysisOnEdt {
                 analyze(method) {
                     method.getReturnKtType().render(position = Variance.INVARIANT)

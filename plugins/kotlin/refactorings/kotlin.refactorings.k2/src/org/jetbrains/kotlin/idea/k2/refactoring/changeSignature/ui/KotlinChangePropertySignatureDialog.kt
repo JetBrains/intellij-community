@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinBaseChangePropertySignatureDialog
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import javax.swing.DefaultComboBoxModel
 
 class KotlinChangePropertySignatureDialog(project: Project,
@@ -27,11 +28,11 @@ class KotlinChangePropertySignatureDialog(project: Project,
     }
 
     override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
-        return kotlinPsiFactory.createExpressionCodeFragment(m.oldReturnType, m.method)
+        return kotlinPsiFactory.createTypeCodeFragment(m.oldReturnType, m.method)
     }
 
     override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
-        return kotlinPsiFactory.createExpressionCodeFragment(m.oldReceiverType ?: "", m.method)
+        return kotlinPsiFactory.createTypeCodeFragment(m.oldReceiverType ?: "", m.method)
     }
 
     override fun isDefaultVisibility(v: Visibility): Boolean {
@@ -39,8 +40,8 @@ class KotlinChangePropertySignatureDialog(project: Project,
     }
 
     override fun PsiCodeFragment?.isValidType(): Boolean {
-        if (this !is KtCodeFragment) return false
-        val typeRef = findChildByClass(KtExpression::class.java) ?: return false
+        if (this !is KtTypeCodeFragment) return false
+        val typeRef = getContentElement() ?: return false
         analyze(typeRef) {
             val ktType = typeRef.getKtType()
             return ktType !is KtErrorType
