@@ -517,6 +517,22 @@ fun <T : CommandChain> T.importMavenProject(): T = apply {
   addCommand("${CMD_PREFIX}importMavenProject")
 }
 
+enum class AssertModuleJdkVersionMode {
+  CONTAINS,
+  EQUALS
+}
+
+fun <T : CommandChain> T.assertModuleJdkVersion(moduleName: String,
+                                                jdkVersion: String,
+                                                mode: AssertModuleJdkVersionMode = AssertModuleJdkVersionMode.CONTAINS): T {
+  val command = mutableListOf("${CMD_PREFIX}assertModuleJdkVersionCommand")
+  command.add("-moduleName=$moduleName")
+  command.add("-jdkVersion=$jdkVersion")
+  command.add("-mode=$mode")
+  addCommandWithSeparator("|", *command.toTypedArray())
+  return this
+}
+
 fun <T : CommandChain> T.setModuleJdk(moduleName: String, jdk: SdkObject): T {
   val command = mutableListOf("${CMD_PREFIX}setModuleJdk")
   command.add("-moduleName=$moduleName")
