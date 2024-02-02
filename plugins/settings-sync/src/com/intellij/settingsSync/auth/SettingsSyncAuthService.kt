@@ -8,10 +8,12 @@ internal interface SettingsSyncAuthService {
     fun getInstance(): SettingsSyncAuthService = ApplicationManager.getApplication().getService(SettingsSyncAuthService::class.java)
   }
 
+  val idToken: String?
+
   fun login()
   fun isLoggedIn(): Boolean
   fun getUserData(): JBAccountInfoService.JBAData?
   fun getAccountInfoService(): JBAccountInfoService?
   fun isLoginAvailable(): Boolean
-  fun invalidateJBA(userId: String)
+  fun invalidateJBA(idToken: String)
 }
