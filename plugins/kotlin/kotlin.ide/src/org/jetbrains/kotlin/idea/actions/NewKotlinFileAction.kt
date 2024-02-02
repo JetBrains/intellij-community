@@ -61,7 +61,7 @@ internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
         return ideView.directories.any {
             val virtualFile = it.virtualFile
             RootKindFilter.projectSources.matches(project, virtualFile) ||
-                    CreateTemplateInPackageAction.isInContentRoot(it.virtualFile, projectFileIndex)
+                    CreateTemplateInPackageAction.isInContentRoot(virtualFile, projectFileIndex)
         }
     }
 
