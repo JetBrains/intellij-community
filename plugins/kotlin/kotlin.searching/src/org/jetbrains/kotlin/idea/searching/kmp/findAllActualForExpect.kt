@@ -29,9 +29,9 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
     containingClassOrObjectOrSelf?.fqName?.let { fqName ->
         val fqNameAsString = fqName.asString()
         val targetDeclarations: List<KtDeclaration> = KotlinFullClassNameIndex.getAllElements(fqNameAsString, project, scope, filter = {
-            it.matchesWithActual(containingClassOrObjectOrSelf)
+            it.matchesWithExpect(containingClassOrObjectOrSelf)
         }) + KotlinTopLevelTypeAliasFqNameIndex.getAllElements(fqNameAsString, project, scope, filter = {
-            it.matchesWithActual(containingClassOrObjectOrSelf)
+            it.matchesWithExpect(containingClassOrObjectOrSelf)
         })
 
         return targetDeclarations.asSequence().mapNotNull { targetDeclaration ->
@@ -40,17 +40,17 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
                 is KtConstructor<*> -> {
                     if (targetDeclaration is KtClass) {
                         val primaryConstructor = targetDeclaration.primaryConstructor
-                        if (primaryConstructor?.matchesWithActual(declaration) == true) {
+                        if (primaryConstructor?.matchesWithExpect(declaration) == true) {
                             primaryConstructor
                         } else {
-                            targetDeclaration.secondaryConstructors.find { it.matchesWithActual(declaration) }
+                            targetDeclaration.secondaryConstructors.find { it.matchesWithExpect(declaration) }
                         }
                     } else null
                 }
                 is KtNamedDeclaration ->
                     when (targetDeclaration) {
                         is KtClassOrObject -> targetDeclaration.declarations.firstOrNull {
-                            it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithActual(declaration)
+                            it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithExpect(declaration)
                         }
                         else -> null
                     }
@@ -66,13 +66,13 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
     return when (declaration) {
         is KtNamedFunction -> {
             KotlinTopLevelFunctionFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
-                it.matchesWithActual(declaration)
+                it.matchesWithExpect(declaration)
             }.asSequence().map(KtNamedFunction::createSmartPointer)
         }
 
         is KtProperty -> {
             KotlinTopLevelPropertyFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
-                it.matchesWithActual(declaration)
+                it.matchesWithExpect(declaration)
             }.asSequence().map(KtProperty::createSmartPointer)
         }
 
@@ -80,10 +80,10 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
     }
 }
 
-private fun KtDeclaration.matchesWithActual(actualDeclaration: KtDeclaration): Boolean {
+private fun KtDeclaration.matchesWithExpect(expectDeclaration: KtDeclaration): Boolean {
     val declaration = this
     return declaration.isEffectivelyActual() && analyze(declaration) {
         val symbol: KtDeclarationSymbol = declaration.getSymbol()
-        return symbol.getExpectsForActual().any { it.psi == actualDeclaration }
+        return symbol.getExpectsForActual().any { it.psi == expectDeclaration }
     }
 }

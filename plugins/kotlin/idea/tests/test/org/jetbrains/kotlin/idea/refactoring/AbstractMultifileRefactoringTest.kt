@@ -99,13 +99,8 @@ fun runRefactoringTest(
 ) {
     val mainFilePath = config.getNullableString("mainFile") ?: config.getAsJsonArray("filesToMove").first().asString
 
-    var conflictFile = File(File(path).parentFile, "conflicts.txt")
-    if (alternativeConflicts != null) {
-        val alternativeConflictsFile = File(File(path).parentFile, alternativeConflicts)
-        if (alternativeConflictsFile.exists()) {
-            conflictFile = alternativeConflictsFile
-        }
-    }
+    val conflictFile = alternativeConflicts?.let { File(File(path).parentFile, alternativeConflicts) }?.takeIf { it.exists() }
+        ?: File(File(path).parentFile, "conflicts.txt")
 
     val mainFile = rootDir.findFileByRelativePath(mainFilePath)!!
     val mainPsiFile = PsiManager.getInstance(project).findFile(mainFile)!!
