@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.scale.JBUIScale
@@ -141,11 +142,10 @@ class LineCenteredInset(
   val presentation: InlayPresentation,
   val editor: Editor
 ) : ScaledDelegatedPresentation() {
-  override val delegate: InlayPresentation by valueOf<InlayPresentation, Int> { lineHeight ->
-    val innerHeight = presentation.height
+  override val delegate: InlayPresentation by valueOf<InlayPresentation, Pair<Int, Int>> { (lineHeight, innerHeight) ->
     InsetPresentation(presentation = presentation, top = (lineHeight - innerHeight) / 2)
   }.withState {
-    editor.lineHeight
+    editor.lineHeight to presentation.height
   }
 }
 
@@ -168,11 +168,13 @@ class ScaleAwareIconPresentation(val icon: Icon,
 
   override fun toString(): String = "<$debugName>"
 
-  private val scaledIcon by valueOf<Icon, Float> { fontSize ->
-    IconUtil.scaleByFont(icon = icon, ancestor = editor.component, fontSize = fontSize)
+  private val scaledIcon by valueOf<Icon, IconParameters> { (fontSize, scale) ->
+    IconUtil.scaleByFont(icon = icon, ancestor = editor.component, fontSize = fontSize / scale)
   }.withState {
-    editor.colorsScheme.editorFontSize2D - fontShift
+    IconParameters(editor.colorsScheme.editorFontSize2D - fontShift)
   }
+
+  private data class IconParameters(val font: Float, val scale: Float = UISettings.getInstance().currentIdeScale)
 }
 
 private class StateDependantValue<TData : Any, TState : Any>(
