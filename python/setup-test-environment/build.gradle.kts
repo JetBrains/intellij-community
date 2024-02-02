@@ -159,15 +159,15 @@ createPython("python3.11", "3.11",
              listOf("python3.11", "black", "joblib", "tensorflow"))
 
 createPython("python3.12", "3.12",
-             listOf("teamcity-messages"),
-             listOf("python3", "python3.12", "messages"))
+             listOf("teamcity-messages", "Twisted")
+               // TODO: maybe switch to optional dependency Twisted[windows-platform]
+               // https://docs.twisted.org/en/stable/installation/howto/optional.html
+               + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
+             listOf("python3", "python3.12", "messages", "twisted"))
 
 createPython("py27", "2.7",
-             listOf("tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "teamcity-messages", "untangle")
-             // TODO: maybe switch to optional dependency Twisted[windows-platform]
-             // https://docs.twisted.org/en/stable/installation/howto/optional.html
-             + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
-             listOf("python2.7", "nose", "pytest", "behave", "packaging", "tox", "twisted", "django-nose", "untangle", "messages"))
+             listOf("tox>=3.8.3", "nose", "pytest", "behave", "teamcity-messages", "untangle"),
+             listOf("python2.7", "nose", "pytest", "behave", "packaging", "tox", "django-nose", "untangle", "messages"))
 
 // set CONDA_PATH to conda binary location to be able to run tests
-createPython("conda", "Miniconda3-py310_23.3.1-0", type = PythonType.CONDA)
+createPython("conda", "Miniconda3-py310_23.3.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)
