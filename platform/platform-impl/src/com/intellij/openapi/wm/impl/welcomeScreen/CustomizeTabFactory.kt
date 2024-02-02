@@ -217,6 +217,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
 
       indent {
         val colorAndFontsOptions = ColorAndFontOptions().apply {
+          setShouldChangeLafIfNecessary(false)
           setSchemesPanelFactory(object : SchemesPanelFactory {
             override fun createSchemesPanel(options: ColorAndFontOptions): SchemesPanel {
               return EditorSchemesPanel(options)

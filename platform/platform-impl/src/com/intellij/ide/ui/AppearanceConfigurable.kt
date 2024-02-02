@@ -199,6 +199,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       indent {
         val colorAndFontsOptions = ColorAndFontOptions().apply {
+          setShouldChangeLafIfNecessary(false)
           setSchemesPanelFactory(object : SchemesPanelFactory {
             override fun createSchemesPanel(options: ColorAndFontOptions): SchemesPanel {
               return EditorSchemesPanel(options)

@@ -93,6 +93,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   private MessageBusConnection myEditorColorSchemeConnection;
+  private boolean myShouldChangeLafIfNecessary = true;
 
   public void addListener(@NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
@@ -222,6 +223,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     mySchemesPanelFactory = schemesPanelFactory;
   }
 
+  @ApiStatus.Internal
+  public void setShouldChangeLafIfNecessary(boolean shouldChangeLafIfNecessary) {
+    myShouldChangeLafIfNecessary = shouldChangeLafIfNecessary;
+  }
+
   public static boolean isReadOnly(final @NotNull EditorColorsScheme scheme) {
     return scheme.isReadOnly();
   }
@@ -334,7 +340,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
       }
 
-      if (!Objects.equals(oldScheme.getName(), editorColorManager.getGlobalScheme().getName())) {
+      if (myShouldChangeLafIfNecessary && !Objects.equals(oldScheme.getName(), editorColorManager.getGlobalScheme().getName())) {
         QuickChangeColorSchemeAction.changeLafIfNecessary(oldScheme, activeOriginalScheme, null);
       }
 
