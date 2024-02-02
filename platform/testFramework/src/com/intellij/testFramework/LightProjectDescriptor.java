@@ -140,7 +140,7 @@ public class LightProjectDescriptor {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.registerIndexableSet(indexableFileSet, project);
     Disposer.register(project, () -> {
-      fileBasedIndex.removeIndexableSet(indexableFileSet);
+      fileBasedIndex.onProjectClosing(indexableFileSet);
       IndexingTestUtil.waitUntilIndexesAreReady(project);
     });
   }

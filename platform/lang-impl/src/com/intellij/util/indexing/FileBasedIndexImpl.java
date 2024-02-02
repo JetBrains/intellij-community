@@ -1929,8 +1929,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     getChangedFilesCollector().addProject(project);
   }
 
-  public void removeIndexableSet(@NotNull IndexableFileSet set) {
-    if (!myIndexableSets.removeIf(p -> p.first == set)) return;
+  public void onProjectClosing(@NotNull IndexableFileSet set) {
+    Pair<IndexableFileSet, Project> p = ContainerUtil.find(myIndexableSets, pair -> pair.first == set);
+    if (p == null) return;
+    myIndexableSets.remove(p);
 
     ChangedFilesCollector changedFilesCollector = getChangedFilesCollector();
     for (VirtualFile file : changedFilesCollector.getAllFilesToUpdate()) {
@@ -1946,6 +1948,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }
     }
+    getChangedFilesCollector().onProjectClosing(p.second, vfsCreationStamp);
 
     IndexingStamp.flushCaches();
   }

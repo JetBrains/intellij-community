@@ -225,11 +225,24 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   public void onProjectClosing(@NotNull Project project, long vfsCreationStamp) {
     persistProjectsDirtyFiles(project, vfsCreationStamp);
-    myDirtyFiles.removeIf(p -> p.first.equals(project));
+    while (true) {
+      if (!myDirtyFiles.removeIf(p -> p.first.equals(project))) break;
+    }
   }
 
   public void persistProjectsDirtyFiles(long vfsCreationStamp) {
+    Set<Project> persistedProjects = new HashSet<>();
     for (Pair<Project, ConcurrentBitSet> p : myDirtyFiles) {
+      if (!persistedProjects.add(p.first)) {
+        // todo: this is a temp fix for the problem in LightPlatformTestCase where
+        //  project is registered in FileBasedIndexImpl two times.
+        //  First time via LightProjectDescriptor.setUpProject
+        //  Second time via ((TestProjectManager)ProjectManagerEx.getInstanceEx()).openProject(project)
+        //  So here in myDirtyFiles there'll be the same project twice, only the first one may contain data
+        //  because second one is never reached.
+        //  (this is relevant only for tests)
+        continue;
+      }
       persistProjectsDirtyFiles(p.first, vfsCreationStamp);
     }
     // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
