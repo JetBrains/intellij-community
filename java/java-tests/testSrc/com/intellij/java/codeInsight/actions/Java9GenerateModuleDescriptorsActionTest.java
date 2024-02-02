@@ -3,61 +3,28 @@ package com.intellij.java.codeInsight.actions;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.java.testFramework.fixtures.MultiModuleProjectDescriptor;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.LightMultiFileTestCase;
-import com.intellij.testFramework.*;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.JobKt;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
-import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-
-import static com.intellij.conversion.ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT;
-import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
-import static org.jetbrains.jps.model.serialization.JpsProjectLoader.*;
-import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*;
-import static org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*;
 
 public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTestCase {
   private MultiModuleProjectDescriptor myDescriptor;
@@ -65,8 +32,23 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return myDescriptor == null
-           ? myDescriptor = new MultiModuleProjectDescriptor(Paths.get(getTestDataPath() + "/" + getTestName(true)))
-           : myDescriptor;
+           ? myDescriptor = new MultiModuleProjectDescriptor(Paths.get(getTestDataPath() + "/" + getTestName(true)), null, projectModel -> {
+      // replace services
+      CompilerProjectExtension.getInstance(projectModel.getProject()).setCompilerOutputUrl(projectModel.getOutputUrl());
+      ServiceContainerUtil.replaceService(projectModel.getProject(), DumbService.class,
+                                          new DumbServiceImpl(projectModel.getProject(), CoroutineScopeKt.CoroutineScope(JobKt.Job(null))) {
+                                            @Override
+                                            public void smartInvokeLater(@NotNull Runnable runnable) {
+                                              runnable.run();
+                                            }
+                                          }, projectModel.getProject());
+      ServiceContainerUtil.replaceService(projectModel.getProject(), CompilerManager.class, new CompilerManagerImpl(projectModel.getProject()) {
+        @Override
+        public boolean isUpToDate(@NotNull CompileScope scope) {
+          return true;
+        }
+      }, projectModel.getProject());
+    }) : myDescriptor;
   }
 
   @Override
@@ -119,231 +101,5 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
 
     PlatformTestUtil.assertDirectoriesEqual(LocalFileSystem.getInstance().findFileByNioFile(descriptor.getAfterPath()),
                                             LocalFileSystem.getInstance().findFileByNioFile(descriptor.getProjectPath()));
-  }
-
-  private static class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor {
-    private final Path myPath;
-    private final Path myProjectPath;
-
-    MultiModuleProjectDescriptor(@NotNull Path path) {
-      myPath = path;
-      myProjectPath = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME);
-    }
-
-    Path getBeforePath() {
-      return myPath.resolve("before");
-    }
-
-    Path getAfterPath() {
-      return myPath.resolve("after");
-    }
-
-    @Override
-    public @NotNull Path generateProjectPath() {
-      return myProjectPath;
-    }
-
-    public @NotNull Path getProjectPath() {
-      return myProjectPath;
-    }
-
-    @Override
-    public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk11();
-    }
-
-    @Override
-    public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
-      WriteAction.run(() -> {
-        FileUtilRt.deleteRecursively(myProjectPath);
-        FileUtil.copyDir(getBeforePath().toFile(), myProjectPath.toFile());
-        VfsUtil.markDirtyAndRefresh(false, true, true, myProjectPath.toFile());
-        ProjectModel projectModel = new ProjectModel(myProjectPath);
-        // replace services
-        CompilerProjectExtension.getInstance(project).setCompilerOutputUrl(projectModel.getOutputUrl());
-        ServiceContainerUtil.replaceService(project, DumbService.class,
-                                            new DumbServiceImpl(project, CoroutineScopeKt.CoroutineScope(JobKt.Job(null))) {
-                                              @Override
-                                              public void smartInvokeLater(@NotNull Runnable runnable) {
-                                                runnable.run();
-                                              }
-                                            }, project);
-        ServiceContainerUtil.replaceService(project, CompilerManager.class, new CompilerManagerImpl(project) {
-          @Override
-          public boolean isUpToDate(@NotNull CompileScope scope) {
-            return true;
-          }
-        }, project);
-
-        for (ModuleDescriptor descriptor : projectModel.getModules()) {
-          Path iml = descriptor.basePath().resolve(descriptor.name() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-          final Module module = Files.exists(iml)
-                                ? ModuleManager.getInstance(project).loadModule(iml)
-                                : createModule(project, iml);
-          handler.moduleCreated(module);
-
-          ModuleRootModificationUtil.updateModel(module, model -> {
-            model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(descriptor.languageLevel());
-            //model.setSdk(IdeaTestUtil.getMockJdk(descriptor.languageLevel().toJavaVersion()));
-            for (SourceDirectory source : descriptor.sources()) {
-              final ContentEntry entry = model.addContentEntry(source.dir());
-              switch (source.type()) {
-                case RESOURCE:
-                  entry.addSourceFolder(source.dir(), JavaResourceRootType.RESOURCE);
-                  break;
-                case TEST_RESOURCE:
-                  entry.addSourceFolder(source.dir(), JavaResourceRootType.TEST_RESOURCE);
-                  break;
-                case TEST_SOURCE:
-                  entry.addSourceFolder(source.dir(), JavaSourceRootType.TEST_SOURCE);
-                  break;
-                case SOURCE:
-                  entry.addSourceFolder(source.dir(), JavaSourceRootType.SOURCE);
-                  break;
-                case GENERATED:
-                  final JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("");
-                  properties.setForGeneratedSources(true);
-                  entry.addSourceFolder(source.dir(), JavaSourceRootType.SOURCE, properties);
-                  break;
-              }
-              handler.sourceRootCreated(ProjectModel.urlToVirtualFile(source.dir()));
-            }
-
-            // maven
-            final Path mavenOutputPath = descriptor.basePath().resolve("target").resolve("classes");
-            if (Files.exists(mavenOutputPath)) {
-              final CompilerModuleExtension compiler = model.getModuleExtension(CompilerModuleExtension.class);
-              compiler.setCompilerOutputPath(mavenOutputPath.toString());
-              compiler.inheritCompilerOutputPath(false);
-            }
-          });
-        }
-      });
-    }
-  }
-
-  private static class ProjectModel {
-    private final Path myProjectPath;
-    private String myOutputUrl;
-    private LanguageLevel myLanguageLevel;
-    private final List<ModuleDescriptor> myModules = new ArrayList<>();
-
-    private ProjectModel(Path path) {
-      try {
-        myProjectPath = path;
-        load();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    private String getOutputUrl() {
-      return myOutputUrl;
-    }
-
-    private LanguageLevel getLanguageLevel() {
-      return myLanguageLevel == null ? LanguageLevel.JDK_11 : myLanguageLevel;
-    }
-
-    private List<ModuleDescriptor> getModules() {
-      return myModules;
-    }
-
-    private void load() throws IOException, JDOMException {
-      final Path projectConfigurationPath = myProjectPath.resolve(DIRECTORY_STORE_FOLDER);
-      final Element miscXml = JDomSerializationUtil.findComponent(JDOMUtil.load(projectConfigurationPath.resolve("misc.xml")),
-                                                                  "ProjectRootManager");
-
-      myLanguageLevel = parseLanguageLevel(miscXml.getAttributeValue(LANGUAGE_LEVEL_ATTRIBUTE), LanguageLevel.JDK_11);
-
-      myOutputUrl = prepare(miscXml.getChild(OUTPUT_TAG).getAttributeValue(JpsJavaModelSerializerExtension.URL_ATTRIBUTE));
-
-      final Element modulesXml = JDomSerializationUtil.findComponent(JDOMUtil.load(projectConfigurationPath.resolve("modules.xml")),
-                                                                     MODULE_MANAGER_COMPONENT);
-      final Element modulesElement = modulesXml.getChild(MODULES_TAG);
-      final List<Element> moduleElements = modulesElement.getChildren(MODULE_TAG);
-      for (Element moduleAttr : moduleElements) {
-        final Path iml = Paths.get(prepare(moduleAttr.getAttributeValue(FILE_PATH_ATTRIBUTE))); // .iml
-        final String moduleName = FileUtil.getNameWithoutExtension(iml.toFile()); // module name
-
-        if (Files.exists(iml)) {
-          final Element component = JDomSerializationUtil.findComponent(JDOMUtil.load(iml), MODULE_ROOT_MANAGER_COMPONENT);
-          final LanguageLevel moduleLanguageLevel =
-            parseLanguageLevel(component.getAttributeValue(MODULE_LANGUAGE_LEVEL_ATTRIBUTE), getLanguageLevel());
-          final Element content = component.getChild(CONTENT_TAG);
-          List<SourceDirectory> sources = new ArrayList<>();
-          if (content != null) {
-            for (Element element : content.getChildren(SOURCE_FOLDER_TAG)) {
-              final String url = prepare(element.getAttributeValue(JpsModuleRootModelSerializer.URL_ATTRIBUTE),
-                                         iml.getParent().toString());
-              sources.add(new SourceDirectory(url, SourceType.of(element)));
-            }
-          }
-          myModules.add(new ModuleDescriptor(moduleName, iml.getParent(), sources, moduleLanguageLevel));
-        }
-        else {
-          myModules.add(new ModuleDescriptor(moduleName, iml.getParent(), List.of(), getLanguageLevel()));
-        }
-      }
-    }
-
-    @Nullable
-    private static LanguageLevel parseLanguageLevel(@Nullable String level, LanguageLevel... levels) {
-      LanguageLevel result = null;
-      if (level != null) result = LanguageLevel.valueOf(level);
-      if (result != null) return result;
-      for (LanguageLevel languageLevel : levels) {
-        if (languageLevel != null) return languageLevel;
-      }
-      return null;
-    }
-
-    @Contract("null->null")
-    @Nullable
-    private static VirtualFile urlToVirtualFile(@Nullable String url) {
-      if (url == null) {
-        return null;
-      }
-      else {
-        return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
-      }
-    }
-
-    @NotNull
-    private String prepare(@NotNull String path) {
-      return path.replace("$PROJECT_DIR$", myProjectPath.toString());
-    }
-
-    @NotNull
-    private String prepare(@NotNull String path, @NotNull String moduleDir) {
-      return prepare(path).replace("$MODULE_DIR$", moduleDir);
-    }
-  }
-
-  private record ModuleDescriptor(@NotNull String name, @NotNull Path basePath, @NotNull List<SourceDirectory> sources,
-                                  @NotNull LanguageLevel languageLevel) {
-  }
-
-  private record SourceDirectory(@NotNull String dir, @NotNull SourceType type) {
-  }
-
-  private enum SourceType {
-    GENERATED,
-    RESOURCE,
-    SOURCE,
-    TEST_RESOURCE,
-    TEST_SOURCE;
-
-    @NotNull
-    static SourceType of(@NotNull Element element) {
-      if (Boolean.parseBoolean(element.getAttributeValue(IS_GENERATED_ATTRIBUTE))) return GENERATED;
-      final String type = element.getAttributeValue(TYPE_ATTRIBUTE);
-      if (JAVA_RESOURCE_ROOT_ID.equals(type)) return RESOURCE;
-      if (JAVA_TEST_RESOURCE_ROOT_ID.equals(type)) return TEST_RESOURCE;
-      return Boolean.parseBoolean(element.getAttributeValue(IS_TEST_SOURCE_ATTRIBUTE))
-             ? TEST_SOURCE
-             : SOURCE;
-    }
   }
 }

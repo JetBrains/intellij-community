@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -7,11 +7,15 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,6 +27,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -43,7 +48,10 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
 import com.intellij.ui.JBColor;
-import com.intellij.util.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairFunction;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -302,7 +310,7 @@ public final class JavaCompletionUtil {
     Set<PsiType> expectedTypes = ObjectUtils.coalesce(getExpectedTypes(parameters), Collections.emptySet());
 
     Set<PsiMember> mentioned = new HashSet<>();
-    JavaLookupElementHighlighter highlighter = getHighlighterForPlace(element);
+    JavaLookupElementHighlighter highlighter = getHighlighterForPlace(element, parameters.getOriginalFile().getVirtualFile());
     for (CompletionElement completionElement : processor.getResults()) {
       for (LookupElement item : createLookupElements(completionElement, javaReference)) {
         item.putUserData(QUALIFIER_TYPE_ATTR, plainQualifier);
@@ -469,62 +477,106 @@ public final class JavaCompletionUtil {
 
   static class JavaLookupElementHighlighter {
     private final @NotNull PsiElement myPlace;
+    private final @Nullable VirtualFile myOriginalFile;
     private final @NotNull LanguageLevel myLanguageLevel;
     private final @NotNull Set<PsiField> myConstantsUsedInSwitch;
 
-    JavaLookupElementHighlighter(@NotNull PsiElement place) {
+    JavaLookupElementHighlighter(@NotNull PsiElement place, @Nullable VirtualFile originalFile) {
       myPlace = place;
+      myOriginalFile = originalFile;
       myLanguageLevel = PsiUtil.getLanguageLevel(myPlace);
       myConstantsUsedInSwitch = findConstantsUsedInSwitch(myPlace);
     }
 
     @NotNull
     LookupElement highlightIfNeeded(@Nullable PsiType qualifierType, @NotNull LookupElement item, @NotNull Object object) {
-      if (shouldMarkRed(object)) {
-        return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
+      final MarkProblem problem = getProblemType(qualifierType, object);
+      return switch (problem.type()) {
+        case RED -> PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
           @Override
           public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
             element.getDelegate().renderElement(presentation);
             presentation.setItemTextForeground(JBColor.RED);
           }
         }), -1);
-      }
-      if (containsMember(qualifierType, object, false) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-        LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
+        case BOLD -> {
+          LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
+            @Override
+            public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+              element.getDelegate().renderElement(presentation);
+              presentation.setItemTextBold(true);
+            }
+          });
+          yield object instanceof PsiField ? bold : PrioritizedLookupElement.withExplicitProximity(bold, 1);
+        }
+        case MODULE_REQUIRED -> PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
           @Override
           public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
             element.getDelegate().renderElement(presentation);
-            presentation.setItemTextBold(true);
+            presentation.setItemTextForeground(JBColor.RED);
+            presentation.setTailText(problem.message(), true);
           }
-        });
-        return object instanceof PsiField ? bold : PrioritizedLookupElement.withExplicitProximity(bold, 1);
-      }
-      return item;
+        }), -1);
+        default -> item;
+      };
     }
 
-    private boolean shouldMarkRed(@NotNull Object object) {
-      if (!(object instanceof PsiMember)) return false;
-      if (LanguageLevelUtil.getLastIncompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
-        return true;
+    @NotNull
+    private MarkProblem getProblemType(@Nullable PsiType qualifierType, @NotNull Object object) {
+      if (object instanceof PsiMember) {
+        if (LanguageLevelUtil.getLastIncompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
+          return new MarkProblem(MarkType.RED, null);
+        }
+        if (object instanceof PsiEnumConstant psiEnumConstant &&
+            myConstantsUsedInSwitch.contains(CompletionUtil.getOriginalOrSelf(psiEnumConstant))) {
+          return new MarkProblem(MarkType.RED, null);
+        }
+        if (object instanceof PsiClass psiClass) {
+          if (ReferenceListWeigher.INSTANCE.getApplicability(psiClass, myPlace) == inapplicable) {
+            return new MarkProblem(MarkType.RED, null);
+          }
+          if (HighlightingFeature.MODULES.isAvailable(myPlace)) {
+            final PsiJavaModule currentModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
+            if (currentModule != null) {
+              final PsiJavaModule targetModule =  ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));
+              if (targetModule != null && targetModule != currentModule &&
+                  !JavaModuleGraphUtil.reads(currentModule, targetModule)) {
+                return new MarkProblem(MarkType.MODULE_REQUIRED,
+                                       JavaBundle.message("completion.requires.module.tail.text", targetModule.getName()));
+              }
+            }
+          }
+        }
       }
+      if (containsMember(qualifierType, object, false) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        return new MarkProblem(MarkType.BOLD, null);
+      }
+      return new MarkProblem(MarkType.NONE, null);
+    }
 
-      if (object instanceof PsiEnumConstant) {
-        return myConstantsUsedInSwitch.contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));
-      }
-      return object instanceof PsiClass && ReferenceListWeigher.INSTANCE.getApplicability((PsiClass)object, myPlace) == inapplicable;
+    record MarkProblem(@NotNull MarkType type, @Nullable String message) {
+    }
+
+    enum MarkType {
+      NONE,
+      RED,
+      BOLD,
+      MODULE_REQUIRED,
+      MODULE_CLOSED
     }
   }
 
-  static @NotNull JavaLookupElementHighlighter getHighlighterForPlace(@NotNull PsiElement place) {
-    return new JavaLookupElementHighlighter(place);
+  static @NotNull JavaLookupElementHighlighter getHighlighterForPlace(@NotNull PsiElement place, @Nullable VirtualFile originalFile) {
+    return new JavaLookupElementHighlighter(place, originalFile);
   }
 
   @NotNull
   public static LookupElement highlightIfNeeded(@Nullable PsiType qualifierType,
+                                                @Nullable VirtualFile originalFile,
                                                 @NotNull LookupElement item,
                                                 @NotNull Object object,
                                                 @NotNull PsiElement place) {
-    return getHighlighterForPlace(place).highlightIfNeeded(qualifierType, item, object);
+    return getHighlighterForPlace(place, originalFile).highlightIfNeeded(qualifierType, item, object);
   }
 
 

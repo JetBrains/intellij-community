@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -119,7 +119,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
     final GlobalSearchScope scope = getReferenceScope(parameters, filterByScope, inPermitsList);
 
-    JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(insertedElement);
+    JavaLookupElementHighlighter highlighter = JavaCompletionUtil.getHighlighterForPlace(insertedElement, parameters.getOriginalFile().getVirtualFile());
     boolean patternContext = JavaPatternCompletionUtil.isPatternContext(psiFile, insertedElement);
 
     Processor<PsiClass> classProcessor = new Processor<>() {

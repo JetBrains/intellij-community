@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -41,6 +42,7 @@ import java.util.function.BiFunction;
 import java.util.jar.JarFile;
 
 import static com.intellij.openapi.roots.DependencyScope.PROVIDED;
+import static com.intellij.psi.PsiJavaModule.JAVA_BASE;
 
 public final class JavaModuleGraphUtil {
   private static final Set<String> STATIC_REQUIRES_MODULE_NAMES = Set.of("lombok");
@@ -146,13 +148,7 @@ public final class JavaModuleGraphUtil {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     List<VirtualFile> sourceRoots = rootManager.getSourceRoots(rootType);
     List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
-    if (files.size() == 1) {
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
-      if (psiFile instanceof PsiJavaFile) {
-        return ((PsiJavaFile)psiFile).getModuleDeclaration();
-      }
-    }
-    else if (files.isEmpty()) {
+    if (files.isEmpty()) {
       JavaResourceRootType resourceRootType = inTests ? JavaResourceRootType.TEST_RESOURCE : JavaResourceRootType.RESOURCE;
       List<VirtualFile> roots = new ArrayList<>(rootManager.getSourceRoots(resourceRootType));
       roots.addAll(sourceRoots);
@@ -171,6 +167,14 @@ public final class JavaModuleGraphUtil {
       List<VirtualFile> sourceSourceRoots = rootManager.getSourceRoots(JavaSourceRootType.SOURCE);
       if (virtualAutoModuleName != null && !sourceSourceRoots.isEmpty()) {
         return LightJavaModule.create(PsiManager.getInstance(project), sourceSourceRoots.get(0), virtualAutoModuleName);
+      }
+    } else {
+      final VirtualFile file = files.get(0);
+      if (ContainerUtil.and(files, f -> f.equals(file))) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        if (psiFile instanceof PsiJavaFile) {
+          return ((PsiJavaFile)psiFile).getModuleDeclaration();
+        }
       }
     }
 
@@ -213,6 +217,7 @@ public final class JavaModuleGraphUtil {
                                    @NotNull String to,
                                    @Nullable DependencyScope scope,
                                    boolean isExported) {
+    if (to.equals(JAVA_BASE)) return false;
     if (!HighlightingFeature.MODULES.isAvailable(from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
@@ -221,6 +226,40 @@ public final class JavaModuleGraphUtil {
                                      to);
     return true;
   }
+
+  public static boolean addDependency(@NotNull PsiJavaModule from,
+                                      @NotNull PsiJavaModule to,
+                                      @Nullable DependencyScope scope) {
+    if (to.getName().equals(JAVA_BASE)) return false;
+    if (!HighlightingFeature.MODULES.isAvailable(from)) return false;
+    if (alreadyContainsRequires(from, to.getName())) return false;
+    PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
+                                     (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +
+                                     (isExported(from, to) ? PsiKeyword.TRANSITIVE + " " : "") +
+                                     to.getName());
+    return true;
+  }
+
+  private static boolean isExported(@NotNull PsiJavaModule from, @NotNull PsiJavaModule to) {
+    VirtualFile toFile = to.getContainingFile().getVirtualFile();
+    if (toFile == null) return false;
+
+    Module fromModule = ModuleUtilCore.findModuleForPsiElement(from);
+    if (fromModule == null) return false;
+
+    Set<OrderEntry> toEntries = new HashSet<>(ProjectFileIndex.getInstance(from.getProject())
+                                                .getOrderEntriesForFile(toFile));
+    if (toEntries.isEmpty()) return false;
+
+    OrderEntry[] entries = ModuleRootManager.getInstance(fromModule).getOrderEntries();
+    for (OrderEntry entry : entries) {
+      if (toEntries.contains(entry) && entry instanceof ExportableOrderEntry exportable) {
+        return exportable.isExported();
+      }
+    }
+    return false;
+  }
+
 
   private static boolean alreadyContainsRequires(@NotNull PsiJavaModule module, @NotNull String dependency) {
     for (PsiRequiresStatement requiresStatement : module.getRequires()) {
@@ -338,7 +377,7 @@ public final class JavaModuleGraphUtil {
       for (PsiRequiresStatement statement : module.getRequires()) {
         PsiJavaModuleReference ref = statement.getModuleReference();
         if (ref != null) {
-          if (PsiJavaModule.JAVA_BASE.equals(ref.getCanonicalText())) explicitJavaBase = true;
+          if (JAVA_BASE.equals(ref.getCanonicalText())) explicitJavaBase = true;
           for (ResolveResult result : ref.multiResolve(false)) {
             PsiJavaModule dependency = (PsiJavaModule)result.getElement();
             assert dependency != null : result;
@@ -349,7 +388,7 @@ public final class JavaModuleGraphUtil {
         }
       }
       if (!explicitJavaBase) {
-        PsiJavaModule javaBase = JavaPsiFacade.getInstance(module.getProject()).findModule(PsiJavaModule.JAVA_BASE, module.getResolveScope());
+        PsiJavaModule javaBase = JavaPsiFacade.getInstance(module.getProject()).findModule(JAVA_BASE, module.getResolveScope());
         if (javaBase != null) relations.putValue(module, javaBase);
       }
     }
