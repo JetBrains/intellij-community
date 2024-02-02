@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -117,7 +118,7 @@ class CodeInliner<TCallElement : KtElement>(
         val facility = ShortenReferencesFacility.getInstance()
         return pointers.mapNotNull { p ->
             val ktElement = p.element ?: return@mapNotNull null
-            facility.shorten(ktElement) as? KtElement
+            facility.shorten(ktElement, ShortenOptions.ALL_ENABLED) as? KtElement
         }
     }
 
