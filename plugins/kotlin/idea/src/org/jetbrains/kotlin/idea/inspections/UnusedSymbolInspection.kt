@@ -360,9 +360,9 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 }
             }
             if (declaration.hasActualModifier()) {
-                KotlinSourceFilterScope.projectSources(project.projectScope(), project)
+                KotlinSourceFilterScope.projectSourcesAndResources(project.projectScope(), project)
             } else {
-                KotlinSourceFilterScope.projectSources(useScope, project)
+                KotlinSourceFilterScope.projectSourcesAndResources(useScope, project)
             }
         } else useScope
 

@@ -144,6 +144,9 @@ fun LibraryEx.updateEx(block: (LibraryEx.ModifiableModelEx) -> Unit) {
 val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
 
+val KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES: Set<JpsModuleSourceRootType<*>> =
+    KOTLIN_AWARE_SOURCE_ROOT_TYPES + JavaModuleSourceRootTypes.RESOURCES
+
 fun Project.getKotlinAwareDestinationSourceRoots(): List<VirtualFile> {
     return ModuleManager.getInstance(this).modules.flatMap { it.collectKotlinAwareDestinationSourceRoots() }
 }

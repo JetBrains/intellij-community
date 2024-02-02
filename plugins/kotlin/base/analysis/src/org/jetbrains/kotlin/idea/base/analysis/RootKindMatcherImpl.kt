@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
@@ -40,7 +41,13 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             return false
         }
 
-        if (virtualFile !is VirtualFileWindow && fileIndex.isUnderSourceRootOfType(virtualFile, KOTLIN_AWARE_SOURCE_ROOT_TYPES)) {
+        val rootType = if (filter.includeResources) {
+            KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES
+        } else {
+            KOTLIN_AWARE_SOURCE_ROOT_TYPES
+        }
+
+        if (virtualFile !is VirtualFileWindow && fileIndex.isUnderSourceRootOfType(virtualFile, rootType)) {
             return filter.includeProjectSourceFiles
         }
 
