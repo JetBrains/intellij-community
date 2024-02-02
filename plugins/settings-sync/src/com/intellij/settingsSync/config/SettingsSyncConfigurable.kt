@@ -399,6 +399,11 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
               .append(message("sync.status.last.sync.message", getReadableSyncTime(), getUserName()))
           }
         }
+        else if (statusTracker.idTokenMissing) {
+          messageBuilder.append(message("sync.status.failed"))
+          statusLabel.icon = AllIcons.General.Error
+          messageBuilder.append(' ').append(SettingsSyncStatusTracker.ID_TOKEN_MISSING_MESSAGE)
+        }
         else {
           messageBuilder.append(message("sync.status.failed"))
           statusLabel.icon = AllIcons.General.Error
