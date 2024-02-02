@@ -2,7 +2,6 @@
 package com.intellij.logging
 
 import com.intellij.logging.UnspecifiedLogger.Companion.UNSPECIFIED_LOGGER_NAME
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -33,20 +32,6 @@ interface JvmLogger {
    * @see com.intellij.logging.UnspecifiedLogger
    */
   fun isOnlyOnStartup() = false
-
-  /**
-   * Inserts a logger element at the specified class.
-   *
-   * @param project the project context
-   * @param clazz the class where the logger element will be inserted
-   * @return the inserted logger element, or null if the operation fails
-   */
-  fun insertLoggerAtClass(project: Project, clazz: PsiClass): PsiElement? {
-    val logger = createLogger(project, clazz) ?: return null
-    return WriteAction.compute<PsiElement?, Exception> {
-      insertLoggerAtClass(project, clazz, logger)
-    }
-  }
 
   /**
    * Inner method for inserting the logger at the specified class. Should only be invoked inside WriteAction.
