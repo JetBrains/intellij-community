@@ -27,7 +27,10 @@ public class FileComparisonFailure extends ComparisonFailure implements FileComp
     myExpected = expected;
     myActual = actual;
     myFilePath = expectedFilePath;
-    if (expectedFilePath != null && !new File(expectedFilePath).isFile()) throw new NullPointerException("'expectedFilePath' should point to the existing file or be null");
+    if (expectedFilePath != null && !new File(expectedFilePath).isFile()) {
+      throw new NullPointerException("'expectedFilePath' should point to the existing file or be null; got: "
+                                     + expectedFilePath);
+    }
     myActualFilePath = actualFilePath;
   }
 
