@@ -52,11 +52,11 @@ public final class DocumentationSettings {
    * and even in not a cross-platform way.
    * So we have to do some hacks to align fonts.
    *
-   * @deprecated Use {@link QuickDocCodeHighlightingHelper} for adding code fragments to documentation
+   * @deprecated Use {@link QuickDocHighlightingHelper} for adding code fragments to documentation
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
-  //TODO Move the code to QuickDocCodeHighlightingHelper once safe to remove
+  //TODO Move the code to QuickDocHighlightingHelper once safe to remove
   public static int getMonospaceFontSizeCorrection(boolean isForRenderedDoc) {
     if (isForRenderedDoc) {
       return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;
