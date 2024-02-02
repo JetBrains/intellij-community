@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION", "TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.psi
@@ -102,6 +102,7 @@ class PsiElementDocumentationTarget private constructor(
         html = parts.doc,
         definitionDetails = parts.definitionDetails,
         imageResolver = pointer.imageResolver,
+        targetElement = targetElement
       ),
       anchor = pointer.anchor,
     )
@@ -158,6 +159,7 @@ class PsiElementDocumentationTarget private constructor(
           content = DocumentationContentData(
             html = doc,
             imageResolver = imageResolver,
+            targetElement = targetElement
           ),
           anchor = anchor,
           links = LinkData(externalUrl = url),

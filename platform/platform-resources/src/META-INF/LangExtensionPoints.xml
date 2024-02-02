@@ -568,6 +568,8 @@
     <extensionPoint name="elementPreviewProvider" interface="com.intellij.codeInsight.preview.ElementPreviewProvider" dynamic="true"/>
 
     <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider" dynamic="true"/>
+    <extensionPoint name="documentation.documentationDownloader"
+                    interface="com.intellij.codeInsight.documentation.actions.DocumentationDownloader" dynamic="true"/>
 
      <extensionPoint name="testDiffProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.execution.testframework.actions.TestDiffProvider"/>

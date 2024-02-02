@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.lang.documentation.ide.ui
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.codeInsight.documentation.DocumentationScrollPane
+import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.hint.DefinitionSwitcher
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
@@ -54,6 +56,9 @@ internal class DocumentationUI(
   val switcherToolbarComponent: JComponent?
 
   private val icons = mutableMapOf<String, Icon>()
+
+  @Volatile
+  private var documentationDownloader: DocumentationDownloader? = null
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
@@ -168,9 +173,17 @@ internal class DocumentationUI(
   private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent.Content) {
     val content = pageContent.content
     imageResolver = content.imageResolver
-    val locationChunk = getDefaultLocationChunk(presentation)
+    val targetElement = pageContent.targetElement
+    var downloadSourcesLink: String? = null
+    if (targetElement != null) {
+      documentationDownloader = DocumentationDownloader.EP.extensionList.find { it.canHandle(targetElement) }
+      if (documentationDownloader != null) {
+        downloadSourcesLink = DocumentationDownloader.formatLink(targetElement)
+      }
+    }
     val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
-    val decorated = decorate(content.html, locationChunk, linkChunk)
+    val locationChunk = getDefaultLocationChunk(presentation)
+    val decorated = decorate(content.html, locationChunk, linkChunk, downloadSourcesLink)
     if (!updateContent(decorated)) {
       return
     }
@@ -276,6 +289,15 @@ internal class DocumentationUI(
   private fun linkActivated(href: String) {
     if (href.startsWith("#")) {
       UIUtil.scrollToReference(editorPane, href.removePrefix("#"))
+    }
+    else if (href.startsWith(DocumentationDownloader.HREF_PREFIX) && documentationDownloader != null) {
+      val filePath = href.replaceFirst(DocumentationDownloader.HREF_PREFIX, "")
+      val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
+      if (file != null) {
+        cs.launch(Dispatchers.Default) {
+          documentationDownloader?.download(file)
+        }
+      }
     }
     else {
       browser.navigateByLink(href)

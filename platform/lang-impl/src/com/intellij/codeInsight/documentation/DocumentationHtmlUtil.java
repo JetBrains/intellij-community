@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
@@ -65,6 +65,7 @@ public final class DocumentationHtmlUtil {
       ".separated { padding: 0 0 4px 0; margin: 0; max-width: 100%;" +
       "             border-bottom: thin solid " + borderColor + "; }",
       ".bottom { padding: 3px 16px 0 " + leftPadding + "px; }",
+      ".download-documentation { padding: 0px 0px 18px; }",
       ".separator-container { padding: 18px " + leftPadding + "px 0px; }",
       ".separator-container .separator { border-top: thin solid " + borderColor + "; }",
       ".bottom-no-content { padding: 5px 16px 0 " + leftPadding + "px; }",

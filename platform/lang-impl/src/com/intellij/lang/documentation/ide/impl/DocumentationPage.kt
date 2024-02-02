@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.ide.impl
@@ -13,6 +13,7 @@ import com.intellij.platform.backend.documentation.DocumentationContentData
 import com.intellij.platform.backend.documentation.LinkData
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.computeDocumentation
+import com.intellij.psi.PsiElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
@@ -64,7 +65,7 @@ internal class DocumentationPage(val requests: List<DocumentationRequest>) {
   }
 
   private fun prepareContent(content: DocumentationContentData, links: LinkData, uiState: UIState?): DocumentationPageContent.Content {
-    return DocumentationPageContent.Content(content, links, uiState)
+    return DocumentationPageContent.Content(content, links, uiState, content.targetElement)
   }
 
   /**
@@ -111,5 +112,6 @@ internal sealed class DocumentationPageContent {
     val content: DocumentationContentData,
     val links: LinkData,
     val uiState: UIState?,
+    val targetElement: PsiElement?
   ) : DocumentationPageContent()
 }

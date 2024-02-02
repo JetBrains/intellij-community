@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
@@ -1857,7 +1858,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Nullable DocumentationProvider provider
   ) {
     HtmlChunk locationInfo = getDefaultLocationInfo(element);
-    return decorate(text, locationInfo, getExternalText(element, externalUrl, provider));
+    return decorate(text, locationInfo, getExternalText(element, externalUrl, provider), null);
   }
 
   @RequiresReadLock
@@ -1897,7 +1898,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Internal
   @Contract(pure = true)
-  public static @Nls String decorate(@Nls @NotNull String text, @Nullable HtmlChunk location, @Nullable HtmlChunk links) {
+  public static @Nls String decorate(@Nls @NotNull String text, @Nullable HtmlChunk location, @Nullable HtmlChunk links,
+                                     @Nullable String downloadDocumentationActionLink) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
     text = replaceIgnoreQuotesType(text, SECTIONS_START + SECTIONS_END, "");
@@ -1922,10 +1924,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
       text = replaceIgnoreQuotesType(text, "class='content'", "class='content-only'");
     }
-    if (location != null) {
+    if (downloadDocumentationActionLink != null || location != null) {
       text += HtmlChunk.div().setClass("separator-container")
         .child(HtmlChunk.div().setClass("separator"));
-      text += location;
+      if (downloadDocumentationActionLink != null) {
+        text += HtmlChunk.div()
+          .children(
+            HtmlChunk.icon("AllIcons.Plugins.Downloads", AllIcons.Plugins.Downloads),
+            HtmlChunk.nbsp(),
+            HtmlChunk.link(downloadDocumentationActionLink, CodeInsightBundle.message("documentation.download.button.label"))
+          )
+          .setClass("download-documentation");
+      }
+      if (location != null) {
+        text += location;
+      }
     }
     if (links != null) {
       text += getBottom(location != null).child(links);
