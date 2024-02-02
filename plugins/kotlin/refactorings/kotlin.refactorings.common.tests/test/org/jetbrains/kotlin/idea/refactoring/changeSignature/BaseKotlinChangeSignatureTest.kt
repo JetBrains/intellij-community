@@ -998,6 +998,12 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         swapParameters(0, 2)
     }
 
+    fun testSwapArgumentsToHaveNamed() = doTest {
+        val newParameters = newParameters
+        setNewParameter(1, newParameters[2])
+        setNewParameter(2, newParameters[1])
+    }
+
     fun testNoDefaultValuesInOverrides() = doTest { swapParameters(0, 1) }
 
     fun testDefaultAfterLambda() = doTest { swapParameters(0, 1) }

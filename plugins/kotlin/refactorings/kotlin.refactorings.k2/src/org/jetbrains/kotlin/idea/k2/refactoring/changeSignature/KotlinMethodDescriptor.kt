@@ -74,7 +74,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
                             params.size, KotlinTypeInfo(p.getReturnKtType().render(position = Variance.INVARIANT), callable),
                             p.name!!,
                             p.valOrVarKeyword.toValVar(),
-                            null, false, p.defaultValue, callable
+                            p.defaultValue, p.defaultValue != null, p.defaultValue, callable
                         )
                         params.add(parameterInfo)
                     }
