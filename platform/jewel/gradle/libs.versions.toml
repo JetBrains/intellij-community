@@ -2,9 +2,7 @@
 composeDesktop = "1.6.0-dev1397"
 detekt = "1.23.4"
 dokka = "1.8.20"
-idea232 = "232.10227.8"
-idea233 = "233.14015.106"
-idea241 = "241.9959.31-EAP-SNAPSHOT"
+idea = "241.9959.31-EAP-SNAPSHOT"
 ideaGradlePlugin = "1.17.0"
 jna = "5.14.0"
 kotlin = "1.8.21"
@@ -20,17 +18,9 @@ kotlinSarif = { module = "io.github.detekt.sarif4k:sarif4k", version.ref = "kotl
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
-ij-platform-ide-core-232 = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea232" }
-ij-platform-ide-impl-232 = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea232" }
-ij-platform-core-ui-232 = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea232" }
-
-ij-platform-ide-core-233 = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea233" }
-ij-platform-ide-impl-233 = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea233" }
-ij-platform-core-ui-233 = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea233" }
-
-ij-platform-ide-core-241 = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea241" }
-ij-platform-ide-impl-241 = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea241" }
-ij-platform-core-ui-241 = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea241" }
+ij-platform-ide-core = { module = "com.jetbrains.intellij.platform:ide-core", version.ref = "idea" }
+ij-platform-ide-impl = { module = "com.jetbrains.intellij.platform:ide-impl", version.ref = "idea" }
+ij-platform-core-ui = { module = "com.jetbrains.intellij.platform:core-ui", version.ref = "idea" }
 
 jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 
@@ -44,9 +34,7 @@ kotlinx-binaryCompatValidator-gradlePlugin = { module = "org.jetbrains.kotlinx:b
 poko-gradlePlugin = { module = "dev.drewhamilton.poko:poko-gradle-plugin", version.ref = "poko" }
 
 [bundles]
-idea232 = ["ij-platform-ide-core-232", "ij-platform-ide-impl-232", "ij-platform-core-ui-232"]
-idea233 = ["ij-platform-ide-core-233", "ij-platform-ide-impl-233", "ij-platform-core-ui-233"]
-idea241 = ["ij-platform-ide-core-241", "ij-platform-ide-impl-241", "ij-platform-core-ui-241"]
+idea = ["ij-platform-ide-core", "ij-platform-ide-impl", "ij-platform-core-ui"]
 
 [plugins]
 composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }

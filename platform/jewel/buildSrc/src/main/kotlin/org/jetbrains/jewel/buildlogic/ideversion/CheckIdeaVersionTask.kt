@@ -1,12 +1,10 @@
 package org.jetbrains.jewel.buildlogic.ideversion
 
-import SupportedIJVersion
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
-import supportedIJVersion
 import java.io.IOException
 import java.net.URL
 
@@ -20,11 +18,10 @@ open class CheckIdeaVersionTask : DefaultTask() {
     private val versionRegex =
         "2\\d{2}\\.\\d+\\.\\d+(?:-EAP-SNAPSHOT)?".toRegex(RegexOption.IGNORE_CASE)
 
+    private val currentIjpVersion = project.currentIjpVersion
+
     init {
         group = "jewel"
-
-        val currentPlatformVersion = project.supportedIJVersion()
-        enabled = project.name.endsWith(currentPlatformVersion.rawPlatformVersion)
     }
 
     @TaskAction
@@ -55,9 +52,8 @@ open class CheckIdeaVersionTask : DefaultTask() {
         check(icReleases.code == "IIC") { "Was expecting code IIC but was ${icReleases.code}" }
         check(icReleases.releases.isNotEmpty()) { "Was expecting to have releases but the list is empty" }
 
-        val currentPlatformVersion = project.supportedIJVersion()
-        val majorPlatformVersion = currentPlatformVersion.majorPlatformVersion
-        val rawPlatformBuild = readPlatformBuild(currentPlatformVersion)
+        val majorPlatformVersion = asMajorPlatformVersion(currentIjpVersion)
+        val rawPlatformBuild = readPlatformBuild()
 
         val isCurrentBuildStable = !rawPlatformBuild.contains("EAP")
         val latestAvailableBuild =
@@ -86,9 +82,12 @@ open class CheckIdeaVersionTask : DefaultTask() {
         logger.lifecycle("No IntelliJ Platform version updates available. Current: $currentPlatformBuild")
     }
 
-    private fun readPlatformBuild(platformVersion: SupportedIJVersion): String {
+    private fun asMajorPlatformVersion(rawVersion: String) =
+        "20${rawVersion.take(2)}.${rawVersion.last()}"
+
+    private fun readPlatformBuild(): String {
         val catalogFile = project.rootProject.file("gradle/libs.versions.toml")
-        val dependencyName = "idea${platformVersion.rawPlatformVersion}"
+        val dependencyName = "idea"
 
         val catalogDependencyLine =
             catalogFile.useLines { lines -> lines.find { it.startsWith(dependencyName) } }

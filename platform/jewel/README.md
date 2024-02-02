@@ -52,7 +52,7 @@ For an **IntelliJ Platform plugin**, then you should depend on the appropriate `
 ```kotlin
 dependencies {
     // The platform version is a supported major IJP version (e.g., 232 or 233 for 2023.2 and 2023.3 respectively)
-    implementation("org.jetbrains.jewel:jewel-ide-laf-bridge:[jewel version]-ij-[platform version]")
+    implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-[platform version]:[jewel version]")
 }
 ```
 
@@ -96,55 +96,36 @@ The project is split in modules:
     * `int-ui-decorated-window` has a standalone version of the Int UI styling values for the custom window decoration
       that can be used in any Compose for Desktop app
 6. `ide-laf-bridge` contains the Swing LaF bridge to use in IntelliJ Platform plugins (see more below)
-    * The `ide-laf-bridge-*` sub-modules contain code that is specific to a certain IntelliJ Platform version
 7. `samples` contains the example apps, which showcase the available components:
     * `standalone` is a regular CfD app, using the standalone theme definitions and custom window decoration
     * `ide-plugin` is an IntelliJ plugin that showcases the use of the Swing Bridge
+
+## Branching strategy and IJ Platforms
+
+Code on the main branch is developed and tested against the current latest IntelliJ Platform version.
+
+When the EAP for a new major version starts, we cut a `releases/xxx` release branch, where `xxx` is the tracked major
+IJP version. At that point, the main branch starts tracking the latest available major IJP version, and changes are
+cherry-picked into each release branch as needed. All active release branches have the same functionality (where
+supported by the corresponding IJP version), but might differ in platform version-specific fixes and internals.
+
+The standalone Int UI theme will always work the same way as the latest major IJP version; release branches will not
+include the `int-ui` module, which is always released from the main branch.
+
+Releases of Jewel are always cut from a tag on the main branch; the HEAD of each `releases/xxx` branch is then tagged
+as `[mainTag]-xxx`, and used to publish the artifacts for that major IJP version.
+
+> ![IMPORTANT]
+> We only support the latest build of IJP for each major IJP version. If the latest 233 version is 2023.3.3, for
+> example, we will only guarantee that Jewel works on that. Versions 2023.3.0–2023.3.2 might or might not work.
 
 ### Int UI Standalone theme
 
 The standalone theme can be used in any Compose for Desktop app. You use it as a normal theme, and you can customise it
 to your heart's content. By default, it matches the official Int UI specs.
 
-Your setup in `build.gradle.kts` should look something like this, assuming you use version catalogs:
-
-```kotlin
-plugins {
-    kotlin("jvm")
-    alias(libs.plugins.composeDesktop)
-}
-
-java {
-    toolchain {
-        vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = 21
-    }
-}
-
-kotlin {
-    jvmToolchain {
-        vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = 21
-    }
-}
-
-repositories {
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    mavenCentral()
-}
-
-dependencies {
-    implementation(libs.jewel.intUi.standalone)
-    implementation(libs.jewel.intUi.decoratedWindow) // Optional
-
-    implementation(compose.desktop.currentOs) {
-        // Exclude Material components — we don't need them
-        exclude(group = "org.jetbrains.compose.material")
-    }
-}
-```
-
-For further information, you can refer to the [`standalone` sample](samples/standalone/build.gradle.kts).
+For an example on how to set up a standalone app, you can refer to
+the [`standalone` sample](samples/standalone/build.gradle.kts).
 
 > [!WARNING]
 > Note that Jewel **requires** the JetBrains Runtime to work correctly. Some features like font loading depend on it,
@@ -216,66 +197,19 @@ SwingBridgeTheme {
 
 #### Supported IntelliJ Platform versions
 
-To use Jewel in the IntelliJ Platform, you should depend on the appropriate `ide-laf-bridge-*` artifact, which will
-bring in the necessary transitive dependencies.
+To use Jewel in the IntelliJ Platform, you should depend on the appropriate `jewel-ide-laf-bridge-*` artifact, which
+will bring in the necessary transitive dependencies. These are the currently supported versions of the IntelliJ Platform
+and the branch on which the corresponding bridge code lives:
 
-| IntelliJ Platform version(s) | Artifact to use      |
- |------------------------------|----------------------|
-| 2023.3 and 2024.1            | `ide-laf-bridge-233` |
-| 2023.2                       | `ide-laf-bridge-232` |
-| 2023.1 or older              | **Not supported**    |
+| IntelliJ Platform version(s) | Branch to use     |
+ |------------------------------|-------------------|
+| 2024.1 (EAP 3+)              | `main`            |
+| 2023.3                       | `releases/233`    |
+| 2023.2                       | `releases/232`    |
+| 2023.1 or older              | **Not supported** |
 
-> [!CAUTION]
-> In the IntelliJ Platform 2024.1, to be able to use Jewel, you need to shadow both Jewel and Compose, due to
-> potential clashes with the versions bundled in the platform. You can use the
-> [Package Search plugin](https://github.com/JetBrains/package-search-intellij-plugin) as a reference on how to do it.
-
-Your setup in `build.gradle.kts` should look something like this, assuming you use version catalogs:
-
-```kotlin
-plugins {
-    kotlin("jvm")
-    alias(libs.plugins.composeDesktop)
-    alias(libs.plugins.ideaGradlePlugin)
-}
-
-java {
-    toolchain {
-        vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = 17 // Or 21, if you're targeting IJ 2024.1 or later
-    }
-}
-
-kotlin {
-    jvmToolchain {
-        vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = 17 // Or 21, if you're targeting IJ 2024.1 or later
-    }
-}
-
-repositories {
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    maven("https://www.jetbrains.com/intellij-repository/snapshots")
-    maven("https://www.jetbrains.com/intellij-repository/releases")
-    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
-    mavenCentral()
-}
-
-dependencies {
-    implementation(libs.jewel.ideLafBridge) {
-        // Exclude any coroutines dependency that might be coming through — the IDE has its own
-        exclude(group = "org.jetbrains.kotlinx")
-    }
-
-    implementation(compose.desktop.currentOs) {
-        // Exclude Material components — we don't need them
-        exclude(group = "org.jetbrains.compose.material")
-        exclude(group = "org.jetbrains.kotlinx")
-    }
-}
-```
-
-For further information, you can refer to the [`ide-plugin` sample](samples/ide-plugin/build.gradle.kts).
+For an example on how to set up an IntelliJ Plugin, you can refer to
+the [`ide-plugin` sample](samples/ide-plugin/build.gradle.kts).
 
 #### Accessing icons
 

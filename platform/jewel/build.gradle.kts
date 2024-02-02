@@ -7,8 +7,6 @@ dependencies {
     sarif(projects.decoratedWindow)
     sarif(projects.foundation)
     sarif(projects.ideLafBridge)
-    sarif(projects.ideLafBridge.ideLafBridge232)
-    sarif(projects.ideLafBridge.ideLafBridge233)
     sarif(projects.intUi.intUiDecoratedWindow)
     sarif(projects.intUi.intUiStandalone)
     sarif(projects.samples.idePlugin)

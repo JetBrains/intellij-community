@@ -1,38 +1,28 @@
-import SupportedIJVersion.IJ_232
-import SupportedIJVersion.IJ_233
-import SupportedIJVersion.IJ_241
-
 plugins {
     jewel
-    `jewel-ij-publish`
+    `jewel-publish`
     `jewel-check-public-api`
+    `ide-version-checker`
     alias(libs.plugins.composeDesktop)
 }
+
+val bridgeIjpTarget = project.property("bridge.ijp.target") as String
 
 dependencies {
     api(projects.ui) {
         exclude(group = "org.jetbrains.kotlinx")
     }
 
-    when (supportedIJVersion()) {
-        IJ_232 -> {
-            api(projects.ideLafBridge.ideLafBridge232)
-            compileOnly(libs.bundles.idea232)
-        }
-
-        IJ_233 -> {
-            api(projects.ideLafBridge.ideLafBridge233)
-            compileOnly(libs.bundles.idea233)
-        }
-
-        IJ_241 -> {
-            api(projects.ideLafBridge.ideLafBridge233)
-            compileOnly(libs.bundles.idea241)
-        }
-    }
+    compileOnly(libs.bundles.idea)
 
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
+    }
+}
+
+publishing.publications {
+    named<MavenPublication>("main") {
+        artifactId = "jewel-${project.name}-$bridgeIjpTarget"
     }
 }

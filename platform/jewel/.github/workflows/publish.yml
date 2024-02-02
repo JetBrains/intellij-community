@@ -4,51 +4,59 @@ on:
   release:
     types: [ published ]
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - 'releases/**'
 
 jobs:
-  publish-core:
-    name: Publish Jewel Core
+  publish-current:
+    name: Publish standalone & current-IJP-version bridge
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 17
           cache: gradle
+
       - name: Setup Gradle
         run: chmod +x gradlew
+
       - name: Run Gradle
-        # supported.ij.version is needed here for project configuration and won't be used during publishing
-        run: ./gradlew publishMainPublicationToSpaceRepository -Psupported.ij.version=232
+        run: ./gradlew publishMainPublicationToSpaceRepository
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
 
-  publish-ide:
-    name: Publish Jewel IDE part
-    needs: publish-core
+  publish-older:
+    name: Publish older-IJP-version bridge(s)
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        supported-ij-version:
-          - 232
-          - 233
+        branch-name:
+          - releases/232
+          - releases/233
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch-name }}
+
+      - uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 17
           cache: gradle
+
       - name: Setup Gradle
         run: chmod +x gradlew
+
       - name: Run Gradle
-        run: ./gradlew publishIdeMainPublicationToSpaceRepository -Psupported.ij.version=${{ matrix.supported-ij-version }}
+        run: ./gradlew :ide-laf-bridge:publishMainPublicationToSpaceRepository
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
