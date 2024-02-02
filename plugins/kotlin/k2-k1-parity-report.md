@@ -1,17 +1,17 @@
 # K2/K1 feature parity report
 
 
-Generated on Sun Jan 28 22:10:21 CET 2024
+Generated on Fri Feb 02 14:56:50 CET 2024
 
 ## Shared cases
-shared 10054 files out of 711 cases
+shared 10056 files out of 711 cases
 
 | Status | Case name | Success rate, % | K2 files | K1 files | Total files |
 | -- | -- | --  | -- | -- | -- |
- | :white_check_mark: | [FirParameterInfoTestGenerated] | 93 | 117 | 126 | 126 | 
+ | :white_check_mark: | [FirParameterInfoTestGenerated] | 94 | 118 | 126 | 126 | 
  | :x: | FirParameterInfoTestGenerated$WithLib3 | 0 | 0 | 1 | 1 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$ArrayAccess | 88 | 7 | 8 | 8 | 
- | :white_check_mark: | FirParameterInfoTestGenerated$FunctionCall | 92 | 82 | 89 | 89 | 
+ | :white_check_mark: | FirParameterInfoTestGenerated$FunctionCall | 93 | 83 | 89 | 89 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$Annotations | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$TypeArguments | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$WithLib1 | 100 | 1 | 1 | 1 | 
@@ -364,8 +364,8 @@ shared 10054 files out of 711 cases
  | :white_check_mark: | FirMultiModuleRenameTestGenerated | 85 | 22 | 26 | 26 | 
  | :white_check_mark: | FirWithLibBasicCompletionTestGenerated | 88 | 15 | 17 | 17 | 
  | :white_check_mark: | FirShortenRefsTestGenerated$This | 88 | 7 | 8 | 8 | 
- | :white_check_mark: | HighLevelMultiFileJvmBasicCompletionTestGenerated | 89 | 79 | 89 | 94 | 
  | :white_check_mark: | K2CompletionCharFilterTestGenerated | 89 | 31 | 35 | 35 | 
+ | :white_check_mark: | HighLevelMultiFileJvmBasicCompletionTestGenerated | 90 | 80 | 89 | 94 | 
  | :white_check_mark: | FirKeywordCompletionTestGenerated$Keywords | 91 | 127 | 139 | 139 | 
  | :white_check_mark: | [K2IdeK2CodeKotlinEvaluateExpressionTestGenerated] | 92 | 322 | 350 | 350 | 
  | :white_check_mark: | K2IdeK2CodeKotlinEvaluateExpressionTestGenerated$MultipleBreakpoints | 92 | 33 | 36 | 36 | 
@@ -415,7 +415,7 @@ shared 10054 files out of 711 cases
  | :white_check_mark: | [K2BreakpointApplicabilityTestGenerated] | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | [K2ClassNameCalculatorTestGenerated] | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | [K2IdeK2CodeAsyncStackTraceTestGenerated] | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | [K2IdeK2CodeContinuationStackTraceTestGenerated] | 100 | 3 | 3 | 3 | 
+ | :white_check_mark: | [K2IdeK2CodeContinuationStackTraceTestGenerated] | 100 | 5 | 5 | 5 | 
  | :white_check_mark: | [K2IdeK2CodeCoroutineDumpTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [K2IdeK2CodeFileRankingTestGenerated] | 100 | 12 | 12 | 12 | 
  | :white_check_mark: | [K2IdeK2CodeKotlinVariablePrintingTestGenerated] | 100 | 9 | 9 | 9 | 
@@ -453,8 +453,8 @@ kt, test, before.Main.kt, kts, main.java, main.kt, option1.kt, kt.kt, java, 0.kt
 
 ---
 ## Total 
- * K1: 9942 rate: 99 % of 10054 files
- * K2: 6817 rate: 68 % of 10054 files
+ * K1: 9944 rate: 99 % of 10056 files
+ * K2: 6821 rate: 68 % of 10056 files
 ---
 
 ## Build cases for K1
@@ -1410,28 +1410,28 @@ org.jetbrains.kotlin.idea.fir.analysis.providers.dependents.ModuleDependentsTest
  * base/fir/analysis-api-providers/testData/moduleDependents/rhombus
  * base/fir/analysis-api-providers/testData/moduleDependents/singleRoot
 
-org.jetbrains.kotlin.idea.fir.low.level.api.FirSealedClassInheritorsTestGenerated has directories
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/ambiguousLibrarySealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/ambiguousLibrarySealedInterface
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/ambiguousSealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/ambiguousSealedInterface
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/illegalDistributedSealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/illegalExtendedLibrarySealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/indirectInheritorsLibrarySealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/indirectInheritorsLibrarySealedInterface
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/indirectInheritorsSealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/indirectInheritorsSealedInterface
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/librarySealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/librarySealedInterface
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/nestedLibrarySealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/nestedLibrarySealedInterface
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/nestedSealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/nestedSealedInterface
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/otherModuleSealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/otherModuleSealedInterface
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/sameModuleSealedClass
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/sameModuleSealedClassWithIrregularPackage
- * fir-low-level-api-ide-impl/testData/sealedClassInheritors/sameModuleSealedInterface
+org.jetbrains.kotlin.idea.fir.analysis.providers.sealedInheritors.SealedInheritorsProviderTestGenerated has directories
+ * base/fir/analysis-api-providers/testData/sealedInheritors/ambiguousLibrarySealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/ambiguousLibrarySealedInterface
+ * base/fir/analysis-api-providers/testData/sealedInheritors/ambiguousSealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/ambiguousSealedInterface
+ * base/fir/analysis-api-providers/testData/sealedInheritors/illegalDistributedSealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/illegalExtendedLibrarySealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/indirectInheritorsLibrarySealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/indirectInheritorsLibrarySealedInterface
+ * base/fir/analysis-api-providers/testData/sealedInheritors/indirectInheritorsSealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/indirectInheritorsSealedInterface
+ * base/fir/analysis-api-providers/testData/sealedInheritors/librarySealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/librarySealedInterface
+ * base/fir/analysis-api-providers/testData/sealedInheritors/nestedLibrarySealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/nestedLibrarySealedInterface
+ * base/fir/analysis-api-providers/testData/sealedInheritors/nestedSealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/nestedSealedInterface
+ * base/fir/analysis-api-providers/testData/sealedInheritors/otherModuleSealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/otherModuleSealedInterface
+ * base/fir/analysis-api-providers/testData/sealedInheritors/sameModuleSealedClass
+ * base/fir/analysis-api-providers/testData/sealedInheritors/sameModuleSealedClassWithIrregularPackage
+ * base/fir/analysis-api-providers/testData/sealedInheritors/sameModuleSealedInterface
 
 org.jetbrains.kotlin.idea.fir.resolve.FirReferenceResolveWithLibTestGenerated has directories
  * idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods
