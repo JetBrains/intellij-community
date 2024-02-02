@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -73,6 +74,13 @@ public final class MergeAllWindowsAction extends IdeDependentAction {
   }
 
   private static void mergeAllWindows(@NotNull Window window, boolean updateTabBars) {
+    for (IdeFrame helper : WindowManager.getInstance().getAllProjectFrames()) {
+      IdeFrameImpl frame = ((ProjectFrameHelper)helper).getFrame();
+      if (frame != window && helper.isInFullScreen()) {
+        frame.getRootPane().putClientProperty(MacMainFrameDecorator.IGNORE_EXIT_FULL_SCREEN, true);
+      }
+    }
+
     Foundation.executeOnMainThread(true, false, () -> {
       ID id = MacUtil.getWindowFromJavaWindow(window);
       Foundation.invoke(id, "mergeAllWindows:", ID.NIL);

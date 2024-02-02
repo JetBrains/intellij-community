@@ -42,6 +42,8 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
       get() = logger<MacMainFrameDecorator>()
 
     const val FULL_SCREEN: String = "Idea.Is.In.FullScreen.Mode.Now"
+
+    const val IGNORE_EXIT_FULL_SCREEN = "Idea.Ignore.Exit.FullScreen"
   }
 
   @Suppress("FunctionName")
@@ -167,10 +169,11 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
   }
 
   private fun exitFullScreen() {
-    isInFullScreen = false
-    storeFullScreenStateIfNeeded()
     val rootPane = frame.rootPane
+    isInFullScreen = rootPane?.getClientProperty(IGNORE_EXIT_FULL_SCREEN) != null
+    storeFullScreenStateIfNeeded()
     rootPane?.putClientProperty(FULL_SCREEN, null)
+    rootPane?.putClientProperty(IGNORE_EXIT_FULL_SCREEN, null)
     tabsHandler.exitFullScreen()
   }
 
