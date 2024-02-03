@@ -20,18 +20,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
  */
 public class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider,
                                                                                     PriorityAction {
-  private final AnAction myAction;
+  private final @NotNull Supplier<? extends AnAction> myAction;
   private final int myOrder;
   private final Icon myIcon;
   private final @IntentionName String myText;
 
   public GutterIntentionAction(@NotNull AnAction action, int order, @NotNull Icon icon, @NotNull @IntentionName String text) {
+    myAction = () -> action;
+    myOrder = order;
+    myIcon = icon;
+    myText = text;
+  }
+
+  public GutterIntentionAction(@NotNull Supplier<? extends AnAction> action, int order, @NotNull Icon icon, @NotNull @IntentionName String text) {
     myAction = action;
     myOrder = order;
     myIcon = icon;
@@ -43,9 +51,11 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
     RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, EditorUtil.getEditorDataContext(editor));
-    if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) return;
-    ActionUtil.performDumbAwareWithCallbacks(myAction, event, () ->
-      ActionUtil.doPerformActionOrShowPopup(myAction, event, popup -> {
+
+    AnAction action = myAction.get();
+    if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) return;
+    ActionUtil.performDumbAwareWithCallbacks(action, event, () ->
+      ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
         popup.showInBestPositionFor(editor);
       }));
   }
@@ -71,7 +81,7 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public @NotNull AnAction getAction() {
-    return myAction;
+    return myAction.get();
   }
 
   @Override
@@ -81,6 +91,6 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public @Nullable ShortcutSet getShortcut() {
-    return myAction.getShortcutSet();
+    return myAction.get().getShortcutSet();
   }
 }
