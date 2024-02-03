@@ -305,7 +305,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     Path file = getProjectsTreeFile();
     try {
       if (Files.exists(file)) {
-        myProjectsTree = MavenProjectsTree.read(myProject, file);
+        var readTree = MavenProjectsTree.read(myProject, file);
+        if (null != readTree) {
+          myProjectsTree = readTree;
+        }
+        else {
+          MavenLog.LOG.warn("Could not load existing tree, read null");
+        }
       }
     }
     catch (IOException e) {
