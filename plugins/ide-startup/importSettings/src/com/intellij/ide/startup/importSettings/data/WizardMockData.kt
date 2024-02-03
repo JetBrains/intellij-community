@@ -156,14 +156,14 @@ class WizardPluginImpl(override val icon: Icon,
 class TestKeymapService : KeymapService {
   override val keymaps: List<WizardKeymap> =
     listOf(TestWizardKeymap(UUID.randomUUID().toString(), "Visual Studio",
-                        "Visual Studio Visual Studio Visual Studio"),
+                        "Visual Studio Visual Studio Visual Studio", 0),
 
            TestWizardKeymap(UUID.randomUUID().toString(), "Visual Assist",
-                            "Visual Studio Visual Studio Visual Studio"),
+                            "Visual Studio Visual Studio Visual Studio", 1),
              TestWizardKeymap(UUID.randomUUID().toString(), "JetBrains IDE",
-           "Visual Studio Visual Studio Visual Studio"),
+           "Visual Studio Visual Studio Visual Studio", 2),
            TestWizardKeymap(UUID.randomUUID().toString(), "VS Code",
-                            "Visual Studio Visual Studio Visual Studio")
+                            "Visual Studio Visual Studio Visual Studio", 3)
            )
 
   override val shortcuts: List<Shortcut> = listOf(Shortcut(UUID.randomUUID().toString(), "Search"),
@@ -179,11 +179,11 @@ class TestKeymapService : KeymapService {
 
 class TestWizardKeymap(override val id: String,
                        override val name: String,
-                       override val description: @Nls String) : WizardKeymap {
+                       override val description: @Nls String, val ind: Int? = null) : WizardKeymap {
 
-  private val shortCuts = listOf("Shift+Shift", "Alt+Shift+F", "Alt+Shift+F1", "F12", "F1")
-  override fun getShortcutValue(id: String): String {
-    return shortCuts.random()
+  private val shortCuts = listOf("Shift+Shift", "F12", "Alt+Shift+F12", "Alt+Shift+F1", "F1", "Ctrl+Shift+B")
+  override fun getShortcutValue(id_: String): String {
+    return ind?.let{ shortCuts[it] } ?: shortCuts.random()
   }
 
 }

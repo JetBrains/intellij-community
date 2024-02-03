@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.wizard.keymapChooser
 
 import com.intellij.ide.startup.importSettings.chooser.ui.RoundedBorder
 import com.intellij.ide.startup.importSettings.chooser.ui.RoundedPanel
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.VerticalLayout
@@ -87,17 +88,42 @@ class KeymapPane(val keymap: Keymap) {
 
           val keyPanel = JPanel(VerticalLayout(0)).apply {
             isOpaque = false
-            add(JLabel(it.value).apply {
+            add(object : JLabel(it.value) {
+              override fun paintComponent(g: Graphics?) {
+                super.paintComponent(g)
+
+                val fm = getFontMetrics(font)
+                if (g !is Graphics2D) {
+                  return
+                }
+                UISettings.setupAntialiasing(g)
+
+                val textWidth = fm.stringWidth(text)
+                var availableWidth = width - insets.right - insets.left
+                icon?.let {
+                  availableWidth -= iconTextGap + it.iconWidth
+                }
+
+                toolTipText = if (textWidth > availableWidth) {
+                  text
+                }
+                else null
+              }
+
+            }.apply {
               font = JBFont.medium()
               border = JBUI.Borders.empty(0, 4)
+              maximumSize = Dimension(JBUI.scale(85), maximumSize.height)
             })
-            border = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, KEY_BACKGROUND, {KEY_BACKGROUND}, 7)
+            border = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, KEY_BACKGROUND, { KEY_BACKGROUND }, 7)
           }
           border = JBUI.Borders.empty(0, 8)
+         // minimumSize = Dimension(JBUI.scale(110), minimumSize.height)
 
           names.add(ShortcutItem(name, keyPanel))
           add(keyPanel, gbc1)
           gbc1.gridy += 1
+
         }
       })
 
@@ -114,14 +140,13 @@ class KeymapPane(val keymap: Keymap) {
     names.forEach {
       it.name.isVisible = active
       val constraints = keyMapGridBagLayout.getConstraints(it.value)
-      constraints.anchor = if(active) GridBagConstraints.LINE_START else GridBagConstraints.CENTER
+      constraints.anchor = if (active) GridBagConstraints.LINE_START else GridBagConstraints.CENTER
       keyMapGridBagLayout.setConstraints(it.value, constraints)
       mainPanel.border = if (active) /*if(UiUtils.isFocusOwner(pane)) focusBorder else*/ activeBorder else regularBorder
     }
 
     jRadioButton.isSelected = active
   }
-
 
 
   private data class ShortcutItem(val name: JComponent, val value: JComponent)
