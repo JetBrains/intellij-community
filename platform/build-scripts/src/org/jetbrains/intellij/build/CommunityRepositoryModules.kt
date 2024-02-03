@@ -135,6 +135,9 @@ object CommunityRepositoryModules {
         val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
         copyDir(maven3Libs, targetLib.resolve("maven3-server-lib"))
 
+        val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+        copyDir(mavenTelemetryDependencies, targetLib.resolve("maven-telemetry-lib"))
+
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
       }

@@ -78,6 +78,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     catch (ClassNotFoundException e) {
       MavenLog.LOG.error(e);
     }
+    addDir(classpath, new File(root, "maven-telemetry-lib"), f -> true);
 
     addDir(classpath, new File(root, "maven4-server-lib"), f -> true);
 

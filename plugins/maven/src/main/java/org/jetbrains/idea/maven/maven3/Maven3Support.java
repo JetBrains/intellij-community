@@ -77,6 +77,7 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     catch (ClassNotFoundException e) {
       MavenLog.LOG.error(e);
     }
+    addDir(classpath, new File(root, "maven-telemetry-lib"), f -> true);
 
     classpath.add(new File(root, "maven3-server-common.jar"));
     addDir(classpath, new File(root, "maven3-server-lib"), f -> true);
