@@ -151,7 +151,7 @@ class WorkspaceModelAsyncTest {
     }
   }
 
-  @Test
+  @Test(timeout = 10_000)
   fun `check several async update produce consistent result`() = runBlocking {
     val moduleNames = setOf("ModuleA", "ModuleB", "ModuleC")
     val application = ApplicationManager.getApplication()
