@@ -78,6 +78,11 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
     private fun registerLocalReferences(elements: List<PsiElement>) {
         val registerDeclarationAccessVisitor = object : KtVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                if (expression.parent is KtValueArgumentName) {
+                    // usage of parameter in form of named argument is not counted
+                    return
+                }
+
                 val symbol = expression.mainReference.resolveToSymbol()
                 if (symbol is KtLocalVariableSymbol || symbol is KtValueParameterSymbol || symbol is KtKotlinPropertySymbol) {
                     refHolder.registerLocalRef(symbol.psi, expression)

@@ -25,14 +25,14 @@ import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
 import junit.framework.TestCase
 import org.jdom.Element
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -237,7 +237,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val localFixAction = localFixActions.singleOrNull { it !is EmptyIntentionAction }
         if (localFixTextString == "none") {
-            assertTrue("Expected no fix action", localFixAction == null)
+            assertTrue("Expected no fix action, actual: `${localFixAction?.text}`", localFixAction == null)
             return false
         }
         assertTrue(
