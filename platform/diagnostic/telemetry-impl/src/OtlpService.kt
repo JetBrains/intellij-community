@@ -11,6 +11,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.exporters.*
 import com.intellij.platform.util.http.ContentType
 import com.intellij.platform.util.http.httpPost
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.onTimeout
@@ -30,10 +31,12 @@ fun getOtlpEndPoint(): String? {
   return normalizeOtlpEndPoint(System.getProperty("idea.diagnostic.opentelemetry.otlp"))
 }
 
-internal class OtlpService {
+internal class OtlpService private constructor() {
   private val spans = Channel<ActivityImpl?>(capacity = Channel.UNLIMITED)
 
-  private val utc = ((ZonedDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli() / 1000) - 1672531200).toInt()
+  internal val utc = ((ZonedDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli() / 1000) - 1672531200).toInt()
+
+  internal val traceIdSalt = System.identityHashCode(spans).toLong() shl 32 or (System.identityHashCode(this).toLong() and 0xffffffffL)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   fun process(coroutineScope: CoroutineScope,
@@ -45,7 +48,6 @@ internal class OtlpService {
     }
 
     return coroutineScope.launch {
-      val traceIdSalt = System.identityHashCode(spans).toLong() shl 32 or (System.identityHashCode(this).toLong() and 0xffffffffL)
       val startTimeUnixNanoDiff = StartUpMeasurer.getStartTimeUnixNanoDiff()
 
       val appInfo = ApplicationInfoImpl.getShadowInstance()
@@ -64,7 +66,7 @@ internal class OtlpService {
 
               val attributes = span.attributes
               val protoSpan = Span(
-                traceId = computeTraceId(span = span, traceIdSalt = traceIdSalt, utc = utc),
+                traceId = computeTraceId(span),
                 spanId = computeSpanId(span),
                 name = normalizeSpanName(span),
                 startTimeUnixNano = startTimeUnixNanoDiff + span.start,
@@ -167,9 +169,22 @@ internal class OtlpService {
     spans.send(null)
     spans.close()
   }
+
+  companion object {
+    private val instance = SynchronizedClearableLazy {
+      return@SynchronizedClearableLazy OtlpService()
+    }
+
+    @JvmStatic
+    fun getInstance(): OtlpService = instance.value
+  }
 }
 
-private fun computeTraceId(span: ActivityImpl, traceIdSalt: Long, utc: Int): ByteArray {
+fun computeTraceId(span: ActivityImpl): ByteArray {
+  val otlpService = OtlpService.getInstance()
+  val traceIdSalt = otlpService.traceIdSalt
+  val utc = otlpService.utc
+
   var rootSpan = span
   while (true) {
     val parentSpan = rootSpan.parent ?: break
@@ -183,7 +198,7 @@ private fun computeTraceId(span: ActivityImpl, traceIdSalt: Long, utc: Int): Byt
   return byteBuffer.array()
 }
 
-private fun computeSpanId(span: ActivityImpl): ByteArray {
+fun computeSpanId(span: ActivityImpl): ByteArray {
   val byteBuffer = ByteBuffer.allocate(8)
   byteBuffer.putInt((span.start / 1_000_000).toInt())
   byteBuffer.putInt(System.identityHashCode(span))

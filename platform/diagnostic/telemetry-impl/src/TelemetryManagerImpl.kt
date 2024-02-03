@@ -66,7 +66,7 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     }
 
     aggregatedMetricExporter = configurator.aggregatedMetricExporter
-    otlpService = OtlpService()
+    otlpService = OtlpService.getInstance()
 
     var otlJob: Job? = null
     val spanExporters = createSpanExporters(configurator.resource, isUnitTestMode = isUnitTestMode)
