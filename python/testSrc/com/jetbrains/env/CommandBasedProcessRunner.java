@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.commandInterface.command.Command;
 import com.intellij.commandInterface.command.SimpleCommand;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +64,7 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
                   @NotNull final ProcessListener processListener,
                   @NotNull final String tempWorkingPath) {
     myConsole = new SimpleProcessRunnerConsole(project, processListener);
+    Disposer.register(project, myConsole);
     myCommand.execute(myCommand.getName(), myModule, myParameters, myConsole, null);
   }
 }
