@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorage.RegionAllocationAtomicityLock;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -19,7 +20,6 @@ import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public class MMappedFileStorageTest {
 
@@ -35,7 +35,10 @@ public class MMappedFileStorageTest {
   }
 
   private @NotNull MMappedFileStorage open() throws IOException {
-    return new MMappedFileStorage(storagePath, PAGE_SIZE);
+    return MMappedFileStorageFactory
+      .withDefaults()
+      .pageSize(PAGE_SIZE)
+      .open(storagePath);
   }
 
   @AfterEach
@@ -107,7 +110,7 @@ public class MMappedFileStorageTest {
     ExecutorService pool = Executors.newFixedThreadPool(CPUs);
     try {
       //create dedicated storage with small pages so page-allocation is faster and fewer shadows concurrent issues:
-      try (MMappedFileStorage storage = new MMappedFileStorage(storagePath, smallPageSize)) {
+      try (MMappedFileStorage storage = MMappedFileStorageFactory.withDefaults().pageSize(smallPageSize).open(storagePath)) {
         try {
           Future<Page[]>[] futures = new Future[CPUs];
 
@@ -158,7 +161,7 @@ public class MMappedFileStorageTest {
   public void openingSecondStorage_OverSameFile_Fails() {
     assertThrows(
       IllegalStateException.class,
-      () -> new MMappedFileStorage(storage.storagePath(), PAGE_SIZE)
+      () -> MMappedFileStorageFactory.withDefaults().pageSize(PAGE_SIZE).open(storage.storagePath())
     );
   }
 
@@ -211,12 +214,17 @@ public class MMappedFileStorageTest {
     storage.fsync();
   }
 
+  //============ MMappedFileStorage_Factory tests: ===========================================================================
+
   @Test
-  public void mappedStorageFailsOpenStorage_IfStorageParentDirectoryNotExist(@TempDir Path tempDir) {
+  public void mappedStorage_Factory_FailsOpenStorage_IfStorageParentDirectoryNotExist(@TempDir Path tempDir) {
     Path nonExistentDir = tempDir.resolve("subdir");
     Path storagePath = nonExistentDir.resolve("storage.file").toAbsolutePath();
     try {
-      var storage = new MMappedFileStorage(storagePath, PAGE_SIZE);
+      var storage = MMappedFileStorageFactory.withDefaults()
+        .createParentDirectories(false)
+        .pageSize(PAGE_SIZE)
+        .open(storagePath);
       storage.closeAndClean();
       fail("Storage must fail to open file in non-existing directory");
     }
@@ -226,11 +234,48 @@ public class MMappedFileStorageTest {
   }
 
   @Test
-  public void mappedStorage_Factory_CreatesParentDirectoryIfNotExist(@TempDir Path tempDir) throws IOException {
+  public void mappedStorage_Factory_CreatesParentDirectory_IfConfiguredTo(@TempDir Path tempDir) throws IOException {
     Path nonExistentDir = tempDir.resolve("subdir");
     Path storagePath = nonExistentDir.resolve("storage.file").toAbsolutePath();
     try (var storage = MMappedFileStorageFactory.withDefaults().open(storagePath)) {
       storage.closeAndClean();
     }
+  }
+
+  @Test
+  public void mappedStorage_Factory_FailsOpenStorage_IfFileSize_IsNotPageAligned(@TempDir Path tempDir) throws IOException {
+    Path storagePath = tempDir.resolve("storage.file").toAbsolutePath();
+    //page un-aligned size:
+    Files.write(storagePath, new byte[PAGE_SIZE + 1]);
+    try {
+      var storage = MMappedFileStorageFactory.withDefaults()
+        .pageSize(PAGE_SIZE)
+        .expandFileIfNotPageAligned(false)
+        .open(storagePath);
+      storage.closeAndClean();
+      fail("Storage must fail to open file with size != N*pageSize");
+    }
+    catch (IOException e) {
+      //ok
+    }
+  }
+
+  @Test
+  public void mappedStorage_Factory_OpensStorageSuccessfully_IfFileSize_IsNotPageAligned_ButThereIsUnfinishedMappingSign(@TempDir Path tempDir)
+    throws IOException {
+    Path storagePath = tempDir.resolve("storage.file").toAbsolutePath();
+    //page un-aligned size:
+    Files.write(storagePath, new byte[PAGE_SIZE + 1]);
+
+    //create 'unfinished mapping' mark:
+    RegionAllocationAtomicityLock regionAllocationLock = RegionAllocationAtomicityLock.defaultLock(storagePath);
+    RegionAllocationAtomicityLock.Region region = regionAllocationLock.region(PAGE_SIZE, PAGE_SIZE);
+    region.start();
+
+    var storage = MMappedFileStorageFactory.withDefaults()
+      .pageSize(PAGE_SIZE)
+      .expandFileIfNotPageAligned(false)
+      .open(storagePath);
+    storage.closeAndClean();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -383,13 +383,23 @@ public final class IOUtil {
                                         long upUntilSize) throws IOException {
     long channelSize = channel.size();
     if (channelSize < upUntilSize) {
-      int stride = ZEROES.length;
-      ByteBuffer zeros = ByteBuffer.wrap(ZEROES);
-      for (long pos = channelSize; pos < upUntilSize; pos += stride) {
-        int remainsToZero = Math.toIntExact(Math.min(stride, upUntilSize - pos));
-        zeros.clear().limit(remainsToZero);
-        channel.write(zeros, pos);
-      }
+      fillFileRegionWithZeros(channel, channelSize, upUntilSize);
+    }
+  }
+
+  /**
+   * Zero region [startingOffset..upUntilSize) -- i.e. upper limit exclusive.
+   * File is expanded, if needed
+   */
+  public static void fillFileRegionWithZeros(@NotNull FileChannel channel,
+                                             long startingOffset,
+                                             long upUntilOffset) throws IOException {
+    int stride = ZEROES.length;
+    ByteBuffer zeros = ByteBuffer.wrap(ZEROES);
+    for (long pos = startingOffset; pos < upUntilOffset; pos += stride) {
+      int remainsToZero = Math.toIntExact(Math.min(stride, upUntilOffset - pos));
+      zeros.clear().limit(remainsToZero);
+      channel.write(zeros, pos);
     }
   }
 

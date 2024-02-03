@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,7 +45,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  */
 @ApiStatus.Internal
 public final class MMappedFileStorage implements Closeable, Unmappable, CleanableStorage {
-  private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
+  static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
   /**
@@ -84,6 +85,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   /** Log each unmapped buffer */
   private static final boolean LOG_UNMAP_OPERATIONS = getBooleanProperty("MMappedFileStorage.LOG_UNMAP_OPERATIONS", false);
 
+  private static final boolean CRASH_TOLERANT_EXPANSION = getBooleanProperty("MMappedFileStorage.CRASH_TOLERANT_EXPANSION", true);
 
   //============== statistics/monitoring: ===================================================================
 
@@ -97,7 +99,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   private static volatile int openedStoragesCount = 0;
   private static final AtomicInteger totalPagesMapped = new AtomicInteger();
   private static final AtomicLong totalBytesMapped = new AtomicLong();
-  /** total time (nanos) spent inside {@link Page#map(FileChannel, int)} call */
+  /** total time (nanos) spent inside {@link Page#map(RegionAllocationAtomicityLock, FileChannel, int)} call */
   private static final AtomicLong totalTimeForPageMapNs = new AtomicLong();
 
   /** Track opened storages to prevent open the same file more than once: Map[absolutePath -> storage] */
@@ -120,14 +122,18 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Page[] pages;
 
-  public MMappedFileStorage(Path path,
-                            int pageSize) throws IOException {
-    this(path, pageSize, 0);
+  private final RegionAllocationAtomicityLock regionAllocationAtomicityLock;
+
+  public MMappedFileStorage(@NotNull Path path,
+                            int pageSize,
+                            @NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock) throws IOException {
+    this(path, pageSize, 0, regionAllocationAtomicityLock);
   }
 
   private MMappedFileStorage(Path path,
                              int pageSize,
-                             int pagesCountToMapInitially) throws IOException {
+                             int pagesCountToMapInitially,
+                             @NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock) throws IOException {
     if (pageSize <= 0) {
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be >0");
     }
@@ -144,6 +150,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
     Path absolutePath = path.toAbsolutePath();
     this.storagePath = absolutePath;
+    this.regionAllocationAtomicityLock = regionAllocationAtomicityLock;
 
     synchronized (openedStorages) {
       MMappedFileStorage alreadyExistingStorage = openedStorages.get(absolutePath);
@@ -366,6 +373,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       synchronized (openedStorages) {
         MMappedFileStorage removed = openedStorages.get(storagePath);
         if (removed == this) {
+          //noinspection resource
           openedStorages.remove(storagePath);
           //noinspection AssignmentToStaticFieldFromInstanceMethod
           openedStoragesCount--;
@@ -385,7 +393,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       Page page = pages[pageIndex];
 
       if (page == null) {
-        page = new Page(pageIndex, channel, pageSize, byteOrder());
+        page = new Page(regionAllocationAtomicityLock, pageIndex, channel, pageSize, byteOrder());
         pages[pageIndex] = page;
 
         registerMappedPage(pageSize);
@@ -408,32 +416,58 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     private final long offsetInFile;
     private final ByteBuffer pageBuffer;
 
-    private Page(int pageIndex,
+    private Page(@NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock,
+                 int pageIndex,
                  @NotNull FileChannel channel,
                  int pageSize,
                  @NotNull ByteOrder byteOrder) throws IOException {
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
       this.offsetInFile = pageIndex * (long)pageSize;
-      this.pageBuffer = map(channel, pageSize).order(byteOrder);
+      this.pageBuffer = map(regionAllocationAtomicityLock, channel, pageSize).order(byteOrder);
     }
 
-    private MappedByteBuffer map(FileChannel channel,
+    private MappedByteBuffer map(@NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock,
+                                 @NotNull FileChannel channel,
                                  int pageSize) throws IOException {
-      //MAYBE RC: this could cause noticeable pauses, hence it may worth to enlarge file in advance, async?
-      //          i.e. schedule enlargement as soon as last page is 50% full? It wouldn't work good for
-      //          completely random-access storages, but most our use-cases are either append-only logs,
-      //          or file-attributes, which indexed by fileId, which are growing quite monotonically,
-      //          so it may work
+      //MAYBE RC: this could cause noticeable pauses, hence it may worth to enlarge file in advance, async.
+      //          i.e. schedule enlargement as soon as last page is 50% full?
+      //          It wouldn't work good for completely random-access storages, but most our use-cases are either append-only
+      //          logs, or file-attributes, which indexed by fileId, which are growing quite monotonically, so it may work
+
       long startedAtNs = System.nanoTime();
       try {
-        IOUtil.allocateFileRegion(channel, offsetInFile + pageSize);
+        ensureFileRegionAllocatedAndZeroed(regionAllocationAtomicityLock, channel, pageSize);
         return channel.map(READ_WRITE, offsetInFile, pageSize);
       }
       finally {
         long timeSpentNs = System.nanoTime() - startedAtNs;
         totalTimeForPageMapNs.addAndGet(timeSpentNs);
       }
+    }
+
+    private void ensureFileRegionAllocatedAndZeroed(@NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock,
+                                                    @NotNull FileChannel channel,
+                                                    int pageSize) throws IOException {
+      //The difference between the branches is: in the 'correct' branch we don't touch already existing part of the
+      // file -- because it could be already written to, and we don't want to ruin that data.
+      //In the 'recovering' branch we intentionally zero _all_ the region -- because we're sure nobody should write into it,
+      // but it could be some garbage in it, which we want to erase
+
+      RegionAllocationAtomicityLock.Region region = regionAllocationAtomicityLock.region(offsetInFile, pageSize);
+
+      if (region.isUnfinished()) {
+        LOG.warn("mmapped file region [" + offsetInFile + ".. +" + pageSize + "] allocation & zeroing has been started, " +
+                 "but hasn't been properly finished -- IDE was crashed/killed? -- try finishing the job");
+        IOUtil.fillFileRegionWithZeros(channel, offsetInFile, offsetInFile + pageSize);
+      }
+      else {
+        region.start();
+        IOUtil.allocateFileRegion(channel, offsetInFile + pageSize);
+      }
+
+      //do not use 'finally': we want to mark region 'finished' only if file region allocation & zeroing was _successful_
+      region.finish();
     }
 
     private void unmap() throws IOException {
@@ -513,7 +547,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     return totalBytesMapped.get();
   }
 
-  /** total time spent inside {@link Page#map(FileChannel, int)} call (including file expansion/zeroing, if needed) */
+  /** total time spent inside {@link Page#map(RegionAllocationAtomicityLock, FileChannel, int)} call (including file expansion/zeroing, if needed) */
   public static long totalTimeForPageMap(@NotNull TimeUnit unit) {
     return unit.convert(totalTimeForPageMapNs.get(), NANOSECONDS);
   }
@@ -533,5 +567,113 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   private static void unregisterMappedPage(int pageSize) {
     totalPagesMapped.decrementAndGet();
     totalBytesMapped.addAndGet(-pageSize);
+  }
+
+  /**
+   * Expanding & zeroing the file region before the actual mmapping ({@link Page#ensureFileRegionAllocatedAndZeroed(RegionAllocationAtomicityLock, FileChannel, int)})
+   * is not atomic: i.e. app crash/kill could interrupt the method call in the middle. This could lead to either
+   * not-fully-expanded file (i.e. file.length != N*pageSize), or expanded, but not fully zeroed (i.e. there is some garbage
+   * in the file).
+   * <p/>
+   * Both scenarios quite probably were observed: there are quite a lot of EAs (e.g. EA-236640, EA-966425,...) about
+   * "fileSize(=8323072 b) is not page(=4194304 b)-aligned", and there are a lot of other bugs that could be explained
+   * (maybe partially) by non-zeroed mmapped storage page.
+   * <p/>
+   * Solution to the issue: somehow register (in a persistent way) the start of region allocation-and-zeroing process,
+   * and if the process was interrupted by the application crash -- finish it on app restart.
+   * <p/>
+   * Different implementations could be used for that 'persistent registering' -- so the interface, and simplest implementation
+   * based on file-lock
+   */
+  public interface RegionAllocationAtomicityLock {
+    Region region(long regionStartOffset, int pageSize) throws IOException;
+
+    interface Region {
+      boolean isUnfinished();
+
+      /** throws exception if already started & not finished */
+      void start() throws IOException;
+
+      /** throws exception if not yet started */
+      void finish() throws IOException;
+    }
+
+    static RegionAllocationAtomicityLock defaultLock(@NotNull Path mainStorageFile) {
+      if (CRASH_TOLERANT_EXPANSION) {
+        return new FileBasedRegionAllocationLock(mainStorageFile);
+      }
+      else {
+        return new NoLock();
+      }
+    }
+
+    /**
+     * Creates a '.lock' file to mark "file expansion/zeroing is running" -- i.e. relies on file creation/deletion to
+     * be atomic on the host machine file-system.
+     * <p>
+     * Implementation assumes no concurrency: it seems like there is no need to handle concurrency -- region allocation
+     * is called under the storage.pagesLock, and it must be only a single storage for the particular file in the JVM
+     * -- {@link MMappedFileStorage} ctor checks for that.
+     * This constraint could be bypassed by using symlinks or opening file from another process -- but all bets are off then.
+     */
+    class FileBasedRegionAllocationLock implements RegionAllocationAtomicityLock {
+
+      private final Path mainStoragePath;
+
+      public FileBasedRegionAllocationLock(@NotNull Path mainStoragePath) { this.mainStoragePath = mainStoragePath; }
+
+      @Override
+      public Region region(long regionStartOffset,
+                           int pageSize) throws IOException {
+        Path mappingLockFile = mainStoragePath.resolveSibling("." + mainStoragePath.getFileName() + "." + regionStartOffset + ".lock");
+        return new RegionImpl(mappingLockFile);
+      }
+
+      private static final class RegionImpl implements Region {
+        private final Path mappingLockFile;
+
+        private RegionImpl(@NotNull Path mappingLockFile) {
+          this.mappingLockFile = mappingLockFile;
+        }
+
+        @Override
+        public void start() throws IOException {
+          Files.createFile(mappingLockFile);
+        }
+
+        @Override
+        public boolean isUnfinished() {
+          return Files.exists(mappingLockFile);
+        }
+
+        @Override
+        public void finish() throws IOException {
+          Files.delete(mappingLockFile);
+          //MAYBE RC: use FileUtil.delete(mappingLockFile) is safer, but more costly
+        }
+      }
+    }
+
+    class NoLock implements RegionAllocationAtomicityLock {
+      @Override
+      public Region region(long regionStartOffset, int pageSize) throws IOException {
+        return new Region() {
+          @Override
+          public boolean isUnfinished() {
+            return false;
+          }
+
+          @Override
+          public void start() throws IOException {
+            //nothing
+          }
+
+          @Override
+          public void finish() throws IOException {
+            //nothing
+          }
+        };
+      }
+    }
   }
 }
