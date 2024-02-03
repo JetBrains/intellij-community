@@ -8,10 +8,12 @@ import java.io.Serializable;
 public class MavenServerResponse<T extends Serializable> implements Serializable {
   @NotNull private final T result;
   @NotNull private final LongRunningTaskStatus status;
+  @NotNull private final byte[] telemetryTrace;
 
-  public MavenServerResponse(@NotNull T result, @NotNull LongRunningTaskStatus status) {
+  public MavenServerResponse(@NotNull T result, @NotNull LongRunningTaskStatus status, @NotNull byte[] telemetryTrace) {
     this.result = result;
     this.status = status;
+    this.telemetryTrace = telemetryTrace;
   }
 
   @NotNull
