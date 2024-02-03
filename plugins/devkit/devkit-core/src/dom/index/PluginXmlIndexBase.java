@@ -79,9 +79,13 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
       if (idx == -1) return false;
 
       // ignore processing & comment tags
-      if (CharArrayUtil.regionMatches(text, idx, "<!--") ||
-          CharArrayUtil.regionMatches(text, idx, "<?")) {
-        idx++;
+      if (CharArrayUtil.regionMatches(text, idx, "<!--")) {
+        idx = CharArrayUtil.indexOf(text, "-->", idx);
+        continue;
+      }
+
+      if (CharArrayUtil.regionMatches(text, idx, "<?")) {
+        idx = CharArrayUtil.indexOf(text, "?>", idx);
         continue;
       }
 
