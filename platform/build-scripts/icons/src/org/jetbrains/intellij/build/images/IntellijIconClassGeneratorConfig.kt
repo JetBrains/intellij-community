@@ -78,11 +78,6 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.spring.mvc",
       )
 
-      "intellij.spring.persistence" -> IntellijIconClassGeneratorModuleConfig(
-        className = "SpringPersistenceIntegrationIcons",
-        packageName = "com.intellij.spring.persistence.integration",
-      )
-
       "intellij.spring.boot" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringBootApiIcons",
         packageName = "com.intellij.spring.boot",
