@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.maven3;
 
+import com.intellij.maven.server.telemetry.MavenServerTelemetryClasspathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
@@ -94,14 +95,7 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(new File(root, "intellij.maven.server"));
 
     classpath.add(new File(root, "intellij.maven.server.telemetry"));
-    try {
-      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.sdk.trace.export.SpanExporter"))));
-      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.context.propagation.TextMapPropagator"))));
-      classpath.add(new File(PathUtil.getJarPathForClass(Class.forName("io.opentelemetry.api.OpenTelemetry"))));
-    }
-    catch (ClassNotFoundException e) {
-      MavenLog.LOG.error(e);
-    }
+    classpath.addAll(MavenUtil.collectClasspath(MavenServerTelemetryClasspathUtil.TELEMETRY_CLASSES));
 
     File parentFile = MavenUtil.getMavenPluginParentFile();
     classpath.add(new File(root, "intellij.maven.server.m3.common"));

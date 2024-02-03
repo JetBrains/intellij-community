@@ -125,9 +125,7 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
   @Override
   public byte[] shutdown() {
     try {
-      if (null != rootSpan) {
-        rootSpan.end();
-      }
+      rootSpan.end();
       if (myScope != null) {
         myScope.close();
       }
@@ -135,15 +133,12 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
         ((Closeable)myOpenTelemetry).close();
       }
       // the data should be exported only after OpenTelemetry was closed to prevent data loss
-      if (mySpanDataCollector != null) {
-        Collection<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
-        return MavenSpanDataSerializer.serialize(collectedSpans);
-      }
+      Collection<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
+      return MavenSpanDataSerializer.serialize(collectedSpans);
     }
     catch (Exception e) {
-      // ignore
+      throw new RuntimeException(e);
     }
-    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
   private static @NotNull Scope injectTracingContext(@NotNull OpenTelemetry telemetry, @NotNull MavenTracingContext context) {

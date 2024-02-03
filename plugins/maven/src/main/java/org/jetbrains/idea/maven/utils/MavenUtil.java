@@ -1747,4 +1747,12 @@ public class MavenUtil {
   public static MavenProjectModelReadHelper createModelReadHelper(Project project) {
     return new MavenProjectModelServerModelReadHelper(project);
   }
+
+  public static Collection<File> collectClasspath(Collection<Class<?>> classes) {
+    var result = new ArrayList<File>();
+    for (Class<?> c : classes) {
+      result.add(new File(PathUtil.getJarPathForClass(c)));
+    }
+    return result;
+  }
 }

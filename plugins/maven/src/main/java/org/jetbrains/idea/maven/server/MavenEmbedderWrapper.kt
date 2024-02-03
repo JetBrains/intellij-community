@@ -17,6 +17,9 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
+import org.jetbrains.idea.maven.telemetry.getCurrentTelemetryIds
+import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
+import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import java.io.File
@@ -268,13 +271,15 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       }
 
       try {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO + tracer.span("runLongRunningTask")) {
+          val telemetryIds = getCurrentTelemetryIds()
           blockingContext {
-            val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, null, null)
+            val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, telemetryIds.traceId, telemetryIds.spanId)
             val response = task.run(embedder, longRunningTaskInput)
             val status = response.status
             eventHandler.handleConsoleEvents(status.consoleEvents())
             eventHandler.handleDownloadEvents(status.downloadEvents())
+            scheduleExportTelemetryTrace(project, response.telemetryTrace)
             response.result
           }
         }

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.telemetry;
 
-import com.intellij.util.ArrayUtilRt;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +15,7 @@ public class MavenSpanDataSerializer {
       return outputStream.toByteArray();
     }
     catch (Exception e) {
-      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+      throw new RuntimeException(e);
     }
   }
 

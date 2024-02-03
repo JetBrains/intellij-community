@@ -25,4 +25,8 @@ public class MavenServerResponse<T extends Serializable> implements Serializable
   public LongRunningTaskStatus getStatus() {
     return status;
   }
+
+  public byte[] getTelemetryTrace() {
+    return telemetryTrace;
+  }
 }

@@ -20,8 +20,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.trackActivity
-import com.intellij.platform.diagnostic.telemetry.Scope
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -45,6 +43,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
+import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -90,8 +89,6 @@ interface MavenAsyncProjectsManager {
                                                    modelsProvider: IdeModifiableModelsProvider?,
                                                    previewModule: Module?): List<Module>
 }
-
-internal val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("maven")) }
 
 open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project) {
   override suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
