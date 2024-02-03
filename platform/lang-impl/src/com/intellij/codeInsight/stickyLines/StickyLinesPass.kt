@@ -28,25 +28,16 @@ internal class StickyLinesPass(
   private var updater: Runnable? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    updater = getUpdater()
+    updater = CachedValuesManager.getCachedValue(
+      psiFile,
+      CACHED_LINES_KEY,
+      getValueProvider(myProject, myDocument, vFile, dependency = psiFile)
+    )
   }
 
   override fun doApplyInformationToEditor() {
     updater?.run()
     updater = null
-  }
-
-  private fun getUpdater(): Runnable {
-    val cachedUpdater = psiFile.getUserData(CACHED_LINES_KEY)?.upToDateOrNull
-    if (cachedUpdater != null) {
-      return cachedUpdater.get()
-    }
-    return CachedValuesManager.getManager(myProject).getCachedValue(
-      psiFile,
-      CACHED_LINES_KEY,
-      getValueProvider(myProject, myDocument, vFile, dependency = psiFile),
-      false
-    )
   }
 
   companion object {
@@ -59,13 +50,13 @@ internal class StickyLinesPass(
       return CachedValueProvider {
         val collector = StickyLinesCollector(project, document)
         val infos: MutableSet<StickyLineInfo> = collector.collectLines(vFile)
-        val alreadyExecuted = AtomicBoolean()
-        val runnable = Runnable {
-          if (alreadyExecuted.compareAndSet(false, true)) {
+        val alreadyApplied = AtomicBoolean()
+        val applier = Runnable {
+          if (alreadyApplied.compareAndSet(false, true)) {
             collector.applyLines(infos)
           }
         }
-        CachedValueProvider.Result.create(runnable, dependency)
+        CachedValueProvider.Result.create(applier, dependency)
       }
     }
   }
