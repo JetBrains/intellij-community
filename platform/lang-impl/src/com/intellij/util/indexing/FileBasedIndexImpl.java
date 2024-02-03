@@ -604,28 +604,31 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
+        IntSet allStaleIdsToCheck = new IntOpenHashSet();
+        IntSet dirtyFilesWithoutProject = getChangedFilesCollector().getDirtyFilesWithoutProject();
+        synchronized (myStaleIds) {
+          allStaleIdsToCheck.addAll(myStaleIds);
+          // we need to persist myStaleIds to disk otherwise we lose them if FileBasedIndexTumbler shutdown is performed twice in a row
+          dirtyFilesWithoutProject.addAll(myStaleIds);
+          myStaleIds.clear();
+        }
         if (myIsUnitTestMode) {
-          IntSet allStaleIds = new IntOpenHashSet();
-          synchronized (myStaleIds) {
-            allStaleIds.addAll(myStaleIds);
-            myStaleIds.clear();
-          }
           // project dirty files are still in ChangedFilesCollector in case FileBasedIndex is restarted using Tumbler (projects are not closed)
           // we need to persist queues, so we can properly re-read them here and in FileBasedIndexDataInitialization
           getChangedFilesCollector().persistProjectsDirtyFiles(vfsCreationStamp);
           // some deleted files were already saved to project queues and saved to disk during project closing
           // we need to read them to avoid false-positive errors in checkIndexForStaleRecords
-          readAllProjectDirtyFilesQueues(allStaleIds);
-          allStaleIds.addAll(getChangedFilesCollector().getDirtyFilesWithoutProject());
+          readAllProjectDirtyFilesQueues(allStaleIdsToCheck);
+          allStaleIdsToCheck.addAll(getChangedFilesCollector().getDirtyFilesWithoutProject());
 
           UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
           if (index != null) {
-            StaleIndexesChecker.checkIndexForStaleRecords(index, allStaleIds, false);
+            StaleIndexesChecker.checkIndexForStaleRecords(index, allStaleIdsToCheck, false);
           }
         }
 
         PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(),
-                                                     getChangedFilesCollector().getDirtyFilesWithoutProject(), vfsCreationStamp);
+                                                     dirtyFilesWithoutProject, vfsCreationStamp);
         getChangedFilesCollector().clearFilesToUpdate();
         vfsCreationStamp = 0;
 
