@@ -188,6 +188,9 @@ abstract class ToolWindowHeader internal constructor(
           }
           else {
             toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
+            // Move focus the context component.
+            val decorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
+            decorator?.requestContentFocus()
           }
         }
       }

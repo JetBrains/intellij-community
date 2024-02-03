@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
@@ -136,6 +137,21 @@ class InternalDecoratorImpl internal constructor(
       val decorator = findNearestDecorator(component)
       if (decorator != null) {
         decorator.componentsWithEditorLikeBackground -= component
+      }
+    }
+
+    @JvmStatic
+    internal fun setActiveDecorator(toolWindow: ToolWindow, focusOwner: Component) {
+      val decorator = findNearestDecorator(focusOwner)
+      if (decorator?.toolWindowId == toolWindow.id) {
+        findTopLevelDecorator(decorator.header)?.forAllNestedDecorators {
+          val newValue = if (it == decorator) null else java.lang.Boolean.TRUE
+          val oldValue = it.getClientProperty(INACTIVE_LOOK)
+          if (newValue != oldValue) {
+            it.putClientProperty(INACTIVE_LOOK, newValue)
+            it.header.repaint()
+          }
+        }
       }
     }
 
@@ -746,7 +762,6 @@ class InternalDecoratorImpl internal constructor(
     if (topLevelDecorator == null || !topLevelDecorator.isShowing) {
       putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null)
       putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, null)
-      putClientProperty(INACTIVE_LOOK, null)
     }
     else {
       val hideLabel: Any? = if (SwingUtilities.convertPoint(this, x, y, topLevelDecorator) == Point()) null else "true"
@@ -756,9 +771,7 @@ class InternalDecoratorImpl internal constructor(
       val screenLocation = locationOnScreen
       screenLocation.x += w
       val hideButtons = if (topScreenLocation == screenLocation) null else java.lang.Boolean.TRUE
-      val hideActivity = if (topScreenLocation.y == screenLocation.y) null else java.lang.Boolean.TRUE
       putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, hideButtons)
-      putClientProperty(INACTIVE_LOOK, hideActivity)
     }
     if (!rectangle.equals(bounds)) {
       contentUi.update()
@@ -864,6 +877,18 @@ class InternalDecoratorImpl internal constructor(
       accessibleContext = AccessibleInternalDecorator()
     }
     return accessibleContext
+  }
+
+  /** Executes the given action for this and nested decorators. */
+  private fun forAllNestedDecorators(action: (InternalDecoratorImpl) -> Unit) {
+    action(this)
+    firstDecorator?.forAllNestedDecorators(action)
+    secondDecorator?.forAllNestedDecorators(action)
+  }
+
+  /** Requests focus transfer to the context component. */
+  internal fun requestContentFocus() {
+    contentUi.component.requestFocusInWindow()
   }
 
   private inner class AccessibleInternalDecorator : AccessibleJPanel() {
