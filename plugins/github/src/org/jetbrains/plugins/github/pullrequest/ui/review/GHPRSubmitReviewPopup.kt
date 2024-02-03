@@ -44,6 +44,7 @@ internal object GHPRSubmitReviewPopup : CodeReviewSubmitPopupHandler<GHPRSubmitR
         toolTipText = GithubBundle.message("pull.request.review.submit.comment.description")
       }.apply {
         bindDisabledIn(cs, vm.isBusy)
+        bindDisabledIn(cs, vm.text.map { it.isBlank() })
         addActionListener { vm.submit(GHPullRequestReviewEvent.COMMENT) }
       }.let(::add)
     }
