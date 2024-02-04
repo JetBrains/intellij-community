@@ -98,7 +98,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   }
 
   private fun processTableOfContents(file: MarkdownFile, document: Document, descriptors: MutableList<FoldingDescriptor>) {
-    val ranges = GenerateTableOfContentsAction.findExistingTocs(file)
+    val ranges = GenerateTableOfContentsAction.Manager.findExistingTocs(file)
     val group = FoldingGroup.newGroup("Table of contents")
     val shouldCollapse = MarkdownCodeFoldingSettings.getInstance().state.collapseTableOfContents
     for (range in ranges) {
