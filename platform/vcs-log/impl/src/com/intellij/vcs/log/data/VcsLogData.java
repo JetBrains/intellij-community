@@ -26,8 +26,8 @@ import com.intellij.vcs.log.data.index.*;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
-import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import kotlin.Unit;
@@ -84,7 +84,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                     @NotNull VcsLogErrorHandler errorHandler,
-                    @NotNull Disposable parentDisposable) {
+                    boolean isIndexEnabled, @NotNull Disposable parentDisposable) {
     myProject = project;
     myLogProviders = logProviders;
     myUserRegistry = (VcsUserRegistryImpl)project.getService(VcsUserRegistry.class);
@@ -92,7 +92,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
     VcsLogProgress progress = new VcsLogProgress(this);
 
-    Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(progress);
+    Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(progress, isIndexEnabled);
     myStorage = storageAndIndex.first;
     myIndex = storageAndIndex.second;
 
@@ -121,7 +121,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  private @NotNull Pair<VcsLogStorage, VcsLogModifiableIndex> createStorageAndIndex(@NotNull VcsLogProgress progress) {
+  private @NotNull Pair<VcsLogStorage, VcsLogModifiableIndex> createStorageAndIndex(@NotNull VcsLogProgress progress, boolean isIndexEnabled) {
     if (!VcsLogCachesInvalidator.getInstance().isValid()) {
       // this is not recoverable
       // restart won't help here
@@ -137,8 +137,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     String logId = PersistentUtil.calcLogId(myProject, myLogProviders);
     Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
     boolean isIndexSwitchedOnInRegistry = isIndexSwitchedOnInRegistry();
-    boolean isIndexSwitchedOnInProject = VcsLogSharedSettings.isIndexSwitchedOn(myProject);
-    boolean isIndexSwitchedOn = isIndexSwitchedOnInProject && isIndexSwitchedOnInRegistry;
+    boolean isIndexSwitchedOn = isIndexEnabled && isIndexSwitchedOnInRegistry;
 
     VcsLogStorage storage;
     VcsLogStorageBackend indexBackend;
@@ -166,7 +165,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
     if (indexBackend == null || !isIndexSwitchedOn || indexers.isEmpty()) {
       if (!isIndexSwitchedOnInRegistry) LOG.info("Vcs log index is turned off in the registry");
-      if (!isIndexSwitchedOnInProject) LOG.info("Vcs log index is turned off for project " + myProject.getName());
+      if (!isIndexEnabled) LOG.info("Vcs log index is turned off for " + VcsLogUtil.getProvidersMapText(myLogProviders));
       if (indexers.isEmpty()) LOG.info("No indexers found for project " + myProject.getName());
       return new Pair<>(storage, new EmptyIndex());
     }

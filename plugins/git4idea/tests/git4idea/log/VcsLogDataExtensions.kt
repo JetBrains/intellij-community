@@ -8,6 +8,7 @@ import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.LoggingErrorHandler
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import git4idea.repo.GitRepository
 import junit.framework.TestCase.fail
 import java.util.concurrent.CompletableFuture
@@ -16,7 +17,8 @@ import java.util.concurrent.TimeUnit
 private val LOG = Logger.getInstance("Git.Test.LogData.Extensions")
 
 internal fun createLogData(repo: GitRepository, logProvider: GitLogProvider, disposable: Disposable): VcsLogData {
-  return VcsLogData(repo.project, mapOf(repo.root to logProvider), LoggingErrorHandler(LOG), disposable)
+  return VcsLogData(repo.project, mapOf(repo.root to logProvider), LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(repo.project),
+                    disposable)
 }
 
 internal fun VcsLogData.refreshAndWait(repo: GitRepository, waitIndexFinishing: Boolean) {

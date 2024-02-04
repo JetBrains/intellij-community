@@ -9,7 +9,8 @@ import java.util.function.BiConsumer
 
 class VcsProjectLogManager(project: Project, uiProperties: VcsLogProjectTabsProperties, logProviders: Map<VirtualFile, VcsLogProvider>,
                            recreateHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>) :
-  VcsLogManager(project, uiProperties, logProviders, getProjectLogName(logProviders), false, recreateHandler) {
+  VcsLogManager(project, uiProperties, logProviders, getProjectLogName(logProviders), false,
+                VcsLogSharedSettings.isIndexSwitchedOn(project), recreateHandler) {
 
   val tabsManager = VcsLogTabsManager(project, uiProperties, this)
 

@@ -15,10 +15,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.TestVcsLogProvider;
-import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
-import com.intellij.vcs.log.impl.VcsRefImpl;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -184,7 +181,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<? super DataPack> dataPackConsumer) {
-    myLogData = new VcsLogData(myProject, myLogProviders, new LoggingErrorHandler(LOG), myProject);
+    myLogData = new VcsLogData(myProject, myLogProviders, new LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(getProject()),
+                               myProject);
     VcsLogRefresherImpl refresher =
       new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(),
                               myLogData.getModifiableIndex(),

@@ -63,7 +63,7 @@ public class VcsLogManager implements Disposable {
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
-    this(project, uiProperties, logProviders, "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders), true, null);
+    this(project, uiProperties, logProviders, "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders), true, false, null);
   }
 
   public VcsLogManager(@NotNull Project project,
@@ -71,13 +71,14 @@ public class VcsLogManager implements Disposable {
                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                        @NotNull String name,
                        boolean scheduleRefreshImmediately,
+                       boolean isIndexEnabled,
                        @Nullable BiConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
     myName = name;
 
-    myLogData = new VcsLogData(myProject, logProviders, new MyErrorHandler(), this);
+    myLogData = new VcsLogData(myProject, logProviders, new MyErrorHandler(), isIndexEnabled, this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);

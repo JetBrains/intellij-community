@@ -38,7 +38,7 @@ class GitWarmupConfigurator : WarmupConfigurator {
     }
 
     val manager = VcsLogManager(project, project.serviceAsync<VcsLogProjectTabsProperties>(), logProviders,
-                                "Warmup Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}", false) { _, throwable ->
+                                "Warmup Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}", false, true) { _, throwable ->
       logger?.reportMessage(1, throwable.stackTraceToString())
     }
     blockingContextScope {
