@@ -182,8 +182,12 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       LOG.info("${optionsDir}' newest file is dated $lastModified")
       val ideName = matcher.group(1)
       val ideVersion = matcher.group(2)
-      val fullName = "${NameMappings.getFullName(ideName)} $ideVersion"
-      val jbProductInfo = JbProductInfo(ideVersion, lastModified, dirName, fullName, ideName,
+      val fullName = NameMappings.getFullName(ideName)
+      if (fullName == null) {
+        continue
+      }
+      val fullNameWithVersion = "$fullName $ideVersion"
+      val jbProductInfo = JbProductInfo(ideVersion, lastModified, dirName, fullNameWithVersion, ideName,
                                         confDir, pluginsDir)
       jbProductInfo.prefetchPluginDescriptors(coroutineScope, context)
       retval[dirName] = jbProductInfo

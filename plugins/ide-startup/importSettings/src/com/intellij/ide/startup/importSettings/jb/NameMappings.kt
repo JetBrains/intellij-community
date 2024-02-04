@@ -26,9 +26,7 @@ object NameMappings {
     }
   }
 
-  fun getFullName(ideName: String) : String {
-    return IDE_MAP[ideName]?.fullName ?: ideName
-  }
+  fun getFullName(ideName: String) : String? = IDE_MAP[ideName]?.fullName
 
   fun canImportDirectly(prevIdeName: String): Boolean {
     val prevIdeData = IDE_MAP[prevIdeName] ?: return false
