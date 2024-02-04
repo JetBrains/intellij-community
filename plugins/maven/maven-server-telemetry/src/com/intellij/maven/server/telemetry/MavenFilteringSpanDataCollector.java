@@ -9,13 +9,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class MavenFilteringSpanDataCollector implements SpanExporter {
 
   private static final long SPAN_DURATION_THRESHOLD_NANOS = TimeUnit.MILLISECONDS.toNanos(15);
 
-  private final @NotNull Map<String, SpanData> collectedSpans = new HashMap<>();
+  private final @NotNull Map<String, SpanData> collectedSpans = new ConcurrentHashMap<>();
 
   @Override
   public @NotNull CompletableResultCode export(@NotNull Collection<SpanData> spans) {

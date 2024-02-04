@@ -16,11 +16,12 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.LongRunningTaskInput;
+import org.jetbrains.idea.maven.server.ParallelRunnerForServer;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -29,6 +30,8 @@ public interface MavenServerOpenTelemetry {
   MavenServerOpenTelemetry NOOP = new MavenServerOpenTelemetryNoop();
 
   <T> T callWithSpan(@NotNull String spanName, @NotNull Supplier<T> fn);
+
+  <T, R> List<R> execute(boolean inParallel, @NotNull Collection<T> collection, @NotNull Function<T, R> method);
 
   byte[] shutdown();
 
@@ -49,6 +52,11 @@ final class MavenServerOpenTelemetryNoop implements MavenServerOpenTelemetry {
   }
 
   @Override
+  public <T, R> List<R> execute(boolean inParallel, @NotNull Collection<T> collection, @NotNull Function<T, R> method) {
+    return ParallelRunnerForServer.execute(inParallel, collection, method);
+  }
+
+  @Override
   public byte[] shutdown() {
     return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
@@ -60,8 +68,9 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
 
   private final @NotNull OpenTelemetry myOpenTelemetry;
   private final @NotNull MavenFilteringSpanDataCollector mySpanDataCollector = new MavenFilteringSpanDataCollector();
+  private final @NotNull Tracer tracer;
   private final @NotNull Span rootSpan;
-  private @Nullable Scope myScope = null;
+  private final @NotNull Scope myScope;
 
   MavenServerOpenTelemetryImpl(@NotNull String traceId, @NotNull String parentSpanId) {
     myOpenTelemetry = OpenTelemetrySdk.builder()
@@ -80,30 +89,23 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
       TraceFlags.getSampled(),
       TraceState.getDefault());
 
-    Tracer tracer = myOpenTelemetry.getTracer(INSTRUMENTATION_NAME);
+    Context context = Context.root().with(Span.wrap(parentSpanContext));
 
+    tracer = myOpenTelemetry.getTracer(INSTRUMENTATION_NAME);
     rootSpan = tracer.spanBuilder("MavenServerRootSpan")
-      .setParent(Context.root().with(Span.wrap(parentSpanContext)))
+      .setParent(context)
       .startSpan();
 
     myScope = rootSpan.makeCurrent();
-  }
-
-  public void start(@NotNull MavenTracingContext context) {
-    myScope = injectTracingContext(myOpenTelemetry, context);
   }
 
   public @NotNull OpenTelemetry getTelemetry() {
     return myOpenTelemetry;
   }
 
-  public @NotNull Tracer getTracer() {
-    return getTelemetry().getTracer(INSTRUMENTATION_NAME);
-  }
-
   @Override
   public <T> T callWithSpan(@NotNull String spanName, @NotNull Supplier<T> fn) {
-    SpanBuilder spanBuilder = getTracer().spanBuilder(spanName);
+    SpanBuilder spanBuilder = tracer.spanBuilder(spanName);
     Span span = spanBuilder.startSpan();
     try (Scope ignore = span.makeCurrent()) {
       return fn.get();
@@ -118,6 +120,16 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
     }
   }
 
+  @Override
+  public <T, R> List<R> execute(boolean inParallel, @NotNull Collection<T> collection, @NotNull Function<T, R> method) {
+    Context context = Context.current();
+
+    // there are issues with passing context to common pool (used by parallelStream and ParallelRunnerForServer)
+    // all spans in pool common threads do not get attached to parent span and get lost
+    // so: either wrap the function or rewrite ParallelRunnerForServer to not use common pool
+    return ParallelRunnerForServer.execute(inParallel, collection, context.wrapFunction(method));
+  }
+
   public <T> T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
     return callWithSpan(spanName, (ignore) -> {
     }, fn);
@@ -126,7 +138,7 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
   public <T> T callWithSpan(@NotNull String spanName,
                             @NotNull Consumer<SpanBuilder> configurator,
                             @NotNull Function<Span, T> fn) {
-    SpanBuilder spanBuilder = getTracer().spanBuilder(spanName);
+    SpanBuilder spanBuilder = tracer.spanBuilder(spanName);
     configurator.accept(spanBuilder);
     Span span = spanBuilder.startSpan();
     try (Scope ignore = span.makeCurrent()) {
@@ -153,9 +165,7 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
   public byte[] shutdown() {
     try {
       rootSpan.end();
-      if (myScope != null) {
-        myScope.close();
-      }
+      myScope.close();
       if (myOpenTelemetry instanceof Closeable) {
         ((Closeable)myOpenTelemetry).close();
       }
@@ -166,14 +176,6 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static @NotNull Scope injectTracingContext(@NotNull OpenTelemetry telemetry, @NotNull MavenTracingContext context) {
-    return telemetry
-      .getPropagators()
-      .getTextMapPropagator()
-      .extract(Context.current(), context, MavenTracingContext.GETTER)
-      .makeCurrent();
   }
 }
 
