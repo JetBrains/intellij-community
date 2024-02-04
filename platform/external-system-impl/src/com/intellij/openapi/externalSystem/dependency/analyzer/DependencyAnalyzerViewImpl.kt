@@ -354,7 +354,7 @@ class DependencyAnalyzerViewImpl(
     val reloadNotificationProperty = isNotificationVisibleProperty(project, systemId)
     val projectReloadSeparator = separator()
       .bindVisible(reloadNotificationProperty)
-    val projectReloadAction = action { ProjectRefreshAction.refreshProject(project) }
+    val projectReloadAction = action { ProjectRefreshAction.Manager.refreshProject(project) }
       .apply { templatePresentation.icon = AllIcons.Actions.BuildLoadChanges }
       .asActionButton(ACTION_PLACE)
       .bindVisible(reloadNotificationProperty)
