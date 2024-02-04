@@ -42,6 +42,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * Hides most of the peculiarities of mmapped-files.
  * But still very low-level, so use with caution -- or better don't. Better use higher-level components, like
  * {@link com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper} or {@link com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes}
+ * For create/open use {@link MMappedFileStorageFactory} instead of ctor
  */
 @ApiStatus.Internal
 public final class MMappedFileStorage implements Closeable, Unmappable, CleanableStorage {
@@ -72,8 +73,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
   /** 'always', 'never', 'on-windows' */
   private static final String UNMAP_ON_CLOSE_KIND = System.getProperty("MMappedFileStorage.UNMAP_ON_CLOSE", "never");
-  private static final boolean UNMAP_ON_CLOSE = "always".equals(UNMAP_ON_CLOSE_KIND)
-                                                || ("on-windows".equals(UNMAP_ON_CLOSE_KIND) && SystemInfoRt.isWindows);
+  private static final boolean UNMAP_ON_CLOSE_BY_DEFAULT = "always".equals(UNMAP_ON_CLOSE_KIND)
+                                                           || ("on-windows".equals(UNMAP_ON_CLOSE_KIND) && SystemInfoRt.isWindows);
 
   /**
    * What if memory mapped buffer is impossible to unmap (by any reason: can't access Unsafe, bad luck, etc)?
@@ -90,8 +91,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   //============== statistics/monitoring: ===================================================================
 
   //Keep track of mapped buffers allocated & their total size, numbers are reported to OTel.Metrics.
-  //Why: mapped buffers are limited resources (~16k on linux by default?), so it is worth to monitor
-  //     how we use them, and issue the alarm early on as we start to use too many
+  //Why: mapped buffers are limited resources (~16k on linux by default?), so it is worth monitoring
+  //     how we use them, and issuing an alarm early on, as we start to use too many
 
   /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
   private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 512);
@@ -124,9 +125,10 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
   private final RegionAllocationAtomicityLock regionAllocationAtomicityLock;
 
-  public MMappedFileStorage(@NotNull Path path,
-                            int pageSize,
-                            @NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock) throws IOException {
+  /** Use {@link MMappedFileStorageFactory} */
+  MMappedFileStorage(@NotNull Path path,
+                     int pageSize,
+                     @NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock) throws IOException {
     this(path, pageSize, 0, regionAllocationAtomicityLock);
   }
 
@@ -246,7 +248,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
   @Override
   public void close() throws IOException {
-    close( /*unmap: */ UNMAP_ON_CLOSE);
+    close(UNMAP_ON_CLOSE_BY_DEFAULT);
   }
 
   /**

@@ -28,15 +28,18 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
 
 
   private final int pageSize;
+
   /**
    * What to do if fileSize is not page-aligned (i.e. fileSize != N*pageSize), and there is no marker of unfinished
    * file expansion?
    * true: expand (and fill with zeroes) the file, so it is page-aligned (fileSize=N * pageSize)
    * false: throw exception
+   * Useful mostly useful for something like backward compatibility: e.g. increase pageSize is a safe change for many
+   * storages -- there is no migration needed, except to align the file size to the new pageSize.
    */
   private final boolean expandFileIfNotPageAligned;
 
-  /** If directories along the path to the file are not exist yet -- create them */
+  /** If directories along the path to the file do not exist yet -- create them */
   private final boolean createParentDirectoriesIfNotExist;
 
   private MMappedFileStorageFactory(int pageSize,
@@ -93,14 +96,17 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
     long fileSize = Files.exists(storagePath) ? Files.size(storagePath) : 0;
     if (fileSize % pageSize != 0) {
       //file size is not page-aligned: suspicious
+
+      //Maybe there was a file expansion interrupted by app crash/kill?
       long startOfSuspiciousRegion = (fileSize / pageSize) * pageSize;
       Region region = regionAllocationLock.region(startOfSuspiciousRegion, pageSize);
       if (!region.isUnfinished()) {
+        // It is generally an error to have file un-aligned with page size, so fail if not explicitly asked to ignore:
         if (!expandFileIfNotPageAligned) {
           throw new IOException("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned");
         }
 
-        //else:expand (zeroes) file up to next page.
+        //else: expand (zeroes) file up to the next page.
 
         //This branch is useful for something like backward compatibility: e.g. increase pageSize is a safe change for many
         // storages -- there is no migration needed, except to align the file size to the new pageSize.
