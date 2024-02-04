@@ -185,7 +185,7 @@ class NotADup {
   }
 
   void n(int i) {
-    if (i == 0) {
+    <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (i == 0) {
       System.out.println(((i)));
       ;
       ;
