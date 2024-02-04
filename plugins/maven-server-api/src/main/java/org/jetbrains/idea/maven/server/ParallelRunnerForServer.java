@@ -9,11 +9,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class ParallelRunnerForServer {
-  private static <T, R, E extends Exception> List<R> executeSequentially(@NotNull Collection<T> collection,
-                                                                         @NotNull ParallelRunnerForServer.CheckedFunction<T, R, E> method) throws E {
+  private static <T, R> List<R> executeSequentially(@NotNull Collection<T> collection,
+                                                    @NotNull Function<T, R> method) {
     List<R> result = new ArrayList<>();
 
     for (T item : collection) {
@@ -23,10 +24,9 @@ public final class ParallelRunnerForServer {
     return result;
   }
 
-  private static <T, R, E extends Exception> List<R> executeInParallel(@NotNull Collection<T> collection,
-                                                                       @NotNull ParallelRunnerForServer.CheckedFunction<T, R, E> method) throws E {
+  private static <T, R> List<R> executeInParallel(@NotNull Collection<T> collection,
+                                                  @NotNull Function<T, R> method) {
     Set<RuntimeException> runtimeExceptions = ConcurrentHashMap.newKeySet();
-    Set<E> checkedExceptions = ConcurrentHashMap.newKeySet();
 
     List<R> result = collection.parallelStream().map(item -> {
         try {
@@ -34,9 +34,6 @@ public final class ParallelRunnerForServer {
         }
         catch (RuntimeException ex) {
           runtimeExceptions.add(ex);
-        }
-        catch (Exception ex) {
-          checkedExceptions.add((E)ex);
         }
         return new Pair<Boolean, R>(false, null);
       })
@@ -51,24 +48,12 @@ public final class ParallelRunnerForServer {
       }).get();
     }
 
-    if (!checkedExceptions.isEmpty()) {
-      throw checkedExceptions.stream().reduce((ex1, ex2) -> {
-        ex1.addSuppressed(ex2);
-        return ex1;
-      }).get();
-    }
-
     return result;
   }
 
-  public static <T, R, E extends Exception> List<R> execute(boolean inParallel,
-                                                            @NotNull Collection<T> collection,
-                                                            @NotNull ParallelRunnerForServer.CheckedFunction<T, R, E> method) throws E {
+  public static <T, R> List<R> execute(boolean inParallel,
+                                       @NotNull Collection<T> collection,
+                                       @NotNull Function<T, R> method) {
     return inParallel ? executeInParallel(collection, method) : executeSequentially(collection, method);
-  }
-
-  @FunctionalInterface
-  public interface CheckedFunction<T, R, E extends Exception> {
-    R apply(T t) throws E;
   }
 }
