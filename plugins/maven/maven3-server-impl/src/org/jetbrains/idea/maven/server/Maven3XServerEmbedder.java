@@ -305,14 +305,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return myContainer;
   }
 
-  private static Maven3ExecutionResult handleException(Exception e) {
-    return new Maven3ExecutionResult(Collections.singletonList(e));
-  }
-
-  private static Maven3ExecutionResult handleException(MavenProject mavenProject, Exception e) {
-    return new Maven3ExecutionResult(mavenProject, Collections.singletonList(e));
-  }
-
   private static List<Exception> filterExceptions(List<Throwable> list) {
     for (Throwable throwable : list) {
       if (!(throwable instanceof Exception)) {
@@ -526,8 +518,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         activeProfiles,
         inactiveProfiles,
         workspaceMap,
-        myConsoleWrapper,
-        myLocalRepository,
         request.getUserProperties(),
         canResolveDependenciesInParallel()
       );

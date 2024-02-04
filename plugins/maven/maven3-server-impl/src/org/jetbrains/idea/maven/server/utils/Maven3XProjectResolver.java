@@ -8,11 +8,6 @@ import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
-import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
-import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
@@ -21,13 +16,12 @@ import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.project.*;
-import org.apache.maven.shared.dependency.tree.DependencyNode;
-import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.util.ExceptionUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
@@ -46,7 +40,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.jetbrains.idea.maven.server.Maven3ServerEmbedder.USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING;
 import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER_VERSION;
 
 public class Maven3XProjectResolver {
@@ -58,8 +51,6 @@ public class Maven3XProjectResolver {
   private final List<String> myActiveProfiles;
   private final List<String> myInactiveProfiles;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
-  @NotNull private final Maven3ServerConsoleLogger myConsoleWrapper;
-  @NotNull private final ArtifactRepository myLocalRepository;
   @NotNull private final Properties userProperties;
   private final boolean myResolveInParallel;
 
@@ -71,8 +62,6 @@ public class Maven3XProjectResolver {
                                 @NotNull List<String> activeProfiles,
                                 @NotNull List<String> inactiveProfiles,
                                 @Nullable MavenWorkspaceMap workspaceMap,
-                                @NotNull Maven3ServerConsoleLogger consoleWrapper,
-                                @NotNull ArtifactRepository localRepository,
                                 @NotNull Properties userProperties,
                                 boolean resolveInParallel) {
     myEmbedder = embedder;
@@ -83,8 +72,6 @@ public class Maven3XProjectResolver {
     myActiveProfiles = activeProfiles;
     myInactiveProfiles = inactiveProfiles;
     myWorkspaceMap = workspaceMap;
-    myConsoleWrapper = consoleWrapper;
-    myLocalRepository = localRepository;
     this.userProperties = userProperties;
     myResolveInParallel = resolveInParallel;
   }
@@ -92,13 +79,10 @@ public class Maven3XProjectResolver {
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects() {
     try {
-      DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
-
-      Collection<Maven3ExecutionResult> results = doResolveProject(Collections.singletonList(listener));
+      Collection<Maven3ExecutionResult> results = doResolveProject();
 
       ArrayList<MavenServerExecutionResult> list = new ArrayList<>();
-      results.stream().map(result -> createExecutionResult(result.getPomFile(), result, listener.getRootNode()))
-        .forEachOrdered(list::add);
+      results.stream().map(result -> createExecutionResult(result.getPomFile(), result)).forEachOrdered(list::add);
       return list;
     }
     catch (Exception e) {
@@ -127,7 +111,7 @@ public class Maven3XProjectResolver {
   }
 
   @NotNull
-  private Collection<Maven3ExecutionResult> doResolveProject(List<ResolutionListener> listeners) {
+  private Collection<Maven3ExecutionResult> doResolveProject() {
     Set<File> files = myPomHashMap.keySet();
     File file = !files.isEmpty() ? files.iterator().next() : null;
     files.forEach(f -> MavenServerStatsCollector.fileRead(f));
@@ -200,12 +184,7 @@ public class Maven3XProjectResolver {
 
           project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
-          if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-            executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, myLocalRepository));
-          }
-          else {
-            buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
-          }
+          buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
         }
 
         myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
@@ -256,7 +235,7 @@ public class Maven3XProjectResolver {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven3ExecutionResult result, DependencyNode rootNode) {
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven3ExecutionResult result) {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     myEmbedder.collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
 
@@ -268,24 +247,14 @@ public class Maven3XProjectResolver {
 
     MavenModel model = new MavenModel();
     try {
-      if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-        //noinspection unchecked
-        List<DependencyNode> dependencyNodes = rootNode == null ? Collections.emptyList() : rootNode.getChildren();
-        model = Maven3ModelConverter.convertModel(
-          mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
-          mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), myEmbedder.getLocalRepositoryFile());
-      }
-      else {
-        DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
-        org.eclipse.aether.graph.DependencyNode dependencyGraph =
-          dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
+      DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
+      DependencyNode dependencyGraph = dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
 
-        List<org.eclipse.aether.graph.DependencyNode> dependencyNodes =
-          dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
-        model = Maven3AetherModelConverter.convertModelWithAetherDependencyTree(
-          mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
-          mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), myEmbedder.getLocalRepositoryFile());
-      }
+      List<DependencyNode> dependencyNodes =
+        dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
+      model = Maven3AetherModelConverter.convertModelWithAetherDependencyTree(
+        mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
+        mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), myEmbedder.getLocalRepositoryFile());
     }
     catch (Exception e) {
       myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), result.getModelProblems(), problems);
@@ -425,28 +394,6 @@ public class Maven3XProjectResolver {
     }
   }
 
-  private Maven3ExecutionResult resolveMvn2CompatResult(MavenProject project,
-                                                        List<Exception> exceptions,
-                                                        List<ResolutionListener> listeners,
-                                                        ArtifactRepository localRepository) {
-    ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
-    resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
-    resolutionRequest.setArtifact(project.getArtifact());
-    resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
-    resolutionRequest.setLocalRepository(localRepository);
-    resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-    resolutionRequest.setListeners(listeners);
-
-    resolutionRequest.setResolveRoot(false);
-    resolutionRequest.setResolveTransitively(true);
-
-    ArtifactResolver resolver = myEmbedder.getComponent(ArtifactResolver.class);
-    ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
-
-    project.setArtifacts(result.getArtifacts());
-    return new Maven3ExecutionResult(project, exceptions);
-  }
-
   private static Maven3ExecutionResult handleException(Exception e) {
     return new Maven3ExecutionResult(Collections.singletonList(e));
   }
@@ -513,10 +460,10 @@ public class Maven3XProjectResolver {
     //if any syntax error presents in pom.xml we may not get dependencies via getDependencies, but they are in dependencyGraph.
     // we need to BFS this graph and add dependencies
     if (addUnresolvedNodes) {
-      Queue<org.eclipse.aether.graph.DependencyNode> queue =
+      Queue<DependencyNode> queue =
         new ArrayDeque<>(dependencyResolutionResult.getDependencyGraph().getChildren());
       while (!queue.isEmpty()) {
-        org.eclipse.aether.graph.DependencyNode node = queue.poll();
+        DependencyNode node = queue.poll();
         queue.addAll(node.getChildren());
         Dependency dependency = node.getDependency();
         if (dependency == null || !addedDependencies.add(dependency)) {
@@ -539,7 +486,7 @@ public class Maven3XProjectResolver {
                                        Map<Dependency, Artifact> winnerDependencyMap) {
     dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
       @Override
-      public boolean visitEnter(org.eclipse.aether.graph.DependencyNode node) {
+      public boolean visitEnter(DependencyNode node) {
         Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
         Dependency dependency = node.getDependency();
         if (dependency != null && winner == null) {
@@ -550,7 +497,7 @@ public class Maven3XProjectResolver {
       }
 
       @Override
-      public boolean visitLeave(org.eclipse.aether.graph.DependencyNode node) {
+      public boolean visitLeave(DependencyNode node) {
         return true;
       }
     }));
