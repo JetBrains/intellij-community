@@ -268,7 +268,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         this,
         updateSnapshots,
         myImporterSpy,
-        task.getIndicator(),
+        task,
+        pomHashMap,
+        activeProfiles,
+        inactiveProfiles,
         workspaceMap,
         getLocalRepositoryFile(),
         request.getUserProperties(),
@@ -276,11 +279,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       );
       try {
         customizeComponents(workspaceMap);
-        ArrayList<MavenServerExecutionResult> result = projectResolver.resolveProjects(
-          task,
-          pomHashMap,
-          activeProfiles,
-          inactiveProfiles);
+        ArrayList<MavenServerExecutionResult> result = projectResolver.resolveProjects();
         byte[] telemetryTrace = telemetry.shutdown();
         return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
       }

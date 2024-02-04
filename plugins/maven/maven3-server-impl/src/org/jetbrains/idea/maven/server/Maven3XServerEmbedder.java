@@ -521,7 +521,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         this,
         updateSnapshots,
         myImporterSpy,
-        task.getIndicator(),
+        task,
+        pomHashMap,
+        activeProfiles,
+        inactiveProfiles,
         workspaceMap,
         myConsoleWrapper,
         myLocalRepository,
@@ -530,11 +533,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       );
       try {
         customizeComponents(workspaceMap);
-        ArrayList<MavenServerExecutionResult> result = projectResolver.resolveProjects(
-          task,
-          pomHashMap,
-          activeProfiles,
-          inactiveProfiles);
+        ArrayList<MavenServerExecutionResult> result = projectResolver.resolveProjects();
         byte[] telemetryTrace = telemetry.shutdown();
         return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
       }

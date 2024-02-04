@@ -53,7 +53,10 @@ public class Maven3XProjectResolver {
   @NotNull private final Maven3XServerEmbedder myEmbedder;
   private final boolean myUpdateSnapshots;
   @NotNull private final Maven3ImporterSpy myImporterSpy;
-  @NotNull private final MavenServerConsoleIndicatorImpl myCurrentIndicator;
+  private final LongRunningTask myLongRunningTask;
+  private final PomHashMap myPomHashMap;
+  private final List<String> myActiveProfiles;
+  private final List<String> myInactiveProfiles;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final Maven3ServerConsoleLogger myConsoleWrapper;
   @NotNull private final ArtifactRepository myLocalRepository;
@@ -63,7 +66,10 @@ public class Maven3XProjectResolver {
   public Maven3XProjectResolver(@NotNull Maven3XServerEmbedder embedder,
                                 boolean updateSnapshots,
                                 @NotNull Maven3ImporterSpy importerSpy,
-                                @NotNull MavenServerConsoleIndicatorImpl currentIndicator,
+                                @NotNull LongRunningTask longRunningTask,
+                                @NotNull PomHashMap pomHashMap,
+                                @NotNull List<String> activeProfiles,
+                                @NotNull List<String> inactiveProfiles,
                                 @Nullable MavenWorkspaceMap workspaceMap,
                                 @NotNull Maven3ServerConsoleLogger consoleWrapper,
                                 @NotNull ArtifactRepository localRepository,
@@ -72,7 +78,10 @@ public class Maven3XProjectResolver {
     myEmbedder = embedder;
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
-    myCurrentIndicator = currentIndicator;
+    myLongRunningTask = longRunningTask;
+    myPomHashMap = pomHashMap;
+    myActiveProfiles = activeProfiles;
+    myInactiveProfiles = inactiveProfiles;
     myWorkspaceMap = workspaceMap;
     myConsoleWrapper = consoleWrapper;
     myLocalRepository = localRepository;
@@ -81,20 +90,11 @@ public class Maven3XProjectResolver {
   }
 
   @NotNull
-  public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
-                                                               @NotNull PomHashMap pomHashMap,
-                                                               @NotNull List<String> activeProfiles,
-                                                               @NotNull List<String> inactiveProfiles) {
+  public ArrayList<MavenServerExecutionResult> resolveProjects() {
     try {
       DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
-      Collection<Maven3ExecutionResult> results = doResolveProject(
-        task,
-        pomHashMap,
-        activeProfiles,
-        inactiveProfiles,
-        Collections.singletonList(listener)
-      );
+      Collection<Maven3ExecutionResult> results = doResolveProject(Collections.singletonList(listener));
 
       ArrayList<MavenServerExecutionResult> list = new ArrayList<>();
       results.stream().map(result -> createExecutionResult(result.getPomFile(), result, listener.getRootNode()))
@@ -127,15 +127,11 @@ public class Maven3XProjectResolver {
   }
 
   @NotNull
-  private Collection<Maven3ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                             @NotNull PomHashMap pomHashMap,
-                                                             @NotNull List<String> activeProfiles,
-                                                             @NotNull List<String> inactiveProfiles,
-                                                             List<ResolutionListener> listeners) {
-    Set<File> files = pomHashMap.keySet();
+  private Collection<Maven3ExecutionResult> doResolveProject(List<ResolutionListener> listeners) {
+    Set<File> files = myPomHashMap.keySet();
     File file = !files.isEmpty() ? files.iterator().next() : null;
     files.forEach(f -> MavenServerStatsCollector.fileRead(f));
-    MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles, userProperties);
+    MavenExecutionRequest request = myEmbedder.createRequest(file, myActiveProfiles, myInactiveProfiles, userProperties);
 
     request.setUpdateSnapshots(myUpdateSnapshots);
 
@@ -148,8 +144,9 @@ public class Maven3XProjectResolver {
         RepositorySystemSession repositorySession = myEmbedder.getComponent(LegacySupport.class).getRepositorySession();
         if (repositorySession instanceof DefaultRepositorySystemSession) {
           DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-          myImporterSpy.setIndicator(myCurrentIndicator);
-          session.setTransferListener(new Maven3TransferListenerAdapter(myCurrentIndicator));
+          MavenServerConsoleIndicatorImpl indicator = myLongRunningTask.getIndicator();
+          myImporterSpy.setIndicator(indicator);
+          session.setTransferListener(new Maven3TransferListenerAdapter(indicator));
 
           if (myWorkspaceMap != null) {
             session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap));
@@ -187,7 +184,7 @@ public class Maven3XProjectResolver {
             continue;
           }
 
-          String previousDependencyHash = pomHashMap.getDependencyHash(pomFile);
+          String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
           String newDependencyHash = fileToNewDependencyHash.get(pomFile);
           if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
             Maven3ExecutionResult res = new Maven3ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
@@ -211,15 +208,15 @@ public class Maven3XProjectResolver {
           }
         }
 
-        task.updateTotalRequests(buildingResultInfos.size());
+        myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
         Collection<Maven3ExecutionResult> execResults =
           ParallelRunnerForServer.execute(
             runInParallel,
             buildingResultInfos, br -> {
-              if (task.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
+              if (myLongRunningTask.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
               Maven3ExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult, br.exceptions);
               result.setDependencyHash(br.dependencyHash);
-              task.incrementFinishedRequests();
+              myLongRunningTask.incrementFinishedRequests();
               return result;
             }
           );
