@@ -4142,4 +4142,9 @@ public enum LevelCode {
       """.trimIndent()
     )
   }
+
+  fun testDoNotFormatLongChains() {
+    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest()
+  }
 }

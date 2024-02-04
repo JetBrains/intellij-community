@@ -824,6 +824,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Block createMethodCallExpressionBlock(@NotNull ASTNode node, Wrap blockWrap, Alignment alignment, Indent indent) {
     final ArrayList<ASTNode> nodes = new ArrayList<>();
     JavaFormatterUtil.collectCallExpressionNodes(nodes, node);
+    if (nodes.isEmpty()) {
+      return new LeafBlock(node, blockWrap, alignment, indent);
+    }
     if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) {
       return
         new LegacyChainedMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);

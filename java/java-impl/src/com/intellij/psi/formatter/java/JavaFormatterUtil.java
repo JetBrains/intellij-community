@@ -31,7 +31,7 @@ public final class JavaFormatterUtil {
   private static final TokenSet ASSIGNMENT_ELEMENT_TYPES = TokenSet
     .create(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
 
-  private static final int CALL_EXPRESSION_DEPTH = 2500;
+  private static final int CALL_EXPRESSION_DEPTH = 500;
 
   private JavaFormatterUtil() { }
 
@@ -532,7 +532,8 @@ public final class JavaFormatterUtil {
     stack.addLast(node.getFirstChildNode());
     while (!stack.isEmpty()) {
       if (stack.size() >= CALL_EXPRESSION_DEPTH) {
-        throw new IllegalStateException("Too long call chain! " + node);
+        nodes.clear();
+        return;
       }
       ASTNode currentNode = stack.removeLast();
         if (!FormatterUtil.containsWhiteSpacesOnly(currentNode)) {
