@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.*
@@ -50,7 +51,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
     val (components, files) = findComponentsAndFiles()
     withExternalStreamProvider(storageManager) {
-      val availableComponents = loadNotLoadedComponents(components, pluginIds)
+      val availableComponents = loadNotLoadedComponents(EmptyProgressIndicator(), components, pluginIds)
       componentStore.reloadComponents(files, emptyList(), availableComponents)
       if (categories.contains(SettingsCategory.KEYMAP)) {
         // ensure component is loaded
@@ -97,10 +98,11 @@ class JbSettingsImporter(private val configDirPath: Path,
    * @return <strong>true</strong> if restart is required,
    * `false` otherwise.
    */
-  suspend fun importOptions(categories: Set<SettingsCategory>): Boolean {
+  suspend fun importOptions(progressIndicator: ProgressIndicator, categories: Set<SettingsCategory>): Boolean {
     // load all components
     // import all, except schema managers
     try {
+      progressIndicator.checkCanceled()
       val allFiles = mutableSetOf<String>()
       val notLoadedComponents = arrayListOf<String>()
       val unknownStorage = arrayListOf<String>()
@@ -118,7 +120,8 @@ class JbSettingsImporter(private val configDirPath: Path,
       //TODO: remove later, now keep for logging purposes
       LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
       LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
-      val loadNotLoadedComponents = loadNotLoadedComponents(notLoadedComponents, null)
+      progressIndicator.checkCanceled()
+      val loadNotLoadedComponents = loadNotLoadedComponents(progressIndicator, notLoadedComponents, null)
       notLoadedComponents.removeAll(loadNotLoadedComponents)
 
       for (component in notLoadedComponents) {
@@ -129,6 +132,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       CodeStyleSchemes.getInstance()
       val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
       schemeManagerFactory.process {
+        progressIndicator.checkCanceled()
         if ((configDirPath / it.fileSpec).isDirectory()) {
           allFiles.addAll(filesFromFolder(configDirPath / it.fileSpec, it.fileSpec))
         }
@@ -155,6 +159,7 @@ class JbSettingsImporter(private val configDirPath: Path,
         (configDirPath / it).copy(PathManager.getConfigDir() / it)
       }
       withExternalStreamProvider(storageManager) {
+        progressIndicator.checkCanceled()
         componentStore.reloadComponents(componentFiles + schemeFiles, emptyList(), componentAndFilesMap.keys)
       }
       RegistryManager.getInstanceAsync().resetValueChangeListener()
@@ -179,13 +184,18 @@ class JbSettingsImporter(private val configDirPath: Path,
     saveSettings(ApplicationManager.getApplication(), true)
   }
 
-  private fun loadNotLoadedComponents(componentsToLoad: Collection<String>, pluginIds: Set<String>?): Set<String> {
+  private fun loadNotLoadedComponents(
+    progressIndicator: ProgressIndicator,
+    componentsToLoad: Collection<String>,
+    pluginIds: Set<String>?
+  ): Set<String> {
     val start = System.currentTimeMillis()
     val notLoadedComponents = arrayListOf<String>()
     notLoadedComponents.addAll(componentsToLoad)
     val foundComponents = hashMapOf<String, Class<*>>()
     val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
     componentManagerImpl.processAllHolders { key, clazz, pluginDescriptor ->
+      progressIndicator.checkCanceled()
       if (pluginDescriptor != null && pluginIds != null && !pluginIds.contains(pluginDescriptor.pluginId.idString))
         return@processAllHolders
 

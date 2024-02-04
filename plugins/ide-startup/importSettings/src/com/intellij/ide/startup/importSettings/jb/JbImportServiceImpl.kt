@@ -15,6 +15,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -255,6 +257,10 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val importData = TransferSettingsProgress(productInfo)
     val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath, null)
     val progressIndicator = importData.createProgressIndicatorAdapter()
+    val importLifetime = LifetimeDefinition()
+    SettingsService.getInstance().importCancelled.advise(importLifetime) {
+      progressIndicator.cancel()
+    }
     val modalityState = ModalityState.current()
 
     val startTime = System.currentTimeMillis()
@@ -282,8 +288,16 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
           importer.installPlugins(progressIndicator, plugins2import)
           restartRequired = true
         }
-        if (importer.importOptions(filteredCategories)) {
-          restartRequired = true
+        if (progressIndicator.isCanceled()) {
+          return@async
+        }
+        try {
+          if (importer.importOptions(progressIndicator, filteredCategories)) {
+            restartRequired = true
+          }
+        } catch (pce: ProcessCanceledException) {
+          LOG.info("Import process cancelled. Proceeding to normal IDE start")
+          return@async
         }
         LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
         progressIndicator.fraction = 0.1
