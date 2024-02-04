@@ -163,16 +163,11 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     DiffUtil.requestFocusInWindow(getPreferredFocusedComponent())
   }
 
-  private fun buildActionPopup(viewerActions: List<AnAction?>?) {
-    collectPopupActions(viewerActions)
-    DiffUtil.registerAction(ShowActionGroupPopupAction(), mainPanel)
-  }
-
-  private fun collectPopupActions(viewerActions: List<AnAction?>?) {
+  private fun buildActionPopup(popupActions: List<AnAction?>?) {
     popupActionGroup.removeAll()
-
     DiffUtil.addActionBlock(popupActionGroup, diffToolChooser)
-    DiffUtil.addActionBlock(popupActionGroup, viewerActions)
+    DiffUtil.addActionBlock(popupActionGroup, popupActions)
+    DiffUtil.registerAction(ShowActionGroupPopupAction(mainPanel, popupActionGroup), mainPanel)
   }
 
   private fun clear() {
@@ -258,7 +253,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
 
       return when {
         DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> getCurrentRequest()
-        OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.`is`(dataId) -> Runnable {  DiffUtil.minimizeDiffIfOpenedInWindow(this)}
+        OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.`is`(dataId) -> Runnable { DiffUtil.minimizeDiffIfOpenedInWindow(this) }
         CommonDataKeys.PROJECT.`is`(dataId) -> context.project
         PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> {
           if (context.getUserData(DiffUserDataKeys.HELP_ID) != null) {
@@ -278,26 +273,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   fun getCurrentRequest(): DiffRequest? {
     val id = combinedViewer?.getCurrentBlockId() ?: return null
     return model.getLoadedRequest(id)
-  }
-
-  private inner class ShowActionGroupPopupAction : DumbAwareAction() {
-    init {
-      ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup")
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.BGT
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = popupActionGroup.childrenCount > 0
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val popup = JBPopupFactory.getInstance().createActionGroupPopup(DiffBundle.message("diff.actions"), popupActionGroup, e.dataContext,
-                                                                      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-      popup.showInCenterOf(mainPanel)
-    }
   }
 
   private inner class MyFocusTraversalPolicy : IdeFocusTraversalPolicy() {
@@ -451,5 +426,28 @@ private class CombinedDiffMainToolbar(
       super.update(e)
       e.presentation.isVisible = false
     }
+  }
+}
+
+private class ShowActionGroupPopupAction(
+  private val parentComponent: JComponent,
+  private val popupActionGroup: DefaultActionGroup
+) : DumbAwareAction() {
+  init {
+    ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = popupActionGroup.childrenCount > 0
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val popup = JBPopupFactory.getInstance().createActionGroupPopup(DiffBundle.message("diff.actions"), popupActionGroup, e.dataContext,
+                                                                    JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+    popup.showInCenterOf(parentComponent)
   }
 }
