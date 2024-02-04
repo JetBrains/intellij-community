@@ -16,9 +16,11 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Graphics
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
+import java.awt.event.MouseWheelEvent
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
 import javax.swing.JPopupMenu
+import javax.swing.JScrollPane
 
 /**
  * Represents one editor's line (gutter + line text)
@@ -37,6 +39,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     val mouseEventHandler = MyMouseEventHandler()
     addMouseListener(mouseEventHandler)
     addMouseMotionListener(mouseEventHandler)
+    addMouseWheelListener(MyMouseWheelListener())
     addMouseListener(GutterMouseEventHandler())
   }
 
@@ -236,6 +239,17 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
 
     private fun isGutterEvent(event: MouseEvent): Boolean {
       return event.x <= editor.gutterComponentEx.width
+    }
+  }
+
+  inner class MyMouseWheelListener : MouseEventAdapter<JScrollPane>(editor.scrollPane) {
+    override fun convertWheel(event: MouseWheelEvent): MouseWheelEvent {
+      return convert(event, editor.scrollPane) as MouseWheelEvent
+    }
+
+    override fun mouseWheelMoved(event: MouseWheelEvent?) {
+      if (event == null || event.isConsumed) return
+      editor.scrollPane.dispatchEvent(convertWheel(event))
     }
   }
 
