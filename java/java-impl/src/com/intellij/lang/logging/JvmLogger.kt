@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.logging
+package com.intellij.lang.logging
 
-import com.intellij.logging.UnspecifiedLogger.Companion.UNSPECIFIED_LOGGER_NAME
+import com.intellij.lang.logging.UnspecifiedLogger.Companion.UNSPECIFIED_LOGGER_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project

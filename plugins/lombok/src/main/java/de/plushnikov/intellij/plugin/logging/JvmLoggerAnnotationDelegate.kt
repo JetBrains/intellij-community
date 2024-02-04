@@ -1,7 +1,7 @@
 package de.plushnikov.intellij.plugin.logging
 
 import com.intellij.java.library.JavaLibraryUtil
-import com.intellij.logging.JvmLogger
+import com.intellij.lang.logging.JvmLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade

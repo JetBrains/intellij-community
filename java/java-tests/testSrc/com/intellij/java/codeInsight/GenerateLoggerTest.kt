@@ -3,18 +3,18 @@ package com.intellij.java.codeInsight
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.generation.GenerateLoggerHandler
-import com.intellij.logging.UnspecifiedLogger
+import com.intellij.lang.logging.UnspecifiedLogger
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiClass
 import com.intellij.refactoring.introduce.PsiIntroduceTarget
-import com.intellij.settings.JavaSettingsStorage
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.ui.UiInterceptors
 import com.intellij.ui.UiInterceptors.UiInterceptor
 import com.intellij.ui.components.JBList
+import com.intellij.ui.logging.JavaSettingsStorage
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import javax.swing.ListModel

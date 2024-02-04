@@ -4,8 +4,8 @@ package com.intellij.codeInsight.generation
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
 import com.intellij.java.JavaBundle
-import com.intellij.logging.JvmLogger
-import com.intellij.logging.UnspecifiedLogger
+import com.intellij.lang.logging.JvmLogger
+import com.intellij.lang.logging.UnspecifiedLogger
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
@@ -21,7 +21,7 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.introduce.PsiIntroduceTarget
 import com.intellij.refactoring.suggested.endOffset
-import com.intellij.settings.JavaSettingsStorage
+import com.intellij.ui.logging.JavaSettingsStorage
 import org.jetbrains.java.generate.GenerationUtil
 
 class GenerateLoggerHandler : CodeInsightActionHandler {

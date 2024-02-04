@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.settings
+package com.intellij.ui.logging
 
-import com.intellij.logging.UnspecifiedLogger
+import com.intellij.lang.logging.UnspecifiedLogger
 import com.intellij.openapi.components.*
 
 @Service(Service.Level.PROJECT)

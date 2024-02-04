@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.settings
+package com.intellij.ui.logging
 
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
-import com.intellij.logging.JvmLogger
-import com.intellij.logging.UnspecifiedLogger
+import com.intellij.lang.logging.JvmLogger
+import com.intellij.lang.logging.UnspecifiedLogger
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
@@ -25,7 +25,7 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
 
   override fun getDisplayName(): String = JavaBundle.message("jvm.logging.configurable.display.name")
 
-  override fun getId(): String = JavaBundle.message("jvm.logging.configurable.display.name")
+  override fun getId(): String = JavaBundle.message("jvm.logging.configurable.id")
 
   override fun createComponent(): JComponent {
     val isOnlyOnStartup = JvmLogger.getAllLoggersNames(settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)

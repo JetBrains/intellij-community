@@ -7,9 +7,9 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.settings.JavaLoggerModel
-import com.intellij.settings.JavaSettingsStorage
-import com.intellij.settings.JvmLoggingConfigurable
+import com.intellij.ui.logging.JavaLoggerModel
+import com.intellij.ui.logging.JavaSettingsStorage
+import com.intellij.ui.logging.JvmLoggingConfigurable
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls

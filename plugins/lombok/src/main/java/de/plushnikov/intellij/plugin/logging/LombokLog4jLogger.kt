@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.logging
 
-import com.intellij.logging.JvmLogger
+import com.intellij.lang.logging.JvmLogger
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 
 class LombokLog4jLogger : JvmLogger by JvmLoggerAnnotationDelegate(
