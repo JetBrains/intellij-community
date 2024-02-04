@@ -15,9 +15,10 @@ import org.jetbrains.kotlin.idea.isStandaloneKotlinScript
 
 class ModuleScriptAdditionalIdeaDependenciesProvider: ScriptAdditionalIdeaDependenciesProvider() {
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> =
-        if (!compilerAllowsAnyScriptsInSourceRoots(project)
-            && RootKindFilter.projectSources.matches(project, file)
-            && (file.isStandaloneKotlinScript(project) && file.hasNoExceptionsToBeUnderSourceRoot())
+        if (!compilerAllowsAnyScriptsInSourceRoots(project) &&
+            RootKindFilter.projectSources.matches(project, file) &&
+            file.isStandaloneKotlinScript(project) &&
+            file.hasNoExceptionsToBeUnderSourceRoot()
         ) {
             emptyList()
         } else {
