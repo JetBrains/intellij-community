@@ -523,7 +523,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       );
       try {
         customizeComponents(workspaceMap);
-        ArrayList<MavenServerExecutionResult> result = projectResolver.resolveProjects();
+        ArrayList<MavenServerExecutionResult> result = telemetry.callWithSpan(
+          "projectResolver.resolveProjects", () -> projectResolver.resolveProjects());
         byte[] telemetryTrace = telemetry.shutdown();
         return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
       }

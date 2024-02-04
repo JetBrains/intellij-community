@@ -63,7 +63,8 @@ public class MavenFilteringSpanDataCollector implements SpanExporter {
   }
 
   private static boolean isValid(@NotNull SpanData span) {
-    return span.getEndEpochNanos() - span.getStartEpochNanos() >= SPAN_DURATION_THRESHOLD_NANOS;
+    return true;
+    //return span.getEndEpochNanos() - span.getStartEpochNanos() >= SPAN_DURATION_THRESHOLD_NANOS;
   }
 }
 

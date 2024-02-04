@@ -279,7 +279,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       );
       try {
         customizeComponents(workspaceMap);
-        ArrayList<MavenServerExecutionResult> result = projectResolver.resolveProjects();
+        ArrayList<MavenServerExecutionResult> result = telemetry.callWithSpan(
+          "projectResolver.resolveProjects", () -> projectResolver.resolveProjects());
         byte[] telemetryTrace = telemetry.shutdown();
         return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
       }

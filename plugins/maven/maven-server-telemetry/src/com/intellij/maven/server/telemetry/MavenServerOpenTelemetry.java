@@ -23,9 +23,12 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public interface MavenServerOpenTelemetry {
   MavenServerOpenTelemetry NOOP = new MavenServerOpenTelemetryNoop();
+
+  <T> T callWithSpan(@NotNull String spanName, @NotNull Supplier<T> fn);
 
   byte[] shutdown();
 
@@ -40,6 +43,11 @@ public interface MavenServerOpenTelemetry {
 }
 
 final class MavenServerOpenTelemetryNoop implements MavenServerOpenTelemetry {
+  @Override
+  public <T> T callWithSpan(@NotNull String spanName, @NotNull Supplier<T> fn) {
+    return fn.get();
+  }
+
   @Override
   public byte[] shutdown() {
     return ArrayUtilRt.EMPTY_BYTE_ARRAY;
@@ -77,6 +85,8 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
     rootSpan = tracer.spanBuilder("MavenServerRootSpan")
       .setParent(Context.root().with(Span.wrap(parentSpanContext)))
       .startSpan();
+
+    myScope = rootSpan.makeCurrent();
   }
 
   public void start(@NotNull MavenTracingContext context) {
@@ -89,6 +99,23 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
 
   public @NotNull Tracer getTracer() {
     return getTelemetry().getTracer(INSTRUMENTATION_NAME);
+  }
+
+  @Override
+  public <T> T callWithSpan(@NotNull String spanName, @NotNull Supplier<T> fn) {
+    SpanBuilder spanBuilder = getTracer().spanBuilder(spanName);
+    Span span = spanBuilder.startSpan();
+    try (Scope ignore = span.makeCurrent()) {
+      return fn.get();
+    }
+    catch (Exception e) {
+      span.recordException(e);
+      span.setStatus(StatusCode.ERROR);
+      throw e;
+    }
+    finally {
+      span.end();
+    }
   }
 
   public <T> T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
