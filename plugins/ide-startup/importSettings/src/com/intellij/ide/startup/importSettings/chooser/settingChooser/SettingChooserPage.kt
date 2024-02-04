@@ -161,9 +161,23 @@ class ConfigurableSettingChooserPage<T : BaseService>(val provider: ActionsDataP
   }
 
   private fun prepareDataForSave(): List<DataForSave> {
-    return settingPanes.map { it.item }.filter { it.selected }.map {
-      val chs = it.childItems?.filter { item -> item.selected }?.map { item -> item.child.id }?.toList() ?: emptyList()
-      DataForSave(it.setting.id, chs)
+    return settingPanes.map { it.item }.filter { it.selected }.map { settingItem ->
+      if (settingItem.childItems == null) {
+        DataForSave(settingItem.setting.id)
+      } else {
+        val (selectedItems, unselectedItems) = settingItem
+          .childItems
+          .partition { childItem -> childItem.selected }
+
+        DataForSave(settingItem.setting.id,
+                    selectedItems.map { it.child.id },
+                    unselectedItems.map { it.child.id }
+        )
+      }
+      /*
+      val selectedChildren = it.childItems?.filter { item -> item.selected }?.map { item -> item.child.id }?.toList() ?: emptyList()
+      val unselectedChidren = it.childItems?.filter { item -> item.selected }?.map { item -> item.child.id }?.toList() ?: emptyList()
+      */
     }
   }
 }

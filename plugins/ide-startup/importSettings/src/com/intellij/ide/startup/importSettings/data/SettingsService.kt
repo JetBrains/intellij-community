@@ -28,7 +28,6 @@ import com.jetbrains.rd.util.reactive.*
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.time.LocalDate
-import java.util.function.Function
 import javax.swing.Icon
 
 interface SettingsService {
@@ -224,7 +223,7 @@ interface ChildSetting {
   val rightComment: @Nls String?
 }
 
-data class DataForSave(val id: String, val childIds: List<String>? = null)
+data class DataForSave(val id: String, val selectedChildIds: List<String>? = null, val unselectedChildIds: List<String>? = null)
 
 interface ImportFromProduct : DialogImportData {
   val from: DialogImportItem

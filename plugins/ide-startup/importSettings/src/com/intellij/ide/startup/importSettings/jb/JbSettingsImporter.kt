@@ -329,6 +329,7 @@ class JbSettingsImporter(private val configDirPath: Path,
                                            bundledPlugins: MutableList<IdeaPluginDescriptor>,
                                            nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
         nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
+        bundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
       }
 
       override fun shouldForceCopy(path: Path): Boolean {

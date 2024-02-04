@@ -230,12 +230,15 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val productInfo = productsLazy.value[productId] ?: error("Can't find product")
     val filteredCategories = mutableSetOf<SettingsCategory>()
     var plugins2import: List<String>? = null
+    var unselectedPlugins: List<String>? = null
     for (data in saveDataList) {
       if (data.id == SettingsCategory.PLUGINS.name) {
         // plugins category must be added as well, some PSC's use it, for instance KotlinNotebookApplicationOptionsProvider
         filteredCategories.add(SettingsCategory.PLUGINS)
-        plugins2import = data.childIds
-        LOG.info("Will import ${plugins2import?.size} custom plugins: ${plugins2import?.joinToString()}")
+        plugins2import = data.selectedChildIds
+        unselectedPlugins = data.unselectedChildIds
+        LOG.info("Will import ${data.selectedChildIds?.size} custom plugins: ${data.selectedChildIds?.joinToString()}\n" +
+                 "${data.unselectedChildIds?.size} plugins will be skipped: ${data.unselectedChildIds?.joinToString()}")
       }
       else {
         val category = DEFAULT_SETTINGS_CATEGORIES[data.id] ?: continue
@@ -246,6 +249,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
     val allRoamableCategories = DEFAULT_SETTINGS_CATEGORIES.values.map { it.settingsCategory }
     val importEverything = filteredCategories.containsAll(allRoamableCategories)
+                           && filteredCategories.contains(SettingsCategory.PLUGINS)
+                           && unselectedPlugins.isNullOrEmpty()
 
     val importData = TransferSettingsProgress(productInfo)
     val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath, null)
@@ -257,6 +262,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
         LOG.info("Started importing all...")
         progressIndicator.text2 = "Migrating options"
+        //TODO support plugin list customization for raw import
+        //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
         importer.importRaw()
         LOG.info("Imported all completed in ${System.currentTimeMillis() - startTime} ms. ")
         LOG.info("Calling restart...")
