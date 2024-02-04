@@ -71,7 +71,6 @@ private val LOG = logger<RecentProjectsManager>()
 @OptIn(FlowPreview::class)
 @State(name = "RecentProjectsManager",
        category = SettingsCategory.SYSTEM,
-       exportable = true,
        storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
 open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
