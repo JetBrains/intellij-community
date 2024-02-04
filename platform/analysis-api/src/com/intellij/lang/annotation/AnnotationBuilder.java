@@ -163,7 +163,6 @@ public interface AnnotationBuilder {
    * @see AnnotationBuilder#withFix(IntentionAction) 
    */
   @Contract(pure = true)
-  @ApiStatus.Experimental
   @NotNull AnnotationBuilder withFix(@NotNull CommonIntentionAction fix);
 
   /**
@@ -184,7 +183,6 @@ public interface AnnotationBuilder {
    * @see AnnotationBuilder#newFix(IntentionAction) 
    */
   @Contract(pure = true)
-  @ApiStatus.Experimental
   @NotNull FixBuilder newFix(@NotNull CommonIntentionAction fix);
 
   /**
