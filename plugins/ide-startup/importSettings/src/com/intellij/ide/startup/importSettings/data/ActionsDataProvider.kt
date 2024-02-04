@@ -3,10 +3,8 @@ package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider.Companion.toRelativeFormat
-import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import javax.swing.Icon
 
@@ -35,40 +33,54 @@ interface ActionsDataProvider<T : BaseService> {
     }
 
     fun LocalDate.toRelativeFormat(suffix: String): String {
-      val now = LocalDate.now()
-      val daysBetween = ChronoUnit.DAYS.between(this, now)
-
-      return if (daysBetween == 0L) {
-        ImportSettingsBundle.message("date.format.today.$suffix")
+      val daysBetween = ChronoUnit.DAYS.between(this, LocalDate.now())
+      if (daysBetween == 0L) {
+        return ImportSettingsBundle.message("date.format.today.$suffix")
       }
       else if (daysBetween == 1L) {
-        ImportSettingsBundle.message("date.format.yesterday.$suffix")
+        return ImportSettingsBundle.message("date.format.yesterday.$suffix")
       }
-      else if (daysBetween <= 6) {
+      val (chronoUnit, cnt) = getRelativeInterval(daysBetween)
+      return if (chronoUnit == ChronoUnit.DAYS) {
         ImportSettingsBundle.message("date.format.n.days.ago.$suffix", daysBetween)
       }
-      else if (daysBetween <= 27) {
-        val weeks = daysBetween / 7
-        if (weeks == 1L) ImportSettingsBundle.message("date.format.n.weeks.ago.one.$suffix")
-        else
-          ImportSettingsBundle.message("date.format.n.weeks.ago.$suffix", weeks)
+      else if (chronoUnit == ChronoUnit.WEEKS) {
+        if (cnt == 1L) {
+          ImportSettingsBundle.message("date.format.n.weeks.ago.one.$suffix")
+        }
+        else {
+          ImportSettingsBundle.message("date.format.n.weeks.ago.$suffix", cnt)
+        }
       }
-      else if (daysBetween <= 345) {
-        val months = daysBetween / 30
-        if(months == 1L) {
+      else if (chronoUnit == ChronoUnit.MONTHS) {
+        if (cnt == 1L) {
           ImportSettingsBundle.message("date.format.n.months.ago.one.$suffix")
-        } else ImportSettingsBundle.message("date.format.n.months.ago.$suffix", months)
+        }
+        else {
+          ImportSettingsBundle.message("date.format.n.months.ago.$suffix", cnt)
+        }
+      }
+      else if (chronoUnit == ChronoUnit.YEARS) {
+        if (cnt == 1L) {
+          ImportSettingsBundle.message("date.format.n.years.ago.one.$suffix")
+        }
+        else {
+          ImportSettingsBundle.message("date.format.n.years.ago.$suffix", cnt)
+        }
       }
       else {
-        val years = daysBetween / 365
-        if(years == 1L) {
-          ImportSettingsBundle.message("date.format.n.years.ago.one.$suffix")
-        } else {
-          ImportSettingsBundle.message("date.format.n.years.ago.$suffix", years)
-        }
+        ImportSettingsBundle.message("date.format.n.days.ago.$suffix", daysBetween)
       }
     }
 
+    private fun getRelativeInterval(daysBetween: Long): Pair<ChronoUnit, Long> {
+      return when {
+        daysBetween < 7 -> ChronoUnit.DAYS to daysBetween
+        daysBetween < 30 -> ChronoUnit.WEEKS to (daysBetween / 7)
+        daysBetween < 365 -> ChronoUnit.MONTHS to (daysBetween / 30)
+        else -> ChronoUnit.YEARS to (daysBetween / 365)
+      }
+    }
   }
 
   val settingsService
