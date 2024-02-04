@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Function;
 
 public abstract class CascadeController implements LinearGraphController {
   private final @NotNull LinearGraphController myDelegateController;
@@ -31,7 +32,7 @@ public abstract class CascadeController implements LinearGraphController {
 
   @Nullable
   GraphChanges<Integer> performAction(@NotNull Function<? super CascadeController, ? extends GraphChanges<Integer>> action) {
-    GraphChanges<Integer> graphChanges = action.fun(this);
+    GraphChanges<Integer> graphChanges = action.apply(this);
     if (graphChanges != null) return graphChanges;
 
     if (myDelegateController instanceof CascadeController) {

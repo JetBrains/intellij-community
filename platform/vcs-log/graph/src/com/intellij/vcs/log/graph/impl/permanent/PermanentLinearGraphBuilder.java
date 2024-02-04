@@ -2,7 +2,6 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -12,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.vcs.log.graph.impl.permanent.DuplicateParentFixer.fixDuplicateParentCommits;
 
@@ -136,11 +136,11 @@ public final class PermanentLinearGraphBuilder<CommitId> {
     throw new IllegalStateException("Not found underdone edge to not load commit for node: " + upNodeIndex);
   }
 
-  private void fixUnderdoneEdges(@NotNull NotNullFunction<? super CommitId, Integer> notLoadedCommitToId) {
+  private void fixUnderdoneEdges(@NotNull Function<? super CommitId, @NotNull Integer> notLoadedCommitToId) {
     List<CommitId> commitIds = new ArrayList<>(upAdjacentNodes.keySet());
     ContainerUtil.sort(commitIds, Comparator.comparingInt(o -> Collections.min(upAdjacentNodes.get(o))));
     for (CommitId notLoadCommit : commitIds) {
-      int notLoadId = notLoadedCommitToId.fun(notLoadCommit);
+      int notLoadId = notLoadedCommitToId.apply(notLoadCommit);
       for (int upNodeIndex : upAdjacentNodes.get(notLoadCommit)) {
         fixUnderdoneEdgeForNotLoadCommit(upNodeIndex, notLoadId);
       }
@@ -149,7 +149,7 @@ public final class PermanentLinearGraphBuilder<CommitId> {
 
   // id's must be less that -2
   @NotNull
-  public PermanentLinearGraphImpl build(@NotNull NotNullFunction<? super CommitId, Integer> notLoadedCommitToId) {
+  public PermanentLinearGraphImpl build(@NotNull Function<? super CommitId, @NotNull Integer> notLoadedCommitToId) {
     for (int nodeIndex = 0; nodeIndex < myNodesCount; nodeIndex++) {
       doStep(nodeIndex);
     }
