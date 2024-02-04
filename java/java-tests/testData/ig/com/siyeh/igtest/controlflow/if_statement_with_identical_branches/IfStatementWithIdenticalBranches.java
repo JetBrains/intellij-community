@@ -234,6 +234,17 @@ class NotADup {
       }
     }
   }
+  
+  void stringTemplate(boolean b) {
+    <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (b) {
+      System.out.println(STR."""
+        vansind\{1}\{}""");
+    }
+    else {
+      System.out.println(STR."""
+        vansind\{1}\{}""");
+    }
+  }
 }
 class Poly {
   Poly rotateRight() {
