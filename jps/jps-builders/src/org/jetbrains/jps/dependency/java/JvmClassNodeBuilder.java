@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import kotlinx.metadata.Attributes;
-import kotlinx.metadata.KmClass;
+import kotlinx.metadata.KmDeclarationContainer;
 import kotlinx.metadata.KmFunction;
 import kotlinx.metadata.KmValueParameter;
 import kotlinx.metadata.jvm.JvmExtensionsKt;
@@ -486,6 +486,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public void visit(int version, int access, String name, String sig, String superName, String[] interfaces) {
     myAccess = access;
     myName = name;
+    myUsages.add(new ImportPackageOnDemandUsage(JvmClass.getPackageName(name))); // implicit 'import' of the package to which the node belongs to
     myVersion = String.valueOf(version);
     mySignature = sig;
     mySuperClass = superName;
@@ -566,9 +567,9 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
 
-  private KmClass findKmClass() {
+  private KmDeclarationContainer findKotlinDeclarationContainer() {
     KotlinMeta meta = (KotlinMeta)Iterators.find(myMetadata, md-> md instanceof KotlinMeta);
-    return meta != null? meta.getKmClass() : null;
+    return meta != null? meta.getDeclarationContainer() : null;
   }
 
   @Override
@@ -582,9 +583,9 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       @Override
       public void visitEnd() {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
-          KmClass kmClass = findKmClass();
-          if (kmClass != null) {
-            KmFunction func = Iterators.find(kmClass.getFunctions(), f -> {
+          KmDeclarationContainer container = findKotlinDeclarationContainer();
+          if (container != null) {
+            KmFunction func = Iterators.find(container.getFunctions(), f -> {
               JvmMethodSignature sign = JvmExtensionsKt.getSignature(f);
               return sign != null && n.equals(sign.getName()) && desc.equals(sign.getDescriptor());
             });

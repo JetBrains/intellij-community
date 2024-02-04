@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -97,16 +97,20 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return getPackageName(getName());
   }
 
-  public @NotNull String getShortName() {
-    String jvmClassName = getName();
-    int index = jvmClassName.lastIndexOf('/');
-    return index >= 0? jvmClassName.substring(index + 1) : jvmClassName;
-  }
-
   @NotNull
   public static String getPackageName(@NotNull String jvmClassName) {
     int index = jvmClassName.lastIndexOf('/');
     return index >= 0? jvmClassName.substring(0, index) : "";
+  }
+
+  public @NotNull String getShortName() {
+    return getShortName(getName());
+  }
+
+  @NotNull
+  public static String getShortName(String jvmClassName) {
+    int index = jvmClassName.lastIndexOf('/');
+    return index >= 0? jvmClassName.substring(index + 1) : jvmClassName;
   }
 
   public boolean isInterface() {

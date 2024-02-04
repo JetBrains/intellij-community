@@ -57,10 +57,6 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmClass addedClass : addedClasses) {
       debug("Class name: ", addedClass.getName());
 
-      if (!processAddedClass(context, addedClass, future, present)) {
-        return false;
-      }
-      
       // class duplication checks
       if (!addedClass.isAnonymous() && !addedClass.isLocal() && addedClass.getOuterFqName().isEmpty()) {
         Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
@@ -316,16 +312,17 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   }
 
   @Override
-  public boolean processChangedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> changed, Utils future, Utils present) {
+  public boolean processChangedMethods(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> methodChanges, Utils future, Utils present) {
+    JvmClass changedClass = clsChange.getPast();
     debug("Processing changed methods: ");
 
-    for (Difference.Change<JvmMethod, JvmMethod.Diff> change : changed) {
+    for (Difference.Change<JvmMethod, JvmMethod.Diff> change : methodChanges) {
       JvmMethod changedMethod = change.getPast();
       JvmMethod.Diff diff = change.getDiff();
 
       debug("Method: ", changedMethod.getName());
 
-      if (!processChangedMethod(context, changedClass, change, future, present)) {
+      if (!processChangedMethod(context, clsChange, change, future, present)) {
         return false;
       }
 
@@ -438,7 +435,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
     }
 
-    Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> moreAccessible = collect(filter(changed, ch -> ch.getDiff().accessExpanded()), new SmartList<>());
+    Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> moreAccessible = collect(filter(methodChanges, ch -> ch.getDiff().accessExpanded()), new SmartList<>());
     if (!isEmpty(moreAccessible)) {
       Iterable<Utils.OverloadDescriptor> overloaded = future.findAllOverloads(changedClass, method -> {
         JVMFlags mostAccessible = null;
@@ -476,7 +473,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   }
 
   @Override
-  public boolean processRemovedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<JvmMethod> removed, Utils future, Utils present) {
+  public boolean processRemovedMethods(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmMethod> removed, Utils future, Utils present) {
+    JvmClass changedClass = change.getPast();
     debug("Processing removed methods: ");
     Iterators.Provider<Boolean> extendsLibraryClass = Utils.lazyValue(() -> {
       return future.inheritsFromLibraryClass(changedClass);
@@ -484,7 +482,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmMethod removedMethod : removed) {
       debug("Method ", removedMethod.getName());
 
-      if (!processRemovedMethod(context, changedClass, removedMethod, future, present)) {
+      if (!processRemovedMethod(context, change, removedMethod, future, present)) {
         return false;
       }
 
@@ -541,7 +539,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   }
 
   @Override
-  public boolean processAddedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<JvmMethod> added, Utils future, Utils present) {
+  public boolean processAddedMethods(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmMethod> added, Utils future, Utils present) {
+    JvmClass changedClass = change.getPast();
     if (changedClass.isAnnotation()) {
       debug("Class is annotation, skipping method analysis for added methods");
       return true;
@@ -560,7 +559,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmMethod addedMethod : added) {
       debug("Method: ", addedMethod.getName());
 
-      if (!processAddedMethod(context, changedClass, addedMethod, future, present)) {
+      if (!processAddedMethod(context, change, addedMethod, future, present)) {
         return false;
       }
 
@@ -646,15 +645,16 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   }
 
   @Override
-  public boolean processAddedFields(DifferentiateContext context, JvmClass changedClass, Iterable<JvmField> added, Utils future, Utils present) {
+  public boolean processAddedFields(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmField> added, Utils future, Utils present) {
     if (!isEmpty(added)) {
       debug("Processing added fields: ");
     }
-    return super.processAddedFields(context, changedClass, added, future, present);
+    return super.processAddedFields(context, change, added, future, present);
   }
 
   @Override
-  public boolean processAddedField(DifferentiateContext context, JvmClass changedClass, JvmField addedField, Utils future, Utils present) {
+  public boolean processAddedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmField addedField, Utils future, Utils present) {
+    JvmClass changedClass = change.getPast();
     debug("Field: " + addedField.getName());
     Set<JvmNodeReferenceID> changedClassWithSubclasses = future.collectSubclassesWithoutField(changedClass.getReferenceID(), addedField);
     changedClassWithSubclasses.add(changedClass.getReferenceID());
@@ -703,15 +703,16 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   }
 
   @Override
-  public boolean processRemovedFields(DifferentiateContext context, JvmClass changedClass, Iterable<JvmField> removed, Utils future, Utils present) {
+  public boolean processRemovedFields(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmField> removed, Utils future, Utils present) {
     if (!isEmpty(removed)) {
       debug("Process removed fields: ");
     }
-    return super.processRemovedFields(context, changedClass, removed, future, present);
+    return super.processRemovedFields(context, change, removed, future, present);
   }
 
   @Override
-  public boolean processRemovedField(DifferentiateContext context, JvmClass changedClass, JvmField removedField, Utils future, Utils present) {
+  public boolean processRemovedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmField removedField, Utils future, Utils present) {
+    JvmClass changedClass = change.getPast();
     debug("Field: ", removedField.getName());
 
     if (!context.getParams().isProcessConstantsIncrementally() && !removedField.isPrivate() && removedField.isInlinable() && removedField.getValue() != null) {
@@ -732,17 +733,18 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   }
 
   @Override
-  public boolean processChangedFields(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmField, JvmField.Diff>> changed, Utils future, Utils present) {
-    if (!isEmpty(changed)) {
+  public boolean processChangedFields(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> chng, Iterable<Difference.Change<JvmField, JvmField.Diff>> fieldChanges, Utils future, Utils present) {
+    if (!isEmpty(fieldChanges)) {
       debug("Process changed fields: ");
     }
-    return super.processChangedFields(context, changedClass, changed, future, present);
+    return super.processChangedFields(context, chng, fieldChanges, future, present);
   }
 
   @Override
-  public boolean processChangedField(DifferentiateContext context, JvmClass changedClass, Difference.Change<JvmField, JvmField.Diff> change, Utils future, Utils present) {
-    JvmField changedField = change.getPast();
-    JvmField.Diff diff = change.getDiff();
+  public boolean processChangedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmField, JvmField.Diff> fieldChange, Utils future, Utils present) {
+    JvmClass changedClass = clsChange.getPast();
+    JvmField changedField = fieldChange.getPast();
+    JvmField.Diff diff = fieldChange.getDiff();
 
     debug("Field: ", changedField.getName());
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.DifferentiateContext;
@@ -51,26 +51,26 @@ public interface JvmDifferentiateStrategy {
 
       Difference.Specifier<JvmMethod, JvmMethod.Diff> methodsDiff = change.getDiff().methods();
       if (!methodsDiff.unchanged()) {
-        if (!processRemovedMethods(context, changedClass, methodsDiff.removed(), future, present)) {
+        if (!processRemovedMethods(context, change, methodsDiff.removed(), future, present)) {
           return false;
         }
-        if (!processAddedMethods(context, changedClass, methodsDiff.added(), future, present)) {
+        if (!processAddedMethods(context, change, methodsDiff.added(), future, present)) {
           return false;
         }
-        if (!processChangedMethods(context, changedClass, methodsDiff.changed(), future, present)) {
+        if (!processChangedMethods(context, change, methodsDiff.changed(), future, present)) {
           return false;
         }
       }
 
       Difference.Specifier<JvmField, JvmField.Diff> fieldsDiff = change.getDiff().fields();
       if (!fieldsDiff.unchanged()) {
-        if (!processRemovedFields(context, changedClass, fieldsDiff.removed(), future, present)) {
+        if (!processRemovedFields(context, change, fieldsDiff.removed(), future, present)) {
           return false;
         }
-        if (!processAddedFields(context, changedClass, fieldsDiff.added(), future, present)) {
+        if (!processAddedFields(context, change, fieldsDiff.added(), future, present)) {
           return false;
         }
-        if (!processChangedFields(context, changedClass, fieldsDiff.changed(), future, present)) {
+        if (!processChangedFields(context, change, fieldsDiff.changed(), future, present)) {
           return false;
         }
       }
@@ -82,81 +82,81 @@ public interface JvmDifferentiateStrategy {
     return true;
   }
 
-  default boolean processRemovedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<JvmMethod> removed, Utils future, Utils present) {
+  default boolean processRemovedMethods(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmMethod> removed, Utils future, Utils present) {
     for (JvmMethod method : removed) {
-      if (!processRemovedMethod(context, changedClass, method, future, present)) {
+      if (!processRemovedMethod(context, change, method, future, present)) {
         return false;
       }
     }
     return true;
   }
 
-  default boolean processRemovedMethod(DifferentiateContext context, JvmClass changedClass, JvmMethod removedMethod, Utils future, Utils present) {
+  default boolean processRemovedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmMethod removedMethod, Utils future, Utils present) {
     return true;
   }
 
-  default boolean processAddedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<JvmMethod> added, Utils future, Utils present) {
+  default boolean processAddedMethods(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmMethod> added, Utils future, Utils present) {
     for (JvmMethod method : added) {
-      if (!processAddedMethod(context, changedClass, method, future, present)) {
+      if (!processAddedMethod(context, change, method, future, present)) {
         return false;
       }
     }
     return true;
   }
 
-  default boolean processAddedMethod(DifferentiateContext context, JvmClass changedClass, JvmMethod addedMethod, Utils future, Utils present) {
+  default boolean processAddedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmMethod addedMethod, Utils future, Utils present) {
     return true;
   }
 
-  default boolean processChangedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> changed, Utils future, Utils present) {
-    for (Difference.Change<JvmMethod, JvmMethod.Diff> change : changed) {
-      if (!processChangedMethod(context, changedClass, change, future, present)) {
+  default boolean processChangedMethods(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> methodChanges, Utils future, Utils present) {
+    for (Difference.Change<JvmMethod, JvmMethod.Diff> methodChange : methodChanges) {
+      if (!processChangedMethod(context, change, methodChange, future, present)) {
         return false;
       }
     }
     return true;
   }
 
-  default boolean processChangedMethod(DifferentiateContext context, JvmClass changedClass, Difference.Change<JvmMethod, JvmMethod.Diff> change, Utils future, Utils present) {
+  default boolean processChangedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmMethod, JvmMethod.Diff> methodChange, Utils future, Utils present) {
     return true;
   }
 
-  default boolean processRemovedFields(DifferentiateContext context, JvmClass changedClass, Iterable<JvmField> removed, Utils future, Utils present) {
+  default boolean processRemovedFields(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmField> removed, Utils future, Utils present) {
     for (JvmField field : removed) {
-      if (!processRemovedField(context, changedClass, field, future, present)) {
+      if (!processRemovedField(context, change, field, future, present)) {
         return false;
       }
     }
     return true;
   }
 
-  default boolean processRemovedField(DifferentiateContext context, JvmClass changedClass, JvmField removedField, Utils future, Utils present) {
+  default boolean processRemovedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmField removedField, Utils future, Utils present) {
     return true;
   }
 
-  default boolean processAddedFields(DifferentiateContext context, JvmClass changedClass, Iterable<JvmField> added, Utils future, Utils present) {
+  default boolean processAddedFields(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmField> added, Utils future, Utils present) {
     for (JvmField field : added) {
-      if (!processAddedField(context, changedClass, field, future, present)) {
+      if (!processAddedField(context, change, field, future, present)) {
         return false;
       }
     }
     return true;
   }
 
-  default boolean processAddedField(DifferentiateContext context, JvmClass changedClass, JvmField addedField, Utils future, Utils present) {
+  default boolean processAddedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmField addedField, Utils future, Utils present) {
     return true;
   }
 
-  default boolean processChangedFields(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmField, JvmField.Diff>> changed, Utils future, Utils present) {
-    for (Difference.Change<JvmField, JvmField.Diff> change : changed) {
-      if (!processChangedField(context, changedClass, change, future, present)) {
+  default boolean processChangedFields(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Iterable<Difference.Change<JvmField, JvmField.Diff>> fieldChanges, Utils future, Utils present) {
+    for (Difference.Change<JvmField, JvmField.Diff> fieldChange : fieldChanges) {
+      if (!processChangedField(context, clsChange, fieldChange, future, present)) {
         return false;
       }
     }
     return true;
   }
 
-  default boolean processChangedField(DifferentiateContext context, JvmClass changedClass, Difference.Change<JvmField, JvmField.Diff> change, Utils future, Utils present) {
+  default boolean processChangedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmField, JvmField.Diff> fieldChange, Utils future, Utils present) {
     return true;
   }
 

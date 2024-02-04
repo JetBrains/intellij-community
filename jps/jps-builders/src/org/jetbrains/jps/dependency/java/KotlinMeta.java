@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import kotlinx.metadata.KmClass;
+import kotlinx.metadata.KmDeclarationContainer;
 import kotlinx.metadata.jvm.KotlinClassHeader;
 import kotlinx.metadata.jvm.KotlinClassMetadata;
 import org.jetbrains.annotations.NotNull;
@@ -105,24 +105,34 @@ public final class KotlinMeta implements JvmMetadata {
   }
 
 
-  private KotlinClassMetadata[] myKmClass; // cached
+  private KotlinClassMetadata[] myCachedMeta;
 
   public KotlinClassMetadata getClassMetadata() {
-    if (myKmClass == null) {
+    if (myCachedMeta == null) {
       try {
-        myKmClass = new KotlinClassMetadata[] {KotlinClassMetadata.readLenient(new KotlinClassHeader(
+        myCachedMeta = new KotlinClassMetadata[] {KotlinClassMetadata.readLenient(new KotlinClassHeader(
           getKind(), getVersion(), getData1(), getData2(), getExtraString(), getPackageName(), getExtraInt()
         ))};
       }
       catch (Throwable e) {
-        myKmClass = new KotlinClassMetadata[] {null};
+        myCachedMeta = new KotlinClassMetadata[] {null};
       }
     }
-    return myKmClass[0];
+    return myCachedMeta[0];
   }
 
-  public KmClass getKmClass() {
-    KotlinClassMetadata classMetadata = getClassMetadata();
-    return classMetadata instanceof KotlinClassMetadata.Class? ((KotlinClassMetadata.Class)classMetadata).getKmClass() : null;
+  @Nullable
+  public KmDeclarationContainer getDeclarationContainer() {
+    KotlinClassMetadata clsMeta = getClassMetadata();
+    if (clsMeta instanceof KotlinClassMetadata.Class) {
+      return ((KotlinClassMetadata.Class)clsMeta).getKmClass();
+    }
+    if (clsMeta instanceof KotlinClassMetadata.FileFacade) {
+      return ((KotlinClassMetadata.FileFacade)clsMeta).getKmPackage();
+    }
+    if (clsMeta instanceof KotlinClassMetadata.MultiFileClassPart) {
+      return ((KotlinClassMetadata.MultiFileClassPart)clsMeta).getKmPackage();
+    }
+    return null;
   }
 }
