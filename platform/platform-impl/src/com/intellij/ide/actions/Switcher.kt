@@ -395,7 +395,7 @@ object Switcher : BaseSwitcherAction(null) {
       addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
       val otherTW: MutableList<SwitcherToolWindow> = ArrayList()
       for (window in windows) {
-        val index = ActivateToolWindowAction.getMnemonicForToolWindow(window.window.id)
+        val index = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(window.window.id)
         if (index < '0'.code || index > '9'.code || !addShortcut(keymap, window, getIndexShortcut(index - '0'.code))) {
           otherTW.add(window)
         }
