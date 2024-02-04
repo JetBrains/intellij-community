@@ -12,6 +12,7 @@ import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.nio.file.Path
 import java.time.LocalDate
 import java.util.*
 import javax.swing.Icon
@@ -220,6 +221,10 @@ class TestJbService private constructor(): JbService {
     return old
   }
 
+  override fun importFromCustomFolder(folderPath: Path) {
+    TODO("Not yet implemented")
+  }
+
 
   override fun getSettings(itemId: String): List<BaseSetting> {
     return if (itemId == main.id) settings1 else settings
@@ -309,6 +314,10 @@ class TestSyncService : SyncService {
 
   override fun getOldProducts(): List<Product> {
     return TestJbService.old
+  }
+
+  override fun importFromCustomFolder(folderPath: Path) {
+    TODO("Not yet implemented")
   }
 
   override fun getSettings(itemId: String): List<BaseSetting> {

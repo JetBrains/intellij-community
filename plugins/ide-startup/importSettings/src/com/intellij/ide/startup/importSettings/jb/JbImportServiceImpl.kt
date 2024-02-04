@@ -105,6 +105,20 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     return filterProducts(old = true)
   }
 
+  override fun importFromCustomFolder(folderPath: Path) {
+    val modalityState = ModalityState.current()
+    coroutineScope.async(modalityState.asContextElement()) {
+      val importer = JbSettingsImporter(folderPath, folderPath, null)
+      importer.importRaw()
+      LOG.info("Performing raw import from '$folderPath'")
+      withContext(Dispatchers.EDT) {
+        ApplicationManager.getApplication().invokeLater({
+                                                          ApplicationManagerEx.getApplicationEx().restart(true)
+                                                        }, modalityState)
+      }
+    }
+  }
+
   override fun products(): List<Product> {
     return filterProducts(old = false)
   }
@@ -239,7 +253,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
         LOG.info("Started importing all...")
         progressIndicator.text2 = "Migrating options"
-        importer.importRaw(progressIndicator, plugins2import ?: emptyList())
+        importer.importRaw()
         LOG.info("Imported all completed in ${System.currentTimeMillis() - startTime} ms. ")
         LOG.info("Calling restart...")
         withContext(Dispatchers.EDT) {
@@ -247,7 +261,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                             ApplicationManagerEx.getApplicationEx().restart(true)
                                                           }, modalityState)
         }
-      } else{
+      }
+      else {
         progressIndicator.text2 = "Migrating options"
         LOG.info("Starting migration...")
         var restartRequired = false
@@ -270,7 +285,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
             ApplicationManager.getApplication().invokeLater({
                                                               ApplicationManagerEx.getApplicationEx().restart(true)
                                                             }, modalityState)
-          } else {
+          }
+          else {
             SettingsService.getInstance().doClose.fire(Unit)
           }
         }

@@ -1,15 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
+import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
+import com.intellij.ide.startup.importSettings.jb.IDEData
 import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.ide.startup.importSettings.transfer.SettingTransferService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.registry.Registry
@@ -21,7 +26,9 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.rd.swing.proxyProperty
 import com.jetbrains.rd.util.reactive.*
 import org.jetbrains.annotations.Nls
+import java.nio.file.Path
 import java.time.LocalDate
+import java.util.function.Function
 import javax.swing.Icon
 
 interface SettingsService {
@@ -82,9 +89,26 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
   override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
 
   override val doClose = Signal<Unit>()
+
   override fun configChosen() {
     if (shouldUseMockData) {
       TestJbService.getInstance().configChosen()
+    } else {
+      val fileChooserDescriptor = FileChooserDescriptor(true, true, false, false, false, false)
+      val selectedDir = FileChooser.chooseFile(fileChooserDescriptor, null, null)
+      if (selectedDir != null) {
+        val prevPath = selectedDir.toNioPath()
+        if (ConfigImportHelper.findConfigDirectoryByPath(prevPath) != null) {
+          getJbService().importFromCustomFolder(prevPath)
+        } else {
+          error.fire(object : NotificationData {
+            override val status = NotificationData.NotificationStatus.ERROR
+            override val message = BootstrapBundle.message("import.chooser.error.unrecognized", selectedDir,
+                                                           IDEData.getSelf()?.fullName ?: "Current IDE")
+            override val customActionList = emptyList<NotificationData.Action>()
+          })
+        }
+      }
     }
   }
 
@@ -140,6 +164,7 @@ interface ExternalService : BaseService {
 interface JbService : BaseService {
   fun hasDataToImport(): Boolean
   fun getOldProducts(): List<Product>
+  fun importFromCustomFolder(folderPath: Path)
 }
 
 interface BaseService {

@@ -682,7 +682,7 @@ public final class ConfigImportHelper {
     return null;
   }
 
-  private static @Nullable Pair<Path, Path> findConfigDirectoryByPath(Path selectedDir) {
+  public static @Nullable Pair<Path, Path> findConfigDirectoryByPath(Path selectedDir) {
     // tries to map a user selection into a valid config directory
     // returns a pair of a config directory and an IDE home (when a user pointed to it; null otherwise)
 

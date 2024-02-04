@@ -338,7 +338,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     return importOptions
   }
 
-  fun importRaw(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
+  fun importRaw() {
     val externalVmOptionsFile = configDirPath.listDirectoryEntries("*.vmoptions").firstOrNull()
     if (externalVmOptionsFile != null) {
       val currentVMFile = PathManager.getConfigDir().resolve(VMOptions.getFileName())

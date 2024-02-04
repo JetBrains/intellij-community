@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.ui.JBAccountInfoService
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CoroutineScope
+import java.nio.file.Path
 import java.time.Duration
 import java.time.LocalDate
 import javax.swing.Icon
@@ -102,6 +103,10 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
   override fun getOldProducts(): List<Product> {
     // TODO: Figure out what are these
     return emptyList()
+  }
+
+  override fun importFromCustomFolder(folderPath: Path) {
+    throw UnsupportedOperationException("importFromCustomFolder is not applicable for this provider!")
   }
 
   override fun products(): List<Product> {

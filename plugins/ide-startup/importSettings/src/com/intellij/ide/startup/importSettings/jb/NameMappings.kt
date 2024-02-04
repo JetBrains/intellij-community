@@ -45,7 +45,7 @@ object NameMappings {
   )
 }
 
-private enum class IDEData(val code: String,
+enum class IDEData(val code: String,
                            val folderName: String,
                            val fullName: String,
                            val icon20: Icon?,
