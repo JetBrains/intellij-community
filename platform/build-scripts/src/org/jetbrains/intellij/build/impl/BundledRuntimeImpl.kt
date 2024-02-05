@@ -66,7 +66,7 @@ class BundledRuntimeImpl : BundledRuntime {
     }
 
   override val build: String
-    get() = dependenciesProperties.property("runtimeBuild")
+    get() = System.getenv("JBR_DEV_SERVER_VERSION") ?: dependenciesProperties.property("runtimeBuild")
 
   override suspend fun getHomeForCurrentOsAndArch(): Path {
     val os = OsFamily.currentOs
