@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package org.jetbrains.intellij.build.impl
 
@@ -7,8 +7,8 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.jetbrains.JBR
@@ -206,7 +206,7 @@ class CompilationContextImpl private constructor(
           context.enableCoroutinesDump(it)
         }
         else {
-          it.addEvent("Coroutines dump is disabled")
+          it.addEvent("coroutine dump is disabled")
         }
       }
       spanBuilder("prepare for build").useWithScope {
