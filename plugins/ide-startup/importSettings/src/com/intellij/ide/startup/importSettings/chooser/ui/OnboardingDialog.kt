@@ -16,6 +16,7 @@ import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.border.Border
 
 class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, null, true, IdeModalityType.IDE,
                                                                        false) {
@@ -68,9 +69,10 @@ class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, nul
     tracker.onEnter(page.stage)
   }
 
-  override fun getStyle(): DialogStyle {
-    return DialogStyle.COMPACT
+  override fun createContentPaneBorder(): Border {
+    return JBUI.Borders.empty()
   }
+
 
   private val overlay = BannerOverlay(pane)
 
