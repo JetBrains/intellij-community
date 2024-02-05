@@ -71,12 +71,14 @@ class IntentionPreviewComputable(private val project: Project,
     catch (e: SideEffectNotAllowedException) {
       val wrapper = RuntimeException(e.message)
       wrapper.stackTrace = e.stackTrace
-      logger<IntentionPreviewComputable>().error("Side effect occurred on invoking the intention '${action.text}' on a copy of the file",
+      logger<IntentionPreviewComputable>().error("Side effect occurred on invoking the intention '${action.text}'" +
+                                                 " (${ReportingClassSubstitutor.getClassToReport(action)}) on a copy of the file",
                                                  wrapper)
       return null
     }
     catch (e: Exception) {
-      logger<IntentionPreviewComputable>().error("Exceptions occurred on invoking the intention '${action.text}' on a copy of the file.", e)
+      logger<IntentionPreviewComputable>().error("Exceptions occurred on invoking the intention '${action.text}'" +
+                                                 " (${ReportingClassSubstitutor.getClassToReport(action)}) on a copy of the file.", e)
       return null
     }
   }
