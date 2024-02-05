@@ -7,7 +7,7 @@ import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedTreeDiffPreview
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedTreeDiffPreviewModel
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.vcs.log.VcsLogBundle
 
@@ -27,7 +27,8 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
 
 }
 
-class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) : CombinedTreeDiffPreviewModel(browser.viewer, browser) {
+class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser)
+  : CombinedDiffPreviewModel(browser.viewer.project, browser) {
 
   init {
     model.context.putUserData(DISABLE_LOADING_BLOCKS, true)
@@ -35,10 +36,14 @@ class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) 
   }
 
   override fun iterateSelectedChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
-    return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.selected(tree))
+    return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.selected(browser.viewer))
   }
 
   override fun iterateAllChanges(): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
-    return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.all(tree))
+    return VcsLogChangeProcessor.wrap(browser, VcsTreeModelData.all(browser.viewer))
+  }
+
+  override fun selectChangeInSourceComponent(change: ChangeViewDiffRequestProcessor.Wrapper) {
+    ChangesBrowserBase.selectObjectWithTag(browser.viewer, change.userObject, change.tag)
   }
 }
