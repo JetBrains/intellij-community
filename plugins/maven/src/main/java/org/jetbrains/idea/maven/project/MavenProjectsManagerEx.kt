@@ -139,10 +139,12 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     getVirtualFileManager().asyncRefresh()
 
     withBackgroundProgressTraced(project, MavenProjectBundle.message("maven.post.processing"), true) {
-      blockingContext {
-        val indicator = EmptyProgressIndicator()
-        for (task in importResult.postTasks) {
-          task.perform(myProject, embeddersManager, indicator)
+      val indicator = EmptyProgressIndicator()
+      for (task in importResult.postTasks) {
+        withContext(tracer.span(task.toString())) {
+          blockingContext {
+            task.perform(myProject, embeddersManager, indicator)
+          }
         }
       }
     }
