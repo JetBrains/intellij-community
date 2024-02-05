@@ -259,7 +259,6 @@ object CommunityRepositoryModules {
     )),
     plugin(listOf(
       "intellij.markdown",
-      "intellij.markdown.core",
       "intellij.markdown.fenceInjection",
       "intellij.markdown.frontmatter",
       "intellij.markdown.frontmatter.yaml",
