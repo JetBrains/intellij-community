@@ -249,7 +249,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testPreferChainFieldSuggestionByExpectedName() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "b.superclass", "b.b", "b.a");
+    myFixture.assertPreferredCompletionItems(0, "b.superclass", "b.a", "b.b");
   }
 
   public void testNoAsListWhenSetExpected() {
