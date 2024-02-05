@@ -38,12 +38,12 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
-internal val LOG: Logger = logger<ComponentStoreImpl>()
+internal val LOG = logger<ComponentStoreImpl>()
 private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
 
 private val isUseLoadedStateAsExistingVmProperty = System.getProperty("use.loaded.state.as.existing", "true").toBoolean()
 
-internal val deprecatedComparator: Comparator<Storage> = Comparator { o1, o2 ->
+internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   val w1 = if (o1.deprecated) 1 else 0
   val w2 = if (o2.deprecated) 1 else 0
   w1 - w2
@@ -314,7 +314,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return saveResult.readonlyFiles.isNotEmpty()
   }
 
-  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(false)
+  internal open fun createSaveSessionProducerManager() = SaveSessionProducerManager(false)
 
   private suspend fun commitComponent(
     sessionManager: SaveSessionProducerManager,
@@ -690,7 +690,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     (storageManager as? StateStorageManagerImpl)?.disposed()
   }
 
-  override fun toString(): String = storageManager.componentManager.toString()
+  override fun toString() = storageManager.componentManager.toString()
 }
 
 enum class StateLoadPolicy {

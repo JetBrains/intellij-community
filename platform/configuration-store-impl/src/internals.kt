@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.CalledInAny
 
-internal const val VERSION_OPTION: String = "version"
+internal const val VERSION_OPTION = "version"
 
 internal fun isSpecialStorage(collapsedPath: String): Boolean =
   collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE

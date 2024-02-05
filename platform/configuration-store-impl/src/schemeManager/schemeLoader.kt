@@ -292,14 +292,14 @@ internal class ExternalInfo(@JvmField var fileNameWithoutExtension: String, @Jvm
     fileExtension = extension
   }
 
-  fun isDigestEquals(newDigest: Long): Boolean = digest == newDigest
+  fun isDigestEquals(newDigest: Long) = digest == newDigest
 
   fun scheduleDelete(filesToDelete: MutableSet<String>, @NonNls reason: String) {
     LOG.debug { "Schedule to delete: $fileName (reason: $reason)" }
     filesToDelete.add(fileName)
   }
 
-  override fun toString(): String = fileName
+  override fun toString() = fileName
 }
 
 internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageManagerFileWriteRequestor): VirtualFile {

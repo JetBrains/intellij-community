@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 @Property(style = Property.Style.ATTRIBUTE)
 class ExternalStorageConfiguration : BaseState() {
-  var enabled: Boolean by property(false)
+  var enabled by property(false)
 }
 
 /**

@@ -36,10 +36,10 @@ import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 
-internal const val PROJECT_FILE: String = "\$PROJECT_FILE\$"
-internal const val PROJECT_CONFIG_DIR: String = "\$PROJECT_CONFIG_DIR\$"
+internal const val PROJECT_FILE = "\$PROJECT_FILE\$"
+internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR\$"
 
-internal val PROJECT_FILE_STORAGE_ANNOTATION: FileStorageAnnotation = FileStorageAnnotation(PROJECT_FILE, false)
+internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
 @ApiStatus.Internal
@@ -87,7 +87,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   final override fun clearStorages(): Unit = storageManager.clearStorages()
 
-  final override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
+  final override fun getPathMacroManagerForDefaults() = PathMacroManager.getInstance(project)
 
   override fun setPath(path: Path) {
     setPath(file = path, isRefreshVfsNeeded = true, template = null)

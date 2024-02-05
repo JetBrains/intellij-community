@@ -45,7 +45,7 @@ sealed class ComponentInfo {
 }
 
 internal class ComponentInfoImpl(override val component: Any, override val stateSpec: State?) : ComponentInfo() {
-  override val isModificationTrackingSupported: Boolean = false
+  override val isModificationTrackingSupported = false
 
   override val lastModificationCount: Long
     get() = -1

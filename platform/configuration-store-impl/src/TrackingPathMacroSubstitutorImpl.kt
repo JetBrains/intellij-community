@@ -24,7 +24,7 @@ class TrackingPathMacroSubstitutorImpl(internal val macroManager: PathMacroManag
     }
   }
 
-  override fun hashCode(): Int = macroManager.expandMacroMap.hashCode()
+  override fun hashCode() = macroManager.expandMacroMap.hashCode()
 
   override fun invalidateUnknownMacros(macros: Set<String>) {
     synchronized(lock) {

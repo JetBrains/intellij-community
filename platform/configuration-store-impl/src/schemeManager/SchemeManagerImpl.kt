@@ -58,11 +58,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   internal val isUseVfs: Boolean
     get() = fileChangeSubscriber != null
 
-  internal val isOldSchemeNaming: Boolean = schemeNameToFileName == OLD_NAME_CONVERTER
+  internal val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
 
   private val isLoadingSchemes = AtomicBoolean()
 
-  internal val schemeListManager: SchemeListManager<T> = SchemeListManager(this)
+  internal val schemeListManager = SchemeListManager(this)
 
   internal val schemes: MutableList<T>
     get() = schemeListManager.schemes
@@ -345,7 +345,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     retainExternalInfo(isScheduleToDelete = false, schemeToInfo = list.schemeToInfo, newSchemes = list.list)
   }
 
-  internal fun getFileName(scheme: T): String? = schemeListManager.getExternalInfo(scheme)?.fileNameWithoutExtension
+  internal fun getFileName(scheme: T) = schemeListManager.getExternalInfo(scheme)?.fileNameWithoutExtension
 
   fun canRead(name: CharSequence): Boolean {
     return (updateExtension && name.endsWith(FileStorageCoreUtil.DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) &&
@@ -698,19 +698,19 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
   }
 
-  override fun addScheme(scheme: T, replaceExisting: Boolean): Unit = schemeListManager.addScheme(scheme, replaceExisting)
+  override fun addScheme(scheme: T, replaceExisting: Boolean) = schemeListManager.addScheme(scheme, replaceExisting)
 
-  override fun findSchemeByName(schemeName: String): T? = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
+  override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 
-  override fun removeScheme(name: String): T? = removeFirstScheme(true) { processor.getSchemeKey(it) == name }
+  override fun removeScheme(name: String) = removeFirstScheme(true) { processor.getSchemeKey(it) == name }
 
-  override fun removeScheme(scheme: T): Boolean = removeScheme(scheme, isScheduleToDelete = true)
+  override fun removeScheme(scheme: T) = removeScheme(scheme, isScheduleToDelete = true)
 
-  fun removeScheme(scheme: T, isScheduleToDelete: Boolean): Boolean = removeFirstScheme(isScheduleToDelete) { it === scheme } != null
+  fun removeScheme(scheme: T, isScheduleToDelete: Boolean) = removeFirstScheme(isScheduleToDelete) { it === scheme } != null
 
-  override fun isMetadataEditable(scheme: T): Boolean = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
+  override fun isMetadataEditable(scheme: T) = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
 
-  override fun toString(): String = fileSpec
+  override fun toString() = fileSpec
 
   /**
    * Call this method before invoking [com.intellij.openapi.components.impl.stores.IComponentStore.save] to ensure that schema will be saved

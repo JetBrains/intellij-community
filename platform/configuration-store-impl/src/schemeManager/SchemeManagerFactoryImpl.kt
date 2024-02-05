@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
-@NonNls const val ROOT_CONFIG: String = "\$ROOT_CONFIG$"
+@NonNls const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
 internal typealias FileChangeSubscriber = (schemeManager: SchemeManagerImpl<*, *>) -> Unit
 

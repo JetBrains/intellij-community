@@ -24,9 +24,9 @@ class CompoundStreamProvider : StreamProvider {
   val isExclusivelyEnabled: Boolean
     get() = enabled && isExclusive
 
-  override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = providers.any { it.isApplicable(fileSpec, roamingType) }
+  override fun isApplicable(fileSpec: String, roamingType: RoamingType) = providers.any { it.isApplicable(fileSpec, roamingType) }
 
-  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean = providers.any { it.read(fileSpec, roamingType, consumer) }
+  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit) = providers.any { it.read(fileSpec, roamingType, consumer) }
 
   override fun processChildren(path: String,
                                roamingType: RoamingType,
@@ -43,7 +43,7 @@ class CompoundStreamProvider : StreamProvider {
     }
   }
 
-  override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = providers.any { it.delete(fileSpec, roamingType) }
+  override fun delete(fileSpec: String, roamingType: RoamingType) = providers.any { it.delete(fileSpec, roamingType) }
 
   override fun deleteIfObsolete(fileSpec: String, roamingType: RoamingType) {
     providers.forEach { 

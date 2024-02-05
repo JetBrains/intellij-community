@@ -28,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
-const val APP_CONFIG: String = "\$APP_CONFIG\$"
+const val APP_CONFIG = "\$APP_CONFIG\$"
 
 @ApiStatus.Internal
 @Suppress("NonDefaultConstructor")
@@ -79,7 +79,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
 
   override fun createContentReader(): JpsFileContentReader = AppStorageContentReader()
 
-  override fun toString(): String = "app"
+  override fun toString() = "app"
 
   @VisibleForTesting
   class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, settingsController: SettingsController?)
@@ -101,7 +101,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
       }
     }
 
-    override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
+    override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
     override fun expandMacro(collapsedPath: String): Path =
       if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
