@@ -23,6 +23,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
@@ -105,7 +106,14 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         }
       }
       span("workspace file index initialization") {
-        (project.serviceAsync<WorkspaceFileIndex>() as WorkspaceFileIndexEx).initialize()
+        try {
+          (project.serviceAsync<WorkspaceFileIndex>() as WorkspaceFileIndexEx).initialize()
+        }
+        catch (e: RuntimeException) {
+          // IDEA-345082 There is a chance that the index was not initialized due to the broken cache.
+          WorkspaceModelCacheImpl.invalidateCaches()
+          throw RuntimeException(e)
+        }
       }
 
       moduleLoadingTimeMs.addElapsedTimeMillis(start)
