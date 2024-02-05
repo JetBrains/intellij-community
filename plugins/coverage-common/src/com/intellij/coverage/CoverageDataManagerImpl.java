@@ -341,7 +341,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public void triggerPresentationUpdate() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> CoverageDataAnnotationsManager.getInstance(myProject).update());
+    CoverageDataAnnotationsManager.getInstance(myProject).update();
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       ProjectView.getInstance(myProject).refresh();

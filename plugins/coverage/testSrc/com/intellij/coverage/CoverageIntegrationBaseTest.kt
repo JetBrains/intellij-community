@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaModuleTestCase
+import com.intellij.util.io.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -41,8 +42,9 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
   protected fun loadXMLSuite(includeFilters: Array<String>? = null, path: String = SIMPLE_XML_REPORT_PATH) =
     loadCoverageSuite(XMLReportEngine::class.java, XMLReportRunner::class.java, path, includeFilters)
 
-  protected fun closeSuite(bundle: CoverageSuitesBundle) {
+  protected suspend fun closeSuite(bundle: CoverageSuitesBundle) {
     manager.closeSuitesBundle(bundle)
+    awaitGutterAnnotations()
   }
 
   protected suspend fun openSuiteAndWait(bundle: CoverageSuitesBundle) = waitSuiteProcessing {
@@ -62,9 +64,12 @@ abstract class CoverageIntegrationBaseTest : JavaModuleTestCase() {
     withTimeout(10_000) {
       // wait until data collected
       while (!dataCollected) delay(1)
+      awaitGutterAnnotations()
     }
     Disposer.dispose(disposable)
   }
+
+  protected suspend fun awaitGutterAnnotations(): Any? = CoverageDataAnnotationsManager.getInstance(myProject).allRequestsCompletion.await()
 
   private fun createCoverageFileProvider(coverageDataPath: String) =
     DefaultCoverageFileProvider(File(coverageDataPath))

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view
 
-import com.intellij.coverage.CoverageDataAnnotationsManager
 import com.intellij.coverage.CoverageEditorAnnotatorImpl
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.openapi.application.EDT
@@ -19,11 +18,9 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.io.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -129,6 +126,7 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     openClass(myProject, "foo.bar.BarClass")
     openClass(myProject, "foo.bar.UncoveredClass")
     openClass(myProject, "foo.FooClass")
+    awaitGutterAnnotations()
   }
 
   private suspend fun assertGutterHighlightLines(className: String, expected: Map<Int, Byte>?) {
@@ -137,12 +135,8 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     Assert.assertEquals(expected, lines)
   }
 
-  private suspend fun getHighlighters(className: String): List<RangeHighlighter>? = withTimeout(1000) {
-    CoverageDataAnnotationsManager.getInstance(myProject).allRequestsCompletion.await()
-    withContext(Dispatchers.EDT) {
-      CoverageDataAnnotationsManager.getInstance(myProject).allRequestsCompletion.await()
-      findEditor(myProject, className).getUserData(CoverageEditorAnnotatorImpl.COVERAGE_HIGHLIGHTERS)
-    }
+  private suspend fun getHighlighters(className: String): List<RangeHighlighter>? = withContext(Dispatchers.EDT) {
+    findEditor(myProject, className).getUserData(CoverageEditorAnnotatorImpl.COVERAGE_HIGHLIGHTERS)
   }
 
   private fun getCoverage(it: RangeHighlighter) = when ((it.lineMarkerRenderer as FillingLineMarkerRenderer).getTextAttributesKey()) {
