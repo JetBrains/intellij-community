@@ -60,8 +60,8 @@ final class ServiceModel implements Disposable, InvokerSupplier {
 
   private final Project myProject;
   private final Invoker myInvoker = Invoker.forBackgroundThreadWithoutReadAction(this);
-  private final List<ServiceViewItem> myRoots = new CopyOnWriteArrayList<>();
-  private final List<ServiceModelEventListener> myListeners = new CopyOnWriteArrayList<>();
+  private final List<ServiceViewItem> myRoots = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ServiceModelEventListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   ServiceModel(@NotNull Project project) {
     myProject = project;
