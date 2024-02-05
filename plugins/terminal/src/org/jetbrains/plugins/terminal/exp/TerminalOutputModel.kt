@@ -70,9 +70,6 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun removeBlock(block: CommandBlock) {
-    document.deleteString(block.startOffset, block.endOffset)
-
-    block.range.dispose()
     decorations[block]?.let {
       Disposer.dispose(it.topInlay)
       Disposer.dispose(it.bottomInlay)
@@ -86,6 +83,11 @@ class TerminalOutputModel(val editor: EditorEx) {
     highlightings.remove(block)
     allHighlightingsSnapshot = null
     blockStates.remove(block)
+
+    // Remove the text after removing the highlightings because removing text will trigger rehighlight
+    // and there should be no highlightings at this moment.
+    document.deleteString(block.startOffset, block.endOffset)
+    block.range.dispose()
   }
 
   @RequiresEdt

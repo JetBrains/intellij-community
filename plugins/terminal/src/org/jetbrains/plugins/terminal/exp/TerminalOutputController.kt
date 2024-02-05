@@ -48,9 +48,16 @@ class TerminalOutputController(
 
     session.addCommandListener(object : ShellCommandListener {
       override fun clearInvoked() {
-        invokeLater {
-          outputModel.clearBlocks()
-        }
+        val disposable = Disposer.newDisposable()
+        // clear all blocks when command is finished and then remove listener
+        session.addCommandListener(object : ShellCommandListener {
+          override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
+            invokeLater {
+              outputModel.clearBlocks()
+            }
+            Disposer.dispose(disposable)
+          }
+        }, disposable)
       }
     })
   }

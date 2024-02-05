@@ -157,6 +157,12 @@ function Global:__JetBrainsIntellijIsGeneratorCommand([string]$Command) {
          -or $Command -like "__jetbrains_intellij_get_directory_files*"
 }
 
+# Override the clear cmdlet to handle it on IDE side and remove the blocks
+function Global:Clear-Host() {
+  $OSC = Global:__JetBrainsIntellijOSC "clear_invoked"
+  [Console]::Write($OSC)
+}
+
 if (Get-Module -Name PSReadLine) {
   $Global:__JetBrainsIntellijOriginalPSConsoleHostReadLine = $function:PSConsoleHostReadLine
 
