@@ -67,7 +67,8 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement element = PsiTreeUtil.findSameElementInCopy(getStartElement(), file);
-    if (element instanceof PsiClass && element.getParent() instanceof PsiJavaFile javaFile && javaFile.getClasses().length == 1) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiClassOwner classOwner && classOwner.getClasses().length == 1 && classOwner.getClasses()[0] == element) {
       var doc = file.getViewProvider().getDocument();
       doc.deleteString(0, doc.getTextLength());
     }
