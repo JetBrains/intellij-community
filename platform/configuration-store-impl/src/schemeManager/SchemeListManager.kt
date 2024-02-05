@@ -38,7 +38,7 @@ internal fun <T : Any> toSchemeCollection(list: List<T>, schemeToInfo: Map<T, Ex
 internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeManagerImpl<T, *>) {
   private val schemeListRef: AtomicReference<SchemeCollection<T>> = AtomicReference(newSchemeCollection())
 
-  internal val readOnlyExternalizableSchemes = ConcurrentHashMap<String, T>()
+  internal val readOnlyExternalizableSchemes: MutableMap<String, T> = ConcurrentHashMap()
 
   val schemes: MutableList<T>
     get() = schemeListRef.get().list

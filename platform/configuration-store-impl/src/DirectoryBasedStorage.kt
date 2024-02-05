@@ -235,7 +235,7 @@ open class DirectoryBasedStorage(override val dir: Path,
     storageDataRef.set(newStates)
   }
 
-  override fun toString() = "${javaClass.simpleName}(dir=${dir}, componentName=$componentName)"
+  override fun toString(): String = "${javaClass.simpleName}(dir=${dir}, componentName=$componentName)"
 }
 
 private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator? {

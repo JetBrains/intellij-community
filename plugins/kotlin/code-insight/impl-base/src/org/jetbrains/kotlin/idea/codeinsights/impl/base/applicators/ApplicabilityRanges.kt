@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
@@ -14,25 +15,25 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 object ApplicabilityRanges {
-    val SELF = applicabilityTarget<PsiElement> { it }
+    val SELF: KotlinApplicabilityRange<PsiElement> = applicabilityTarget { it }
 
-    val CALLABLE_RETURN_TYPE = applicabilityTarget<KtCallableDeclaration> { decalration ->
+    val CALLABLE_RETURN_TYPE: KotlinApplicabilityRange<KtCallableDeclaration> = applicabilityTarget { decalration ->
         decalration.typeReference?.typeElement
     }
 
-    val VISIBILITY_MODIFIER = modifier(KtTokens.VISIBILITY_MODIFIERS)
-    val MODALITY_MODIFIER = modifier(KtTokens.MODALITY_MODIFIERS)
+    val VISIBILITY_MODIFIER: KotlinApplicabilityRange<KtModifierListOwner> = modifier(KtTokens.VISIBILITY_MODIFIERS)
+    val MODALITY_MODIFIER: KotlinApplicabilityRange<KtModifierListOwner> = modifier(KtTokens.MODALITY_MODIFIERS)
 
     private fun modifier(tokens: TokenSet) = applicabilityTarget<KtModifierListOwner> { declaration ->
         declaration.modifierList?.getModifier(tokens)
     }
 
-    val CALL_EXCLUDING_LAMBDA_ARGUMENT = applicabilityRanges<KtCallElement> { element ->
+    val CALL_EXCLUDING_LAMBDA_ARGUMENT: KotlinApplicabilityRange<KtCallElement> = applicabilityRanges { element ->
         val endElement = element.valueArgumentList ?: element.calleeExpression ?: return@applicabilityRanges emptyList()
         listOf(TextRange(0, endElement.endOffset - element.startOffset))
     }
 
-    val VALUE_ARGUMENT_EXCLUDING_LAMBDA = applicabilityRanges<KtValueArgument> { element ->
+    val VALUE_ARGUMENT_EXCLUDING_LAMBDA: KotlinApplicabilityRange<KtValueArgument> = applicabilityRanges { element ->
         val expression = element.getArgumentExpression() ?: return@applicabilityRanges emptyList()
         if (expression is KtLambdaExpression) {
             // Use OUTSIDE of curly braces only as applicability ranges for lambda.
@@ -44,7 +45,7 @@ object ApplicabilityRanges {
         }
     }
 
-    val DECLARATION_WITHOUT_INITIALIZER = applicabilityRange<KtCallableDeclaration> {
+    val DECLARATION_WITHOUT_INITIALIZER: KotlinApplicabilityRange<KtCallableDeclaration> = applicabilityRange {
         val selfRange = TextRange(0, it.textLength)
         if (it !is KtDeclarationWithInitializer) return@applicabilityRange selfRange
         val initializer = it.initializer ?: return@applicabilityRange selfRange
@@ -55,7 +56,7 @@ object ApplicabilityRanges {
         TextRange(0, initializer.startOffsetInParent - 1)
     }
 
-    val DECLARATION_NAME = applicabilityTarget<KtNamedDeclaration> {  element ->
+    val DECLARATION_NAME: KotlinApplicabilityRange<KtNamedDeclaration> = applicabilityTarget { element ->
         element.nameIdentifier
     }
 }

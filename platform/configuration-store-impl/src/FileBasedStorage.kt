@@ -47,7 +47,7 @@ open class FileBasedStorage(
   private var blockSaving: BlockSaving? = null
 
   @Volatile
-  var file = file
+  var file: Path = file
     private set
 
   init {
@@ -57,7 +57,7 @@ open class FileBasedStorage(
     }
   }
 
-  protected open val isUseXmlProlog = false
+  protected open val isUseXmlProlog: Boolean = false
 
   private val isUseUnixLineSeparator: Boolean
     // only ApplicationStore doesn't use xml prolog
@@ -71,7 +71,7 @@ open class FileBasedStorage(
     }
   }
 
-  override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(states, this)
+  override fun createSaveSession(states: StateMap): FileSaveSessionProducer = FileSaveSessionProducer(states, this)
 
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorageSaveSessionProducer<FileBasedStorage>(storageData, storage) {
@@ -229,7 +229,7 @@ open class FileBasedStorage(
     }
   }
 
-  override fun toString() = "FileBasedStorage(file=$file, fileSpec=$fileSpec, isBlockSavingTheContent=$blockSaving)"
+  override fun toString(): String = "FileBasedStorage(file=$file, fileSpec=$fileSpec, isBlockSavingTheContent=$blockSaving)"
 }
 
 internal fun writeFile(cachedFile: Path?,
@@ -266,7 +266,7 @@ internal fun writeFile(cachedFile: Path?,
   return file
 }
 
-internal val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
+internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
 private fun isEqualContent(result: VirtualFile,
                            lineSeparator: LineSeparator,

@@ -24,7 +24,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
   override val serviceContainer: ComponentManagerImpl
     get() = project as ComponentManagerImpl
   
-  override val storageManager = object : StateStorageManager {
+  override val storageManager: StateStorageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?
       get() = null
 
@@ -52,7 +52,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun setPath(path: Path) { }
 
-  override fun toString() = "default project"
+  override fun toString(): String = "default project"
 
   private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager)
     : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED)

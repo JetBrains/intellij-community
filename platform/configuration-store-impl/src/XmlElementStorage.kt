@@ -38,7 +38,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       return provider == null || provider.saveStorageDataOnReload
     }
 
-  internal val rawRoamingType = storageRoamingType
+  internal val rawRoamingType: RoamingType = storageRoamingType
   private val effectiveRoamingType = getEffectiveRoamingType(storageRoamingType, fileSpec)
 
   protected abstract fun loadLocalData(): Element?
@@ -51,7 +51,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     storageData.archive(componentName, serializedState)
   }
 
-  final override fun loadData() = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY
+  final override fun loadData(): StateMap = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY
 
   private fun loadElement(useStreamProvider: Boolean = true): Element? {
     var element: Element? = null
@@ -129,7 +129,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
     private var newLiveStates: MutableMap<String, Element>? = HashMap()
 
-    protected open fun isSaveAllowed() = !storage.checkIsSavingDisabled()
+    protected open fun isSaveAllowed(): Boolean = !storage.checkIsSavingDisabled()
 
     final override fun createSaveSession(): SaveSession? {
       if (copiedStates == null || !isSaveAllowed()) {
