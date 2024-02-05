@@ -1231,7 +1231,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       var pathList = toList(paths);
       if (pathList.size() == 1) {
-        setExpandedState(pathList.get(0), true);
+        var path = pathList.get(0);
+        if (isNotLeaf(path)) {
+          setExpandedState(path, true);
+        }
         return;
       }
       pathList.sort(Comparator.comparing(TreePath::getPathCount));
@@ -1246,11 +1249,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         beginBulkOperation();
         suspendExpandCollapseAccessibilityAnnouncements();
         for (TreePath path : toExpand) {
-          expandedState.put(path, Boolean.TRUE);
-          fireTreeExpanded(path);
-          var parent = path.getParentPath();
-          if (parent == null || !toExpand.contains(parent)) {
-            expandRoots.add(path);
+          if (isNotLeaf(path)) {
+            expandedState.put(path, Boolean.TRUE);
+            fireTreeExpanded(path);
+            var parent = path.getParentPath();
+            if (parent == null || !toExpand.contains(parent)) {
+              expandRoots.add(path);
+            }
           }
         }
       }
@@ -1268,6 +1273,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (LOG.isDebugEnabled()) {
         LOG.debug("Expanded " + count + " paths, time: " + (System.currentTimeMillis() - started) + " ms");
       }
+    }
+
+    private boolean isNotLeaf(@NotNull TreePath path) {
+      var model = getModel();
+      return model != null && !model.isLeaf(path.getLastPathComponent());
     }
 
     private void beginBulkOperation() {
