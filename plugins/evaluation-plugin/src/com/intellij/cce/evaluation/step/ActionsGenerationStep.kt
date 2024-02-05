@@ -24,13 +24,13 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-class ActionsGenerationStep(
-  private val config: Config,
-  private val language: String,
-  private val evaluationRootInfo: EvaluationRootInfo,
+open class ActionsGenerationStep(
+  protected val config: Config,
+  protected val language: String,
+  protected  val evaluationRootInfo: EvaluationRootInfo,
   project: Project,
-  private val processor: GenerateActionsProcessor,
-  private val featureName: String
+  protected val processor: GenerateActionsProcessor,
+  protected val featureName: String
 ) : BackgroundEvaluationStep(project) {
   override val name: String = "Generating actions"
 
@@ -44,7 +44,7 @@ class ActionsGenerationStep(
     return workspace
   }
 
-  private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
+  protected fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
                               evaluationRootInfo: EvaluationRootInfo, filesLimit: Int?, indicator: Progress) {
     val actionsGenerator = ActionsGenerator(processor)
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName, config.strategy)
