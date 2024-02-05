@@ -426,7 +426,7 @@ public final class PersistentFSLoader {
     }
 
     if (attributesEnumerator.isEmpty() && !attributesStorage.isEmpty()) {
-      addProblem(UNRECOGNIZED, "Attributes enumerator is empty, while attributesStorage is !empty");
+      addProblem(ATTRIBUTES_STORAGE_CORRUPTED, "Attributes enumerator is empty, while attributesStorage is !empty");
     }
 
     int maxAllocatedID = recordsStorage.maxAllocatedID();

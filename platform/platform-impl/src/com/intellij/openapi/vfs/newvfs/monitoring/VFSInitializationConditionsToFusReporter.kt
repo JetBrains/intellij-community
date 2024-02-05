@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.monitoring
 
 import com.intellij.openapi.project.Project
@@ -43,7 +43,7 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
 
       null -> VFSInitKind.UNRECOGNIZED
       UNRECOGNIZED -> VFSInitKind.UNRECOGNIZED
-      HAS_ERRORS_IN_PREVIOUS_SESSION -> VFSInitKind.UNRECOGNIZED
+      HAS_ERRORS_IN_PREVIOUS_SESSION -> VFSInitKind.HAS_ERRORS_IN_PREVIOUS_SESSION
 
       SCHEDULED_REBUILD -> VFSInitKind.SCHEDULED_REBUILD
       RECOVERED_FROM_LOG -> VFSInitKind.RECOVERED_FROM_LOG
@@ -103,6 +103,9 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
     /** VFS was cleared and rebuild from scratch because: application wasn't closed properly,
      *  VFS storages are fractured */
     NOT_CLOSED_PROPERLY,
+
+    /** VFS error was detected in a previous session (see [FSRecords.handleError]) */
+    HAS_ERRORS_IN_PREVIOUS_SESSION,
 
     /** VFS was cleared and rebuild from scratch because: current VFS impl (code)
      *  version != VFS on-disk format version */
