@@ -45,7 +45,7 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
 
   override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<PsiItemWithSimilarity<*>>,
                                          knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>,
-                                         durationMs: Long): () -> FoundItemDescriptor<Any> {
+                                         durationMs: Long): () -> FoundItemDescriptor<Any>? {
     val element = descriptor.item.value
     val foundElement = if (element is PsiElement) attachPsiPresentation(element, psiElementsRenderer) else element
     val newItem = PsiItemWithSimilarity(foundElement, descriptor.item.similarityScore)
@@ -53,14 +53,26 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
     return {
       val equal = knownItems.firstOrNull { checkItemsEqual(it.item.value, foundElement) }
       if (equal != null) {
-        // slightly increase the weight to replace
-        FoundItemDescriptor(equal.item.mergeWith(newItem) as PsiItemWithSimilarity<*>, equal.weight + 1)
+        mergeOrSkipItem(newItem, equal, durationMs)
       }
       else {
         knownItems.add(descriptor)
         FoundItemDescriptor(newItem, descriptor.weight)
       }
     }
+  }
+
+  // To not replace already frozen items
+  private fun mergeOrSkipItem(newItem: PsiItemWithSimilarity<*>,
+                              existingItem: FoundItemDescriptor<PsiItemWithSimilarity<*>>,
+                              durationMs: Long): FoundItemDescriptor<Any>? {
+    if (durationMs > 70) {
+      // elements are frozen after 100ms delay and shouldn't be re-ordered
+      return null
+    }
+    val mergedElement = existingItem.item.mergeWith(newItem) as PsiItemWithSimilarity<*>
+    // slightly increase the weight to replace
+    return FoundItemDescriptor(mergedElement, existingItem.weight + 1)
   }
 
   private fun checkItemsEqual(lhs: Any, rhs: Any): Boolean {
