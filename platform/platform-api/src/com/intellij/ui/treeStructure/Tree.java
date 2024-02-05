@@ -1302,7 +1302,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       var pathList = toList(paths);
       if (pathList.size() == 1) {
-        setExpandedState(pathList.get(0), false);
+        var path = pathList.get(0);
+        if (isNotLeaf(path)) {
+          setExpandedState(path, false);
+        }
+        else { // the path has become a leaf, remove it to save memory
+          expandedState.remove(path);
+        }
         return;
       }
       pathList.sort(Comparator.comparing(TreePath::getPathCount));
@@ -1339,10 +1345,15 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           fireTreeExpanded(path);
         }
         for (TreePath path : toCollapseList) {
-          expandedState.put(path, Boolean.FALSE);
-          fireTreeCollapsed(path);
-          if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
-            addSelectionPath(path);
+          if (isNotLeaf(path)) {
+            expandedState.put(path, Boolean.FALSE);
+            fireTreeCollapsed(path);
+            if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
+              addSelectionPath(path);
+            }
+          }
+          else { // the path has become a leaf, remove it to save memory
+            expandedState.remove(path);
           }
         }
       }
