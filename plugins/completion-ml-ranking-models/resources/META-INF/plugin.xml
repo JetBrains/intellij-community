@@ -30,5 +30,6 @@
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentCidrMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentalHTMLMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentalCSSMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentalShMLRankingProvider"/>
   </extensions>
 </idea-plugin>

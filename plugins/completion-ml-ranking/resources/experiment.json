@@ -219,6 +219,12 @@
       "experimentBucketsCount": 4,
       "includeGroups": [ 7, 22, 28, 24 ],
       "shouldLogElementFeatures": true
+    },
+    {
+      "id": "shell script",
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 12, 13 ],
+      "shouldLogElementFeatures": true
     }
   ]
 }

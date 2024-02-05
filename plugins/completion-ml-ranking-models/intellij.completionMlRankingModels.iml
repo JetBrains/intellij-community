@@ -299,5 +299,23 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-sh-exp" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-sh:0.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.1/completion-ranking-sh-0.0.1.jar">
+              <sha256sum>2ab8007555b8fdedb7efce607cc77c03da85fcf4ea2e8376b9a352bed5f04f4a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.1/completion-ranking-sh-0.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.1/completion-ranking-sh-0.0.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
