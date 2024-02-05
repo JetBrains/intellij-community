@@ -430,7 +430,7 @@ pre {
 
 .multiline .autocomplete-items {
   position: absolute;
-  box-shadow: 2px 0 0 lightgrey;
+  box-shadow: 1px 1px 0 1px lightgrey;
   border: none;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -474,6 +474,7 @@ pre {
 .multiline .attachments:hover {
   cursor: pointer;
 }
+
 .multiline .expected-header {
   background-color: lightgrey;
   padding: 0;
@@ -487,6 +488,15 @@ pre {
   padding-left: 1em;
 }
 
-.missing-context {
+.multiline .missing-context {
   background-color: mistyrose;
+}
+
+.multiline .line-numbers {
+  cursor: pointer;
+}
+
+.multiline .metrics-values {
+  font-style: italic;
+  padding-inline: 4px;
 }

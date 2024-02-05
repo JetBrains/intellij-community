@@ -10,7 +10,6 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import java.io.File
 import java.nio.file.Path
-import java.text.DecimalFormat
 
 abstract class BaseCompletionGolfFileReportGenerator(
   filterName: String,
@@ -298,8 +297,6 @@ abstract class BaseCompletionGolfFileReportGenerator(
     operator fun Double.compareTo(t: BaseThreshold) = compareTo(t.value)
     operator fun compareTo(d: Double) = value.compareTo(d)
   }
-
-  protected fun Double.format() = DecimalFormat("0.##").format(this)
 
   companion object {
     const val perfectLineSign: String = "\uD83C\uDF89" // :tada emoji:

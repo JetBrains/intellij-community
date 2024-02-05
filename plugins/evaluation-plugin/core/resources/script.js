@@ -296,10 +296,17 @@ function updateMultilinePopup(event) {
     return
   }
   const target = event.target
+  if (target.closest(".line-numbers") != null) {
+    showMetrics()
+    return
+  }
   const suggestionDiv = target.closest(".suggestion")
   const attachmentsDiv = target.closest(".attachments")
   const showSuggestion =  attachmentsDiv != null || target.classList.contains("completion")
   if (suggestionDiv == null && !showSuggestion) {
+    if (target.closest(".autocomplete-items") == null) {
+      closeAllLists();
+    }
     return
   }
   const sessionDiv = target.closest(".completion")
@@ -318,9 +325,7 @@ function updateMultilinePopup(event) {
   }
   else {
     addMultilineAttachments(sessionDiv, popup, expectedText)
-    // addMultilineExpectedText(popup, expectedText)
   }
-  addMultilineStatsFooter(popup, lookup)
   sessionDiv.appendChild(popup)
 }
 
@@ -394,13 +399,6 @@ function addMultilineExpectedText(popup, expectedText) {
   popup.appendChild(expected)
 }
 
-function addMultilineStatsFooter(popup, lookup) {
-  const statsDiv = document.createElement("DIV")
-  statsDiv.setAttribute("style", "background-color: lightgrey; grid-column: span 2;")
-  statsDiv.innerHTML = `latency: ${lookup["latency"]}`
-  popup.appendChild(statsDiv)
-}
-
 function showMultilinePrefixAndSuffix(event) {
   if (event.target.classList.contains("completion")) {
     const sessionDiv = event.target
@@ -430,5 +428,9 @@ function showMultilinePrefixAndSuffix(event) {
   }
 }
 
+function showMetrics() {
+  let metricsDiv = document.getElementById("metrics-column")
+  metricsDiv.style.display = metricsDiv.style.display === "none" ? "" : "none"
+}
 
 document.getElementById("defaultTabOpen")?.click()

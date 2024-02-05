@@ -12,6 +12,7 @@ import java.io.File
 import java.io.FileWriter
 import java.io.OutputStreamWriter
 import java.nio.file.Path
+import java.text.DecimalFormat
 import java.util.zip.GZIPOutputStream
 
 abstract class FileReportGenerator(
@@ -90,6 +91,8 @@ abstract class FileReportGenerator(
     }
     return resultStream.toString()
   }
+
+  protected fun Double.format() = DecimalFormat("0.##").format(this)
 
   companion object {
     private val sessionSerializer = SessionSerializer()
