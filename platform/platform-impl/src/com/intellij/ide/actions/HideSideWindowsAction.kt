@@ -16,7 +16,7 @@ internal class HideSideWindowsAction : AnAction(), DumbAware {
     val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project) as ToolWindowManagerImpl
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
     val window = toolWindowManager.getToolWindow(id) ?: return
-    if (HideToolWindowAction.shouldBeHiddenByShortCut(window)) {
+    if (HideToolWindowAction.Manager.shouldBeHiddenByShortCut(window)) {
       toolWindowManager.hideToolWindow(id = id, hideSide = true, source = ToolWindowEventSource.HideSideWindowsAction)
     }
   }
@@ -32,7 +32,7 @@ internal class HideSideWindowsAction : AnAction(), DumbAware {
     val toolWindowManager = ToolWindowManager.getInstance(project)
     if (toolWindowManager.activeToolWindowId == null) {
       val window = toolWindowManager.getToolWindow(toolWindowManager.lastActiveToolWindowId ?: return)
-      presentation.isEnabled = window != null && HideToolWindowAction.shouldBeHiddenByShortCut(window)
+      presentation.isEnabled = window != null && HideToolWindowAction.Manager.shouldBeHiddenByShortCut(window)
     }
     else {
       presentation.isEnabled = true

@@ -17,6 +17,7 @@ import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -31,6 +32,13 @@ import java.lang.ref.WeakReference
 open class ActivateToolWindowAction protected constructor(val toolWindowId: String)
   : DumbAwareAction(), MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
   companion object {
+    @JvmStatic
+    @Deprecated("Use ActivateToolWindowAction.Manager explicitly")
+    @ApiStatus.ScheduledForRemoval
+    fun getActionIdForToolWindow(id: String): @NonNls String = Manager.getActionIdForToolWindow(id)
+  }
+
+  object Manager {
     @JvmStatic
     fun ensureToolWindowActionRegistered(toolWindow: ToolWindow, actionManager: ActionManager) {
       val actionId = getActionIdForToolWindow(toolWindow.id)
@@ -67,7 +75,9 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
      * Otherwise, the method returns `-1`.
      * Meta-mask is OK for Mac OS X user, because Alt+digit types strange characters into the editor.
      */
-    internal fun getMnemonicForToolWindow(toolWindowId: String): Int {
+    @ApiStatus.Internal
+    @JvmStatic
+    fun getMnemonicForToolWindow(toolWindowId: String): Int {
       val activeKeymap = KeymapManager.getInstance().activeKeymap
       for (shortcut in activeKeymap.getShortcuts(getActionIdForToolWindow(toolWindowId))) {
         if (shortcut !is KeyboardShortcut) {

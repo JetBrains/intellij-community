@@ -1143,7 +1143,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     if (ensureToolWindowActionRegistered) {
-      ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
+      ActivateToolWindowAction.Manager.ensureToolWindowActionRegistered(toolWindow, ActionManager.getInstance())
     }
 
     val stripeButton = if (preparedTask.isButtonNeeded) {
@@ -1204,7 +1204,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     LOG.debug { "unregisterToolWindow($id)" }
 
     ThreadingAssertions.assertEventDispatchThread()
-    ActivateToolWindowAction.unregister(id)
+    ActivateToolWindowAction.Manager.unregister(id)
 
     val entry = idToEntry.remove(id) ?: return
     val toolWindow = entry.toolWindow
@@ -2292,7 +2292,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
     }
 
-    ActivateToolWindowAction.updateToolWindowActionPresentation(toolWindow)
+    ActivateToolWindowAction.Manager.updateToolWindowActionPresentation(toolWindow)
   }
 
   internal fun activated(toolWindow: ToolWindowImpl, source: ToolWindowEventSource?) {

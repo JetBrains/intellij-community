@@ -181,8 +181,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return Toggleable.isSelected(myPresentation) || Boolean.TRUE.equals(getClientProperty(IS_SELECTED_BUTTON));
   }
 
-  public void setSelected(Boolean value) {
+  public void setSelected(boolean value) {
     putClientProperty(IS_SELECTED_BUTTON, value);
+    repaint();
   }
 
   @Override

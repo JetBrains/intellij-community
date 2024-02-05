@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-// Not really with identical branches, but also common parts
+/**
+ * Reports not only on identical branches, but also when the branches have common parts.
+ */
 public final class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean myHighlightWhenLastStatementIsCall = false;
   public boolean myHighlightElseIf = false;
@@ -116,22 +118,10 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
                                          IfStatementWithIdenticalBranchesInspection inspection);
   }
 
-  private static class IfInspectionResult {
-    private final @NotNull PsiElement myElementToHighlight;
-    private final boolean myIsWarning;
-    private final @NotNull LocalQuickFix myFix;
-    private final @NotNull @InspectionMessage String myMessage;
-
-    IfInspectionResult(@NotNull PsiElement elementToHighlight,
-                       boolean isWarning,
-                       @NotNull LocalQuickFix fix,
-                       @NotNull @InspectionMessage String message) {
-      myElementToHighlight = elementToHighlight;
-      myIsWarning = isWarning;
-      myFix = fix;
-      myMessage = message;
-    }
-  }
+  private record IfInspectionResult(@NotNull PsiElement myElementToHighlight,
+                                     boolean myIsWarning,
+                                     @NotNull LocalQuickFix myFix,
+                                     @NotNull @InspectionMessage String myMessage) {}
 
   private static class MergeElseIfsFix extends PsiUpdateModCommandQuickFix {
     private final boolean myInvert;
@@ -799,12 +789,8 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
 
     boolean variableRenameRequired() {
       return ContainerUtil.or(myHeadUnitsOfThen, unit -> {
-        if (unit instanceof VariableDeclarationUnit declarationUnit) {
-          if (!Objects.equals(declarationUnit.myThenVariable.getName(), declarationUnit.myElseVariable.getName())) {
-            return true;
-          }
-        }
-        return false;
+        return unit instanceof VariableDeclarationUnit declarationUnit &&
+               !Objects.equals(declarationUnit.myThenVariable.getName(), declarationUnit.myElseVariable.getName());
       });
     }
 
@@ -872,9 +858,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     private static boolean canRemoveBranch(int len, PsiStatement branch, int duplicatedStatementsLen) {
       if (len == duplicatedStatementsLen) {
         PsiBlockStatement blockStatement = tryCast(branch, PsiBlockStatement.class);
-        if (blockStatement != null && PsiTreeUtil.getChildOfType(blockStatement.getCodeBlock(), PsiComment.class) == null) {
-          return true;
-        }
+        return blockStatement != null && PsiTreeUtil.getChildOfType(blockStatement.getCodeBlock(), PsiComment.class) == null;
       }
       return false;
     }
@@ -973,6 +957,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       CommonPartType type = thenElse.myCommonPartType;
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly);
       boolean tailStatementIsSingleCall = !inspection.myHighlightWhenLastStatementIsCall
+                                          && thenBranch.length > 1
                                           && isSingleCallTail(thenElse.myTailStatementsOfThen)
                                           && thenElse.myHeadUnitsOfThen.isEmpty();
       boolean isInfoLevel = mayChangeSemantics
@@ -981,8 +966,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
                             || tailStatementIsSingleCall;
       PsiElement elementToHighlight = isInfoLevel ? ifStatement : ifStatement.getFirstChild();
       if (type == CommonPartType.VARIABLES_ONLY && !isOnTheFly) return null;
-      return new IfInspectionResult(elementToHighlight, !isInfoLevel, fix,
-                                    type.getDescriptionMessage(mayChangeSemantics));
+      return new IfInspectionResult(elementToHighlight, !isInfoLevel, fix, type.getDescriptionMessage(mayChangeSemantics));
     }
 
     private static boolean isVariableTypeWithRename(ThenElse thenElse, CommonPartType type) {
@@ -1248,8 +1232,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       if (!myLocalVariables.contains(localVariable1) || !myLocalVariables.contains(localVariable2)) {
         return false;
       }
-      if (!equalNotConsideringInitializer(localVariable1, localVariable2)) return false;
-      return true;
+      return equalNotConsideringInitializer(localVariable1, localVariable2);
     }
 
     private boolean equalNotConsideringInitializer(@NotNull PsiLocalVariable localVariable1, @NotNull PsiLocalVariable localVariable2) {

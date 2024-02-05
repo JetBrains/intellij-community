@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.speedSearch
 
-import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
@@ -12,10 +14,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import javax.swing.SwingUtilities
 
-class SpeedSearchAction : DumbAwareAction(
-  ActionsBundle.messagePointer("action.SpeedSearch.text"),
-  AllIcons.Actions.Find,
-), ActionRemoteBehaviorSpecification.Frontend {
+class SpeedSearchAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   init {
     isEnabledInModalContext = true

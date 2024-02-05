@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Comparator.*;
@@ -731,7 +733,56 @@ public class EquivalenceChecker {
     if (expression1 instanceof PsiSwitchExpression) {
       return switchBlocksMatch((PsiSwitchExpression)expression1, (PsiSwitchExpression)expression2);
     }
+    if (expression1 instanceof PsiEmptyExpressionImpl) {
+      return EXACT_MATCH;
+    }
+    if (expression1 instanceof PsiTemplateExpression) {
+      return templateExpressionsMatch((PsiTemplateExpression)expression1, (PsiTemplateExpression)expression2);
+    }
     return EXACT_MISMATCH;
+  }
+
+  private Match templateExpressionsMatch(PsiTemplateExpression expression1, PsiTemplateExpression expression2) {
+    final PsiExpression processor1 = expression1.getProcessor();
+    final PsiExpression processor2 = expression2.getProcessor();
+    if (expressionsMatch(processor1, processor2) != EXACT_MATCH) {
+      return EXACT_MISMATCH;
+    }
+
+    if (expression1.getArgumentType() == PsiTemplateExpression.ArgumentType.TEMPLATE) {
+      if (expression2.getArgumentType() != PsiTemplateExpression.ArgumentType.TEMPLATE) {
+        return EXACT_MISMATCH;
+      }
+      final PsiTemplate template1 = expression1.getTemplate();
+      final PsiTemplate template2 = expression2.getTemplate();
+      if (template1 == null) {
+        return template2 == null ? EXACT_MATCH : EXACT_MISMATCH;
+      }
+      else if (template2 == null) return EXACT_MISMATCH;
+      final List<@NotNull PsiFragment> fragments1 = template1.getFragments();
+      final List<@NotNull PsiFragment> fragments2 = template2.getFragments();
+      if (fragments1.size() != fragments2.size()) return EXACT_MISMATCH;
+      for (int i = 0, size = fragments1.size(); i < size; i++) {
+        if (!Objects.equals(fragments1.get(i).getValue(), fragments2.get(i).getValue())) {
+          return EXACT_MISMATCH;
+        }
+      }
+      final List<@NotNull PsiExpression> expressions1 = template1.getEmbeddedExpressions();
+      final List<@NotNull PsiExpression> expressions2 = template2.getEmbeddedExpressions();
+      if (expressions1.size() != expressions2.size()) return EXACT_MISMATCH;
+      for (int i = 0, size = expressions1.size(); i < size; i++) {
+        if (expressionsMatch(expressions1.get(i), expressions2.get(i)) != EXACT_MATCH) {
+          return EXACT_MISMATCH;
+        }
+      }
+      return EXACT_MATCH;
+    }
+    else {
+      if (expression2.getArgumentType() == PsiTemplateExpression.ArgumentType.TEMPLATE) {
+        return EXACT_MISMATCH;
+      }
+      return expressionsMatch(expression1.getLiteralExpression(), expression2.getLiteralExpression());
+    }
   }
 
   @NotNull

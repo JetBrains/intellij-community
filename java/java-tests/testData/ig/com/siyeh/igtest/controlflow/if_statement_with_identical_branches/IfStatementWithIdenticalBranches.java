@@ -185,7 +185,7 @@ class NotADup {
   }
 
   void n(int i) {
-    if (i == 0) {
+    <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (i == 0) {
       System.out.println(((i)));
       ;
       ;
@@ -232,6 +232,17 @@ class NotADup {
       if (j == 2) {
         System.out.println("2");
       }
+    }
+  }
+  
+  void stringTemplate(boolean b) {
+    <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (b) {
+      System.out.println(STR."""
+        vansind\{1}\{}""");
+    }
+    else {
+      System.out.println(STR."""
+        vansind\{1}\{}""");
     }
   }
 }

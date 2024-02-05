@@ -44,7 +44,7 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware, Ac
       if (shouldSkipShown && window.isShowStripeButton() && window.isAvailable() && manager.isStripeButtonShow(window)) {
         continue;
       }
-      String actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.getId());
+      String actionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(window.getId());
       AnAction action = actionManager.getAction(actionId);
       if (action instanceof ActivateToolWindowAction) {
         result.add((ActivateToolWindowAction)action);
@@ -74,7 +74,7 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware, Ac
 
   private static @NotNull Comparator<ActivateToolWindowAction> comparingMnemonic() {
     return comparingInt(it -> {
-      int mnemonic = ActivateToolWindowAction.Companion.getMnemonicForToolWindow$intellij_platform_ide_impl(it.getToolWindowId());
+      int mnemonic = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(it.getToolWindowId());
       return mnemonic != -1 ? mnemonic : Integer.MAX_VALUE;
     });
   }

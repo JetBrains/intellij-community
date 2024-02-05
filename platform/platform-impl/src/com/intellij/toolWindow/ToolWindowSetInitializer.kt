@@ -179,7 +179,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     span("ensureToolWindowActionRegistered executing$suffix") {
       val actionManager = serviceAsync<ActionManager>()
       for (result in entries) {
-        ActivateToolWindowAction.ensureToolWindowActionRegistered(result.entry.toolWindow, actionManager)
+        ActivateToolWindowAction.Manager.ensureToolWindowActionRegistered(result.entry.toolWindow, actionManager)
       }
     }
 

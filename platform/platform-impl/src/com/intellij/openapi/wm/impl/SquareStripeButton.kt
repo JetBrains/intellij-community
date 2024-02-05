@@ -222,7 +222,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
     HelpTooltip()
       .setTitle(toolWindow.stripeTitleProvider)
       .setLocation(getAlignment(toolWindow.anchor, toolWindow.isSplitMode))
-      .setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.id)))
+      .setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindow.id)))
       .setInitialDelay(0)
       .setHideDelay(0)
       .installOn(this)
