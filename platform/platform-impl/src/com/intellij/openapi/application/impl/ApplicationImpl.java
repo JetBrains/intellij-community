@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -553,19 +554,34 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
+    boolean mustExit = true;
+    try {
+      mustExit = destructApplication(flags, restart, beforeRestart, exitCode);
+    }
+    catch (Throwable err) {
+      logErrorDuringExit("Failed to destruct the application", err);
+    }
+    finally {
+      if (mustExit) {
+        System.exit(exitCode);
+      }
+    }
+  }
+
+  private boolean destructApplication(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
     IJTracer tracer = TelemetryManager.getInstance().getTracer(new com.intellij.platform.diagnostic.telemetry.Scope("exitApp", null));
     Span exitSpan = tracer.spanBuilder("application.exit").startSpan();
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try (Scope scope = exitSpan.makeCurrent()) {
       if (!force && !confirmExitIfNeeded(BitUtil.isSet(flags, EXIT_CONFIRMED))) {
-        return;
+        return false;
       }
 
       AppLifecycleListener lifecycleListener = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecycleListener.appClosing();
 
       if (!force && !canExit()) {
-        return;
+        return false;
       }
 
       stopServicePreloading();
@@ -585,7 +601,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         lifecycleListener.appWillBeClosed(restart);
       }
       catch (Throwable t) {
-        getLogger().error(t);
+        logErrorDuringExit("Failed to invoke lifecycle listeners", t);
       }
 
       LifecycleUsageTriggerCollector.onIdeClose(restart);
@@ -602,7 +618,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
           }
         }
         catch (Throwable e) {
-          getLogger().error(e);
+          logErrorDuringExit("Failed to close and dispose all projects", e);
         }
       }
       try {
@@ -612,7 +628,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         disposeContainer();
       }
       catch (Throwable t) {
-        getLogger().error(t);
+        logErrorDuringExit("Failed to dispose the container", t);
       }
 
       //noinspection SpellCheckingInspection
@@ -621,7 +637,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         if (Boolean.getBoolean("idea.test.guimode")) {
           shutdown();
         }
-        return;
+        return false;
       }
 
       IdeaLogger.dropFrequentExceptionsCaches();
@@ -630,18 +646,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
           Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
         }
         catch (Throwable t) {
-          getLogger().error("Restart failed", t);
+          logErrorDuringExit("Failed to restart the application", t);
           StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), t);
           if (exitCode == 0) {
             exitCode = AppExitCodes.RESTART_FAILED;
           }
         }
       }
-      System.exit(exitCode);
+      return true;
     }
     finally {
       exitSpan.end();
       myExitInProgress = false;
+    }
+  }
+
+  private static void logErrorDuringExit(String message, Throwable err) {
+    if (!(err instanceof ControlFlowException)) {
+      getLogger().error(message, err);
     }
   }
 
