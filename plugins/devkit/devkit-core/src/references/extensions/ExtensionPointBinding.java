@@ -12,6 +12,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.util.xmlb.annotations.Property.Style.ATTRIBUTE;
 
-public class ExtensionPointBinding {
+public final class ExtensionPointBinding {
 
   private final PsiClass myPsiClass;
 
@@ -102,6 +103,7 @@ public class ExtensionPointBinding {
     return PsiUtil.findAnnotation(annotationClass, fieldSetter.getValue());
   }
 
+  @ApiStatus.OverrideOnly
   public interface BindingVisitor {
 
     enum RequiredFlag {
