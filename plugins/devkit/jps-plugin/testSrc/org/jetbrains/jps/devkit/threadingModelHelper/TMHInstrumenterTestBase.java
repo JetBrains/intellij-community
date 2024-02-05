@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -18,7 +18,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
@@ -26,111 +25,32 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_UNDER_EDT;
-import static com.intellij.util.concurrency.ThreadingAssertions.MUST_NOT_EXECUTE_UNDER_EDT;
 
-public class TMHInstrumenterTest extends UsefulTestCase {
+public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
+
   private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/instrumenter/";
-
   private static final String TESTING_BACKGROUND_THREAD_NAME = "TESTING_BACKGROUND_THREAD";
 
-  public void testSimple() throws Exception {
-    doEdtTest();
-  }
-
-  public void testSecondMethod() throws Exception {
-    doEdtTest();
-  }
-
-  public void testMethodHasOtherAnnotationBefore() throws Exception {
-    doEdtTest();
-  }
-
-  public void testMethodHasOtherAnnotationAfter() throws Exception {
-    doEdtTest();
-  }
-
-  public void testEmptyBody() throws Exception {
-    doEdtTest();
-  }
-
-  public void testConstructor() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    testClass.aClass.getDeclaredConstructor().newInstance();
-    assertThrows(Throwable.class, MUST_EXECUTE_UNDER_EDT,
-                 () -> executeInBackground(() -> testClass.aClass.getDeclaredConstructor().newInstance()));
-  }
-
-  public void testDoNotInstrument() throws Exception {
-    TestClass testClass = getNotInstrumentedTestClass();
-    invokeMethod(testClass.aClass);
-    executeInBackground(() -> invokeMethod(testClass.aClass));
-  }
-
-  public void testRequiresBackgroundThreadAssertion() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    executeInBackground(() -> invokeMethod(testClass.aClass));
-    assertThrows(Throwable.class, MUST_NOT_EXECUTE_UNDER_EDT, () -> invokeMethod(testClass.aClass));
-  }
-
-  public void testRequiresReadLockAssertion() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessAllowed"));
-  }
-
-  public void testRequiresWriteLockAssertion() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccessAllowed"));
-  }
-
-  public void testRequiresReadLockAbsenceAssertion() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessNotAllowed"));
-  }
-
-  public void testLineNumber() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
-    assertEquals(Arrays.asList(5, 8, 8), TMHTestUtil.getLineNumbers(testClass.classBytes));
-  }
-
-  public void testLineNumberWhenBodyHasTwoStatements() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
-    assertEquals(Arrays.asList(5, 8, 8, 9), TMHTestUtil.getLineNumbers(testClass.classBytes));
-  }
-
-  public void testLineNumberWhenEmptyBody() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
-    assertEquals(Arrays.asList(5, 7, 7), TMHTestUtil.getLineNumbers(testClass.classBytes));
-  }
-
-  public void testLineNumberWhenOtherMethodBefore() throws Exception {
-    TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
-    assertEquals(Arrays.asList(5, 7, 12, 12), TMHTestUtil.getLineNumbers(testClass.classBytes));
-  }
-
-  private void doEdtTest() throws Exception {
+  final void doEdtTest() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     invokeMethod(testClass.aClass);
     assertThrows(Throwable.class, MUST_EXECUTE_UNDER_EDT, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
   }
 
-  private @NotNull TestClass getInstrumentedTestClass() throws IOException {
+  final @NotNull TestClass getInstrumentedTestClass() throws IOException {
     TestClass testClass = prepareTest(false);
     assertTrue(testClass.isInstrumented);
     return testClass;
   }
 
-  private @NotNull TestClass getNotInstrumentedTestClass() throws IOException {
+  final @NotNull TestClass getNotInstrumentedTestClass() throws IOException {
     TestClass testClass = prepareTest(false);
     assertFalse(testClass.isInstrumented);
     return testClass;
   }
 
   @NotNull
-  protected TestClass prepareTest(@SuppressWarnings("SameParameterValue") boolean printClassFiles) throws IOException {
+  final TestClass prepareTest(@SuppressWarnings("SameParameterValue") boolean printClassFiles) throws IOException {
     List<File> classFiles = compileTestFiles();
     MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
     TestClass testClass = null;
@@ -178,7 +98,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     }
   }
 
-  private static void invokeMethod(@NotNull Class<?> testClass) {
+  static void invokeMethod(@NotNull Class<?> testClass) {
     rethrowExceptions(() -> {
       Object instance = testClass.getDeclaredConstructor().newInstance();
       Method method = testClass.getMethod("test");
@@ -199,7 +119,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     }
   }
 
-  private static void executeInBackground(@NotNull ThrowableRunnable<? extends Throwable> runnable) throws ExecutionException {
+  static void executeInBackground(@NotNull ThrowableRunnable<? extends Throwable> runnable) throws ExecutionException {
     waitResult(startInBackground(runnable));
   }
 
@@ -228,7 +148,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
     }
   }
 
-  private static class TestClass {
+  static class TestClass {
     final Class<?> aClass;
     final byte[] classBytes;
     final boolean isInstrumented;
