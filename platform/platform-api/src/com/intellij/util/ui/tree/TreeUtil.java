@@ -877,6 +877,18 @@ public final class TreeUtil {
     internalSelect(tree, normalize(leadSelectionPath, minCount, keepSelectionLevel));
   }
 
+  private static void expandPaths(@NotNull JTree tree, @Nullable List<TreePath> paths) {
+    if (paths == null || paths.isEmpty()) {
+      return;
+    }
+    if (Tree.isBulkExpandCollapseSupported() && tree instanceof Tree jbTree) {
+      jbTree.expandPaths(paths);
+    }
+    else {
+      paths.forEach(tree::expandPath);
+    }
+  }
+
   private static void collapsePaths(@NotNull JTree tree, @Nullable List<TreePath> paths) {
     if (paths == null || paths.isEmpty()) {
       return;
@@ -1590,7 +1602,10 @@ public final class TreeUtil {
   }
 
   private static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull AsyncPromise<?> promise) {
-    MakeVisibleVisitor makeVisibleVisitor = new BackgroundMakeVisibleVisitor(tree, visitor, promise);
+    MakeVisibleVisitor makeVisibleVisitor =
+      !(tree.getModel() instanceof TreeVisitor.Acceptor) && Tree.isBulkExpandCollapseSupported()
+      ? new BulkMakeVisibleVisitor(tree, visitor, promise)
+      : new BackgroundMakeVisibleVisitor(tree, visitor, promise);
     if (tree instanceof Tree jbTree) {
       jbTree.suspendExpandCollapseAccessibilityAnnouncements();
     }
@@ -1688,6 +1703,30 @@ public final class TreeUtil {
     @Override
     protected void doExpand(@NotNull TreePath path) {
       expandPathWithDebug(tree, path);
+    }
+  }
+
+  private static class BulkMakeVisibleVisitor extends MakeVisibleVisitor {
+
+    private final @NotNull List<@NotNull TreePath> pathsToExpand = new ArrayList<>();
+
+    private BulkMakeVisibleVisitor(@NotNull JTree tree, @NotNull TreeVisitor delegate, @NotNull AsyncPromise<?> promise) {
+      super(tree, delegate, promise);
+    }
+
+    @Override
+    protected boolean checkCancelled(@NotNull TreePath path) {
+      return false; // bulk expand is performed in a single non-cancelable operation
+    }
+
+    @Override
+    protected void doExpand(@NotNull TreePath path) {
+      pathsToExpand.add(path);
+    }
+
+    @Override
+    void finishExpanding() {
+      expandPaths(tree, pathsToExpand);
     }
   }
 
