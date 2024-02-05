@@ -103,6 +103,12 @@ interface BaseKotlinConverter {
                     }
                 }
 
+                is UastFakeSourceLightDefaultAccessorForConstructorParameter -> {
+                    el<UMethod> {
+                        KotlinUMethodWithFakeLightDelegateDefaultAccessorForConstructorProperty(element.original, element, givenParent)
+                    }
+                }
+
                 is UastFakeSourceLightDefaultAccessor -> {
                     el<UMethod> {
                         KotlinUMethodWithFakeLightDelegateDefaultAccessor(element.original, element, givenParent)
