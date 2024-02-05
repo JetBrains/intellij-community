@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
@@ -659,8 +658,15 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   private static void logErrorDuringExit(String message, Throwable err) {
-    if (!(err instanceof ControlFlowException)) {
-      getLogger().error(message, err);
+    if (err != null) {
+      try {
+        getLogger().error(message, err);
+      }
+      catch (Throwable ignored) {
+        // Do nothing. The logger throws an uncatchable error during logging a control flow exception.
+        // A control flow exception is something that should not happen during exit,
+        // so it is worth logging despite recommendations.
+      }
     }
   }
 
