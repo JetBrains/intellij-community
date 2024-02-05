@@ -104,7 +104,7 @@ internal object GHPRStatisticsCollector: CounterUsagesCollector() {
 
   fun logDiffOpened(project: Project) {
     val count = FileEditorManager.getInstance(project).openFiles.count {
-      it is GHPRDiffVirtualFile || it is GHPRCombinedDiffPreviewVirtualFile
+      it is GHPRDiffVirtualFile
     }
     DIFF_OPENED_EVENT.log(project, count)
   }

@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 
 internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirtualFileSystem.FilePath>(PathSerializer()) {
 
@@ -33,9 +32,6 @@ internal class GitLabVirtualFileSystem : ComplexPathVirtualFileSystem<GitLabVirt
   }
 
   private fun createDiffFile(path: FilePath, project: Project): VirtualFile {
-    if (GitLabRegistry.isCombinedDiffEnabled()) {
-      return GitLabMergeRequestCombinedDiffFile(path.sessionId, project, path.repository, path.mrIid)
-    }
     return GitLabMergeRequestDiffFile(path.sessionId, project, path.repository, path.mrIid)
   }
 

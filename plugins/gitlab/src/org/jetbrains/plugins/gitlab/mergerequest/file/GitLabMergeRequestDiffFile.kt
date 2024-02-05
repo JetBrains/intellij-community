@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
-import com.intellij.collaboration.file.codereview.CodeReviewCombinedDiffVirtualFile
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
 import com.intellij.collaboration.util.KeyValuePair
+import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 import com.intellij.diff.util.DiffUserDataKeys
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffView
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 
 internal data class GitLabMergeRequestDiffFile(
   override val connectionId: String,
@@ -45,34 +46,15 @@ internal data class GitLabMergeRequestDiffFile(
 
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
-  override fun createProcessor(project: Project): DiffRequestProcessor =
-    project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(connectionId, mergeRequestIid)
-}
-
-internal data class GitLabMergeRequestCombinedDiffFile(
-  override val connectionId: String,
-  private val project: Project,
-  private val glProject: GitLabProjectCoordinates,
-  private val mergeRequestIid: String
-) : CodeReviewCombinedDiffVirtualFile(createSourceId(connectionId, glProject, mergeRequestIid), getFileName(mergeRequestIid)),
-    VirtualFilePathWrapper,
-    GitLabVirtualFile {
-
-  override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GitLabVirtualFileSystem.getInstance()
-
-  override fun getPath(): String = (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestIid, true)
-  override fun getPresentablePath(): String = getPresentablePath(glProject, mergeRequestIid)
-  override fun getPresentableName(): String = GitLabBundle.message("merge.request.diff.file.name", mergeRequestIid)
-
-  override fun isValid(): Boolean = isFileValid(project, connectionId)
-
-  override fun createProcessor(project: Project): CombinedDiffComponentProcessor {
-    return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
+  override fun createProcessor(project: Project): DiffEditorViewer {
+    if (GitLabRegistry.isCombinedDiffEnabled()) {
+      return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
+    }
+    else {
+      return project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(connectionId, mergeRequestIid)
+    }
   }
 }
-
-private fun createSourceId(connectionId: String, glProject: GitLabProjectCoordinates, mergeRequestIid: String) =
-  "GitLabMergeRequest:$connectionId:$glProject/$mergeRequestIid"
 
 private fun getFileName(mergeRequestIid: String): String = "$mergeRequestIid.diff"
 

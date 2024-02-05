@@ -9,10 +9,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.plugins.github.GHRegistry
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.*
+import org.jetbrains.plugins.github.pullrequest.GHNewPRDiffVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
+import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
 import java.util.concurrent.atomic.AtomicReference
 
 internal class GHPRFilesManagerImpl(private val project: Project,
@@ -27,12 +29,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   override fun createOrGetNewPRDiffFile(): DiffVirtualFileBase {
     return newPRDiffFile.updateAndGet {
-      it ?: if (GHRegistry.isCombinedDiffEnabled()) {
-        GHNewPRCombinedDiffPreviewVirtualFile(id, project, repository)
-      }
-      else {
-        GHNewPRDiffVirtualFile(id, project, repository)
-      }
+      it ?: GHNewPRDiffVirtualFile(id, project, repository)
     }!!
   }
 
@@ -47,12 +44,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
     diffFiles.getOrPut(pullRequest) {
-      if (GHRegistry.isCombinedDiffEnabled()) {
-        GHPRCombinedDiffPreviewVirtualFile(id, project, repository, pullRequest)
-      }
-      else {
-        GHPRDiffVirtualFile(id, project, repository, pullRequest)
-      }
+      GHPRDiffVirtualFile(id, project, repository, pullRequest)
     }.let {
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
       GHPRStatisticsCollector.logDiffOpened(project)
