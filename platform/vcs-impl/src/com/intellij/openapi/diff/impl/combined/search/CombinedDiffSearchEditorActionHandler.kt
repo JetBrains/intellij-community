@@ -1,8 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.tools.combined.search
+package com.intellij.openapi.diff.impl.combined.search
 
 import com.intellij.diff.tools.combined.CombinedDiffBaseEditorWithSelectionHandler
 import com.intellij.diff.tools.combined.CombinedDiffViewer
+import com.intellij.diff.tools.combined.search.CombinedDiffSearchProvider
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service

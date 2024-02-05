@@ -8,7 +8,7 @@ import javax.swing.JComponent
 /**
  * Provides "search in multiple editors" functionality for [CombinedDiffViewer]
  *
- *  @see [CombinedDiffSearchEditorActionHandler]
+ *  @see [com.intellij.openapi.diff.impl.combined.search.CombinedDiffSearchEditorActionHandler]
  *  @see [com.intellij.diff.tools.combined.CombinedDiffModelListener.onRequestsLoaded]
  */
 interface CombinedDiffSearchProvider {
