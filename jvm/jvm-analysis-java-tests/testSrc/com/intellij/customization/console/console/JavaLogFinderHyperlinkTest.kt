@@ -11,31 +11,31 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
     checkColumnFinderJava(
       fileName = "Log4jk",
       classText = """
-package com.example.loggingjava.java;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-public final class Log4j {
-
-    private static final Logger logger = LogManager.getLogger();
-
-    public static void main(String[] args) {
-        System.out.println("1");
-        log4j();
-        log4j2(1);
-    }
-
-    private static void log4j2(int i) {
-        String message = "Second" + " Request {}" + i;
-        logger.error(message, i);
-    }
-
-    private static void log4j() {
-        logger.info("First request");
-    }
-}
-""".trimIndent(),
+          package com.example.loggingjava.java;
+          
+          import org.apache.logging.log4j.LogManager;
+          import org.apache.logging.log4j.Logger;
+          
+          public final class Log4j {
+          
+              private static final Logger logger = LogManager.getLogger();
+          
+              public static void main(String[] args) {
+                  System.out.println("1");
+                  log4j();
+                  log4j2(1);
+              }
+          
+              private static void log4j2(int i) {
+                  String message = "Second" + " Request {}" + i;
+                  logger.error(message, i);
+              }
+          
+              private static void log4j() {
+                  logger.info("First request");
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -50,31 +50,31 @@ public final class Log4j {
     checkColumnFinderJava(
       fileName = "Log4jk",
       classText = """
-package com.example.loggingjava.java;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-public final class Log4j {
-
-    private static final Logger logger = LogManager.getLogger();
-
-    public static void main(String[] args) {
-        System.out.println("1");
-        log4j();
-        log4j2(1);
-    }
-
-    private static void log4j2(int i) {
-        String message = "Second" + " Request {}" + i;
-        logger.error(message, i);
-    }
-
-    private static void log4j() {
-        logger.info("First request");
-    }
-}
-""".trimIndent(),
+          package com.example.loggingjava.java;
+          
+          import org.apache.logging.log4j.LogManager;
+          import org.apache.logging.log4j.Logger;
+          
+          public final class Log4j {
+          
+              private static final Logger logger = LogManager.getLogger();
+          
+              public static void main(String[] args) {
+                  System.out.println("1");
+                  log4j();
+                  log4j2(1);
+              }
+          
+              private static void log4j2(int i) {
+                  String message = "Second" + " Request {}" + i;
+                  logger.error(message, i);
+              }
+          
+              private static void log4j() {
+                  logger.info("First request");
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -89,35 +89,35 @@ public final class Log4j {
     checkColumnFinderJava(
       fileName = "Slf4J",
       classText = """
-package com.example.loggingjava.java;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class Slf4J {
-    private final static Logger log = LoggerFactory.getLogger(Slf4J.class);
-
-    public static void main(String[] args) {
-        System.out.println(2);
-        log1(1);
-        log2(2);
-    }
-
-    private static void log1(int i) {
-        String msg = getMsg(i);
-        log.info(msg);
-    }
-
-    private static void log2(int i) {
-        String msg = "log2" + i;
-        log.info(msg);
-    }
-
-    private static String getMsg(int i) {
-        return "test" + i;
-    }
-}
-""".trimIndent(),
+          package com.example.loggingjava.java;
+          
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+          
+          public final class Slf4J {
+              private final static Logger log = LoggerFactory.getLogger(Slf4J.class);
+          
+              public static void main(String[] args) {
+                  System.out.println(2);
+                  log1(1);
+                  log2(2);
+              }
+          
+              private static void log1(int i) {
+                  String msg = getMsg(i);
+                  log.info(msg);
+              }
+          
+              private static void log2(int i) {
+                  String msg = "log2" + i;
+                  log.info(msg);
+              }
+          
+              private static String getMsg(int i) {
+                  return "test" + i;
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -132,33 +132,33 @@ public final class Slf4J {
     checkColumnFinderJava(
       fileName = "IdeaLog",
       classText = """
-package com.example.loggingjava.java;
-
-import com.intellij.openapi.diagnostic.Logger;
-
-public final class IdeaLog {
-
-    public static void start(Logger log) {
-        System.out.println(2);
-        log1(1, log);
-        log2(2, log);
-    }
-
-    private static void log1(int i, Logger log) {
-        String msg = getMsg(i);
-        log.info(msg);
-    }
-
-    private static void log2(int i, Logger log) {
-        String msg = "log2" + i;
-        log.info(msg);
-    }
-
-    private static String getMsg(int i) {
-        return "test" + i;
-    }
-}
-""".trimIndent(),
+          package com.example.loggingjava.java;
+          
+          import com.intellij.openapi.diagnostic.Logger;
+          
+          public final class IdeaLog {
+          
+              public static void start(Logger log) {
+                  System.out.println(2);
+                  log1(1, log);
+                  log2(2, log);
+              }
+          
+              private static void log1(int i, Logger log) {
+                  String msg = getMsg(i);
+                  log.info(msg);
+              }
+          
+              private static void log2(int i, Logger log) {
+                  String msg = "log2" + i;
+                  log.info(msg);
+              }
+          
+              private static String getMsg(int i) {
+                  return "test" + i;
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -173,34 +173,34 @@ public final class IdeaLog {
     checkColumnFinderJava(
       fileName = "Slf4JFluent",
       classText = """
-package com.example.loggingjava.java;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class Slf4JFluent {
-    private final static Logger log = LoggerFactory.getLogger(Slf4JFluent.class);
-
-    public static void main(String[] args) {
-        System.out.println(2);
-        log1(1);
-        log2(2);
-    }
-
-    private static void log1(int i) {
-        String msg = "test" + i;
-        log.atInfo()
-                .setMessage(msg)
-                .log();
-    }
-
-    private static void log2(int i) {
-        String msg = "log2" + i;
-        log.atInfo()
-                .log(msg);
-    }
-}
-""".trimIndent(),
+          package com.example.loggingjava.java;
+          
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+          
+          public final class Slf4JFluent {
+              private final static Logger log = LoggerFactory.getLogger(Slf4JFluent.class);
+          
+              public static void main(String[] args) {
+                  System.out.println(2);
+                  log1(1);
+                  log2(2);
+              }
+          
+              private static void log1(int i) {
+                  String msg = "test" + i;
+                  log.atInfo()
+                          .setMessage(msg)
+                          .log();
+              }
+          
+              private static void log2(int i) {
+                  String msg = "log2" + i;
+                  log.atInfo()
+                          .log(msg);
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -216,34 +216,34 @@ public final class Slf4JFluent {
     checkColumnFinderJava(
       fileName = "Slf4JFluent",
       classText = """
-package com.example.úsh.čas;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class UčenjaУченья {
-    private final static Logger log = LoggerFactory.getLogger(UčenjaУченья.class);
-
-    public static void main(String[] args) {
-        System.out.println(2);
-        log1(1);
-        log2(2);
-    }
-
-    private static void log1(int i) {
-        String msg = "test" + i;
-        log.atInfo()
-                .setMessage(msg)
-                .log();
-    }
-
-    private static void log2(int i) {
-        String msg = "log2" + i;
-        log.atInfo()
-                .log(msg);
-    }
-}
-""".trimIndent(),
+          package com.example.úsh.čas;
+          
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+          
+          public final class UčenjaУченья {
+              private final static Logger log = LoggerFactory.getLogger(UčenjaУченья.class);
+          
+              public static void main(String[] args) {
+                  System.out.println(2);
+                  log1(1);
+                  log2(2);
+              }
+          
+              private static void log1(int i) {
+                  String msg = "test" + i;
+                  log.atInfo()
+                          .setMessage(msg)
+                          .log();
+              }
+          
+              private static void log2(int i) {
+                  String msg = "log2" + i;
+                  log.atInfo()
+                          .log(msg);
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -257,25 +257,25 @@ public final class UčenjaУченья {
     checkColumnFinderJava(
       fileName = "EmptySpringApplication",
       classText = """
-package org.example.emptyspring;
-
-import org.slf4j.Logger;
-
-public final class EmptySpringApplication {
-
-
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(EmptySpringApplication.class);
-
-    public static void main(String[] args) {
-        request2("1");
-    }
-
-    private static void request2(Object number) {
-        log.info("new request {}", number);
-        throw new RuntimeException();
-    }
-}
-""".trimIndent(),
+          package org.example.emptyspring;
+          
+          import org.slf4j.Logger;
+          
+          public final class EmptySpringApplication {
+          
+          
+              private static final Logger log = org.slf4j.LoggerFactory.getLogger(EmptySpringApplication.class);
+          
+              public static void main(String[] args) {
+                  request2("1");
+              }
+          
+              private static void request2(Object number) {
+                  log.info("new request {}", number);
+                  throw new RuntimeException();
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -291,27 +291,27 @@ public final class EmptySpringApplication {
     checkColumnFinderJava(
       fileName = "UpperClass",
       classText = """
-package com.example;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class UpperClass {
-    public static class Inner{
-        private static final Logger log = org.slf4j.LoggerFactory.getLogger(Inner.class);
-    }
-
-    public static void main(String[] args) {
-        request1("1");
-    }
-
-
-    private static void request1(String number) {
-        System.out.println("com.example.UpperClass${'$'}Inner test");
-        Inner.log.info("new request1 {}", number);
-    }
-}
-""".trimIndent(),
+          package com.example;
+          
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+          
+          public final class UpperClass {
+              public static class Inner{
+                  private static final Logger log = org.slf4j.LoggerFactory.getLogger(Inner.class);
+              }
+          
+              public static void main(String[] args) {
+                  request1("1");
+              }
+          
+          
+              private static void request1(String number) {
+                  System.out.println("com.example.UpperClass${'$'}Inner test");
+                  Inner.log.info("new request1 {}", number);
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -326,29 +326,29 @@ public final class UpperClass {
     checkColumnFinderJava(
       fileName = "UpperClass",
       classText = """
-package com.example;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class UpperClass {
-    public static class Inner{
-      public static class Inner2{
-        private static final Logger log = org.slf4j.LoggerFactory.getLogger(Inner2.class);
-      }
-    }
-
-    public static void main(String[] args) {
-        request1("1");
-    }
-
-
-    private static void request1(String number) {
-        System.out.println("com.example.UpperClass${'$'}Inner${'$'}Inner2 test");
-        Inner.Inner2.log.info("new request1 {}", number);
-    }
-}
-""".trimIndent(),
+          package com.example;
+          
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+          
+          public final class UpperClass {
+              public static class Inner{
+                public static class Inner2{
+                  private static final Logger log = org.slf4j.LoggerFactory.getLogger(Inner2.class);
+                }
+              }
+          
+              public static void main(String[] args) {
+                  request1("1");
+              }
+          
+          
+              private static void request1(String number) {
+                  System.out.println("com.example.UpperClass${'$'}Inner${'$'}Inner2 test");
+                  Inner.Inner2.log.info("new request1 {}", number);
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -363,26 +363,26 @@ public final class UpperClass {
     checkColumnFinderJava(
       fileName = "UpperClass",
       classText = """
-package com.example;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class UpperClass {
-  private static final Logger logger = LoggerFactory.getLogger(UpperClass.class);
-
-
-  public static void main(String[] args) {
-    class LocalClass{
-      public LocalClass() {
-        System.out.println(this.getClass().getCanonicalName());
-      }
-    }
-    new LocalClass();
-    System.out.println("class com.example.UpperClass${'$'}1LocalClass");
-  }
-}
-""".trimIndent(),
+          package com.example;
+          
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+          
+          public final class UpperClass {
+            private static final Logger logger = LoggerFactory.getLogger(UpperClass.class);
+          
+          
+            public static void main(String[] args) {
+              class LocalClass{
+                public LocalClass() {
+                  System.out.println(this.getClass().getCanonicalName());
+                }
+              }
+              new LocalClass();
+              System.out.println("class com.example.UpperClass${'$'}1LocalClass");
+            }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
@@ -397,35 +397,35 @@ public final class UpperClass {
     checkColumnFinderJava(
       fileName = "Slf4J",
       classText = """
-package com.example.loggingjava.java;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public final class Slf4J$ {
-    private final static Logger log = LoggerFactory.getLogger(Slf4J$.class);
-
-    public static void main(String[] args) {
-        System.out.println(2);
-        log1(1);
-        log2(2);
-    }
-
-    private static void log1(int i) {
-        String msg = getMsg(i);
-        log.info(msg);
-    }
-
-    private static void log2(int i) {
-        String msg = "log2" + i;
-        log.info(msg);
-    }
-
-    private static String getMsg(int i) {
-        return "test" + i;
-    }
-}
-""".trimIndent(),
+          package com.example.loggingjava.java;
+          
+          import org.slf4j.Logger;
+          import org.slf4j.LoggerFactory;
+          
+          public final class Slf4J$ {
+              private final static Logger log = LoggerFactory.getLogger(Slf4J$.class);
+          
+              public static void main(String[] args) {
+                  System.out.println(2);
+                  log1(1);
+                  log2(2);
+              }
+          
+              private static void log1(int i) {
+                  String msg = getMsg(i);
+                  log.info(msg);
+              }
+          
+              private static void log2(int i) {
+                  String msg = "log2" + i;
+                  log.info(msg);
+              }
+          
+              private static String getMsg(int i) {
+                  return "test" + i;
+              }
+          }
+          """.trimIndent(),
       logItems = listOf(
         LogItem("java.exe", null),
         LogItem("1", null),
