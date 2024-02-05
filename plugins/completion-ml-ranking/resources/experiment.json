@@ -168,8 +168,8 @@
     },
     {
       "id": "ruby",
-      "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 8, 12, 13 ],
+      "experimentBucketsCount": 1,
+      "includeGroups": [ 24 ],
       "shouldLogElementFeatures": true
     },
     {
