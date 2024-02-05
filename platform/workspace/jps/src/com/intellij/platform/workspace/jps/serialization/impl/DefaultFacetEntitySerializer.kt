@@ -8,10 +8,10 @@ import com.intellij.platform.workspace.jps.entities.FacetId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.childrenFacets
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.util.Functions.identity
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
 
 class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEntity> {
   override val rootEntityType: Class<FacetEntity>
@@ -37,7 +37,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     facetStates.forEach { facetState ->
       val entitySource = evaluateEntitySource(facetState)
       val configurationXmlTagRaw = facetState.configuration?.let { JDOMUtil.write(it) }
-      val configurationXmlTag = configurationXmlTagRaw?.let { configurationStringInterner.computeIfAbsent(it, identity()) }
+      val configurationXmlTag = configurationXmlTagRaw?.let { configurationStringInterner.computeIfAbsent(it, Function.identity()) }
 
       // Check for existing facet it's needed in cases when we read sub-facet located in .xml but underling facet is from .iml,
       // thus same root facet will be declared in two places
