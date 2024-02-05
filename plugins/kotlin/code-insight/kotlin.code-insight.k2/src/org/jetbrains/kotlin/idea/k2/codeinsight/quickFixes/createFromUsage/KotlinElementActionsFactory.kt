@@ -31,9 +31,9 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
-        if (targetClass is PsiElement && !BaseIntentionAction.canModify(targetClass)) return emptyList()
-        var container = targetClass.toKtClassOrFile() ?: return emptyList()
-
+        var container =
+            targetClass.takeIf { (targetClass as? PsiElement)?.let<PsiElement, Boolean>(BaseIntentionAction::canModify) != false }
+                ?.toKtClassOrFile() ?: return emptyList()
         return when (request) {
             is CreateMethodFromKotlinUsageRequest -> {
                 val isExtension = request.isExtension
