@@ -3,12 +3,16 @@ package com.intellij.openapi.editor.impl.stickyLines
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.MouseEventHandler
 import com.intellij.util.ui.StartupUiUtil
@@ -223,12 +227,23 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
         }
         MouseEvent.MOUSE_CLICKED -> {
           if (!isPopup && !isEmpty()) {
-            editor.caretModel.moveToOffset(offsetOnClick)
-            editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
-            editor.selectionModel.removeSelection(/* allCarets = */ true)
+            // wrap into command to support "Back navigation" IJPL-591
+            CommandProcessor.getInstance().executeCommand(
+              editor.project,
+              Runnable {
+                editor.caretModel.moveToOffset(offsetOnClick)
+                editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+                editor.selectionModel.removeSelection(/* allCarets = */ true)
+                IdeDocumentHistory.getInstance(editor.project).includeCurrentCommandAsNavigation()
+              },
+              "",
+              DocCommandGroupId.noneGroupId(editor.document),
+              UndoConfirmationPolicy.DEFAULT,
+              editor.document
+            )
           }
         }
-        MouseEvent.MOUSE_DRAGGED, -> {}
+        MouseEvent.MOUSE_DRAGGED -> {}
       }
       event.consume()
     }
