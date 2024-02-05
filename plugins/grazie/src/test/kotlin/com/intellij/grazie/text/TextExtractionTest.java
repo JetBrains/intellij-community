@@ -131,9 +131,6 @@ public class TextExtractionTest extends BasePlatformTestCase {
       * tags1 <unknownTag>this<unknownTag>is</unknownTag>unknown</unknownTag >
       * tags2 <unknown1>one<unknown2>unknown<unknown1>unknown</unknown2> two<p/> three<unknown1/> four</unknown1>
       * {@link #unknown} is unknown.
-      * {@snippet :
-      *   int foo = 1;
-      * }
       * @param foo the text without the parameter name
       * @return the offset of {@link #bar} in something
       * @throws Exception when something happens
@@ -149,6 +146,21 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
     text = extractText("a.java", docText, docText.indexOf("when something"));
     assertEquals("when something happens", text.toString());
+  }
+
+  public void testSnippet() {
+    String docText = """
+      /**
+      * Before snippet
+      * {@snippet id="snippetId" lang="java" :
+      *   int foo = 1; // comment 1
+      *   // comment 2
+      *   class Foo {} // @highlight substring="Foo"
+      * }
+      * After snippet
+       */""";
+    TextContent text = extractText("a.java", docText, 6);
+    assertEquals("Before snippet\n\nAfter snippet", text.toString());
   }
 
   public void testJavaLiteral() {
