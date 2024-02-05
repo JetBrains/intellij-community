@@ -212,5 +212,5 @@ abstract class CombinedDiffPreviewModel(val project: Project,
 
   abstract fun selectChangeInSourceComponent(change: Wrapper)
 
-  override fun getComponent(): JComponent = throw UnsupportedOperationException() //only for splitter preview
+  override val component: JComponent get() = processor.getMainComponent()
 }

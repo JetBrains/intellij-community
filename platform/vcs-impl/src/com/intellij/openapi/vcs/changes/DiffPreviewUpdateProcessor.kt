@@ -13,30 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import javax.swing.JComponent
 
-import javax.swing.*;
-
-public interface DiffPreviewUpdateProcessor {
+interface DiffPreviewUpdateProcessor {
   /**
    * Notify currently shown diff that it's not needed now and cached values can be reset, a.e. before hiding preview panel
    */
   @RequiresEdt
-  void clear();
+  fun clear()
 
   /**
    * Get newly requested element for diff and update/create new diff request for it
    * a.e. get selection from some model and check if previously shown diff request need to be replaced or still valid for such selection
    *
    * @param fromModelRefresh Whether refresh was triggered without explicit change of selected item by user.
-   *                         In this case, we might want not to close active viewer while it is in focus.
+   * In this case, we might want not to close active viewer while it is in focus.
    */
   @RequiresEdt
-  void refresh(boolean fromModelRefresh);
+  fun refresh(fromModelRefresh: Boolean)
 
-  @NotNull
-  JComponent getComponent();
+  val component: JComponent
 }
