@@ -38,8 +38,15 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
   override fun main(args: List<String>) {
     MainEvaluationCommand()
-      .subcommands(FullCommand(), GenerateActionsCommand(), CustomCommand(),
-                   MultipleEvaluations(), CompareEvaluationsInDirectory(), MergeEvaluations())
+      .subcommands(
+        FullCommand(),
+        GenerateActionsCommand(),
+        CustomCommand(),
+        MultipleEvaluations(),
+        CompareEvaluationsInDirectory(),
+        MergeEvaluations(),
+        ContextCollectionEvaluationCommand()
+      )
       .main(args.toList().subList(1, args.size))
   }
 
