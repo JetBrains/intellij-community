@@ -39,12 +39,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
-fun PsiElement.isPartOfImportDirectiveOrAnnotation(): Boolean = PsiTreeUtil.getParentOfType(
+fun PsiElement.isPartOfImportDirectiveOrAnnotation() = PsiTreeUtil.getParentOfType(
     this,
     KtTypeReference::class.java, KtAnnotationEntry::class.java, KtImportDirective::class.java
 ) != null
 
-fun KtModifierList?.hasAbstractModifier(): Boolean = this?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true
+fun KtModifierList?.hasAbstractModifier() = this?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true
 
 context (KtAnalysisSession)
 internal fun KtType.hasAbstractDeclaration(): Boolean {
@@ -55,7 +55,7 @@ internal fun KtType.hasAbstractDeclaration(): Boolean {
 }
 
 context (KtAnalysisSession)
-internal fun KtType.canRefactor(): Boolean = expandedClassSymbol?.psi?.canRefactorElement() == true
+internal fun KtType.canRefactor() = expandedClassSymbol?.psi?.canRefactorElement() == true
 
 context (KtAnalysisSession)
 internal fun KtExpression.resolveExpression(): KtSymbol? {
@@ -140,7 +140,7 @@ val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSourc
 }
 
 context (KtAnalysisSession)
-internal fun JvmType.toKtType(useSitePosition: PsiElement): KtType? = when (this) {
+internal fun JvmType.toKtType(useSitePosition: PsiElement) = when (this) {
     is PsiType -> if (isValid) {
         try {
             asKtType(useSitePosition)

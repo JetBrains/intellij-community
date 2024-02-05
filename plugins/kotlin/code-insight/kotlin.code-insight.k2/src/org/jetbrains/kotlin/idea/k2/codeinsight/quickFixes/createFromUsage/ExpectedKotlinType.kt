@@ -19,7 +19,7 @@ internal class ExpectedKotlinType(val type: JvmType) : ExpectedType {
         /**
          * A placeholder to denote "This type is invalid". Only thing this type does is returning `false` for `isValid()` function.
          */
-        val INVALID_TYPE: ExpectedKotlinType = createExpectedKotlinType(object : PsiType(emptyArray()) {
+        val INVALID_TYPE = createExpectedKotlinType(object : PsiType(emptyArray()) {
             override fun <A : Any?> accept(visitor: PsiTypeVisitor<A>): A {
                 return visitor.visitType(PsiTypes.nullType())
             }

@@ -2,12 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.lang.jvm.JvmModifier
-import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 
@@ -18,7 +16,7 @@ internal class KotlinModifierBuilder(
     private val allowJvmStatic: Boolean = true
 ) {
     companion object {
-        val javaPsiModifiersMapping: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
+        val javaPsiModifiersMapping = mapOf(
             JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
             JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD,
             JvmModifier.PROTECTED to KtTokens.PUBLIC_KEYWORD,
@@ -28,7 +26,7 @@ internal class KotlinModifierBuilder(
 
     private val psiFactory = KtPsiFactory(targetContainer.project)
 
-    val modifierList: KtModifierList = psiFactory.createEmptyModifierList()
+    val modifierList = psiFactory.createEmptyModifierList()
 
     private fun JvmModifier.transformAndAppend(): Boolean {
         javaPsiModifiersMapping[this]?.let {
@@ -51,7 +49,7 @@ internal class KotlinModifierBuilder(
         return true
     }
 
-    var isValid: Boolean = true
+    var isValid = true
         private set
 
     fun addJvmModifier(modifier: JvmModifier) {

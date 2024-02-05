@@ -56,7 +56,7 @@ internal class CreateKotlinCallableAction(
         return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, getContainerName(), "", callableDefinitionAsString ?: "")
     }
 
-    override fun getRenderData(): JvmActionGroup.RenderData = JvmActionGroup.RenderData { request.methodName }
+    override fun getRenderData() = JvmActionGroup.RenderData { request.methodName }
 
     override fun getTarget(): JvmClass = targetClass
 
