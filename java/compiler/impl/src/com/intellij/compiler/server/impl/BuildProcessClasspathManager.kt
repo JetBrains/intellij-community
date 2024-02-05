@@ -6,6 +6,7 @@ import com.intellij.compiler.server.CompileServerPlugin
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.diagnostic.logger
@@ -104,6 +105,11 @@ private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, 
   val jarFile = baseFile.resolve("lib/$relativePath")
   if (Files.exists(jarFile)) {
     return jarFile.toString()
+  }
+
+  if (AppMode.isDevServer()) {
+    check(Files.isDirectory(baseFile))
+    return baseFile.toString()
   }
 
   // ... 'plugin run configuration': all module outputs are copied to 'classes' folder
