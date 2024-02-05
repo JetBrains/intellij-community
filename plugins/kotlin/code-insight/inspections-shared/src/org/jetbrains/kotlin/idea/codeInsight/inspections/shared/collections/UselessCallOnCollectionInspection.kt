@@ -18,7 +18,9 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
 
@@ -44,7 +46,15 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     private fun KtExpression.isLambdaReturningNotNull(): Boolean {
         val expression = if (this is KtLabeledExpression) this.baseExpression else this
         if (expression !is KtLambdaExpression) return false
-        return expression.bodyExpression?.getKtType()?.canBeNull == false
+        var labelledReturnReturnsNullable = false
+        expression.bodyExpression?.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
+            val targetExpression = returnExpression.getReturnTargetSymbol()?.psi?.parent
+            if (targetExpression == expression) {
+                labelledReturnReturnsNullable = labelledReturnReturnsNullable ||
+                        returnExpression.returnedExpression?.getKtType()?.canBeNull == true
+            }
+        }
+        return !labelledReturnReturnsNullable && expression.bodyExpression?.getKtType()?.canBeNull == false
     }
 
     context(KtAnalysisSession)
