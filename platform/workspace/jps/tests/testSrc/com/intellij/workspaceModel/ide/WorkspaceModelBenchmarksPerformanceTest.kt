@@ -212,7 +212,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     }
 
     val storage = storageBuilder.toSnapshot()
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, manager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, manager, ijBuildVersion = "")
 
     val sizes = ArrayList<Int>()
 

@@ -253,7 +253,8 @@ class DelayedProjectSynchronizerTest {
     return EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = JpsProjectUrlRelativizer(currentProject)
+      urlRelativizer = JpsProjectUrlRelativizer(currentProject),
+      ""
     )
   }
 

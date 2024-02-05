@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.metadata.serialization
 
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -40,7 +40,7 @@ abstract class MetadataSerializationTest {
     storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
 
-    val serializer = EntityStorageSerializerImpl(MetadataDiffTestResolver, virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(MetadataDiffTestResolver, virtualFileManager, ijBuildVersion = "")
 
     val file = Files.createTempFile("", "")
     try {

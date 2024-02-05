@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 
@@ -11,6 +12,7 @@ public fun EntityStorage.assertConsistency() {
   (this as AbstractEntityStorage).assertConsistency()
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal fun AbstractEntityStorage.assertConsistency() {
   AbstractEntityStorage.LOG.trace { "Checking consistency of $this" }
 
@@ -20,7 +22,14 @@ internal fun AbstractEntityStorage.assertConsistency() {
   //    1.1) For abstract containers: EntityId has the class of ConnectionId
   //  2) There is no child without a parent under the hard reference
 
+  val existingConnectionIds = entitiesByType.entityFamilies
+    .mapNotNull { it?.entities?.firstOrNull()?.createEntity(this)?.asBase()?.connectionIdList() }
+    .flatten()
+    .toMutableSet()
+
   refs.oneToManyContainer.forEach { (connectionId, map) ->
+
+    existingConnectionIds.remove(connectionId)
 
     // Assert correctness of connection id
     assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY)
@@ -41,6 +50,8 @@ internal fun AbstractEntityStorage.assertConsistency() {
 
   refs.oneToOneContainer.forEach { (connectionId, map) ->
 
+    existingConnectionIds.remove(connectionId)
+
     // Assert correctness of connection id
     assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE)
 
@@ -55,6 +66,8 @@ internal fun AbstractEntityStorage.assertConsistency() {
   }
 
   refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
+
+    existingConnectionIds.remove(connectionId)
 
     // Assert correctness of connection id
     assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY)
@@ -77,6 +90,8 @@ internal fun AbstractEntityStorage.assertConsistency() {
 
   refs.abstractOneToOneContainer.forEach { (connectionId, map) ->
 
+    existingConnectionIds.remove(connectionId)
+
     // Assert correctness of connection id
     assert(connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE)
 
@@ -94,6 +109,19 @@ internal fun AbstractEntityStorage.assertConsistency() {
     if (!connectionId.isParentNullable) {
       checkStrongAbstractConnection(this, map.keys.mapTo(HashSet()) { it.id }, map.keys.toMutableSet().map { it.id.clazz }.toSet(),
                                     connectionId.debugStr())
+    }
+  }
+
+  existingConnectionIds.filterNot { it.isParentNullable }.forEach { connectionId ->
+    val childrenClass = connectionId.childClass
+    val childWithoutParent = entitiesByType[childrenClass]?.entities?.firstOrNull()
+    assert(childWithoutParent == null) {
+      """
+        There is an entity ${childWithoutParent!!.createEntityId().asString()} of type ${childrenClass.findWorkspaceEntity().simpleName} without a parent of type ${connectionId.parentClass.findWorkspaceEntity().simpleName}
+        However, the parent field in child is not nullable
+        Child full type: ${childrenClass.findWorkspaceEntity()}
+        Parent full type: ${connectionId.parentClass.findWorkspaceEntity()}
+        """.trimIndent()
     }
   }
 

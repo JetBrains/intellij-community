@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.Disposable
@@ -45,7 +45,7 @@ class JpsProjectLoadingListenerTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
   }
 
   @After

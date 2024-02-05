@@ -45,7 +45,7 @@ object MetadataSerializationRoundTripChecker: BaseSerializationChecker() {
     storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
 
-    val serializer = EntityStorageSerializerImpl(MetadataDiffTestResolver, virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(MetadataDiffTestResolver, virtualFileManager, ijBuildVersion = "")
 
     val file = Files.createTempFile("", "")
     try {

@@ -22,7 +22,7 @@ abstract class BaseSerializationChecker {
     storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
 
-    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val file = Files.createTempFile("", "")
     try {

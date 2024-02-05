@@ -69,7 +69,8 @@ class JpsProjectUrlRelativizerTest {
     serializer = EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = JpsProjectUrlRelativizer(project)
+      urlRelativizer = JpsProjectUrlRelativizer(project),
+      ""
     )
   }
 
@@ -154,7 +155,8 @@ class JpsProjectUrlRelativizerTest {
     val otherSerializer = EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = otherPathRelativizer
+      urlRelativizer = otherPathRelativizer,
+      "",
     )
     val storage2 = otherSerializer.deserializeCache(cacheFile).getOrNull()!!
 

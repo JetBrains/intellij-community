@@ -44,7 +44,7 @@ class WorkspaceCacheTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
   }
 
   @After

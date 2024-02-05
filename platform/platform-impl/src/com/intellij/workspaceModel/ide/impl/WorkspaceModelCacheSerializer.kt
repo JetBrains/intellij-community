@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -30,7 +31,8 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     EntityStorageSerializerImpl(
       PluginAwareEntityTypesResolver,
       vfuManager,
-      urlRelativizer
+      urlRelativizer,
+      ApplicationInfo.getInstance().build.toString(),
     )
 
   internal fun loadCacheFromFile(file: Path,

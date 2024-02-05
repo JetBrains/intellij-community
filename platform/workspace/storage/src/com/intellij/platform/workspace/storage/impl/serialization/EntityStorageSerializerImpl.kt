@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.platform.workspace.storage.impl.serialization
@@ -39,10 +39,11 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 public class EntityStorageSerializerImpl(
   private val typesResolver: EntityTypesResolver,
   private val virtualFileManager: VirtualFileUrlManager,
-  private val urlRelativizer: UrlRelativizer? = null
+  private val urlRelativizer: UrlRelativizer? = null,
+  private val ijBuildVersion: String,
 ) : EntityStorageSerializer {
   public companion object {
-    public const val STORAGE_SERIALIZATION_VERSION: String = "version5"
+    public const val STORAGE_SERIALIZATION_VERSION: String = "version6"
 
     private val loadCacheMetadataFromFileTimeMs: AtomicLong = AtomicLong()
 
@@ -97,8 +98,9 @@ public class EntityStorageSerializerImpl(
     return try {
       val (kryo, classCache) = createKryo()
 
-      // Save version
+      // Save versions
       output.writeString(serializerDataFormatVersion)
+      output.writeString(ijBuildVersion)
 
       val cacheMetadata = getCacheMetadata(storage, typesResolver)
 
@@ -141,6 +143,7 @@ public class EntityStorageSerializerImpl(
         if (!checkCacheVersionIdentical(input)) {
           return Result.success(null)
         }
+        val cacheIjBuildVersion = input.readString()
 
         var time = System.nanoTime()
         val metadataDeserializationStartTimeMs = System.currentTimeMillis()
@@ -199,9 +202,14 @@ public class EntityStorageSerializerImpl(
           }
         }
 
-        if (LOG.isTraceEnabled) {
-          builder.assertConsistency()
-          LOG.trace("Builder loaded from caches has no consistency issues")
+        if (LOG.isTraceEnabled || cacheIjBuildVersion != ijBuildVersion) {
+          try {
+            builder.assertConsistency()
+          }
+          catch (e: Throwable) {
+            return Result.failure(e)
+          }
+          LOG.info("Builder loaded from caches has no consistency issues. Current version of IJ: $ijBuildVersion. IJ version from cache: $cacheIjBuildVersion")
         }
 
         builder
@@ -293,6 +301,7 @@ public class EntityStorageSerializerImpl(
       val (kryo, _) = createKryo()
 
       checkCacheVersionIdentical(input)
+      input.readString() // Just reading the version of IJ build
 
       val (comparisonResult, _) = compareCacheMetadata(kryo, input)
       return comparisonResult.info
