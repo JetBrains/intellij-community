@@ -16,6 +16,7 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.content.Content.TEMPORARY_REMOVED_KEY
 import com.intellij.ui.content.impl.ContentImpl
+import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
@@ -52,7 +53,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
           ClientProperty.isTrue(decorator.toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS) &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
-           Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter)) {
+           Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
+          (decorator.toolWindow.contentManager as ContentManagerImpl).getRecursiveContentCount() > 1) {
         return child
       }
       else {
