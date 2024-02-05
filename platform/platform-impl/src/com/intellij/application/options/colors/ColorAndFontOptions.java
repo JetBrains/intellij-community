@@ -74,6 +74,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
+  private @Nullable String myPreselectedSchemeName;
 
   private boolean mySomeSchemesDeleted = false;
   private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;
@@ -363,6 +364,17 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private boolean myIsReset = false;
 
+  @ApiStatus.Internal
+  public void preselectScheme(@NotNull String schemeName) {
+    selectScheme(schemeName);
+    if (myInitResetCompleted) {
+      resetSchemesCombo(this);
+    }
+    else {
+      myPreselectedSchemeName = schemeName;
+    }
+  }
+
   private void resetSchemesCombo(Object source) {
     myIsReset = true;
     try {
@@ -550,21 +562,32 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
    }
 
   private void initAll() {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     mySchemes = new HashMap<>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
       MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
       initScheme(schemeDelegate);
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
     }
-    if (EditorColorsManagerImpl.Companion.isTempScheme(globalScheme)) {
-      MyColorScheme schemeDelegate = new MyTempColorScheme((AbstractColorsScheme)globalScheme);
-      initScheme(schemeDelegate);
-      mySchemes.put(schemeDelegate.getName(), schemeDelegate);
-    }
-    mySelectedScheme = mySchemes.get(globalScheme.getName());
 
-    assert mySelectedScheme != null : globalScheme.getName() + "; myschemes=" + mySchemes;
+    EditorColorsScheme schemeToSelect = null;
+    if (myPreselectedSchemeName != null) {
+      schemeToSelect = mySchemes.get(myPreselectedSchemeName);
+      myPreselectedSchemeName = null;
+    }
+
+    if (schemeToSelect == null) {
+      schemeToSelect = EditorColorsManager.getInstance().getGlobalScheme();
+
+      if (EditorColorsManagerImpl.Companion.isTempScheme(schemeToSelect)) {
+        MyColorScheme schemeDelegate = new MyTempColorScheme((AbstractColorsScheme)schemeToSelect);
+        initScheme(schemeDelegate);
+        mySchemes.put(schemeDelegate.getName(), schemeDelegate);
+      }
+    }
+
+    mySelectedScheme = mySchemes.get(schemeToSelect.getName());
+
+    assert mySelectedScheme != null : schemeToSelect.getName() + "; myschemes=" + mySchemes;
   }
 
   private static void initScheme(@NotNull MyColorScheme scheme) {

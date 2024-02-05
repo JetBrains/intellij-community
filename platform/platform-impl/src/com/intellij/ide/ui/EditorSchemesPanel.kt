@@ -34,7 +34,7 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions)
       override fun getActions(): MutableCollection<AnAction> {
         val list = mutableListOf<AnAction>()
 
-        list.add(OpenEditorSchemeConfigurableAction(component))
+        list.add(OpenEditorSchemeConfigurableAction(component) { colorAndFontsOptions.selectedScheme.name })
         list.add(Separator())
         list.addAll(getExportImportActions(false))
         return list
@@ -59,7 +59,7 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions)
   override fun useBoldForNonRemovableSchemes(): Boolean = false
 }
 
-private class OpenEditorSchemeConfigurableAction(val component: Component) :
+private class OpenEditorSchemeConfigurableAction(val component: Component, val selectedSchemeProvider: () -> String?) :
   DumbAwareAction(IdeBundle.message("combobox.editor.color.scheme.edit")) {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -69,7 +69,11 @@ private class OpenEditorSchemeConfigurableAction(val component: Component) :
       ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject, ColorAndFontOptions::class.java)
     }
     else {
-      settings.select(settings.find("reference.settingsdialog.IDE.editor.colors"))
+      val configurable = settings.find("reference.settingsdialog.IDE.editor.colors") as? ColorAndFontOptions ?: return
+      selectedSchemeProvider()?.let {
+        configurable.preselectScheme(it)
+      }
+      settings.select(configurable)
     }
   }
 }
