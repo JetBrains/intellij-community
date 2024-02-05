@@ -3,21 +3,25 @@ package org.jetbrains.plugins.terminal.exp.history
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
 
-class CommandSearchAction : TerminalPromotedDumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    e.promptController?.showCommandSearch()
-  }
-
-  override fun update(e: AnActionEvent) {
-    val editor = e.editor
-    e.presentation.isEnabledAndVisible = editor != null && editor.isPromptEditor && LookupManager.getActiveLookup(editor) == null
-  }
-
+internal class CommandSearchAction : TerminalPromotedEditorAction(Handler()), ActionRemoteBehaviorSpecification.Disabled {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  private class Handler : EditorActionHandler() {
+    override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
+      dataContext.promptController?.showCommandSearch()
+    }
+
+    override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+      return editor.isPromptEditor && LookupManager.getActiveLookup(editor) == null
+    }
+  }
 }
