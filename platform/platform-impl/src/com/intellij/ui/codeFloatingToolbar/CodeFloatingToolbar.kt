@@ -204,7 +204,6 @@ class CodeFloatingToolbar(
       override fun beforeShown(event: LightweightWindowEvent) {
         activeMenuPopup = popup
         button.isSelected = true
-        button.repaint()
         alignButtonPopup(popup)
         HelpTooltip.setMasterPopupOpenCondition(button) { true }
       }
@@ -212,7 +211,6 @@ class CodeFloatingToolbar(
       override fun onClosed(event: LightweightWindowEvent) {
         activeMenuPopup = null
         button.isSelected = false
-        button.repaint()
       }
     })
   }
