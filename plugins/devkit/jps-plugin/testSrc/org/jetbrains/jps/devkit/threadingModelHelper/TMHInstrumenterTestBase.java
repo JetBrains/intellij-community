@@ -32,10 +32,12 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
   private static final String TESTING_BACKGROUND_THREAD_NAME = "TESTING_BACKGROUND_THREAD";
 
   private final String dependencyPath;
+  private final boolean useThreadingAssertions;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected TMHInstrumenterTestBase(String dependencyPath) {
+  protected TMHInstrumenterTestBase(String dependencyPath, boolean useThreadingAssertions) {
     this.dependencyPath = dependencyPath;
+    this.useThreadingAssertions = useThreadingAssertions;
   }
 
   final void doEdtTest() throws Exception {
@@ -69,7 +71,7 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
         classLoader.doDefineClass(null, classData);
       }
       else {
-        byte[] instrumentedClassData = TMHTestUtil.instrument(classData);
+        byte[] instrumentedClassData = TMHTestUtil.instrument(classData, useThreadingAssertions);
         if (instrumentedClassData != null) {
           testClass = new TestClass(classLoader.doDefineClass(null, instrumentedClassData), instrumentedClassData, true);
           if (printClassFiles) {

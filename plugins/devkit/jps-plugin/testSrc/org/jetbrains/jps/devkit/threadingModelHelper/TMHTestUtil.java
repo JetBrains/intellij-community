@@ -86,17 +86,22 @@ public final class TMHTestUtil {
     return lineNumbers;
   }
 
-  public static byte @Nullable [] instrument(byte @NotNull [] classData) {
+  public static byte @Nullable [] instrument(byte @NotNull [] classData, boolean useThreadingAssertions) {
     FailSafeClassReader reader = new FailSafeClassReader(classData);
     int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
     ClassWriter writer = new ClassWriter(reader, flags);
-    boolean instrumented = TMHInstrumenter.instrument(reader, writer, Set.of(
+
+    var generators = useThreadingAssertions ? TMHAssertionGenerator2.generators(
+      "com/intellij/util/concurrency/fake/ThreadingAssertions",
+      "com/intellij/util/concurrency/annotations/fake"
+    ) : Set.of(
       new TMHAssertionGenerator1.AssertEdt(REQUIRES_EDT_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
       new TMHAssertionGenerator1.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
       new TMHAssertionGenerator1.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
       new TMHAssertionGenerator1.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
       new TMHAssertionGenerator1.AssertNoReadAccess(REQUIRES_READ_LOCK_ABSENCE_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
-    ), true);
+    );
+    boolean instrumented = TMHInstrumenter.instrument(reader, writer, generators, true);
     return instrumented ? writer.toByteArray() : null;
   }
 }

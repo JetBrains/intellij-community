@@ -23,6 +23,10 @@ public class TMHInstrumentingBuilderTest extends JpsBuildTestCase {
     doSimpleTest("assertIsDispatchThread", "dependencies1");
   }
 
+  public void testSimple2() throws IOException {
+    doSimpleTest("assertEventDispatchThread", "dependencies2");
+  }
+
   private void doSimpleTest(String assertIsDispatchThread, String dependencyPath) throws IOException {
     String src = copyToProject(TEST_DATA_PATH + dependencyPath, "src");
     String testFileName = "Simple.java";
