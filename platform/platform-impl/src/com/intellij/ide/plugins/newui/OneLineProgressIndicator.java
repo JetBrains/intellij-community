@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.impl.status.InlineProgressIndicator;
 import com.intellij.ui.components.panels.Wrapper;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,6 +33,12 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
     if (!withText) {
       text.getParent().remove(text);
     }
+    updateProgressNow();
+    getComponent().setToolTipText(null);
+  }
+
+  public OneLineProgressIndicator(@Nls String progressTitle, boolean canBeCancelled) {
+    super(true, task(progressTitle, canBeCancelled));
     updateProgressNow();
     getComponent().setToolTipText(null);
   }
