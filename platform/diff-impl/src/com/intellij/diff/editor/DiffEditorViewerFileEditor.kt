@@ -5,10 +5,13 @@ import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffEditorViewerListener
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.FileEditorWithTextEditors
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.reopenVirtualFileEditor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -64,6 +67,21 @@ open class DiffEditorViewerFileEditor(
     override fun onActiveFileChanged() {
       val project = processor.context.project ?: return
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
+    }
+  }
+
+  companion object {
+    fun reloadDiffEditorsForFiles(project: Project, condition: (VirtualFile) -> Boolean) {
+      val editorManager = FileEditorManager.getInstance(project)
+      val diffFiles = editorManager.allEditors
+        .filter { it is DiffEditorViewerFileEditor }
+        .mapNotNull { it.file }
+        .filter(condition)
+        .toSet()
+
+      for (file in diffFiles) {
+        reopenVirtualFileEditor(project, file, file)
+      }
     }
   }
 }

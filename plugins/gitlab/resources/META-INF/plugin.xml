@@ -248,5 +248,8 @@
               activeInHeadlessMode="false"
               activeInTestMode="false"/>
   </projectListeners>
-
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.gitlab.util.GitLabRegistryValueListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
 </idea-plugin>

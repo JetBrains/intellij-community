@@ -223,4 +223,8 @@
               activeInHeadlessMode="false"
               activeInTestMode="false"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.github.GHRegistryValueListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
 </idea-plugin>

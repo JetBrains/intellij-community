@@ -2473,3 +2473,35 @@ internal interface FileEditorStateProvider {
 
   suspend fun getState(provider: FileEditorProvider): FileEditorState?
 }
+
+@RequiresEdt
+fun reopenVirtualFileEditor(project: Project, oldFile: VirtualFile, newFile: VirtualFile) {
+  val editorManager: FileEditorManagerEx = FileEditorManagerEx.getInstanceEx(project)
+  val windows: Array<EditorWindow> = editorManager.windows
+
+  val currentWindow: EditorWindow? = if (windows.size >= 2) editorManager.currentWindow else null
+
+  for (window in windows) {
+    reopenVirtualFileInEditor(editorManager, window, oldFile, newFile)
+  }
+
+  currentWindow?.requestFocus(false)
+}
+
+private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window: EditorWindow, oldFile: VirtualFile, newFile: VirtualFile) {
+  val oldComposite = window.getComposite(oldFile) ?: return // the old file is not opened in this split
+  val active = window.selectedComposite == oldComposite
+  val pinned = window.isFilePinned(oldFile)
+  var newOptions = FileEditorOpenOptions(selectAsCurrent = active, requestFocus = active, pin = pinned)
+  if (oldFile == newFile) {
+    val index = window.files.indexOf(oldFile)
+    newOptions = newOptions.withIndex(index)
+    window.closeFile(oldFile, disposeIfNeeded = false)
+    editorManager.openFile(newFile, window, newOptions)
+  }
+  else {
+    val composite: FileEditorComposite = editorManager.openFile(newFile, window, newOptions)
+    val ok = composite.allEditors.any { editor: FileEditor -> editor.file == newFile }
+    if (ok) window.closeFile(oldFile)
+  }
+}
