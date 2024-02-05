@@ -255,7 +255,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_JDK_10") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk10()
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(LanguageLevel.JDK_10)
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_REFLECT") ->
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithReflect()

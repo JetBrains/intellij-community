@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.quickfix.tests
  
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -38,16 +39,12 @@ abstract class KotlinCreateFunctionFromUsageTest : LightIntentionActionTestCase(
         return false
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk10()
-    }
-
     override fun doSingleTest(fileSuffix: String, testDataPath: String) {
         val filePath = "$testDataPath/$relativeBasePath/$fileSuffix"
         val test: LightJavaCodeInsightFixtureTestCase
         val singleFileTest:AbstractK2QuickFixTest = object : AbstractK2QuickFixTest() {
             override fun getProjectDescriptor(): LightProjectDescriptor {
-                return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk10()
+                return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(LanguageLevel.JDK_10)
             }
 
             override val testDataDirectory: File
@@ -73,7 +70,7 @@ abstract class KotlinCreateFunctionFromUsageTest : LightIntentionActionTestCase(
         else {
             test = object : AbstractK2MultiFileQuickFixTest() {
                 override fun getProjectDescriptor(): LightProjectDescriptor {
-                    return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk10()
+                    return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(LanguageLevel.JDK_10)
                 }
 
                 override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
@@ -94,19 +91,12 @@ abstract class KotlinCreateFunctionFromUsageTest : LightIntentionActionTestCase(
         test.runBare()
     }
 
-    // do not create another project, since we instantiate and run test cases manually in doSingleTest
-    override fun setUp() {
-    }
-
-    override fun tearDown() {
-    }
-
     /**
      * Class names correspond to the testData directories inside /idea/tests/testData/quickfix/createFromUsage/
      */
     class FromJava : KotlinCreateFunctionFromUsageTest()
     class FromKotlinToJava : KotlinCreateFunctionFromUsageTest()
-    class Call {
+    class Call /*: KotlinCreateFunctionFromUsageTest()*/ {
         class Abstract : KotlinCreateFunctionFromUsageTest()
     }
 }
