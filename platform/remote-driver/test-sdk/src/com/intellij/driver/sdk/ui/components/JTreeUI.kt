@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: Locators.byType(JTree::class.java),
                                                               JTreeUiComponent::class.java)
 
-class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
+open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private val fixture by lazy { driver.new(JTreeFixtureRef::class, robotService.robot, component) }
 
   private fun clickRow(row: Int) = fixture.clickRow(row)
@@ -64,7 +64,7 @@ class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  private fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path,
+  protected fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path,
                                                                                                             fullMatch = fullMatch).singleOrNull()
 
   private fun findExpandedPaths(vararg path: String,
