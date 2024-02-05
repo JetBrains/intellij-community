@@ -96,6 +96,6 @@ public class IJPerfCompletionTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + TestUtil.getDataSubPath("completion");
+    return PathManager.getCommunityHomePath() + TestUtil.getDataSubPath("completion");
   }
 }

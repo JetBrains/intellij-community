@@ -56,6 +56,6 @@ public class IJPerfParserTest extends ParsingTestCase {
   @Override
   @NonNls
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + TestUtil.getDataSubPath("");
+    return PathManager.getCommunityHomePath() + TestUtil.getDataSubPath("");
   }
 }

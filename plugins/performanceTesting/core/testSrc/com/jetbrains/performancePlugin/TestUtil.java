@@ -9,6 +9,6 @@ public final class TestUtil {
 
   @NonNls
   public static String getDataSubPath(@NonNls String theme) {
-    return "/plugins/performanceTesting/testData/" + theme;
+    return "/plugins/performanceTesting/core/testData/" + theme;
   }
 }

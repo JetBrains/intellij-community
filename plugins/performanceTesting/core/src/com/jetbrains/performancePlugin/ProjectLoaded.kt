@@ -187,8 +187,8 @@ class ProjectLoaded : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
     if (System.getProperty("com.sun.management.jmxremote") == "true") {
       service<InvokerService>().register({ PerformanceTestSpan.TRACER },
-                            { PerformanceTestSpan.getContext() },
-                            { takeScreenshotOfAllWindowsBlocking(it) })
+                                         { PerformanceTestSpan.getContext() },
+                                         { takeScreenshotOfAllWindowsBlocking(it) })
     }
 
     if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {

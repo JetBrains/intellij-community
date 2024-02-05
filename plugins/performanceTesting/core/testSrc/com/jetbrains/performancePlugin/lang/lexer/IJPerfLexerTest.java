@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.lang.lexer;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LexerTestCase;
 import com.jetbrains.performancePlugin.TestUtil;
 import com.jetbrains.performancePlugin.lang.IJPerfFileType;
@@ -63,6 +64,11 @@ public class IJPerfLexerTest extends LexerTestCase {
   @Override
   protected @NotNull Lexer createLexer() {
     return new IJPerfLexerAdapter();
+  }
+
+  @Override
+  protected @NotNull String getPathToTestDataFile(@NotNull String extension) {
+    return PathManager.getCommunityHomePath() + "/" + getDirPath() + "/" + getTestName(true) + extension;
   }
 
   @Override
