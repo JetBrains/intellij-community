@@ -31,6 +31,13 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
   private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/instrumenter/";
   private static final String TESTING_BACKGROUND_THREAD_NAME = "TESTING_BACKGROUND_THREAD";
 
+  private final String dependencyPath;
+
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  protected TMHInstrumenterTestBase(String dependencyPath) {
+    this.dependencyPath = dependencyPath;
+  }
+
   final void doEdtTest() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     invokeMethod(testClass.aClass);
@@ -83,7 +90,7 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
     File testFile = PathManagerEx.findFileUnderProjectHome(TEST_DATA_PATH + getTestName(false) + ".java", getClass());
     File classesDir = FileUtil.createTempDirectory("tmh-test-output", null);
 
-    File dependenciesDir = PathManagerEx.findFileUnderProjectHome(TEST_DATA_PATH + "dependencies", getClass());
+    File dependenciesDir = PathManagerEx.findFileUnderProjectHome(TEST_DATA_PATH + dependencyPath, getClass());
     File[] dependencies = dependenciesDir.listFiles();
     if (dependencies == null || dependencies.length == 0) {
       throw new IllegalStateException("Cannot find dependencies at " + dependenciesDir.getAbsolutePath());

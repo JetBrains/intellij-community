@@ -8,6 +8,10 @@ import static com.intellij.util.concurrency.ThreadingAssertions.MUST_NOT_EXECUTE
 
 public class TMHInstrumenter1Test extends TMHInstrumenterTestBase {
 
+  public TMHInstrumenter1Test() {
+    super("dependencies1");
+  }
+
   public void testSimple() throws Exception {
     doEdtTest();
   }
