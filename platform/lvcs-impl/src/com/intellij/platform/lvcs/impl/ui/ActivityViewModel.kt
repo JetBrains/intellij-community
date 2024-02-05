@@ -1,26 +1,32 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.history.integration.IdeaGateway
+import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.*
 
 @OptIn(FlowPreview::class)
-internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private val activityScope: ActivityScope, coroutineScope: CoroutineScope) {
+internal class ActivityViewModel(private val project: Project, gateway: IdeaGateway, private val activityScope: ActivityScope, coroutineScope: CoroutineScope) {
   private val eventDispatcher = EventDispatcher.create(ActivityModelListener::class.java)
 
   internal val activityProvider: ActivityProvider = LocalHistoryActivityProvider(project, gateway)
 
   private val activityItemsFlow = MutableStateFlow(ActivityData.EMPTY)
   private val selectionFlow = MutableStateFlow<ActivitySelection?>(null)
+  private val diffDataFlow = MutableStateFlow<Pair<ActivitySelection?, ActivityDiffData?>>(Pair(null, null))
 
   private val scopeFilterFlow = MutableStateFlow<String?>(null)
   private val activityFilterFlow = MutableStateFlow<String?>(null)
@@ -58,6 +64,7 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
             }
           }
         }
+        diffDataFlow.value = selection to diffData
         withContext(Dispatchers.EDT) {
           eventDispatcher.multicaster.onDiffDataLoaded(diffData)
         }
@@ -83,6 +90,20 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
     }
   }
 
+  @RequiresEdt
+  internal fun loadDiffDataSynchronously(): ActivityDiffData? {
+    val lastSelection = selectionFlow.value ?: return null
+
+    val (lastSelectionWithDiffData, lastDiffData) = diffDataFlow.value
+    if (lastSelectionWithDiffData == lastSelection) return lastDiffData
+
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+      runBlockingCancellable {
+        diffDataFlow.first { it.first == lastSelection }
+      }
+    }, LocalHistoryBundle.message("activity.diff.loading"), true, project).second
+  }
+
   internal val isScopeFilterSupported get() = activityProvider.isScopeFilterSupported(activityScope)
   internal val isActivityFilterSupported get() = activityProvider.isActivityFilterSupported(activityScope)
 
@@ -97,6 +118,7 @@ internal class ActivityViewModel(project: Project, gateway: IdeaGateway, private
     }
   }
 
+  @RequiresEdt
   fun setSelection(selection: ActivitySelection?) {
     selectionFlow.value = selection
   }

@@ -22,16 +22,19 @@ import com.intellij.platform.lvcs.impl.filePath
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import javax.swing.JComponent
 
-internal open class CombinedActivityDiffPreview(project: Project,
-                                                targetComponent: JComponent,
-                                                val scope: ActivityScope,
-                                                parentDisposable: Disposable) :
+internal abstract class CombinedActivityDiffPreview(project: Project,
+                                                    targetComponent: JComponent,
+                                                    val scope: ActivityScope,
+                                                    parentDisposable: Disposable) :
   CombinedDiffPreview(project, targetComponent, true, parentDisposable) {
 
   private var diffData: ActivityDiffData? = null
 
+  abstract fun loadDiffDataSynchronously(): ActivityDiffData?
+
   override fun performDiffAction(): Boolean {
     LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.Diff, scope)
+    setDiffData(loadDiffDataSynchronously(), forceUpdate = true)
     return super.performDiffAction()
   }
 
@@ -46,9 +49,11 @@ internal open class CombinedActivityDiffPreview(project: Project,
     return LocalHistoryBundle.message("activity.diff.tab.title")
   }
 
-  fun setDiffData(diffData: ActivityDiffData?) {
-    this.diffData = diffData
-    updatePreview()
+  fun setDiffData(diffData: ActivityDiffData?, forceUpdate: Boolean = false) {
+    if (this.diffData != diffData) {
+      this.diffData = diffData
+      if (forceUpdate) updatePreviewProcessor.updateBlocks() else updatePreview()
+    }
   }
 
   private inner class CombinedActivityDiffPreviewModel(project: Project, parentDisposable: Disposable) :

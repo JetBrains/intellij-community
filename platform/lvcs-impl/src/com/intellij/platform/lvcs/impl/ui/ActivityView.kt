@@ -46,6 +46,8 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     updateEmptyText(true)
   }
   private val editorDiffPreview = object : CombinedActivityDiffPreview(project, activityList, activityScope, this@ActivityView) {
+    override fun loadDiffDataSynchronously() = model.loadDiffDataSynchronously()
+
     override fun returnFocusToSourceComponent() {
       IdeFocusManager.getInstance(project).requestFocus(activityList, true)
     }
