@@ -42,7 +42,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        // We expect two events: One published before and one after the PSI tree modification.
         trackerA.assertModified("module A after out-of-block change")
         trackerB.assertNotModified("unmodified module B")
         trackerC.assertNotModified("unmodified module C")
@@ -113,7 +112,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        // In total, seven PSI tree changes are processed: Two `BEFORE_CHILD_REPLACEMENT`, one `CHILDREN_CHANGED`, and four `CHILD_ADDED`.
         trackerA.assertModified("module A after adding a space in an identifier")
     }
 
@@ -209,7 +207,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        // In total, seven PSI tree changes are processed: Three `BEFORE_CHILD_REMOVAL`, three `CHILD_REMOVED`, and one `CHILD_ADDED`.
         trackerA.assertModified("module A after adding a modifier to a function")
     }
 
@@ -230,8 +227,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        // In total, seventeen PSI tree changes are processed: Five `BEFORE_CHILD_REMOVAL`, two `CHILDREN_CHANGED`, seven `CHILD_REMOVED`,
-        // two `CHILD_ADDED`, and one `BEFORE_CHILD_REPLACEMENT`.
         trackerA.assertModified("module A after adding a return type to a function")
     }
 
@@ -409,7 +404,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        // We expect two events: One published before and one after the PSI tree modification.
         trackerA.assertModified("script A after out-of-block modification")
         trackerB.assertNotModified("unmodified script B")
         trackerC.assertNotModified("unmodified module C")
@@ -433,7 +427,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        // We expect two events: One published before and one after the PSI tree modification.
         trackerA.assertModified("not-under-content-root file A after out-of-block modification")
         trackerB.assertNotModified("unmodified not-under-content-root file B")
         trackerC.assertNotModified("unmodified module C")
