@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel;
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyTraverser;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import org.gradle.api.Project;
@@ -14,8 +16,6 @@ import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyTraverser;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl;
 
 import java.io.File;
 import java.util.Collection;
@@ -52,10 +52,10 @@ public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilder
 
     Configuration classpathConfiguration = project.getBuildscript().getConfigurations().findByName(CLASSPATH_CONFIGURATION_NAME);
     if (classpathConfiguration != null) {
-      Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project)
+      Collection<ExternalDependency> dependencies = new GradleDependencyResolver(context, project)
         .resolveDependencies(classpathConfiguration);
 
-      for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {
+      for (ExternalDependency dependency : new GradleDependencyTraverser(dependencies)) {
         if (dependency instanceof ExternalProjectDependency) {
           ExternalProjectDependency projectDependency = (ExternalProjectDependency)dependency;
           Collection<File> projectDependencyArtifacts = projectDependency.getProjectDependencyArtifacts();

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.ENABLE_KGP_DEPENDENCY_RESOLUTION
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
@@ -9,11 +10,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImport
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolver
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl
 
 interface HasDependencyResolver {
-    val dependencyResolver: DependencyResolver
+    val dependencyResolver: GradleDependencyResolver
     val dependencyMapper: KotlinDependencyMapper
 }
 
@@ -122,7 +121,7 @@ internal class MultiplatformModelImportingContextImpl(
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
 
-    override val dependencyResolver = DependencyResolverImpl(modelBuilderContext, project)
+    override val dependencyResolver = GradleDependencyResolver(modelBuilderContext, project)
     override val dependencyMapper = KotlinDependencyMapper()
 
     /** see [initializeCompilations] */

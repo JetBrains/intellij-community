@@ -52,7 +52,11 @@ import static java.util.stream.Collectors.*;
 /**
  * @author Vladislav.Soroka
  */
-public final class DependencyResolverImpl implements DependencyResolver {
+public final class GradleDependencyResolver {
+
+  private static final @NotNull String COMPILE_SCOPE = "COMPILE";
+  private static final @NotNull String RUNTIME_SCOPE = "RUNTIME";
+  private static final @NotNull String PROVIDED_SCOPE = "PROVIDED";
 
   private static final boolean IS_83_OR_BETTER = GradleVersionUtil.isCurrentGradleAtLeast("8.3");
   private static final Pattern PUNCTUATION_IN_SUFFIX_PATTERN = Pattern.compile("[\\p{Punct}\\s]+$");
@@ -61,7 +65,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   private final @NotNull Project myProject;
   private final @NotNull GradleDependencyDownloadPolicy myDownloadPolicy;
 
-  public DependencyResolverImpl(
+  public GradleDependencyResolver(
     @NotNull ModelBuilderContext context,
     @NotNull Project project,
     @NotNull GradleDependencyDownloadPolicy downloadPolicy
@@ -71,11 +75,10 @@ public final class DependencyResolverImpl implements DependencyResolver {
     myDownloadPolicy = downloadPolicy;
   }
 
-  public DependencyResolverImpl(@NotNull ModelBuilderContext context, @NotNull Project project) {
+  public GradleDependencyResolver(@NotNull ModelBuilderContext context, @NotNull Project project) {
     this(context, project, GradleDependencyDownloadPolicyCache.getInstance(context).getDependencyDownloadPolicy(project));
   }
 
-  @Override
   public Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName) {
     if (configurationName == null) return emptyList();
     Collection<ExternalDependency> dependencies = resolveDependencies(myProject.getConfigurations().findByName(configurationName), null);
@@ -86,7 +89,6 @@ public final class DependencyResolverImpl implements DependencyResolver {
     return dependencies;
   }
 
-  @Override
   public Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration) {
     Collection<ExternalDependency> dependencies = resolveDependencies(configuration, null);
     int order = 0;
@@ -96,7 +98,6 @@ public final class DependencyResolverImpl implements DependencyResolver {
     return dependencies;
   }
 
-  @Override
   public Collection<ExternalDependency> resolveDependencies(@NotNull final SourceSet sourceSet) {
     Collection<ExternalDependency> result = new ArrayList<>();
 

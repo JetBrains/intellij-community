@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve
 
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -11,10 +11,10 @@ import java.io.File
 import java.util.stream.Stream
 
 /**
- * @see DependencyResolverImpl
+ * @see GradleDependencyResolver
  * @author Denes Daniel
  */
-class DependencyResolverImplTest {
+class GradleDependencyResolverTest {
 
   @field:TempDir
   lateinit var tempDir: File
@@ -24,7 +24,7 @@ class DependencyResolverImplTest {
   @Test
   fun `choose auxiliary artifact file when there is none to choose from`() {
     val main = testFile("foo-bar.jar")
-    assertThat(DependencyResolverImpl.chooseAuxiliaryArtifactFile(main, setOf())).isNull()
+    assertThat(GradleDependencyResolver.chooseAuxiliaryArtifactFile(main, setOf())).isNull()
   }
 
   @Test
@@ -34,10 +34,10 @@ class DependencyResolverImplTest {
     val valid2 = testFile("foo-bar-sources.jar")
     val valid3 = testFile("foo-bar-sources.src.jar")
     val nonsense = testFile("nonsense")
-    assertThat(DependencyResolverImpl.chooseAuxiliaryArtifactFile(main, setOf(valid1))).isSameAs(valid1)
-    assertThat(DependencyResolverImpl.chooseAuxiliaryArtifactFile(main, setOf(valid2))).isSameAs(valid2)
-    assertThat(DependencyResolverImpl.chooseAuxiliaryArtifactFile(main, setOf(valid3))).isSameAs(valid3)
-    assertThat(DependencyResolverImpl.chooseAuxiliaryArtifactFile(main, setOf(nonsense))).isSameAs(nonsense)
+    assertThat(GradleDependencyResolver.chooseAuxiliaryArtifactFile(main, setOf(valid1))).isSameAs(valid1)
+    assertThat(GradleDependencyResolver.chooseAuxiliaryArtifactFile(main, setOf(valid2))).isSameAs(valid2)
+    assertThat(GradleDependencyResolver.chooseAuxiliaryArtifactFile(main, setOf(valid3))).isSameAs(valid3)
+    assertThat(GradleDependencyResolver.chooseAuxiliaryArtifactFile(main, setOf(nonsense))).isSameAs(nonsense)
   }
 
   data class ChooseAuxiliaryTestCase(val main: String, val auxiliaries: Set<String>, val correctAuxiliary: String = main) {
@@ -57,7 +57,7 @@ class DependencyResolverImplTest {
     val main = testFile(testCase.main)
     val auxiliaries = testCase.auxiliaries.map(::testFile).toSet()
     val correctAuxiliary = testFile(testCase.correctAuxiliary)
-    assertThat(DependencyResolverImpl.chooseAuxiliaryArtifactFile(main, auxiliaries)).isEqualTo(correctAuxiliary)
+    assertThat(GradleDependencyResolver.chooseAuxiliaryArtifactFile(main, auxiliaries)).isEqualTo(correctAuxiliary)
   }
 
   companion object {

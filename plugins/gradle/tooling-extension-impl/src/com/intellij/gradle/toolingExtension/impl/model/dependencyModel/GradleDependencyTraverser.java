@@ -11,10 +11,10 @@ import java.util.Queue;
 /**
  * @author Vladislav.Soroka
  */
-public class DependencyTraverser implements Iterable<ExternalDependency> {
+public class GradleDependencyTraverser implements Iterable<ExternalDependency> {
   private final Collection<ExternalDependency> collection;
 
-  public DependencyTraverser(Collection<ExternalDependency> c) {
+  public GradleDependencyTraverser(Collection<ExternalDependency> c) {
     collection = c;
   }
 

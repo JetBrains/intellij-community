@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
@@ -19,7 +20,6 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.DependencyResolverImpl
 
 import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.cleanupSharedSourceFolders
 import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.containsAllSourceSetOutput
@@ -293,7 +293,7 @@ class GradleSourceSetGroovyHelper {
       }
 
       if (resolveSourceSetDependencies) {
-        def dependencies = new DependencyResolverImpl(context, project)
+        def dependencies = new GradleDependencyResolver(context, project)
           .resolveDependencies(sourceSet)
         externalSourceSet.dependencies.addAll(dependencies)
       }
