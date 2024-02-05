@@ -63,9 +63,6 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
       .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, ExtendableHTMLViewFactory.Extensions.icons(::existingIconsProvider))
       .build()
 
-    // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
-    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
-
     // BasicTextUI adds caret width to the preferred size of the component (see usages of 'caretMargin' field in BasicTextUI),
     // so the resulting width is 1px greater than the width specified inside updateEditorPaneText() if line length is limited.
     // Set caret width to 0, to make the width of the component equal to the specified width.
@@ -96,6 +93,10 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     background = UIUtil.TRANSPARENT_COLOR
     isOpaque = false
     disabledTextColor = JBUI.CurrentTheme.Label.disabledForeground()
+
+    // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
+    (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
+
     patchFont()
     updateEditorPaneText()
   }
