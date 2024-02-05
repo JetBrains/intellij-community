@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.JDOMUtil
@@ -20,11 +20,9 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.io.path.bufferedReader
 
-@Suppress("SpellCheckingInspection")
 private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
 
 @VisibleForTesting
-@Suppress("SpellCheckingInspection")
 internal val MAJOR_RELEASE_DATE_PATTERN: DateTimeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd")
 
 @Suppress("KotlinRedundantDiagnosticSuppress", "UNNECESSARY_LATEINIT")
@@ -62,7 +60,7 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       .bufferedReader()
       .use(::readXmlAsModel)
 
-
+    @Suppress("DEPRECATION")
     val applicationInfoOverrides = productProperties.applicationInfoOverride(project)
 
     val versionTag = root.getChild("version")!!
@@ -154,14 +152,16 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
     check("$majorVersion$minorVersion".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
       "'major=$majorVersion' and 'minor=$minorVersion' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
     }
-    val artifactsServer = context.proprietaryBuildTools.artifactsServer
+    
+    val artifactServer = context.proprietaryBuildTools.artifactsServer
     var builtinPluginsRepoUrl = ""
-    if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "$productCode-plugins/plugins.xml")!!
+    if (artifactServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+      builtinPluginsRepoUrl = artifactServer.urlToArtifact(context, "$productCode-plugins/plugins.xml")!!
       check(!builtinPluginsRepoUrl.startsWith("http:")) {
         "Insecure artifact server: $builtinPluginsRepoUrl"
       }
     }
+    
     val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(context.options.buildDateInSeconds), ZoneOffset.UTC)
     var patchedAppInfo = BuildUtils.replaceAll(
       text = Files.readString(appInfoXmlPath),
@@ -176,56 +176,73 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
 
     val isEapOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
     val suffixOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
+    @Suppress("DEPRECATION")
     val appInfoOverride = context.productProperties.applicationInfoOverride(context.project)
     if (isEapOverride != null || suffixOverride != null || appInfoOverride != null) {
-      val element = JDOMUtil.load(patchedAppInfo)
-      @Suppress("HttpUrlsUsage")
-      val namespace = Namespace.getNamespace("http://jetbrains.org/intellij/schema/application-info")
-
-      if (isEapOverride != null || suffixOverride != null) {
-        val version = element.getChildren("version", namespace)
-                        .singleOrNull() ?: error("Could not find child element 'version' under root of '$appInfoXmlPath'")
-        isEapOverride?.let { version.setAttribute("eap", it) }
-        suffixOverride?.let { version.setAttribute("suffix", it) }
-      }
-
-      if (appInfoOverride != null) {
-        fun replaceAttribute(element: Element, tag: String, override: String?) {
-          if (override != null) {
-            element.setAttribute(tag, override)
-          } else {
-            element.removeAttribute(tag)
-          }
-        }
-
-        val names = element.getChildren("names", namespace)
-          .singleOrNull() ?: error("Could not find or more than one child element 'names' under root of '$appInfoXmlPath'")
-
-        val version = element.getChildren("version", namespace)
-          .singleOrNull() ?: error("Could not find or more than one child element 'version' under root of '$appInfoXmlPath'")
-
-        val build = element.getChildren("build", namespace)
-          .singleOrNull() ?: error("Could not find or more than one child element 'build' under root of '$appInfoXmlPath'")
-
-        names.setAttribute("fullname", appInfoOverride.fullProductName)
-        replaceAttribute(names, "edition", appInfoOverride.editionName)
-        replaceAttribute(names, "motto", appInfoOverride.motto)
-
-        replaceAttribute(version, "eap", appInfoOverride.eap)
-        replaceAttribute(version, "major", appInfoOverride.majorVersion)
-        replaceAttribute(version, "minor", appInfoOverride.minorVersion)
-        replaceAttribute(version, "micro", appInfoOverride.microVersion)
-        replaceAttribute(version, "patch", appInfoOverride.patchVersion)
-        replaceAttribute(version, "full", appInfoOverride.fullVersionFormat)
-        replaceAttribute(version, "suffix", appInfoOverride.versionSuffix)
-
-        replaceAttribute(build, "majorReleaseDate", appInfoOverride.majorReleaseDate)
-      }
-
-      patchedAppInfo = JDOMUtil.write(element)
+      patchedAppInfo = withAppInfoOverride(originalPatchedAppInfo = patchedAppInfo,
+                                           isEapOverride = isEapOverride,
+                                           suffixOverride = suffixOverride,
+                                           appInfoXmlPath = appInfoXmlPath,
+                                           appInfoOverride = appInfoOverride)
     }
     return@lazy patchedAppInfo
   }
+}
+
+private fun withAppInfoOverride(originalPatchedAppInfo: String,
+                                isEapOverride: String?,
+                                suffixOverride: String?,
+                                appInfoXmlPath: Path,
+                                @Suppress("DEPRECATION") appInfoOverride: ProductProperties.ApplicationInfoOverrides?): String {
+  val element = JDOMUtil.load(originalPatchedAppInfo)
+
+  @Suppress("HttpUrlsUsage")
+  val namespace = Namespace.getNamespace("http://jetbrains.org/intellij/schema/application-info")
+
+  if (isEapOverride != null || suffixOverride != null) {
+    val version = element.getChildren("version", namespace).singleOrNull()
+                  ?: error("Could not find child element 'version' under root of '$appInfoXmlPath'")
+    isEapOverride?.let { version.setAttribute("eap", it) }
+    suffixOverride?.let { version.setAttribute("suffix", it) }
+  }
+
+  if (appInfoOverride == null) {
+    return JDOMUtil.write(element)
+  }
+
+  fun replaceAttribute(element: Element, tag: String, override: String?) {
+    if (override != null) {
+      element.setAttribute(tag, override)
+    }
+    else {
+      element.removeAttribute(tag)
+    }
+  }
+
+  val names = element.getChildren("names", namespace).singleOrNull()
+              ?: error("Could not find or more than one child element 'names' under root of '$appInfoXmlPath'")
+
+  val version = element.getChildren("version", namespace).singleOrNull()
+                ?: error("Could not find or more than one child element 'version' under root of '$appInfoXmlPath'")
+
+  val build = element.getChildren("build", namespace).singleOrNull()
+              ?: error("Could not find or more than one child element 'build' under root of '$appInfoXmlPath'")
+
+  names.setAttribute("fullname", appInfoOverride.fullProductName)
+  replaceAttribute(names, "edition", appInfoOverride.editionName)
+  replaceAttribute(names, "motto", appInfoOverride.motto)
+
+  replaceAttribute(version, "eap", appInfoOverride.eap)
+  replaceAttribute(version, "major", appInfoOverride.majorVersion)
+  replaceAttribute(version, "minor", appInfoOverride.minorVersion)
+  replaceAttribute(version, "micro", appInfoOverride.microVersion)
+  replaceAttribute(version, "patch", appInfoOverride.patchVersion)
+  replaceAttribute(version, "full", appInfoOverride.fullVersionFormat)
+  replaceAttribute(version, "suffix", appInfoOverride.versionSuffix)
+
+  replaceAttribute(build, "majorReleaseDate", appInfoOverride.majorReleaseDate)
+
+  return JDOMUtil.write(element)
 }
 
 //copy of ApplicationInfoImpl.shortenCompanyName
