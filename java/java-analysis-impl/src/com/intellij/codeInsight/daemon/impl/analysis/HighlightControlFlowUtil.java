@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.FileTypeUtils;
@@ -457,8 +458,10 @@ public final class HighlightControlFlowUtil {
       String description = JavaErrorBundle.message("variable.not.initialized", name);
       HighlightInfo.Builder builder =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
-      IntentionAction action1 = getQuickFixFactory().createAddVariableInitializerFix(variable);
-      builder.registerFix(action1, null, null, null, null);
+      if (!(variable instanceof LightRecordField)) {
+        IntentionAction action1 = getQuickFixFactory().createAddVariableInitializerFix(variable);
+        builder.registerFix(action1, null, null, null, null);
+      }
       if (variable instanceof PsiLocalVariable) {
         IntentionAction action = HighlightFixUtil.createInsertSwitchDefaultFix(variable, topBlock, expression);
         if (action != null) {
