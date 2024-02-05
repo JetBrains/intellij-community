@@ -337,7 +337,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
       val result = importModules(spec, syncActivity, projectsToResolve, modelsProvider)
 
-      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+      withContext(tracer.span("notifyMavenProblems")) {
+        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+      }
 
       return result
     }
@@ -352,7 +354,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
                ProjectImportCollector.SUBMODULES_COUNT.with(projectsTree.projects.count()))
       }
-      ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncFinished(myProject)
+      withContext(tracer.span("syncFinished")) {
+        ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncFinished(myProject)
+      }
     }
   }
 
