@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.Method;
+
+import java.util.Set;
 
 class TMHAssertionGenerator {
   private static final String DEFAULT_APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/ApplicationManager";
@@ -164,5 +166,15 @@ class TMHAssertionGenerator {
     AssertNoReadAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
       super(annotationClass, applicationManagerClass, applicationClass, new Method("assertReadAccessNotAllowed", "()V"));
     }
+  }
+
+  static Set<? extends TMHAssertionGenerator> generators() {
+    return Set.of(
+      new TMHAssertionGenerator.AssertEdt(),
+      new TMHAssertionGenerator.AssertBackgroundThread(),
+      new TMHAssertionGenerator.AssertReadAccess(),
+      new TMHAssertionGenerator.AssertWriteAccess(),
+      new TMHAssertionGenerator.AssertNoReadAccess()
+    );
   }
 }
