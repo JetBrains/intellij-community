@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.execution.*;
@@ -273,7 +273,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
         if (!id.equals(myId)) {
-          return;
+          throw new IllegalStateException("This test listener is not supposed to listen to more than 1 task");
         }
         if (StringUtil.isEmptyOrSpaces(text)) return;
         (stdOut ? System.out : System.err).print(text);
@@ -283,7 +283,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
       @Override
       public void onEnd(@NotNull ExternalSystemTaskId id) {
         if (!id.equals(myId)) {
-          return;
+          throw new IllegalStateException("This test listener is not supposed to listen to more than 1 task");
         }
         done.up();
       }
@@ -305,7 +305,8 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
           fail(e.getMessage());
         }
       });
-      Assert.assertTrue(done.waitFor(30000));
+      Assert.assertTrue("Execution did not finish in 30 seconds. Flushing available build output:\n" + out,
+                        done.waitFor(30000));
     }
     finally {
       notificationManager.removeNotificationListener(listener);
