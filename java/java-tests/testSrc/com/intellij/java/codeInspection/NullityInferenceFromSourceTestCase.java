@@ -334,7 +334,7 @@ public abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeIn
   }
 
   public void testNotNullSwitchExpression() {
-    assertNotEquals(Nullability.NULLABLE,
+    assertEquals(Nullability.NOT_NULL,
                     inferNullability(
                       parse("""
                               private static String test(Object t) {

@@ -113,7 +113,10 @@ class MethodReturnInferenceVisitor {
     List<ReturnValue> values = new ArrayList<>();
     if (!rules.isEmpty()) {
       for (LighterASTNode rule : rules) {
-        values.add(findValueInRule(rule));
+        ReturnValue ruleReturnValue = findValueInRule(rule);
+        if (ruleReturnValue != null) {
+          values.add(ruleReturnValue);
+        }
       }
     }
     else {
@@ -145,7 +148,7 @@ class MethodReturnInferenceVisitor {
     return visitor.values;
   }
 
-  @NotNull
+  @Nullable
   private ReturnValue findValueInRule(@NotNull LighterASTNode rule) {
     LighterASTNode body = firstChildOfType(tree, rule, PsiSwitchLabeledRuleStatementImpl.BODY_STATEMENTS);
     if (body == null) {
@@ -153,6 +156,9 @@ class MethodReturnInferenceVisitor {
     }
     else if (body.getTokenType() == EXPRESSION_STATEMENT) {
       return getExpressionValue(findExpressionChild(tree, body));
+    }
+    else if (body.getTokenType() == THROW_STATEMENT) {
+      return null;
     }
     else if (body.getTokenType() == BLOCK_STATEMENT) {
       List<ReturnValue> values = findValueInSwitchBlock(body);
