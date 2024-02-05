@@ -22,11 +22,12 @@ public class ControlFlowOptions {
   };
 
   public static final @NotNull ControlFlowOptions NO_CONST_EVALUATE = create(false, false, true);
+  public static final @NotNull ControlFlowOptions NO_CONST_EVALUATE_EXPLICIT_EXCEPTIONS = new ControlFlowOptions(false, false, false, true);
 
   private final boolean myEnableShortCircuit;
   private final boolean myEvaluateConstantIfCondition;
   private final boolean myExceptionAfterAssignment;
-
+  private final boolean myOnlyExplicitExceptions;
   public static ControlFlowOptions create(boolean enableShortCircuit,
                                           boolean evaluateConstantIfCondition,
                                           boolean exceptionAfterAssignment) {
@@ -36,9 +37,15 @@ public class ControlFlowOptions {
   }
 
   private ControlFlowOptions(boolean enableShortCircuit, boolean evaluateConstantIfCondition, boolean exceptionAfterAssignment) {
+    this(enableShortCircuit, evaluateConstantIfCondition, exceptionAfterAssignment, false);
+  }
+
+  private ControlFlowOptions(boolean enableShortCircuit, boolean evaluateConstantIfCondition, boolean exceptionAfterAssignment,
+                             boolean onlyExplicitException) {
     myEnableShortCircuit = enableShortCircuit;
     myEvaluateConstantIfCondition = evaluateConstantIfCondition;
     myExceptionAfterAssignment = exceptionAfterAssignment;
+    myOnlyExplicitExceptions = onlyExplicitException;
   }
 
   /**
@@ -64,6 +71,12 @@ public class ControlFlowOptions {
   public boolean isExceptionAfterAssignment() {
     return myExceptionAfterAssignment;
   }
+  /**
+   * @return true if control flow assumes that exception could be thrown only in explicit points
+   */
+  public boolean isOnlyExplicitExceptions() {
+    return myOnlyExplicitExceptions;
+  }
 
   /**
    * @return ControlFlowOptions object that is the same as current but without "evaluate constant if condition" option.
@@ -81,6 +94,7 @@ public class ControlFlowOptions {
     ControlFlowOptions options = (ControlFlowOptions)o;
     return myEnableShortCircuit == options.myEnableShortCircuit &&
            myEvaluateConstantIfCondition == options.myEvaluateConstantIfCondition &&
+           myOnlyExplicitExceptions == options.myOnlyExplicitExceptions &&
            myExceptionAfterAssignment == options.myExceptionAfterAssignment;
   }
 
@@ -89,6 +103,7 @@ public class ControlFlowOptions {
     int result = 1;
     result = 31 * result + (myEnableShortCircuit ? 1231 : 1237);
     result = 31 * result + (myEvaluateConstantIfCondition ? 1231 : 1237);
+    result = 31 * result + (myOnlyExplicitExceptions ? 1231 : 1237);
     result = 31 * result + (myExceptionAfterAssignment ? 1231 : 1237);
     return result;
   }

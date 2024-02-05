@@ -308,6 +308,9 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateExceptionJumps(@NotNull PsiElement element, Collection<? extends PsiClassType> unhandledExceptions) {
+    if (myOptions.isOnlyExplicitExceptions()) {
+      return;
+    }
     for (PsiClassType unhandledException : unhandledExceptions) {
       ProgressManager.checkCanceled();
       generateThrow(unhandledException, element);
@@ -615,17 +618,19 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiExpression expression = statement.getExpression();
     expression.accept(this);
 
-    for (PsiParameter catchParameter : myCatchParameters) {
-      ProgressManager.checkCanceled();
-      if (myUnhandledExceptionCatchBlocks.contains(((PsiCatchSection)catchParameter.getDeclarationScope()).getCatchBlock())) {
-        continue;
-      }
-      PsiType type = catchParameter.getType();
-      List<PsiType> types =
-        type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
-      for (PsiType subType : types) {
-        if (subType instanceof PsiClassType) {
-          generateThrow((PsiClassType)subType, statement);
+    if (!myOptions.isOnlyExplicitExceptions()) {
+      for (PsiParameter catchParameter : myCatchParameters) {
+        ProgressManager.checkCanceled();
+        if (myUnhandledExceptionCatchBlocks.contains(((PsiCatchSection)catchParameter.getDeclarationScope()).getCatchBlock())) {
+          continue;
+        }
+        PsiType type = catchParameter.getType();
+        List<PsiType> types =
+          type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
+        for (PsiType subType : types) {
+          if (subType instanceof PsiClassType) {
+            generateThrow((PsiClassType)subType, statement);
+          }
         }
       }
     }

@@ -225,7 +225,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
             ControlFlow flow;
             try {
               flow = ControlFlowFactory.getControlFlow(
-                this, new LocalsControlFlowPolicy(this), ControlFlowOptions.NO_CONST_EVALUATE);
+                this, new LocalsControlFlowPolicy(this), ControlFlowOptions.NO_CONST_EVALUATE_EXPLICIT_EXCEPTIONS);
             }
             catch (AnalysisCanceledException e) {
               return true;
