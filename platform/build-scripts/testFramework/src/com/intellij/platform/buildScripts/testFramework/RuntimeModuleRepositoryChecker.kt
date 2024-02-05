@@ -82,7 +82,7 @@ class RuntimeModuleRepositoryChecker private constructor(
         }
     }
   }
-  private val descriptors by lazy { RuntimeModuleRepositorySerialization.loadFromJar(descriptorsJarFile) }
+  private val moduleRepositoryData by lazy { RuntimeModuleRepositorySerialization.loadFromJar(descriptorsJarFile) }
 
   private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
     try {
@@ -129,7 +129,7 @@ class RuntimeModuleRepositoryChecker private constructor(
       repository.getModule(moduleId).resourceRootPaths.map { it to moduleId }
     }.groupBy({ it.first }, { it.second })
     
-    for (rawModuleId in descriptors.keys) {
+    for (rawModuleId in moduleRepositoryData.allIds) {
       val moduleId = RuntimeModuleId.raw(rawModuleId)
       if (rawModuleId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX)) {
         //additional libraries shouldn't cause problems because their resources should not be loaded unless they are requested from modules

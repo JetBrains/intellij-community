@@ -10,13 +10,13 @@ import java.nio.file.Path
 fun checkRuntimeModuleRepository(outputDir: Path,
                                  expected: RawDescriptorListBuilder.() -> Unit) {
   val zipPath = outputDir.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
-  val buildRepository = RuntimeModuleRepositorySerialization.loadFromJar(zipPath)
-  val actual = buildRepository.filterKeys { it != RUNTIME_REPOSITORY_MARKER_MODULE && it != "${RUNTIME_REPOSITORY_MARKER_MODULE}${RuntimeModuleId.TESTS_NAME_SUFFIX}" }
+  val buildRepositoryData = RuntimeModuleRepositorySerialization.loadFromJar(zipPath)
+  val actualIds = buildRepositoryData.allIds.filter { it != RUNTIME_REPOSITORY_MARKER_MODULE && it != "${RUNTIME_REPOSITORY_MARKER_MODULE}${RuntimeModuleId.TESTS_NAME_SUFFIX}" }
   val builder = RawDescriptorListBuilder()
   builder.expected()
-  JpsBuildTestCase.assertSameElements(actual.keys, builder.descriptors.map { it.id })
+  JpsBuildTestCase.assertSameElements(actualIds, builder.descriptors.map { it.id })
   for (expectedDescriptor in builder.descriptors) {
-    JpsBuildTestCase.assertEquals("Different data for '${expectedDescriptor.id}'.", expectedDescriptor, actual[expectedDescriptor.id]!!)
+    JpsBuildTestCase.assertEquals("Different data for '${expectedDescriptor.id}'.", expectedDescriptor, buildRepositoryData.findDescriptor(expectedDescriptor.id)!!)
   }
 }
 

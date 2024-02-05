@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Map;
 
 public final class RuntimeModuleRepositorySerialization {
   private RuntimeModuleRepositorySerialization() {}
@@ -32,9 +31,9 @@ public final class RuntimeModuleRepositorySerialization {
     }
   }
 
-  public static @NotNull Map<String, RawRuntimeModuleDescriptor> loadFromJar(@NotNull Path jarPath) throws MalformedRepositoryException {
+  public static @NotNull RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws MalformedRepositoryException {
     try {
-      return JarFileSerializer.loadFromJar(jarPath);
+      return new RawRuntimeModuleRepositoryData(jarPath);
     }
     catch (XMLStreamException | IOException e) {
       throw new MalformedRepositoryException("Failed to load repository from " + jarPath, e);

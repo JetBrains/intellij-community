@@ -116,7 +116,8 @@ class JarRepositorySerializationTest {
   }
 
   private fun checkLoading(zipFileSpec: DirectoryContentSpec, expectedDescriptors: List<RawRuntimeModuleDescriptor>) {
-    val actualDescriptors = RuntimeModuleRepositorySerialization.loadFromJar(zipFileSpec.generateInTempDir()).values
+    val repositoryData = RuntimeModuleRepositorySerialization.loadFromJar(zipFileSpec.generateInTempDir())
+    val actualDescriptors = repositoryData.allIds.map { repositoryData.findDescriptor(it)!! }
     UsefulTestCase.assertSameElements(actualDescriptors, expectedDescriptors)
   }
 
