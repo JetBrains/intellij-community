@@ -5,9 +5,9 @@ import com.intellij.lang.logging.UnspecifiedLogger
 import com.intellij.openapi.components.*
 
 @Service(Service.Level.PROJECT)
-@State(name = "JavaSettingsStorage",
+@State(name = "JvmLoggingSettingsStorage",
        storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class JavaSettingsStorage : SimplePersistentStateComponent<JavaSettingsStorage.State>(State()) {
+class JvmLoggingSettingsStorage : SimplePersistentStateComponent<JvmLoggingSettingsStorage.State>(State()) {
   class State : BaseState() {
     var loggerName: String? by string(UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
   }

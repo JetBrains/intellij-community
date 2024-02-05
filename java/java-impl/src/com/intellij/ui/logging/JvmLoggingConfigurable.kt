@@ -20,8 +20,7 @@ import javax.swing.JComponent
 class JvmLoggingConfigurable(private val project: Project) : SearchableConfigurable, NoScroll {
   private lateinit var warningRow: Row
   private lateinit var panel: DialogPanel
-  private val boundedExecutor = AppExecutorUtil.getAppExecutorService()
-  private val settings = project.service<JavaSettingsStorage>().state
+  private val settings = project.service<JvmLoggingSettingsStorage>().state
 
   override fun getDisplayName(): String = JavaBundle.message("jvm.logging.configurable.display.name")
 
@@ -53,7 +52,7 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
       JvmLogger.getLoggerByName(loggerDisplayName)?.isAvailable(project) == false
     }.finishOnUiThread(ModalityState.any()) { isVisible ->
       warningRow.visible(isVisible)
-    }.submit(boundedExecutor)
+    }.submit(AppExecutorUtil.getAppExecutorService())
   }
 
   override fun isModified(): Boolean = panel.isModified()

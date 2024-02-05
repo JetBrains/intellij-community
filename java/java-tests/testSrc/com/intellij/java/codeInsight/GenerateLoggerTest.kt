@@ -14,7 +14,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.ui.UiInterceptors
 import com.intellij.ui.UiInterceptors.UiInterceptor
 import com.intellij.ui.components.JBList
-import com.intellij.ui.logging.JavaSettingsStorage
+import com.intellij.ui.logging.JvmLoggingSettingsStorage
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import javax.swing.ListModel
@@ -80,6 +80,39 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
     }
   """.trimIndent())
     doTest()
+  }
+
+  fun testAnonymousClass() {
+    myFixture.addClass("""
+      package org.apache.log4j;
+      
+      interface Logger {
+      static <T> Logger getLogger(Class<T> clazz) {}
+      }
+    """.trimIndent())
+    doTest()
+  }
+
+  fun testImplicitlyDeclaredClass() {
+    myFixture.addClass("""
+      package org.apache.log4j;
+      
+      interface Logger {
+      static <T> Logger getLogger(Class<T> clazz) {}
+      }
+    """.trimIndent())
+    myFixture.configureByText("implicitlyDeclaredClass.java",
+                                """
+                                void main() {<caret>
+                                }
+                                """.trimIndent())
+
+    val loggers = GenerateLoggerHandler.findSuitableLoggers(module)
+    TestCase.assertTrue(loggers.isNotEmpty())
+    val element = file.findElementAt(editor.caretModel.offset)!!
+    val places = GenerateLoggerHandler.getPossiblePlacesForLogger(element, loggers)
+
+    TestCase.assertTrue(places.isEmpty())
   }
 
   fun testNestedClassesOuterClass() {
@@ -156,12 +189,12 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
       static <T> Logger getLogger(Class<T> clazz) {}
       }
     """.trimIndent())
-    assertEquals(project.service<JavaSettingsStorage>().state.loggerName, UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
+    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerName, UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
     doTest()
-    assertEquals(project.service<JavaSettingsStorage>().state.loggerName, "Log4j")
+    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerName, "Log4j")
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_LATEST_WITH_LATEST_JDK
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_21
 
   private fun doTestWithMultiplePlaces(expectedClassNameList: List<String>, selectedClass: String) {
     val name = getTestName(false)

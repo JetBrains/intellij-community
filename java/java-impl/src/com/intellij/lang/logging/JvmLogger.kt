@@ -7,11 +7,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Extension point representing a JVM logger. Extensions of this EP are used to store information about concrete logger and provide
- * the way to generate a logger at the class.
+ * the way to generate a logger at the class. Please, don't use it now, this API will be rewritten in the future.
  */
+@ApiStatus.Internal
 interface JvmLogger {
   /**
    * This field represents fully qualified name of the logger's type
@@ -20,7 +22,7 @@ interface JvmLogger {
 
   /**
    * This field is used to determine the order of loggers in the settings
-   * @see com.intellij.settings.JvmLoggingConfigurable
+   * @see com.intellij.ui.logging.JvmLoggingConfigurable
    */
   val priority: Int
 
@@ -29,7 +31,7 @@ interface JvmLogger {
    * For example, it happens after creation of the new project.
    *
    * @return true if the logger should only be used during startup, false otherwise
-   * @see com.intellij.logging.UnspecifiedLogger
+   * @see com.intellij.lang.logging.UnspecifiedLogger
    */
   fun isOnlyOnStartup() = false
 
@@ -42,7 +44,7 @@ interface JvmLogger {
   fun insertLoggerAtClass(project: Project, clazz: PsiClass, logger: PsiElement): PsiElement?
 
   /**
-   * Determines if the logger is available for the given project.
+   * Determines if the logger is available for the given project. Should only be invoked inside ReadAction.
    *
    * @param project the project context
    * @return true if the logger is available, false otherwise
@@ -50,7 +52,7 @@ interface JvmLogger {
   fun isAvailable(project: Project?) : Boolean
 
   /**
-   * Determines if the logger is available for the given module.
+   * Determines if the logger is available for the given module. Should only be invoked inside ReadAction.
    *
    * @param module the module context
    * @return true if the logger is available, false otherwise

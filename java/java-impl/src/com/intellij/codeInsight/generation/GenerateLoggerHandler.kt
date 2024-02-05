@@ -21,7 +21,8 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.introduce.PsiIntroduceTarget
 import com.intellij.refactoring.suggested.endOffset
-import com.intellij.ui.logging.JavaSettingsStorage
+import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.ui.logging.JvmLoggingSettingsStorage
 import org.jetbrains.java.generate.GenerationUtil
 
 class GenerateLoggerHandler : CodeInsightActionHandler {
@@ -35,7 +36,16 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     val chosenLogger = getSelectedLogger(project, availableLoggers) ?: return
 
     when (places.size) {
-      0 -> return
+      0 -> {
+        CommonRefactoringUtil.showErrorHint(
+          project,
+          editor,
+          JavaBundle.message("generate.logger.no.place.found.dialog.message"),
+          JavaBundle.message("generate.logger.no.place.found.dialog.title"),
+          null
+        )
+        return
+      }
       1 -> execute(places.first(), chosenLogger, project, editor)
       else -> {
         val targetInfo = places.map { PsiTargetClassInfo(it) }
@@ -85,7 +95,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
       0 -> null
       1 -> availableLoggers.first()
       else -> {
-        val preferredLogger = JvmLogger.getLoggerByName(project.service<JavaSettingsStorage>().state.loggerName)
+        val preferredLogger = JvmLogger.getLoggerByName(project.service<JvmLoggingSettingsStorage>().state.loggerName)
 
         val chooseLoggerDialog = ChooseLoggerDialogWrapper(
           project,
@@ -110,7 +120,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
   private fun saveLoggerAfterFirstTime(project: Project, logger: JvmLogger?) {
     if (logger == null) return
-    val settings = project.service<JavaSettingsStorage>().state
+    val settings = project.service<JvmLoggingSettingsStorage>().state
     if (settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME) {
       settings.loggerName = logger.toString()
     }
@@ -123,7 +133,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 
     fun getPossiblePlacesForLogger(element: PsiElement, loggerList: List<JvmLogger>): List<PsiClass> = element.parentsOfType(
       PsiClass::class.java, true)
-      .filter { clazz -> clazz !is PsiAnonymousClass && isPossibleToPlaceLogger(clazz, loggerList) }
+      .filter { clazz -> clazz !is PsiAnonymousClass && clazz !is PsiImplicitClass && isPossibleToPlaceLogger(clazz, loggerList) }
       .toList()
       .reversed()
 
@@ -134,7 +144,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
 }
 
 private class PsiTargetClassInfo(clazz: PsiClass) : PsiIntroduceTarget<PsiClass>(clazz) {
-  private val className : String = clazz.name ?: throw IllegalStateException("Unable to fetch class name")
+  private val className: String = clazz.name ?: throw IllegalStateException("Unable to fetch class name")
 
   override fun render(): String = "class $className"
 

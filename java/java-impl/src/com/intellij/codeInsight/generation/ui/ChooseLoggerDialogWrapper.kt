@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.logging.JavaLoggerModel
-import com.intellij.ui.logging.JavaSettingsStorage
+import com.intellij.ui.logging.JvmLoggingSettingsStorage
 import com.intellij.ui.logging.JvmLoggingConfigurable
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
@@ -25,7 +25,7 @@ class ChooseLoggerDialogWrapper(
     private set
 
   private lateinit var comboBox: Cell<ComboBox<String>>
-  private val settings = project.service<JavaSettingsStorage>().state
+  private val settings = project.service<JvmLoggingSettingsStorage>().state
 
   init {
     title = JavaBundle.message("dialog.title.choose.logger")
