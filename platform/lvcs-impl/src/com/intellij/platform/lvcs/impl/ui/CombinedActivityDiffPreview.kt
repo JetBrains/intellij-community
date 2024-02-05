@@ -4,6 +4,8 @@ package com.intellij.platform.lvcs.impl.ui
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.MessageDiffRequest
+import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
+import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
@@ -43,7 +45,9 @@ internal abstract class CombinedActivityDiffPreview(project: Project,
   }
 
   override fun getCombinedDiffTabTitle(): String {
-    val filePath = previewModel?.selected?.filePath
+    val combinedDiffViewer = previewModel?.processor?.context?.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    val filePath = (combinedDiffViewer?.getCurrentBlockId() as? CombinedPathBlockId)?.path
+                   ?: previewModel?.selected?.filePath
     if (filePath != null) return LocalHistoryBundle.message("activity.diff.tab.title.file", filePath.name)
     if (scope == ActivityScope.Recent) return LocalHistoryBundle.message("activity.diff.tab.title.recent")
     return LocalHistoryBundle.message("activity.diff.tab.title")

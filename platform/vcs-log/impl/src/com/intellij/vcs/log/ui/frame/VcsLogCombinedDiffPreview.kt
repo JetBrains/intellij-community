@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
+import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
+import com.intellij.diff.tools.combined.CombinedPathBlockId
 import com.intellij.diff.tools.combined.DISABLE_LOADING_BLOCKS
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
@@ -19,7 +21,9 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
   }
 
   override fun getCombinedDiffTabTitle(): String {
-    val filePath = previewModel?.selected?.filePath
+    val combinedDiffViewer = previewModel?.processor?.context?.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    val filePath = (combinedDiffViewer?.getCurrentBlockId() as? CombinedPathBlockId)?.path
+                   ?: previewModel?.selected?.filePath
     return if (filePath == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
     else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", filePath.name)
   }

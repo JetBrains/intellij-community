@@ -2,6 +2,7 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
+import kotlin.properties.Delegates
 
 interface BlockOrder {
   fun iterateBlocks(): Iterable<CombinedBlockId>
@@ -9,12 +10,14 @@ interface BlockOrder {
   val blocksCount: Int
 }
 
-class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNextDifferenceIterable, BlockOrder {
+class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId, onCurrentBlockChanged: () -> Unit) : PrevNextDifferenceIterable, BlockOrder {
   private val blocks: List<CombinedBlockId> = list.toList()
 
   private val blockByIndex: MutableMap<CombinedBlockId, Int> = mutableMapOf()
 
-  var currentBlock: CombinedBlockId = current
+  var currentBlock: CombinedBlockId by Delegates.observable(current) { _, oldValue, newValue ->
+    if (oldValue != newValue) onCurrentBlockChanged()
+  }
 
   init {
     blocks.forEachIndexed { index, block ->

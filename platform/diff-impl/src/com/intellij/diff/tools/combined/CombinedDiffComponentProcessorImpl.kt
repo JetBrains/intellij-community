@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -46,6 +47,8 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
   private val mainUi: CombinedDiffMainUI
 
   private var combinedViewer: CombinedDiffViewer?
+
+  private val eventDispatcher = EventDispatcher.create(DiffEditorViewerListener::class.java)
 
   init {
     Disposer.register(disposable, model.ourDisposable)
@@ -72,7 +75,14 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
   override fun cleanBlocks() = model.cleanBlocks()
 
   override fun fireProcessorActivated() = Unit
-  override fun addListener(listener: DiffEditorViewerListener, disposable: Disposable?) = Unit
+  override fun addListener(listener: DiffEditorViewerListener, disposable: Disposable?) {
+    if (disposable != null) {
+      eventDispatcher.addListener(listener, disposable)
+    }
+    else {
+      eventDispatcher.addListener(listener)
+    }
+  }
 
   override fun setToolbarVerticalSizeReferent(component: JComponent) {
     mainUi.setToolbarVerticalSizeReferent(component)
@@ -111,7 +121,9 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
     if (blocks.isEmpty()) return null
 
-    val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id)
+    val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id) {
+      eventDispatcher.multicaster.onActiveFileChanged()
+    }
 
     return CombinedDiffViewer(context, MyBlockListener(), blockState).also { viewer ->
       Disposer.register(disposable, viewer)
