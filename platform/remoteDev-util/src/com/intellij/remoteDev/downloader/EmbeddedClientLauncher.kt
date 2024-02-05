@@ -115,9 +115,14 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
           LOG.info("Cannot use launcher because $productInfoPath doesn't have special handling for 'thinClient' command")
           return null
         }
+        
         val helpers = homePath.resolve("Helpers")
         //todo locate proper directory if there are several entries
-        val appPath = if (helpers.isDirectory()) helpers.listDirectoryEntries("*.app").singleOrNull() else null
+        val separateClientBundle = if (helpers.isDirectory()) helpers.listDirectoryEntries("*.app").singleOrNull() else null
+        val appPath = 
+          separateClientBundle?.takeIf { Registry.`is`("rdct.launch.embedded.client.from.separate.bundle.on.macos") } ?:
+          homePath.parent.takeIf { it.fileName.toString().endsWith(".app") }
+        
         if (appPath != null) {
           CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
         }
