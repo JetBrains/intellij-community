@@ -4,9 +4,7 @@ import com.intellij.find.impl.TextSearchContributor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.*;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -103,13 +101,14 @@ public class SearchEverywhereCommand extends AbstractCommand {
           }
           DataContext dataContext = DataManager.getInstance().getDataContext(component);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-          AnActionEvent actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, dataContext);
-          if(actionEvent.getProject() == null && !(tab.equals("action") || tab.equals("all"))) {
-            actionCallback.reject("Project is null, SE requires project to show any tab except actions.");
-          }
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", dialogSpan -> {
             var manager = SearchEverywhereManager.getInstance(project);
-            manager.show(tabId.get(), "", actionEvent);
+            manager.show(tabId.get(), "", new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(), 0) {
+              @Override
+              public Project getProject() {
+                return context.getProject();
+              }
+            });
             attachSearchListeners(manager.getCurrentlyShownUI());
           });
           if (!insertText.isEmpty()) {
