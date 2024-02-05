@@ -27,10 +27,6 @@ public final class TMHInstrumenter {
     return true;
   }
 
-  public static boolean instrument(ClassReader classReader, ClassVisitor classWriter, boolean generateLineNumbers) {
-    return instrument(classReader, classWriter, TMHAssertionGenerator.generators(), generateLineNumbers);
-  }
-
   private static class AnnotatedMethodsCollector extends ClassVisitor {
     final Set<? extends TMHAssertionGenerator> assertionGenerators;
     final Map<MethodKey, InstrumentationInfo> annotatedMethods = new HashMap<>();
