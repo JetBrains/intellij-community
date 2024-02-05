@@ -742,8 +742,10 @@ public final class GenericsHighlightUtil {
     String description = JavaErrorBundle.message(key, HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
     HighlightInfo.Builder info =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-    IntentionAction action = QuickFixFactory.getInstance().createSameErasureButDifferentMethodsFix(method, superMethod);
-    info.registerFix(action, null, null, null, null);
+    if (!(method instanceof SyntheticElement)) {
+      IntentionAction action = QuickFixFactory.getInstance().createSameErasureButDifferentMethodsFix(method, superMethod);
+      info.registerFix(action, null, null, null, null);
+    }
 
     return info;
   }
