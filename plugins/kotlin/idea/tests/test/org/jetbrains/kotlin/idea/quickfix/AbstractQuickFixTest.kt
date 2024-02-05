@@ -367,7 +367,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     private fun applyQuickFix() = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "$APPLY_QUICKFIX_DIRECTIVE:") != false
 
-    open fun getAfterFileName(beforeFileName: String): String {
+    protected open fun getAfterFileName(beforeFileName: String): String {
         return File(beforeFileName).name + ".after"
     }
 
