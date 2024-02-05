@@ -61,7 +61,7 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
                                      InstrumentationClassFinder finder) {
     try {
       boolean generateLineNumbers = SystemProperties.getBooleanProperty(GENERATE_LINE_NUMBERS_PROPERTY, false);
-      var generators = TMHAssertionGenerator.generators();
+      var generators = TMHAssertionGenerator1.generators();
       if (TMHInstrumenter.instrument(reader, writer, generators, generateLineNumbers)) {
         return new BinaryContent(writer.toByteArray());
       }

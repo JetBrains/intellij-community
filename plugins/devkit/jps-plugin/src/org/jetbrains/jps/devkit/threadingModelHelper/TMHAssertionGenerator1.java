@@ -6,7 +6,7 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import java.util.Set;
 
-class TMHAssertionGenerator {
+class TMHAssertionGenerator1 implements TMHAssertionGenerator {
   private static final String DEFAULT_APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/ApplicationManager";
   private static final String DEFAULT_APPLICATION_CLASS_NAME = "com/intellij/openapi/application/Application";
 
@@ -21,7 +21,7 @@ class TMHAssertionGenerator {
   private final Method myGetApplicationMethod;
   private final Method myAssetionMethod;
 
-  TMHAssertionGenerator(Type annotationClass, Type applicationManagerClass, Type applicationClass, Method assetionMethod) {
+  TMHAssertionGenerator1(Type annotationClass, Type applicationManagerClass, Type applicationClass, Method assetionMethod) {
     myAnnotationClass = annotationClass;
     myApplicationManagerClass = applicationManagerClass;
     myApplicationClass = applicationClass;
@@ -29,15 +29,18 @@ class TMHAssertionGenerator {
     myAssetionMethod = assetionMethod;
   }
 
-  boolean isMyAnnotation(String annotationDescriptor) {
+  @Override
+  public boolean isMyAnnotation(String annotationDescriptor) {
     return myAnnotationClass.getDescriptor().equals(annotationDescriptor);
   }
 
-  public AnnotationChecker getAnnotationChecker(int api, Runnable onShouldGenerateAssertion) {
+  @Override
+  public AnnotationVisitor getAnnotationChecker(int api, Runnable onShouldGenerateAssertion) {
     return new AnnotationChecker(api, onShouldGenerateAssertion);
   }
 
-  void generateAssertion(MethodVisitor writer, int methodStartLineNumber) {
+  @Override
+  public void generateAssertion(MethodVisitor writer, int methodStartLineNumber) {
     if (methodStartLineNumber != -1) {
       Label generatedCodeStart = new Label();
       writer.visitLabel(generatedCodeStart);
@@ -74,7 +77,7 @@ class TMHAssertionGenerator {
   }
 
   // TODO avoid hardcoding annotation names
-  static class AssertEdt extends TMHAssertionGenerator {
+  static class AssertEdt extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresEdt";
 
     AssertEdt() {
@@ -92,7 +95,7 @@ class TMHAssertionGenerator {
     }
   }
 
-  static class AssertBackgroundThread extends TMHAssertionGenerator {
+  static class AssertBackgroundThread extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresBackgroundThread";
 
     AssertBackgroundThread() {
@@ -110,7 +113,7 @@ class TMHAssertionGenerator {
     }
   }
 
-  static class AssertReadAccess extends TMHAssertionGenerator {
+  static class AssertReadAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLock";
 
     AssertReadAccess() {
@@ -130,7 +133,7 @@ class TMHAssertionGenerator {
     }
   }
 
-  static class AssertWriteAccess extends TMHAssertionGenerator {
+  static class AssertWriteAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresWriteLock";
 
     AssertWriteAccess() {
@@ -150,7 +153,7 @@ class TMHAssertionGenerator {
     }
   }
 
-  static class AssertNoReadAccess extends TMHAssertionGenerator {
+  static class AssertNoReadAccess extends TMHAssertionGenerator1 {
     private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLockAbsence";
 
     AssertNoReadAccess() {
@@ -170,11 +173,11 @@ class TMHAssertionGenerator {
 
   static Set<? extends TMHAssertionGenerator> generators() {
     return Set.of(
-      new TMHAssertionGenerator.AssertEdt(),
-      new TMHAssertionGenerator.AssertBackgroundThread(),
-      new TMHAssertionGenerator.AssertReadAccess(),
-      new TMHAssertionGenerator.AssertWriteAccess(),
-      new TMHAssertionGenerator.AssertNoReadAccess()
+      new TMHAssertionGenerator1.AssertEdt(),
+      new TMHAssertionGenerator1.AssertBackgroundThread(),
+      new TMHAssertionGenerator1.AssertReadAccess(),
+      new TMHAssertionGenerator1.AssertWriteAccess(),
+      new TMHAssertionGenerator1.AssertNoReadAccess()
     );
   }
 }
