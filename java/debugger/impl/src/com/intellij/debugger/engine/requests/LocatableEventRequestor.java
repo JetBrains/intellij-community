@@ -18,6 +18,14 @@ public interface LocatableEventRequestor extends Requestor {
    */
   String getSuspendPolicy();
 
+  default boolean shouldIgnoreThreadFiltering() {
+    return false;
+  }
+
+  default boolean needReplaceWithAllThreadSuspendContext() {
+    return false;
+  }
+
   class EventProcessingException extends Exception {
     private final @NlsContexts.DialogTitle String myTitle;
 

@@ -368,9 +368,13 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   public void resume() {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if (suspendContext != null) {
-      clearSteppingThrough();
-      resumeAction(myDebugProcess.createResumeCommand(suspendContext), Event.RESUME);
+      resumeSuspendContext(suspendContext);
     }
+  }
+
+  public void resumeSuspendContext(SuspendContextImpl suspendContext) {
+    clearSteppingThrough();
+    resumeAction(myDebugProcess.createResumeCommand(suspendContext), Event.RESUME);
   }
 
   public void resetIgnoreStepFiltersFlag() {
@@ -484,7 +488,8 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     public void paused(final SuspendContextImpl suspendContext) {
       LOG.debug("paused");
 
-      ThreadReferenceProxyImpl currentThread = suspendContext.getThread();
+      ThreadReferenceProxyImpl anotherThreadToFocus = suspendContext.getAnotherThreadToFocus();
+      ThreadReferenceProxyImpl currentThread = anotherThreadToFocus != null ? anotherThreadToFocus : suspendContext.getThread();
 
       if (!shouldSetAsActiveContext(suspendContext)) {
         notifyThreadsRefresh();

@@ -636,12 +636,17 @@ public class DebugProcessEvents extends DebugProcessImpl {
         // Don't try to check breakpoint's condition or evaluate its log expression,
         // because these evaluations may lead to skipping of more important stepping events,
         // see IDEA-336282.
-        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
+        boolean filterWasUsed = false;
+        boolean shouldIgnoreThreadFiltering = requestor == null || !requestor.shouldIgnoreThreadFiltering();
+        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine() && shouldIgnoreThreadFiltering) {
           LightOrRealThreadInfo filter = getRequestsManager().getFilterThread();
-          if (filter != null && !filter.checkSameThread(thread, suspendContext)) {
-            notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
-            suspendManager.voteResume(suspendContext);
-            return;
+          if (filter != null) {
+            if (!filter.checkSameThread(thread, suspendContext)) {
+              notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
+              suspendManager.voteResume(suspendContext);
+              return;
+            }
+            filterWasUsed = true;
           }
         }
 
@@ -731,8 +736,18 @@ public class DebugProcessEvents extends DebugProcessImpl {
           //  // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
           //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           //}
-          suspendManager.voteSuspend(suspendContext);
-          showStatusText(DebugProcessEvents.this, event);
+          if (filterWasUsed && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD &&
+              requestor.needReplaceWithAllThreadSuspendContext()) {
+            // Do not vote to resume.
+            // Instead, create an auxiliary request to correctly stop all threads as soon as possible.
+            // [SuspendOtherThreadsRequestor] will resume this suspendContext when the request hits.
+            // Resume will be without voting.
+            SuspendOtherThreadsRequestor.enableRequest(mySession.getProcess(), suspendContext);
+          }
+          else {
+            suspendManager.voteSuspend(suspendContext);
+            showStatusText(DebugProcessEvents.this, event);
+          }
         }
       }
     });

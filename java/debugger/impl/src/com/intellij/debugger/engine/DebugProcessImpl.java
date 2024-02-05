@@ -1853,8 +1853,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     public RunToCursorCommand(SuspendContextImpl suspendContext, @NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
       super(suspendContext, null);
       myIgnoreBreakpoints = ignoreBreakpoints;
-      myRunToCursorBreakpoint =
-        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addRunToCursorBreakpoint(position, ignoreBreakpoints);
+      boolean needReplaceWithAllThreadSuspendContext = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
+      myRunToCursorBreakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager()
+        .addRunToCursorBreakpoint(position, ignoreBreakpoints, needReplaceWithAllThreadSuspendContext);
     }
 
     @Override
@@ -1985,7 +1986,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     protected void applyThreadFilter(@Nullable LightOrRealThreadInfo threadInfo) {
-      if (getSuspendContext().getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+      boolean isLightThread = threadInfo != null && threadInfo.getRealThread() == null;
+      if (isLightThread || getSuspendContext().getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
         // there could be explicit resume as a result of call to voteSuspend()
         // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_
         // resuming and all breakpoints in other threads will be ignored.

@@ -53,6 +53,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private JavaExecutionStack myActiveExecutionStack;
 
+  private @Nullable ThreadReferenceProxyImpl myAnotherThreadToFocus = null;
+
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess,
                      @MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy,
                      int eventVotes,
@@ -334,4 +336,12 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private static final Comparator<JavaExecutionStack> THREADS_SUSPEND_AND_NAME_COMPARATOR =
     Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR);
+
+  public @Nullable ThreadReferenceProxyImpl getAnotherThreadToFocus() {
+    return myAnotherThreadToFocus;
+  }
+
+  public void setAnotherThreadToFocus(@Nullable ThreadReferenceProxyImpl threadToFocus) {
+    myAnotherThreadToFocus = threadToFocus;
+  }
 }

@@ -31,6 +31,8 @@ import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationEnabledChecker
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.idea.debugger.evaluate.DebugContextProvider
@@ -40,8 +42,6 @@ import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinterDelegate
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -210,7 +210,7 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
         val sourcePosition = ContextUtil.getSourcePosition(suspendContext)
 
         // Default test debuggerContext doesn't provide a valid stackFrame so we have to create one more for evaluation purposes.
-        val frameProxy = suspendContext.frameProxy
+        val frameProxy = getFrameProxy(suspendContext)
         val threadProxy = frameProxy?.threadProxy()
         val debuggerContext = createDebuggerContext(myDebuggerSession, suspendContext, threadProxy, frameProxy)
         debuggerContext.initCaches()

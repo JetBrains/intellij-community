@@ -91,7 +91,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
         if (myInProgress) {
-            val proxy = frameProxy ?: return emptyList()
+            val proxy = getFrameProxy(this) ?: return emptyList()
             return KotlinPositionManager(debugProcess)
               .createStackFrames(StackFrameDescriptorImpl(proxy, MethodsTracker()))
               .filterIsInstance<KotlinStackFrame>()
@@ -251,7 +251,10 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
                 return@runReadAction println("Context thread is null", ProcessOutputTypes.SYSTEM)
             }
 
-            val sourcePosition = PositionUtil.getSourcePosition(this)
+            val sourcePosition = if (anotherThreadToFocus != null)
+                debugProcess.positionManager.getSourcePosition(getFrameProxy(this).location())
+            else
+                PositionUtil.getSourcePosition(this)
             println(sourcePosition?.render() ?: "null", ProcessOutputTypes.SYSTEM)
             extraPrintContext(this)
         }

@@ -22,11 +22,13 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
   private final boolean myRestoreBreakpoints;
   @NotNull
   protected final SourcePosition myCustomPosition;
+  private final boolean myNeedReplaceWithAllThreadSuspendContext;
 
-  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints, boolean needReplaceWithAllThreadSuspendContext) {
     super(project);
     myCustomPosition = pos;
     myRestoreBreakpoints = restoreBreakpoints;
+    myNeedReplaceWithAllThreadSuspendContext = needReplaceWithAllThreadSuspendContext;
   }
 
   @NotNull
@@ -70,12 +72,15 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
   }
 
   @Nullable
-  protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull XSourcePosition position, boolean restoreBreakpoints) {
+  protected static RunToCursorBreakpoint create(@NotNull Project project,
+                                                @NotNull XSourcePosition position,
+                                                boolean restoreBreakpoints,
+                                                boolean needReplaceWithAllThreadSuspendContext) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
     if (psiFile == null) {
       return null;
     }
-    return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints);
+    return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints, needReplaceWithAllThreadSuspendContext);
   }
 
   @Override
@@ -85,5 +90,10 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
   @Override
   public boolean track() {
     return false;
+  }
+
+  @Override
+  public boolean needReplaceWithAllThreadSuspendContext() {
+    return myNeedReplaceWithAllThreadSuspendContext;
   }
 }

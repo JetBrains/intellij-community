@@ -26,7 +26,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   @Nullable private RequestHint myHint;
 
   protected StepIntoBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, @NotNull BreakpointStepMethodFilter filter) {
-    super(project, pos, false);
+    super(project, pos, false, false);
     myFilter = filter;
   }
 
