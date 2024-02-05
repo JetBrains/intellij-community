@@ -33,10 +33,13 @@ import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class ArtifactOutputPackagingElementEntityImpl(private val dataSource: ArtifactOutputPackagingElementEntityData) : ArtifactOutputPackagingElementEntity, WorkspaceEntityBase(dataSource) {
+open class ArtifactOutputPackagingElementEntityImpl(private val dataSource: ArtifactOutputPackagingElementEntityData) : ArtifactOutputPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
+                                                                                PackagingElementEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -64,7 +67,8 @@ open class ArtifactOutputPackagingElementEntityImpl(private val dataSource: Arti
   }
 
 
-  class Builder(result: ArtifactOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArtifactOutputPackagingElementEntity, ArtifactOutputPackagingElementEntityData>(result), ArtifactOutputPackagingElementEntity.Builder {
+  class Builder(result: ArtifactOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArtifactOutputPackagingElementEntity, ArtifactOutputPackagingElementEntityData>(
+    result), ArtifactOutputPackagingElementEntity.Builder {
     constructor() : this(ArtifactOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,8 +128,8 @@ open class ArtifactOutputPackagingElementEntityImpl(private val dataSource: Arti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
-          ?: this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                                PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
         else {
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
@@ -248,7 +252,8 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

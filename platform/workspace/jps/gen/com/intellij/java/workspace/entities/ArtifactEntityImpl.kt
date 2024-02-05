@@ -38,9 +38,16 @@ import org.jetbrains.annotations.NonNls
 open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : ArtifactEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val ROOTELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, CompositePackagingElementEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
-    internal val CUSTOMPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactOutputPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val ROOTELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
+                                                                               CompositePackagingElementEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
+    internal val CUSTOMPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
+                                                                                    ArtifactPropertiesEntity::class.java,
+                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
+                                                                                                  ArtifactOutputPackagingElementEntity::class.java,
+                                                                                                  ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                  true)
 
     private val connections = listOf<ConnectionId>(
       ROOTELEMENT_CONNECTION_ID,
@@ -93,7 +100,8 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
   }
 
 
-  class Builder(result: ArtifactEntityData?) : ModifiableWorkspaceEntityBase<ArtifactEntity, ArtifactEntityData>(result), ArtifactEntity.Builder {
+  class Builder(result: ArtifactEntityData?) : ModifiableWorkspaceEntityBase<ArtifactEntity, ArtifactEntityData>(
+    result), ArtifactEntity.Builder {
     constructor() : this(ArtifactEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -208,8 +216,8 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)
-          ?: this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
+          _diff.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                             ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
         else {
           this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
@@ -246,8 +254,10 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<ArtifactPropertiesEntity>(CUSTOMPROPERTIES_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity>
-                                                                                                                       ?: emptyList())
+          _diff.extractOneToManyChildren<ArtifactPropertiesEntity>(CUSTOMPROPERTIES_CONNECTION_ID,
+                                                                   this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                                   CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity>
+                                                                                       ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity> ?: emptyList()
@@ -288,8 +298,8 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this)
-          ?: this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity
+          _diff.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                                        ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity
         }
         else {
           this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity
