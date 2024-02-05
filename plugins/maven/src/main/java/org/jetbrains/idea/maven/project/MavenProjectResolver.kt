@@ -79,17 +79,19 @@ class MavenProjectResolver(private val myProject: Project) {
             mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties)
           }
         }
-        val projectsWithUnresolvedPluginsChunk = doResolve(
-          incrementally,
-          mavenProjectsInBaseDir,
-          tree,
-          generalSettings,
-          embedder,
-          progressReporter,
-          eventHandler,
-          tree.workspaceMap,
-          updateSnapshots,
-          userProperties)
+        val projectsWithUnresolvedPluginsChunk = withContext(tracer.span("doResolve $baseDir")) {
+          doResolve(
+            incrementally,
+            mavenProjectsInBaseDir,
+            tree,
+            generalSettings,
+            embedder,
+            progressReporter,
+            eventHandler,
+            tree.workspaceMap,
+            updateSnapshots,
+            userProperties)
+        }
         projectsWithUnresolvedPlugins[baseDir] = projectsWithUnresolvedPluginsChunk
       }
       catch (t: Throwable) {
