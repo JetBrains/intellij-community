@@ -37,10 +37,6 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     return !myIsInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents);
   }
 
-  public @NotNull com.intellij.ui.components.panels.Wrapper getToolbarWrapper() {
-    return myToolbarWrapper;
-  }
-
   @Override
   public @NotNull Iterable<Wrapper> iterateSelectedChanges() {
     return wrap(VcsTreeModelData.selected(myBrowser.getViewer()));

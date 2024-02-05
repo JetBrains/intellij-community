@@ -7,8 +7,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.diff.*;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.*;
-import com.intellij.diff.editor.DiffRequestProcessorEditor;
-import com.intellij.diff.editor.DiffRequestProcessorEditorState;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
@@ -54,6 +52,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
@@ -94,7 +93,7 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
  * @see CacheDiffRequestProcessor.Simple
  * @see com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
  */
-public abstract class DiffRequestProcessor implements CheckedDisposable {
+public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
   private static final DataKey<DiffTool> ACTIVE_DIFF_TOOL = DataKey.create("active_diff_tool");
@@ -119,9 +118,9 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   private final @NotNull JPanel myTopPanel;
   private final @NotNull ActionToolbar myToolbar;
   private final @NotNull ActionToolbar myRightToolbar;
-  protected final @NotNull Wrapper myToolbarWrapper;
-  protected final @NotNull Wrapper myDiffInfoWrapper;
-  protected final @NotNull Wrapper myRightToolbarWrapper;
+  private final @NotNull Wrapper myToolbarWrapper;
+  private final @NotNull Wrapper myDiffInfoWrapper;
+  private final @NotNull Wrapper myRightToolbarWrapper;
   private final @NotNull Wrapper myToolbarStatusPanel;
   private final @NotNull MyProgressBar myProgressBar;
 
@@ -643,6 +642,11 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     return myToolbar;
   }
 
+  @Override
+  public void setToolbarVerticalSizeReferent(@NotNull JComponent component) {
+    myToolbarWrapper.setVerticalSizeReferent(component);
+  }
+
   protected void buildActionPopup(@Nullable List<? extends AnAction> viewerActions) {
     collectPopupActions(viewerActions);
 
@@ -659,10 +663,12 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   // Getters
   //
 
+  @Override
   public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
+  @Override
   public @NotNull JComponent getPreferredFocusedComponent() {
     JComponent component = myState.getPreferredFocusedComponent();
     JComponent fallback = myToolbar.getComponent();
@@ -679,16 +685,20 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     return myActiveRequest;
   }
 
+  @Override
   public @NotNull DiffContext getContext() {
     return myContext;
   }
 
-  public void setState(@NotNull DiffRequestProcessorEditorState state) {
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    if (!(state instanceof DiffRequestProcessorEditorState processorState)) return;
+
     DiffViewer viewer = getActiveViewer();
     if (!(viewer instanceof EditorDiffViewer)) return;
 
     var editors = ((EditorDiffViewer)viewer).getEditors();
-    var editorStates = state.getEmbeddedEditorStates();
+    var editorStates = processorState.getEmbeddedEditorStates();
 
     TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
     for (int i = 0; i < Math.min(editorStates.size(), editors.size()); i++) {
@@ -696,6 +706,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     }
   }
 
+  @Override
   public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     DiffViewer viewer = getActiveViewer();
     if (!(viewer instanceof EditorDiffViewer)) return FileEditorState.INSTANCE;
@@ -724,6 +735,47 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   @Override
   public boolean isDisposed() {
     return myDisposed;
+  }
+
+  @NotNull
+  @Override
+  public CheckedDisposable getDisposable() {
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public List<Editor> getEmbeddedEditors() {
+    DiffViewer viewer = getActiveViewer();
+    if (viewer instanceof EditorDiffViewer editorDiffViewer) {
+      return new ArrayList<>(editorDiffViewer.getEditors());
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getFilesToRefresh() {
+    DiffRequest request = getActiveRequest();
+    if (request != null) {
+      return request.getFilesToRefresh();
+    }
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void fireProcessorActivated() {
+    updateRequest();
+  }
+
+  @Override
+  public void addListener(@NotNull DiffEditorViewerListener listener, @Nullable Disposable disposable) {
+    addListener(new DiffRequestProcessorListener() {
+      @Override
+      public void onViewerChanged() {
+        listener.onActiveFileChanged();
+      }
+    }, disposable);
   }
 
   //

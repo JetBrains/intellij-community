@@ -212,5 +212,5 @@ abstract class CombinedDiffPreviewModel(val project: Project,
 
   abstract fun selectChangeInSourceComponent(change: Wrapper)
 
-  override val component: JComponent get() = processor.getMainComponent()
+  override val component: JComponent get() = processor.component
 }

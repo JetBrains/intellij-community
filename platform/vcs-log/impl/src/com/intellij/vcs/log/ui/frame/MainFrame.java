@@ -170,7 +170,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     setLayout(new BorderLayout());
     VcsLogChangeProcessor processor = myChangesBrowser.createChangeProcessor(false);
-    processor.getToolbarWrapper().setVerticalSizeReferent(getToolbar());
+    processor.setToolbarVerticalSizeReferent(getToolbar());
     myDiffPreview = new FrameDiffPreview<>(processor,
                                            myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
                                            myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),

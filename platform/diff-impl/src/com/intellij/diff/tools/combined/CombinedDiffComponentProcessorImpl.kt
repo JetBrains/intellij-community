@@ -2,6 +2,8 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.*
+import com.intellij.diff.impl.DiffEditorViewer
+import com.intellij.diff.impl.DiffEditorViewerListener
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.diff.requests.DiffRequest
@@ -9,16 +11,18 @@ import com.intellij.diff.tools.ErrorDiffTool
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -56,13 +60,23 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
     model.cleanBlocks()
   }
 
-  override fun getPreferredFocusedComponent() = mainUi.getPreferredFocusedComponent()
-  override fun getMainComponent() = mainUi.getComponent()
+  override val preferredFocusedComponent: JComponent? get() = mainUi.getPreferredFocusedComponent()
+  override val component: JComponent get() = mainUi.getComponent()
+
+  override val filesToRefresh: List<VirtualFile> get() = emptyList()
+  override val embeddedEditors: List<Editor> get() = combinedViewer?.editors.orEmpty()
 
   override val context: DiffContext get() = model.context
   override val blocks: List<CombinedBlockProducer> get() = model.requests
   override fun setBlocks(requests: List<CombinedBlockProducer>) = model.setBlocks(requests)
   override fun cleanBlocks() = model.cleanBlocks()
+
+  override fun fireProcessorActivated() = Unit
+  override fun addListener(listener: DiffEditorViewerListener, disposable: Disposable?) = Unit
+
+  override fun setToolbarVerticalSizeReferent(component: JComponent) {
+    mainUi.setToolbarVerticalSizeReferent(component)
+  }
 
   override fun getState(level: FileEditorStateLevel): FileEditorState {
     val viewer = combinedViewer
@@ -224,16 +238,7 @@ data class CombinedDiffEditorState(
   }
 }
 
-interface CombinedDiffComponentProcessor {
-  val context: DiffContext
-  val disposable: CheckedDisposable
-
-  fun getMainComponent(): JComponent
-  fun getPreferredFocusedComponent(): JComponent?
-
-  fun getState(level: FileEditorStateLevel): FileEditorState = FileEditorState.INSTANCE
-  fun setState(state: FileEditorState) {}
-
+interface CombinedDiffComponentProcessor : DiffEditorViewer {
   val blocks: List<CombinedBlockProducer>
 
   /**

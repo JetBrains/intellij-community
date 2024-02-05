@@ -149,6 +149,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     toolbarStatusPanel.setContent(toolbarComponents.statusPanel)
   }
 
+  fun setToolbarVerticalSizeReferent(component: JComponent) {
+    diffInfoWrapper.setVerticalSizeReferent(component)
+  }
+
   @RequiresEdt
   fun setSearchController(searchController: CombinedDiffSearchController) {
     this.searchController = searchController

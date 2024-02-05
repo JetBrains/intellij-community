@@ -49,8 +49,6 @@ class GitStageDiffPreview(project: Project,
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
-  fun getToolbarWrapper(): com.intellij.ui.components.panels.Wrapper = myToolbarWrapper
-
   override fun selectChange(change: Wrapper) {
     if (change !is GitFileStatusNodeWrapper && change !is ChangeWrapper) return
     val node = TreeUtil.findNodeWithObject(tree.root, change.userObject) ?: return

@@ -8,10 +8,11 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.FileEditorWithTextEditors
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
 
 class CombinedDiffEditor(file: CombinedDiffVirtualFile, val processor: CombinedDiffComponentProcessor) :
-  DiffEditorBase(file, processor.getMainComponent(), processor.disposable), FileEditorWithTextEditors {
+  DiffEditorBase(file, processor.component, processor.disposable), FileEditorWithTextEditors {
 
   override fun dispose() {
     Disposer.dispose(processor.disposable)
@@ -28,9 +29,8 @@ class CombinedDiffEditor(file: CombinedDiffVirtualFile, val processor: CombinedD
     processor.setState(state)
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? = processor.getPreferredFocusedComponent()
+  override fun getPreferredFocusedComponent(): JComponent? = processor.preferredFocusedComponent
 
-  override fun getEmbeddedEditors(): List<Editor> {
-    return processor.context.getUserData(COMBINED_DIFF_VIEWER_KEY)?.editors.orEmpty()
-  }
+  override fun getFilesToRefresh(): List<VirtualFile> = processor.filesToRefresh
+  override fun getEmbeddedEditors(): List<Editor> = processor.embeddedEditors
 }

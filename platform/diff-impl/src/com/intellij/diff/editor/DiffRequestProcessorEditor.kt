@@ -1,16 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
+import com.intellij.diff.impl.DiffEditorViewerListener
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.impl.DiffRequestProcessorListener
-import com.intellij.diff.tools.combined.editors
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.FileEditorWithTextEditors
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.text.TextEditorState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -25,7 +23,7 @@ open class DiffRequestProcessorEditor(
                    processor), FileEditorWithTextEditors {
 
   init {
-    processor.addListener(MyProcessorListener(), this)
+    processor.addListener(MyEditorViewerListener(), this)
   }
 
   override fun dispose() {
@@ -49,7 +47,7 @@ open class DiffRequestProcessorEditor(
   }
 
   override fun setState(state: FileEditorState) {
-    if (!Registry.`is`(DIFF_IN_NAVIGATION_HISTORY_KEY) || state !is DiffRequestProcessorEditorState) return
+    if (!Registry.`is`(DIFF_IN_NAVIGATION_HISTORY_KEY)) return
 
     processor.setState(state)
   }
@@ -57,29 +55,17 @@ open class DiffRequestProcessorEditor(
   override fun getPreferredFocusedComponent(): JComponent? = processor.preferredFocusedComponent
 
   override fun selectNotify() {
-    processor.updateRequest()
+    processor.fireProcessorActivated()
   }
 
-  override fun getFilesToRefresh(): List<VirtualFile> = processor.activeRequest?.filesToRefresh ?: emptyList()
+  override fun getFilesToRefresh(): List<VirtualFile> = processor.filesToRefresh
+  override fun getEmbeddedEditors(): List<Editor> = processor.embeddedEditors
 
-  private inner class MyProcessorListener : DiffRequestProcessorListener {
-    override fun onViewerChanged() {
+  private inner class MyEditorViewerListener : DiffEditorViewerListener {
+    override fun onActiveFileChanged() {
       val project = processor.project ?: return
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
     }
   }
-
-  override fun getEmbeddedEditors(): List<Editor> {
-    return processor.activeViewer?.editors.orEmpty()
-  }
 }
 
-data class DiffRequestProcessorEditorState(
-  val embeddedEditorStates: List<TextEditorState>
-) : FileEditorState {
-  override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean =
-    otherState is DiffRequestProcessorEditorState &&
-    embeddedEditorStates.zip(otherState.embeddedEditorStates).all { (l, r) -> l.canBeMergedWith(r, level) }
-
-  override fun toString(): String = embeddedEditorStates.joinToString()
-}

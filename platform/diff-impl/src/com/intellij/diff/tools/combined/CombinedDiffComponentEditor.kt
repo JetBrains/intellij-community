@@ -25,8 +25,8 @@ class CombinedDiffComponentEditor(
     super.dispose()
   }
 
-  override fun getComponent(): JComponent = processor.getMainComponent()
-  override fun getPreferredFocusedComponent(): JComponent? = processor.getPreferredFocusedComponent()
+  override fun getComponent(): JComponent = processor.component
+  override fun getPreferredFocusedComponent(): JComponent? = processor.preferredFocusedComponent
 
   override fun isValid(): Boolean = !isDisposed && !processor.disposable.isDisposed
   override fun getFile(): VirtualFile = file

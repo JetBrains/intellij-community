@@ -229,7 +229,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
     diffPreviewProcessor = GitStageDiffPreview(project, _tree, tracker, isInEditor, this)
-    diffPreviewProcessor!!.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
+    diffPreviewProcessor!!.setToolbarVerticalSizeReferent(toolbar.component)
 
     if (isInEditor) {
       editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree).apply { setup() }
