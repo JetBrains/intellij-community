@@ -37,18 +37,18 @@ interface CombinedDiffManager {
 class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
                                          goToChangeAction: AnAction?) : CombinedDiffComponentProcessor {
 
-  override val ourDisposable = Disposer.newCheckedDisposable()
+  override val disposable = Disposer.newCheckedDisposable()
 
   private val mainUi: CombinedDiffMainUI
 
   private var combinedViewer: CombinedDiffViewer?
 
   init {
-    Disposer.register(ourDisposable, model.ourDisposable)
-    model.addListener(ModelListener(), ourDisposable)
+    Disposer.register(disposable, model.ourDisposable)
+    model.addListener(ModelListener(), disposable)
 
     mainUi = CombinedDiffMainUI(model, goToChangeAction)
-    Disposer.register(ourDisposable, mainUi)
+    Disposer.register(disposable, mainUi)
     model.context.putUserData(COMBINED_DIFF_MAIN_UI, mainUi)
 
     combinedViewer = createCombinedViewer(true)
@@ -100,7 +100,7 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
     val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id)
 
     return CombinedDiffViewer(context, MyBlockListener(), blockState).also { viewer ->
-      Disposer.register(ourDisposable, viewer)
+      Disposer.register(disposable, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_KEY, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)
       mainUi.setContent(viewer, blockState)
@@ -226,7 +226,7 @@ data class CombinedDiffEditorState(
 
 interface CombinedDiffComponentProcessor {
   val context: DiffContext
-  val ourDisposable: CheckedDisposable
+  val disposable: CheckedDisposable
 
   fun getMainComponent(): JComponent
   fun getPreferredFocusedComponent(): JComponent?

@@ -56,7 +56,7 @@ internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManage
     val processor = CombinedDiffManager.getInstance(project).createProcessor()
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel
-    diffModel.addAndInvokeRequestChainListener(processor.ourDisposable) {
+    diffModel.addAndInvokeRequestChainListener(processor.disposable) {
       processor.cleanBlocks()
       diffModel.requestChain?.let<DiffRequestChain, Unit> {
         val requests = mutableListOf<CombinedBlockProducer>()

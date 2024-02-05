@@ -47,7 +47,7 @@ abstract class CombinedDiffPreview(project: Project,
     previewModel?.let { return it }
     val newPreviewModel = createPreviewModel()
     newPreviewModel.processor.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
-    Disposer.register(newPreviewModel.processor.ourDisposable) { previewModel = null }
+    Disposer.register(newPreviewModel.processor.disposable) { previewModel = null }
     previewModel = newPreviewModel
     return newPreviewModel
   }
@@ -102,7 +102,7 @@ abstract class CombinedDiffPreviewModel(val project: Project,
 
   init {
     processor = CombinedDiffManager.getInstance(project).createProcessor(diffPlace)
-    Disposer.register(parentDisposable, processor.ourDisposable)
+    Disposer.register(parentDisposable, processor.disposable)
     processor.context.putUserData(COMBINED_DIFF_PREVIEW_MODEL, this)
   }
 
@@ -154,7 +154,7 @@ abstract class CombinedDiffPreviewModel(val project: Project,
   }
 
   override fun refresh(fromModelRefresh: Boolean) {
-    if (processor.ourDisposable.isDisposed) return
+    if (processor.disposable.isDisposed) return
 
     val selectedChanges = iterateSelectedOrAllChanges().toList()
 
@@ -184,7 +184,7 @@ abstract class CombinedDiffPreviewModel(val project: Project,
   }
 
   fun updateBlocks() {
-    if (processor.ourDisposable.isDisposed) return
+    if (processor.disposable.isDisposed) return
     processor.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
     val changes = iterateAllChanges().toList()
     if (changes.isNotEmpty()) {

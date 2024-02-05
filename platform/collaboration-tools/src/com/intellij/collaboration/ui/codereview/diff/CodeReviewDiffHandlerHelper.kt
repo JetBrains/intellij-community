@@ -73,7 +73,7 @@ class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: Corout
           }
         }
       }
-    }.cancelOnDispose(processor.ourDisposable)
+    }.cancelOnDispose(processor.disposable)
     return processor
   }
 

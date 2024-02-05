@@ -11,10 +11,10 @@ import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
 
 class CombinedDiffEditor(file: CombinedDiffVirtualFile, val processor: CombinedDiffComponentProcessor) :
-  DiffEditorBase(file, processor.getMainComponent(), processor.ourDisposable), FileEditorWithTextEditors {
+  DiffEditorBase(file, processor.getMainComponent(), processor.disposable), FileEditorWithTextEditors {
 
   override fun dispose() {
-    Disposer.dispose(processor.ourDisposable)
+    Disposer.dispose(processor.disposable)
     super.dispose()
   }
 

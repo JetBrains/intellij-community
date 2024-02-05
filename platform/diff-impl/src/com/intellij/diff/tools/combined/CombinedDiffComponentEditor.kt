@@ -15,20 +15,20 @@ class CombinedDiffComponentEditor(
 ) : FileEditorBase() {
 
   init {
-    Disposer.register(processor.ourDisposable, Disposable {
+    Disposer.register(processor.disposable, Disposable {
       firePropertyChange(FileEditor.PROP_VALID, true, false)
     })
   }
 
   override fun dispose() {
-    Disposer.dispose(processor.ourDisposable)
+    Disposer.dispose(processor.disposable)
     super.dispose()
   }
 
   override fun getComponent(): JComponent = processor.getMainComponent()
   override fun getPreferredFocusedComponent(): JComponent? = processor.getPreferredFocusedComponent()
 
-  override fun isValid(): Boolean = !isDisposed && !processor.ourDisposable.isDisposed
+  override fun isValid(): Boolean = !isDisposed && !processor.disposable.isDisposed
   override fun getFile(): VirtualFile = file
   override fun getName(): String = DiffBundle.message("diff.file.editor.name")
 }
