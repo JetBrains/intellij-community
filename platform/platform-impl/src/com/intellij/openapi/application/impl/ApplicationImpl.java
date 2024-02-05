@@ -23,10 +23,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressResult;
 import com.intellij.openapi.progress.impl.ProgressRunner;
@@ -621,7 +618,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
           logErrorDuringExit("Failed to close and dispose all projects", e);
         }
       }
-      try {
+      try (var ignored = Cancellation.withNonCancelableSection()) {
         scope.close();
         exitSpan.end();
         //noinspection TestOnlyProblems
