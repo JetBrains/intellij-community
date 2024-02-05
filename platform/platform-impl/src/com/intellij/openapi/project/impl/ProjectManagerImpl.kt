@@ -58,6 +58,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
@@ -382,7 +383,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project)
       if (project is ProjectImpl) {
-        cancelAndJoinBlocking(project)
+        if (Registry.`is`("ide.await.project.scope.completion")) {
+          cancelAndJoinBlocking(project)
+        }
+        else {
+          cancelAndTryJoin(project)
+        }
       }
     }
 

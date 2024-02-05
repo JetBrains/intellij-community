@@ -29,6 +29,10 @@ fun isCoroutineDumpHeader(line: String): Boolean {
   return line == COROUTINE_DUMP_HEADER || line == COROUTINE_DUMP_HEADER_STRIPPED
 }
 
+fun isCoroutineDumpEnabled(): Boolean {
+  return DebugProbes.isInstalled
+}
+
 fun enableCoroutineDump(): Result<Unit> {
   return runCatching {
     DebugProbes.enableCreationStackTraces = false
@@ -43,7 +47,7 @@ fun enableCoroutineDump(): Result<Unit> {
  */
 @JvmOverloads
 fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true, deduplicateTrees: Boolean = true): String? {
-  if (!DebugProbes.isInstalled) {
+  if (!isCoroutineDumpEnabled()) {
     return null
   }
   val charset = StandardCharsets.UTF_8.name()
