@@ -86,11 +86,11 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         model.setSelection(selection)
       }
       override fun onEnter(): Boolean {
-        openDiff()
+        editorDiffPreview.performDiffAction()
         return true
       }
       override fun onDoubleClick(): Boolean {
-        openDiff()
+        editorDiffPreview.performDiffAction()
         return true
       }
     }, this)
@@ -171,11 +171,6 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       return LocalHistoryBundle.message("activity.list.empty.text.recent")
     }
     return LocalHistoryBundle.message("activity.list.empty.text.in.scope", activityScope.presentableName)
-  }
-
-  private fun openDiff() {
-    LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.Diff, activityScope)
-    editorDiffPreview.openPreview(true)
   }
 
   override fun dispose() {

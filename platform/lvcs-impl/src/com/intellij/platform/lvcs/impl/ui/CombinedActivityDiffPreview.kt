@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import com.intellij.platform.lvcs.impl.ActivityDiffData
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.filePath
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import javax.swing.JComponent
 
 internal open class CombinedActivityDiffPreview(project: Project,
@@ -26,6 +27,11 @@ internal open class CombinedActivityDiffPreview(project: Project,
                                                 val scope: ActivityScope,
                                                 parentDisposable: Disposable) :
   CombinedDiffPreview(project, targetComponent, true, parentDisposable) {
+
+  override fun performDiffAction(): Boolean {
+    LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.Diff, scope)
+    return super.performDiffAction()
+  }
 
   override fun createPreviewModel(): CombinedDiffPreviewModel {
     return CombinedActivityDiffPreviewModel(project, scope, parentDisposable)
