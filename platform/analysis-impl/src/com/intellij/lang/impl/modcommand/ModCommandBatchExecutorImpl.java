@@ -257,9 +257,12 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
                                                                true));
       }
       else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
-        PsiFile target = PsiManager.getInstance(project).findFile(navigate.file());
-        if (target != null) {
-          navigateInfo = IntentionPreviewInfo.navigate(target, navigate.caret());
+        VirtualFile virtualFile = navigate.file();
+        if (virtualFile.isValid()) {
+          PsiFile target = PsiManager.getInstance(project).findFile(virtualFile);
+          if (target != null) {
+            navigateInfo = IntentionPreviewInfo.navigate(target, navigate.caret());
+          }
         }
       }
       else if (command instanceof ModChooseAction target) {
