@@ -1518,90 +1518,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("testData/quickfix/createFromUsage/createFunction/call")
             public abstract static class Call extends AbstractQuickFixMultiFileTest {
                 @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/quickfix/createFromUsage/createFunction/call/extension")
-                public static class Extension extends AbstractQuickFixMultiFileTest {
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-                    }
-
-                    @TestMetadata("extensionFunOnGroovyType.before.Main.kt")
-                    public void testExtensionFunOnGroovyType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnGroovyType.before.Main.kt");
-                    }
-
-                    @TestMetadata("extensionFunOnJavaType.before.Main.kt")
-                    public void testExtensionFunOnJavaType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnJavaType.before.Main.kt");
-                    }
-
-                    @TestMetadata("extensionFunOnTypeFromAnotherPackage.before.Main.kt")
-                    public void testExtensionFunOnTypeFromAnotherPackage() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnTypeFromAnotherPackage.before.Main.kt");
-                    }
-
-                    @TestMetadata("staticExtensionFunOnJavaClass.before.Main.kt")
-                    public void testStaticExtensionFunOnJavaClass() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/staticExtensionFunOnJavaClass.before.Main.kt");
-                    }
-                }
-
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/quickfix/createFromUsage/createFunction/call/member")
-                public static class Member extends AbstractQuickFixMultiFileTest {
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-                    }
-
-                    @TestMetadata("funOnClassNoClassObject3.before.Main.kt")
-                    public void testFunOnClassNoClassObject3() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnClassNoClassObject3.before.Main.kt");
-                    }
-
-                    @TestMetadata("funOnGroovyType.before.Main.kt")
-                    public void testFunOnGroovyType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnGroovyType.before.Main.kt");
-                    }
-
-                    @TestMetadata("funOnJavaInterface.before.Main.kt")
-                    public void testFunOnJavaInterface() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnJavaInterface.before.Main.kt");
-                    }
-
-                    @TestMetadata("funOnJavaType.before.Main.kt")
-                    public void testFunOnJavaType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funOnJavaType.before.Main.kt");
-                    }
-
-                    @TestMetadata("genericFunOnJavaType.before.Main.kt")
-                    public void testGenericFunOnJavaType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/genericFunOnJavaType.before.Main.kt");
-                    }
-
-                    @TestMetadata("staticFunOnJavaClass.before.Main.kt")
-                    public void testStaticFunOnJavaClass() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/staticFunOnJavaClass.before.Main.kt");
-                    }
-
-                    @TestMetadata("staticFunOnJavaInterface.before.Main.kt")
-                    public void testStaticFunOnJavaInterface() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/staticFunOnJavaInterface.before.Main.kt");
-                    }
-                }
-
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/quickfix/createFromUsage/createFunction/call/simple")
-                public static class Simple extends AbstractQuickFixMultiFileTest {
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-                    }
-
-                    @TestMetadata("javaNullabilityAnnotation.before.Main.kt")
-                    public void testJavaNullabilityAnnotation() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/javaNullabilityAnnotation.before.Main.kt");
-                    }
-                }
-
-                @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createFunction/call/typeArguments")
                 public static class TypeArguments extends AbstractQuickFixMultiFileTest {
                     private void runTest(String testDataFilePath) throws Exception {
@@ -1621,6 +1537,74 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     @TestMetadata("javaClassMemberWithReceiverArg.before.Main.kt")
                     public void testJavaClassMemberWithReceiverArg() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/typeArguments/javaClassMemberWithReceiverArg.before.Main.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/quickfix/createFromUsage/createFunction/call")
+                public static class Uncategorized extends AbstractQuickFixMultiFileTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("extensionFunOnGroovyType.before.Main.kt")
+                    public void testExtensionFunOnGroovyType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnGroovyType.before.Main.kt");
+                    }
+
+                    @TestMetadata("extensionFunOnJavaType.before.Main.kt")
+                    public void testExtensionFunOnJavaType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnJavaType.before.Main.kt");
+                    }
+
+                    @TestMetadata("extensionFunOnTypeFromAnotherPackage.before.Main.kt")
+                    public void testExtensionFunOnTypeFromAnotherPackage() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extensionFunOnTypeFromAnotherPackage.before.Main.kt");
+                    }
+
+                    @TestMetadata("funOnClassNoClassObject3.before.Main.kt")
+                    public void testFunOnClassNoClassObject3() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnClassNoClassObject3.before.Main.kt");
+                    }
+
+                    @TestMetadata("funOnGroovyType.before.Main.kt")
+                    public void testFunOnGroovyType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnGroovyType.before.Main.kt");
+                    }
+
+                    @TestMetadata("funOnJavaInterface.before.Main.kt")
+                    public void testFunOnJavaInterface() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnJavaInterface.before.Main.kt");
+                    }
+
+                    @TestMetadata("funOnJavaType.before.Main.kt")
+                    public void testFunOnJavaType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/funOnJavaType.before.Main.kt");
+                    }
+
+                    @TestMetadata("genericFunOnJavaType.before.Main.kt")
+                    public void testGenericFunOnJavaType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/genericFunOnJavaType.before.Main.kt");
+                    }
+
+                    @TestMetadata("javaNullabilityAnnotation.before.Main.kt")
+                    public void testJavaNullabilityAnnotation() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/javaNullabilityAnnotation.before.Main.kt");
+                    }
+
+                    @TestMetadata("staticExtensionFunOnJavaClass.before.Main.kt")
+                    public void testStaticExtensionFunOnJavaClass() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/staticExtensionFunOnJavaClass.before.Main.kt");
+                    }
+
+                    @TestMetadata("staticFunOnJavaClass.before.Main.kt")
+                    public void testStaticFunOnJavaClass() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/staticFunOnJavaClass.before.Main.kt");
+                    }
+
+                    @TestMetadata("staticFunOnJavaInterface.before.Main.kt")
+                    public void testStaticFunOnJavaInterface() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/staticFunOnJavaInterface.before.Main.kt");
                     }
                 }
             }
