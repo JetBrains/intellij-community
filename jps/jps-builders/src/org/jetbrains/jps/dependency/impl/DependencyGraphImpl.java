@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +114,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       @Override
       public void affectUsage(@NotNull Usage usage, @NotNull Predicate<Node<?, ?>> constraint) {
         Predicate<Node<?, ?>> prevConstraint = affectedUsages.put(usage, constraint);
-        if (prevConstraint != null) {
+        if (prevConstraint != null && constraint != ANY_CONSTRAINT) {
           affectedUsages.put(usage, prevConstraint == ANY_CONSTRAINT? ANY_CONSTRAINT : prevConstraint.or(constraint));
         }
       }
