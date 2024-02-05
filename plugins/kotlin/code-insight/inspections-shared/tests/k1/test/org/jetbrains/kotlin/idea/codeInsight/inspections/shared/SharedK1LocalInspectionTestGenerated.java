@@ -1864,6 +1864,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapIndexedNotNullToOnSequence.kt");
         }
 
+        @TestMetadata("MapNotNullAvoidCapturingOuterLabel.kt")
+        public void testMapNotNullAvoidCapturingOuterLabel() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullAvoidCapturingOuterLabel.kt");
+        }
+
         @TestMetadata("MapNotNullFakeAlias.kt")
         public void testMapNotNullFakeAlias() throws Exception {
             runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullFakeAlias.kt");

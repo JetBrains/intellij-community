@@ -13,7 +13,10 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 
@@ -28,6 +31,22 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
         calleeExpression: KtExpression,
         conversion: Conversion
     )
+
+    abstract class ScopedLabelVisitor(private val label: String) : KtTreeVisitor<Unit>() {
+        private fun String.trimLabel() = trim('@').trim()
+
+        override fun visitLabeledExpression(expression: KtLabeledExpression, data: Unit?): Void? {
+            // The label has been overwritten, do not descend into children
+            if (expression.getLabelName() == label) return null
+            return super.visitLabeledExpression(expression, data)
+        }
+
+        override fun visitCallExpression(expression: KtCallExpression, data: Unit?): Void? {
+            // The label has been overwritten, do not descend into children
+            if (expression.calleeExpression?.text?.trimLabel() == label) return null
+            return super.visitCallExpression(expression, data)
+        }
+    }
 
     inner class QualifiedExpressionVisitor internal constructor(val holder: ProblemsHolder, val isOnTheFly: Boolean) : KtVisitorVoid() {
         override fun visitQualifiedExpression(expression: KtQualifiedExpression) {
@@ -46,6 +65,19 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = QualifiedExpressionVisitor(holder, isOnTheFly)
+
+    protected fun KtExpression.isUsingLabelInScope(labelName: String): Boolean {
+        var usingLabel = false
+        accept(object : KtTreeVisitor<Unit>() {
+            override fun visitExpressionWithLabel(expression: KtExpressionWithLabel, data: Unit?): Void? {
+                if (expression.getLabelName() == labelName) {
+                    usingLabel = true
+                }
+                return super.visitExpressionWithLabel(expression, data)
+            }
+        })
+        return usingLabel
+    }
 
     protected sealed interface Conversion {
         data class Replace(val replacementName: String) : Conversion

@@ -69,7 +69,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         calleeExpression: KtExpression,
         conversion: Conversion
     ) {
-        val receiverType = expression.receiverExpression.getKtType() as? KtNonErrorClassType ?:return
+        val receiverType = expression.receiverExpression.getKtType() as? KtNonErrorClassType ?: return
         val receiverTypeArgument = receiverType.ownTypeArguments.singleOrNull() ?: return
         val receiverTypeArgumentType = receiverTypeArgument.type ?: return
         val resolvedCall = expression.resolveCall()?.singleFunctionCallOrNull() ?: return
@@ -94,6 +94,10 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
 
         val newName = (conversion as? Conversion.Replace)?.replacementName
         if (newName != null) {
+            // Do not suggest quick-fix to prevent capturing the name
+            if (expression.isUsingLabelInScope(newName)) {
+                return
+            }
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
                 TextRange(

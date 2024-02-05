@@ -82,7 +82,10 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
     private fun createRenameUselessCallFix(
         expression: KtQualifiedExpression,
         newFunctionName: String
-    ): RenameUselessCallFix {
+    ): RenameUselessCallFix? {
+        if (expression.isUsingLabelInScope(newFunctionName)) {
+            return null
+        }
         val nonInvertedFix = RenameUselessCallFix(newFunctionName, invert = false)
         if (expression.parent.safeAs<KtPrefixExpression>()?.operationToken != KtTokens.EXCL) {
             return nonInvertedFix
@@ -94,9 +97,9 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         val contentElement = codeFragment.getContentElement() as? KtQualifiedExpression ?: return nonInvertedFix
         return analyze(codeFragment) {
             // After changing to the inverted name, we make sure that if the function is inverted, we are calling the correct function.
-            // (Relevant if for example a different List.isEmpty() is already defined in the same scope, we do not want to use it)
+            // (Relevant if, for example, a different List.isEmpty() is already defined in the same scope, we do not want to use it)
             val invertedName = contentElement.invertSelectorFunction()?.callExpression?.calleeExpression?.text
-            if (invertedName != null) {
+            if (invertedName != null && !expression.isUsingLabelInScope(invertedName)) {
                 RenameUselessCallFix(invertedName, invert = true)
             } else {
                 nonInvertedFix
