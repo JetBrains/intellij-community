@@ -15,10 +15,10 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_MERGE_REQUEST_COMMITS("graphql/query/getMergeRequestCommits.graphql"),
   @SinceGitLab("12.3")
   GET_MERGE_REQUEST_DISCUSSIONS("graphql/query/getMergeRequestDiscussions.graphql"),
+  @SinceGitLab("12.0")
+  GET_PROJECT("graphql/query/getProject.graphql"),
   @SinceGitLab("13.1", note = "No exact version")
   GET_PROJECT_LABELS("graphql/query/getProjectLabels.graphql"),
-  @SinceGitLab("12.0")
-  GET_PROJECT_REPOSITORY("graphql/query/getProjectRepository.graphql"),
   @SinceGitLab("15.2")
   GET_PROJECT_WORK_ITEMS("graphql/query/getProjectWidgets.graphql"),
   @SinceGitLab("13.0")

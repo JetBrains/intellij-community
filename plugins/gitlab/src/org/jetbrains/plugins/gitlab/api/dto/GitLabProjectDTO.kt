@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
@@ -16,10 +16,13 @@ data class GitLabProjectDTO(
   val fullPath: @NlsSafe String,
   val httpUrlToRepo: @NlsSafe String?,
   val sshUrlToRepo: @NlsSafe String?,
-  val userPermissions: ProjectUserPermissions,
   val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
   val onlyAllowMergeIfPipelineSucceeds: Boolean,
-  @SinceGitLab("13.1") val allowMergeOnSkippedPipeline: Boolean
+  @SinceGitLab("13.1") val allowMergeOnSkippedPipeline: Boolean,
+  @SinceGitLab("16.8") val allowsMultipleMergeRequestAssignees: Boolean?,
+  @SinceGitLab("16.8") val allowsMultipleMergeRequestReviewers: Boolean?,
+  val userPermissions: ProjectUserPermissions,
+  val repository: Repository
 ) {
   val ownerPath: @NlsSafe String = fullPath.split("/").dropLast(1).joinToString("/")
 
@@ -28,5 +31,9 @@ data class GitLabProjectDTO(
    */
   data class ProjectUserPermissions(
     @SinceGitLab("12.6") val createSnippet: Boolean
+  )
+
+  data class Repository(
+    val rootRef: String
   )
 }

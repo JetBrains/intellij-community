@@ -12,16 +12,22 @@ import com.intellij.collaboration.util.resolveRelative
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabRepositoryDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO
+import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpResponse
+
+@SinceGitLab("12.0")
+suspend fun GitLabApi.GraphQL.getProject(project: GitLabProjectCoordinates): HttpResponse<out GitLabProjectDTO> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+  )
+  val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT, parameters)
+  return withErrorStats(GitLabGQLQuery.GET_PROJECT) {
+    loadResponse<GitLabProjectDTO>(request, "project")
+  }
+}
 
 @SinceGitLab("13.1", note = "No exact version")
 fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabLabelDTO>> =
@@ -64,20 +70,6 @@ suspend fun GitLabApi.Rest.getProjectNamespace(namespaceId: String): HttpRespons
   val request = request(uri).GET().build()
   return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_NAMESPACE) {
     loadJsonValue(request)
-  }
-}
-
-@SinceGitLab("12.0")
-suspend fun GitLabApi.GraphQL.getProjectRepository(
-  project: GitLabProjectCoordinates
-): HttpResponse<out GitLabRepositoryDTO> {
-  val parameters = mapOf(
-    "fullPath" to project.projectPath.fullPath()
-  )
-
-  val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_REPOSITORY, parameters)
-  return withErrorStats(GitLabGQLQuery.GET_PROJECT_REPOSITORY) {
-    loadResponse<GitLabRepositoryDTO>(request, "project", "repository")
   }
 }
 

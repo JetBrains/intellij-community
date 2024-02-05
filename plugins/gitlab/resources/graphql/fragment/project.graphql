@@ -10,7 +10,14 @@ fragment project on Project {
   onlyAllowMergeIfPipelineSucceeds
   allowMergeOnSkippedPipeline
 
+  allowsMultipleMergeRequestAssignees
+  allowsMultipleMergeRequestReviewers
+
   userPermissions {
     createSnippet
+  }
+
+  repository {
+    ...repository
   }
 }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.GitLabWidgetDTO.WorkItemWidgetAssignees
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.WorkItemType
@@ -82,24 +83,31 @@ class GitLabLazyProject(
   }.triggerOn(projectDataReloadSignal.withInitial(Unit))
     .modelFlow(parentCs, LOG)
 
+  private val initialData: Deferred<GitLabProjectDTO> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    api.graphQL.getProject(projectCoordinates).body()
+  }
+
   override val defaultBranch: Deferred<String> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    val projectRepository = api.graphQL.getProjectRepository(projectCoordinates).body()
-    projectRepository.rootRef
+    val project = initialData.await()
+    project.repository.rootRef
   }
 
-  private val plan: Deferred<GitLabPlan?> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    runCatchingUser {
-      val namespace = api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()
-      namespace?.plan
-    }.getOrNull()
-  }
-
-  // TODO: Change the implementation after adding `allowsMultipleReviewers` field to the API
-  //  https://gitlab.com/gitlab-org/gitlab/-/issues/431829
   override val allowsMultipleReviewers: SharedFlow<Boolean> = channelFlow {
-    val glPlan = plan.await()
-    if (glPlan != null) {
-      send(glPlan != GitLabPlan.FREE)
+    if (glMetadata != null && glMetadata.version >= GitLabVersion(16, 8)) {
+      val project = initialData.await()
+      send(project.allowsMultipleMergeRequestReviewers!!)
+      return@channelFlow
+    }
+
+    val plan = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+      runCatchingUser {
+        val namespace = api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()
+        namespace?.plan
+      }.getOrNull()
+    }.await()
+
+    if (plan != null) {
+      send(plan != GitLabPlan.FREE)
       return@channelFlow
     }
 
