@@ -59,10 +59,11 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
         var foundItemsCount = 0
         val cachedMatches = mutableListOf<ScoredText>()
 
+        val semanticMatches = itemsProvider.searchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
+        if (semanticMatches.isEmpty()) return@launch
+        standardSearchJob.join()
+
         suspend fun iterate() {
-          val semanticMatches = itemsProvider.searchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
-          if (semanticMatches.isEmpty()) return
-          standardSearchJob.join()
           for (priority in ORDERED_PRIORITIES) {
             val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
             else cachedMatches.filter { it.findPriority() == priority }.iterator()
@@ -76,6 +77,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
               }
 
               for (descriptor in itemsProvider.createItemDescriptors(match.text, match.similarity, pattern)) {
+                ensureActive()
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {
                   consumer.process(it)
