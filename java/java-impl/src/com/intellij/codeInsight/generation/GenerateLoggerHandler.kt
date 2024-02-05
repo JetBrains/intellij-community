@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation
 
 import com.intellij.codeInsight.CodeInsightActionHandler
+import com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
 import com.intellij.java.JavaBundle
 import com.intellij.lang.logging.JvmLogger
@@ -27,6 +28,8 @@ import org.jetbrains.java.generate.GenerationUtil
 
 class GenerateLoggerHandler : CodeInsightActionHandler {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    GenerateLoggerStatisticsCollector.logActionInvoked(project)
+
     val currentElement = file.findElementAt(editor.caretModel.offset) ?: return
 
     val module = ModuleUtil.findModuleForFile(file)
@@ -78,6 +81,7 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
         }
         editor.caretModel.moveToOffset(offset)
         editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+        GenerateLoggerStatisticsCollector.logActionCompleted(project)
       }
       catch (e: Exception) {
         GenerationUtil.handleException(project, e)

@@ -2490,6 +2490,8 @@
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
     <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
+      <statistics.counterUsagesCollector
+              implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
