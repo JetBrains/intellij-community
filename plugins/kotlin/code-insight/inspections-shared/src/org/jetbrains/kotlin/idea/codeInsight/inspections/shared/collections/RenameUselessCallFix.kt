@@ -4,15 +4,18 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RenameUselessCallFix(private val newName: String, private val invert: Boolean = false) : LocalQuickFix {
@@ -33,17 +36,35 @@ class RenameUselessCallFix(private val newName: String, private val invert: Bool
     private fun KtCallExpression.renameGivenReturnLabels(factory: KtPsiFactory, labelName: String, newName: String) {
         val lambdaExpression = lambdaArguments.firstOrNull()?.getLambdaExpression() ?: return
         val bodyExpression = lambdaExpression.bodyExpression ?: return
+        val expectedLabelText = "@$labelName"
 
-        bodyExpression.forEachDescendantOfType<KtReturnExpression> {
-            if (it.getLabelName() != labelName) return@forEachDescendantOfType
+        val replacementMap = mutableMapOf<PsiElement, PsiElement>()
+        bodyExpression.accept(object : KtTreeVisitor<Unit>() {
+            override fun visitAnnotatedExpression(expression: KtAnnotatedExpression, data: Unit?): Void? {
+                // The label has been overwritten, do not descend into children
+                if (expression.annotationEntries.any { it.text == expectedLabelText }) return null
+                return super.visitAnnotatedExpression(expression, data)
+            }
 
-            it.replaced(
-                factory.createExpressionByPattern(
-                    "return@$0 $1",
-                    newName,
-                    it.returnedExpression ?: ""
-                )
-            )
+            override fun visitCallExpression(expression: KtCallExpression, data: Unit?): Void? {
+                // The label has been overwritten, do not descend into children
+                if (expression.calleeExpression?.text == labelName) return null
+                return super.visitCallExpression(expression, data)
+            }
+
+            override fun visitReturnExpression(expression: KtReturnExpression, data: Unit?): Void? {
+                expression.labeledExpression?.takeIf { it.text == expectedLabelText }?.let { labeledExpression ->
+                    // We use a hack here to only replace the labels in the return expressions, to avoid having to replace the entire
+                    // returned expression, which might contain elements that we also need to modify
+                    val newReturn = factory.createExpressionByPattern("return@$0", newName).children.firstOrNull() as? KtContainerNode
+                    if (newReturn == null) return@let
+                    replacementMap[labeledExpression] = newReturn
+                }
+                return super.visitReturnExpression(expression, data)
+            }
+        })
+        replacementMap.forEach { original, replacement ->
+            original.replace(replacement)
         }
     }
 

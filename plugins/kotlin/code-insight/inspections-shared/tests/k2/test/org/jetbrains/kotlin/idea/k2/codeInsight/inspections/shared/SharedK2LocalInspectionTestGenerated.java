@@ -1874,6 +1874,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullFakeLocalFunction.kt");
         }
 
+        @TestMetadata("MapNotNullLabelNoProblem.kt")
+        public void testMapNotNullLabelNoProblem() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullLabelNoProblem.kt");
+        }
+
+        @TestMetadata("MapNotNullNestedSameLabels.kt")
+        public void testMapNotNullNestedSameLabels() throws Exception {
+            runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullNestedSameLabels.kt");
+        }
+
         @TestMetadata("MapNotNullOnGeneratedSequence.kt")
         public void testMapNotNullOnGeneratedSequence() throws Exception {
             runTest("../testData/inspectionsLocal/uselessCallOnCollection/MapNotNullOnGeneratedSequence.kt");
