@@ -8,7 +8,9 @@ import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.EventDispatcher;
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
+  private static final Logger LOG = Logger.getInstance(SchemesPanel.class);
   private final ColorAndFontOptions myOptions;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
@@ -70,6 +73,10 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     myListLoaded = b;
   }
 
+  protected boolean shouldApplyImmediately() {
+    return false;
+  }
+
   public void addListener(@NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -100,6 +107,15 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
       myOptions.selectScheme(scheme.getName());
       if (areSchemesLoaded()) {
         myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
+      }
+
+      if (shouldApplyImmediately() && myOptions.isModified()) {
+        try {
+          myOptions.apply();
+        }
+        catch (ConfigurationException e) {
+          LOG.warn("Unable to apply compiler resource patterns", e);
+        }
       }
     }
   }

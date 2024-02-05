@@ -220,7 +220,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
           setShouldChangeLafIfNecessary(false)
           setSchemesPanelFactory(object : SchemesPanelFactory {
             override fun createSchemesPanel(options: ColorAndFontOptions): SchemesPanel {
-              return EditorSchemesPanel(options)
+              return EditorSchemesPanel(options, true)
             }
           })
         }

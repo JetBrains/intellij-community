@@ -18,10 +18,13 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.ActionLink
 import java.awt.Component
 
-internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions): SchemesPanel(colorAndFontsOptions, 0) {
+internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
+                                  private val applyImmediately: Boolean = false): SchemesPanel(colorAndFontsOptions, 0) {
   init {
     setSeparatorVisible(false)
   }
+
+  override fun shouldApplyImmediately(): Boolean = applyImmediately
 
   override fun getComboBoxLabel(): String {
     return IdeBundle.message("combobox.editor.color.scheme")
