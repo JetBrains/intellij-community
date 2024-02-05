@@ -51,6 +51,9 @@
                          id="terminalFindPrevious" order="first"/>
     <editorActionHandler action="Replace" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
+    <editorActionHandler action="Terminal.SearchInCommandHistory"
+                         implementationClass="org.jetbrains.plugins.terminal.exp.history.CommandSearchSelectNextHandler"
+                         id="terminalCommandSearchSelectNext" order="first"/>
     <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
                   id="terminalCompletionAutoPopup" order="first"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"
