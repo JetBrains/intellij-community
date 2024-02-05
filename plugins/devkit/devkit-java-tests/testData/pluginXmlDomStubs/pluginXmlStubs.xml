@@ -1,3 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Test skipping processing directive and comments before root tag: -->
+<!-- Comment with angle bracket <test> -->
+<!-- Regular comment -->
 <idea-plugin package="idea.plugin.package">
   <id>com.intellij.myPlugin</id>
   <name>pluginName</name>

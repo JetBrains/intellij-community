@@ -23,6 +23,8 @@ import java.util.Objects;
 
 abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
 
+  protected final int BASE_INDEX_VERSION = 10;
+
   protected abstract Map<K, V> performIndexing(IdeaPlugin plugin);
 
   @Override
@@ -79,9 +81,13 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
       if (idx == -1) return false;
 
       // ignore processing & comment tags
-      if (CharArrayUtil.regionMatches(text, idx, "<!--") ||
-          CharArrayUtil.regionMatches(text, idx, "<?")) {
-        idx++;
+      if (CharArrayUtil.regionMatches(text, idx, "<!--")) {
+        idx = CharArrayUtil.indexOf(text, "-->", idx);
+        continue;
+      }
+
+      if (CharArrayUtil.regionMatches(text, idx, "<?")) {
+        idx = CharArrayUtil.indexOf(text, "?>", idx);
         continue;
       }
 
