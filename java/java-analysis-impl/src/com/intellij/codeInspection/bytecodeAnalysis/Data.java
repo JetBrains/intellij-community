@@ -16,12 +16,12 @@ final class Component {
   final EKey @NotNull [] ids;
 
   Component(@NotNull Value value, @NotNull Collection<EKey> ids) {
-    this(value, ids.toArray(EKey.EMPTY_ARRAY));
+    this(value, ids.toArray(new EKey[0]));
   }
 
   Component(@NotNull Value value, EKey @NotNull ... ids) {
     this.value = value;
-    this.ids = ids.length == 0 ? EKey.EMPTY_ARRAY : ids;
+    this.ids = ids;
   }
 
   @Override

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -42,7 +43,7 @@ public final class FileTypeAssocTable<T> {
     myExactFileNameAnyCaseMappings = concurrentCharSequenceMapBuilder.build(exactFileNameAnyCaseMappings, false);
     myConcurrentCharSequenceMapBuilder = concurrentCharSequenceMapBuilder;
     myHashBangMap = new ConcurrentHashMap<>(hashBangMap);
-    myMatchingMappings = ContainerUtil.createLockFreeCopyOnWriteList(matchingMappings);
+    myMatchingMappings = new CopyOnWriteArrayList<>(matchingMappings);
   }
 
   public FileTypeAssocTable(@NotNull ConcurrentCharSequenceMapBuilder<T> concurrentCharSequenceMapBuilder) {
@@ -298,8 +299,8 @@ public final class FileTypeAssocTable<T> {
   }
 
   // todo drop it, when ConcurrentCollectionFactory will be available in the classpath
-  private static @NotNull <T> Map<CharSequence, T> createCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source, boolean caseSensitive) {
-    Map<CharSequence, T> map = CollectionFactory.createCharSequenceMap(caseSensitive, source.size(), 0.5f);
+  private static @NotNull <T> Map<CharSequence, T> createCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source, boolean caseSensetive) {
+    Map<CharSequence, T> map = CollectionFactory.createCharSequenceMap(caseSensetive, source.size(), 0.5f);
     map.putAll(source);
     return Collections.synchronizedMap(map);
   }
