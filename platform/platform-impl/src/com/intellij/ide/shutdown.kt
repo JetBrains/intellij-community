@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -61,9 +60,6 @@ internal fun cancelAndJoinBlocking(
   debugString: String,
   joinBlocking: (containerJob: Job, dumpJob: Job) -> Unit,
 ) {
-  if (!Registry.`is`("ide.await.scope.completion", true)) {
-    return
-  }
   val containerJob = containerScope.coroutineContext.job
   LOG.trace("$debugString: joining scope")
   containerJob.cancel()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -973,9 +973,6 @@ private fun clearNewFocusOwner() {
 }
 
 private fun cancelAndJoinPluginScopes(classLoaders: WeakList<PluginClassLoader>) {
-  if (!Registry.`is`("ide.await.scope.completion")) {
-    return
-  }
   for (classLoader in classLoaders) {
     cancelAndJoinBlocking(classLoader.pluginCoroutineScope, "Plugin ${classLoader.pluginId}") { job, _ ->
       while (job.isActive) {
