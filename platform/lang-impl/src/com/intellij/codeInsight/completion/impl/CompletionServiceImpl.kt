@@ -64,15 +64,18 @@ open class CompletionServiceImpl : BaseCompletionService() {
     }
 
     @JvmStatic
-    var completionPhase: CompletionPhase
+    val completionPhase: CompletionPhase
       get() {
         val clientCompletionService = tryGetClientCompletionService(getAppSession()) ?: return DEFAULT_PHASE_HOLDER.phase
         return clientCompletionService.completionPhase
       }
-      set(phase) {
-        val clientCompletionService = tryGetClientCompletionService(getAppSession()) ?: return
-        clientCompletionService.completionPhase = phase
-      }
+
+    // Keep the function for compatibility with external plugins
+    @JvmStatic
+    fun setCompletionPhase(phase: CompletionPhase) {
+      val clientCompletionService = tryGetClientCompletionService(getAppSession()) ?: return
+      clientCompletionService.completionPhase = phase
+    }
   }
 
   init {
