@@ -87,7 +87,7 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
     if (refactoring is SuggestedRenameData) {
       if (refactoring.oldName == refactoring.declaration.name) return CodeVisionState.READY_EMPTY
       val text = RefactoringBundle.message("rename.code.vision.text")
-      val tooltip = RefactoringBundle.message("rename.code.vision.tooltip", refactoring.oldName, refactoring.declaration.name)
+      val tooltip = RefactoringBundle.message("suggested.refactoring.rename.popup.text", refactoring.oldName, refactoring.declaration.name)
       return CodeVisionState.Ready(listOf(
         refactoring.declaration.textRange to RenameCodeVisionEntry(project, text, tooltip, id)
       ))
