@@ -45,25 +45,9 @@ public class YAMLElementGenerator {
     return sb.toString();
   }
 
-  /**
-   * Create a YAML key-value pair with a sequence as the value.
-   * Example:
-   * <pre>{@code
-   * Given:
-   * keyName = "fruits";
-   * sequence = Map.of("apple","red", "banana","yellow");
-   *
-   * would generate YAML:
-   * fruits:
-   *   apple: red
-   *   banana: yellow
-   * }</pre>
-   * @param keyName   The name of the key.
-   * @param sequence  The sequence to be used as the value.
-   * @return The created YAML key-value pair.
-   */
-  public YAMLKeyValue createYamlKeyValueWithSequence(@NotNull String keyName, @NotNull Map<String, String> sequence) {
-    String yamlString = sequence.entrySet().stream()
+  public YAMLKeyValue createYamlKeyValueWithSequence(@NotNull String keyName, @NotNull Map<String, String> elementsMap) {
+    String yamlString = elementsMap
+      .entrySet().stream()
       .sorted(Map.Entry.comparingByKey())
       .map(entry -> "%s: %s".formatted(entry.getKey(), entry.getValue()))
       .collect(Collectors.joining("\n"));

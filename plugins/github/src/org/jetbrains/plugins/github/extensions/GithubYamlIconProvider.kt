@@ -3,23 +3,18 @@ package org.jetbrains.plugins.github.extensions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.FileIconProvider
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import javax.swing.Icon
 
+val GITHUB_ACTION_SCHEMA_NAMES: Set<String> = setOf("github-action")
+val GITHUB_WORKFLOW_SCHEMA_NAMES: Set<String> = setOf("github-workflow")
+
 internal class GithubYamlIconProvider : FileIconProvider {
-  private val GITHUB_SCHEMA_NAMES: Set<String> = setOf("github-workflow", "github-action")
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
 
     if (isGithubActionsFile(file, project)) {
-      return AllIcons.Vcs.Vendors.Github
-    }
-
-    val schemaFiles = project?.service<JsonSchemaService>()?.getSchemaFilesForFile(file)
-    if (schemaFiles?.any { GITHUB_SCHEMA_NAMES.contains(it.nameWithoutExtension) } == true) {
       return AllIcons.Vcs.Vendors.Github
     }
 
