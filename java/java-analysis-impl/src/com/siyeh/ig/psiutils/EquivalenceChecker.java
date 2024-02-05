@@ -344,6 +344,7 @@ public class EquivalenceChecker {
 
   protected Match conditionalLoopStatementsMatch(@NotNull PsiConditionalLoopStatement statement1,
                                                  @NotNull PsiConditionalLoopStatement statement2) {
+    markDeclarationsAsEquivalent(statement1, statement2);
     if (statement1 instanceof PsiForStatement) {
       final PsiStatement initialization1 = ((PsiForStatement)statement1).getInitialization();
       final PsiStatement initialization2 = ((PsiForStatement)statement2).getInitialization();
@@ -367,6 +368,7 @@ public class EquivalenceChecker {
   }
 
   protected Match forEachStatementsMatch(@NotNull PsiForeachStatement statement1, @NotNull PsiForeachStatement statement2) {
+    markDeclarationsAsEquivalent(statement1, statement2);
     final PsiExpression value1 = statement1.getIteratedValue();
     final PsiExpression value2 = statement2.getIteratedValue();
     if (!expressionsMatch(value1, value2).isExactMatch()) {
@@ -383,6 +385,7 @@ public class EquivalenceChecker {
   }
 
   private Match forEachPatternStatementsMatch(PsiForeachPatternStatement statement1, PsiForeachPatternStatement statement2) {
+    markDeclarationsAsEquivalent(statement1, statement2);
     final PsiExpression value1 = statement1.getIteratedValue();
     final PsiExpression value2 = statement2.getIteratedValue();
     if (!expressionsMatch(value1, value2).isExactMatch()) {
@@ -399,6 +402,7 @@ public class EquivalenceChecker {
   }
 
   protected Match switchBlocksMatch(@NotNull PsiSwitchBlock switchBlock1, @NotNull PsiSwitchBlock switchBlock2) {
+    markDeclarationsAsEquivalent(switchBlock1, switchBlock2);
     final PsiCodeBlock body1 = switchBlock1.getBody();
     final PsiCodeBlock body2 = switchBlock2.getBody();
     if (!codeBlocksAreEquivalent(body1, body2)) {
@@ -430,26 +434,14 @@ public class EquivalenceChecker {
   }
 
   protected Match blockStatementsMatch(@NotNull PsiBlockStatement statement1, @NotNull PsiBlockStatement statement2) {
-    final PsiCodeBlock block1 = statement1.getCodeBlock();
-    final PsiCodeBlock block2 = statement2.getCodeBlock();
-    return codeBlocksMatch(block1, block2);
+    return codeBlocksMatch(statement1.getCodeBlock(), statement2.getCodeBlock());
   }
 
   protected Match breakStatementsMatch(@NotNull PsiBreakStatement statement1, @NotNull PsiBreakStatement statement2) {
-    final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
-    final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
-    if (identifier1 == null && identifier2 == null) {
-      return EXACT_MATCH;
-    }
     return Match.exact(equivalentDeclarations(statement1.findExitedStatement(), statement2.findExitedStatement()));
   }
 
   protected Match continueStatementsMatch(@NotNull PsiContinueStatement statement1, @NotNull PsiContinueStatement statement2) {
-    final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
-    final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
-    if (identifier1 == null && identifier2 == null) {
-      return EXACT_MATCH;
-    }
     return Match.exact(equivalentDeclarations(statement1.findContinuedStatement(), statement2.findContinuedStatement()));
   }
 
@@ -547,8 +539,7 @@ public class EquivalenceChecker {
   }
 
   protected Match labeledStatementsMatch(@NotNull PsiLabeledStatement statement1, @NotNull PsiLabeledStatement statement2) {
-    markDeclarationsAsEquivalent(statement1, statement2);
-    return EXACT_MATCH;
+    return statementsMatch(statement1.getStatement(), statement2.getStatement());
   }
 
   public boolean codeBlocksAreEquivalent(@Nullable PsiCodeBlock block1, @Nullable PsiCodeBlock block2) {

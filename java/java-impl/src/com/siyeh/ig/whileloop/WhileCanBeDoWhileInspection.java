@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.whileloop;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -187,7 +187,7 @@ public final class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInsp
 
     @Nullable
     DiffRange getDiffRange(@NotNull Block block) {
-      final EquivalenceChecker checker = new BreakTrackingEquivalenceChecker();
+      final EquivalenceChecker checker = new TrackingEquivalenceChecker();
       if (block.block != null && this.block != null) {
         if (checker.statementsAreEquivalent(block.block, this.block)) {
           return new DiffRange(block.block, block.block, equalsComments(comments, block.comments)
@@ -216,52 +216,11 @@ public final class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInsp
     private static boolean equalsComments(@NotNull List<PsiComment> comments1, @NotNull List<PsiComment> comments2) {
       if (comments1.size() != comments2.size()) return false;
       for (int i = 0; i < comments1.size(); i++) {
-        if (!Objects.equals(comments1.get(i).getText().trim(),
-                            comments2.get(i).getText().trim())) {
+        if (!Objects.equals(comments1.get(i).getText().trim(), comments2.get(i).getText().trim())) {
           return false;
         }
       }
       return true;
-    }
-
-    /**
-     * Expanding the possibilities of comparing break statements to avoid the situation:
-     * <pre><code>
-     *   while(a) {
-     *     if(foo()) break;
-     *     while(b) {
-     *       if(foo()) break;
-     *     }
-     *   }
-     * </code></pre>
-     * it isn't equivalent to:
-     * <pre><code>
-     *   do(a) {
-     *     if(foo()) break;
-     *   }
-     * </code></pre>
-     */
-    private static class BreakTrackingEquivalenceChecker extends TrackingEquivalenceChecker {
-      @Override
-      protected Match breakStatementsMatch(@NotNull PsiBreakStatement statement1, @NotNull PsiBreakStatement statement2) {
-        return !isParentFor(statement1.findExitedStatement(), statement2.findExitedStatement())
-               ? super.breakStatementsMatch(statement1, statement2)
-               : EXACT_MISMATCH;
-      }
-
-      private static boolean isParentFor(@Nullable PsiElement element1, @Nullable PsiElement element2) {
-        if (element1 == null || element2 == null) return true;
-        if (element1.equals(element2)) return false;
-
-        PsiElement pinedElement1 = element1;
-        while ((element1 = element1.getParent()) != null) {
-          if (element1.equals(element2)) return true;
-        }
-        while ((element2 = element2.getParent()) != null) {
-          if (pinedElement1.equals(element2)) return true;
-        }
-        return false;
-      }
     }
   }
 }

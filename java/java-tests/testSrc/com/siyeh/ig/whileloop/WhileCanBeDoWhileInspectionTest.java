@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.whileloop;
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -189,6 +189,77 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
                      } while (j > 4);
                  }
                }
+               boolean condition() { return true; }
+             }""");
+  }
+
+  public void testDifferentBreaks2() {
+    doTest("""
+             class DoWhileClass {
+               void test() {
+                 for(int i = 0; i < 10; i++) {
+                   int j = i;
+                   outer: for (;condition();) inner: for(int k = 0; k < 2; k++) if(condition()) break inner;
+                   j--;
+                   while<caret>(j > 4) {
+                     outer: for (; condition(); ) for (int k = 0; k < 2; k++) if (condition()) break outer;
+               
+                     j--;
+                   }
+                 }
+               }
+               
+               boolean condition() { return true; }
+             }""", """
+             class DoWhileClass {
+               void test() {
+                 for(int i = 0; i < 10; i++) {
+                   int j = i;
+                   outer: for (;condition();) inner: for(int k = 0; k < 2; k++) if(condition()) break inner;
+                   j--;
+                     if (j > 4) {
+                         do {
+                             outer:
+                             for (; condition(); ) for (int k = 0; k < 2; k++) if (condition()) break outer;
+
+                             j--;
+                         } while (j > 4);
+                     }
+                 }
+               }
+
+               boolean condition() { return true; }
+             }""");
+  }
+  
+  public void testDifferentContinues() {
+    doTest("""
+             class DoWhileClass {
+               
+               void test(boolean a, boolean b) {
+                 while(a) {
+                   if(condition()) continue;
+                   while<caret>(b) {
+                     if(condition()) continue;
+                   }
+                 }
+               }
+               
+               boolean condition() { return true; }
+             }""", """
+             class DoWhileClass {
+
+               void test(boolean a, boolean b) {
+                 while(a) {
+                   if(condition()) continue;
+                     if (b) {
+                         do {
+                             if (condition()) continue;
+                         } while (b);
+                     }
+                 }
+               }
+
                boolean condition() { return true; }
              }""");
   }
