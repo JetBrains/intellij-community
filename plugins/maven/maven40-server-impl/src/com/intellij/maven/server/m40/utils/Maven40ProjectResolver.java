@@ -140,7 +140,7 @@ public class Maven40ProjectResolver {
           session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
         }
 
-        List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults", () ->
+        List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
           getProjectBuildingResults(request, files));
 
         fillSessionCache(mavenSession, repositorySession, buildingResults);
