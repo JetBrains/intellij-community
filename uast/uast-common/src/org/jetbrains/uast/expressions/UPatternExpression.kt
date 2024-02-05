@@ -17,15 +17,15 @@ import org.jetbrains.uast.visitor.UastVisitor
 @Experimental
 interface UPatternExpression : UExpression {
   /**
-   * Name of the pattern, can be null if the pattern is unnamed or no name is specified.
+   * The primary type reference that is checked when evaluating this pattern or null when there is none (e.g., unnamed pattern).
+   * For deconstruction patterns like `Point(int x, int y)` the main type will be `Point`.
    */
-  val name: String?
+  val typeReference: UTypeReferenceExpression? get() = variable?.typeReference
 
   /**
-   * The primary type reference that is checked when evaluating this pattern or null when there is none.
-   * * For deconstruction patterns like `Point(int x, int y)` this will be then main type `Point`.
+   * The pattern variable or null if the pattern has no name identifier specified.
    */
-  val typeReference: UTypeReferenceExpression?
+  val variable: UParameter?
 
   /**
    * The deconstructed patterns or empty if this pattern is not a deconstruction pattern.
@@ -36,14 +36,20 @@ interface UPatternExpression : UExpression {
 
   override fun asRenderString(): String {
     val renderPatternList = if (deconstructedPatterns.isNotEmpty()) "(${deconstructedPatterns.joinToString { it.asRenderString() }})" else ""
-    val renderName = "${if (typeReference != null) " " else ""}${name ?: "_"}"
-    return "${typeReference?.type?.name ?: ""}$renderPatternList$renderName"
+    val typeReference = typeReference?.type ?: variable?.type
+    val renderName = "${if (typeReference != null) " " else ""}${variable?.name ?: "_"}"
+    return "${typeReference?.name ?: ""}$renderPatternList$renderName"
   }
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitPatternExpression(this)) return
     uAnnotations.acceptList(visitor)
-    typeReference?.accept(visitor)
+    if (variable == null) {
+      typeReference?.accept(visitor)
+    } else {
+      // type reference is part of the variable
+      variable?.accept(visitor)
+    }
     deconstructedPatterns.acceptList(visitor)
     visitor.afterVisitPatternExpression(this)
   }

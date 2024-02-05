@@ -184,6 +184,10 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
       override fun visitVariable(variable: PsiVariable) {
         result = requiredType.el<UVariable, PsiVariable>(variable, givenParent, ::JavaUVariable)
       }
+
+      override fun visitPatternVariable(variable: PsiPatternVariable) {
+        result = requiredType.el<UParameter, PsiPatternVariable>(variable, givenParent, ::JavaUParameter)
+      }
     }
 
     element.accept(visitor)
@@ -319,10 +323,6 @@ internal object JavaConverter {
       }
 
       override fun visitDeconstructionList(deconstructionList: PsiDeconstructionList) {
-        result = true
-      }
-
-      override fun visitPatternVariable(variable: PsiPatternVariable) {
         result = true
       }
     }

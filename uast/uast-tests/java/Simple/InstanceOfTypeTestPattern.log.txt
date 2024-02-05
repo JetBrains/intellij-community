@@ -7,6 +7,6 @@ UFile (package = )
                     UBinaryExpressionWithPattern
                         USimpleNameReferenceExpression (identifier = x)
                         UPatternExpression
-                            UTypeReferenceExpression (name = java.lang.Integer)
+                            UParameter (name = y)
                     UBlockExpression
                     UastEmptyExpression

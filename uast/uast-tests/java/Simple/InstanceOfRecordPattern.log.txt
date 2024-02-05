@@ -15,7 +15,7 @@ UFile (package = )
                         UPatternExpression
                             UTypeReferenceExpression (name = Box)
                             UPatternExpression
-                                UTypeReferenceExpression (name = RedBall)
+                                UParameter (name = a)
                     UBlockExpression
                     UastEmptyExpression
                 UIfExpression
@@ -24,7 +24,7 @@ UFile (package = )
                         UPatternExpression
                             UTypeReferenceExpression (name = Box)
                             UPatternExpression
-                                UTypeReferenceExpression (name = GreenBall)
+                                UParameter (name = _)
                     UBlockExpression
                     UastEmptyExpression
                 UIfExpression

@@ -8,5 +8,5 @@ UFile (package = )
                     UExpressionList (switch)
                         USwitchClauseExpressionWithBody
                             UPatternExpression
-                                UTypeReferenceExpression (name = java.lang.Integer)
+                                UParameter (name = i)
                             UExpressionList (switch_entry)

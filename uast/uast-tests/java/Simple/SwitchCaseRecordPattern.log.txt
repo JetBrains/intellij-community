@@ -15,11 +15,11 @@ UFile (package = )
                             UPatternExpression
                                 UTypeReferenceExpression (name = Box)
                                 UPatternExpression
-                                    UTypeReferenceExpression (name = RedBall)
+                                    UParameter (name = _)
                             UPatternExpression
                                 UTypeReferenceExpression (name = Box)
                                 UPatternExpression
-                                    UTypeReferenceExpression (name = BlueBall)
+                                    UParameter (name = _)
                             UExpressionList (switch_entry)
                                 UYieldExpression
                                     UQualifiedReferenceExpression
@@ -33,7 +33,7 @@ UFile (package = )
                             UPatternExpression
                                 UTypeReferenceExpression (name = Box)
                                 UPatternExpression
-                                    UTypeReferenceExpression (name = GreenBall)
+                                    UParameter (name = a)
                             UExpressionList (switch_entry)
                                 UYieldExpression
                                     UQualifiedReferenceExpression
