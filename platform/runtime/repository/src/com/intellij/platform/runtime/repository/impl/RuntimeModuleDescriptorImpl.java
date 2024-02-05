@@ -112,7 +112,7 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
 
   private static Path convertToAbsolute(Path baseDir, String relativePath) {
     if (relativePath.startsWith("$")) {
-      return ResourcePathMacros.resolve(relativePath);
+      return ResourcePathMacros.resolve(relativePath, baseDir);
     }
     Path root = baseDir;
     while (relativePath.startsWith("../")) {

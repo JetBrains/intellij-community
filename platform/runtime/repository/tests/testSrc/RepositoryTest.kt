@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository
 
+import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.rules.TempDirectoryExtension
@@ -100,8 +101,13 @@ class RepositoryTest {
       RawRuntimeModuleDescriptor("ij.foo", listOf("\$PROJECT_DIR$/foo.jar"), emptyList()),
       RawRuntimeModuleDescriptor("ij.bar", listOf("\$MAVEN_REPOSITORY$/bar/bar.jar"), emptyList()),
     )
+    
+    //ensure that tempDirectory will be treated as the project root
+    tempDirectory.newFile("intellij.idea.community.main.iml")
+    tempDirectory.newDirectory(".idea")
+    
     val foo = repository.getModule(RuntimeModuleId.raw("ij.foo"))
-    assertEquals(listOf(Path.of("foo.jar").toAbsolutePath()), foo.resourceRootPaths)
+    assertEquals(listOf(tempDirectory.rootPath.resolve( "foo.jar")), foo.resourceRootPaths)
     val bar = repository.getModule(RuntimeModuleId.raw("ij.bar"))
     assertEquals(listOf(IntelliJProjectConfiguration.getLocalMavenRepo().resolve("bar/bar.jar")), bar.resourceRootPaths)
   }
