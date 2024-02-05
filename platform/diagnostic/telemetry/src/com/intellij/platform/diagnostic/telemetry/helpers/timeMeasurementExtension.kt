@@ -6,7 +6,7 @@ import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
 
 /**
- * Add now.minus([startTime]) in milliseconds to the current value
+ * Add NOW.minus([startTime]) in milliseconds to the current value
  * [startTimeMs] - start time of measurement in milliseconds
  */
 fun AtomicLong.addElapsedTimeMillis(startTimeMs: Long): Unit {
@@ -14,7 +14,7 @@ fun AtomicLong.addElapsedTimeMillis(startTimeMs: Long): Unit {
 }
 
 /**
- * Add now.minus([startTime]) in nanoseconds to the current value
+ * Add NOW.minus([startTime]) in nanoseconds to the current value
  * [startTimeNanosec] - start time of measurement in nanoseconds
  */
 fun AtomicLong.addElapsedTimeNanosec(startTimeNanosec: Long): Unit {
