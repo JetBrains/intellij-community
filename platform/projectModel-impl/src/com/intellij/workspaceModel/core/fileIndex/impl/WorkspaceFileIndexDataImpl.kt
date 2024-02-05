@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeNanosec
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeNanosec
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -323,7 +322,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
   }
 
-  override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeNanosec.addMeasuredTimeMillis {
+  override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeNanosec.addMeasuredTimeNanosec {
     if (!dir.isDirectory) return null
 
     val fileSet = when (val info = getFileInfo(dir, true, true, true, true, true)) {
