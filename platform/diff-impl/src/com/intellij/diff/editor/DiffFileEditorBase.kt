@@ -18,13 +18,13 @@ import javax.swing.JPanel
 /**
  * @see [DiffRequestProcessorEditorCustomizer.Companion.customize]
  */
-abstract class DiffEditorBase(
+abstract class DiffFileEditorBase(
   private val file: VirtualFile,
   component: JComponent,
   private val contentDisposable: CheckedDisposable
 ) : FileEditorBase() {
   companion object {
-    private val LOG = logger<DiffEditorBase>()
+    private val LOG = logger<DiffFileEditorBase>()
     const val DIFF_IN_NAVIGATION_HISTORY_KEY = "include.diffs.in.navigation.history"
   }
 

@@ -11,8 +11,11 @@ open class ChainDiffVirtualFile(val chain: DiffRequestChain, name: String) : Dif
   override fun createProcessor(project: Project): DiffRequestProcessor = CacheDiffRequestChainProcessor(project, chain)
 
   override fun getEditorTabName(project: Project, editors: List<FileEditor>): String? {
-    val editor = editors.filterIsInstance<DiffRequestProcessorEditor>().firstOrNull()
-    return editor?.processor?.activeRequest?.title
+    val processor = editors.filterIsInstance<DiffEditorViewerFileEditor>()
+      .map { it.processor }
+      .filterIsInstance<DiffRequestProcessor>()
+      .firstOrNull()
+    return processor?.activeRequest?.title
   }
 
   override fun toString(): String = "${super.toString()}:$chain"

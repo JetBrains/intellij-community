@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool
 
-import com.intellij.diff.editor.DiffRequestProcessorEditor
+import com.intellij.diff.editor.DiffEditorViewerFileEditor
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.ErrorDiffRequest
 import com.intellij.diff.requests.MessageDiffRequest
@@ -48,7 +48,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
       val processor = CombinedDiffManager.getInstance(project).createProcessor()
       processor.setBlocks(buildCombinedDiffModel(document))
 
-      val editor = CombinedDiffComponentEditor(file, processor)
+      val editor = DiffEditorViewerFileEditor(file, processor)
       document.addDocumentListener(CombinedViewerPatchChangeListener(processor), editor)
 
       return editor
@@ -57,7 +57,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
       val chain = PatchDiffRequestChain(document)
       val processor = MutableDiffRequestChainProcessor(project, chain)
 
-      val editor = DiffRequestProcessorEditor(file, processor)
+      val editor = DiffEditorViewerFileEditor(file, processor)
       document.addDocumentListener(RequestProcessorPatchChangeListener(processor), editor)
 
       return editor
