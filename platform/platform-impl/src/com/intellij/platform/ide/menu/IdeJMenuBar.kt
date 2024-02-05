@@ -269,7 +269,9 @@ internal fun installAppMenuIfNeeded(frame: JFrame) {
 }
 
 private fun JMenu.isTryingToShowPopupMenu(): Boolean =
-  if (this is ActionMenu)
+  if (this is ActionMenu) {
     isTryingToShowPopupMenu
-  else
+  }
+  else {
     isPopupMenuVisible
+  }
