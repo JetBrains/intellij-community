@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitBranchComparisonResult
-import git4idea.changes.GitBranchComparisonResultImpl
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.fetch.GitFetchSupport
 import git4idea.remote.GitRemoteUrlCoordinates
@@ -120,8 +119,7 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       val prPatches = prPatchesRequest.joinCancellable()
       it.checkCanceled()
 
-      GitBranchComparisonResultImpl(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsList,
-                                    prPatches) as GitBranchComparisonResult
+      GitBranchComparisonResult.create(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsList, prPatches)
     }.logError(LOG, "Error occurred while building changes from commits")
   }
 

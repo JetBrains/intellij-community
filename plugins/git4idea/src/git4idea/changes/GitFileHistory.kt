@@ -2,10 +2,12 @@
 package git4idea.changes
 
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents a history of changes in a single file
  */
+@ApiStatus.Experimental
 interface GitFileHistory : Comparator<String> {
 
   /**

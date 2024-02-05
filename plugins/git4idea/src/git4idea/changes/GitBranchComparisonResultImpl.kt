@@ -11,12 +11,12 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitRevisionNumber
 import java.util.*
 
-class GitBranchComparisonResultImpl(private val project: Project,
-                                    private val vcsRoot: VirtualFile,
-                                    override val baseSha: String,
-                                    override val mergeBaseSha: String,
-                                    override val commits: List<GitCommitShaWithPatches>,
-                                    private val headPatches: List<FilePatch>)
+internal class GitBranchComparisonResultImpl(private val project: Project,
+                                             private val vcsRoot: VirtualFile,
+                                             override val baseSha: String,
+                                             override val mergeBaseSha: String,
+                                             override val commits: List<GitCommitShaWithPatches>,
+                                             private val headPatches: List<FilePatch>)
   : GitBranchComparisonResult {
 
   override val headSha: String = commits.last().sha

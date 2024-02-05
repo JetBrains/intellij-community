@@ -3,7 +3,7 @@ package git4idea.changes
 
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
-class SinglePatchGitFileHistory(private val patch: TextFilePatch) : GitFileHistory {
+internal class SinglePatchGitFileHistory(private val patch: TextFilePatch) : GitFileHistory {
 
   override fun findStartCommit(): String? = patch.beforeVersionId
 
