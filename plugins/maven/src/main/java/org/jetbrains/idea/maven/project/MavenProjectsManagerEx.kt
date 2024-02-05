@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.trackActivity
@@ -124,7 +125,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     val modelsProvider = optionalModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
 
-    val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
+    val importResult = withBackgroundProgressTraced(project, MavenProjectBundle.message("maven.project.importing"), false) {
       blockingContext {
         ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).importStarted(myProject)
         val importResult = runImportProjectActivity(projectsToImport, modelsProvider, parentActivity)
@@ -137,7 +138,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     getVirtualFileManager().asyncRefresh()
 
-    withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
+    withBackgroundProgressTraced(project, MavenProjectBundle.message("maven.post.processing"), true) {
       blockingContext {
         val indicator = EmptyProgressIndicator()
         for (task in importResult.postTasks) {
@@ -359,7 +360,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                     modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     logDebug("importModules started: ${projectsToResolve.size}")
     val resolver = MavenProjectResolver(project)
-    val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
+    val resolutionResult = withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.resolving"), true) {
       reportRawProgress { reporter ->
         runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
@@ -385,7 +386,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return coroutineScope {
       val pluginResolutionJob = launch(CoroutineName("pluginResolutionJob")) {
         val pluginResolver = MavenPluginResolver(projectsTree)
-        withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
+        withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
           reportRawProgress { reporter ->
             project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pluginResolutionStarted()
             runMavenImportActivity(project, MavenImportStats.PluginsResolvingTask) {
@@ -419,7 +420,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private suspend fun readMavenProjectsActivity(parentActivity: StructuredIdeActivity,
                                                 read: suspend () -> MavenProjectsTreeUpdateResult): MavenProjectsTreeUpdateResult {
-    return withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
+    return withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.reading"), false) {
       runMavenImportActivity(project, parentActivity, MavenImportStats.ReadingTask) {
         project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pomReadingStarted()
         val result = read()
@@ -525,7 +526,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                          docs: Boolean): MavenArtifactDownloader.DownloadResult {
     if (!sources && !docs) return MavenArtifactDownloader.DownloadResult()
 
-    val result = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading"), true) {
+    val result = withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.downloading"), true) {
       reportRawProgress { reporter ->
         doDownloadArtifacts(projects, artifacts, sources, docs, reporter)
       }
@@ -598,6 +599,14 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
+  private suspend fun <T> withBackgroundProgressTraced(
+    project: Project,
+    title: @NlsContexts.ProgressTitle String,
+    cancellable: Boolean,
+    action: suspend CoroutineScope.() -> T
+  ): T {
+    return withContext(tracer.span(title)) { withBackgroundProgress(project, title, cancellable, action) }
+  }
 
   private fun logDebug(debugMessage: String) {
     MavenLog.LOG.debug(debugMessage)
