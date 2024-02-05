@@ -3,6 +3,7 @@ package com.intellij.platform.runtime.repository
 
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.*
@@ -152,5 +153,38 @@ class RepositoryTest {
     val basePath = tempDirectory.rootPath
     val repository = createRepository(basePath, *descriptors, bootstrapModuleName = storedBootstrapModule.takeIf { it.isNotEmpty() })
     assertEquals(listOf(basePath.resolve("bar.jar"), basePath.resolve("foo.jar")), repository.getBootstrapClasspath("ij.bar"))
+  }
+  
+  @Test
+  fun `additional repositories`() {
+    val main = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor("ij.foo", listOf("foo.jar"), emptyList()),
+    ) as RuntimeModuleRepositoryImpl
+    val additional1Path = tempDirectory.rootPath.resolve("additional1")
+    val additional1 = createRawRepository(
+      additional1Path,
+      RawRuntimeModuleDescriptor("custom1.foo", listOf("custom1-foo.jar"), listOf("ij.foo")),
+      RawRuntimeModuleDescriptor("custom1.bar", listOf("custom1-bar.jar"), listOf("custom1.foo")),
+    )
+    val additional2Path = tempDirectory.rootPath.resolve("additional2")
+    val additional2 = createRawRepository(
+      additional2Path,
+      RawRuntimeModuleDescriptor("custom2", listOf("custom2.jar"), listOf("custom1.bar")),
+    )
+    main.loadAdditionalRepositories(listOf(additional1, additional2))
+    val moduleId = RuntimeModuleId.raw("custom2")
+    val classpath = main.getModule(moduleId).moduleClasspath
+    assertEquals(listOf(
+      additional2Path.resolve("custom2.jar"), 
+      additional1Path.resolve("custom1-bar.jar"), 
+      additional1Path.resolve("custom1-foo.jar"),
+      tempDirectory.rootPath.resolve("foo.jar"),
+    ), classpath)
+    assertEquals(listOf(additional2Path.resolve("custom2.jar")), main.getModuleResourcePaths(moduleId))
+  }
+
+  private fun createRawRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescriptor): RawRuntimeModuleRepositoryData {
+    return RawRuntimeModuleRepositoryData(basePath, descriptors.associateBy { it.id })
   }
 }

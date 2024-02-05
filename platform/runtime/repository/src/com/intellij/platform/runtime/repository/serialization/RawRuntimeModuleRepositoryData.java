@@ -4,6 +4,7 @@ package com.intellij.platform.runtime.repository.serialization;
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
@@ -22,6 +23,12 @@ public final class RawRuntimeModuleRepositoryData {
   RawRuntimeModuleRepositoryData(@NotNull Path descriptorsJarPath) throws XMLStreamException, IOException {
     myBasePath = descriptorsJarPath.getParent();
     myDescriptors = JarFileSerializer.loadFromJar(descriptorsJarPath);
+  }
+
+  @VisibleForTesting
+  public RawRuntimeModuleRepositoryData(Path basePath, Map<String, RawRuntimeModuleDescriptor> descriptors) {
+    myBasePath = basePath;
+    myDescriptors = descriptors;
   }
 
   public @Nullable RawRuntimeModuleDescriptor findDescriptor(@NotNull String id) {
