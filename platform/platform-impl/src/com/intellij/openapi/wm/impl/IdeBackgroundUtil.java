@@ -355,8 +355,13 @@ public final class IdeBackgroundUtil {
       }
 
       Editor editor = obtainEditor(c);
-      if (editor != null) {
-        if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return original;
+      if (editor instanceof EditorImpl editorImpl) {
+        if (c instanceof EditorComponentImpl && (editorImpl.isDumb() || editorImpl.isStickyLinePainting())) {
+          return original;
+        }
+        if (c instanceof EditorGutterComponentEx && editorImpl.isStickyLinePainting()) {
+          return original;
+        }
       }
 
       Graphics2D gg = withEditorBackground(original, c);
