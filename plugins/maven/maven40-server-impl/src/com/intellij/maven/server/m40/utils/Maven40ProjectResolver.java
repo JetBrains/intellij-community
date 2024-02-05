@@ -2,6 +2,7 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
+import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.RepositoryUtils;
@@ -26,7 +27,10 @@ import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.LongRunningTask;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
+import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
+import org.jetbrains.idea.maven.server.PomHashMap;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -36,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Maven40ProjectResolver {
   @NotNull private final Maven40ServerEmbedderImpl myEmbedder;
+  @NotNull private final MavenServerOpenTelemetry myTelemetry;
   private final boolean myUpdateSnapshots;
   @NotNull private final Maven40ImporterSpy myImporterSpy;
   private final LongRunningTask myLongRunningTask;
@@ -48,6 +53,7 @@ public class Maven40ProjectResolver {
   private final boolean myResolveInParallel;
 
   public Maven40ProjectResolver(@NotNull Maven40ServerEmbedderImpl embedder,
+                                @NotNull MavenServerOpenTelemetry telemetry,
                                 boolean updateSnapshots,
                                 @NotNull Maven40ImporterSpy importerSpy,
                                 @NotNull LongRunningTask longRunningTask,
@@ -59,6 +65,7 @@ public class Maven40ProjectResolver {
                                 @NotNull Properties userProperties,
                                 boolean resolveInParallel) {
     myEmbedder = embedder;
+    myTelemetry = telemetry;
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myLongRunningTask = longRunningTask;
@@ -74,7 +81,7 @@ public class Maven40ProjectResolver {
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects() {
     try {
-      Collection<Maven40ExecutionResult> results = doResolveProject();
+      Collection<Maven40ExecutionResult> results = myTelemetry.callWithSpan("doResolveProject", () -> doResolveProject());
       ArrayList<MavenServerExecutionResult> list = new ArrayList<>();
       results.stream().map(result -> createExecutionResult(result)).forEachOrdered(list::add);
       return list;
@@ -133,22 +140,24 @@ public class Maven40ProjectResolver {
           session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
         }
 
-        List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
+        List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults", () ->
+          getProjectBuildingResults(request, files));
 
         fillSessionCache(mavenSession, repositorySession, buildingResults);
 
         boolean runInParallel = myResolveInParallel;
         Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
-        ParallelRunnerForServer.execute(
-          runInParallel,
-          buildingResults, br -> {
-            String newDependencyHash = Maven40EffectivePomDumper.dependencyHash(br.getProject());
-            if (null != newDependencyHash) {
-              fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
+        myTelemetry.callWithSpan("dependencyHashes", () ->
+          myTelemetry.execute(
+            runInParallel,
+            buildingResults, br -> {
+              String newDependencyHash = Maven40EffectivePomDumper.dependencyHash(br.getProject());
+              if (null != newDependencyHash) {
+                fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
+              }
+              return br;
             }
-            return br;
-          }
-        );
+          ));
 
         for (ProjectBuildingResult buildingResult : buildingResults) {
           MavenProject project = buildingResult.getProject();
@@ -180,16 +189,19 @@ public class Maven40ProjectResolver {
 
         myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
         Collection<Maven40ExecutionResult> execResults =
-          ParallelRunnerForServer.execute(
-            runInParallel,
-            buildingResultInfos, br -> {
-              if (myLongRunningTask.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
-              Maven40ExecutionResult result = resolveBuildingResult(repositorySession, br.buildingResult, br.exceptions);
-              result.setDependencyHash(br.dependencyHash);
-              myLongRunningTask.incrementFinishedRequests();
-              return result;
-            }
-          );
+          myTelemetry.callWithSpan("resolveBuildingResults", () ->
+            myTelemetry.execute(
+              runInParallel,
+              buildingResultInfos, br -> {
+                if (myLongRunningTask.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
+                Maven40ExecutionResult result = myTelemetry.callWithSpan(
+                  "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
+                    resolveBuildingResult(repositorySession, br.buildingResult, br.exceptions));
+                result.setDependencyHash(br.dependencyHash);
+                myLongRunningTask.incrementFinishedRequests();
+                return result;
+              }
+            ));
 
         executionResults.addAll(execResults);
       }

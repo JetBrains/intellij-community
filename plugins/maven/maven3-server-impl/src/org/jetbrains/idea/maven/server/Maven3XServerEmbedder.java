@@ -511,6 +511,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pomHashMap.size(), myConsoleWrapper)) {
       Maven3XProjectResolver projectResolver = new Maven3XProjectResolver(
         this,
+        telemetry,
         updateSnapshots,
         myImporterSpy,
         task,

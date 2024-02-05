@@ -266,6 +266,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pomHashMap.size(), myConsoleWrapper)) {
       Maven40ProjectResolver projectResolver = new Maven40ProjectResolver(
         this,
+        telemetry,
         updateSnapshots,
         myImporterSpy,
         task,

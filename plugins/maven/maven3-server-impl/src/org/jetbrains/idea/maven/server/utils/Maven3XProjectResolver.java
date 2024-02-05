@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.utils;
 
+import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
@@ -44,6 +45,7 @@ import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER
 
 public class Maven3XProjectResolver {
   @NotNull private final Maven3XServerEmbedder myEmbedder;
+  @NotNull private final MavenServerOpenTelemetry myTelemetry;
   private final boolean myUpdateSnapshots;
   @NotNull private final Maven3ImporterSpy myImporterSpy;
   private final LongRunningTask myLongRunningTask;
@@ -55,6 +57,7 @@ public class Maven3XProjectResolver {
   private final boolean myResolveInParallel;
 
   public Maven3XProjectResolver(@NotNull Maven3XServerEmbedder embedder,
+                                @NotNull MavenServerOpenTelemetry telemetry,
                                 boolean updateSnapshots,
                                 @NotNull Maven3ImporterSpy importerSpy,
                                 @NotNull LongRunningTask longRunningTask,
@@ -65,6 +68,7 @@ public class Maven3XProjectResolver {
                                 @NotNull Properties userProperties,
                                 boolean resolveInParallel) {
     myEmbedder = embedder;
+    myTelemetry = telemetry;
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myLongRunningTask = longRunningTask;
@@ -79,7 +83,7 @@ public class Maven3XProjectResolver {
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects() {
     try {
-      Collection<Maven3ExecutionResult> results = doResolveProject();
+      Collection<Maven3ExecutionResult> results = myTelemetry.callWithSpan("doResolveProject", () -> doResolveProject());
 
       ArrayList<MavenServerExecutionResult> list = new ArrayList<>();
       results.stream().map(result -> createExecutionResult(result.getPomFile(), result)).forEachOrdered(list::add);
@@ -140,7 +144,8 @@ public class Maven3XProjectResolver {
           session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
         }
 
-        List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
+        List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults", () ->
+          getProjectBuildingResults(request, files));
 
         fillSessionCache(mavenSession, repositorySession, buildingResults);
 
@@ -148,16 +153,17 @@ public class Maven3XProjectResolver {
 
         boolean runInParallel = myResolveInParallel;
         Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
-        ParallelRunnerForServer.execute(
-          runInParallel,
-          buildingResults, br -> {
-            String newDependencyHash = Maven3EffectivePomDumper.dependencyHash(br.getProject());
-            if (null != newDependencyHash) {
-              fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
+        myTelemetry.callWithSpan("dependencyHashes", () ->
+          myTelemetry.execute(
+            runInParallel,
+            buildingResults, br -> {
+              String newDependencyHash = Maven3EffectivePomDumper.dependencyHash(br.getProject());
+              if (null != newDependencyHash) {
+                fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
+              }
+              return br;
             }
-            return br;
-          }
-        );
+          ));
 
         for (ProjectBuildingResult buildingResult : buildingResults) {
           MavenProject project = buildingResult.getProject();
@@ -189,16 +195,19 @@ public class Maven3XProjectResolver {
 
         myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
         Collection<Maven3ExecutionResult> execResults =
-          ParallelRunnerForServer.execute(
-            runInParallel,
-            buildingResultInfos, br -> {
-              if (myLongRunningTask.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
-              Maven3ExecutionResult result = resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult, br.exceptions);
-              result.setDependencyHash(br.dependencyHash);
-              myLongRunningTask.incrementFinishedRequests();
-              return result;
-            }
-          );
+          myTelemetry.callWithSpan("resolveBuildingResults", () ->
+            myTelemetry.execute(
+              runInParallel,
+              buildingResultInfos, br -> {
+                if (myLongRunningTask.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
+                Maven3ExecutionResult result = myTelemetry.callWithSpan(
+                  "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
+                    resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult, br.exceptions));
+                result.setDependencyHash(br.dependencyHash);
+                myLongRunningTask.incrementFinishedRequests();
+                return result;
+              }
+            ));
 
         executionResults.addAll(execResults);
       }
