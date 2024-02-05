@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -14,7 +14,7 @@ import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
-class BuildOptions(
+data class BuildOptions(
   @ApiStatus.Internal
   @JvmField
   val jarCacheDir: Path? = null,
@@ -31,6 +31,15 @@ class BuildOptions(
   val validateImplicitPlatformModule: Boolean = true,
   @JvmField
   var skipDependencySetup: Boolean = false,
+
+  /**
+   * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
+   * In the development mode, build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
+   *
+   * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity).
+   */
+  var isInDevelopmentMode: Boolean = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null),
+  var useCompiledClassesFromProjectOutput: Boolean = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 ) {
   companion object {
     /**
@@ -261,14 +270,6 @@ class BuildOptions(
     targetArch = JvmArchitecture.currentJvmArch
   }
 
-  /**
-   * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
-   * In the development mode, build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
-   *
-   * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity).
-   */
-  var isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null)
-  var useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode)
   var forceRebuild = SystemProperties.getBooleanProperty(FORCE_REBUILD_PROPERTY, false)
 
   /**

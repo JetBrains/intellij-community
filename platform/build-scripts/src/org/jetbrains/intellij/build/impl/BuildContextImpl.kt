@@ -28,6 +28,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.invariantSeparatorsPathString
 
 class BuildContextImpl(
   private val compilationContext: CompilationContextImpl,
@@ -200,18 +201,20 @@ class BuildContextImpl(
     return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
   }
 
-  override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean): BuildContext {
-    val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
-    val options = BuildOptions(compressZipFiles = this.options.compressZipFiles)
-    options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
-    if (this.options.useCompiledClassesFromProjectOutput) {
+  override fun createCopyForProduct(productProperties: ProductProperties,
+                                    projectHomeForCustomizers: Path,
+                                    prepareForBuild: Boolean): BuildContext {
+    val projectHomeForCustomizersAsString = projectHomeForCustomizers.invariantSeparatorsPathString
+    val sourceOptions = this.options
+    val options = sourceOptions.copy()
+    if (options.useCompiledClassesFromProjectOutput) {
       // compiled classes are already reused
       options.pathToCompiledClassesArchivesMetadata = null
       options.pathToCompiledClassesArchive = null
     }
-    options.buildStepsToSkip = this.options.buildStepsToSkip
-    options.targetArch = this.options.targetArch
-    options.targetOs = this.options.targetOs
+    options.buildStepsToSkip = sourceOptions.buildStepsToSkip
+    options.targetArch = sourceOptions.targetArch
+    options.targetOs = sourceOptions.targetOs
     val compilationContextCopy = compilationContext.createCopy(
       messages = messages,
       options = options,
