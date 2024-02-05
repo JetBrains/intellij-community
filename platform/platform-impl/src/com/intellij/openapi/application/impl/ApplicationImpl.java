@@ -551,34 +551,34 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
-    boolean mustExit = true;
+    Integer actualExitCode = null;
     try {
-      mustExit = destructApplication(flags, restart, beforeRestart, exitCode);
+      actualExitCode = destructApplication(flags, restart, beforeRestart, exitCode);
     }
     catch (Throwable err) {
       logErrorDuringExit("Failed to destruct the application", err);
     }
     finally {
-      if (mustExit) {
-        System.exit(exitCode);
+      if (actualExitCode != null) {
+        System.exit(actualExitCode);
       }
     }
   }
 
-  private boolean destructApplication(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
+  private @Nullable Integer destructApplication(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
     IJTracer tracer = TelemetryManager.getInstance().getTracer(new com.intellij.platform.diagnostic.telemetry.Scope("exitApp", null));
     Span exitSpan = tracer.spanBuilder("application.exit").startSpan();
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try (Scope scope = exitSpan.makeCurrent()) {
       if (!force && !confirmExitIfNeeded(BitUtil.isSet(flags, EXIT_CONFIRMED))) {
-        return false;
+        return null;
       }
 
       AppLifecycleListener lifecycleListener = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecycleListener.appClosing();
 
       if (!force && !canExit()) {
-        return false;
+        return null;
       }
 
       stopServicePreloading();
@@ -634,7 +634,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         if (Boolean.getBoolean("idea.test.guimode")) {
           shutdown();
         }
-        return false;
+        return null;
       }
 
       IdeaLogger.dropFrequentExceptionsCaches();
@@ -650,7 +650,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
           }
         }
       }
-      return true;
+      return exitCode;
     }
     finally {
       exitSpan.end();
