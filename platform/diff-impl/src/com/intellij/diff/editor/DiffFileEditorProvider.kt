@@ -2,7 +2,6 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffEditorViewer
-import com.intellij.diff.tools.combined.CombinedDiffVirtualFile
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -21,22 +20,13 @@ internal class DiffFileEditorProvider : DefaultPlatformFileEditorProvider, Struc
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is CombinedDiffVirtualFile || file is DiffVirtualFile
+    return file is DiffViewerVirtualFile
   }
 
   override fun acceptRequiresReadAction() = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val processor: DiffEditorViewer = when (file) {
-      is CombinedDiffVirtualFile -> {
-        file.createProcessor()
-      }
-      is DiffVirtualFile -> {
-        file.createProcessor(project)
-      }
-      else -> throw IllegalArgumentException(file.toString())
-    }
-
+    val processor: DiffEditorViewer = (file as DiffViewerVirtualFile).createProcessor(project)
     val editor = DiffEditorViewerFileEditor(file, processor)
     DiffRequestProcessorEditorCustomizer.customize(file, editor, processor.context)
     return editor

@@ -45,7 +45,7 @@ abstract class CombinedDiffPreview(project: Project,
 
   override val previewFile: VirtualFile by lazy {
     object : CombinedDiffPreviewVirtualFile() {
-      override fun createProcessor(): CombinedDiffComponentProcessor = getOrCreatePreviewModel().processor
+      override fun createProcessor(project: Project): CombinedDiffComponentProcessor = getOrCreatePreviewModel().processor
     }
   }
 

@@ -50,7 +50,7 @@ internal data class GHPRCombinedDiffPreviewVirtualFile(private val fileManagerId
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createProcessor(): CombinedDiffComponentProcessor {
+  override fun createProcessor(project: Project): CombinedDiffComponentProcessor {
     return project.service<GHPRDiffService>().createCombinedDiffProcessor(repository, pullRequest)
   }
 }

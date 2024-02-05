@@ -52,7 +52,7 @@ internal data class GHNewPRCombinedDiffPreviewVirtualFile(private val fileManage
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createProcessor(): CombinedDiffComponentProcessor {
+  override fun createProcessor(project: Project): CombinedDiffComponentProcessor {
     val processor = CombinedDiffManager.getInstance(project).createProcessor()
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel
