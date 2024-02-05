@@ -11,7 +11,6 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
     private val LOG = logger<SettingsSyncDefaultAuthService>()
   }
 
-  @Volatile
   private var invalidatedIdToken: String? = null
 
   override fun isLoggedIn(): Boolean {
@@ -51,6 +50,8 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
   override fun isLoginAvailable(): Boolean = getAccountInfoService() != null
 
   override fun invalidateJBA(idToken: String) {
+    // there's no synchronization on the 'invalidatedIdToken' field, although it can be accessed from multiple threads.
+    // thread safety is not guaranteed, but it doesn't really hurt in this case.
     if (invalidatedIdToken == idToken) return
 
     LOG.warn("Invalidating JBA Token")

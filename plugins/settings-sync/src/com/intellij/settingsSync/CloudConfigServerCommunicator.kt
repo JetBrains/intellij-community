@@ -14,7 +14,6 @@ import com.jetbrains.cloudconfig.auth.JbaJwtTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
 import com.jetbrains.cloudconfig.exception.UnauthorizedException
 import org.jdom.JDOMException
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -34,13 +33,10 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
 
   protected val clientVersionContext = CloudConfigVersionContext()
 
-  @VisibleForTesting
-  @Volatile
-  internal var _currentIdTokenVar: String? = null
+  private var clientAndTokenPair = resettableLazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
 
-  internal var _client = resettableLazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
-    @TestOnly set
-  internal open val client get() = _client.value
+  internal open val currentIdToken: String? get() = clientAndTokenPair.value.second
+  internal open val client get() = clientAndTokenPair.value.first
 
   private val lastRemoteErrorRef = AtomicReference<Throwable>()
 
@@ -48,15 +44,10 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     SettingsSyncEvents.getInstance().addListener(
       object : SettingsSyncEventListener {
         override fun loginStateChanged() {
-          _client.reset()
+          clientAndTokenPair.reset()
         }
       }
     )
-  }
-
-  private fun getCurrentIdToken(): String? {
-    _client.value // init lazy, if necessary
-    return _currentIdTokenVar
   }
 
   @VisibleForTesting
@@ -163,7 +154,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
   }
 
   override fun checkServerState(): ServerState {
-    val idTokenInRequest = getCurrentIdToken()
+    val idTokenInRequest = currentIdToken
     try {
       val snapshotFilePath = currentSnapshotFilePath() ?: return ServerState.Error("Unknown error during checkServerState")
       val latestVersion = client.getLatestVersion(snapshotFilePath)
@@ -183,7 +174,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
 
   override fun receiveUpdates(): UpdateResult {
     LOG.info("Receiving settings snapshot from the cloud config server...")
-    val idTokenInRequest = getCurrentIdToken()
+    val idTokenInRequest = currentIdToken
     try {
       val snapshotFilePath = currentSnapshotFilePath() ?: return UpdateResult.Error("Unknown error during receiveUpdates")
       val (stream, version) = receiveSnapshotFile(snapshotFilePath)
@@ -225,7 +216,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       return SettingsSyncPushResult.Error(e.message ?: "Couldn't prepare zip file")
     }
 
-    val idTokenInRequest = getCurrentIdToken()
+    val idTokenInRequest = currentIdToken
     try {
       val pushResult = sendSnapshotFile(zip.inputStream(), expectedServerVersionId, force)
       clearLastRemoteError()
@@ -314,15 +305,14 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
   }
 
   @VisibleForTesting
-  internal open fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
-    val conf = createConfiguration()
-    return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
+  internal open fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): Pair<CloudConfigFileClientV2, String?> {
+    val idToken = SettingsSyncAuthService.getInstance().idToken
+    val conf = createConfiguration(idToken)
+    return Pair(CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext), idToken)
   }
 
-  private fun createConfiguration(): Configuration {
+  private fun createConfiguration(idToken: String?): Configuration {
     val configuration = Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS)
-    val idToken = SettingsSyncAuthService.getInstance().idToken
-    _currentIdTokenVar = idToken
     if (idToken == null) {
       LOG.warn("No idToken provided! Setting Sync will be disabled")
     } else {

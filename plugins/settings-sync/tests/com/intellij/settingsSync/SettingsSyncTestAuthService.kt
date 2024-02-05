@@ -22,7 +22,7 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
   }
 
   override val idToken: String?
-    get() = getAccountInfoService().idToken
+    get() = getAccountInfoService()?.idToken
 
   override fun login() {
   }
