@@ -7,22 +7,22 @@ import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
-class UastKotlinPsiSetterParameter internal constructor(
+class UastKotlinPsiSetterParameter<T : KtCallableDeclaration> internal constructor(
     parameterType: PsiType,
     parent: PsiElement,
-    ktProperty: KtProperty,
+    ktOrigin: T,
     private val nullability: KtTypeNullability?,
-) : UastKotlinPsiParameterBase<KtProperty>(
+) : UastKotlinPsiParameterBase<T>(
     name = SpecialNames.IMPLICIT_SET_PARAMETER.asString(),
     type = parameterType,
     parent = parent,
-    ktOrigin = ktProperty,
-    language = ktProperty.language,
+    ktOrigin = ktOrigin,
+    language = ktOrigin.language,
     isVarArgs = false,
     ktDefaultValue = null
 ) {

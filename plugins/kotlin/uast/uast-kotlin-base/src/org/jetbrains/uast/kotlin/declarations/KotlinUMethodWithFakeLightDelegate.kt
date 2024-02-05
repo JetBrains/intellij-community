@@ -4,18 +4,14 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.kotlin.psi.*
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightAccessor
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightDefaultAccessor
-import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethodBase
 
 sealed class KotlinUMethodWithFakeLightDelegateBase<T : KtDeclaration>(
     private val original: T,
@@ -53,6 +49,15 @@ internal class KotlinUMethodWithFakeLightDelegateMethod(
 ) : KotlinUMethodWithFakeLightDelegateBase<KtFunction>(original, fakePsi, givenParent) {
     constructor(original: KtFunction, containingLightClass: PsiClass, givenParent: UElement?)
             : this(original, UastFakeSourceLightMethod(original, containingLightClass), givenParent)
+}
+
+internal class KotlinUMethodWithFakeLightDelegateDefaultAccessorForConstructorProperty(
+    original: KtParameter,
+    fakePsi: UastFakeSourceLightDefaultAccessorForConstructorParameter,
+    givenParent: UElement?
+) : KotlinUMethodWithFakeLightDelegateBase<KtParameter>(original, fakePsi, givenParent) {
+    constructor(original: KtParameter, containingLightClass: PsiClass, isSetter: Boolean, givenParent: UElement?)
+            : this(original, UastFakeSourceLightDefaultAccessorForConstructorParameter(original, containingLightClass, isSetter), givenParent)
 }
 
 internal class KotlinUMethodWithFakeLightDelegateDefaultAccessor(
