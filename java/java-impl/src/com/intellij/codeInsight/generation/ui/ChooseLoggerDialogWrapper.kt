@@ -7,11 +7,10 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.logging.JavaLoggerModel
-import com.intellij.ui.logging.JvmLoggingSettingsStorage
-import com.intellij.ui.logging.JvmLoggingConfigurable
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.logging.JvmLoggingConfigurable
+import com.intellij.ui.logging.JvmLoggingSettingsStorage
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.JComponent
@@ -41,9 +40,9 @@ class ChooseLoggerDialogWrapper(
     return panel {
       row {
         label(JavaBundle.message("label.configurable.logger.type"))
-        comboBox = comboBox(JavaLoggerModel(availableLoggers, selectedLogger)).onChanged {
-          selectedLogger = it.item
-        }
+        comboBox = comboBox(availableLoggers)
+          .onChanged { selectedLogger = it.item }
+          .apply { this.component.item = settings.loggerName }
       }
       row {
         text(JavaBundle.message("link.configurable.logger.generator.display.name")) {

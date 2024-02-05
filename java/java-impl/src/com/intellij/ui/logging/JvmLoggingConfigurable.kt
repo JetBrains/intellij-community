@@ -27,15 +27,14 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
   override fun getId(): String = JavaBundle.message("jvm.logging.configurable.id")
 
   override fun createComponent(): JComponent {
-    val isOnlyOnStartup = JvmLogger.getAllLoggersNames(settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
+    val loggers = JvmLogger.getAllLoggersNames(settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
     panel = panel {
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
           label(JavaBundle.message("label.configurable.logger.type"))
-          comboBox(JavaLoggerModel(isOnlyOnStartup, settings.loggerName)).bindItem(
-            settings::loggerName.toNullableProperty()).onChanged {
-            updateWarningRow(it.item)
-          }
+          comboBox(loggers)
+            .bindItem(settings::loggerName.toNullableProperty())
+            .onChanged { updateWarningRow(it.item) }
         }
         warningRow = row {
           icon(AllIcons.General.Warning).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
