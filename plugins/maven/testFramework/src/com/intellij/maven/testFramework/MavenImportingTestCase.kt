@@ -459,9 +459,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertTrue("Auto-reload is disabled for tests by default", isAutoReloadEnabled)
   }
 
-  protected fun assertHasPendingProjectForReload() {
+  protected suspend fun assertHasPendingProjectForReload() {
     assertAutoReloadIsInitialized()
-    assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
+    assertWithinTimeout(10) {
+      assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
+    }
     assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
