@@ -127,6 +127,20 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 29,
+      "description": "Full Line - 150ms debounce",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 30,
+      "description": "Full Line - 50 ms debounce",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -139,7 +153,7 @@
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [15, 27, 22, 24],
+      "includeGroups": [15, 29, 22, 30],
       "shouldLogElementFeatures": true
     },
     {
