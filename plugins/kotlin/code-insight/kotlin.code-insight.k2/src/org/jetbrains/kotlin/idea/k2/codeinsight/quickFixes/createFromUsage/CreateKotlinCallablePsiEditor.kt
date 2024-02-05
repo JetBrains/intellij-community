@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  */
 internal data class NewCallableInfo(
     val definitionAsString: String,
-    val candidatesOfParameterNames: List<Collection<String>>,
+    val candidatesOfParameterNames: List<MutableCollection<String>>,
     val candidatesOfRenderedParameterTypes: List<List<String>>,
     val candidatesOfRenderedReturnType: List<String>,
     val containerClassFqName: FqName?,

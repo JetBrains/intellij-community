@@ -17,9 +17,12 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
     call: T,
     private val modifiers: Collection<JvmModifier>,
 ) : CreateExecutableRequest {
-    private val project = call.project
+
+    private val psiManager = call.manager
+    private val project = psiManager.project
     private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer()
-    private val expectedParameterInfo: MutableList<ParameterInfo> = mutableListOf()
+
+    private val expectedParameterInfo = mutableListOf<ParameterInfo>()
 
     init {
         analyze(call) {
@@ -42,11 +45,11 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
 
     override fun getExpectedParameters(): List<ExpectedParameter> = expectedParameterInfo.map { parameterInfo ->
         object : ExpectedParameter {
-            override fun getExpectedTypes(): List<ExpectedType> =
-                listOf(parameterInfo.type?.let { ExpectedKotlinType.createExpectedKotlinType(it) }
+            override fun getExpectedTypes(): MutableList<ExpectedType> =
+                mutableListOf(parameterInfo.type?.let { ExpectedKotlinType.createExpectedKotlinType(it) }
                                   ?: ExpectedKotlinType.INVALID_TYPE)
 
-            override fun getSemanticNames(): Collection<String> = parameterInfo.nameCandidates
+            override fun getSemanticNames(): MutableCollection<String> = parameterInfo.nameCandidates
         }
     }
 }

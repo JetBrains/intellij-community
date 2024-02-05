@@ -15,7 +15,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -59,10 +65,11 @@ internal fun buildRequests(callExpression: KtCallExpression): Map<JvmClass, Crea
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
         val defaultClassForReceiverOrFile = calleeExpression.getReceiverOrContainerClass()
         defaultClassForReceiverOrFile?.let {
+            val modifiers = mutableSetOf<JvmModifier>()
             val packageNameOfReceiver = calleeExpression.getReceiverOrContainerClassPackageName()
-            val modifiers = if (packageNameOfReceiver != null && packageNameOfReceiver == callExpression.containingKtFile.packageFqName)
-              listOf(JvmModifier.PUBLIC)
-            else listOf()
+            if (packageNameOfReceiver != null && packageNameOfReceiver == callExpression.containingKtFile.packageFqName) {
+                modifiers.add(JvmModifier.PUBLIC)
+            }
             requests[it] = CreateMethodFromKotlinUsageRequest(callExpression, modifiers, receiverExpression)
         }
     }
@@ -132,7 +139,7 @@ private fun LinkedHashMap<JvmClass, CreateMethodRequest>.registerCreateAbstractC
 ) {
     val jvmClassWrapper = JvmClassWrapperForKtClass(abstractContainerClass)
     this[jvmClassWrapper] = CreateMethodFromKotlinUsageRequest(
-        callExpression, setOf(), receiverExpression, isAbstractClassOrInterface = true
+        callExpression, mutableSetOf(), receiverExpression, isAbstractClassOrInterface = true
     )
 }
 
@@ -141,5 +148,5 @@ private fun LinkedHashMap<JvmClass, CreateMethodRequest>.registerCreateExtension
 ) {
     val containerClassForExtension = calleeExpression.getNonStrictParentOfType<KtClassOrObject>() ?: calleeExpression.containingKtFile
     val jvmClassWrapper = JvmClassWrapperForKtClass(containerClassForExtension)
-    this[jvmClassWrapper] = CreateMethodFromKotlinUsageRequest(callExpression, setOf(), receiverExpression, isExtension = true)
+    this[jvmClassWrapper] = CreateMethodFromKotlinUsageRequest(callExpression, mutableSetOf(), receiverExpression, isExtension = true)
 }
