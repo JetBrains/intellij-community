@@ -45,9 +45,7 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static java.util.Collections.*;
-import static java.util.stream.Collectors.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -156,7 +154,7 @@ public final class GradleDependencyResolver {
 
   private Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration, @Nullable String scope) {
     if (configuration == null) {
-      return emptySet();
+      return Collections.emptySet();
     }
 
     // following statement should trigger parallel resolution of configurations artifacts
@@ -197,7 +195,7 @@ public final class GradleDependencyResolver {
             }
           }
         }
-        resolvedArtifacts.put(dependency, emptySet());
+        resolvedArtifacts.put(dependency, Collections.emptySet());
       }
       catch (Exception ignore) {
         // ignore other artifact resolution exceptions
@@ -251,7 +249,7 @@ public final class GradleDependencyResolver {
             projectDependencyArtifacts.add(artifactFile);
             projectDependency.setProjectDependencyArtifacts(projectDependencyArtifacts);
             Set<File> artifactSources = new LinkedHashSet<>(projectDependency.getProjectDependencyArtifactsSources());
-            artifactSources.addAll(sourceSetFinder.findArtifactSources(singleton(artifactFile)));
+            artifactSources.addAll(sourceSetFinder.findArtifactSources(Collections.singleton(artifactFile)));
             projectDependency.setProjectDependencyArtifactsSources(artifactSources);
             continue;
           }
@@ -266,7 +264,7 @@ public final class GradleDependencyResolver {
           projectDependency.setScope(scope);
           projectDependency.setProjectPath(projectPath);
           projectDependency.setConfigurationName(resolvedDependency.getConfiguration());
-          Set<File> projectArtifacts = singleton(artifactFile);
+          Set<File> projectArtifacts = Collections.singleton(artifactFile);
           projectDependency.setProjectDependencyArtifacts(projectArtifacts);
           projectDependency.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(projectArtifacts));
         }
@@ -382,7 +380,7 @@ public final class GradleDependencyResolver {
       }
     }
     else {
-      artifactsResultMap = emptyMap();
+      artifactsResultMap = Collections.emptyMap();
     }
     return artifactsResultMap;
   }
@@ -407,7 +405,7 @@ public final class GradleDependencyResolver {
     for (ResolvedArtifactResult artifactResult : artifactResults) {
       File file = artifactResult.getFile();
       if (!resolvedFiles.contains(file.getPath())) {
-        DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(singleton(file));
+        DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(Collections.singleton(file));
         fileCollectionDependency.setScope(scope);
         result.add(fileCollectionDependency);
       }
@@ -512,7 +510,7 @@ public final class GradleDependencyResolver {
       .filter(ResolvedArtifactResult.class::isInstance)
       .map(ResolvedArtifactResult.class::cast)
       .map(ResolvedArtifactResult::getFile)
-      .collect(toSet());
+      .collect(Collectors.toSet());
   }
 
   /**
@@ -621,7 +619,7 @@ public final class GradleDependencyResolver {
     return resolveDependenciesWithDefault(fileCollection, scope, new Supplier<Collection<? extends ExternalDependency>>() {
       @Override
       public Collection<? extends ExternalDependency> get() {
-        return singleton(new DefaultFileCollectionDependency(fileCollection.getFiles()));
+        return Collections.singleton(new DefaultFileCollectionDependency(fileCollection.getFiles()));
       }
     });
   }
@@ -659,7 +657,7 @@ public final class GradleDependencyResolver {
   @NotNull
   public static Collection<File> getFiles(ExternalDependency dependency) {
     if (dependency instanceof ExternalLibraryDependency) {
-      return singleton(((ExternalLibraryDependency)dependency).getFile());
+      return Collections.singleton(((ExternalLibraryDependency)dependency).getFile());
     }
     else if (dependency instanceof FileCollectionDependency) {
       return ((FileCollectionDependency)dependency).getFiles();
@@ -670,7 +668,7 @@ public final class GradleDependencyResolver {
     else if (dependency instanceof ExternalProjectDependency) {
       return ((ExternalProjectDependency)dependency).getProjectDependencyArtifacts();
     }
-    return emptySet();
+    return Collections.emptySet();
   }
 
   private static @NotNull String getBuildName(@NotNull ProjectComponentIdentifier projectComponentIdentifier) {
