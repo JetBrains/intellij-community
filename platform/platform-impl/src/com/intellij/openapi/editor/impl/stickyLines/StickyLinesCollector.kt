@@ -111,6 +111,18 @@ class StickyLinesCollector(private val project: Project, private val document: D
           else -> false
         }
       }
+      "Python" -> {
+        // exclude if/else, try/except IDEA-344895
+        // see com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider.HELPERS
+        val debugName = element.toString()
+        return when (debugName) {
+          "PyIfPartIf", "PyIfPartElif", "PyElsePart",
+          "PyTryPart", "PyExceptPart", "PyFinallyPart",
+          "PyWhilePart", "PyForPart",
+          "PyKeyValueExpression" -> true
+          else -> false
+        }
+      }
       "YAML" -> {
         // exclude root element IDEA-344788
         return element.toString() == "YAML document"
