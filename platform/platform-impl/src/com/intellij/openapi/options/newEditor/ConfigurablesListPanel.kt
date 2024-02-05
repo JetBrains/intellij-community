@@ -5,11 +5,12 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import java.awt.Component
 
-internal fun createConfigurablesListPanel(description: String?,
+internal fun createConfigurablesListPanel(description: @NlsContexts.Label String?,
                                           configurables: List<Configurable>,
                                           configurableEditor: ConfigurableEditor?): DialogPanel {
   return panel {
