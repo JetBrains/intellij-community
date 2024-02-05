@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.DataManager
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
@@ -74,6 +75,8 @@ class SavedPatchesTree(project: Project,
         if (isProviderVisible(provider)) rebuildTree()
       }
     }
+
+    Disposer.register(parentDisposable) { shutdown() }
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
