@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -20,7 +20,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   private final String myType;
   private final Icon myIcon;
   private final String myToolTip;
-  private final EditorColorsScheme scheme;
+  private final @Nullable EditorColorsScheme scheme;
   private boolean isForegroundChecked;
   private boolean isBackgroundChecked;
   private boolean isEffectsColorChecked;
@@ -228,7 +228,8 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   }
 
   public boolean isEditable() {
-    return !scheme.isReadOnly();
+    EditorColorsScheme scheme = this.scheme;
+    return scheme == null || !scheme.isReadOnly();
   }
 
   public @Nullable TextAttributes getBaseAttributes() {
