@@ -2,12 +2,37 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 object DocumentationUsageCollector: CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("documentation", 1)
+  private val GROUP = EventLogGroup("documentation", 2)
 
   val QUICK_DOC_SHOWN = GROUP.registerEvent("quick.doc.shown")
+
+  val DOCUMENTATION_LINK_CLICKED: EventId2<DocumentationLinkProtocol, Boolean> = GROUP.registerEvent(
+    "quick.doc.link.clicked",
+    EventFields.Enum("protocol", DocumentationLinkProtocol::class.java),
+    EventFields.Boolean("lookup_active"),
+  )
+
+}
+
+enum class DocumentationLinkProtocol {
+  HTTP,
+  HTTPS,
+  PSI_ELEMENT,
+  FILE,
+  OTHER;
+
+  companion object {
+    fun of(url: String): DocumentationLinkProtocol {
+      val prefix = url.takeWhile { it != ':' }
+      return entries.firstOrNull { it.name.equals(prefix, true) }
+             ?: OTHER
+    }
+  }
 }

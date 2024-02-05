@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object UIEventLogger : CounterUsagesCollector() {
 
-  private val uiEventGroup = EventLogGroup("ui.event", 19)
+  private val uiEventGroup = EventLogGroup("ui.event", 20)
 
   @JvmField
   val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
@@ -142,13 +142,6 @@ object UIEventLogger : CounterUsagesCollector() {
   val StatusBarPopupShown: EventId1<Class<*>> = uiEventGroup.registerEvent(
     "StatusBarPopupShown",
     EventFields.Class("class"),
-  )
-
-  @JvmField
-  val DocumentationLinkClicked: EventId2<DocumentationLinkProtocol, Boolean> = uiEventGroup.registerEvent(
-    "DocumentationLinkClicked",
-    EventFields.Enum("protocol", DocumentationLinkProtocol::class.java),
-    EventFields.Boolean("lookup_active"),
   )
 
   @JvmField

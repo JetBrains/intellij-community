@@ -2,8 +2,6 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.internal.statistic.service.fus.collectors.DocumentationLinkProtocol
-import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.model.Pointer
@@ -175,7 +173,7 @@ internal class DocumentationBrowser private constructor(
   }
 
   private fun logLinkClicked(protocol: DocumentationLinkProtocol) {
-    UIEventLogger.DocumentationLinkClicked.log(
+    DocumentationUsageCollector.DOCUMENTATION_LINK_CLICKED.log(
       protocol,
       LookupManager.getInstance(project).activeLookup != null
     )
