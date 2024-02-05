@@ -1590,25 +1590,20 @@ public final class TreeUtil {
   }
 
   private static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull AsyncPromise<?> promise) {
-    MakeVisibleVisitor makeVisibleVisitor = new MakeVisibleVisitor(tree, visitor, promise);
+    MakeVisibleVisitor makeVisibleVisitor = new BackgroundMakeVisibleVisitor(tree, visitor, promise);
     if (tree instanceof Tree jbTree) {
       jbTree.suspendExpandCollapseAccessibilityAnnouncements();
     }
     return promiseVisit(tree, makeVisibleVisitor).onProcessed(path -> {
-      if (tree instanceof Tree jbTree) {
-        jbTree.resumeExpandCollapseAccessibilityAnnouncements();
-        for (TreePath expandRoot : makeVisibleVisitor.expandRoots) {
-          jbTree.fireAccessibleTreeExpanded(expandRoot);
-        }
-      }
+      makeVisibleVisitor.finish();
     });
   }
 
-  private static class MakeVisibleVisitor extends DelegatingEdtBgtTreeVisitor {
+  private abstract static class MakeVisibleVisitor extends DelegatingEdtBgtTreeVisitor {
 
-    private final JTree tree;
-    private final @NotNull AsyncPromise<?> promise;
-    final @NotNull Set<@NotNull TreePath> expandRoots = new LinkedHashSet<>();
+    protected final JTree tree;
+    protected final @NotNull AsyncPromise<?> promise;
+    private final @NotNull Set<@NotNull TreePath> expandRoots = new LinkedHashSet<>();
 
     private MakeVisibleVisitor(@NotNull JTree tree, @NotNull TreeVisitor delegate, @NotNull AsyncPromise<?> promise) {
       super(delegate);
@@ -1624,12 +1619,7 @@ public final class TreeUtil {
     @Override
     public @NotNull Action postVisitEDT(@NotNull TreePath path, @NotNull TreeVisitor.Action action) {
       if (action == TreeVisitor.Action.CONTINUE || action == TreeVisitor.Action.INTERRUPT) {
-        // do not expand children if parent path is collapsed
-        if (!tree.isVisible(path)) {
-          if (!promise.isCancelled()) {
-            if (LOG.isTraceEnabled()) LOG.debug("tree expand canceled");
-            promise.cancel();
-          }
+        if (checkCancelled(path)) {
           return TreeVisitor.Action.SKIP_SIBLINGS;
         }
         var model = tree.getModel();
@@ -1637,11 +1627,15 @@ public final class TreeUtil {
           if (!isUnderExpandRoot(path)) {
             expandRoots.add(path);
           }
-          expandPathWithDebug(tree, path);
+          doExpand(path);
         }
       }
       return action;
     }
+    
+    protected abstract boolean checkCancelled(@NotNull TreePath path);
+
+    protected abstract void doExpand(@NotNull TreePath path);
 
     private boolean isUnderExpandRoot(@NotNull TreePath path) {
       var parent = path.getParentPath();
@@ -1652,6 +1646,48 @@ public final class TreeUtil {
         parent = parent.getParentPath();
       }
       return false;
+    }
+
+    final void finish() {
+      finishExpanding();
+      announceExpanded();
+    }
+
+    void finishExpanding() { }
+
+    void announceExpanded() {
+      if (tree instanceof Tree jbTree) {
+        jbTree.resumeExpandCollapseAccessibilityAnnouncements();
+        for (TreePath expandRoot : expandRoots) {
+          jbTree.fireAccessibleTreeExpanded(expandRoot);
+        }
+      }
+    }
+  }
+
+  private static class BackgroundMakeVisibleVisitor extends MakeVisibleVisitor {
+
+    private BackgroundMakeVisibleVisitor(@NotNull JTree tree, @NotNull TreeVisitor delegate, @NotNull AsyncPromise<?> promise) {
+      super(tree, delegate, promise);
+    }
+
+    @Override
+    protected boolean checkCancelled(@NotNull TreePath path) {
+      if (tree.isVisible(path)) {
+        return false;
+      }
+      else {
+        if (!promise.isCancelled()) {
+          if (LOG.isTraceEnabled()) LOG.debug("tree expand canceled");
+          promise.cancel();
+        }
+        return true;
+      }
+    }
+
+    @Override
+    protected void doExpand(@NotNull TreePath path) {
+      expandPathWithDebug(tree, path);
     }
   }
 
