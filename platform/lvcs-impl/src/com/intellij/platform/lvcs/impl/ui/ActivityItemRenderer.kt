@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.openapi.util.NlsContexts
@@ -29,6 +29,7 @@ private const val ROW_TOP_BOTTOM_INSETS = 8
 private val HIGHLIGHTED_ARC = JBUI.value(4f)
 private val BACKGROUND_ARC = JBUI.value(8f)
 private val HIGHLIGHT_THICKNESS = JBUI.value(4f)
+private val HGAP = JBUI.value(2f)
 
 internal class ActivityItemRenderer(private val presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : ListCellRenderer<ActivityItem> {
 
@@ -85,7 +86,7 @@ private class RoundedPanel(var roundedBackgroundColor: Color?, var highlightColo
 private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, icon: Icon?, timestamp: Long,
                                backgroundColor: Color?, highlightColor: Color?, isSelected: Boolean): RoundedPanel {
   val content = RoundedPanel(backgroundColor, highlightColor)
-  content.layout = BorderLayout()
+  content.layout = BorderLayout(HGAP.get(), 0)
   content.font = list.font
   content.foreground = if (isSelected) list.selectionForeground else list.foreground
   content.background = null
