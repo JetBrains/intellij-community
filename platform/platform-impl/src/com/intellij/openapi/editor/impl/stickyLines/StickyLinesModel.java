@@ -61,7 +61,7 @@ public final class StickyLinesModel {
     myListeners = new ArrayList<>();
   }
 
-  boolean isFirstUpdate() {
+  public boolean isFirstUpdate() {
     boolean isFirstTime = myMarkupModel.getUserData(STICKY_LINES_FIRST_PASS_KEY) == null;
     if (isFirstTime) {
       myMarkupModel.putUserData(STICKY_LINES_FIRST_PASS_KEY, false);
@@ -97,7 +97,7 @@ public final class StickyLinesModel {
     processStickyLines(null, endOffset, processor);
   }
 
-  void processStickyLines(@Nullable String source, @NotNull Processor<? super StickyLine> processor) {
+  public void processStickyLines(@Nullable String source, @NotNull Processor<? super StickyLine> processor) {
     processStickyLines(source, myMarkupModel.getDocument().getTextLength(), processor);
   }
 
