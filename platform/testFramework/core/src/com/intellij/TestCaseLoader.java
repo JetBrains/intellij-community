@@ -658,7 +658,7 @@ public class TestCaseLoader {
   public static class Builder {
     private String myTestGroupsResourcePath;
     private String myPatterns;
-    private List<String> myTestGroups;
+    private List<String> myTestGroups = Collections.emptyList();
     private boolean myForceLoadPerformanceTests = false;
     private boolean myWarmup = false;
 
@@ -716,7 +716,7 @@ public class TestCaseLoader {
 
   private static TestClassesFilter getFilter(String patterns,
                                              String testGroupsResourcePath,
-                                             List<String> testGroups,
+                                             @NotNull List<@NotNull String> testGroups,
                                              boolean warmup) {
     TestClassesFilter filter;
     if (ourCommonTestClassesFilterArgs.getValue().equals(new TestClassesFilterArgs(patterns, testGroups, testGroupsResourcePath))) {
