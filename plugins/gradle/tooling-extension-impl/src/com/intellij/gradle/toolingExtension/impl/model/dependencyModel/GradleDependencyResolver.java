@@ -79,16 +79,6 @@ public final class GradleDependencyResolver {
     this(context, project, GradleDependencyDownloadPolicyCache.getInstance(context).getDependencyDownloadPolicy(project));
   }
 
-  public Collection<ExternalDependency> resolveDependencies(@Nullable String configurationName) {
-    if (configurationName == null) return emptyList();
-    Collection<ExternalDependency> dependencies = resolveDependencies(myProject.getConfigurations().findByName(configurationName), null);
-    int order = 0;
-    for (ExternalDependency dependency : dependencies) {
-      ((AbstractExternalDependency)dependency).setClasspathOrder(++order);
-    }
-    return dependencies;
-  }
-
   public Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration) {
     Collection<ExternalDependency> dependencies = resolveDependencies(configuration, null);
     int order = 0;
