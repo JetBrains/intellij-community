@@ -29,6 +29,7 @@ import org.junit.Assert
  */
 open class ModificationEventTracker(
     protected val project: Project,
+    protected val label: String,
     protected val expectedEventKind: KotlinModificationEventKind,
     protected val allowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     testRootDisposable: Disposable,
@@ -119,47 +120,47 @@ open class ModificationEventTracker(
 
     private val expectedEventName: String get() = expectedEventKind.name
 
-    fun assertNotModified(label: String) {
+    fun assertNotModified() {
         Assert.assertTrue(
-            "`$expectedEventName` events for '$label' should not have been published, but ${expectedEvents.size} events were received.",
+            "`$expectedEventName` events for $label should not have been published, but ${expectedEvents.size} events were received.",
             expectedEvents.isEmpty(),
         )
-        checkForbiddenEvents(label)
+        checkForbiddenEvents()
     }
 
-    fun assertModified(label: String, shouldBeRemoval: Boolean = false) {
+    fun assertModified(shouldBeRemoval: Boolean = false) {
         Assert.assertTrue(
-            "At least one `$expectedEventName` event for '$label' should have been published, but no events were received.",
+            "At least one `$expectedEventName` event for $label should have been published, but no events were received.",
             expectedEvents.isNotEmpty(),
         )
-        checkShouldBeRemoval(label, shouldBeRemoval)
-        checkForbiddenEvents(label)
+        checkShouldBeRemoval(shouldBeRemoval)
+        checkForbiddenEvents()
     }
 
-    fun assertModifiedOnce(label: String, shouldBeRemoval: Boolean = false) {
+    fun assertModifiedOnce(shouldBeRemoval: Boolean = false) {
         Assert.assertTrue(
-            "A single `$expectedEventName` event for '$label' should have been published, but ${expectedEvents.size} events were received.",
+            "A single `$expectedEventName` event for $label should have been published, but ${expectedEvents.size} events were received.",
             expectedEvents.size == 1,
         )
-        checkShouldBeRemoval(label, shouldBeRemoval)
-        checkForbiddenEvents(label)
+        checkShouldBeRemoval(shouldBeRemoval)
+        checkForbiddenEvents()
     }
 
-    private fun checkShouldBeRemoval(label: String, shouldBeRemoval: Boolean) {
+    private fun checkShouldBeRemoval(shouldBeRemoval: Boolean) {
         val shouldOrShouldNot = if (shouldBeRemoval) "should" else "should not"
         expectedEvents.forEachIndexed { index, receivedEvent ->
             Assert.assertTrue(
-                "The `$expectedEventName` event #$index for '$label' $shouldOrShouldNot be a removal event.",
+                "The `$expectedEventName` event #$index for $label $shouldOrShouldNot be a removal event.",
                 receivedEvent.isRemoval == shouldBeRemoval,
             )
         }
     }
 
-    private fun checkForbiddenEvents(label: String) {
+    private fun checkForbiddenEvents() {
         if (forbiddenEvents.isEmpty()) return
 
         Assert.fail(
-            "The following forbidden events for '$label' should not have been published:\n- ${forbiddenEvents.joinToString("\n -")}"
+            "The following forbidden events for $label should not have been published:\n- ${forbiddenEvents.joinToString("\n -")}"
         )
     }
 
@@ -168,10 +169,11 @@ open class ModificationEventTracker(
 
 class ModuleModificationEventTracker(
     private val ktModule: KtModule,
+    label: String,
     expectedEventKind: KotlinModificationEventKind,
     allowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     testRootDisposable: Disposable,
-) : ModificationEventTracker(ktModule.project, expectedEventKind, allowedEventKinds, testRootDisposable) {
+) : ModificationEventTracker(ktModule.project, label, expectedEventKind, allowedEventKinds, testRootDisposable) {
     init {
         require(expectedEventKind.isModuleLevel)
     }

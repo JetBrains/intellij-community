@@ -11,9 +11,15 @@ abstract class AbstractKotlinGlobalModificationEventTest : AbstractKotlinModific
         require(expectedEventKind.isGlobalLevel)
     }
 
-    protected fun createTracker(additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet()): ModificationEventTracker =
-        createGlobalTracker(additionalAllowedEventKinds)
+    protected fun createTracker(
+        label: String,
+        additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
+    ): ModificationEventTracker =
+        createGlobalTracker(label, additionalAllowedEventKinds)
 
-    protected fun createTracker(additionalAllowedEventKind: KotlinModificationEventKind): ModificationEventTracker =
-        createGlobalTracker(setOf(additionalAllowedEventKind))
+    protected fun createTracker(
+        label: String,
+        additionalAllowedEventKind: KotlinModificationEventKind,
+    ): ModificationEventTracker =
+        createGlobalTracker(label, setOf(additionalAllowedEventKind))
 }

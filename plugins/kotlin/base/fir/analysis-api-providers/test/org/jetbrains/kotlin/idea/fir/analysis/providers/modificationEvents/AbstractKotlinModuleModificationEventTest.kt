@@ -25,34 +25,41 @@ abstract class AbstractKotlinModuleModificationEventTest : AbstractKotlinModific
      */
     protected fun createTracker(
         module: KtModule,
+        label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
-        createModuleTracker(module, additionalAllowedEventKinds)
+        createModuleTracker(module, label, additionalAllowedEventKinds)
 
     protected fun createTracker(
         module: Module,
+        label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
         createTracker(
             module.productionSourceInfo!!.toKtModule(),
+            label,
             additionalAllowedEventKinds,
         )
 
     protected fun createTracker(
         library: Library,
+        label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
         createTracker(
             LibraryInfoCache.getInstance(project)[library].single().toKtModule(),
+            label,
             additionalAllowedEventKinds,
         )
 
     protected fun createTracker(
         file: KtFile,
+        label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker =
         createTracker(
             ProjectStructureProvider.getModule(project, file, contextualModule = null),
+            label,
             additionalAllowedEventKinds,
         )
 }

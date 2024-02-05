@@ -36,12 +36,14 @@ protected abstract val expectedEventKind: KotlinModificationEventKind
      * does not need to be disposed manually.
      */
     protected fun createGlobalTracker(
+        label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModificationEventTracker {
         require(expectedEventKind.isGlobalLevel)
 
         return ModificationEventTracker(
             project,
+            label,
             expectedEventKind,
             additionalAllowedEventKinds + defaultAllowedEventKinds,
             testRootDisposable,
@@ -54,12 +56,14 @@ protected abstract val expectedEventKind: KotlinModificationEventKind
      */
     protected fun createModuleTracker(
         module: KtModule,
+        label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker {
         require(expectedEventKind.isModuleLevel)
 
         return ModuleModificationEventTracker(
             module,
+            label,
             expectedEventKind,
             additionalAllowedEventKinds + defaultAllowedEventKinds,
             testRootDisposable,
