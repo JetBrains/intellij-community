@@ -3,28 +3,16 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;
 import org.gradle.api.artifacts.component.*;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.result.*;
 import org.gradle.api.component.Artifact;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.file.UnionFileCollection;
-import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.specs.Spec;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetOutput;
-import org.gradle.api.tasks.compile.AbstractCompile;
-import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
-import org.gradle.internal.impldep.com.google.common.collect.HashMultimap;
-import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
 import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
@@ -36,9 +24,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
 
 import java.io.File;
@@ -52,14 +38,9 @@ import java.util.stream.Collectors;
  */
 public final class GradleDependencyResolver {
 
-  private static final @NotNull String COMPILE_SCOPE = "COMPILE";
-  private static final @NotNull String RUNTIME_SCOPE = "RUNTIME";
-  private static final @NotNull String PROVIDED_SCOPE = "PROVIDED";
-
   private static final boolean IS_83_OR_BETTER = GradleVersionUtil.isCurrentGradleAtLeast("8.3");
   private static final Pattern PUNCTUATION_IN_SUFFIX_PATTERN = Pattern.compile("[\\p{Punct}\\s]+$");
 
-  private final @NotNull ModelBuilderContext myContext;
   private final @NotNull Project myProject;
   private final @NotNull GradleDependencyDownloadPolicy myDownloadPolicy;
 
@@ -70,7 +51,6 @@ public final class GradleDependencyResolver {
     @NotNull Project project,
     @NotNull GradleDependencyDownloadPolicy downloadPolicy
   ) {
-    myContext = context;
     myProject = project;
     myDownloadPolicy = downloadPolicy;
 
@@ -79,81 +59,6 @@ public final class GradleDependencyResolver {
 
   public GradleDependencyResolver(@NotNull ModelBuilderContext context, @NotNull Project project) {
     this(context, project, GradleDependencyDownloadPolicyCache.getInstance(context).getDependencyDownloadPolicy(project));
-  }
-
-  public @NotNull Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration) {
-    Collection<ExternalDependency> dependencies = resolveDependencies(configuration, null);
-    int order = 0;
-    for (ExternalDependency dependency : dependencies) {
-      ((AbstractExternalDependency)dependency).setClasspathOrder(++order);
-    }
-    return dependencies;
-  }
-
-  public @NotNull Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet) {
-    Collection<ExternalDependency> result = new ArrayList<>();
-
-    // resolve compile dependencies
-    FileCollection compileClasspath = getCompileClasspath(sourceSet);
-    Collection<? extends ExternalDependency> compileDependencies = resolveDependenciesWithDefault(
-      compileClasspath, COMPILE_SCOPE,
-      new Supplier<Collection<? extends ExternalDependency>>() {
-        @Override
-        public Collection<? extends ExternalDependency> get() {
-          String configurationName = sourceSet.getCompileClasspathConfigurationName();
-          Configuration configuration = myProject.getConfigurations().getByName(configurationName);
-          return getDependencies(configuration, COMPILE_SCOPE);
-        }
-      }
-    );
-    // resolve runtime dependencies
-    FileCollection runtimeClasspath = sourceSet.getRuntimeClasspath();
-    Collection<? extends ExternalDependency> runtimeDependencies = resolveDependenciesWithDefault(
-      runtimeClasspath, RUNTIME_SCOPE,
-      new Supplier<Collection<? extends ExternalDependency>>() {
-        @Override
-        public Collection<? extends ExternalDependency> get() {
-          String configurationName = sourceSet.getRuntimeClasspathConfigurationName();
-          Configuration configuration = myProject.getConfigurations().getByName(configurationName);
-          return getDependencies(configuration, RUNTIME_SCOPE);
-        }
-      }
-    );
-
-    filterRuntimeAndMarkCompileOnlyAsProvided(compileDependencies, runtimeDependencies);
-    result.addAll(compileDependencies);
-    result.addAll(runtimeDependencies);
-
-    addAdditionalProvidedDependencies(sourceSet, result);
-
-    int order = 0;
-    for (ExternalDependency dependency : result) {
-      ((AbstractExternalDependency)dependency).setClasspathOrder(++order);
-    }
-    return result;
-  }
-
-  private @NotNull FileCollection getCompileClasspath(@NotNull SourceSet sourceSet) {
-    final String compileTaskName = sourceSet.getCompileJavaTaskName();
-    Task compileTask = myProject.getTasks().findByName(compileTaskName);
-    if (compileTask instanceof AbstractCompile) {
-      try {
-        return ((AbstractCompile)compileTask).getClasspath();
-      } catch (Exception e) {
-        myContext.getMessageReporter().createMessage()
-          .withGroup(Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP)
-          .withKind(Message.Kind.INTERNAL)
-          .withTitle("Compile classpath resolution error")
-          .withText(String.format(
-            "Error obtaining compile classpath for java compilation task for [%s] in project [%s]",
-            sourceSet.getName(),
-            myProject.getPath()
-          ))
-          .withException(e)
-          .reportMessage(myProject);
-      }
-    }
-    return sourceSet.getCompileClasspath();
   }
 
   private static void ensureConfigurationArtifactsResolved(@NotNull Configuration configuration) {
@@ -172,7 +77,7 @@ public final class GradleDependencyResolver {
     }
   }
 
-  private @NotNull Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration, @Nullable String scope) {
+  public @NotNull Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration) {
     if (configuration == null) {
       return Collections.emptySet();
     }
@@ -206,17 +111,14 @@ public final class GradleDependencyResolver {
       }
     }
     Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap = buildAuxiliaryArtifactsMap(configuration, resolvedArtifacts);
-    Collection<FileCollectionDependency> sourceSetsOutputDirsRuntimeFileDependencies = new LinkedHashSet<>();
     Set<String> resolvedFiles = new HashSet<>();
     Collection<ExternalDependency> artifactDependencies = resolveArtifactDependencies(
-      resolvedFiles, sourceSetsOutputDirsRuntimeFileDependencies, resolvedArtifacts, auxiliaryArtifactsMap,
-      transformedProjectDependenciesResultMap, scope
+      resolvedFiles, resolvedArtifacts, auxiliaryArtifactsMap, transformedProjectDependenciesResultMap
     );
-    Collection<FileCollectionDependency> otherFileDependencies = resolveOtherFileDependencies(resolvedFiles, configuration, scope);
-    Collection<ExternalDependency> unresolvedDependencies = collectUnresolvedDependencies(lenientConfiguration, scope);
+    Collection<FileCollectionDependency> otherFileDependencies = resolveOtherFileDependencies(resolvedFiles, configuration);
+    Collection<ExternalDependency> unresolvedDependencies = collectUnresolvedDependencies(lenientConfiguration);
 
     Collection<ExternalDependency> result = new LinkedHashSet<>();
-    result.addAll(sourceSetsOutputDirsRuntimeFileDependencies);
     result.addAll(otherFileDependencies);
     result.addAll(artifactDependencies);
     result.addAll(unresolvedDependencies);
@@ -230,11 +132,9 @@ public final class GradleDependencyResolver {
 
   private @NotNull Collection<ExternalDependency> resolveArtifactDependencies(
     @NotNull Set<String> resolvedFiles, // mutable
-    @NotNull Collection<FileCollectionDependency> sourceSetsOutputDirsRuntimeFileDependencies, // mutable
     @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts,
     @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap,
-    @NotNull Map<ModuleVersionIdentifier, ResolvedDependencyResult> transformedProjectDependenciesResultMap,
-    @Nullable String scope
+    @NotNull Map<ModuleVersionIdentifier, ResolvedDependencyResult> transformedProjectDependenciesResultMap
   ) {
     Collection<ExternalDependency> artifactDependencies = new LinkedHashSet<>();
     Map<String, DefaultExternalProjectDependency> resolvedProjectDependencies = new HashMap<>();
@@ -248,31 +148,21 @@ public final class GradleDependencyResolver {
         }
         ComponentIdentifier componentIdentifier = artifact.getId().getComponentIdentifier();
         if (componentIdentifier instanceof ProjectComponentIdentifier) {
-          if (RUNTIME_SCOPE.equals(scope)) {
-            SourceSet sourceSet = mySourceSetFinder.findByArtifact(artifactFile.getPath());
-            if (sourceSet != null) {
-              FileCollectionDependency outputDirsRuntimeFileDependency =
-                resolveSourceSetOutputDirsRuntimeFileDependency(sourceSet.getOutput());
-              if (outputDirsRuntimeFileDependency != null) {
-                sourceSetsOutputDirsRuntimeFileDependencies.add(outputDirsRuntimeFileDependency);
-              }
-            }
-          }
           ExternalDependency dependency = resolveProjectDependency(
-            resolvedProjectDependencies, resolvedDependency, artifactFile, (ProjectComponentIdentifier)componentIdentifier, scope
+            resolvedProjectDependencies, resolvedDependency, artifactFile, (ProjectComponentIdentifier)componentIdentifier
           );
           if (dependency != null) {
             artifactDependencies.add(dependency);
           }
         }
         else {
-          ExternalDependency dependency = resolveLibraryDependency(artifact, artifactFile, auxiliaryArtifactsMap, scope);
+          ExternalDependency dependency = resolveLibraryDependency(artifact, artifactFile, auxiliaryArtifactsMap);
           artifactDependencies.add(dependency);
         }
       }
       if (artifacts.isEmpty()) {
         ExternalDependency dependency = resolveFailedToTransformProjectDependency(
-          resolvedProjectDependencies, resolvedDependency, transformedProjectDependenciesResultMap, scope
+          resolvedProjectDependencies, resolvedDependency, transformedProjectDependenciesResultMap
         );
         if (dependency != null) {
           artifactDependencies.add(dependency);
@@ -326,8 +216,7 @@ public final class GradleDependencyResolver {
     @NotNull Map<String, DefaultExternalProjectDependency> resolvedProjectDependencies, // mutable
     @NotNull ResolvedDependency resolvedDependency,
     @NotNull File artifactFile,
-    @NotNull ProjectComponentIdentifier projectComponentIdentifier,
-    @Nullable String scope
+    @NotNull ProjectComponentIdentifier projectComponentIdentifier
   ) {
     String key = getProjectDependencyKey(resolvedDependency, projectComponentIdentifier);
     DefaultExternalProjectDependency cachedProjectDependency = resolvedProjectDependencies.get(key);
@@ -348,7 +237,6 @@ public final class GradleDependencyResolver {
     projectDependency.setName(projectComponentIdentifier.getProjectName());
     projectDependency.setGroup(resolvedDependency.getModuleGroup());
     projectDependency.setVersion(resolvedDependency.getModuleVersion());
-    projectDependency.setScope(scope);
     projectDependency.setProjectPath(projectComponentIdentifier.getProjectPath());
     projectDependency.setConfigurationName(resolvedDependency.getConfiguration());
     projectDependency.setProjectDependencyArtifacts(Collections.singleton(artifactFile));
@@ -360,8 +248,7 @@ public final class GradleDependencyResolver {
   private static @NotNull DefaultExternalLibraryDependency resolveLibraryDependency(
     @NotNull ResolvedArtifact artifact,
     @NotNull File artifactFile,
-    @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap,
-    @Nullable String scope
+    @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap
   ) {
     DefaultExternalLibraryDependency libraryDependency = new DefaultExternalLibraryDependency();
 
@@ -388,7 +275,6 @@ public final class GradleDependencyResolver {
     if (artifact.getExtension() != null) {
       libraryDependency.setPackaging(artifact.getExtension());
     }
-    libraryDependency.setScope(scope);
     libraryDependency.setClassifier(artifact.getClassifier());
 
     return libraryDependency;
@@ -398,8 +284,7 @@ public final class GradleDependencyResolver {
   private @Nullable ExternalProjectDependency resolveFailedToTransformProjectDependency(
     @NotNull Map<String, DefaultExternalProjectDependency> resolvedProjectDependencies, // mutable
     @NotNull ResolvedDependency resolvedDependency,
-    @NotNull Map<ModuleVersionIdentifier, ResolvedDependencyResult> transformedProjectDependenciesResultMap,
-    @Nullable String scope
+    @NotNull Map<ModuleVersionIdentifier, ResolvedDependencyResult> transformedProjectDependenciesResultMap
   ) {
     ModuleVersionIdentifier moduleVersionIdentifier = resolvedDependency.getModule().getId();
     ResolvedDependencyResult resolvedDependencyResult = transformedProjectDependenciesResultMap.get(moduleVersionIdentifier);
@@ -417,7 +302,6 @@ public final class GradleDependencyResolver {
     projectDependency.setName(projectName);
     projectDependency.setGroup(resolvedDependency.getModuleGroup());
     projectDependency.setVersion(resolvedDependency.getModuleVersion());
-    projectDependency.setScope(scope);
     projectDependency.setProjectPath(projectPath);
     projectDependency.setConfigurationName(resolvedDependency.getConfiguration());
 
@@ -475,8 +359,7 @@ public final class GradleDependencyResolver {
 
   private static @NotNull Collection<FileCollectionDependency> resolveOtherFileDependencies(
     @NotNull Set<String> resolvedFiles, // mutable
-    @NotNull Configuration configuration,
-    @Nullable String scope
+    @NotNull Configuration configuration
   ) {
     ArtifactView artifactView = configuration.getIncoming().artifactView(new Action<ArtifactView.ViewConfiguration>() {
       @Override
@@ -499,16 +382,13 @@ public final class GradleDependencyResolver {
       }
       resolvedFiles.add(file.getPath());
 
-      DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(Collections.singleton(file));
-      fileCollectionDependency.setScope(scope);
-      result.add(fileCollectionDependency);
+      result.add(new DefaultFileCollectionDependency(Collections.singleton(file)));
     }
     return result;
   }
 
   private static @NotNull Collection<ExternalDependency> collectUnresolvedDependencies(
-    @NotNull LenientConfiguration lenientConfiguration,
-    @Nullable String scope
+    @NotNull LenientConfiguration lenientConfiguration
   ) {
     Collection<ExternalDependency> result = new LinkedHashSet<>();
     Set<UnresolvedDependency> unresolvedModuleDependencies = lenientConfiguration.getUnresolvedModuleDependencies();
@@ -542,69 +422,10 @@ public final class GradleDependencyResolver {
       dependency.setName(moduleVersionSelector.name);
       dependency.setGroup(moduleVersionSelector.group);
       dependency.setVersion(moduleVersionSelector.version);
-      dependency.setScope(scope);
       dependency.setFailureMessage(problem.getMessage());
       result.add(dependency);
     }
     return result;
-  }
-
-  private static @NotNull Collection<ExternalDependency> resolveSourceOutputFileDependencies(
-    @NotNull SourceSetOutput sourceSetOutput,
-    @Nullable String scope
-  ) {
-    Collection<ExternalDependency> result = new ArrayList<>(2);
-    List<File> files = new ArrayList<>(sourceSetOutput.getClassesDirs().getFiles());
-    files.add(sourceSetOutput.getResourcesDir());
-    DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(files);
-    fileCollectionDependency.setScope(scope);
-    result.add(fileCollectionDependency);
-
-    if (RUNTIME_SCOPE.equals(scope)) {
-      ExternalDependency outputDirsRuntimeFileDependency = resolveSourceSetOutputDirsRuntimeFileDependency(sourceSetOutput);
-      if (outputDirsRuntimeFileDependency != null) {
-        result.add(outputDirsRuntimeFileDependency);
-      }
-    }
-    return result;
-  }
-
-  private static @Nullable FileCollectionDependency resolveSourceSetOutputDirsRuntimeFileDependency(
-    @NotNull SourceSetOutput sourceSetOutput
-  ) {
-    List<File> runtimeOutputDirs = new ArrayList<>(sourceSetOutput.getDirs().getFiles());
-    if (!runtimeOutputDirs.isEmpty()) {
-      DefaultFileCollectionDependency runtimeOutputDirsDependency = new DefaultFileCollectionDependency(runtimeOutputDirs);
-      runtimeOutputDirsDependency.setScope(RUNTIME_SCOPE);
-      runtimeOutputDirsDependency.setExcludedFromIndexing(true);
-      return runtimeOutputDirsDependency;
-    }
-    return null;
-  }
-
-  private static void filterRuntimeAndMarkCompileOnlyAsProvided(
-    @NotNull Collection<? extends ExternalDependency> compileDependencies,
-    @NotNull Collection<? extends ExternalDependency> runtimeDependencies
-  ) {
-    Multimap<Collection<File>, ExternalDependency> filesToRuntimeDependenciesMap = HashMultimap.create();
-    for (ExternalDependency runtimeDependency : runtimeDependencies) {
-      final Collection<File> resolvedFiles = getFiles(runtimeDependency);
-      filesToRuntimeDependenciesMap.put(resolvedFiles, runtimeDependency);
-    }
-
-    for (ExternalDependency compileDependency : compileDependencies) {
-      final Collection<File> resolvedFiles = getFiles(compileDependency);
-
-      Collection<ExternalDependency> dependencies = filesToRuntimeDependenciesMap.get(resolvedFiles);
-      final boolean hasRuntimeDependencies = !dependencies.isEmpty();
-
-      if (hasRuntimeDependencies) {
-        runtimeDependencies.removeAll(dependencies);
-      }
-      else {
-        ((AbstractExternalDependency)compileDependency).setScope(PROVIDED_SCOPE);
-      }
-    }
   }
 
   private static @NotNull Set<File> getResolvedAuxiliaryArtifactFiles(
@@ -679,105 +500,6 @@ public final class GradleDependencyResolver {
     }
 
     return shortlistedAuxiliariesBySuffixlessName.firstEntry().getValue();
-  }
-
-  private void addAdditionalProvidedDependencies(@NotNull SourceSet sourceSet, @NotNull Collection<ExternalDependency> result) {
-    final Set<Configuration> providedConfigurations = new LinkedHashSet<>();
-    if (sourceSet.getName().equals("main") && myProject.getPlugins().findPlugin(WarPlugin.class) != null) {
-      Configuration providedCompile = myProject.getConfigurations().findByName("providedCompile");
-      if (providedCompile != null) {
-        providedConfigurations.add(providedCompile);
-      }
-      Configuration providedRuntime = myProject.getConfigurations().findByName("providedRuntime");
-      if (providedRuntime != null) {
-        providedConfigurations.add(providedRuntime);
-      }
-    }
-    if (providedConfigurations.isEmpty()) {
-      return;
-    }
-
-    Multimap<Object, ExternalDependency> filesToDependenciesMap = ArrayListMultimap.create();
-    for (ExternalDependency dep : result) {
-      filesToDependenciesMap.put(getFiles(dep), dep);
-    }
-
-    for (Configuration configuration : providedConfigurations) {
-      Collection<ExternalDependency> providedDependencies = resolveDependencies(configuration, PROVIDED_SCOPE);
-      for (Iterator<ExternalDependency> iterator = providedDependencies.iterator(); iterator.hasNext(); ) {
-        ExternalDependency providedDependency = iterator.next();
-        Collection<File> files = getFiles(providedDependency);
-        Collection<ExternalDependency> dependencies = filesToDependenciesMap.get(files);
-        if (!dependencies.isEmpty()) {
-          for (ExternalDependency depForScope : dependencies) {
-            ((AbstractExternalDependency)depForScope).setScope(PROVIDED_SCOPE);
-          }
-          iterator.remove();
-        }
-      }
-      result.addAll(providedDependencies);
-    }
-  }
-
-  private @NotNull Collection<? extends ExternalDependency> getDependencies(
-    @NotNull FileCollection fileCollection,
-    @NotNull String scope
-  ) {
-    return resolveDependenciesWithDefault(fileCollection, scope, new Supplier<Collection<? extends ExternalDependency>>() {
-      @Override
-      public Collection<? extends ExternalDependency> get() {
-        return Collections.singleton(new DefaultFileCollectionDependency(fileCollection.getFiles()));
-      }
-    });
-  }
-
-  private @NotNull Collection<? extends ExternalDependency> resolveDependenciesWithDefault(
-    @NotNull FileCollection fileCollection,
-    @NotNull String scope,
-    @NotNull Supplier<Collection<? extends ExternalDependency>> defaultValueProvider
-  ) {
-    if (fileCollection instanceof ConfigurableFileCollection) {
-      return getDependencies(((ConfigurableFileCollection)fileCollection).getFrom(), scope);
-    }
-    else if (fileCollection instanceof UnionFileCollection) {
-      return getDependencies(((UnionFileCollection)fileCollection).getSources(), scope);
-    }
-    else if (fileCollection instanceof Configuration) {
-      return resolveDependencies((Configuration)fileCollection, scope);
-    }
-    else if (fileCollection instanceof SourceSetOutput) {
-      return resolveSourceOutputFileDependencies((SourceSetOutput)fileCollection, scope);
-    }
-    return defaultValueProvider.get();
-  }
-
-  private @NotNull Collection<ExternalDependency> getDependencies(
-    @NotNull Iterable<?> fileCollections,
-    @NotNull String scope
-  ) {
-    Set<ExternalDependency> result = new LinkedHashSet<>();
-    for (Object fileCollection : fileCollections) {
-      if (fileCollection instanceof FileCollection) {
-        result.addAll(getDependencies((FileCollection)fileCollection, scope));
-      }
-    }
-    return result;
-  }
-
-  public static @NotNull Collection<File> getFiles(@NotNull ExternalDependency dependency) {
-    if (dependency instanceof ExternalLibraryDependency) {
-      return Collections.singleton(((ExternalLibraryDependency)dependency).getFile());
-    }
-    else if (dependency instanceof FileCollectionDependency) {
-      return ((FileCollectionDependency)dependency).getFiles();
-    }
-    else if (dependency instanceof ExternalMultiLibraryDependency) {
-      return ((ExternalMultiLibraryDependency)dependency).getFiles();
-    }
-    else if (dependency instanceof ExternalProjectDependency) {
-      return ((ExternalProjectDependency)dependency).getProjectDependencyArtifacts();
-    }
-    return Collections.emptySet();
   }
 
   private static @NotNull String getBuildName(@NotNull ProjectComponentIdentifier projectComponentIdentifier) {

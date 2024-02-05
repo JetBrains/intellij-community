@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleSourceSetDependencyResolver
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
@@ -293,7 +293,7 @@ class GradleSourceSetGroovyHelper {
       }
 
       if (resolveSourceSetDependencies) {
-        def dependencies = new GradleDependencyResolver(context, project)
+        def dependencies = new GradleSourceSetDependencyResolver(context, project)
           .resolveDependencies(sourceSet)
         externalSourceSet.dependencies.addAll(dependencies)
       }
