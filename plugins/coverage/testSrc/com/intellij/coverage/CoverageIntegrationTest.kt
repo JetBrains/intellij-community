@@ -52,6 +52,10 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     Assert.assertTrue(JavaCoverageOptionsProvider.getInstance(myProject).ignoreImplicitConstructors)
     val filters = arrayOf("foo.bar.BarClass")
     val bundle = loadIJSuite(filters)
+
+    val projectData = bundle.coverageData!!
+    projectData.getClassData("foo.bar.BarClass")!!
+
     val consumer = PackageAnnotationConsumer()
     JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitSuite()
     assertEquals("""
