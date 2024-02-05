@@ -20,9 +20,14 @@ import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
+import org.jetbrains.org.objectweb.asm.util.Textifier;
+import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -566,6 +571,14 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     };
   }
 
+  private KmFunction findKmFunction(String methodName, String methodDescriptor) {
+    KmDeclarationContainer container = findKotlinDeclarationContainer();
+    if (container != null) {
+      JvmMethodSignature sig = new JvmMethodSignature(methodName, methodDescriptor);
+      return Iterators.find(container.getFunctions(), f -> sig.equals(JvmExtensionsKt.getSignature(f)));
+    }
+    return null;
+  }
 
   private KmDeclarationContainer findKotlinDeclarationContainer() {
     KotlinMeta meta = (KotlinMeta)Iterators.find(myMetadata, md-> md instanceof KotlinMeta);
@@ -579,26 +592,48 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     final Set<ParamAnnotation> paramAnnotations = new HashSet<>();
     processSignature(signature);
 
-    return new MethodVisitor(ASM_API_VERSION) {
+    KmFunction kmFunction = findKmFunction(n, desc);
+    Textifier printer = new Textifier();
+
+    MethodVisitor visitor = new MethodVisitor(ASM_API_VERSION) {
+
       @Override
       public void visitEnd() {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
-          KmDeclarationContainer container = findKotlinDeclarationContainer();
-          if (container != null) {
-            KmFunction func = Iterators.find(container.getFunctions(), f -> {
-              JvmMethodSignature sign = JvmExtensionsKt.getSignature(f);
-              return sign != null && n.equals(sign.getName()) && desc.equals(sign.getDescriptor());
-            });
-            if (func != null) {
-              if (Attributes.isNullable(func.getReturnType())) {
-                annotations.add(KotlinMeta.KOTLIN_NULLABLE);
+          if (kmFunction != null) {
+            if (Attributes.isNullable(kmFunction.getReturnType())) {
+              annotations.add(KotlinMeta.KOTLIN_NULLABLE);
+            }
+            int paramIndex = 0;
+            for (KmValueParameter parameter : kmFunction.getValueParameters()) {
+              if (Attributes.isNullable(parameter.getType())) {
+                paramAnnotations.add(new ParamAnnotation(paramIndex, KotlinMeta.KOTLIN_NULLABLE));
               }
-              int paramIndex = 0;
-              for (KmValueParameter parameter : func.getValueParameters()) {
-                if (Attributes.isNullable(parameter.getType())) {
-                  paramAnnotations.add(new ParamAnnotation(paramIndex, KotlinMeta.KOTLIN_NULLABLE));
+              paramIndex++;
+            }
+            if (Attributes.isInline(kmFunction)) {
+              // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
+              try {
+                MessageDigest digest = MessageDigest.getInstance("MD5");
+                for (Object o : printer.getText()) {
+                  digest.update(String.valueOf(o).getBytes(StandardCharsets.UTF_8));
                 }
-                paramIndex++;
+                byte[] digestBytes = digest.digest();
+                long[] hash = new long[digestBytes.length / 8];
+                for (int hi = 0; hi < hash.length; hi++) {
+                  for (int i = 0; i < 8; i++) {
+                    hash[hi] = (hash[hi] << 8) | (digestBytes[hi * 8 + i] & 0xFF);
+                  }
+                }
+                defaultValue.set(hash);
+              }
+              catch (NoSuchAlgorithmException e) {
+                LOG.info(e);
+                int hash = 0; // fallback logic
+                for (Object o : printer.getText()) {
+                  hash = 31 * hash + o.hashCode();
+                }
+                defaultValue.set(hash);
               }
             }
           }
@@ -831,6 +866,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
 
     };
+
+    return kmFunction != null && Attributes.isInline(kmFunction)? new TraceMethodVisitor(visitor, printer) : visitor;
   }
 
   /**

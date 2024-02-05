@@ -153,15 +153,25 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
 
   @Override
   public boolean processChangedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmMethod, JvmMethod.Diff> methodChange, Utils future, Utils present) {
+    JvmClass changedClass = clsChange.getPast();
+    JvmMethod changedMethod = methodChange.getPast();
+    JvmNodeReferenceID clsId = changedClass.getReferenceID();
+
+    Iterable<JvmNodeReferenceID> propagated = lazy(() -> future.collectSubclassesWithoutMethod(clsId, changedMethod));
+
     if (
       find(methodChange.getDiff().paramAnnotations().removed(), annot -> KotlinMeta.KOTLIN_NULLABLE.equals(annot.type)) != null ||
       find(methodChange.getDiff().annotations().added(), annot -> KotlinMeta.KOTLIN_NULLABLE.equals(annot)) != null) {
 
-      JvmMethod changedMethod = methodChange.getPast();
       debug("One of method's parameters or method's return value has become non-nullable; affecting method usages ", changedMethod);
-      JvmNodeReferenceID clsId = clsChange.getPast().getReferenceID();
-      affectMemberUsages(context, clsId, changedMethod, future.collectSubclassesWithoutMethod(clsId, changedMethod));
+      affectMemberUsages(context, clsId, changedMethod, propagated);
     }
+
+    if (isKotlinNode(changedClass) && methodChange.getDiff().valueChanged()) {
+      debug("Method was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", changedMethod);
+      affectMemberUsages(context, clsId, changedMethod, propagated);
+    }
+
     return true;
   }
 
