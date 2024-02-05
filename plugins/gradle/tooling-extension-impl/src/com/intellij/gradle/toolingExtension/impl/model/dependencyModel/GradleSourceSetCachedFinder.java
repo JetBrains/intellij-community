@@ -38,12 +38,16 @@ public class GradleSourceSetCachedFinder {
     myArtifactsMap = createArtifactsMap(context);
   }
 
-  public @NotNull List<File> findArtifactSources(@NotNull Collection<? extends File> artifactFiles) {
-    List<File> artifactSources = new ArrayList<>();
+  public @NotNull Set<File> findArtifactSources(@NotNull Collection<? extends File> artifactFiles) {
+    Set<File> artifactSources = new LinkedHashSet<>();
     for (File artifactFile : artifactFiles) {
       artifactSources.addAll(findSourcesByArtifact(artifactFile.getPath()));
     }
     return artifactSources;
+  }
+
+  public @NotNull Set<File> findArtifactSources(@NotNull File artifactFile) {
+    return findSourcesByArtifact(artifactFile.getPath());
   }
 
   private @NotNull Set<File> findSourcesByArtifact(@NotNull String path) {
