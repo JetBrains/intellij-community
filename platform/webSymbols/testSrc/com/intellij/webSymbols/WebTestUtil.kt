@@ -250,6 +250,7 @@ private fun CodeInsightTestFixture.renderDocAtCaret(): String? =
     .also { assertTrue("More then one documentation rendered:\n\n${it.joinToString("\n\n")}", it.size <= 1) }
     .getOrNull(0)
     ?.trim()
+    ?.replace(Regex("<a href=\"psi_element:[^\"]*/unitTest[0-9]+/"), "<a href=\"psi_element:///src/")
 
 
 infix fun ((item: LookupElementInfo) -> Boolean).and(other: (item: LookupElementInfo) -> Boolean): (item: LookupElementInfo) -> Boolean =
