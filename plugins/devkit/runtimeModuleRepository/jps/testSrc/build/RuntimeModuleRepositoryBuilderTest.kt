@@ -4,6 +4,9 @@ package com.intellij.devkit.runtimeModuleRepository.jps.build
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaLibraryType
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.util.JpsPathUtil
 
 class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
   fun `test module with tests`() {
@@ -56,7 +59,19 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       descriptor("a")
       testDescriptor("a.tests", "a")
       descriptor("b", "a")
-      testDescriptor("b.tests", "b", "a.tests")
+      testDescriptor("b.tests", "b", "a", "a.tests")
+    }
+  }
+  
+  fun `test dependency on test only module with non-standard name`() {
+    val aTests = addModule("a.test", withSources = false, withTests = true)
+    val b = addModule("b", withTests = true)
+    val dependency = b.dependenciesList.addModuleDependency(aTests)
+    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
+    buildAndCheck { 
+      testDescriptor("a.test.tests", resourceDirName = "a.test")
+      descriptor("b")
+      testDescriptor("b.tests", "b", "a.test.tests")
     }
   }
 
@@ -72,6 +87,21 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       testDescriptor("c.tests", "c", "b", "a.tests")
     }
   }
+  
+  fun `test do not add unnecessary transitive dependencies via module without tests`() {
+    val a = addModule("a", withTests = true)
+    val b = addModule("b", withTests = false)
+    val c = addModule("c", a, b, withTests = false)
+    addModule("d", c, withTests = true)
+    buildAndCheck {
+      descriptor("a")
+      descriptor("b")
+      descriptor("c", "a", "b")
+      descriptor("d", "c")
+      testDescriptor("a.tests", "a")
+      testDescriptor("d.tests", "d", "c", "a.tests")
+    }
+  }
 
   fun `test circular dependency with tests`() {
     val a = addModule("a", withTests = true)
@@ -80,9 +110,9 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.RUNTIME
     buildAndCheck {
       descriptor("a", "b")
-      testDescriptor("a.tests", "a", "b.tests")
+      testDescriptor("a.tests", "a", "b", "b.tests")
       descriptor("b", "a")
-      testDescriptor("b.tests", "b", "a.tests")
+      testDescriptor("b.tests", "b", "a", "a.tests")
     }
   }
   
@@ -96,16 +126,54 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       descriptor("a", "b")
       descriptor("b", "a")
       descriptor("c", "b")
-      testDescriptor("c.tests", "c", "b", "a")
+      testDescriptor("c.tests", "c", "b")
     }
   }
 
   fun `test separate module for tests`() {
-    addModule("a", withTests = false)
-    addModule("a.tests", withTests = true, withSources = false)
+    val a = addModule("a", withTests = false)
+    addModule("a.tests", a, withTests = true, withSources = false)
     buildAndCheck {
       descriptor("a")
       testDescriptor("a.tests", "a", resourceDirName = "a.tests")
+    }
+  }
+
+  fun `test module library`() {
+    val a = addModule("a", withTests = false)
+    val lib = a.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
+    a.dependenciesList.addLibraryDependency(lib)
+    val libraryRoot = getUrl("lib")
+    lib.addRoot(libraryRoot, JpsOrderRootType.COMPILED)
+    buildAndCheck { 
+      descriptor("a", "lib.a.lib")
+      descriptor("lib.a.lib", listOf(JpsPathUtil.urlToPath(libraryRoot)), emptyList())
+    }
+  }
+  
+  fun `test project library`() {
+    val a = addModule("a", withTests = false)
+    val lib = myProject.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
+    a.dependenciesList.addLibraryDependency(lib)
+    val libraryRoot = getUrl("lib")
+    lib.addRoot(libraryRoot, JpsOrderRootType.COMPILED)
+    buildAndCheck { 
+      descriptor("a", "lib.lib")
+      descriptor("lib.lib", listOf(JpsPathUtil.urlToPath(libraryRoot)), emptyList())
+    }
+  }
+  
+  fun `test library with test scope`() {
+    val a = addModule("a", withTests = true)
+    val lib = myProject.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
+    val dependency = a.dependenciesList.addLibraryDependency(lib)
+    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
+    val libraryRoot = getUrl("lib")
+    lib.addRoot(libraryRoot, JpsOrderRootType.COMPILED)
+    buildAndCheck { 
+      descriptor("a")
+      testDescriptor("a.tests", "a", "lib.lib")
+      descriptor("lib.lib", listOf(JpsPathUtil.urlToPath(libraryRoot)), emptyList())
     }
   }
 }
