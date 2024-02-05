@@ -6,7 +6,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.collectors.fus.DataContextUtils
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.LOOKUP_ACTIVE
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent.Companion.from
 import com.intellij.internal.statistic.utils.PluginInfo
@@ -161,7 +160,7 @@ class ActionsCollectorImpl : ActionsCollector() {
           if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
             val isLookupActive = event.dataContext.getData(CommonDataKeys.HOST_EDITOR)
               ?.let { LookupManager.getActiveLookup(it) } != null
-            add(LOOKUP_ACTIVE.with(isLookupActive))
+            add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
           }
         }
         if (project != null && !project.isDisposed) {
