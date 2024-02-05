@@ -183,7 +183,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testValueTossedEvenInCaseOfSuccessfulPutIfAbsentInConcurrentSoftValueMap() {
-    ConcurrentSoftValueHashMap<Object, Object> map = new ConcurrentSoftValueHashMap<>();
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentSoftValueMap();
     Object value = new Object();
     Reference<Object> ref = new SoftReference<>(value);
     map.put(1, value);
@@ -196,7 +196,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     while (ref.get()!=null);
     Object old = map.putIfAbsent(2, new Object());
     assertNull(old);
-    assertFalse(map.processQueue());
+    assertFalse(((ConcurrentRefValueHashMap<?, ?>)map).processQueue());
   }
 
   @SuppressWarnings("ConstantValue") // Map contract is tested, not implied here

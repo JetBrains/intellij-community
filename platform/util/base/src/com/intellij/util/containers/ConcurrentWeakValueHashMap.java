@@ -3,9 +3,11 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.function.Consumer;
 
 /**
  * Concurrent strong key:K -> weak value:V map
@@ -14,6 +16,11 @@ import java.lang.ref.WeakReference;
  * Use {@link ContainerUtil#createConcurrentWeakValueMap()} to create this
  */
 final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
+
+  ConcurrentWeakValueHashMap(@Nullable Consumer<K> evictionListener) {
+    super(evictionListener);
+  }
+
   private static final class MyWeakReference<K, V> extends WeakReference<V> implements ValueReference<K, V> {
     private final K key;
     private MyWeakReference(@NotNull K key, @NotNull V referent, @NotNull ReferenceQueue<V> q) {

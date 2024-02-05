@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 
 // ContainerUtil requires trove in classpath
 public final class CollectionFactory {
@@ -30,12 +31,24 @@ public final class CollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap() {
-    return new ConcurrentWeakValueHashMap<>();
+    return new ConcurrentWeakValueHashMap<>(null);
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap() {
-    return new ConcurrentSoftValueHashMap<>();
+    return new ConcurrentSoftValueHashMap<>(null);
+  }
+
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(
+    @NotNull Consumer<K> evictionListener) {
+    return new ConcurrentWeakValueHashMap<>(evictionListener);
+  }
+
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(
+    @NotNull Consumer<K> evictionListener) {
+    return new ConcurrentSoftValueHashMap<>(evictionListener);
   }
 
   @Contract(value = " -> new", pure = true)

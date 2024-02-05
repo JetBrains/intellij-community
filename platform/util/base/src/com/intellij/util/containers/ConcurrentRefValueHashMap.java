@@ -4,12 +4,13 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 
 /**
  * Base class for concurrent strong key:K -> (soft/weak) value:V map
@@ -17,8 +18,14 @@ import java.util.concurrent.ConcurrentMap;
  * Null values are NOT allowed
  */
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
+
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = new ConcurrentHashMap<>();
+  private final Consumer<K> myEvictionListener;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
+
+  ConcurrentRefValueHashMap(@Nullable Consumer<K> evictionListener) {
+    myEvictionListener = evictionListener;
+  }
 
   interface ValueReference<K, V> {
     @NotNull
@@ -35,7 +42,10 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
       //noinspection unchecked
       ValueReference<K, V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
-      myMap.remove(ref.getKey(), ref);
+      K key = ref.getKey();
+      if (myMap.remove(key, ref) && myEvictionListener != null) {
+        myEvictionListener.accept(key);
+      }
       processed = true;
     }
     return processed;

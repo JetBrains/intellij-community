@@ -2,9 +2,11 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
+import java.util.function.Consumer;
 
 /**
  * Concurrent strong key:K -> soft value:V map
@@ -13,6 +15,11 @@ import java.lang.ref.SoftReference;
  * Use {@link CollectionFactory#createConcurrentSoftValueMap()} to create this
  */
 final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
+
+  ConcurrentSoftValueHashMap(@Nullable Consumer<K> evictionListener) {
+    super(evictionListener);
+  }
+
   private static final class MySoftReference<K, V> extends SoftReference<V> implements ValueReference<K, V> {
     private final K key;
     private MySoftReference(@NotNull K key, @NotNull V referent, @NotNull ReferenceQueue<V> q) {
