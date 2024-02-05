@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.diff.chains.DiffRequestProducer
@@ -28,13 +28,15 @@ internal open class CombinedActivityDiffPreview(project: Project,
                                                 parentDisposable: Disposable) :
   CombinedDiffPreview(project, targetComponent, true, parentDisposable) {
 
+  private var diffData: ActivityDiffData? = null
+
   override fun performDiffAction(): Boolean {
     LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.Diff, scope)
     return super.performDiffAction()
   }
 
   override fun createPreviewModel(): CombinedDiffPreviewModel {
-    return CombinedActivityDiffPreviewModel(project, scope, parentDisposable)
+    return CombinedActivityDiffPreviewModel(project, parentDisposable)
   }
 
   override fun getCombinedDiffTabTitle(): String {
@@ -45,22 +47,20 @@ internal open class CombinedActivityDiffPreview(project: Project,
   }
 
   fun setDiffData(diffData: ActivityDiffData?) {
-    (previewModel as? CombinedActivityDiffPreviewModel)?.diffData = diffData
+    this.diffData = diffData
     updatePreview()
   }
-}
 
-private class CombinedActivityDiffPreviewModel(project: Project, private val scope: ActivityScope, parentDisposable: Disposable) :
-  CombinedDiffPreviewModel(project, parentDisposable) {
+  private inner class CombinedActivityDiffPreviewModel(project: Project, parentDisposable: Disposable) :
+    CombinedDiffPreviewModel(project, parentDisposable) {
 
-  var diffData: ActivityDiffData? = null
+    override fun iterateAllChanges(): Iterable<Wrapper> {
+      return diffData?.getPresentableChanges(project)?.takeIf { it.any() } ?: listOf(EmptyChangeWrapper(project, scope))
+    }
 
-  override fun iterateAllChanges(): Iterable<Wrapper> {
-    return diffData?.getPresentableChanges(project)?.takeIf { it.any() } ?: listOf(EmptyChangeWrapper(project, scope))
+    override fun iterateSelectedChanges(): Iterable<Wrapper> = iterateAllChanges()
+    override fun selectChangeInSourceComponent(change: Wrapper) = Unit
   }
-
-  override fun iterateSelectedChanges(): Iterable<Wrapper> = iterateAllChanges()
-  override fun selectChangeInSourceComponent(change: Wrapper) = Unit
 }
 
 private class EmptyChangeWrapper(private val project: Project, private val scope: ActivityScope) : Wrapper() {
