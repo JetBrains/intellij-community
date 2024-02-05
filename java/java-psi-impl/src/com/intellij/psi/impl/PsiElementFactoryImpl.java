@@ -277,8 +277,12 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @Override
   public PsiParameter createParameter(@NotNull String name, @NotNull PsiType type, PsiElement context) throws IncorrectOperationException {
-    PsiMethod psiMethod = createMethodFromText("void f(" + type.getCanonicalText(true) + " " + name + ") {}", context);
+    String text = "void f(" + type.getCanonicalText(true) + " " + name + ") {}";
+    PsiMethod psiMethod = createMethodFromText(text, context);
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+    if (parameters.length != 1) {
+      throw new IncorrectOperationException("Incorrect method was created: " + psiMethod.getText());
+    }
     return parameters[0];
   }
 
