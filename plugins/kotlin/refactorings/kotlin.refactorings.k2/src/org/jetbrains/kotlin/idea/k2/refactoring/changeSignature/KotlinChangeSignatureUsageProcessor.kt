@@ -315,7 +315,8 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 receiverTypeText,
                 element as KtCallableDeclaration,
                 changeInfo.method,
-                Variance.IN_VARIANCE
+                Variance.IN_VARIANCE,
+                true
             ) else null
             (element as KtCallableDeclaration).setReceiverTypeReference(receiverTypeRef)?.let { shortenReferences(it) }
         }

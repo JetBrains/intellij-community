@@ -27,7 +27,8 @@ internal fun KtPsiFactory.createType(
     typeText: String,
     inheritedCallable: KtDeclaration?,
     baseFunction: PsiElement,
-    variance: Variance
+    variance: Variance,
+    isReceiver: Boolean = false
 ): KtTypeReference {
     if (inheritedCallable != null) {
         allowAnalysisFromWriteAction {
@@ -52,16 +53,14 @@ internal fun KtPsiFactory.createType(
                     }
 
                     val ktSubstitutor = createSubstitutor(inheritedCallable, baseFunction)
-                    if (ktSubstitutor != null) {
-                        val ktType = createTypeCodeFragment(typeText, baseFunction).getContentElement()?.getKtType()
-                        if (ktType != null) {
-                            val type = ktSubstitutor.substitute(ktType)
-                            val substitutedType = type.render(position = variance)
-                            if (type is KtDefinitelyNotNullType) {
-                                return createType("($substitutedType)")
-                            }
-                            return createType(substitutedType)
+                    val ktType = createTypeCodeFragment(typeText, baseFunction).getContentElement()?.getKtType()
+                    if (ktType != null) {
+                        val type = ktSubstitutor?.substitute(ktType) ?: ktType
+                        val substitutedType = type.render(position = variance)
+                        if (isReceiver && type is KtDefinitelyNotNullType) {
+                            return createType("($substitutedType)")
                         }
+                        return createType(substitutedType)
                     }
                 }
             }
