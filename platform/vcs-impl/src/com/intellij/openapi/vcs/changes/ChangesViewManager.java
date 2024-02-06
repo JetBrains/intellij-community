@@ -75,6 +75,7 @@ import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -755,8 +756,9 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
+    private final Function0<Boolean> isAllowExcludeFromCommit = () -> isAllowExcludeFromCommit();
     private @NotNull Function<ChangeNodeDecorator, ChangeNodeDecorator> getChangeDecoratorProvider() {
-      return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, () -> isAllowExcludeFromCommit());
+      return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, isAllowExcludeFromCommit);
     }
 
     @Override
