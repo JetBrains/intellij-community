@@ -8,6 +8,7 @@ import com.intellij.platform.lvcs.impl.ActivityPresentation
 import com.intellij.platform.lvcs.impl.ActivitySelection
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.components.JBList
+import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.util.EventDispatcher
 import java.awt.event.KeyAdapter
@@ -25,6 +26,7 @@ internal class ActivityList(presentationFunction: (item: ActivityItem) -> Activi
 
   init {
     cellRenderer = ActivityItemRenderer(presentationFunction)
+    ListHoverListener.DEFAULT.addTo(this)
     addListSelectionListener {
       if (it.valueIsAdjusting) return@addListSelectionListener
       eventDispatcher.multicaster.onSelectionChanged(selection)

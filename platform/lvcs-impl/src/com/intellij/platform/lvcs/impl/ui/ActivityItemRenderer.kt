@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.hover.ListHoverListener
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
@@ -45,7 +46,9 @@ internal class ActivityItemRenderer(private val presentationFunction: (item: Act
     contentPanel.background = list.background
     val activityPresentation = presentationFunction(value) ?: return contentPanel
 
-    val cellBackgroundColor = if (isSelected) list.selectionBackground else null
+    val cellBackgroundColor = if (isSelected) list.selectionBackground
+    else if (index == ListHoverListener.getHoveredIndex(list)) JBUI.CurrentTheme.List.Hover.background(cellHasFocus)
+    else null
     val cellHighlightColor = activityPresentation.highlightColor
 
     val rowComponent = createRowComponent(list, activityPresentation.text, activityPresentation.icon, value.timestamp,
