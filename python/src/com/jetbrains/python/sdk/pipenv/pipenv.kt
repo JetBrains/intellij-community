@@ -148,8 +148,8 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
     }
   }
   return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {
-    isPipEnv = true
     associateWithModule(module, newProjectPath)
+    isPipEnv = true
   }
 }
 
