@@ -43,7 +43,37 @@
       <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
-  <item name='java.awt.event.InputEvent int getMaskForButton(int)'>
+  <item name='java.awt.event.InputEvent boolean isAltDown()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.InputEvent boolean isAltGraphDown()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.InputEvent boolean isConsumed()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.InputEvent boolean isControlDown()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.InputEvent boolean isMetaDown()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.InputEvent boolean isShiftDown()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.event.InputEvent int getMaskForButton(int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -56,6 +86,24 @@
   <item name="java.awt.event.InputEvent int getModifiersEx()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.InputEvent java.lang.String getModifiersExText(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.InputEvent long getWhen()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.InputEvent void consume()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
   <item name="java.awt.event.ItemEvent ItemEvent(java.awt.ItemSelectable, int, java.lang.Object, int) 3">
