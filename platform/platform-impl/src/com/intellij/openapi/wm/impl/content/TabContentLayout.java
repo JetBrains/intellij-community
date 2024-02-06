@@ -352,7 +352,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       if (toDrawTabs == TabsDrawMode.PAINT_ALL) {
         if (each.isSelected()) {
           tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(),
-                                      ui.window.isActive(), each.isHovered());
+                                      ui.window.isActive() && ui.isActive(), each.isHovered());
         }
         else {
           tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(),
