@@ -1,10 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -17,6 +15,7 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogTabLocation;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -79,7 +78,16 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
       filters = VcsLogFilterObject.collection();
     }
 
-    VcsProjectLog.getInstance(project).openLogTab(filters, myLocation);
+    VcsProjectLog.getInstance(project).openLogTab(filters, getLocation(e));
+  }
+
+  private @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e) {
+    if (!ActionPlaces.VCS_LOG_TOOLBAR_PLACE.equals(e.getPlace())) return myLocation;
+
+    if (e.getData(PlatformDataKeys.TOOL_WINDOW) == null) {
+      return VcsLogTabLocation.EDITOR;
+    }
+    return VcsLogTabLocation.TOOL_WINDOW;
   }
 
   @Override
