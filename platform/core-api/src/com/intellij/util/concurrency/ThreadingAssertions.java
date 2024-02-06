@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -159,7 +159,7 @@ public final class ThreadingAssertions {
 
   private static @NotNull String getThreadDetails() {
     Thread current = Thread.currentThread();
-    Thread edt = EDT.getEventDispatchThread();
+    Thread edt = EDT.getEventDispatchThreadOrNull();
     return "Current thread: " + describe(current) + " (EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() + ")\n" +
            "SystemEventQueueThread: " + (edt == current ? "(same)" : describe(edt));
   }
