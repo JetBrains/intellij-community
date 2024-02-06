@@ -48,8 +48,9 @@ internal class CombinedEditorSearchSession(private val project: Project,
 
   private val listeners = EventDispatcher.create(CombinedEditorSearchSessionListener::class.java)
 
-  private inner class EditorSearchSessionHolder(private val sessions: List<EditorSearchSession>) {
-    constructor(project: Project, editors: List<Editor>) : this(editors.map { editor -> EditorSearchSession(editor, project, findModel) })
+  private inner class EditorSearchSessionHolder(private val sessions: List<EditorSearchSessionEx>) {
+    constructor(project: Project, editors: List<Editor>) :
+      this(editors.map { editor -> EditorSearchSessionEx(editor, project, findModel, this@CombinedEditorSearchSession::close) })
 
     fun isSearchInProgress() = sessions.any(EditorSearchSession::isSearchInProgress)
     fun hasMatches() = sessions.any(EditorSearchSession::hasMatches)
@@ -59,8 +60,8 @@ internal class CombinedEditorSearchSession(private val project: Project,
     fun addResultListener(listener: SearchResultsListener) = sessions.forEach { session -> session.searchResults.addListener(listener) }
     fun initLivePreview() = sessions.forEach(EditorSearchSession::initLivePreview)
     fun disableLivePreview() = sessions.forEach(EditorSearchSession::disableLivePreview)
-    fun disposeLivePreview() = sessions.forEach(EditorSearchSession::disposeLivePreview)
-    fun close() = sessions.forEach(EditorSearchSession::close)
+    fun disposeLivePreview() = sessions.forEach(EditorSearchSessionEx::disposeLivePreview)
+    fun close() = sessions.forEach(EditorSearchSessionEx::closeSession)
     fun getOrNull(position: Position): EditorSearchSession? = sessions.getOrNull(position.index)
     fun indexOf(editor: Editor): Position? = Position.entries.find { it.index == sessions.indexOfFirst { session -> session.editor == editor } }
   }
@@ -373,7 +374,6 @@ internal class CombinedEditorSearchSession(private val project: Project,
     override fun getData(dataId: String): Any? {
       return when {
         SearchSession.KEY.`is`(dataId) -> this@CombinedEditorSearchSession
-        SelectAllAction.DISABLED.`is`(dataId) -> true
         else -> currentSession.getData(dataId)
       }
     }
@@ -381,5 +381,20 @@ internal class CombinedEditorSearchSession(private val project: Project,
 
   private class WiderStatusTextAction : StatusTextAction() {
     override fun getTextToCountPreferredSize(): String = "9888 results in 100500 files"
+  }
+
+  private class EditorSearchSessionEx(editor: Editor, project: Project, findModel: FindModel,
+                                      private val combinedSessionClose: () -> Unit) : EditorSearchSession(editor, project, findModel) {
+    override fun close() {
+      combinedSessionClose()
+    }
+
+    fun closeSession() {
+      super.close()
+    }
+
+    public override fun disposeLivePreview() {
+      super.disposeLivePreview()
+    }
   }
 }

@@ -13,8 +13,6 @@ import java.util.List;
 
 public final class SelectAllAction extends OccurrenceAction {
 
-  public static final DataKey<Boolean> DISABLED = DataKey.create("SelectAllAction.disabled");
-
   public SelectAllAction() {
     super(IdeActions.ACTION_SELECT_ALL_OCCURRENCES, AllIcons.Actions.CheckMulticaret);
   }
@@ -38,10 +36,6 @@ public final class SelectAllAction extends OccurrenceAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (Boolean.TRUE.equals(e.getData(DISABLED))) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
     super.update(e);
     if (ExperimentalUI.isNewUI()) {
       e.getPresentation().setIcon(null);

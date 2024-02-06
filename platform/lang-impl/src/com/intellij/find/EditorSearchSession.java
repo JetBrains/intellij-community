@@ -56,11 +56,11 @@ import java.util.regex.PatternSyntaxException;
 /**
  * @author max, andrey.zaytsev
  */
-public final class EditorSearchSession implements SearchSession,
-                                                  DataProvider,
-                                                  SelectionListener,
-                                                  SearchResults.SearchResultsListener,
-                                                  SearchReplaceComponent.Listener {
+public class EditorSearchSession implements SearchSession,
+                                            DataProvider,
+                                            SelectionListener,
+                                            SearchResults.SearchResultsListener,
+                                            SearchReplaceComponent.Listener {
   public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
   private static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
 
@@ -569,7 +569,7 @@ public final class EditorSearchSession implements SearchSession,
     mySearchResults.removeListener(this);
   }
 
-  public void disposeLivePreview() {
+  protected void disposeLivePreview() {
     myLivePreviewController.dispose();
   }
 
