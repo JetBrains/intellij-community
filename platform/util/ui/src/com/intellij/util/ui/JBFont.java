@@ -68,6 +68,10 @@ public class JBFont extends Font {
     return labelFont().getSize();
   }
 
+  public static float labelFontSize2D() {
+    return labelFont().getSize2D();
+  }
+
   private static Font labelFont() {
     return UIManager.getFont("Label.font");
   }

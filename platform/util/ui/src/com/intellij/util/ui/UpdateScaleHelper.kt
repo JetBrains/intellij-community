@@ -3,12 +3,10 @@ package com.intellij.util.ui
 
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
-import javax.swing.UIManager
+import kotlin.math.abs
 
 @Internal
-open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentValue: (() -> Float) = {
-  UIManager.getFont("Label.font").size2D
-}) {
+open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentValue: (() -> Float) = { JBFont.labelFontSize2D() }) {
   private var savedValue: Float = currentValue()
   private var initialRunPerformed = false
 
@@ -17,7 +15,7 @@ open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentVa
 
   fun saveScaleAndRunIfChanged(block: () -> Unit): Boolean {
     if ((!forceInitialRun || initialRunPerformed)
-        && savedValue == currentValue()) return false
+        && savedValue.equalsWithinEpsilonTo(currentValue())) return false
 
     try {
       block()
@@ -40,4 +38,6 @@ open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentVa
       (it as? JComponent)?.updateUI()
     }
   }
+
+  private fun Float.equalsWithinEpsilonTo(other: Float): Boolean = abs(this - other) < 0.001
 }
