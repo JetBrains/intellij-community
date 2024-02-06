@@ -57,7 +57,7 @@ object TestProjectLibraryParser {
     }
 }
 
-data class TestProjectModule(val name: String, val targetPlatform: TargetPlatform, val dependsOnModules: List<Dependency>)
+data class TestProjectModule(val name: String, val targetPlatform: TargetPlatform, val dependencies: List<Dependency>)
 data class Dependency(val name: String, val kind: DependencyKind)
 
 enum class DependencyKind(val jsonName: String) {
@@ -80,7 +80,7 @@ enum class TestPlatform(val jsonName: String, val targetPlatform: TargetPlatform
 }
 
 object TestProjectModuleParser {
-    private const val DEPENDS_ON_FIELD = "dependsOn"
+    private const val DEPENDENCIES_FIELD = "dependencies"
     private const val MODULE_NAME_FIELD = "name"
     private const val DEPENDENCY_NAME_FIELD = "name"
     private const val DEPENDENCY_KIND_FIELD = "kind"
@@ -88,7 +88,7 @@ object TestProjectModuleParser {
 
     fun parse(json: JsonElement): TestProjectModule {
         require(json is JsonObject)
-        val dependencies = json.getAsJsonArray(DEPENDS_ON_FIELD)?.map(::parseDependency).orEmpty()
+        val dependencies = json.getAsJsonArray(DEPENDENCIES_FIELD)?.map(::parseDependency).orEmpty()
         val platform = json.getNullableString(PLATFORM_FIELD)?.let(::parsePlatform) ?: JvmPlatforms.defaultJvmPlatform
         return TestProjectModule(
             json.getString(MODULE_NAME_FIELD),

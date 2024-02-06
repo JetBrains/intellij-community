@@ -3,7 +3,7 @@
         { "name": "library", "roots": ["library"] }
     ],
     "modules": [
-        { "name": "main", "dependsOn": ["library"] }
+        { "name": "main", "dependencies": ["library"] }
     ],
     "targets": [
         { "module": "main", "file": "main.kt" }

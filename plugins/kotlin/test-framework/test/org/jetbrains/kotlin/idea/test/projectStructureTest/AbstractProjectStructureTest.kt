@@ -74,12 +74,12 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
         }
 
         val refinementMap: Map<String, List<String>> = testStructure.modules.associate { testModule ->
-            testModule.name to testModule.dependsOnModules.filter { it.kind == DependencyKind.REFINEMENT }.map { it.name }
+            testModule.name to testModule.dependencies.filter { it.kind == DependencyKind.REFINEMENT }.map { it.name }
         }
 
         testStructure.modules.forEach { moduleData ->
             val module = modulesByName.getValue(moduleData.name)
-            val dependenciesByKind = moduleData.dependsOnModules.groupBy { it.kind }
+            val dependenciesByKind = moduleData.dependencies.groupBy { it.kind }
 
             dependenciesByKind[DependencyKind.REGULAR].orEmpty().let { regularDependencies ->
                 addRegularDependencies(module, regularDependencies, modulesByName, projectLibrariesByName)

@@ -1,7 +1,7 @@
 {
   "modules" : [
-    { "name": "A", "dependsOn": ["A"] },
-    { "name": "B", "dependsOn": ["A"] }
+    { "name": "A", "dependencies": ["A"] },
+    { "name": "B", "dependencies": ["A"] }
   ],
   "targets": [
     {

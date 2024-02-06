@@ -1,8 +1,8 @@
 {
     "modules": [
         { "name": "module1" },
-        { "name": "module2", "dependsOn": ["module1"] },
-        { "name": "main", "dependsOn": ["module1", "module2"] }
+        { "name": "module2", "dependencies": ["module1"] },
+        { "name": "main", "dependencies": ["module1", "module2"] }
     ],
     "targets": [
         { "module": "main", "file": "main.kt" }
