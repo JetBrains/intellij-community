@@ -23,7 +23,7 @@ import java.util.Objects;
 
 abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
 
-  protected final int BASE_INDEX_VERSION = 10;
+  protected static final int BASE_INDEX_VERSION = 10;
 
   protected abstract Map<K, V> performIndexing(IdeaPlugin plugin);
 
