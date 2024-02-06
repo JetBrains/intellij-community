@@ -247,6 +247,25 @@ public interface IntentionPreviewInfo {
     public @NotNull InfoKind infoKind() {
       return myInfoKind;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Html html = (Html)o;
+      return myContent.toString().equals(html.myContent.toString()) && myInfoKind == html.myInfoKind;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * myContent.toString().hashCode() + myInfoKind.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "HTML [content=" + myContent + ", infoKind=" + myInfoKind + "]";
+    }
   }
 
   /**
