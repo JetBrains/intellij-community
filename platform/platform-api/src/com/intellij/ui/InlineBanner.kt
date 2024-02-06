@@ -11,51 +11,60 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.*
+import com.intellij.util.ui.FinalLayoutWrapper
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
-import javax.swing.*
-import kotlin.math.max
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.Timer
 
 /**
  * @author Alexander Lobas
  */
-open class InlineBanner(background: Color, private var myBorderColor: Color, icon: Icon?) : JBPanel<InlineBanner>() {
-  private val myIconPanel: JPanel
+open class InlineBanner private constructor(
+  messageText: @Nls String,
+  status: EditorNotificationPanel.Status,
+  gap: Int,
+) : InlineBannerBase(status, gap, messageText) {
+
+  override var status: EditorNotificationPanel.Status = status
+    set(value) {
+      setIcon(value.icon)
+      super.status = value
+    }
+
   private val myIcon = JBLabel()
-  private val myMessage = JEditorPane()
   private val myButtonPanel: JPanel
   private val myCloseButton: JComponent
   private var myGearButton: JComponent? = null
   private var myCloseAction: Runnable? = null
   private val myActionPanel: JPanel
 
-  constructor(status: EditorNotificationPanel.Status) : this(status.background, status.border, status.icon)
+  @Suppress("unused")
+  constructor(status: EditorNotificationPanel.Status) : this(
+    messageText = "",
+    status = status,
+  )
 
-  constructor() : this(EditorNotificationPanel.Status.Info)
-
-  constructor(text: @Nls String, status: EditorNotificationPanel.Status) : this(status) {
-    setMessage(text)
-  }
-
-  constructor(text: @Nls String) : this() {
-    setMessage(text)
-  }
+  @JvmOverloads
+  constructor(
+    messageText: @Nls String = "",
+    status: EditorNotificationPanel.Status = EditorNotificationPanel.Status.Info,
+  ) : this(messageText, status, JBUI.scale(8))
 
   init {
     myCloseButton = createInplaceButton(IdeBundle.message("editor.banner.close.tooltip"), ExpUiIcons.General.Close) {
       close()
     }
-
-    val gap = JBUI.scale(8)
 
     layout = object : BorderLayout(gap, gap) {
       @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
@@ -85,46 +94,26 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
       }
     }
 
-    border = JBUI.Borders.empty(12)
-    isOpaque = false
-    this.background = background
-
-    myIconPanel = JPanel(BorderLayout())
-    myIconPanel.isOpaque = false
-    myIconPanel.add(myIcon, BorderLayout.NORTH)
-    setIcon(icon)
-    add(myIconPanel, BorderLayout.WEST)
-
-    val centerPanel = JPanel(VerticalLayout(gap))
-    centerPanel.isOpaque = false
+    iconPanel.add(myIcon, BorderLayout.NORTH)
+    setIcon(status.icon)
+    add(iconPanel, BorderLayout.WEST)
     add(centerPanel)
-
-    myMessage.isEditable = false
-    myMessage.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
-    myMessage.contentType = UIUtil.HTML_MIME
-    myMessage.editorKit = HTMLEditorKitBuilder().build()
-    myMessage.isOpaque = false
-    myMessage.border = null
-    myMessage.isEditable = false
-    if (myMessage.caret != null) {
-      myMessage.caretPosition = 0
-    }
-    myMessage.addHyperlinkListener(BrowserHyperlinkListener())
 
     add(myCloseButton)
 
     val titlePanel = JPanel(BorderLayout())
-    titlePanel.isOpaque = false
-    titlePanel.add(myMessage)
+    titlePanel.isOpaque = isOpaque
+    titlePanel.background = background
+    titlePanel.add(message)
     centerPanel.add(titlePanel)
 
     myButtonPanel = JPanel()
-    myButtonPanel.isOpaque = false
+    myButtonPanel.isOpaque = isOpaque
     updateButtonsSize()
     titlePanel.add(myButtonPanel, BorderLayout.EAST)
 
     myActionPanel = JPanel(DropDownActionLayout(HorizontalLayout(JBUI.scale(16))))
-    myActionPanel.isOpaque = false
+    myActionPanel.isOpaque = isOpaque
     myActionPanel.isVisible = false
     myActionPanel.add(DropDownAction())
     centerPanel.add(myActionPanel)
@@ -160,34 +149,15 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
     return button
   }
 
-  override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-    super.setBounds(x, y, max(width, JBUI.scale(256)), height)
-  }
-
   fun setMessage(text: @Nls String): InlineBanner {
-    myMessage.text = text
-    if (myMessage.caret != null) {
-      myMessage.caretPosition = 0
-    }
+    messageText = text
     return this
-  }
-
-  fun setType(status: EditorNotificationPanel.Status): InlineBanner {
-    return setPresentation(status.background, status.border, status.icon)
   }
 
   fun setIcon(icon: Icon?): InlineBanner {
     myIcon.icon = icon
     myIcon.isVisible = icon != null
-    myIconPanel.isVisible = icon != null
-    return this
-  }
-
-  fun setPresentation(background: Color, border: Color, icon: Icon?): InlineBanner {
-    this.background = background
-    myBorderColor = border
-    setIcon(icon)
-    repaint()
+    iconPanel.isVisible = icon != null
     return this
   }
 
@@ -246,17 +216,6 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
       buttons++
     }
     myButtonPanel.preferredSize = JBDimension(buttons * 22, 16)
-  }
-
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    val config = GraphicsUtil.setupAAPainting(g)
-    val cornerRadius = JBUI.scale(16)
-    g.color = background
-    g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
-    g.color = myBorderColor
-    g.drawRoundRect(0, 0, width - 1, height - 1, cornerRadius, cornerRadius)
-    config.restore()
   }
 
   private class DropDownActionLayout(layout: LayoutManager2) : FinalLayoutWrapper(layout) {
