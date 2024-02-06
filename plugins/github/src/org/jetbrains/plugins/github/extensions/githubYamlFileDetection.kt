@@ -38,7 +38,7 @@ private fun isGithubSchemaAssigned(project: Project?, virtualFile: VirtualFile, 
 }
 
 fun isGithubActionFile(psiFile: PsiFile): Boolean {
-  val virtualFile = psiFile.virtualFile
+  val virtualFile = psiFile.originalFile?.virtualFile
   if (virtualFile == null) return false
   val schemaAssigned = isGithubSchemaAssigned(psiFile.project, virtualFile, GITHUB_ACTION_SCHEMA_NAMES)
   return (psiFile.language.`is` (YAMLLanguage.INSTANCE)
@@ -46,7 +46,7 @@ fun isGithubActionFile(psiFile: PsiFile): Boolean {
 }
 
 fun isGithubWorkflowFile(psiFile: PsiFile): Boolean {
-  val virtualFile = psiFile.virtualFile
+  val virtualFile = psiFile.originalFile?.virtualFile
   if (virtualFile == null) return false
   val schemaAssigned = isGithubSchemaAssigned(psiFile.project, virtualFile, GITHUB_WORKFLOW_SCHEMA_NAMES)
   return (psiFile.language.`is` (YAMLLanguage.INSTANCE)
