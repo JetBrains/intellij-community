@@ -107,7 +107,9 @@ abstract class AbstractKotlinUClass(
                 when (ktDeclaration) {
                     is KtParameter -> {
                         // properties from constructor parameters
-                        if (ktDeclaration.annotationEntries.any { it.isDeprecated() }) {
+                        if (ktDeclaration.annotationEntries.any { it.isDeprecated() } ||
+                            baseResolveProviderService.hasTypeForValueClassInSignature(ktDeclaration)
+                        ) {
                             val fakeAccessors = if (ktDeclaration.hasValOrVar()) {
                                 listOfNotNull(
                                     UastFakeSourceLightDefaultAccessorForConstructorParameter(ktDeclaration, javaPsi, isSetter = false),
