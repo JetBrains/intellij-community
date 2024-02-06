@@ -539,16 +539,17 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
     @JvmStatic
     fun buildReplacementPreviewBalloon(replacement: @NlsSafe String): Balloon {
-      val replacementView = ReplacementView(replacement)
-      val balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView)
-      balloonBuilder.setFadeoutTime(0)
-      balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR)
-      balloonBuilder.setAnimationCycle(0)
-      balloonBuilder.setHideOnClickOutside(false)
-      balloonBuilder.setHideOnKeyOutside(false)
-      balloonBuilder.setHideOnAction(false)
-      balloonBuilder.setCloseButtonEnabled(true)
-      return balloonBuilder.createBalloon()
+      return JBPopupFactory.getInstance().createBalloonBuilder(ReplacementView(replacement))
+        .setFadeoutTime(0)
+        .setFillColor(IdeTooltipManager.GRAPHITE_COLOR)
+        .setBorderColor(IdeTooltipManager.GRAPHITE_COLOR)
+        .setAnimationCycle(0)
+        .setHideOnClickOutside(false)
+        .setHideOnKeyOutside(false)
+        .setHideOnAction(false)
+        .setCloseButtonEnabled(true)
+        .setHideOnFrameResize(false)
+        .createBalloon()
     }
 
     private fun buildReplacementPreviewLabel(replacement: @NlsSafe String): JLabel {
@@ -577,6 +578,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       if (r.startOffset > textLength) return false
       if (r.endOffset > textLength) return false
       val visibleArea = e.scrollingModel.visibleArea
+      visibleArea.height -= 2 * e.lineHeight
+      visibleArea.y -= e.lineHeight
       val point = e.logicalPositionToXY(e.offsetToLogicalPosition(r.startOffset))
       return visibleArea.contains(point)
     }
