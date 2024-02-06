@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharedFlow
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 
@@ -70,6 +69,8 @@ public interface WorkspaceModel {
    * Subscription to the changes of the workspace model.
    *
    * [subscriber] function returns the initial storage and the flow of updates starting from this state.
+   *
+   * Keep in mind that since this listener is asynchronous, there is no guarantee that file index or jps bridges will be updated.
    *
    * # Behavior details
    *
