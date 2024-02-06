@@ -11,13 +11,6 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 
 class SuspendOtherThreadsRequestor implements FilteredRequestor {
-
-  private static final ClassFilter[] CLASS_EXCLUSION_FILTERS = {
-    new ClassFilter("java.*"),
-    new ClassFilter("jdk.*"),
-    new ClassFilter("sun.*"),
-  };
-
   private final @NotNull DebugProcessImpl myProcess;
   private final @NotNull SuspendContextImpl myThreadSuspendContext;
 
@@ -50,7 +43,6 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
     return true;
   }
 
-
   @Override
   public String getSuspendPolicy() {
     return DebuggerSettings.SUSPEND_ALL;
@@ -78,7 +70,7 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
 
   @Override
   public boolean isClassFiltersEnabled() {
-    return true;
+    return false;
   }
 
   @Override
@@ -88,7 +80,7 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
 
   @Override
   public ClassFilter[] getClassExclusionFilters() {
-    return CLASS_EXCLUSION_FILTERS;
+    return ClassFilter.EMPTY_ARRAY;
   }
 
   @Override
