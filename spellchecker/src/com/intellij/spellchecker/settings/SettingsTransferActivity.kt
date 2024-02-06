@@ -13,7 +13,7 @@ internal class SettingsTransferActivity : ProjectActivity {
     if (settings.isSettingsTransferred) {
       return
     }
-    if (settings.isUseSingleDictionaryToSave && ProjectDictionaryLayer.name == settings.dictionaryToSave &&
+    if (settings.isUseSingleDictionaryToSave && ProjectDictionaryLayer.name.get() == settings.dictionaryToSave &&
         project.getService(ProjectDictionaryState::class.java).projectDictionary.words.isEmpty()) {
       settings.dictionaryToSave = ApplicationDictionaryLayer.name
     }
