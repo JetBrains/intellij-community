@@ -2,7 +2,9 @@
 package com.jetbrains.jsonSchema.impl.light.nodes
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.keyFMap.KeyFMap
 import com.jetbrains.jsonSchema.JsonPointerUtil
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.*
@@ -13,12 +15,31 @@ import com.jetbrains.jsonSchema.impl.light.legacy.isOldParserAwareOfFieldName
 import com.jetbrains.jsonSchema.impl.light.legacy.tryReadEnumMetadata
 import java.util.*
 
+private val ONE_OF_KEY = Key<List<JsonSchemaObject>>("oneOf")
+private val ANY_OF_KEY = Key<List<JsonSchemaObject>>("anyOf")
+private val ALL_OF_KEY = Key<List<JsonSchemaObject>>("allOf")
+private val TYPE_VARIANTS_KEY = Key<Set<JsonSchemaType>>("typeVariants")
+private val PATTERN_KEY = Key<PropertyNamePattern>("pattern")
+private val PATTERN_PROPERTIES_KEY = Key<PatternProperties>("patternProperties")
+
+private const val INVALID_PATTERN_FALLBACK = "__invalid_ij_pattern"
+
 internal abstract class JsonSchemaObjectBackedByJacksonBase(
   override val rawSchemaNode: JsonNode,
   private val jsonPointer: String
 ) : JsonSchemaObjectLegacyAdapter(), JsonSchemaNodePointer<JsonNode> {
 
   abstract fun getRootSchemaObject(): RootJsonSchemaObjectBackedByJackson
+
+  private var myCompositeObjectsCache = KeyFMap.EMPTY_MAP
+
+  protected fun <V : Any> getOrComputeValue(key: Key<V>, computation: () -> V): V {
+    val existingValue = myCompositeObjectsCache.get(key)
+    if (existingValue != null) return existingValue
+    val newValue = computation()
+    myCompositeObjectsCache = myCompositeObjectsCache.plus(key, newValue)
+    return newValue
+  }
 
   private fun createResolvableChild(vararg childNodeRelativePointer: String): JsonSchemaObjectBackedByJacksonBase? {
     // delegate to the root schema's factory - it is the only entry point for objects instantiation and caching
@@ -57,25 +78,20 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
     return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, DEPRECATION)
   }
 
-  private val myVariants by lazy {
-    JacksonSchemaNodeAccessor.readUntypedNodesCollection(rawSchemaNode, TYPE)
-      ?.filterIsInstance<String>()
-      ?.map(String::asUnquotedString)
-      ?.map(JsonSchemaReader::parseType)
-      ?.toSet()
-  }
-
   override fun getTypeVariants(): Set<JsonSchemaType?>? {
-    return myVariants
-  }
-
-  private val myType by lazy {
-    JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, TYPE)
-      ?.let(JsonSchemaReader::parseType)
+    return getOrComputeValue(TYPE_VARIANTS_KEY) {
+      JacksonSchemaNodeAccessor.readUntypedNodesCollection(rawSchemaNode, TYPE)
+        .orEmpty()
+        .filterIsInstance<String>()
+        .map(String::asUnquotedString)
+        .mapNotNull(JsonSchemaReader::parseType)
+        .toSet()
+    }.takeIf { it.isNotEmpty() }
   }
 
   override fun getType(): JsonSchemaType? {
-    return myType
+    return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, TYPE)
+      ?.let(JsonSchemaReader::parseType)
   }
 
   override fun getMultipleOf(): Number? {
@@ -118,12 +134,15 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
     return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, PATTERN)
   }
 
-  private val myPattern by lazy {
-    pattern?.let(::PropertyNamePattern)
+  private fun getOrComputeCompiledPattern(): PropertyNamePattern {
+    return getOrComputeValue(PATTERN_KEY) {
+      val effectivePattern = pattern ?: INVALID_PATTERN_FALLBACK
+      PropertyNamePattern(effectivePattern)
+    }
   }
 
   override fun getPatternError(): String? {
-    return myPattern?.patternError
+    return getOrComputeCompiledPattern().patternError
   }
 
   override fun findRelativeDefinition(ref: String): JsonSchemaObject? {
@@ -173,7 +192,7 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
   }
 
   override fun getItemsSchemaList(): List<JsonSchemaObject?>? {
-    return createIndexedItemsSequence(ITEMS)
+    return createIndexedItemsSequence(ITEMS).takeIf { it.isNotEmpty() }
   }
 
   override fun getContainsSchema(): JsonSchemaObject? {
@@ -254,16 +273,14 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
     return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, TITLE)
   }
 
-  private val myPatternProperties by lazy {
-    PatternProperties(createChildMap(PATTERN_PROPERTIES).orEmpty())
-  }
-
   override fun getMatchingPatternPropertySchema(name: String): JsonSchemaObject? {
-    return myPatternProperties.getPatternPropertySchema(name)
+    return getOrComputeValue(PATTERN_PROPERTIES_KEY) {
+      PatternProperties(createChildMap(PATTERN_PROPERTIES).orEmpty())
+    }.getPatternPropertySchema(name)
   }
 
   override fun checkByPattern(value: String): Boolean {
-    return myPattern != null && myPattern!!.checkByPattern(value)
+    return getOrComputeCompiledPattern().checkByPattern(value)
   }
 
   override fun getPropertyDependencies(): Map<String, List<String?>?>? {
@@ -282,28 +299,22 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
     return null
   }
 
-  private val myAllOf by lazy {
-    createIndexedItemsSequence(ALL_OF)
-  }
-
   override fun getAllOf(): List<JsonSchemaObject?>? {
-    return myAllOf
-  }
-
-  private val myAnyOf by lazy {
-    createIndexedItemsSequence(ANY_OF)
+    return getOrComputeValue(ALL_OF_KEY) {
+      createIndexedItemsSequence(ALL_OF)
+    }.takeIf { it.isNotEmpty() }
   }
 
   override fun getAnyOf(): List<JsonSchemaObject?>? {
-    return myAnyOf
-  }
-
-  private val myOneOf by lazy {
-    createIndexedItemsSequence(ONE_OF)
+    return getOrComputeValue(ANY_OF_KEY) {
+      createIndexedItemsSequence(ANY_OF)
+    }.takeIf { it.isNotEmpty() }
   }
 
   override fun getOneOf(): List<JsonSchemaObject?>? {
-    return myOneOf
+    return getOrComputeValue(ONE_OF_KEY) {
+      createIndexedItemsSequence(ONE_OF)
+    }.takeIf { it.isNotEmpty() }
   }
 
   override fun getNot(): JsonSchemaObject? {
@@ -359,13 +370,12 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
     return createResolvableChild(DEPENDENCIES, name)
   }
 
-  private fun createIndexedItemsSequence(containingNodeName: String): List<JsonSchemaObject>? {
+  private fun createIndexedItemsSequence(containingNodeName: String): List<JsonSchemaObject> {
     return generateSequence(0, Int::inc)
       .map { grandChildId -> createResolvableChild(containingNodeName, "$grandChildId") }
       .takeWhile { it != null }
       .filterNotNull()
       .toList()
-      .takeIf { it.isNotEmpty() }
   }
 
   private fun createChildMap(vararg childMapName: String): Map<String, JsonSchemaObject>? {

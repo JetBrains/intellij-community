@@ -28,8 +28,8 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
-import com.jetbrains.jsonSchema.impl.light.legacy.ApiAdapterUtils
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
+import one.util.streamex.StreamEx
 import org.toml.ide.experiments.TomlExperiments
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTableHeader
@@ -95,7 +95,7 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
             knownNames: MutableSet<String>,
             originalPosition: PsiElement
         ) {
-            val variants = ApiAdapterUtils.iteratorAsStream(schema.propertyNames).filter { name ->
+            val variants = StreamEx.of(schema.propertyNames).filter { name ->
                 !properties.contains(name) && !knownNames.contains(name) || name == adapter?.name
             }
 

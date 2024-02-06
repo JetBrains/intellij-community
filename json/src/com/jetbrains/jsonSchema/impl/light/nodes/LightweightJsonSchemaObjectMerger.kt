@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
+import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectMerger
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toImmutableSet
 
@@ -18,12 +18,10 @@ internal fun <T> MergedJsonSchemaObjectView.mergeLists(memberReference: JsonSche
   val second = other.memberReference()
 
   if (first.isNullOrEmpty()) return second
-  if (second == null) {
+  if (second.isNullOrEmpty()) {
     return first
   }
-  val merged = first.toMutableList()
-  merged.addAll(second)
-  return merged.toImmutableList()
+  return ContainerUtil.concat(first, second)
 }
 
 internal fun <K, V> MergedJsonSchemaObjectView.mergeMaps(memberReference: JsonSchemaObject.() -> Map<K, V>?): Map<K, V>? {
@@ -31,7 +29,7 @@ internal fun <K, V> MergedJsonSchemaObjectView.mergeMaps(memberReference: JsonSc
   val second = other.memberReference()
 
   if (first.isNullOrEmpty()) return second
-  if (second == null) {
+  if (second.isNullOrEmpty()) {
     return first
   }
   val merged = first.toMutableMap()
@@ -41,7 +39,7 @@ internal fun <K, V> MergedJsonSchemaObjectView.mergeMaps(memberReference: JsonSc
 
 internal fun <T> mergeSets(first: Set<T>?, second: Set<T>?): Set<T>? {
   if (first.isNullOrEmpty()) return second
-  if (second == null) {
+  if (second.isNullOrEmpty()) {
     return first
   }
   val merged = first.toMutableSet()

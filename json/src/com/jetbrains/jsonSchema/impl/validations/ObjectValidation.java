@@ -16,7 +16,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.*;
-import com.jetbrains.jsonSchema.impl.light.legacy.ApiAdapterUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,15 +114,13 @@ public final class ObjectValidation implements JsonSchemaValidation {
         }
       }
       final var schemaDependencies = schema.getSchemaDependencyNames();
-      if (schemaDependencies.hasNext()) {
-        ApiAdapterUtils.iteratorAsStream(schemaDependencies)
-          .forEach(name -> {
-            var dependency = schema.getSchemaDependencyByName(name);
-            if (set.contains(name) && dependency != null) {
-              consumer.checkObjectBySchemaRecordErrors(dependency, value);
-            }
-          });
-      }
+      StreamEx.of(schemaDependencies)
+        .forEach(name -> {
+          var dependency = schema.getSchemaDependencyByName(name);
+          if (set.contains(name) && dependency != null) {
+            consumer.checkObjectBySchemaRecordErrors(dependency, value);
+          }
+        });
     }
   }
 

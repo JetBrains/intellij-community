@@ -2,9 +2,9 @@
 package com.jetbrains.jsonSchema.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.ExtensionTestUtil
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNode
 import org.intellij.lang.annotations.Language
@@ -28,7 +28,7 @@ fun testNestedCompletionsWithPredefinedCompletionsRoot(predefinedNestedCompletio
 private fun <T : Any> ExtensionPointName<T>.maskingExtensions(extensions: List<T>, block: () -> Unit) {
   val disposable = Disposer.newDisposable()
   try {
-    (point as ExtensionPointImpl).maskAll(extensions, disposable, false)
+    ExtensionTestUtil.maskExtensions(this, extensions, disposable)
     block()
   }
   finally {

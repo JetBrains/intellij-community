@@ -2,9 +2,12 @@
 package com.jetbrains.jsonSchema.impl.light.nodes
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.impl.light.JSON_DOLLAR_ID
 import com.jetbrains.jsonSchema.impl.light.SCHEMA_ROOT_POINTER
+
+private val IDS_MAP_KEY = Key<Map<String, String>>("ids")
 
 internal class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: VirtualFile?)
   : JsonSchemaObjectBackedByJacksonBase(rootNode, SCHEMA_ROOT_POINTER) {
@@ -24,11 +27,9 @@ internal class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schem
   }
 
   override fun resolveId(id: String): String? {
-    return ids[id]
-  }
-
-  private val ids by lazy {
-    collectIds(rootNode).toMap()
+    return getOrComputeValue(IDS_MAP_KEY) {
+      collectIds(rawSchemaNode).toMap()
+    }[id]
   }
 
   private fun collectIds(root: JsonNode, parentPointer: List<String> = emptyList()): Sequence<Pair<String, String>> {

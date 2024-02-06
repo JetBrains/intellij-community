@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -18,7 +19,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SameThreadExecutor;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -97,9 +98,9 @@ public final class JsonFileResolver {
   //  - url became invalid by the time
   private static final LoadingCache<String, VirtualFile> urlValidityCache =
     Caffeine.newBuilder()
-      .expireAfterAccess(1, TimeUnit.MINUTES)
+      .expireAfterAccess(Registry.intValue("remote.schema.cache.validity.duration", 1), TimeUnit.MINUTES)
       .maximumSize(1000)
-      .executor(AppExecutorUtil.getAppExecutorService())
+      .executor(SameThreadExecutor.INSTANCE)
       .build(JsonFileResolver::computeVirtualFileForValidUrlOrNull);
 
   private static @Nullable VirtualFile computeVirtualFileForValidUrlOrNull(@NotNull String url) {

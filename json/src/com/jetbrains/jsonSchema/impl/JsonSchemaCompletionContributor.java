@@ -44,13 +44,13 @@ import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.light.legacy.ApiAdapterUtils;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsKt;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.SchemaPath;
 import kotlin.Unit;
 import kotlin.collections.SetsKt;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -267,7 +267,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                                         JsonPropertyAdapter adapter,
                                         Set<String> knownNames,
                                         @Nullable SchemaPath completionPath) {
-      ApiAdapterUtils.iteratorAsStream(schema.getPropertyNames())
+      StreamEx.of(schema.getPropertyNames())
         .filter(name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name.equals(adapter.getName()))
         .forEach(name -> {
           knownNames.add(name);

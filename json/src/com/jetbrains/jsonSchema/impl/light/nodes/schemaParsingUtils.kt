@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonPointer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.MissingNode
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.asSafely
 import com.intellij.util.io.URLUtil
@@ -141,7 +141,7 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
       JsonPointer.compile(adaptJsonPointerToJacksonImplementation(unescapedPointer))
     }
     catch (exception: IllegalArgumentException) {
-      Logger.getInstance("jsonSchemaParsingUtils").warn("Unable to compile json pointer. Resolve aborted.", exception)
+      thisLogger().warn("Unable to compile json pointer. Resolve aborted.", exception)
       null
     }
   }

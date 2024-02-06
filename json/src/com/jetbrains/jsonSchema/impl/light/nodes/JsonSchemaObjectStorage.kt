@@ -29,9 +29,9 @@ internal class JsonSchemaObjectStorage {
     }
   }
 
-  private data class SchemaId(val fileId: Int, val modificationStamp: Long)
+  private data class SchemaId(val schemaFile: VirtualFile, val modificationStamp: Long)
 
-  private val parsedSchemaById = CollectionFactory.createConcurrentSoftValueMap<SchemaId, JsonSchemaObject>()
+  private val parsedSchemaById = CollectionFactory.createConcurrentWeakKeyWeakValueMap<SchemaId, JsonSchemaObject>()
 
   fun getOrComputeSchemaRootObject(schemaFile: VirtualFile): JsonSchemaObject? {
     if (isNotLoadedHttpFile(schemaFile)) return null
@@ -51,7 +51,7 @@ internal class JsonSchemaObjectStorage {
   }
 
   private fun VirtualFile.asSchemaId(): SchemaId {
-    return SchemaId(this.hashCode(), this.modificationStamp)
+    return SchemaId(this, this.modificationStamp)
   }
 
   private fun createRootSchemaObject(schemaFile: VirtualFile): JsonSchemaObject {
@@ -72,9 +72,10 @@ internal class JsonSchemaObjectStorage {
         return null
       }
     }
-    return runCatching {
+    return try {
       schemaFile.inputStream.use<InputStream, JsonNode?>(suitableReader::readTree)
-    }.getOrElse { exception ->
+    }
+    catch (exception: Exception) {
       Logger.getInstance("JsonSchemaReader2").warn("Unable to parse JSON schema from the given file '${schemaFile.name}'", exception)
       null
     }

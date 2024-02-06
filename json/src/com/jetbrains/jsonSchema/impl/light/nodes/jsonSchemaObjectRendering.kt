@@ -5,7 +5,7 @@ package com.jetbrains.jsonSchema.impl.light.nodes
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 
 internal fun renderSchemaNode(schemaNode: JsonSchemaObject, language: JsonSchemaObjectRenderingLanguage): String {
@@ -13,8 +13,7 @@ internal fun renderSchemaNode(schemaNode: JsonSchemaObject, language: JsonSchema
     when (schemaNode) {
       is JsonSchemaObjectBackedByJacksonBase -> schemaNode.rawSchemaNode
       else -> {
-        Logger.getInstance("JsonSchemaReader").warn(
-          "Unsupported JsonSchemaObject implementation provided: ${schemaNode::class.java.simpleName}")
+        fileLogger().warn("Unsupported JsonSchemaObject implementation provided: ${schemaNode::class.java.simpleName}")
         return schemaNode.toString()
       }
     }
@@ -28,10 +27,11 @@ internal fun renderSchemaNode(schemaNode: JsonSchemaObject, language: JsonSchema
 }
 
 private fun serializeJsonNodeSafe(jsonNode: JsonNode, serializer: ObjectMapper): String {
-  return runCatching {
+  return try {
     serializer.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode).trim(' ', '\n')
-  }.getOrElse {
-    Logger.getInstance("JsonSchemaReader").warn("Error during JsonSchemaObjectSerialization", it)
+  }
+  catch (exception: Exception) {
+    fileLogger().warn("Error during JsonSchemaObjectSerialization", exception)
     ""
   }
 }
