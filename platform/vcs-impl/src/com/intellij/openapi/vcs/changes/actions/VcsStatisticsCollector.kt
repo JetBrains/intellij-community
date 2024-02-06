@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 
 object VcsStatisticsCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("vcs", 14)
+  val GROUP = EventLogGroup("vcs", 15)
 
   @JvmField
   val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
