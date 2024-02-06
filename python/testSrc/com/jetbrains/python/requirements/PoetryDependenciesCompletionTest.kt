@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
-class PoetryDependenciesCompletionTest : PythonDependencyCompletionTest() {
+class PoetryDependenciesCompletionTest : PythonDependencyTestCase() {
 
   fun testPackageNameCompletion() {
     mockPackageNames(listOf("mypy", "mypy-extensions"))

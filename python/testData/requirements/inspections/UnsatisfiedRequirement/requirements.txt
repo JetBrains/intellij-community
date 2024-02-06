@@ -1,0 +1,1 @@
+<warning descr="Package requirement mypy is not satisfied">mypy</warning>
