@@ -84,6 +84,23 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertTrue(descriptors.any { x -> x.plugin.id == "com.intellij" })
   }
 
+  fun `test generate descriptions`() {
+    val groupDescription = "Test group description"
+    val eventDescription = "Description of test event"
+    val fieldDescription = "Number of elements in event"
+    val eventLogGroup = EventLogGroup("test.group.id", 1, description = groupDescription)
+    eventLogGroup.registerEvent("test_event", EventFields.Int("count", fieldDescription), eventDescription)
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
+
+
+    val groupDescriptor = groups.first()
+    assertEquals(groupDescription, groupDescriptor.description)
+    val eventDescriptor = groupDescriptor.schema.first()
+    assertEquals(eventDescription, eventDescriptor.description)
+    assertEquals(fieldDescription, eventDescriptor.fields.first().description)
+  }
+
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
     val group = buildGroupDescription(eventField)
     val event = group.schema.first()

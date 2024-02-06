@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.events.*
-import org.intellij.lang.annotations.Pattern
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -13,8 +12,10 @@ import org.jetbrains.annotations.NonNls
  */
 
 
-
-class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: String, val version: Int, val recorder: String = "FUS") {
+class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: String,
+                                              val version: Int,
+                                              val recorder: String = "FUS",
+                                              val description: String? = null) {
   private val registeredEventIds = mutableSetOf<String>()
   private val registeredEvents = mutableListOf<BaseEventId>()
 
@@ -42,8 +43,9 @@ class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: Strin
    *
    * @see registerVarargEvent
    */
-  fun registerEvent(@NonNls @EventIdName eventId: String): EventId {
-    return EventId(this, eventId).also { addToRegisteredEvents(it) }
+  @JvmOverloads
+  fun registerEvent(@NonNls @EventIdName eventId: String, @NonNls description: String? = null): EventId {
+    return EventId(this, eventId, description).also { addToRegisteredEvents(it) }
   }
 
   /**
@@ -52,8 +54,11 @@ class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: Strin
    * @see registerEvent
    * @see registerVarargEvent
    */
-  fun <T1> registerEvent(@NonNls @EventIdName eventId: String, eventField1: EventField<T1>): EventId1<T1> {
-    return EventId1(this, eventId, eventField1).also { addToRegisteredEvents(it) }
+  @JvmOverloads
+  fun <T1> registerEvent(@NonNls @EventIdName eventId: String,
+                         eventField1: EventField<T1>,
+                         @NonNls description: String? = null): EventId1<T1> {
+    return EventId1(this, eventId, description, eventField1).also { addToRegisteredEvents(it) }
   }
 
   /**
@@ -62,8 +67,12 @@ class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: Strin
    * @see registerEvent
    * @see registerVarargEvent
    */
-  fun <T1, T2> registerEvent(@NonNls @EventIdName eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>): EventId2<T1, T2> {
-    return EventId2(this, eventId, eventField1, eventField2).also { addToRegisteredEvents(it) }
+  @JvmOverloads
+  fun <T1, T2> registerEvent(@NonNls @EventIdName eventId: String,
+                             eventField1: EventField<T1>,
+                             eventField2: EventField<T2>,
+                             @NonNls description: String? = null): EventId2<T1, T2> {
+    return EventId2(this, eventId, description, eventField1, eventField2).also { addToRegisteredEvents(it) }
   }
 
   /**
@@ -72,8 +81,13 @@ class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: Strin
    * @see registerEvent
    * @see registerVarargEvent
    */
-  fun <T1, T2, T3> registerEvent(@NonNls @EventIdName eventId: String, eventField1: EventField<T1>, eventField2: EventField<T2>, eventField3: EventField<T3>): EventId3<T1, T2, T3> {
-    return EventId3(this, eventId, eventField1, eventField2, eventField3).also { addToRegisteredEvents(it) }
+  @JvmOverloads
+  fun <T1, T2, T3> registerEvent(@NonNls @EventIdName eventId: String,
+                                 eventField1: EventField<T1>,
+                                 eventField2: EventField<T2>,
+                                 eventField3: EventField<T3>,
+                                 @NonNls description: String? = null): EventId3<T1, T2, T3> {
+    return EventId3(this, eventId, description, eventField1, eventField2, eventField3).also { addToRegisteredEvents(it) }
   }
 
   /**
@@ -82,7 +96,11 @@ class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: Strin
    * @see registerEvent
    */
   fun registerVarargEvent(@NonNls @EventIdName eventId: String, vararg fields: EventField<*>): VarargEventId {
-    return VarargEventId(this, eventId, *fields).also { addToRegisteredEvents(it) }
+    return VarargEventId(this, eventId, null, *fields).also { addToRegisteredEvents(it) }
+  }
+
+  fun registerVarargEvent(@NonNls @EventIdName eventId: String, @NonNls description: String? = null, vararg fields: EventField<*>): VarargEventId {
+    return VarargEventId(this, eventId, description, *fields).also { addToRegisteredEvents(it) }
   }
 
   @JvmOverloads

@@ -28,6 +28,7 @@ object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
                                                             EventFields.DurationMs)
 
   val VCS_LIST_FIELD = object : StringListEventField("vcs_list") {
+    override val description: String? = null
     override val validationRule: List<String> get() = VcsLogRepoSizeCollector.getVcsValidationRule()
   }
   val FILTERS_FIELD = EventFields.StringList("filters", VcsLogFilterCollection.STANDARD_KEYS.map { it.name })

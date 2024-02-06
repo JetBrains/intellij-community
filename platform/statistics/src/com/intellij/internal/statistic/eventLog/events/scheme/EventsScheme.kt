@@ -22,10 +22,12 @@ data class FieldDescriptor(val path: String,
                            @JsonInclude(JsonInclude.Include.NON_DEFAULT)
                            val shouldBeAnonymized: Boolean = false,
                            @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = FieldDataTypeIncludeFilter::class)
-                           val dataType: FieldDataType = FieldDataType.PRIMITIVE)
+                           val dataType: FieldDataType = FieldDataType.PRIMITIVE,
+                           val description: String? = null)
 
 data class EventDescriptor(val event: String,
-                           val fields: Set<FieldDescriptor>)
+                           val fields: Set<FieldDescriptor>,
+                           val description: String? = null)
 
 data class PluginSchemeDescriptor(val id: String)
 
@@ -35,4 +37,5 @@ data class GroupDescriptor(val id: String,
                            val schema: Set<EventDescriptor>,
                            val className: String,
                            val recorder: String,
-                           val plugin: PluginSchemeDescriptor)
+                           val plugin: PluginSchemeDescriptor,
+                           val description: String? = null)

@@ -16,6 +16,7 @@ import kotlin.reflect.KProperty
 
 sealed class EventField<T> {
   abstract val name: String
+  abstract val description: String?
 
   open val shouldBeAnonymized: Boolean
     get() = false
@@ -26,11 +27,11 @@ sealed class EventField<T> {
   infix fun with(data: T): EventPair<T> = EventPair(this, data)
 }
 
-abstract class PrimitiveEventField<T> : EventField<T>() {
+abstract class PrimitiveEventField<T>(@NonNls override val description: String? = null) : EventField<T>() {
   abstract val validationRule: List<String>
 }
 
-abstract class ListEventField<T> : EventField<List<T>>() {
+abstract class ListEventField<T>() : EventField<List<T>>() {
   abstract val validationRule: List<String>
 }
 
@@ -47,30 +48,39 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
     }
   }
 
-  data class ValidatedByAllowedValues(@NonNls @EventFieldName override val name: String, val allowedValues: List<String>) : StringEventField(name) {
+  data class ValidatedByAllowedValues @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                      val allowedValues: List<String>,
+                                      @NonNls override val description: String? = null) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{enum:${allowedValues.joinToString("|")}}")
   }
 
-  data class ValidatedByEnum(@NonNls @EventFieldName  override val name: String, @NonNls val enumRef: String) : StringEventField(name) {
+  data class ValidatedByEnum @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                             @NonNls val enumRef: String,
+                             @NonNls override val description: String? = null) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{enum#$enumRef}")
   }
 
   data class ValidatedByCustomValidationRule @JvmOverloads constructor(
     @NonNls @EventFieldName  override val name: String,
-    @NonNls val customValidationRule: Class<out CustomValidationRule>
+    @NonNls val customValidationRule: Class<out CustomValidationRule>,
+    @NonNls override val description: String? = null
   ) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{util#${CustomValidationRule.getRuleId(customValidationRule)}}")
   }
 
-  data class ValidatedByRegexp(@NonNls @EventFieldName  override val name: String, @NonNls val regexpRef: String) : StringEventField(name) {
+  data class ValidatedByRegexp @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                               @NonNls val regexpRef: String,
+                               @NonNls override val description: String? = null) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{regexp#$regexpRef}")
   }
 
-  data class ValidatedByInlineRegexp(@NonNls @EventFieldName  override val name: String, @NonNls val regexp: String) : StringEventField(name) {
+  data class ValidatedByInlineRegexp @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                     @NonNls val regexp: String,
+                                     @NonNls override val description: String? = null) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{regexp:$regexp}")
   }
@@ -80,7 +90,7 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
 
 // region Int fields
 
-data class IntEventField(override val name: String) : PrimitiveEventField<Int>() {
+data class IntEventField @JvmOverloads constructor(override val name: String, @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -89,7 +99,9 @@ data class IntEventField(override val name: String) : PrimitiveEventField<Int>()
   }
 }
 
-data class RegexpIntEventField(override val name: String, @NonNls val regexp: String) : PrimitiveEventField<Int>() {
+data class RegexpIntEventField @JvmOverloads constructor(override val name: String,
+                               @NonNls val regexp: String,
+                               @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp:$regexp}")
 
@@ -98,7 +110,8 @@ data class RegexpIntEventField(override val name: String, @NonNls val regexp: St
   }
 }
 
-data class RoundedIntEventField(override val name: String) : PrimitiveEventField<Int>() {
+data class RoundedIntEventField @JvmOverloads constructor(override val name: String,
+                                                          @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -110,7 +123,9 @@ data class RoundedIntEventField(override val name: String) : PrimitiveEventField
 /**
  * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
  * */
-internal data class BoundedIntEventField(override val name: String, val bounds: IntArray) : PrimitiveEventField<Int>() {
+internal data class BoundedIntEventField(override val name: String,
+                                         val bounds: IntArray,
+                                         @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
   init {
     if (bounds.isEmpty()) throw InvalidParameterException("Bounds array should not be empty")
     if ((1..<bounds.size).any { bounds[it] <= bounds[it - 1] })
@@ -128,7 +143,9 @@ internal data class BoundedIntEventField(override val name: String, val bounds: 
 /**
  * @throws InvalidParameterException if range parameter is empty or contains more than 500 values
  * */
-internal data class LimitedIntEventField(override val name: String, val range: IntRange) : PrimitiveEventField<Int>() {
+internal data class LimitedIntEventField(override val name: String,
+                                         val range: IntRange,
+                                         @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
   init {
     if (range.isEmpty()) throw InvalidParameterException("Range should not be empty")
     if (range.last - range.first - 1 > 500) throw InvalidParameterException("Range should not contain more than 500 elements")
@@ -143,7 +160,8 @@ internal data class LimitedIntEventField(override val name: String, val range: I
   }
 }
 
-internal data class LogarithmicIntEventField(override val name: String) : PrimitiveEventField<Int>() {
+internal data class LogarithmicIntEventField(override val name: String,
+                                             @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -156,7 +174,8 @@ internal data class LogarithmicIntEventField(override val name: String) : Primit
 
 // region Long fields
 
-data class LongEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<Long>() {
+data class LongEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                          @NonNls override val description: String? = null) : PrimitiveEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -165,7 +184,8 @@ data class LongEventField(@NonNls @EventFieldName override val name: String) : P
   }
 }
 
-data class RoundedLongEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<Long>() {
+data class RoundedLongEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                 @NonNls override val description: String? = null) : PrimitiveEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -177,7 +197,9 @@ data class RoundedLongEventField(@NonNls @EventFieldName override val name: Stri
 /**
  * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
  * */
-internal data class BoundedLongEventField(@NonNls @EventFieldName override val name: String, val bounds: LongArray) : PrimitiveEventField<Long>() {
+internal data class BoundedLongEventField(@NonNls @EventFieldName override val name: String,
+                                          val bounds: LongArray,
+                                          @NonNls override val description: String? = null) : PrimitiveEventField<Long>() {
   init {
     if (bounds.isEmpty()) throw InvalidParameterException("Bounds array should not be empty")
     if ((1..<bounds.size).any { bounds[it] <= bounds[it - 1] })
@@ -192,7 +214,8 @@ internal data class BoundedLongEventField(@NonNls @EventFieldName override val n
   }
 }
 
-internal data class LogarithmicLongEventField(override val name: String) : PrimitiveEventField<Long>() {
+internal data class LogarithmicLongEventField(override val name: String,
+                                              @NonNls override val description: String? = null) : PrimitiveEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -203,7 +226,8 @@ internal data class LogarithmicLongEventField(override val name: String) : Primi
 
 // endregion Long fields
 
-data class FloatEventField(override val name: String) : PrimitiveEventField<Float>() {
+data class FloatEventField @JvmOverloads constructor(override val name: String,
+                           @NonNls override val description: String? = null) : PrimitiveEventField<Float>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#float}")
 
@@ -212,7 +236,8 @@ data class FloatEventField(override val name: String) : PrimitiveEventField<Floa
   }
 }
 
-data class DoubleEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<Double>() {
+data class DoubleEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                            @NonNls override val description: String? = null) : PrimitiveEventField<Double>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#float}")
 
@@ -223,7 +248,8 @@ data class DoubleEventField(@NonNls @EventFieldName override val name: String) :
 
 // endregion Numeric fields
 
-data class BooleanEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<Boolean>() {
+data class BooleanEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                             @NonNls override val description: String? = null) : PrimitiveEventField<Boolean>() {
   override val validationRule: List<String>
     get() = listOf("{enum#boolean}")
 
@@ -232,7 +258,8 @@ data class BooleanEventField(@NonNls @EventFieldName override val name: String) 
   }
 }
 
-data class AnonymizedEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<String?>() {
+data class AnonymizedEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                @NonNls override val description: String? = null) : PrimitiveEventField<String?>() {
   override val shouldBeAnonymized: Boolean = true
 
   override val validationRule: List<String>
@@ -243,7 +270,8 @@ data class AnonymizedEventField(@NonNls @EventFieldName override val name: Strin
   }
 }
 
-data class AnonymizedListEventField(@NonNls @EventFieldName  override val name: String) : StringListEventField(name) {
+data class AnonymizedListEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                    @NonNls override val description: String? = null) : StringListEventField(name) {
   override val shouldBeAnonymized: Boolean
     get() = true
 
@@ -252,7 +280,8 @@ data class AnonymizedListEventField(@NonNls @EventFieldName  override val name: 
 }
 
 
-internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<String?>() {
+internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override val name: String,
+                                              @NonNls override val description: String? = null) : PrimitiveEventField<String?>() {
   override val shouldBeAnonymized: Boolean = true
 
   override val validationRule: List<String>
@@ -264,6 +293,7 @@ internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override v
 }
 
 internal data class DatedShortAnonymizedEventField<T>(@NonNls @EventFieldName override val name: String,
+                                                      @NonNls override val description: String? = null,
                                                       val dateAndValueProvider: (T) -> Pair<Long, String?>) : PrimitiveEventField<T>() {
   override val shouldBeAnonymized: Boolean = true
 
@@ -278,7 +308,12 @@ internal data class DatedShortAnonymizedEventField<T>(@NonNls @EventFieldName ov
 
 data class EnumEventField<T : Enum<*>>(@NonNls @EventFieldName override val name: String,
                                        private val enumClass: Class<T>,
+                                       @NonNls override val description: String? = null,
                                        private val transform: (T) -> String) : PrimitiveEventField<T>() {
+  constructor(name: String,
+              enumClass: Class<T>,
+              transform: (T) -> String) : this(name, enumClass, null, transform)
+
   override fun addData(fuData: FeatureUsageData, value: T) {
     fuData.addData(name, transform(value))
   }
@@ -290,6 +325,7 @@ data class EnumEventField<T : Enum<*>>(@NonNls @EventFieldName override val name
 data class NullableEnumEventField<T : Enum<*>>(@NonNls @EventFieldName override val name: String,
                                                private val enumClass: Class<T>,
                                                private val nullValue: String?,
+                                               @NonNls override val description: String? = null,
                                                private val transform: (T) -> String) : PrimitiveEventField<T?>() {
   override fun addData(fuData: FeatureUsageData, value: T?) {
     if (value == null) {
@@ -308,7 +344,8 @@ data class NullableEnumEventField<T : Enum<*>>(@NonNls @EventFieldName override 
     }
 }
 
-data class LongListEventField(@NonNls @EventFieldName override val name: String) : ListEventField<Long>() {
+data class LongListEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                              @NonNls override val description: String? = null) : ListEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -317,7 +354,8 @@ data class LongListEventField(@NonNls @EventFieldName override val name: String)
   }
 }
 
-data class IntListEventField(@NonNls @EventFieldName override val name: String) : ListEventField<Int>() {
+data class IntListEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                             @NonNls override val description: String? = null) : ListEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -331,31 +369,39 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
     fuData.addData(name, value)
   }
 
-  data class ValidatedByAllowedValues(@NonNls @EventFieldName  override val name: String,
-                                      val allowedValues: List<String>) : StringListEventField(name) {
+  data class ValidatedByAllowedValues @JvmOverloads constructor(@NonNls @EventFieldName  override val name: String,
+                                      val allowedValues: List<String>,
+                                      @NonNls override val description: String? = null) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{enum:${allowedValues.joinToString("|")}}")
   }
 
-  data class ValidatedByEnum(@NonNls @EventFieldName  override val name: String, @NonNls val enumRef: String) : StringListEventField(name) {
+  data class ValidatedByEnum @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                             @NonNls val enumRef: String,
+                             @NonNls override val description: String? = null) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{enum#$enumRef}")
   }
 
   data class ValidatedByCustomValidationRule @JvmOverloads constructor(
     @NonNls @EventFieldName  override val name: String,
-    @NonNls val customValidationRule: Class<out CustomValidationRule>
+    @NonNls val customValidationRule: Class<out CustomValidationRule>,
+    @NonNls override val description: String? = null
   ) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{util#${CustomValidationRule.getRuleId(customValidationRule)}}")
   }
 
-  data class ValidatedByRegexp(@NonNls @EventFieldName  override val name: String, @NonNls val regexpRef: String) : StringListEventField(name) {
+  data class ValidatedByRegexp @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                               @NonNls val regexpRef: String,
+                               @NonNls override val description: String? = null) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{regexp#$regexpRef}")
   }
 
-  data class ValidatedByInlineRegexp(@NonNls @EventFieldName  override val name: String, @NonNls val regexp: String) : StringListEventField(name) {
+  data class ValidatedByInlineRegexp @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                     @NonNls val regexp: String,
+                                     @NonNls override val description: String? = null) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{regexp:$regexp}")
   }
@@ -365,7 +411,8 @@ val classCheckAndTransform: (Class<*>) -> String = {
   if (getPluginInfo(it).isSafeToReport()) StringUtil.substringBeforeLast(it.name, "$\$Lambda$", true) else "third.party"
 }
 
-data class ClassEventField(@NonNls @EventFieldName override val name: String) : PrimitiveEventField<Class<*>?>() {
+data class ClassEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                                     @NonNls override val description: String? = null) : PrimitiveEventField<Class<*>?>() {
 
   override fun addData(fuData: FeatureUsageData, value: Class<*>?) {
     if (value == null) {
@@ -378,7 +425,8 @@ data class ClassEventField(@NonNls @EventFieldName override val name: String) : 
     get() = listOf("{util#class_name}")
 }
 
-data class ClassListEventField(override val name: String) : ListEventField<Class<*>?>() {
+data class ClassListEventField @JvmOverloads constructor(override val name: String,
+                                                         @NonNls override val description: String? = null) : ListEventField<Class<*>?>() {
 
   override fun addData(fuData: FeatureUsageData, values: List<Class<*>?>) {
     val classList = values.filterNotNull()
@@ -392,8 +440,12 @@ data class ClassListEventField(override val name: String) : ListEventField<Class
     get() = listOf("{util#class_name}")
 }
 
-class ObjectEventField(@NonNls @EventFieldName override val name: String, vararg val fields: EventField<*>) : EventField<ObjectEventData>() {
-  constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
+class ObjectEventField(@NonNls @EventFieldName override val name: String,
+                       @NonNls override val description: String? = null,
+                       vararg val fields: EventField<*>) : EventField<ObjectEventData>() {
+  constructor(name: String, description: String? = null, structureDescription: ObjectDescription) : this(name, description, *structureDescription.getFields())
+  constructor(name: String, structureDescription: ObjectDescription) : this(name, null, *structureDescription.getFields())
+  constructor(name: String, vararg fields: EventField<*>) : this(name, null, *fields)
 
   override fun addData(fuData: FeatureUsageData, value: ObjectEventData) {
     fuData.addObjectData(name, value.buildObjectData(fuData.recorderId, fields))
@@ -488,7 +540,10 @@ class EventFieldDelegate<T>(val eventField: EventField<T>) {
   }
 }
 
-class ObjectListEventField(@NonNls @EventFieldName override val name: String, vararg val fields: EventField<*>) : EventField<List<ObjectEventData>>() {
+
+class ObjectListEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                           vararg val fields: EventField<*>,
+                           @NonNls override val description: String? = null) : EventField<List<ObjectEventData>>() {
   constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
 
   override fun addData(fuData: FeatureUsageData, value: List<ObjectEventData>) {

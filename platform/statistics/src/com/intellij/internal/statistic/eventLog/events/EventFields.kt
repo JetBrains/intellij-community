@@ -45,8 +45,9 @@ object EventFields {
               ReplaceWith("StringEventField.StringValidatedByRegexpReference(name, regexpRef)"))
   @ScheduledForRemoval
   @JvmStatic
-  fun StringValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String): StringEventField {
-    return StringEventField.ValidatedByRegexp(name, regexpRef)
+  @JvmOverloads
+  fun StringValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String, @NonNls description: String? = null): StringEventField {
+    return StringEventField.ValidatedByRegexp(name, regexpRef, description)
   }
 
   /**
@@ -57,8 +58,9 @@ object EventFields {
    * @param regexpRef reference to global regexp rule, e.g. "integer" for "{regexp#integer}".
    */
   @JvmStatic
-  fun StringValidatedByRegexpReference(@NonNls name: String, @NonNls regexpRef: String): StringEventField {
-    return StringEventField.ValidatedByRegexp(name, regexpRef)
+  @JvmOverloads
+  fun StringValidatedByRegexpReference(@NonNls name: String, @NonNls regexpRef: String, @NonNls description: String? = null): StringEventField {
+    return StringEventField.ValidatedByRegexp(name, regexpRef, description)
   }
 
   /**
@@ -69,21 +71,9 @@ object EventFields {
    * @param enumRef reference to global enum, e.g. "os" for "{enum#os}".
    */
   @JvmStatic
-  fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String): StringEventField {
-    return StringEventField.ValidatedByEnum(name, enumRef)
-  }
-
-  /**
-   * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
-   * @param name  name of the field
-   * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
-   * e.g "class_name" for "{util#class_name}"
-   */
-  @kotlin.Deprecated("Please use EventFields.StringValidatedByCustomRule(String, Class<out CustomValidationRule>)",
-                     ReplaceWith("EventFields.StringValidatedByCustomRule(name, customValidationRule)"))
-  @JvmStatic
-  fun StringValidatedByCustomRule(@NonNls @EventFieldName name: String, @NonNls customRuleId: String): StringEventField {
-    return StringEventField.ValidatedByCustomRule(name, customRuleId)
+  @JvmOverloads
+  fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String, @NonNls description: String? = null): StringEventField {
+    return StringEventField.ValidatedByEnum(name, enumRef, description)
   }
 
   /**
@@ -92,16 +82,19 @@ object EventFields {
    * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule],
    */
   @JvmStatic
+  @JvmOverloads
   fun StringValidatedByCustomRule(@NonNls @EventFieldName name: String,
-                                  customValidationRule: Class<out CustomValidationRule>): StringEventField =
-    StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)
+                                  customValidationRule: Class<out CustomValidationRule>,
+                                  @NonNls description: String? = null): StringEventField =
+    StringEventField.ValidatedByCustomValidationRule(name, customValidationRule, description)
 
   /**
    * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule].
    * @param name  name of the field
    */
-  inline fun <reified T : CustomValidationRule> StringValidatedByCustomRule(@NonNls name: String): StringEventField =
-    StringValidatedByCustomRule(name, T::class.java)
+  inline fun <reified T : CustomValidationRule> StringValidatedByCustomRule(@NonNls name: String,
+                                                                            @NonNls description: String? = null): StringEventField =
+    StringValidatedByCustomRule(name, T::class.java, description)
 
   /**
    * Creates a field that allows only a specific list of values
@@ -109,11 +102,13 @@ object EventFields {
    * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
    */
   @JvmStatic
-  fun String(@NonNls @EventFieldName name: String, allowedValues: List<String>): StringEventField =
-    StringEventField.ValidatedByAllowedValues(name, allowedValues)
+  @JvmOverloads
+  fun String(@NonNls @EventFieldName name: String, allowedValues: List<String>, @NonNls description: String? = null): StringEventField =
+    StringEventField.ValidatedByAllowedValues(name, allowedValues, description)
 
   @JvmStatic
-  fun Int(@NonNls @EventFieldName name: String): IntEventField = IntEventField(name)
+  @JvmOverloads
+  fun Int(@NonNls @EventFieldName name: String, @NonNls description: String? = null): IntEventField = IntEventField(name, description)
 
   /**
    * Creates an int field that will be validated by regexp rule
@@ -122,8 +117,11 @@ object EventFields {
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
-  fun RegexpInt(@NonNls @EventFieldName name: String, @InjectedLanguage("RegExp") @NonNls regexp: String): RegexpIntEventField =
-    RegexpIntEventField(name, regexp)
+  @JvmOverloads
+  fun RegexpInt(@NonNls @EventFieldName name: String,
+                @InjectedLanguage("RegExp") @NonNls regexp: String,
+                @NonNls description: String? = null): RegexpIntEventField =
+    RegexpIntEventField(name, regexp, description)
 
   /**
    * Rounds integer value to the next power of two.
@@ -131,7 +129,8 @@ object EventFields {
    * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
    */
   @JvmStatic
-  fun RoundedInt(@NonNls @EventFieldName name: String): RoundedIntEventField = RoundedIntEventField(name)
+  @JvmOverloads
+  fun RoundedInt(@NonNls @EventFieldName name: String, @NonNls description: String? = null): RoundedIntEventField = RoundedIntEventField(name, description)
 
   /**
    * Rounds integer value to the upper bound from provided bounds.
@@ -143,7 +142,8 @@ object EventFields {
    * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
    */
   @JvmStatic
-  fun BoundedInt(@NonNls @EventFieldName name: String, bounds: IntArray): PrimitiveEventField<Int> = BoundedIntEventField(name, bounds)
+  @JvmOverloads
+  fun BoundedInt(@NonNls @EventFieldName name: String, bounds: IntArray, @NonNls description: String? = null): PrimitiveEventField<Int> = BoundedIntEventField(name, bounds, description)
 
   /**
    * Reports values from range and lower or upper bound of range if reported value is out of range.
@@ -152,16 +152,19 @@ object EventFields {
    * @param range non-empty range of possible values not bigger than 500 elements
    * @throws InvalidParameterException if range parameter is empty or contains more than 500 values
    * */
-  fun LimitedInt(@NonNls @EventFieldName name: String, range: IntRange): PrimitiveEventField<Int> = LimitedIntEventField(name, range)
+  @JvmOverloads
+  fun LimitedInt(@NonNls @EventFieldName name: String, range: IntRange, @NonNls description: String? = null): PrimitiveEventField<Int> = LimitedIntEventField(name, range, description)
 
   /**
    * Rounds values in logarithmic scale.
    * Use it to anonymize sensitive information like the number of files in a project.
    * */
-  fun LogarithmicInt(@NonNls @EventFieldName name: String): PrimitiveEventField<Int> = LogarithmicIntEventField(name)
+  @JvmOverloads
+  fun LogarithmicInt(@NonNls @EventFieldName name: String, @NonNls description: String? = null): PrimitiveEventField<Int> = LogarithmicIntEventField(name, description)
 
   @JvmStatic
-  fun Long(@NonNls @EventFieldName name: String): LongEventField = LongEventField(name)
+  @JvmOverloads
+  fun Long(@NonNls @EventFieldName name: String, @NonNls description: String? = null): LongEventField = LongEventField(name, description)
 
   /**
    * Rounds long value to the next power of two.
@@ -169,7 +172,8 @@ object EventFields {
    * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
    */
   @JvmStatic
-  fun RoundedLong(@NonNls @EventFieldName name: String): RoundedLongEventField = RoundedLongEventField(name)
+  @JvmOverloads
+  fun RoundedLong(@NonNls @EventFieldName name: String, @NonNls description: String? = null): RoundedLongEventField = RoundedLongEventField(name, description)
 
   /**
    * Rounds long value to the upper bound from provided bounds.
@@ -181,27 +185,34 @@ object EventFields {
    * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
    */
   @JvmStatic
-  fun BoundedLong(@NonNls @EventFieldName name: String, bounds: LongArray): PrimitiveEventField<Long> = BoundedLongEventField(name, bounds)
+  @JvmOverloads
+  fun BoundedLong(@NonNls @EventFieldName name: String, bounds: LongArray, @NonNls description: String? = null): PrimitiveEventField<Long> = BoundedLongEventField(name, bounds, description)
 
   /**
    * Rounds values in logarithmic scale.
    * Use it to anonymize sensitive information like the number of files in a project.
    * */
-  fun LogarithmicLong(@NonNls @EventFieldName name: String): PrimitiveEventField<Long> = LogarithmicLongEventField(name)
+  @JvmOverloads
+  fun LogarithmicLong(@NonNls @EventFieldName name: String, @NonNls description: String? = null): PrimitiveEventField<Long> = LogarithmicLongEventField(name, description)
 
   @JvmStatic
-  fun Float(@NonNls @EventFieldName name: String): FloatEventField = FloatEventField(name)
+  @JvmOverloads
+  fun Float(@NonNls @EventFieldName name: String, @NonNls description: String? = null): FloatEventField = FloatEventField(name, description)
 
   @JvmStatic
-  fun Double(@NonNls @EventFieldName name: String): DoubleEventField = DoubleEventField(name)
+  @JvmOverloads
+  fun Double(@NonNls @EventFieldName name: String, @NonNls description: String? = null): DoubleEventField = DoubleEventField(name, description)
 
   @JvmStatic
-  fun Boolean(@NonNls @EventFieldName name: String): BooleanEventField = BooleanEventField(name)
+  @JvmOverloads
+  fun Boolean(@NonNls @EventFieldName name: String, @NonNls description: String? = null): BooleanEventField = BooleanEventField(name, description)
 
   @JvmStatic
-  fun Class(@NonNls @EventFieldName name: String): ClassEventField = ClassEventField(name)
+  @JvmOverloads
+  fun Class(@NonNls @EventFieldName name: String, @NonNls description: String? = null): ClassEventField = ClassEventField(name, description)
 
-  fun ClassList(@NonNls @EventFieldName name: String): ClassListEventField = ClassListEventField(name)
+  @JvmOverloads
+  fun ClassList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): ClassListEventField = ClassListEventField(name, description)
 
   val defaultEnumTransform: (Any) -> String = { it.toString() }
 
@@ -209,12 +220,25 @@ object EventFields {
   @JvmOverloads
   fun <T : Enum<*>> Enum(@NonNls @EventFieldName name: String,
                          enumClass: Class<T>,
+                         @NonNls description: String,
                          transform: (T) -> String = defaultEnumTransform): EnumEventField<T> =
-    EnumEventField(name, enumClass, transform)
+    EnumEventField(name, enumClass, description, transform)
+
+  @JvmStatic
+  @JvmOverloads
+  fun <T : Enum<*>> Enum(@NonNls @EventFieldName name: String,
+                         enumClass: Class<T>,
+                         transform: (T) -> String = defaultEnumTransform): EnumEventField<T> =
+    EnumEventField(name, enumClass, null, transform)
+
+  inline fun <reified T : Enum<*>> Enum(@NonNls @EventFieldName name: String,
+                                        @NonNls description: String,
+                                        noinline transform: (T) -> String = defaultEnumTransform): EnumEventField<T> =
+    EnumEventField(name, T::class.java, description, transform)
 
   inline fun <reified T : Enum<*>> Enum(@NonNls @EventFieldName name: String,
                                         noinline transform: (T) -> String = defaultEnumTransform): EnumEventField<T> =
-    EnumEventField(name, T::class.java, transform)
+    EnumEventField(name, T::class.java, null, transform)
 
 
   /**
@@ -225,14 +249,20 @@ object EventFields {
    * @param transform function that transforms Enum to String
    */
   @JvmStatic
+  fun <T : Enum<*>> NullableEnum(@NonNls @EventFieldName name: String,
+                                 enumClass: Class<T>,
+                                 nullValue: String? = null,
+                                 @NonNls description: String,
+                                 transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T>
+  = NullableEnumEventField(name, enumClass, nullValue, description, transform)
+
+  @JvmStatic
   @JvmOverloads
   fun <T : Enum<*>> NullableEnum(@NonNls @EventFieldName name: String,
                                  enumClass: Class<T>,
                                  nullValue: String? = null,
-                                 transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T> = NullableEnumEventField(name,
-                                                                                                                                      enumClass,
-                                                                                                                                      nullValue,
-                                                                                                                                      transform)
+                                 transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T>
+    = NullableEnumEventField(name, enumClass, nullValue, null, transform)
 
   /**
    * Creates a field that allows nullable Enum
@@ -242,20 +272,14 @@ object EventFields {
    */
   inline fun <reified T : Enum<*>> NullableEnum(@NonNls @EventFieldName name: String,
                                                 nullValue: String? = null,
+                                                @NonNls description: String,
                                                 noinline transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T> = NullableEnumEventField(
-    name, T::class.java, nullValue, transform)
+    name, T::class.java, nullValue, description, transform)
 
-  /**
-   * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
-   * @param name  name of the field
-   * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
-   * e.g "class_name" for "{util#class_name}"
-   */
-  @kotlin.Deprecated("Please use EventFields.StringListValidatedByCustomRule(String, Class<out CustomValidationRule>)",
-                     ReplaceWith("EventFields.StringListValidatedByCustomRule(name, customValidationRule)"))
-  @JvmStatic
-  fun StringListValidatedByCustomRule(@NonNls @EventFieldName name: String, @NonNls customRuleId: String): StringListEventField =
-    StringListEventField.ValidatedByCustomRule(name, customRuleId)
+  inline fun <reified T : Enum<*>> NullableEnum(@NonNls @EventFieldName name: String,
+                                                nullValue: String? = null,
+                                                noinline transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T> = NullableEnumEventField(
+    name, T::class.java, nullValue, null, transform)
 
   /**
    * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
@@ -263,16 +287,18 @@ object EventFields {
    * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
    */
   @JvmStatic
+  @JvmOverloads
   fun StringListValidatedByCustomRule(@NonNls @EventFieldName name: String,
-                                      customValidationRule: Class<out CustomValidationRule>): StringListEventField =
-    StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)
+                                      customValidationRule: Class<out CustomValidationRule>,
+                                      @NonNls description: String? = null): StringListEventField =
+    StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule, description)
 
   /**
    * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
    * @param name  name of the field
    */
-  inline fun <reified T : CustomValidationRule> StringListValidatedByCustomRule(@NonNls name: String): StringListEventField =
-    StringListValidatedByCustomRule(name, T::class.java)
+  inline fun <reified T : CustomValidationRule> StringListValidatedByCustomRule(@NonNls name: String, @NonNls description: String? = null): StringListEventField =
+    StringListValidatedByCustomRule(name, T::class.java, description)
 
   /**
    * Creates a field for a list, each element of which will be validated by global enum rule
@@ -280,8 +306,9 @@ object EventFields {
    * @param enumRef reference to global enum, e.g "os" for "{enum#os}"
    */
   @JvmStatic
-  fun StringListValidatedByEnum(@NonNls @EventFieldName name: String, @NonNls enumRef: String): StringListEventField =
-    StringListEventField.ValidatedByEnum(name, enumRef)
+  @JvmOverloads
+  fun StringListValidatedByEnum(@NonNls @EventFieldName name: String, @NonNls enumRef: String, @NonNls description: String? = null): StringListEventField =
+    StringListEventField.ValidatedByEnum(name, enumRef, description)
 
   /**
    * Creates a field for a list, each element of which will be validated by global regexp
@@ -289,8 +316,9 @@ object EventFields {
    * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
    */
   @JvmStatic
-  fun StringListValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String): StringListEventField =
-    StringListEventField.ValidatedByRegexp(name, regexpRef)
+  @JvmOverloads
+  fun StringListValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String, @NonNls description: String? = null): StringListEventField =
+    StringListEventField.ValidatedByRegexp(name, regexpRef, description)
 
   /**
    * Creates a field for a list in which only a specific values are allowed
@@ -298,30 +326,35 @@ object EventFields {
    * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
    */
   @JvmStatic
-  fun StringList(@NonNls @EventFieldName name: String, allowedValues: List<String>): StringListEventField =
-    StringListEventField.ValidatedByAllowedValues(name, allowedValues)
+  @JvmOverloads
+  fun StringList(@NonNls @EventFieldName name: String, allowedValues: List<String>, @NonNls description: String? = null): StringListEventField =
+    StringListEventField.ValidatedByAllowedValues(name, allowedValues, description)
 
   @JvmStatic
-  fun LongList(@NonNls @EventFieldName name: String): LongListEventField = LongListEventField(name)
+  @JvmOverloads
+  fun LongList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): LongListEventField = LongListEventField(name, description)
 
   @JvmStatic
-  fun IntList(@NonNls @EventFieldName name: String): IntListEventField = IntListEventField(name)
+  @JvmOverloads
+  fun IntList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): IntListEventField = IntListEventField(name, description)
 
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
+  @JvmOverloads
   fun StringValidatedByInlineRegexp(@NonNls @EventFieldName name: String,
-                                    @InjectedLanguage("RegExp") @NonNls regexp: String): StringEventField =
-    StringEventField.ValidatedByInlineRegexp(name, regexp)
+                                    @InjectedLanguage("RegExp") @NonNls regexp: String, @NonNls description: String? = null): StringEventField =
+    StringEventField.ValidatedByInlineRegexp(name, regexp, description)
 
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
+  @JvmOverloads
   fun StringListValidatedByInlineRegexp(@NonNls @EventFieldName name: String,
-                                        @InjectedLanguage("RegExp") @NonNls regexp: String): StringListEventField =
-    StringListEventField.ValidatedByInlineRegexp(name, regexp)
+                                        @InjectedLanguage("RegExp") @NonNls regexp: String, @NonNls description: String? = null): StringListEventField =
+    StringListEventField.ValidatedByInlineRegexp(name, regexp, description)
 
   @JvmField
   val InputEvent = object : PrimitiveEventField<FusInputEvent?>() {
@@ -477,13 +510,15 @@ object EventFields {
    * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
    * */
   @JvmStatic
-  fun AnonymizedField(@NonNls @EventFieldName name: String): EventField<String?> = AnonymizedEventField(name)
+  @JvmOverloads
+  fun AnonymizedField(@NonNls @EventFieldName name: String, @NonNls description: String? = null): EventField<String?> = AnonymizedEventField(name, description)
 
   /**
    * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
    * */
   @JvmStatic
-  fun AnonymizedList(@NonNls @EventFieldName name: String): AnonymizedListEventField = AnonymizedListEventField(name)
+  @JvmOverloads
+  fun AnonymizedList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): AnonymizedListEventField = AnonymizedListEventField(name, description)
 
   /**
    * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
@@ -493,7 +528,8 @@ object EventFields {
    * Reduces amount of data reported from user, but increases probability of collisions
    * */
   @JvmStatic
-  fun ShortAnonymizedField(@NonNls @EventFieldName name: String): EventField<String?> = ShortAnonymizedEventField(name)
+  @JvmOverloads
+  fun ShortAnonymizedField(@NonNls @EventFieldName name: String, @NonNls description: String? = null): EventField<String?> = ShortAnonymizedEventField(name, description)
 
   /**
    * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
@@ -506,9 +542,11 @@ object EventFields {
    * @param dateAndValueProvider extracts timestamp and value to hash from reporting object
    * */
   @JvmStatic
+  @JvmOverloads
   fun <T> DatedShortAnonymizedField(@NonNls @EventFieldName name: String,
-                                    dateAndValueProvider: (T) -> Pair<Long, String?>): EventField<T> = DatedShortAnonymizedEventField(name,
-                                                                                                                                      dateAndValueProvider)
+                                    @NonNls description: String? = null,
+                                    dateAndValueProvider: (T) -> Pair<Long, String?>): EventField<T> =
+    DatedShortAnonymizedEventField(name, description, dateAndValueProvider)
 
   @JvmField
   val CodeWithMeClientId = object : PrimitiveEventField<String?>() {
@@ -535,9 +573,11 @@ object EventFields {
   }
 
   @JvmStatic
-  fun Language(@NonNls @EventFieldName name: String): PrimitiveEventField<Language?> {
+  @JvmOverloads
+  fun Language(@NonNls @EventFieldName name: String, @NonNls description: String? = null): PrimitiveEventField<Language?> {
     return object: PrimitiveEventField<Language?>() {
       override val name = name
+      override val description = description
       override val validationRule: List<String>
         get() = listOf("{util#lang}")
 
@@ -642,7 +682,8 @@ object EventFields {
   val StartTime = LongEventField(EventFieldIds.START_TIME_FIELD_ID)
 
   @JvmStatic
-  fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {
+  @JvmOverloads
+  fun createAdditionalDataField(groupId: String, eventId: String, @NonNls description: String? = null): ObjectEventField {
     val additionalFields = mutableListOf<EventField<*>>()
     for (ext in FeatureUsageCollectorExtension.EP_NAME.extensionsIfPointIsRegistered) {
       if (ext.groupId == groupId && ext.eventId == eventId) {
@@ -653,13 +694,14 @@ object EventFields {
         }
       }
     }
-    return ObjectEventField("additional", *additionalFields.toTypedArray())
+    return ObjectEventField("additional", description, *additionalFields.toTypedArray())
   }
 
   @JvmStatic
-  fun createDurationField(unit: DurationUnit, fieldName: String): PrimitiveEventField<Duration> {
+  @JvmOverloads
+  fun createDurationField(unit: DurationUnit, fieldName: String, @NonNls description: String? = null): PrimitiveEventField<Duration> {
     return object : PrimitiveEventField<Duration>() {
-
+      override val description: String? = description
       override val validationRule: List<String>
         get() = listOf("{regexp#integer}")
 
