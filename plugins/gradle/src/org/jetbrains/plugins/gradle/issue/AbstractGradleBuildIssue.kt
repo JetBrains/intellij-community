@@ -47,7 +47,7 @@ abstract class AbstractGradleBuildIssue : BuildIssue {
 
   fun addGradleVersionQuickFix(projectPath: String, gradleVersion: GradleVersion) {
     val quickFix = GradleVersionQuickFix(projectPath, gradleVersion, true)
-    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.version.auto", quickFix.id, gradleVersion.version))
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.version", quickFix.id, gradleVersion.version))
     addQuickFix(quickFix)
   }
 

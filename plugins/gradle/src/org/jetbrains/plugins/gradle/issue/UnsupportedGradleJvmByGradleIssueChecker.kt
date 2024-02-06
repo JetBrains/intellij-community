@@ -5,19 +5,14 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
-import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix
 import com.intellij.util.lang.JavaVersion
 import org.gradle.internal.jvm.UnsupportedJavaRuntimeException
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.io.File
 import java.util.function.Consumer
 
@@ -178,25 +173,7 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
         if (!isUnsupportedClassVersionErrorIssue) {
           val oldestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
                                               ?: GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
-          val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(issueData.projectPath)
-          if (wrapperPropertiesFile == null || gradleVersionUsed != null && gradleVersionUsed.baseVersion < oldestCompatibleGradleVersion) {
-            val gradleVersionFix = GradleVersionQuickFix(issueData.projectPath, oldestCompatibleGradleVersion, true)
-            addQuickFixPrompt(GradleBundle.message(
-              "gradle.build.quick.fix.gradle.version.auto", gradleVersionFix.id,
-              oldestCompatibleGradleVersion.version
-            ))
-            addQuickFix(gradleVersionFix)
-          }
-          else {
-            val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(issueData.projectPath, "distributionUrl")
-            val reimportQuickFix = ReimportQuickFix(issueData.projectPath, GradleConstants.SYSTEM_ID)
-            addQuickFixPrompt(GradleBundle.message(
-              "gradle.build.quick.fix.gradle.version.manual", wrapperSettingsOpenQuickFix.id, reimportQuickFix.id,
-              oldestCompatibleGradleVersion.version
-            ))
-            addQuickFix(wrapperSettingsOpenQuickFix)
-            addQuickFix(reimportQuickFix)
-          }
+          addGradleVersionQuickFix(issueData.projectPath, oldestCompatibleGradleVersion)
         }
       }
     }
