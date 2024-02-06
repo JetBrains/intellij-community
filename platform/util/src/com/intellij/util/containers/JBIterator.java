@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -102,6 +103,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   /**
    * Proceeds to the next element if any and returns true; otherwise false.
    */
+  @Contract(mutates = "this")
   public final boolean advance() {
     myCurrent = Do.INIT;
     peekNext();

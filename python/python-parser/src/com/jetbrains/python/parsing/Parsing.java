@@ -10,6 +10,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyParsingBundle;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class Parsing {
     return getParsingContext().getPatternParser();
   }
 
+  @Contract(mutates = "this")
   protected boolean checkMatches(final IElementType token, @NotNull @ParsingError String message) {
     if (myBuilder.getTokenType() == token) {
       myBuilder.advanceLexer();
