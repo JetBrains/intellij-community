@@ -471,6 +471,10 @@ fun <T : CommandChain> T.recordStateCollectors(): T = apply {
   addCommand("${CMD_PREFIX}recordStateCollectors")
 }
 
+fun <T : CommandChain> T.flushFusEvents(): T = apply {
+  addCommand("${CMD_PREFIX}flushFusEvents")
+}
+
 fun <T : CommandChain> T.reloadFiles(filePaths: List<String> = listOf()): T = apply {
   addCommand("${CMD_PREFIX}reloadFiles ${filePaths.joinToString(" ")}")
 }

@@ -50,6 +50,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(CompareProjectFiles.PREFIX, CompareProjectFiles::new),
       Map.entry(RecordCounterCollectorBaselinesCommand.PREFIX, RecordCounterCollectorBaselinesCommand::new),
       Map.entry(RecordStateCollectorsCommand.PREFIX, RecordStateCollectorsCommand::new),
+      Map.entry(FlushFusEventsCommand.PREFIX, FlushFusEventsCommand::new),
       Map.entry(CreateAllServicesAndExtensionsCommand.PREFIX, CreateAllServicesAndExtensionsCommand::new),
       Map.entry(RecoveryActionCommand.PREFIX, RecoveryActionCommand::new),
       Map.entry(CorruptIndexesCommand.PREFIX, CorruptIndexesCommand::new),
