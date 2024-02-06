@@ -47,7 +47,6 @@ class TerminalPromptModel(private val session: BlockTerminalSession) : ShellComm
     val result = mutableListOf<PromptComponentInfo>()
     // numbers are the indexes in BlockTerminalColors.KEYS array
     val greenAttributes = plainAttributes(2)
-    val magentaAttributes = plainAttributes(5)
     val yellowAttributes = plainAttributes(3)
     val defaultAttributes = plainAttributes(-1)
 
@@ -56,15 +55,11 @@ class TerminalPromptModel(private val session: BlockTerminalSession) : ShellComm
     }
 
     if (!state.virtualEnv.isNullOrBlank()) {
-      addComponent("(", greenAttributes)
       val venvName = PathUtil.getFileName(state.virtualEnv)
-      addComponent(venvName, magentaAttributes)
-      addComponent(")", greenAttributes)
+      addComponent("($venvName)", greenAttributes)
     }
     if (!state.condaEnv.isNullOrBlank()) {
-      addComponent("(", greenAttributes)
-      addComponent(state.condaEnv, magentaAttributes)
-      addComponent(")", greenAttributes)
+      addComponent("(${state.condaEnv})", greenAttributes)
     }
     if (result.isNotEmpty()) {
       addComponent(" ", defaultAttributes)
