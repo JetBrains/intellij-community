@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
@@ -133,9 +134,21 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       }
 
       boolean isNodeAffected(Node<?, ?> node) {
-        if (!affectedUsages.isEmpty() && find(filter(map(node.getUsages(), affectedUsages::get), Objects::nonNull), constr -> constr.test(node)) != null) {
-          return true;
+        if (!affectedUsages.isEmpty()) {
+          List<Predicate<Node<?, ?>>> deferred = new SmartList<>();
+          for (Predicate<Node<?, ?>> constr : filter(map(node.getUsages(), affectedUsages::get), Objects::nonNull)) {
+            if (constr == ANY_CONSTRAINT) {
+              return true;
+            }
+            deferred.add(constr);
+          }
+          for (Predicate<Node<?, ?>> constr : deferred) {
+            if (constr.test(node)) {
+              return true;
+            }
+          }
         }
+
         if (!usageQueries.isEmpty() && find(node.getUsages(), u -> find(usageQueries, query -> query.test(node, u)) != null) != null) {
           return true;
         }
