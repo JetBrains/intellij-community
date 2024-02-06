@@ -9,9 +9,10 @@ import com.intellij.spellchecker.dictionary.ProjectDictionary
 import com.intellij.spellchecker.state.AppDictionaryState
 import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.function.Supplier
 
+@ApiStatus.Internal
 interface DictionaryLayersProvider {
   fun getLayers(project: Project): List<DictionaryLayer>
 

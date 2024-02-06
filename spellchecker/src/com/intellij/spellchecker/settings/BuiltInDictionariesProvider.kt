@@ -2,7 +2,9 @@
 package com.intellij.spellchecker.settings
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface BuiltInDictionariesProvider {
   fun getDictionaries(): List<BuiltInDictionary>
 
