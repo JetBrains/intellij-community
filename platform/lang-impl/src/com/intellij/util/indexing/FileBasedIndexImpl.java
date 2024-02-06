@@ -605,15 +605,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
-        IntSet allStaleIdsToCheck = new IntOpenHashSet();
-        IntSet dirtyFilesWithoutProject = getChangedFilesCollector().getDirtyFilesWithoutProject();
+        IntSet staleIds = new IntOpenHashSet();
         synchronized (myStaleIds) {
-          allStaleIdsToCheck.addAll(myStaleIds);
-          // we need to persist myStaleIds to disk otherwise we lose them if FileBasedIndexTumbler shutdown is performed twice in a row
-          dirtyFilesWithoutProject.addAll(myStaleIds);
+          staleIds.addAll(myStaleIds);
           myStaleIds.clear();
         }
+
         if (myIsUnitTestMode) {
+          IntSet allStaleIdsToCheck = new IntOpenHashSet();
+          allStaleIdsToCheck.addAll(staleIds);
           // project dirty files are still in ChangedFilesCollector in case FileBasedIndex is restarted using Tumbler (projects are not closed)
           // we need to persist queues, so we can properly re-read them here and in FileBasedIndexDataInitialization
           getChangedFilesCollector().persistProjectsDirtyFiles(vfsCreationStamp);
@@ -628,6 +628,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
+        IntSet dirtyFilesWithoutProject = getChangedFilesCollector().getDirtyFilesWithoutProject();
+        // we need to persist myStaleIds to disk otherwise we lose them if FileBasedIndexTumbler shutdown is performed twice in a row
+        dirtyFilesWithoutProject.addAll(staleIds);
         PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(),
                                                      dirtyFilesWithoutProject, vfsCreationStamp);
         getChangedFilesCollector().clearFilesToUpdate();
