@@ -359,7 +359,12 @@ public final class NewMappings implements Disposable {
         }
 
         MappedRoot mappedRoot = findDirectMappingFor(mapping, pointerDisposable);
-        if (mappedRoot != null) mappedRoots.putIfAbsent(mappedRoot.root, mappedRoot);
+        if (mappedRoot != null) {
+          mappedRoots.putIfAbsent(mappedRoot.root, mappedRoot);
+        }
+        else {
+          LOG.info("Invalid mapping: " + mapping);
+        }
       }
 
       for (VcsDirectoryMapping mapping : mappings) {
@@ -529,8 +534,9 @@ public final class NewMappings implements Disposable {
     }
     else if (haveDefaultMapping() != null) {
       LOG.info("Mapped Roots: " + myMappedRoots.size());
-      for (MappedRoot root : ContainerUtil.getFirstItems(myMappedRoots, 5)) {
-        LOG.debug(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.root.getPath()));
+      List<MappedRoot> detectedRoots = ContainerUtil.filter(myMappedRoots, root -> root.mapping.isDefaultMapping());
+      for (MappedRoot root : ContainerUtil.getFirstItems(detectedRoots, 10)) {
+        LOG.info(String.format("Detected mapped Root: [%s] - [%s]", root.vcs, root.root.getPath()));
       }
     }
   }
