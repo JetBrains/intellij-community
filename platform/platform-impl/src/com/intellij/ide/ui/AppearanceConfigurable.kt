@@ -190,10 +190,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           checkBox(message("preferred.theme.autodetect.selector"))
             .bindSelected(syncThemeProperty)
             .visible(lafManager.autodetectSupported)
+            .gap(RightGap.SMALL)
 
           theme.enabledIf(syncThemeAndEditorSchemePredicate.not())
           cell(lafManager.settingsToolbar)
-            .visibleIf(syncThemeAndEditorSchemePredicate)
+            .visible(lafManager.autodetectSupported)
         }
       }
 

@@ -800,6 +800,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       templatePresentation.text = IdeBundle.message("preferred.theme.and.editor.color.scheme.text")
       templatePresentation.description = IdeBundle.message("preferred.theme.and.editor.color.scheme.description")
     }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isEnabled = getInstance().autodetect
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   }
 
   private inner class PreferredLafAction : DefaultActionGroup(), DumbAware {
