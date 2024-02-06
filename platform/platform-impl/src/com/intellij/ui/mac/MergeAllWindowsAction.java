@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -96,21 +97,33 @@ public final class MergeAllWindowsAction extends IdeDependentAction {
   private static final class RecentProjectsFullScreenTabSupport implements AppLifecycleListener {
     @Override
     public void appStarted() {
+      Logger logger = Logger.getInstance(MergeAllWindowsAction.class);
       if (JdkEx.isTabbingModeAvailable()) {
         IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
 
         if (frames.length > 1) {
           for (IdeFrame frame : frames) {
             if (!frame.isInFullScreen()) {
+              logger.info("=== FullScreenTabSupport: no fullscreen frame: " + ((ProjectFrameHelper)frame).getFrame() + " ===");
               return;
             }
           }
 
-          if (Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
-            Logger.getInstance(MergeAllWindowsAction.class).info("=== Auto mergeAllWindows on start ===");
+          int state = Foundation.invoke("NSWindow", "userTabbingPreference").intValue();
+          if (state == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
+            logger.info("=== FullScreenTabSupport: run auto mergeAllWindows on start ===");
             mergeAllWindows(Objects.requireNonNull(((ProjectFrameHelper)frames[0]).getFrame()), false);
           }
+          else {
+            logger.info("=== FullScreenTabSupport: settings: " + state + " ===");
+          }
         }
+        else {
+          logger.info("=== FullScreenTabSupport: frames: " + frames.length + " ===");
+        }
+      }
+      else if (SystemInfoRt.isMac) {
+        logger.info("=== FullScreenTabSupport: off ===");
       }
     }
   }

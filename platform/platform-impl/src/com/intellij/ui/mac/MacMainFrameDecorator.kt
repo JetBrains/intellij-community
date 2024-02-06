@@ -164,6 +164,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
 
   private fun enterFullScreen() {
     isInFullScreen = true
+    LOG.debug { "Full screen set flag true for $frame" }
     storeFullScreenStateIfNeeded()
     tabsHandler.enterFullScreen()
   }
@@ -171,6 +172,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
   private fun exitFullScreen() {
     val rootPane = frame.rootPane
     isInFullScreen = rootPane?.getClientProperty(IGNORE_EXIT_FULL_SCREEN) != null
+    LOG.debug { "Full screen set flag false/$isInFullScreen for $frame" }
     storeFullScreenStateIfNeeded()
     rootPane?.putClientProperty(FULL_SCREEN, null)
     rootPane?.putClientProperty(IGNORE_EXIT_FULL_SCREEN, null)
