@@ -21,12 +21,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
-import com.intellij.util.EnvironmentUtil
-import com.intellij.pycharm.community.ide.impl.PySdkFromEnvironmentVariableConfigurator.Companion.PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
@@ -63,7 +60,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdk != null || isProjectCreatedWithWizard) {
       return
     }
-    if (!Strings.isEmptyOrSpaces(EnvironmentUtil.getValue(PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE))) {
+    if (PySdkFromEnvironmentVariableConfigurator.getPycharmPythonPathProperty()?.isNotBlank() == true) {
       return
     }
 
