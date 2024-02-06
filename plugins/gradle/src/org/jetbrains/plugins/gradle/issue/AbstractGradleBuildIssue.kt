@@ -52,15 +52,16 @@ abstract class AbstractGradleBuildIssue : BuildIssue {
   }
 
   fun addGradleJvmQuickFix(projectPath: String, javaVersion: JavaVersion) {
-    if ("AndroidStudio" != PlatformUtils.getPlatformPrefix()) {
-      val gradleSettingsQuickFix = GradleSettingsQuickFix(
-        projectPath, true,
-        GradleSettingsQuickFix.GradleJvmChangeDetector,
-        GradleBundle.message("gradle.settings.text.jvm.path")
-      )
-      addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", gradleSettingsQuickFix.id, javaVersion))
-      addQuickFix(gradleSettingsQuickFix)
-    }
+    // Android Studio doesn't have Gradle JVM setting
+    if ("AndroidStudio" == PlatformUtils.getPlatformPrefix()) return
+
+    val gradleSettingsQuickFix = GradleSettingsQuickFix(
+      projectPath, true,
+      GradleSettingsQuickFix.GradleJvmChangeDetector,
+      GradleBundle.message("gradle.settings.text.jvm.path")
+    )
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", gradleSettingsQuickFix.id, javaVersion))
+    addQuickFix(gradleSettingsQuickFix)
   }
 
   private class BuildIssueConfigurator {
