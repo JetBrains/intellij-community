@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl
 
 import com.intellij.find.FindBundle
@@ -562,7 +562,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       else {
         val shortened = StringUtil.shortenTextWithEllipsis(replacement, 500, 0, true)
         htmlToShow = HtmlBuilder()
-          .append(shortened)
+          .append(shortened.replace("\t", "    "))
           .wrapWith("code").wrapWith("pre").wrapWith("body").wrapWith("html")
           .toString()
       }
