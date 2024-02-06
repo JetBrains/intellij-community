@@ -21,7 +21,7 @@ class IdeToolkit : SunToolkit() {
     @JvmStatic
     fun getInstance(): IdeToolkit = getDefaultToolkit() as IdeToolkit
 
-    private val clipboard = Clipboard("System")
+    private val clipboard = IdeClipboard()
   }
 
   fun clientInstance() = ClientToolkit.getInstance()
