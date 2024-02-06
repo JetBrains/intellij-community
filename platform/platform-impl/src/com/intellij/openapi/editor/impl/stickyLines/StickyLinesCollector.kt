@@ -29,13 +29,11 @@ class StickyLinesCollector(private val project: Project, private val document: D
       val endOffset: Int = document.getLineEndOffset(line)
       val psiElements: List<PsiElement> = psiCollector.computePsiElements(vFile, document, endOffset)
       for (element: PsiElement in psiElements) {
-        if (!isInBanList(element)) {
-          infos.add(StickyLineInfo(
-            element.textOffset,
-            element.textRange.endOffset,
-            debugText(element)
-          ))
-        }
+        infos.add(StickyLineInfo(
+          element.textOffset,
+          element.textRange.endOffset,
+          debugText(element)
+        ))
       }
     }
     return infos
@@ -92,43 +90,6 @@ class StickyLinesCollector(private val project: Project, private val document: D
     } else {
       null
     }
-  }
-
-  private fun isInBanList(element: PsiElement): Boolean {
-    // TODO: provide extension point for suppressing/including psi elements
-    when (element.language.displayName) {
-      "Kotlin" -> {
-        // special handling for kotlin to exclude if/else, try/catch
-        // see org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider.Holder,
-        // org.jetbrains.kotlin.KtNodeTypes.THEN, org.jetbrains.kotlin.KtNodeTypes.ELSE, etc
-        val debugName = element.toString()
-        return when (debugName) {
-          "THEN", "ELSE", "WHEN", "FINALLY" -> true
-          "BLOCK", "BODY" -> when (element.parent?.toString()) {
-            "TRY", "FOR", "DO_WHILE", "WHEN_ENTRY" -> true
-            else -> false
-          }
-          else -> false
-        }
-      }
-      "Python" -> {
-        // exclude if/else, try/except IDEA-344895
-        // see com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider.HELPERS
-        val debugName = element.toString()
-        return when (debugName) {
-          "PyIfPartIf", "PyIfPartElif", "PyElsePart",
-          "PyTryPart", "PyExceptPart", "PyFinallyPart",
-          "PyWhilePart", "PyForPart",
-          "PyKeyValueExpression" -> true
-          else -> false
-        }
-      }
-      "YAML" -> {
-        // exclude root element IDEA-344788
-        return element.toString() == "YAML document"
-      }
-    }
-    return false
   }
 
   companion object {

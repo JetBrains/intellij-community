@@ -39,6 +39,13 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
       FunctionHelper,
       KeyValueHelper
     )
+    private val STICKY_HELPERS = listOf<Helper<*>>(
+      // exclude if/else, try/except, etc. IDEA-344895
+      LambdaHelper,
+      WithHelper,
+      ClassHelper,
+      FunctionHelper,
+    )
   }
 
   override fun isShownByDefault(): Boolean = false
@@ -47,16 +54,18 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
   override fun acceptElement(e: PsiElement): Boolean = getHelper(e) != null
 
+  override fun acceptStickyElement(e: PsiElement): Boolean = getHelper(e, STICKY_HELPERS) != null
+
   override fun getParent(e: PsiElement): PsiElement? = e.parent
 
   override fun getElementInfo(e: PsiElement): String = getHelper(e)!!.elementInfo(e as PyElement)
   override fun getElementTooltip(e: PsiElement): String = getHelper(e)!!.elementTooltip(e as PyElement)
 
-  private fun getHelper(e: PsiElement): Helper<in PyElement>? {
+  private fun getHelper(e: PsiElement, helpers: List<Helper<*>> = HELPERS): Helper<in PyElement>? {
     if (e !is PyElement) return null
 
     @Suppress("UNCHECKED_CAST")
-    return HELPERS.firstOrNull { it.type.isInstance(e) } as Helper<in PyElement>?
+    return helpers.firstOrNull { it.type.isInstance(e) } as Helper<in PyElement>?
   }
 
   private abstract class Helper<T : PyElement>(val type: Class<T>) {

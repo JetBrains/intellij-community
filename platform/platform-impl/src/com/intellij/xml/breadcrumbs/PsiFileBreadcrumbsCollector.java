@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -106,12 +106,12 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
   public @NotNull List<PsiElement> computePsiElements(@NotNull VirtualFile file, @NotNull Document document, int offset) {
     boolean checkSettings = false;
     BreadcrumbsProvider defaultInfoProvider = findProvider(file, myProject, true);
-    PsiElement element = findStartElement(document, offset, file, myProject, defaultInfoProvider, checkSettings); // TODO: check settings?
+    PsiElement element = findStartElement(document, offset, file, myProject, defaultInfoProvider, checkSettings, true);
     if (element == null) return Collections.emptyList();
     ArrayList<PsiElement> result = new ArrayList<>();
     while (element != null) {
       BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider, checkSettings);
-      if (provider != null && provider.acceptElement(element)) {
+      if (provider != null && provider.acceptStickyElement(element)) {
         result.add(element);
       }
       element = getParent(element, provider);
@@ -136,7 +136,7 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
                                                                                              Project project,
                                                                                              BreadcrumbsProvider defaultInfoProvider,
                                                                                              boolean checkSettings) {
-    PsiElement element = findStartElement(document, offset, file, project, defaultInfoProvider, checkSettings);
+    PsiElement element = findStartElement(document, offset, file, project, defaultInfoProvider, checkSettings, false);
     if (element == null) return null;
 
     LinkedList<Pair<PsiElement, BreadcrumbsProvider>> result = new LinkedList<>();
@@ -170,15 +170,16 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
                                              VirtualFile file,
                                              Project project,
                                              BreadcrumbsProvider defaultInfoProvider,
-                                             boolean checkSettings) {
-    PsiElement middleElement = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider, checkSettings);
+                                             boolean checkSettings,
+                                             boolean isSticky) {
+    PsiElement middleElement = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider, checkSettings, isSticky);
 
     // Let's simulate brace matcher logic of searching brace backwards (see `BraceHighlightingHandler.updateBraces`)
     CharSequence chars = document.getCharsSequence();
     int leftOffset = CharArrayUtil.shiftBackward(chars, offset - 1, "\t ");
     leftOffset = leftOffset >= 0 ? leftOffset : offset - 1;
 
-    PsiElement leftElement = findFirstBreadcrumbedElement(leftOffset, file, project, defaultInfoProvider, checkSettings);
+    PsiElement leftElement = findFirstBreadcrumbedElement(leftOffset, file, project, defaultInfoProvider, checkSettings, isSticky);
     if (leftElement != null && (middleElement == null || PsiTreeUtil.isAncestor(middleElement, leftElement, true))) {
       return leftElement;
     }
@@ -191,7 +192,8 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
                                                                    final VirtualFile file,
                                                                    final Project project,
                                                                    final BreadcrumbsProvider defaultInfoProvider,
-                                                                   boolean checkSettings) {
+                                                                   boolean checkSettings,
+                                                                   boolean isSticky) {
     if (file == null || !file.isValid() || file.isDirectory()) return null;
 
     PriorityQueue<PsiElement> leafs =
@@ -223,8 +225,11 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
       //if (!element.isValid()) continue;
 
       BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider, checkSettings);
-      if (provider != null && provider.acceptElement(element)) {
-        return element;
+      if (provider != null) {
+        boolean accept = isSticky ? provider.acceptStickyElement(element) : provider.acceptElement(element);
+        if (accept) {
+          return element;
+        }
       }
       if (!(element instanceof PsiFile)) {
         ContainerUtil.addIfNotNull(leafs, getParent(element, provider));

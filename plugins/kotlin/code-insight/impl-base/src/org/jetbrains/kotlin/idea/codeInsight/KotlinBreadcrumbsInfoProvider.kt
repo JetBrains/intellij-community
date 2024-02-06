@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -379,15 +379,20 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun handler(e: PsiElement): ElementHandler<in KtElement>? {
+    private fun handler(e: PsiElement, handlers: List<ElementHandler<*>> = Holder.handlers): ElementHandler<in KtElement>? {
         if (e !is KtElement) return null
-        val handler = Holder.handlers.firstOrNull { it.type.java.isInstance(e) && (it as ElementHandler<in KtElement>).accepts(e) }
+        val handler = handlers.firstOrNull { it.type.java.isInstance(e) && (it as ElementHandler<in KtElement>).accepts(e) }
         return handler as ElementHandler<in KtElement>?
     }
 
     override fun getLanguages() = arrayOf(KotlinLanguage.INSTANCE)
 
     override fun acceptElement(e: PsiElement) = !DumbService.isDumb(e.project) && handler(e) != null
+
+    override fun acceptStickyElement(e: PsiElement): Boolean {
+        // do not check isDumb IDEA-345105
+        return handler(e, Holder.stickyHandlers) != null
+    }
 
     override fun getElementInfo(e: PsiElement): String {
         if (DumbService.isDumb(e.project)) return ""
@@ -419,6 +424,13 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
             WhenHandler,
             WhenEntryHandler,
             ForHandler
+        )
+        val stickyHandlers: List<ElementHandler<*>> = listOf<ElementHandler<*>>(
+            LambdaHandler,
+            AnonymousObjectHandler,
+            AnonymousFunctionHandler,
+            PropertyAccessorHandler,
+            DeclarationHandler,
         )
     }
 }
