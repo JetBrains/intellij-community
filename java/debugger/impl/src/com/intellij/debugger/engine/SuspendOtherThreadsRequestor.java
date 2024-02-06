@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
-import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
@@ -46,41 +44,6 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
   @Override
   public String getSuspendPolicy() {
     return DebuggerSettings.SUSPEND_ALL;
-  }
-
-  @Override
-  public boolean isInstanceFiltersEnabled() {
-    return false;
-  }
-
-  @Override
-  public InstanceFilter[] getInstanceFilters() {
-    return InstanceFilter.EMPTY_ARRAY;
-  }
-
-  @Override
-  public boolean isCountFilterEnabled() {
-    return false;
-  }
-
-  @Override
-  public int getCountFilter() {
-    return 0;
-  }
-
-  @Override
-  public boolean isClassFiltersEnabled() {
-    return false;
-  }
-
-  @Override
-  public ClassFilter[] getClassFilters() {
-    return ClassFilter.EMPTY_ARRAY;
-  }
-
-  @Override
-  public ClassFilter[] getClassExclusionFilters() {
-    return ClassFilter.EMPTY_ARRAY;
   }
 
   @Override
