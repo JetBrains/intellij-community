@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.ui.split
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -15,7 +14,7 @@ private const val SECOND_EDITOR = "second_editor"
 private const val SPLIT_LAYOUT = "split_layout"
 
 @ApiStatus.Internal
-abstract class SplitTextEditorProvider(
+abstract class TextEditorWithPreviewProvider(
   private val firstProvider: FileEditorProvider,
   private val secondProvider: FileEditorProvider
 ): AsyncFileEditorProvider, DumbAware {

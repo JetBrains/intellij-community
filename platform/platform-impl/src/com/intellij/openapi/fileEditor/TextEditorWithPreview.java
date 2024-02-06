@@ -59,6 +59,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PR
  * @author Konstantin Bulenkov
  */
 public class TextEditorWithPreview extends UserDataHolderBase implements TextEditor {
+  private static final Key<TextEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
   protected final TextEditor myEditor;
   protected final FileEditor myPreview;
   private final @NotNull MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
@@ -81,6 +82,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myName = editorName;
     myDefaultLayout = ObjectUtils.notNull(getLayoutForFile(myEditor.getFile()), defaultLayout);
     myIsVerticalSplit = isVerticalSplit;
+    editor.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
+    preview.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
   }
 
   public TextEditorWithPreview(@NotNull TextEditor editor,
@@ -613,6 +616,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   public static FileEditor @NotNull [] openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
     file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW);
     return FileEditorManager.getInstance(project).openFile(file, true);
+  }
+
+  public static TextEditorWithPreview getParentSplitEditor(@NotNull FileEditor fileEditor) {
+    return PARENT_SPLIT_EDITOR_KEY.get(fileEditor);
   }
 
   private static final class MyEditorLayeredComponentWrapper extends JBLayeredPane {

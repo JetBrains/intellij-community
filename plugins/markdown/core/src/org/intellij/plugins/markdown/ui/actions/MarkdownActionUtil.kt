@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
@@ -33,9 +34,10 @@ object MarkdownActionUtil {
   @RequiresEdt
   @JvmStatic
   fun findSplitEditor(editor: FileEditor?): MarkdownEditorWithPreview? {
+    if (editor == null) return null
     return when (editor) {
       is MarkdownEditorWithPreview -> editor
-      else -> editor?.getUserData(MarkdownEditorWithPreview.PARENT_SPLIT_EDITOR_KEY)
+      else -> TextEditorWithPreview.getParentSplitEditor(editor) as MarkdownEditorWithPreview?
     }
   }
 

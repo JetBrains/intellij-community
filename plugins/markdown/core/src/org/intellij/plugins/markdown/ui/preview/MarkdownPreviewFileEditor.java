@@ -76,7 +76,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     myHtmlPanelWrapper = new JPanel(new BorderLayout());
     myHtmlPanelWrapper.addComponentListener(new AttachPanelOnVisibilityChangeListener());
 
-    attachHtmlPanel();
+    //    attachHtmlPanel();
 
     final var messageBusConnection = myProject.getMessageBus().connect(this);
     final var settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();

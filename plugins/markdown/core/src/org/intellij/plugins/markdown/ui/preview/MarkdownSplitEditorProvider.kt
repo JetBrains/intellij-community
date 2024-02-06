@@ -1,20 +1,16 @@
 package org.intellij.plugins.markdown.ui.preview
 
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.intellij.plugins.markdown.ui.split.SplitTextEditorProvider
 import org.jdom.Attribute
 import org.jdom.DataConversionException
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class MarkdownSplitEditorProvider : SplitTextEditorProvider(PsiAwareTextEditorProvider(), MarkdownPreviewFileEditorProvider()) {
+class MarkdownSplitEditorProvider : TextEditorWithPreviewProvider(PsiAwareTextEditorProvider(), MarkdownPreviewFileEditorProvider()) {
   override fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor {
     require(firstEditor is TextEditor) { "Main editor should be TextEditor" }
     require(secondEditor is MarkdownPreviewFileEditor) { "Secondary editor should be MarkdownPreviewFileEditor" }

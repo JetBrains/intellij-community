@@ -13,7 +13,6 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Key;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,6 @@ import java.util.Objects;
  * @author Konstantin Bulenkov
  */
 public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
-  public static final Key<MarkdownEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
   private boolean myAutoScrollPreview;
 
   public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview) {
@@ -35,8 +33,6 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
       Layout.SHOW_EDITOR_AND_PREVIEW,
       !MarkdownSettings.getInstance(ProjectUtil.currentOrDefaultProject(editor.getEditor().getProject())).isVerticalSplit()
     );
-    editor.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
-    preview.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
 
     preview.setMainEditor(editor.getEditor());
 
