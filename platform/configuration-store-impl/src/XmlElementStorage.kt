@@ -5,7 +5,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
@@ -88,7 +88,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor))
+    return StateMap.fromMap(ComponentStorageUtil.load(element, pathMacroSubstitutor))
   }
 
   final override fun createSaveSessionProducer(): SaveSessionProducer? {
@@ -305,13 +305,13 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>): Mutable
 
     // name attribute should be first
     val elementAttributes = element.attributes
-    var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
+    var nameAttribute = element.getAttribute(ComponentStorageUtil.NAME)
     if (nameAttribute != null && nameAttribute === elementAttributes[0] && componentName == nameAttribute.value) {
       // all is OK
     }
     else {
       if (nameAttribute == null) {
-        nameAttribute = Attribute(FileStorageCoreUtil.NAME, componentName)
+        nameAttribute = Attribute(ComponentStorageUtil.NAME, componentName)
         elementAttributes.add(0, nameAttribute)
       }
       else {
@@ -334,12 +334,12 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>): Mutable
 
 internal fun Element.normalizeRootName(): Element {
   if (org.jdom.JDOMInterner.isInterned(this)) {
-    if (name == FileStorageCoreUtil.COMPONENT) {
+    if (name == ComponentStorageUtil.COMPONENT) {
       return this
     }
     else {
       val clone = clone()
-      clone.name = FileStorageCoreUtil.COMPONENT
+      clone.name = ComponentStorageUtil.COMPONENT
       return clone
     }
   }
@@ -348,7 +348,7 @@ internal fun Element.normalizeRootName(): Element {
       LOG.warn("State element must not have a parent: ${JDOMUtil.writeElement(this)}")
       detach()
     }
-    name = FileStorageCoreUtil.COMPONENT
+    name = ComponentStorageUtil.COMPONENT
     return this
   }
 }

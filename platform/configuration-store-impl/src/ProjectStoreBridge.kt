@@ -9,7 +9,7 @@ import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.module.ModuleManager
@@ -195,7 +195,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
       val component = if (storage is DirectoryBasedStorage) {
         val elementContent = stateMap.getElement(PathUtilRt.getFileName(filePath))
         if (elementContent != null) {
-          Element(FileStorageCoreUtil.COMPONENT).setAttribute(FileStorageCoreUtil.NAME, componentName).addContent(elementContent)
+          Element(ComponentStorageUtil.COMPONENT).setAttribute(ComponentStorageUtil.NAME, componentName).addContent(elementContent)
         }
         else {
           null

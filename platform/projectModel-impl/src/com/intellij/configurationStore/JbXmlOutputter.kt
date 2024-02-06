@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.application.PathMacroFilter
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
@@ -483,8 +483,8 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       var parent = parentElement
       while (parent != null) {
         var parentId = parent.name
-        if (parentId == FileStorageCoreUtil.COMPONENT) {
-          val componentName = parent.getAttributeValue(FileStorageCoreUtil.NAME)
+        if (parentId == ComponentStorageUtil.COMPONENT) {
+          val componentName = parent.getAttributeValue(ComponentStorageUtil.NAME)
           if (componentName != null) {
             parentId += "@$componentName"
           }

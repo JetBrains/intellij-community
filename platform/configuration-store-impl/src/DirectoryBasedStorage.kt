@@ -5,8 +5,7 @@ import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.StateSplitterEx
-import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,7 +23,7 @@ open class DirectoryBasedStorage(
   protected var componentName: String? = null
 
   public override fun loadData(): StateMap =
-    StateMap.fromMap(DirectoryStorageUtil.loadFrom(dir, pathMacroSubstitutor))
+    StateMap.fromMap(ComponentStorageUtil.load(dir, pathMacroSubstitutor))
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -44,7 +43,7 @@ open class DirectoryBasedStorage(
 
     // on load, `FileStorageCoreUtil` checks both component and name attributes
     // (critically important for the external store case, where we have only in-project artifacts, but not external)
-    val state = Element(FileStorageCoreUtil.COMPONENT).setAttribute(FileStorageCoreUtil.NAME, componentName)
+    val state = Element(ComponentStorageUtil.COMPONENT).setAttribute(ComponentStorageUtil.NAME, componentName)
     if (splitter is StateSplitterEx) {
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null
@@ -201,7 +200,7 @@ open class DirectoryBasedStorage(
           val file = dir.getOrCreateChild(fileName, this)
           // we don't write xml prolog due to historical reasons (and should not in any case)
           val macroManager = if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
-          val xmlDataWriter = XmlDataWriter(FileStorageCoreUtil.COMPONENT, listOf(element), mapOf(FileStorageCoreUtil.NAME to storage.componentName!!), macroManager, dir.path)
+          val xmlDataWriter = XmlDataWriter(ComponentStorageUtil.COMPONENT, listOf(element), mapOf(ComponentStorageUtil.NAME to storage.componentName!!), macroManager, dir.path)
           writeFile(null, this, file, xmlDataWriter, getOrDetectLineSeparator(file) ?: LineSeparator.getSystemLineSeparator(), false)
         }
         catch (e: IOException) {
@@ -226,7 +225,7 @@ open class DirectoryBasedStorage(
       val copiedStorageData = copiedStorageData!!
       for (file in dir.children) {
         val fileName = file.name
-        if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
+        if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
           if (file.isWritable) {
             file.delete(this)
           }

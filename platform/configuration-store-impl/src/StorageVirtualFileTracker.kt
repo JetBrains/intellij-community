@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
@@ -71,7 +71,7 @@ internal class StorageVirtualFileTracker {
         // So, we don't check if some of the registered storages located inside changed directory.
 
         // but if we have DirectoryBasedStorage, we check - if file located inside it
-        if (storage == null && hasDirectoryBasedStorages && path.endsWith(FileStorageCoreUtil.DEFAULT_EXT, ignoreCase = true)) {
+        if (storage == null && hasDirectoryBasedStorages && path.endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true)) {
           storage = filePathToStorage.get(VfsUtil.getParentDir(path))
         }
       }

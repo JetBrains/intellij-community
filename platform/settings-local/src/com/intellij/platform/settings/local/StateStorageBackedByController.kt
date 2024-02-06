@@ -9,7 +9,7 @@ import com.intellij.configurationStore.SaveSessionProducer
 import com.intellij.configurationStore.__platformSerializer
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
@@ -172,7 +172,7 @@ private class ControllerBackedSaveSessionProducer(
     when (state) {
       is Element -> putJdomElement(settingDescriptor, state)
       is com.intellij.openapi.util.JDOMExternalizable -> {
-        val element = Element(FileStorageCoreUtil.COMPONENT)
+        val element = Element(ComponentStorageUtil.COMPONENT)
         state.writeExternal(element)
         putJdomElement(settingDescriptor, element)
       }

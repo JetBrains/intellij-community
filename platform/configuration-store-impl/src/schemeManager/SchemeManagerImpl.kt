@@ -11,7 +11,7 @@ import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -80,7 +80,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       updateExtension = true
     }
     else {
-      schemeExtension = FileStorageCoreUtil.DEFAULT_EXT
+      schemeExtension = ComponentStorageUtil.DEFAULT_EXT
       updateExtension = false
     }
 
@@ -123,7 +123,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
           val fileNameWithoutExtension = schemeNameToFileName(schemeKey)
           val externalInfo = ExternalInfo(fileNameWithoutExtension = fileNameWithoutExtension,
-                                          fileExtension = fileNameWithoutExtension + FileStorageCoreUtil.DEFAULT_EXT)
+                                          fileExtension = fileNameWithoutExtension + ComponentStorageUtil.DEFAULT_EXT)
 
           externalInfo.schemeKey = schemeKey
 
@@ -246,7 +246,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   internal fun getFileExtension(fileName: CharSequence, isAllowAny: Boolean): String {
     return when {
       fileName.endsWith(schemeExtension, ignoreCase = true) -> schemeExtension
-      fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT, ignoreCase = true) -> FileStorageCoreUtil.DEFAULT_EXT
+      fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true) -> ComponentStorageUtil.DEFAULT_EXT
       isAllowAny -> PathUtilRt.getFileExtension(fileName.toString())!!
       else -> throw IllegalStateException("Scheme file extension $fileName is unknown, must be filtered out")
     }
@@ -348,7 +348,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   internal fun getFileName(scheme: T) = schemeListManager.getExternalInfo(scheme)?.fileNameWithoutExtension
 
   fun canRead(name: CharSequence): Boolean {
-    return (updateExtension && name.endsWith(FileStorageCoreUtil.DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) &&
+    return (updateExtension && name.endsWith(ComponentStorageUtil.DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) &&
            (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
   }
 

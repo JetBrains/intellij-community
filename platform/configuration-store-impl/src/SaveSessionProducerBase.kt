@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
@@ -38,7 +38,7 @@ internal fun serializeState(state: Any): Element? {
   return when (state) {
     is Element -> state
     is com.intellij.openapi.util.JDOMExternalizable -> {
-      val element = Element(FileStorageCoreUtil.COMPONENT)
+      val element = Element(ComponentStorageUtil.COMPONENT)
       state.writeExternal(element)
       element
     }
