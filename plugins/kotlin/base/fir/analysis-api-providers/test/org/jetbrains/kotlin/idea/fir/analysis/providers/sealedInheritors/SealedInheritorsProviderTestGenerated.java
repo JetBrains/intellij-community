@@ -43,6 +43,11 @@ public class SealedInheritorsProviderTestGenerated extends AbstractSealedInherit
         runTest("testData/sealedInheritors/ambiguousSealedInterface/");
     }
 
+    @TestMetadata("hmppExpectActual")
+    public void testHmppExpectActual() throws Exception {
+        runTest("testData/sealedInheritors/hmppExpectActual/");
+    }
+
     @TestMetadata("illegalDistributedSealedClass")
     public void testIllegalDistributedSealedClass() throws Exception {
         runTest("testData/sealedInheritors/illegalDistributedSealedClass/");

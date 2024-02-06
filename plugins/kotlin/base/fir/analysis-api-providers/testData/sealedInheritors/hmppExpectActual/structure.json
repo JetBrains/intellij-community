@@ -1,0 +1,12 @@
+{
+    "modules": [
+        { "name": "common", "platform": "common", "dependsOn": [] },
+        { "name": "intermediate", "platform": "common", "dependsOn": [{ "kind": "refinement", "name": "common" }] },
+        { "name": "platform", "platform": "jvm", "dependsOn": [{ "kind": "refinement", "name": "intermediate" }] }
+    ],
+    "targets": [
+        { "module": "common", "file": "main.common.kt" },
+        { "module": "intermediate", "file": "main.intermediate.kt" },
+        { "module":  "platform", "file":  "main.platform.kt" }
+    ]
+}
