@@ -128,7 +128,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun adjustPosition(originalPopup: JBPopup?, checkResizing: Boolean = false) {
-    if (originalPopup != null && originalPopup.content.isShowing) {
+    if (!popup.isDisposed && originalPopup != null && originalPopup.content.isShowing) {
       val positionAdjuster = PositionAdjuster(originalPopup.content)
       val previousDimension = PopupImplUtil.getPopupSize(popup)
       val bounds: Rectangle = positionAdjuster.adjustBounds(previousDimension, arrayOf(RIGHT, LEFT))
