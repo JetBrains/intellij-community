@@ -131,10 +131,12 @@ class ResultsGraph(private val contributorName: String, private val resultTiming
       }
       g2.color = JBColor.blue
       val intervals = timings.stream().collect(Collectors.groupingBy({ it / groupingInterval }, Collectors.counting()))
-      val maxIntervalItems = intervals.values.max()
+      val maxIntervalItems = intervals.values.sum()
       val bottomLine = rect.maxY.toInt()
+      var sum = 0L
       for (intervalItems in intervals) {
-        val columnHeight = (rect.height * 1.0 * intervalItems.value / maxIntervalItems).toInt()
+        sum += intervalItems.value
+        val columnHeight = (rect.height * 1.0 * sum / maxIntervalItems).toInt()
         val point = Point(rect.x + (intervalItems.key * columnWidth).toInt(), (bottomLine - columnHeight))
         g2.fillRect(point.x, point.y, columnWidth, columnHeight)
       }
