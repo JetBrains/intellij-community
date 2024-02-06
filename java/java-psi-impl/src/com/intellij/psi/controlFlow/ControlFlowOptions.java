@@ -83,8 +83,15 @@ public class ControlFlowOptions {
    * @see #shouldEvaluateConstantIfCondition() 
    */
   public ControlFlowOptions dontEvaluateConstantIfCondition() {
-    return myEvaluateConstantIfCondition ?
-           create(myEnableShortCircuit, false, myExceptionAfterAssignment) : this;
+    if (myEvaluateConstantIfCondition) {
+      if (!myOnlyExplicitExceptions) {
+        return create(myEnableShortCircuit, false, myExceptionAfterAssignment);
+      }
+      else {
+        return new ControlFlowOptions(myEnableShortCircuit, false, myExceptionAfterAssignment, myOnlyExplicitExceptions);
+      }
+    }
+    return this;
   }
 
   @Override
