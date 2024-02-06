@@ -1,5 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
+    <langCodeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyLanguageCodeStyleSettingsProvider"/>
   </extensions>
 </idea-plugin>
