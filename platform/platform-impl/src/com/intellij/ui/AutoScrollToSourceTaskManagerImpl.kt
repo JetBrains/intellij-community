@@ -12,8 +12,11 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.await
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -45,8 +48,14 @@ internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager
       }
 
       if (navigatable != null) {
-        SlowOperations.knownIssue("IDEA-304701, EA-677533").use {
-          OpenSourceUtil.navigateToSource(false, true, navigatable)
+        if (Registry.`is`("ide.navigation.requests") && project != null) {
+          val options = NavigationOptions.defaultOptions().requestFocus(false).preserveCaret(true)
+          NavigationService.getInstance(project).navigate(navigatable, options)
+        }
+        else {
+          SlowOperations.knownIssue("IDEA-304701, EA-677533").use {
+            OpenSourceUtil.navigateToSource(false, true, navigatable)
+          }
         }
       }
     }
