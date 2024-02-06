@@ -109,11 +109,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
     listeners.addListener(listener, disposable)
   }
 
-  fun update(editors: List<List<Editor>>, currentEditor: Editor = this.currentEditor) {
-    update(editors, { it }, currentEditor)
-  }
-
-  private fun <EditorHolder> update(items: List<EditorHolder>, mapper: (EditorHolder) -> List<Editor>, currentEditor: Editor) {
+  fun <EditorHolder> update(items: List<EditorHolder>, mapper: (EditorHolder) -> List<Editor>, currentEditor: Editor = this.currentEditor) {
     val update = holders.isNotEmpty()
 
     holders.forEach(EditorSearchSessionHolder::disposeLivePreview)

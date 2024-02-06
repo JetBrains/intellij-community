@@ -3,6 +3,8 @@ package com.intellij.openapi.diff.impl.combined.search
 
 import com.intellij.diff.tools.combined.CombinedDiffViewer
 import com.intellij.diff.tools.combined.currentEditor
+import com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
+import com.intellij.diff.tools.combined.search.CombinedDiffSearchContext.EditorHolder
 import com.intellij.diff.tools.combined.search.CombinedDiffSearchController
 import com.intellij.diff.tools.combined.search.CombinedDiffSearchProvider
 import com.intellij.openapi.diff.DiffBundle
@@ -35,14 +37,14 @@ class CombinedDiffSearchProviderImpl(private val project: Project) : CombinedDif
       .also { it.addListener(this) }
 
     init {
-      session.update(viewer.editorsOrdered, currentEditor)
+      session.update(viewer.createSearchContext().holders, EditorHolder::editors, currentEditor)
     }
 
     override val searchComponent: JComponent
       get() = session.component
 
-    override fun update(editors: List<List<Editor>>) {
-      session.update(editors)
+    override fun update(context: CombinedDiffSearchContext) {
+      session.update(context.holders, EditorHolder::editors)
     }
 
     override fun onSearch(forward: Boolean, editor: Editor) {

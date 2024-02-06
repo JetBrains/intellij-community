@@ -10,6 +10,7 @@ import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
 import com.intellij.diff.tools.combined.search.CombinedDiffSearchController
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.DiffUserDataKeys
@@ -88,8 +89,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     }
   }
 
-  var searchController: CombinedDiffSearchController? = null
-    private set
+  private var searchController: CombinedDiffSearchController? = null
 
   init {
     Touchbar.setActions(mainPanel, touchbarActionGroup)
@@ -157,6 +157,11 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
 
     topPanel.revalidate()
     topPanel.repaint()
+  }
+
+  @RequiresEdt
+  fun updateSearch(context: CombinedDiffSearchContext) {
+    searchController?.update(context)
   }
 
   @RequiresEdt

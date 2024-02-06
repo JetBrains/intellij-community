@@ -6,6 +6,7 @@ import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.impl.ui.DiffInfo
+import com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffViewer
 import com.intellij.diff.tools.util.DiffDataKeys
@@ -445,7 +446,7 @@ class CombinedDiffViewer(
   }
 
   private fun updateSearch() {
-    getMainUI().searchController?.update(editorsOrdered)
+    getMainUI().updateSearch(createSearchContext())
   }
 
   private val foldingModels: List<FoldingModelSupport>
@@ -529,11 +530,16 @@ class CombinedDiffViewer(
     }
   }
 
+  fun createSearchContext(): CombinedDiffSearchContext {
+    return CombinedDiffSearchContext(blockState.iterateBlocks()
+                                       .asSequence()
+                                       .mapNotNull { id -> diffViewers[id]?.editors }
+                                       .map(CombinedDiffSearchContext::EditorHolder)
+                                       .toList())
+  }
+
   internal val editors: List<Editor>
     get() = diffViewers.values.flatMap { it.editors }
-
-  val editorsOrdered: List<List<Editor>>
-    get() = blockState.iterateBlocks().asSequence().mapNotNull { id -> diffViewers[id]?.editors}.toList()
 
   private inner class FocusListener(disposable: Disposable) : FocusAdapter(), FocusChangeListener {
     init {

@@ -23,5 +23,14 @@ interface CombinedDiffSearchController {
 
   val searchComponent: JComponent
 
-  fun update(editors: List<List<Editor>>)
+  fun update(context: CombinedDiffSearchContext)
+}
+
+class CombinedDiffSearchContext(val holders: List<EditorHolder>) {
+  /**
+   * Holder, which contains ordered editors
+   *
+   * @see [com.intellij.diff.EditorDiffViewer]
+   */
+  class EditorHolder(val editors: List<Editor>)
 }
