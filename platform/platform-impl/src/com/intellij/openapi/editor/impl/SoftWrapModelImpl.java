@@ -203,7 +203,9 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       myPainter.reinit();
     }
 
-    if (myUseSoftWraps != softWrapsUsedBefore || tabWidthBefore >= 0 && myTabWidth != tabWidthBefore || fontsChanged) {
+    if (myUseSoftWraps != softWrapsUsedBefore ||
+        myUseSoftWraps && tabWidthBefore >= 0 && myTabWidth != tabWidthBefore ||
+        myUseSoftWraps && fontsChanged) {
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
       myStorage.removeAll();
