@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter.HealthCheckError
 import java.util.concurrent.Callable
@@ -33,6 +34,8 @@ internal sealed class ProjectIndexableFilesFilterHolder {
   abstract fun removeFile(fileId: Int)
 
   abstract fun findProjectForFile(fileId: Int): Project?
+
+  abstract fun findProjectsForFile(fileId: Int): Set<Project>
 
   abstract fun runHealthCheck()
 }
@@ -96,6 +99,16 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
       }
     }
     return null
+  }
+
+  override fun findProjectsForFile(fileId: Int): Set<Project> {
+    val projects = SmartHashSet<Project>()
+    for ((project, filter) in myProjectFilters) {
+      if (filter.containsFileId(fileId)) {
+        projects.add(project)
+      }
+    }
+    return projects
   }
 
   override fun runHealthCheck() {

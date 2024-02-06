@@ -164,7 +164,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     if (!(fileOrDir instanceof VirtualFileWithId fileOrDirWithId)) return;
     int id = fileOrDirWithId.getId();
 
-    Set<Project> projects = myFileBasedIndex.getContainingProjects(fileOrDir);
+    Set<Project> projects = myFileBasedIndex.getIndexableFilesFilterHolder().findProjectsForFile(FileBasedIndex.getFileId(fileOrDir));
     if (projects.isEmpty()) {
       myDirtyFilesWithoutProject.set(id);
       return;
