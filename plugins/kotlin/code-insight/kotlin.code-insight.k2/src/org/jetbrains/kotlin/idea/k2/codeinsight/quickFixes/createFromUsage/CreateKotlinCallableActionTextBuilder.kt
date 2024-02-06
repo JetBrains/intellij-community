@@ -27,7 +27,7 @@ internal class CreateKotlinCallableActionTextBuilder(
     private val isAbstract: Boolean,
     private val isExtension: Boolean,
 ) {
-    fun build() = buildString {
+    fun build(): String = buildString {
         append(KotlinBundle.message("text.create"))
         append(' ')
         descriptionOfCallableAsString()?.let { callableKindAsString ->
