@@ -22,7 +22,7 @@ class PythonHeadlessSdkUpdater : StartupActivity, DumbAware {
   override fun runActivity(project: Project) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) return
-    if (!PythonSdkUpdater.dropUpdaterInHeadless()) return // see PythonSdkUpdater
+    if (!dropUpdaterInHeadless()) return // see PythonSdkUpdateProjectActivity
 
     scheduleTasks(project)
     waitForTasks(project)

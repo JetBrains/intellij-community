@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -25,7 +24,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -37,7 +35,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.remote.RemoteSdkProperties;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
@@ -66,7 +63,7 @@ import java.util.function.Function;
 /**
  * Refreshes all project's Python SDKs.
  */
-public final class PythonSdkUpdater implements StartupActivity, DumbAware {
+public final class PythonSdkUpdater {
   private static final Logger LOG = Logger.getInstance(PythonSdkUpdater.class);
 
   private static final Object ourLock = new Object();
@@ -81,25 +78,9 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ourEnabledInTests = enabled;
   }
 
-  static boolean dropUpdaterInHeadless() {
-    return ApplicationManager.getApplication().isHeadlessEnvironment() && !Registry.is("ide.warmup.use.predicates");
-  }
-
   /**
    * Schedules a background refresh of the SDKs of the modules for the open project.
    */
-  @Override
-  public void runActivity(@NotNull Project project) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) return;
-    if (dropUpdaterInHeadless()) return; // see PythonHeadlessSdkUpdater
-    if (project.isDisposed()) return;
-
-    for (Sdk sdk : getPythonSdks(project)) {
-      scheduleUpdate(sdk, project);
-    }
-  }
-
   private static class PyUpdateSdkRequestData {
     final Instant myTimestamp;
     final Throwable myTraceback;
@@ -713,7 +694,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   }
 
   private enum Trigger {
-    STARTUP_ACTIVITY("com.jetbrains.python.sdk.PythonSdkUpdater.runActivity"),
+    STARTUP_ACTIVITY("com.jetbrains.python.sdk.PythonSdkUpdateProjectActivity.execute"),
     CHANGE_UNDER_INTERPRETER_ROOTS("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$subscribeToLocalChanges"),
     REFRESH_AFTER_PACKAGING_OPERATION("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$refresh"),
     NEW_SDK_GENERATION("com.jetbrains.python.sdk.PySdkExtKt.createSdkByGenerateTask"),
