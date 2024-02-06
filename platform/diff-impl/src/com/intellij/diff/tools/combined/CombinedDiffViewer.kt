@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.actions.EditorActionUtil
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
@@ -29,6 +30,7 @@ import com.intellij.openapi.editor.impl.ScrollingModelImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.JBColor
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBLayeredPane
@@ -37,9 +39,14 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.Point
@@ -52,15 +59,20 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.min
 import kotlin.math.roundToInt
+
 class CombinedDiffViewer(
   private val context: DiffContext,
   blockListener: BlockListener,
-  private val blockState: BlockState
+  private val blockState: BlockState,
+  private val viewState: CombinedDiffUIState
   ) : CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
     DataProvider,
     Disposable {
   private val project = context.project!! // CombinedDiffContext expected
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private val cs = GlobalScope.namedChildScope("CombinedDiffViewer", Dispatchers.EDT)
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
   private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = hashMapOf()
@@ -133,6 +145,12 @@ class CombinedDiffViewer(
   init {
     blockListeners.listeners.add(blockListener)
     selectDiffBlock(blockState.currentBlock, true)
+
+    cs.launch {
+      viewState.separatorState.collect { visible ->
+        separatorPanel.background = if (visible) JBColor.border() else CombinedDiffUI.MAIN_HEADER_BACKGROUND
+      }
+    }.cancelOnDispose(this)
   }
 
   internal fun updateBlockContent(newContent: CombinedDiffBlockContent) {
@@ -346,7 +364,7 @@ class CombinedDiffViewer(
     val viewRect = scrollPane.viewport.viewRect
     val bounds = blocksPanel.getBlockBounds().firstOrNull { viewRect.intersects(it) } ?: return
     val block = diffBlocks[bounds.blockId]
-    separatorPanel.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    viewState.setStickyHeaderUnderBorder(false)
 
     if (block == null || bounds.minY > viewRect.minY) {
       stickyHeaderPanel.setContent(null)
@@ -371,7 +389,7 @@ class CombinedDiffViewer(
 
     val showBorder = headerHeightInViewport < headerHeight
     if (showBorder) {
-      separatorPanel.background = JBColor.border()
+      viewState.setStickyHeaderUnderBorder(true)
     }
 
     diffInfo.updateForBlock(block.id)

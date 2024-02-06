@@ -128,7 +128,7 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
       eventDispatcher.multicaster.onActiveFileChanged()
     }
 
-    return CombinedDiffViewer(context, MyBlockListener(), blockState).also { viewer ->
+    return CombinedDiffViewer(context, MyBlockListener(), blockState, mainUi.getUiState()).also { viewer ->
       Disposer.register(disposable, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_KEY, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)

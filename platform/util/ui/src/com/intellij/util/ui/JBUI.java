@@ -1747,7 +1747,7 @@ public final class JBUI {
 
       public static final class CombinedDiff {
         public static @NotNull Insets mainToolbarInsets() {
-          return insets(mainToolbarInsetsKey(), isNewUI() ? insets(5, 10) : insets(1, 10));
+          return insets(mainToolbarInsetsKey(), isNewUI() ? insets(4, 10) : insets(1, 10));
         }
 
         public static @NotNull String mainToolbarInsetsKey() {

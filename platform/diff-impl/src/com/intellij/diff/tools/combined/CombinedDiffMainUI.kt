@@ -32,7 +32,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.GuiUtils
+import com.intellij.ui.JBColor
 import com.intellij.ui.JBSplitter
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.touchbar.Touchbar
@@ -41,6 +43,9 @@ import com.intellij.util.ui.Centerizer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Component
@@ -65,6 +70,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   private val contentPanel = Wrapper()
 
   private val diffToolChooser: MyDiffToolChooser = MyDiffToolChooser()
+
+  private val combinedDiffUIState = CombinedDiffUIState()
 
   private val mainToolbar: CombinedDiffMainToolbar = CombinedDiffMainToolbar(
     mainPanel,
@@ -125,6 +132,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   @RequiresEdt
   fun setSearchController(searchController: CombinedDiffSearchController) {
     this.searchController = searchController
+    combinedDiffUIState.setSearchMode(true)
     mainToolbar.setSearchComponent(searchController.searchComponent)
   }
 
@@ -137,6 +145,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   fun closeSearch() {
     searchController = null
     mainToolbar.hideSearch()
+    combinedDiffUIState.setSearchMode(false)
 
     val project = model.context.project ?: return
     combinedViewer?.preferredFocusedComponent?.let { preferedFocusedComponent ->
@@ -171,6 +180,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   }
 
   private fun clear() {
+    combinedDiffUIState.reset()
     contentPanel.setContent(null)
     mainToolbar.clear()
     popupActionGroup.removeAll()
@@ -275,6 +285,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     return model.getLoadedRequest(id)
   }
 
+  fun getUiState(): CombinedDiffUIState = combinedDiffUIState
+
   private inner class MyFocusTraversalPolicy : IdeFocusTraversalPolicy() {
     override fun getDefaultComponent(focusCycleRoot: Container): Component? {
       val component: JComponent = getPreferredFocusedComponent() ?: return null
@@ -307,6 +319,8 @@ private class CombinedDiffMainToolbar(
 
   val component: JComponent = panel
 
+  private val topPanel: BorderLayoutPanel
+
   init {
     leftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, leftToolbarGroup, true)
     leftToolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
@@ -323,18 +337,44 @@ private class CombinedDiffMainToolbar(
     rightToolbar.component.border = JBUI.Borders.empty()
     rightToolbarPanel = Centerizer(rightToolbar.component, Centerizer.TYPE.VERTICAL)
 
-    panel.addToTop(buildTopPanel())
+    topPanel = buildTopPanel()
+    configureTopPanelForActionsMode()
+    panel.addToTop(topPanel)
       .addToBottom(searchPanel)
   }
 
   fun setSearchComponent(searchComponent: JComponent) {
     searchPanel.setContent(searchComponent)
+    searchComponent.border = SideBorder(JBColor.border(), SideBorder.LEFT)
+    topPanel.removeAll()
+    topPanel.addToCenter(searchPanel).addToLeft(leftToolbarPanel)
+    configureTopPanelForSearchMode()
     revalidateAndRepaint()
   }
 
   fun hideSearch() {
     searchPanel.setContent(null)
+    topPanel.removeAll()
+    topPanel.addToCenter(diffInfoPanel).addToLeft(leftToolbarPanel).addToRight(rightToolbarPanel)
+    configureTopPanelForActionsMode()
     revalidateAndRepaint()
+  }
+
+  private fun configureTopPanelForActionsMode() {
+    topPanel.border = JBUI.Borders.empty(CombinedDiffUI.MAIN_HEADER_INSETS)
+    val background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    topPanel.background = background
+    leftToolbarPanel.background = background
+    leftToolbar.component.background = background
+  }
+
+  private fun configureTopPanelForSearchMode() {
+    topPanel.border = JBUI.Borders.emptyLeft(CombinedDiffUI.MAIN_HEADER_INSETS.left)
+    val background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+    topPanel.background = background
+    leftToolbarPanel.background = background
+    leftToolbar.component.background = background
+    leftToolbar.component.border = JBUI.Borders.emptyRight(CombinedDiffUI.MAIN_HEADER_INSETS.left)
   }
 
   fun isFocusedInWindow(): Boolean = DiffUtil.isFocusedComponentInWindow(leftToolbar.component) || DiffUtil.isFocusedComponentInWindow(rightToolbar.component)
@@ -365,12 +405,9 @@ private class CombinedDiffMainToolbar(
 
   private fun buildTopPanel(): BorderLayoutPanel {
     val topPanel = JBUI.Panels.simplePanel(diffInfoPanel)
-      .andTransparent()
+      .andOpaque()
       .addToLeft(leftToolbarPanel)
       .addToRight(rightToolbarPanel)
-      .apply {
-        border = JBUI.Borders.empty(CombinedDiffUI.MAIN_HEADER_INSETS)
-      }
     GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)
     GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)
 
@@ -449,5 +486,28 @@ private class ShowActionGroupPopupAction(
     val popup = JBPopupFactory.getInstance().createActionGroupPopup(DiffBundle.message("diff.actions"), popupActionGroup, e.dataContext,
                                                                     JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
     popup.showInCenterOf(parentComponent)
+  }
+}
+
+/**
+ * Various ui states which shared between the main ui and the combined diff viewer
+ */
+class CombinedDiffUIState {
+  private val searchMode: MutableStateFlow<Boolean> = MutableStateFlow(false)
+  private val stickyHeaderUnderBorder: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+  val separatorState: Flow<Boolean> = combine(searchMode, stickyHeaderUnderBorder) { search, header -> search || header }
+
+  fun setSearchMode(isSearchMode: Boolean) {
+    searchMode.value = isSearchMode
+  }
+
+  fun setStickyHeaderUnderBorder(isHeaderUnderBorder: Boolean) {
+    stickyHeaderUnderBorder.value = isHeaderUnderBorder
+  }
+
+  fun reset() {
+    setStickyHeaderUnderBorder(false)
+    setSearchMode(false)
   }
 }
