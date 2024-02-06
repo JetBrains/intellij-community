@@ -70,10 +70,10 @@ private fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, 
 }
 
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any>) {
-  override fun toString() = if (this == EMPTY) "EMPTY" else states.toString()
+  override fun toString(): String = if (this == EMPTY) "EMPTY" else states.toString()
 
   companion object {
-    internal val EMPTY = StateMap(ArrayUtilRt.EMPTY_STRING_ARRAY, AtomicReferenceArray(0))
+    internal val EMPTY: StateMap = StateMap(ArrayUtilRt.EMPTY_STRING_ARRAY, AtomicReferenceArray(0))
 
     fun fromMap(map: Map<String, Any>): StateMap {
       if (map.isEmpty()) {

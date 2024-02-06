@@ -52,7 +52,7 @@ internal class AppStorageContentReader : JpsFileContentReader {
 }
 
 internal class AppStorageContentWriter(private val session: SaveSessionProducerManager) : JpsAppFileContentWriter {
-  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) = saveComponentTimeMs.addMeasuredTimeMillis {
+  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?): Unit = saveComponentTimeMs.addMeasuredTimeMillis {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (isApplicationLevelFile(filePath)) {
       val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)

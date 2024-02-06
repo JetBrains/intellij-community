@@ -42,7 +42,7 @@ open class StateStorageManagerImpl(
   @Volatile
   protected var macros: List<Macro> = Collections.emptyList()
 
-  protected val storageLock = ReentrantReadWriteLock()
+  protected val storageLock: ReentrantReadWriteLock = ReentrantReadWriteLock()
   private val storages = HashMap<String, StateStorage>()
 
   val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()

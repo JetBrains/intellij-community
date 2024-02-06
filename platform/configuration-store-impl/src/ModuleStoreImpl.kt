@@ -7,6 +7,7 @@ import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -25,7 +26,7 @@ private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMa
 internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), ModuleStore {
   private val pathMacroManager = PathMacroManager.getInstance(module)
 
-  override val project = module.project
+  override val project: Project = module.project
 
   override val storageManager: StateStorageManagerImpl =
     ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
@@ -60,7 +61,7 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
     }
   }
 
-  final override fun setPath(path: Path) = setPath(path, null, false)
+  final override fun setPath(path: Path): Unit = setPath(path, null, false)
 
   override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
     val isMacroAdded = storageManager.setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
