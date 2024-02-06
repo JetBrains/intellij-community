@@ -54,17 +54,21 @@ private suspend fun runValidationRulesUpdate() {
   }
 
   while (true) {
-    val providers = getEventLogProviders()
-    for (provider in providers) {
-      if (provider.isLoggingEnabled()) {
-        blockingContext {
-          IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
-        }
-      }
-    }
+    updateValidationRules()
     serviceAsync<StatisticsValidationUpdatedService>().updatedDeferred.complete(Unit)
 
     delay(180.minutes)
+  }
+}
+
+suspend fun updateValidationRules() {
+  val providers = getEventLogProviders()
+  for (provider in providers) {
+    if (provider.isLoggingEnabled()) {
+      blockingContext {
+        IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
+      }
+    }
   }
 }
 
