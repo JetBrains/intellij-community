@@ -684,11 +684,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!states.isEmpty()) {
       ProgressManager.getInstance().executeNonCancelableSection(() -> removeFileDataFromIndices(states, fileId, originalFile));
     }
-    boolean isValid =
-      file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).isOriginalValid() : file.isValid();
-    if (!isValid) {
-      getIndexableFilesFilterHolder().removeFile(fileId);
-    }
   }
 
   public void removeFileDataFromIndices(@NotNull Collection<? extends ID<?, ?>> indexIds, int fileId, @Nullable VirtualFile file) {
@@ -1942,12 +1937,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       final int fileId = getFileId(file);
       if (!file.isValid()) {
         removeDataFromIndicesForFile(fileId, file, "invalid_file");
+        getIndexableFilesFilterHolder().removeFile(fileId);
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }
       else if (!belongsToIndexableFiles(file)) {
         if (ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA) {
           removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
         }
+        getIndexableFilesFilterHolder().removeFile(fileId);
         changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
       }
     }

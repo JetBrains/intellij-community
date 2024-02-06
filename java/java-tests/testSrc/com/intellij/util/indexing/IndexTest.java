@@ -1500,6 +1500,24 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertFalse(IndexingFlag.isFileIndexed(file, indexingRequest.getFileIndexingStamp(file)));
   }
 
+  public void test_modified_excluded_file_not_present_in_indexable_files_filter() throws IOException {
+    final VirtualFile file = myFixture.addFileToProject("src/to_be_excluded/A.java", "class A {}").getVirtualFile();
+    assertNotNull(findClass("A"));
+
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    int fileId = ((VirtualFileWithId)file).getId();
+
+    fileBasedIndex.getChangedFilesCollector().ensureUpToDate();
+    assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+
+    VirtualFile parentDir = file.getParent();
+    PsiTestUtil.addExcludedRoot(myFixture.getModule(), parentDir);
+    WriteAction.run(() -> VfsUtil.saveText(file, "class B {}"));
+
+    fileBasedIndex.getChangedFilesCollector().ensureUpToDate();
+    assertNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
+  }
+
   public void test_stub_index_updated_after_language_level_change() {
     VirtualFile file = myFixture.addFileToProject("src1/A.java", "class A {}").getVirtualFile();
     FilePropertyKey<LanguageLevel> javaLanguageLevelKey = FilePropertyPusher.EP_NAME.findExtension(JavaLanguageLevelPusher.class).getFilePropertyKey();

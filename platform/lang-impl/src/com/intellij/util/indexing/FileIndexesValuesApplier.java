@@ -10,6 +10,7 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateWriter;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexesEvaluated;
+import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -136,6 +137,10 @@ public final class FileIndexesValuesApplier {
     long startTime = System.nanoTime();
     if (removeDataFromIndicesForFile) {
       myIndex.removeDataFromIndicesForFile(fileId, file, "invalid_or_large_file");
+      boolean isValid = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).isOriginalValid() : file.isValid();
+      if (!isValid) {
+        myIndex.getIndexableFilesFilterHolder().removeFile(fileId);
+      }
     }
 
     if (appliers.isEmpty() && removers.isEmpty()) {

@@ -90,6 +90,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       Set<Project> projects = myFileBasedIndex.getContainingProjects(file);
       if (projects.isEmpty()) {
         removeNonIndexableFileData(file, fileId);
+        myFileBasedIndex.getIndexableFilesFilterHolder().removeFile(fileId);
         return;
       }
     }
