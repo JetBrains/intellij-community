@@ -192,7 +192,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
     else {
       val storage = getProjectStateStorage(filePath, project.stateStore, project)
       val stateMap = storage.getStorageData()
-      val component = if (storage is DirectoryBasedStorageBase) {
+      val component = if (storage is DirectoryBasedStorage) {
         val elementContent = stateMap.getElement(PathUtilRt.getFileName(filePath))
         if (elementContent != null) {
           Element(FileStorageCoreUtil.COMPONENT).setAttribute(FileStorageCoreUtil.NAME, componentName).addContent(elementContent)

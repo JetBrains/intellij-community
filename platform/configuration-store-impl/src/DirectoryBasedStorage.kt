@@ -12,22 +12,19 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Path
 
-abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val splitter: com.intellij.openapi.components.StateSplitter,
-                                         protected val pathMacroSubstitutor: PathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
+open class DirectoryBasedStorage(
+  private val dir: Path,
+  @Suppress("DEPRECATION", "removal") private val splitter: com.intellij.openapi.components.StateSplitter,
+  private val pathMacroSubstitutor: PathMacroSubstitutor? = null
+) : StateStorageBase<StateMap>() {
   protected var componentName: String? = null
 
-  protected abstract val dir: Path
-
-  public override fun loadData(): StateMap {
-    return StateMap.fromMap(DirectoryStorageUtil.loadFrom(dir, pathMacroSubstitutor))
-  }
-
-  override fun createSaveSessionProducer(): SaveSessionProducer? = null
+  public override fun loadData(): StateMap =
+    StateMap.fromMap(DirectoryStorageUtil.loadFrom(dir, pathMacroSubstitutor))
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -45,7 +42,8 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
       return null
     }
 
-    // FileStorageCoreUtil on load check both component and name attributes (critical important for external store case, where we have only in-project artifacts, but not external)
+    // on load, `FileStorageCoreUtil` checks both component and name attributes
+    // (critically important for the external store case, where we have only in-project artifacts, but not external)
     val state = Element(FileStorageCoreUtil.COMPONENT).setAttribute(FileStorageCoreUtil.NAME, componentName)
     if (splitter is StateSplitterEx) {
       for (fileName in storageData.keys()) {
@@ -61,21 +59,13 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
       }
 
       if (subElements.isNotEmpty()) {
+        @Suppress("removal")
         splitter.mergeStatesInto(state, subElements.toTypedArray())
       }
     }
     return state
   }
-}
 
-@ApiStatus.Internal
-interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {
-  fun setFileState(fileName: String, componentName: String, element: Element?)
-}
-
-open class DirectoryBasedStorage(override val dir: Path,
-                                 @Suppress("DEPRECATION") splitter: com.intellij.openapi.components.StateSplitter,
-                                 pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
 
@@ -92,9 +82,13 @@ open class DirectoryBasedStorage(override val dir: Path,
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): SaveSessionProducer? = if (checkIsSavingDisabled()) null else MySaveSessionProducer(this, getStorageData())
+  override fun createSaveSessionProducer(): SaveSessionProducer? =
+    if (checkIsSavingDisabled()) null else MySaveSessionProducer(this, getStorageData())
 
-  private class MySaveSessionProducer(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionProducerBase(), SaveSession, DirectoryBasedSaveSessionProducer {
+  private class MySaveSessionProducer(
+    private val storage: DirectoryBasedStorage,
+    private val originalStates: StateMap
+  ) : SaveSessionProducerBase(), SaveSession, DirectoryBasedSaveSessionProducer {
     private var copiedStorageData: MutableMap<String, Any>? = null
 
     private val dirtyFileNames = HashSet<String>()
@@ -103,7 +97,7 @@ open class DirectoryBasedStorage(override val dir: Path,
     override fun setSerializedState(componentName: String, element: Element?) {
       storage.componentName = componentName
 
-      val stateAndFileNameList = if (JDOMUtil.isEmpty(element)) emptyList() else storage.splitter.splitState(element!!)
+      @Suppress("removal") val stateAndFileNameList = if (JDOMUtil.isEmpty(element)) emptyList() else storage.splitter.splitState(element!!)
       if (stateAndFileNameList.isEmpty()) {
         if (copiedStorageData != null) {
           copiedStorageData!!.clear()
@@ -158,7 +152,8 @@ open class DirectoryBasedStorage(override val dir: Path,
       }
     }
 
-    override fun createSaveSession() = if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
+    override fun createSaveSession(): SaveSession? =
+      if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
 
     override fun saveBlocking() {
       val stateMap = StateMap.fromMap(copiedStorageData!!)
@@ -215,6 +210,18 @@ open class DirectoryBasedStorage(override val dir: Path,
       }
     }
 
+    private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator? {
+      if (!file.exists()) {
+        return null
+      }
+      file.detectedLineSeparator?.let {
+        return LineSeparator.fromString(it)
+      }
+      val lineSeparator = detectLineSeparators(Charsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray())))
+      file.detectedLineSeparator = lineSeparator.separatorString
+      return lineSeparator
+    }
+
     private fun deleteFiles(dir: VirtualFile) {
       val copiedStorageData = copiedStorageData!!
       for (file in dir.children) {
@@ -235,18 +242,9 @@ open class DirectoryBasedStorage(override val dir: Path,
     storageDataRef.set(newStates)
   }
 
-  override fun toString() = "${javaClass.simpleName}(dir=${dir}, componentName=$componentName)"
+  override fun toString(): String = "${javaClass.simpleName}(dir=${dir}, componentName=$componentName)"
 }
 
-private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator? {
-  if (!file.exists()) {
-    return null
-  }
-
-  file.detectedLineSeparator?.let {
-    return LineSeparator.fromString(it)
-  }
-  val lineSeparator = detectLineSeparators(Charsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray())))
-  file.detectedLineSeparator = lineSeparator.separatorString
-  return lineSeparator
+internal interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {
+  fun setFileState(fileName: String, componentName: String, element: Element?)
 }
