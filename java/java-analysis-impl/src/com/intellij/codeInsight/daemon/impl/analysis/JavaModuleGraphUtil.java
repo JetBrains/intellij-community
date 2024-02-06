@@ -32,6 +32,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,9 +54,23 @@ public final class JavaModuleGraphUtil {
   @Contract("null->null")
   public static @Nullable PsiJavaModule findDescriptorByElement(@Nullable PsiElement element) {
     if (element == null) return null;
-    PsiFileSystemItem fsItem = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
-    if (fsItem == null) return null;
-    return findDescriptorByFile(fsItem.getVirtualFile(), fsItem.getProject());
+    if (element instanceof PsiFileSystemItem fsItem) {
+      return findDescriptorByFile(fsItem.getVirtualFile(), fsItem.getProject());
+    }
+
+    PsiFile file = element.getContainingFile();
+    if (file != null) {
+      return findDescriptorByFile(file.getVirtualFile(), file.getProject());
+    }
+
+    if (element instanceof PsiPackage psiPackage) {
+      PsiDirectory[] directories = psiPackage.getDirectories(ProjectScope.getLibrariesScope(psiPackage.getProject()));
+      for (PsiDirectory directory : directories) {
+        PsiJavaModule descriptor = findDescriptorByFile(directory.getVirtualFile(), directory.getProject());
+        if (descriptor != null) return descriptor;
+      }
+    }
+    return null;
   }
 
   @Contract("null,_->null")
@@ -119,7 +134,7 @@ public final class JavaModuleGraphUtil {
     final PsiJavaModule javaModule = findDescriptorInLibrary(project, ProjectFileIndex.getInstance(project), files[0]);
     return javaModule != null && javaModule.isValid() ? javaModule : null;
   }
-  
+
   public static @Nullable PsiJavaModule findNonAutomaticDescriptorByModule(@Nullable Module module, boolean inTests) {
     PsiJavaModule javaModule = findDescriptorByModule(module, inTests);
     return javaModule instanceof LightJavaModule ? null : javaModule;
@@ -129,8 +144,8 @@ public final class JavaModuleGraphUtil {
   private static Result<PsiJavaModule> createModuleCacheResult(@NotNull Module module,
                                                                boolean inTests) {
     Project project = module.getProject();
-    return new Result<>(findDescriptionByModuleInner(module, inTests), 
-                        ProjectRootModificationTracker.getInstance(project), 
+    return new Result<>(findDescriptionByModuleInner(module, inTests),
+                        ProjectRootModificationTracker.getInstance(project),
                         PsiJavaModuleModificationTracker.getInstance(project));
   }
 
@@ -215,9 +230,9 @@ public final class JavaModuleGraphUtil {
   }
 
   public static boolean addDependency(@NotNull PsiJavaModule from,
-                                   @NotNull String to,
-                                   @Nullable DependencyScope scope,
-                                   boolean isExported) {
+                                      @NotNull String to,
+                                      @Nullable DependencyScope scope,
+                                      boolean isExported) {
     if (to.equals(JAVA_BASE)) return false;
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
@@ -286,7 +301,7 @@ public final class JavaModuleGraphUtil {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       List<PsiJavaModule> descriptors = ContainerUtil.mapNotNull(moduleRootManager.getSourceRoots(true),
-        root -> findDescriptorByFile(root, project));
+                                                                 root -> findDescriptorByFile(root, project));
       if (descriptors.size() > 2) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
 
       if (descriptors.size() == 2) {
@@ -343,7 +358,10 @@ public final class JavaModuleGraphUtil {
   }
 
   private static RequiresGraph getRequiresGraph(@NotNull PsiJavaModule module) {
-    Project project = module.getProject();
+    final Project project = module.getProject();
+    if (DumbService.getInstance(project).isAlternativeResolveEnabled()) {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> buildRequiresGraph(project));
+    }
     return CachedValuesManager.getManager(project).getCachedValue(project, () ->
       Result.create(buildRequiresGraph(project),
                     PsiJavaModuleModificationTracker.getInstance(project),
@@ -469,8 +487,7 @@ public final class JavaModuleGraphUtil {
       return module.getName() + '/' + exporter.getName();
     }
 
-    @NotNull
-    public Set<PsiJavaModule> getAllDependencies(@NotNull PsiJavaModule module) {
+    public @NotNull Set<PsiJavaModule> getAllDependencies(@NotNull PsiJavaModule module) {
       Set<PsiJavaModule> requires = new HashSet<>();
       collectDependencies(module, requires);
       return requires;

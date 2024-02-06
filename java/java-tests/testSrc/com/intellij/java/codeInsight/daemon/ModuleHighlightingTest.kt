@@ -20,10 +20,13 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiResolveHelper
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import java.util.jar.JarFile
@@ -164,6 +167,30 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""module M1 { requires <error descr="Module not found: all.fours">all.fours</error>; }""")
     addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: all.fours\n", M4)
     highlight("""module M1 { requires all.fours; }""")
+  }
+
+  fun testDumbMode() {
+    myFixture.configureFromExistingVirtualFile(addFile("org/test/Test.java", """
+        package org.test;
+        class Test {}""".trimIndent(), M2))
+    val psiPackage = myFixture.findPackage("org.test")
+
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      addFile("module-info.java", """
+        module M1 {
+          requires M.missing;
+        }""".trimIndent())
+      myFixture.configureByText("A.java", """
+        package com.example;
+        public class A {
+          public static void main(String[] args) {
+            System.out.println(Tes<caret>);
+          }
+        }""".trimIndent())
+
+      val accessible = PsiResolveHelper.getInstance(myFixture.getProject()).isAccessible(psiPackage, file)
+      TestCase.assertFalse(accessible)
+    }
   }
 
   fun testExports() {
