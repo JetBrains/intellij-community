@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.ide.caches.CachesInvalidator
@@ -217,7 +217,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
       return it
     }
 
-    LOG.debug { "Creating Vcs Log for ${VcsLogUtil.getProvidersMapText(logProviders)}" }
+    LOG.debug { "Creating ${getProjectLogName(logProviders)}" }
     val result = VcsProjectLogManager(project, uiProperties, logProviders) { s, t ->
       errorHandler.recreateOnError(s, t)
     }
@@ -235,7 +235,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     ThreadingAssertions.assertEventDispatchThread()
     val oldValue = cachedLogManager ?: return null
     cachedLogManager = null
-    LOG.debug { "Disposing Vcs Log for ${VcsLogUtil.getProvidersMapText(oldValue.dataManager.logProviders)}" }
+    LOG.debug { "Disposing ${oldValue.name}" }
     project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
     return oldValue
   }
