@@ -390,7 +390,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
     }
 
     fun closeSession() {
-      super.close()
+      disposeLivePreview()
     }
 
     public override fun disposeLivePreview() {
