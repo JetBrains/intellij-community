@@ -43,11 +43,12 @@ public class ActionsTest extends IntegrationTestCase {
     a.finish();
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals("current: doc2\n" +
-                 "action: doc1\n" +
-                 "null: file2\n" +
-                 "null: file1\n" +
-                 "External change: null", getNameAndOldContent(rr));
+    assertEquals("""
+                   current: doc2
+                   action: doc1
+                   null: file2
+                   null: file1
+                   External change: null""", getNameAndOldContent(rr));
   }
 
   /**
@@ -67,11 +68,12 @@ public class ActionsTest extends IntegrationTestCase {
     }, "command", null);
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals("current: doc2\n" +
-                 "command: doc1\n" +
-                 "null: initial\n" +
-                 "null: \n" +
-                 "External change: null", getNameAndOldContent(rr));
+    assertEquals("""
+                   current: doc2
+                   command: doc1
+                   null: initial
+                   null:\s
+                   External change: null""", getNameAndOldContent(rr));
   }
 
   public void testActionInsideCommandSurroundedWithSomeChanges() throws Exception {
@@ -94,10 +96,11 @@ public class ActionsTest extends IntegrationTestCase {
     }, "command", null);
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals("current: doc3\n" +
-                 "command: doc1\n" +
-                 "null: \n" +
-                 "External change: null", getNameAndOldContent(rr));
+    assertEquals("""
+                   current: doc3
+                   command: doc1
+                   null:\s
+                   External change: null""", getNameAndOldContent(rr));
   }
 
   private static @NotNull String getNameAndOldContent(@NotNull List<Revision> revisions) {

@@ -82,7 +82,7 @@ public class Menu extends MenuItem {
       return "";
 
     TextWithMnemonic txt = TextWithMnemonic.parse(src);
-    return txt == null ? "" : txt.getText();
+    return txt.getText();
   }
 
   public static void renameAppMenuItems() {

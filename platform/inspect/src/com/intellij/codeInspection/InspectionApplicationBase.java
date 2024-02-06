@@ -218,7 +218,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
   }
 
-  private final @Nullable Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
+  private @Nullable Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
     VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(
       FileUtil.toSystemIndependentName(projectPath.toString()));

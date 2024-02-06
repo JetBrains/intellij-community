@@ -75,6 +75,7 @@ class SearchEverywhereMlExperiment {
 
   fun isLoggingEnabledForTab(tabId: String) = tabsWithEnabledLogging.contains(tabId)
 
+  @Suppress("UnresolvedPluginConfigReference")
   private fun isDisableExperiments(tab: SearchEverywhereTabWithMlRanking): Boolean {
     return Registry.`is`("search.everywhere.force.disable.experiment.${tab.name.lowercase()}.ml")
   }
