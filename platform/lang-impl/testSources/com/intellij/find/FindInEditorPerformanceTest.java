@@ -11,7 +11,7 @@ public class FindInEditorPerformanceTest extends AbstractFindInEditorTest {
     setTextToFind("s");
     assertEquals(9999 + 1 /* cursor highlighting */, getEditor().getMarkupModel().getAllHighlighters().length);
     getEditor().getCaretModel().moveToOffset(0);
-    PlatformTestUtil.startPerformanceTest("typing in editor when a lot of search results are highlighted", 20000, () -> {
+    PlatformTestUtil.startPerformanceTest("typing in editor when a lot of search results are highlighted", () -> {
       for (int i = 0; i < 100; i++) {
         myFixture.type(' ');
       }

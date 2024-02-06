@@ -181,21 +181,21 @@ public class XmlParsingTest extends ParsingTestCase {
 
   public void testPerformance1() throws Exception {
     //noinspection SpellCheckingInspection
-    doTestPerformance("pallada.xml", 1000);
+    doTestPerformance("pallada.xml");
   }
 
   public void testPerformance2() throws Exception {
-    doTestPerformance("performance2.xml", 2000);
+    doTestPerformance("performance2.xml");
   }
 
-  private void doTestPerformance(String fileName, int expectedMs) throws IOException {
+  private void doTestPerformance(String fileName) throws IOException {
     final String text = loadFileDefault(getXmlParsingTestDataPath() + "psi/xml", fileName);
     long start = System.nanoTime();
     final PsiFile file = createFile(fileName, text);
     transformAllChildren(file.getNode());
     LOG.debug("First parsing took " + (System.nanoTime() - start) + "ns");
 
-    PlatformTestUtil.startPerformanceTest("XML Parser Performance on " + fileName, expectedMs, () -> {
+    PlatformTestUtil.startPerformanceTest("XML Parser Performance on " + fileName, () -> {
       for (int i = 0; i < 10; i++) {
         PsiFile next = createPsiFile("test" + i, text);
         transformAllChildren(next.getNode());

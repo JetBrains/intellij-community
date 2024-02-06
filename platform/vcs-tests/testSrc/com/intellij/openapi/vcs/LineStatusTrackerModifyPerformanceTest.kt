@@ -16,7 +16,7 @@ class LineStatusTrackerModifyPerformanceTest : BaseLineStatusTrackerTestCase() {
     val text1 = sb1.toString()
     val text2 = sb2.toString()
 
-    PlatformTestUtil.startPerformanceTest(PlatformTestUtil.getTestName(name, true), 7000) {
+    PlatformTestUtil.startPerformanceTest(PlatformTestUtil.getTestName(name, true)) {
       test(text1) {
         tracker.doFrozen(Runnable {
           simpleTracker.setBaseRevision(text2)
@@ -41,7 +41,7 @@ class LineStatusTrackerModifyPerformanceTest : BaseLineStatusTrackerTestCase() {
     val text2 = sb2.toString()
     val text3 = sb3.toString()
 
-    PlatformTestUtil.startPerformanceTest(PlatformTestUtil.getTestName(name, true), 10000) {
+    PlatformTestUtil.startPerformanceTest(PlatformTestUtil.getTestName(name, true)) {
       test(text1, text2) {
         tracker.doFrozen(Runnable {
           simpleTracker.setBaseRevision(text3)

@@ -1131,7 +1131,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
 
   public void testPerformance() {
     configureByFile("/codeInsight/enterAction/Performance.java");
-    PlatformTestUtil.startPerformanceTest("enter in " + getFile(), 200, () -> {
+    PlatformTestUtil.startPerformanceTest("enter in " + getFile(), () -> {
       performAction();
       deleteLine();
       caretUp();
@@ -1145,6 +1145,6 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                                      "    u." +
                                      StringUtil.repeat("\n      a('b').c(new Some()).", 500)) + "<caret>\n" +
                                     "      x(); } }");
-    PlatformTestUtil.startPerformanceTest("enter", 1500, this::performAction).assertTiming();
+    PlatformTestUtil.startPerformanceTest("enter", this::performAction).assertTiming();
   }
 }

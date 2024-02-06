@@ -101,21 +101,21 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   )
 
   fun testHeaderProcessingPerformance() {
-    doTestPerf(5000, EditorConfigNoMatchingFilesInspection::class)
+    doTestPerf(EditorConfigNoMatchingFilesInspection::class)
   }
 
   fun testHeaderProcessingPerformance2() {
-    doTestPerf(7000, EditorConfigPatternRedundancyInspection::class)
+    doTestPerf(EditorConfigPatternRedundancyInspection::class)
   }
 
   fun testHeaderProcessingPerformance3() {
-    doTestPerf(5000, EditorConfigHeaderUniquenessInspection::class)
+    doTestPerf(EditorConfigHeaderUniquenessInspection::class)
   }
 
-  private fun doTestPerf(expectedMs: Int, inspection: KClass<out LocalInspectionTool>) {
+  private fun doTestPerf(inspection: KClass<out LocalInspectionTool>) {
     myFixture.enableInspections(inspection.java)
     myFixture.configureByFile("${getTestName(true)}/.editorconfig")
-    PlatformTestUtil.startPerformanceTest("${inspection.simpleName} performance", expectedMs, ThrowableRunnable<Throwable> {
+    PlatformTestUtil.startPerformanceTest("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
       myFixture.doHighlighting()
     }).attempts(1).assertTiming()
   }

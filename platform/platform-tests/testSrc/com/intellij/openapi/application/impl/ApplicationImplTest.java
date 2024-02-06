@@ -60,14 +60,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private volatile Throwable exception;
 
   public void testRead50Write50LockPerformance() {
-    runReadWrites(500_000, 500_000, 2000);
+    runReadWrites(500_000, 500_000);
   }
 
   public void testRead100Write0LockPerformance() {
-    runReadWrites(50_000_000, 0, 10_000);
+    runReadWrites(50_000_000, 0);
   }
 
-  private void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
+  private void runReadWrites(final int readIterations, final int writeIterations) {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // someone might've submitted a task depending on app events which we disable now
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
@@ -75,7 +75,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ThreadingAssertions.assertEventDispatchThread();
 
     try {
-      PlatformTestUtil.startPerformanceTest("lock/unlock "+getTestName(false), expectedMs, () -> {
+      PlatformTestUtil.startPerformanceTest("lock/unlock "+getTestName(false), () -> {
         final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
         List<Job<Void>> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -475,7 +475,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       }
     });
 
-    PlatformTestUtil.startPerformanceTest("RWLock/unlock", 27_000, ()-> {
+    PlatformTestUtil.startPerformanceTest("RWLock/unlock", ()-> {
       ThreadingAssertions.assertEventDispatchThread();
       assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
       List<Future<Void>> futures = AppExecutorUtil.getAppExecutorService().invokeAll(callables);

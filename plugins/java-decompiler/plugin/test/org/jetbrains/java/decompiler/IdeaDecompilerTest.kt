@@ -146,7 +146,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     val jrt = JavaVersion.current().feature >= 9
     val base = if (jrt) "jrt://${SystemProperties.getJavaHome()}!/java.desktop/" else "jar://${SystemProperties.getJavaHome()}/lib/rt.jar!/"
     val file = VirtualFileManager.getInstance().findFileByUrl(base + "javax/swing/JTable.class")!!
-    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000) { decompiler.getText(file) }.assertTiming()
+    PlatformTestUtil.startPerformanceTest("decompiling JTable.class") { decompiler.getText(file) }.assertTiming()
   }
 
   fun testStructureView() {

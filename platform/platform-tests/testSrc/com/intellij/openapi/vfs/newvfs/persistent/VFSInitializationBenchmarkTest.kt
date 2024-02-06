@@ -14,9 +14,7 @@ class VFSInitializationBenchmarkTest {
   @Test
   @Throws(Exception::class)
   fun benchmarkVfsInitializationTime_CreateVfsFromScratch(@TempDir temporaryDirectory: Path) {
-    PlatformTestUtil.startPerformanceTest(
-      "create VFS from scratch", 1000
-    ) {
+    PlatformTestUtil.startPerformanceTest("create VFS from scratch") {
       val cachesDir: Path = temporaryDirectory
       val version = 1
 
@@ -26,7 +24,6 @@ class VFSInitializationBenchmarkTest {
       )
       PersistentFSConnector.disconnect(initializationResult.connection)
     }
-      .ioBound()
       .warmupIterations(1)
       .attempts(4)
       .assertTiming()
@@ -43,9 +40,7 @@ class VFSInitializationBenchmarkTest {
     )
     PersistentFSConnector.disconnect(result.connection)
 
-    PlatformTestUtil.startPerformanceTest(
-      "open existing VFS files", 500
-    ) {
+    PlatformTestUtil.startPerformanceTest("open existing VFS files") {
       val initResult = PersistentFSConnector.connectWithoutVfsLog(
         cachesDir,
         version
@@ -53,7 +48,6 @@ class VFSInitializationBenchmarkTest {
       Assertions.assertFalse(initResult.vfsCreatedAnew, "Must open existing")
       PersistentFSConnector.disconnect(initResult.connection)
     }
-      .ioBound() //.warmupIterations(1)
       .attempts(4)
       .assertTiming()
   }

@@ -831,7 +831,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     String text = FileUtil.loadFile(new File(path));
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
     String message = "Source file size: " + text.length();
-    PlatformTestUtil.startPerformanceTest(message, 700, () -> myBuilder.buildStubTree(file)).assertTiming();
+    PlatformTestUtil.startPerformanceTest(message, () -> myBuilder.buildStubTree(file)).assertTiming();
   }
 
   private void doTest(/*@Language("JAVA")*/ String source, @Language("TEXT") String expected) {

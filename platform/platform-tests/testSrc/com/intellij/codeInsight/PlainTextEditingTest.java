@@ -301,7 +301,7 @@ public class PlainTextEditingTest extends EditingTestBase {
   public void testCalculatingLongLinesPositionPerformanceInEditorWithNoTabs() {
     final String longLine = StringUtil.repeatSymbol(' ', 1000000);
     configureFromFileText("x.txt", longLine);
-    PlatformTestUtil.startPerformanceTest("calcOffset", 10, () -> {
+    PlatformTestUtil.startPerformanceTest("calcOffset", () -> {
       for (int i = 0; i < 1000; i++) {
         int off = getEditor().logicalPositionToOffset(new LogicalPosition(0, longLine.length() - 1));
         assertEquals(longLine.length() - 1, off);

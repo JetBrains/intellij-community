@@ -23,7 +23,7 @@ public class ImmutableTextTest extends UsefulTestCase {
   public void testDeleteAllPerformance() {
     ImmutableText original = ImmutableText.valueOf(StringUtil.repeat("abcdefghij", 1_900_000));
 
-    PlatformTestUtil.startPerformanceTest("Deletion of all contents must be fast", 100, () -> {
+    PlatformTestUtil.startPerformanceTest("Deletion of all contents must be fast", () -> {
       for (int iter = 0; iter < 100000; iter++) {
         ImmutableText another = original.delete(0, original.length());
         assertEquals(0, another.length());

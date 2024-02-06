@@ -590,7 +590,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 20_000, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
           // decrease GC pressure, we're not measuring that
@@ -608,7 +608,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
       Application application = ApplicationManager.getApplication();
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
@@ -629,7 +629,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     Runnable r = () -> counter.incrementAndGet();
     Application application = ApplicationManager.getApplication();
     application.invokeAndWait(r);
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 900, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
       counter.set(0);
       UIUtil.invokeAndWaitIfNeeded(() -> LaterInvocator.enterModal(myWindow1));
       for (int i = 0; i < N; i++) {

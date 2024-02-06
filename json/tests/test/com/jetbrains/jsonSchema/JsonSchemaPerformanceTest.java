@@ -74,14 +74,14 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         myFixture.doHighlighting();
       }
     });
-    PlatformTestUtil.startPerformanceTest(getTestName(false), expectedMs, test).usesAllCPUCores().assertTiming();
+    PlatformTestUtil.startPerformanceTest(getTestName(false), test).assertTiming();
   }
 
 
   public void testEslintHighlightingPerformance() {
     myFixture.configureByFile(getTestName(true) + "/.eslintrc.json");
     PsiFile psiFile = myFixture.getFile();
-    PlatformTestUtil.startPerformanceTest(getTestName(true), (int)TimeUnit.SECONDS.toMillis(15), () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(true), () -> {
       for (int i = 0; i < 10; i++) {
         myFixture.doHighlighting();
 

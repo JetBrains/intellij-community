@@ -42,7 +42,7 @@ public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest 
     };
 
     PlatformTestUtil
-      .startPerformanceTest("smart reformat on big file", 500, test)
+      .startPerformanceTest("smart reformat on big file", test)
       .setup(setup)
       .warmupIterations(50)
       .attempts(100)

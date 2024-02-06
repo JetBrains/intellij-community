@@ -293,7 +293,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     Document document = pdm.getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      PlatformTestUtil.startPerformanceTest("deep reparse", 200, () -> {
+      PlatformTestUtil.startPerformanceTest("deep reparse", () -> {
         document.insertString(document.getTextLength() - suffix.length(), call1);
         pdm.commitDocument(document);
 

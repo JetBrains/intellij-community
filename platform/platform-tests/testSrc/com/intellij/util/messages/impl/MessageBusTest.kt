@@ -243,7 +243,7 @@ class MessageBusTest : MessageBusOwner {
 
   @Test
   fun manyChildrenCreationDeletionPerformance() {
-    PlatformTestUtil.startPerformanceTest("Child bus creation/deletion", 1000) {
+    PlatformTestUtil.startPerformanceTest("Child bus creation/deletion") {
       val children = ArrayList<MessageBus>()
       val count = 10000
       for (i in 0 until count) {

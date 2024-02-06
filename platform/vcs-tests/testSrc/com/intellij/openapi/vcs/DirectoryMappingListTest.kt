@@ -338,7 +338,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/non_existent/some/path"
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings few roots FilePaths", 1000) {
+    PlatformTestUtil.startPerformanceTest("NewMappings few roots FilePaths") {
       for (i in 0..20000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -361,7 +361,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/non_existent/some/path"
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings many roots FilePaths", 1000) {
+    PlatformTestUtil.startPerformanceTest("NewMappings many roots FilePaths") {
       for (i in 0..20000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -388,7 +388,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(220)
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings nested roots FilePaths", 1000) {
+    PlatformTestUtil.startPerformanceTest("NewMappings nested roots FilePaths") {
       for (i in 0..2000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -412,7 +412,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/non_existent/some/path"
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings few roots VirtualFiles", 500) {
+    PlatformTestUtil.startPerformanceTest("NewMappings few roots VirtualFiles") {
       for (i in 0..60000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -435,7 +435,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/non_existent/some/path"
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings many roots VirtualFiles", 500) {
+    PlatformTestUtil.startPerformanceTest("NewMappings many roots VirtualFiles") {
       for (i in 0..80000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -462,7 +462,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(200)
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings nested roots VirtualFiles", 500) {
+    PlatformTestUtil.startPerformanceTest("NewMappings nested roots VirtualFiles") {
       for (i in 0..15000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)

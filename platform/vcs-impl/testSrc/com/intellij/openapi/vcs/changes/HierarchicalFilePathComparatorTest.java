@@ -275,21 +275,21 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
 
   public void testNaturalPerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Natural hierarchical comparator", 7000, () -> {
+    PlatformTestUtil.startPerformanceTest("Natural hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.NATURAL);
     }).assertTiming();
   }
 
   public void testCaseInsensitivePerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Case-insensitive hierarchical comparator", 4000, () -> {
+    PlatformTestUtil.startPerformanceTest("Case-insensitive hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_INSENSITIVE);
     }).assertTiming();
   }
 
   public void testCaseSensitivePerformance() {
     List<FilePath> filePaths = generatePerformanceTestFilePaths();
-    PlatformTestUtil.startPerformanceTest("Case-sensitive hierarchical comparator", 3000, () -> {
+    PlatformTestUtil.startPerformanceTest("Case-sensitive hierarchical comparator", () -> {
       assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.CASE_SENSITIVE);
     }).assertTiming();
   }

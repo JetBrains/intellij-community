@@ -34,7 +34,7 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
     for (int i = 0; i < 3; i++) {
       EditorTestUtil.performTypingAction(getEditor(), '\n');
     }
-    PlatformTestUtil.startPerformanceTest("Xml editor enter", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("Xml editor enter", () -> {
       for (int i = 0; i < 3; i ++) {
         EditorTestUtil.performTypingAction(getEditor(), '\n');
       }

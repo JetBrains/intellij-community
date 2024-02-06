@@ -30,7 +30,7 @@ public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestC
     myFixture.configureByText("plugin.xml", generatePluginXmlText(randomMethodNames));
     PsiClass psiClass = myFixture.addClass(generateJavaClassText(randomMethodNames));
 
-    PlatformTestUtil.startPerformanceTest("Locating extension tag by PsiClass", 2000, () -> {
+    PlatformTestUtil.startPerformanceTest("Locating extension tag by PsiClass", () -> {
       List<ExtensionCandidate> result = locateExtensionsByPsiClass(psiClass);
       assertSize(1, result);
     }).attempts(1).assertTiming();

@@ -32,7 +32,7 @@ public class LocalFileSystemStressTest extends BareTestFixtureTestCase {
     assertThat(tmpRoot.getFileSystem()).isInstanceOf(TempFileSystem.class);
     VirtualFile testDir = WriteAction.computeAndWait(() -> tmpRoot.createChildDirectory(this, getTestName(true)));
     int N_LEVELS = 1_000_000;
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 3_000, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
       UIUtil.pump();
       StringBuilder expectedPath = new StringBuilder(N_LEVELS*4+100);
       expectedPath.append(testDir.getPath());

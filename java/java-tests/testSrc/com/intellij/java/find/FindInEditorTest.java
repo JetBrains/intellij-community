@@ -326,7 +326,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myFindModel.setPromptOnReplace(false);
 
-      PlatformTestUtil.startPerformanceTest("replace", 45000, ()->{
+      PlatformTestUtil.startPerformanceTest("replace", ()->{
         for (int i=0; i<25; i++) {
           myFindModel.   setStringToFind(aas);
           myFindModel.setStringToReplace(bbs);

@@ -63,8 +63,7 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
     detectIndentOptions(getVFile(), getEditor().getDocument());
     
     PlatformTestUtil
-      .startPerformanceTest("Detecting indent on hot file", 180,
-                            () -> detectIndentOptions(getVFile(), getEditor().getDocument()))
+      .startPerformanceTest("Detecting indent on hot file", () -> detectIndentOptions(getVFile(), getEditor().getDocument()))
       .assertTiming();
   }
   

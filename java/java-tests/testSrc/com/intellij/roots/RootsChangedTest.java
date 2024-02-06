@@ -407,7 +407,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     VirtualFile xxx = createChildDirectory(temp, dirName);
 
-    PlatformTestUtil.startPerformanceTest("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", 10000, ()->{
+    PlatformTestUtil.startPerformanceTest("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", ()->{
       for (int i = 0; i < 100; i++) {
         rename(xxx, "yyy");
         rename(xxx, dirName);

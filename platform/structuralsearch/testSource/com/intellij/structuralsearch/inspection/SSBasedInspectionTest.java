@@ -82,7 +82,7 @@ public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
     final ToolsImpl tools = profile.getToolsOrNull("SSBasedInspection", myFixture.getProject());
     final SSBasedInspection inspection = (SSBasedInspection)tools.getTool().getTool();
     final PsiFile file = myFixture.getFile();
-    PlatformTestUtil.startPerformanceTest("Chained method call inspection performance", 1500,
+    PlatformTestUtil.startPerformanceTest("Chained method call inspection performance",
                                           () -> InspectionEngine.inspectEx(
                                             Collections.singletonList(new LocalInspectionToolWrapper(inspection)), file,
                                             file.getTextRange(),

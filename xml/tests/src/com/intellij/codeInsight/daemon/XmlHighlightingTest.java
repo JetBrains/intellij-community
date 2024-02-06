@@ -1240,9 +1240,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
                     "]>\n" +
                     "<rules/>");
     PlatformTestUtil
-      .startPerformanceTest("highlighting", 4_500, () -> doHighlighting())
+      .startPerformanceTest("highlighting", () -> doHighlighting())
       .setup(() -> getPsiManager().dropPsiCaches())
-      .usesAllCPUCores()
       .assertTiming();
   }
 

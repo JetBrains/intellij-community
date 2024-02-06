@@ -268,7 +268,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testPerformance() {
     withCycleConsoleNoFolding(100, console ->
-      PlatformTestUtil.startPerformanceTest("console print", 15000, () -> {
+      PlatformTestUtil.startPerformanceTest("console print", () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -282,7 +282,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testLargeConsolePerformance() {
     withCycleConsoleNoFolding(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
-      PlatformTestUtil.startPerformanceTest("console print", 15_000, () -> {
+      PlatformTestUtil.startPerformanceTest("console print", () -> {
         console.clear();
         for (int i=0; i<20_000_000; i++) {
           console.print("hello\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -294,7 +294,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testPerformanceOfMergeableTokens() {
     withCycleConsoleNoFolding(1000, console ->
-      PlatformTestUtil.startPerformanceTest("console print with mergeable tokens", 3500, () -> {
+      PlatformTestUtil.startPerformanceTest("console print with mergeable tokens", () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -696,7 +696,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testBackspacePerformance() {
     int nCopies = 10000;
     String in = StringUtil.repeat("\na\nb\bc", nCopies);
-    PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("print newlines with backspace", () -> {
       for (int i = 0; i < 2; i++) {
         myConsole.clear();
         int printCount = ConsoleBuffer.getCycleBufferSize() / in.length();

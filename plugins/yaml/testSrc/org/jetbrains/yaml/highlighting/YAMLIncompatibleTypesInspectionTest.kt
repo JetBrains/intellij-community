@@ -158,7 +158,7 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
     }
         - abc: <warning descr="The type of value is 'boolean' while other values use type 'string'">true</warning>
     """.trimIndent())
-    PlatformTestUtil.startPerformanceTest("Inspection should finish in sane time", 4000) {
+    PlatformTestUtil.startPerformanceTest("Inspection should finish in sane time") {
       myFixture.testHighlighting()
     }.warmupIterations(0).attempts(1).assertTiming()
   }

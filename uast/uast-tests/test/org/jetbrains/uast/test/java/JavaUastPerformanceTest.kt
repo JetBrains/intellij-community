@@ -46,7 +46,7 @@ class JavaUastPerformanceTest : AbstractJavaUastTest() {
           }
       }
     """.trimIndent())
-    PlatformTestUtil.startPerformanceTest("convert each element to uast first time", 1000) {
+    PlatformTestUtil.startPerformanceTest("convert each element to uast first time") {
       val walker = EachPsiToUastWalker()
       clazz.accept(walker)
       TestCase.assertEquals(4019, walker.totalCount)
@@ -56,7 +56,7 @@ class JavaUastPerformanceTest : AbstractJavaUastTest() {
   @Test
   fun testConvertAllElementsWithNaiveToUElement() {
     myFixture.configureByFile("Performance/Thinlet.java")
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 13_000, object : ThrowableRunnable<Throwable?> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), object : ThrowableRunnable<Throwable?> {
       var hash = 0
       override fun run() {
         for (i in 0..99) {

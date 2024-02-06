@@ -25,7 +25,7 @@ public class AntHighlightingPerformanceTest extends DaemonAnalyzerTestCase {
                      findVirtualFile(getTestName(false) + ".xml"),
                      findVirtualFile("buildserver.xml"),
                      findVirtualFile("buildserver.properties"));
-    PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 15_000, () -> doDoTest(true, false))
+    PlatformTestUtil.startPerformanceTest("Big ant file highlighting", () -> doDoTest(true, false))
       .setup(getPsiManager()::dropPsiCaches)
       .assertTiming();
   }

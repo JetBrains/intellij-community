@@ -19,7 +19,7 @@ public class EditorPerformanceTest extends AbstractEditorTest {
       getEditor().getMarkupModel().addRangeHighlighter(offset, offset + 1, 0, attributes, HighlighterTargetArea.EXACT_RANGE);
     }
     getEditor().getCaretModel().moveToOffset(0);
-    PlatformTestUtil.startPerformanceTest("Editing with a lot of highlighters", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("Editing with a lot of highlighters", () -> {
       for (int i = 0; i < 50; i++) {
         executeAction(IdeActions.ACTION_EDITOR_ENTER);
         UIUtil.dispatchAllInvocationEvents(); // let gutter update its width

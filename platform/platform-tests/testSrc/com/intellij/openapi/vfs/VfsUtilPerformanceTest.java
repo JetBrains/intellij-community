@@ -81,7 +81,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     UIUtil.pump(); // wait for all event handlers to calm down
 
     Logger.getInstance(VfsUtilPerformanceTest.class).debug("Start searching...");
-    PlatformTestUtil.startPerformanceTest("finding child", 1500, () -> {
+    PlatformTestUtil.startPerformanceTest("finding child", () -> {
       for (int i = 0; i < 1_000_000; i++) {
         VirtualFile child = vDir.findChild("5111.txt");
         assertEquals(theChild, child);
@@ -105,7 +105,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     String path = jar.getPath() + "!/";
     ManagingFS managingFS = ManagingFS.getInstance();
     NewVirtualFile root = managingFS.findRoot(path, fs);
-    PlatformTestUtil.startPerformanceTest("finding root", 20_000,
+    PlatformTestUtil.startPerformanceTest("finding root",
                                           () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
                                             Collections.nCopies(500, null), null,
                                             __ -> {
@@ -115,7 +115,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
                                                 assertSame(root, rootJar);
                                               }
                                               return true;
-                                            })).usesAllCPUCores().assertTiming();
+                                            })).assertTiming();
   }
 
   @Test
@@ -123,7 +123,6 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     VirtualFile root = tempDir.getVirtualFileRoot();
     int depth = 10;
     int N = 5_000_000;
-    int time = 1000;
 
     WriteCommandAction.writeCommandAction(null).run(() -> {
       VirtualFile dir = root;
@@ -151,7 +150,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         }
       };
 
-      PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance)
+      PlatformTestUtil.startPerformanceTest("getParent before movement", checkPerformance)
         .assertTiming(getQualifiedTestMethodName() + " - getParent before movement");
 
       VirtualFile dir1 = root.createChildDirectory(this, "dir1");
@@ -160,7 +159,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
 
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance)
+      PlatformTestUtil.startPerformanceTest("getParent after movement", checkPerformance)
         .assertTiming(getQualifiedTestMethodName() + " - getParent after movement");
     });
   }
@@ -185,7 +184,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
                     "fff.txt";
       VirtualFile file = fixture.findOrCreateDir(path);
 
-      PlatformTestUtil.startPerformanceTest("VF.getPath()", 10_000, () -> {
+      PlatformTestUtil.startPerformanceTest("VF.getPath()", () -> {
         for (int i = 0; i < 1_000_000; ++i) {
           file.getPath();
         }
@@ -270,7 +269,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     VirtualDirectoryImpl temp = createTempFsDirectory();
 
     EdtTestUtil.runInEdtAndWait(() -> {
-      PlatformTestUtil.startPerformanceTest("many files creations", 3_000, () -> {
+      PlatformTestUtil.startPerformanceTest("many files creations", () -> {
         assertEquals(N, events.size());
         processEvents(events);
         assertEquals(N, temp.getCachedChildren().size());
@@ -285,7 +284,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       })
       .assertTiming(getQualifiedTestMethodName() + " - many files creations");
 
-      PlatformTestUtil.startPerformanceTest("many files deletions", 3_300, () -> {
+      PlatformTestUtil.startPerformanceTest("many files deletions", () -> {
         assertEquals(N, events.size());
         processEvents(events);
         assertEquals(0, temp.getCachedChildren().size());

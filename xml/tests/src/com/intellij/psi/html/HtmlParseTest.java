@@ -523,7 +523,7 @@ public class HtmlParseTest extends LightIdeaTestCase {
     ExtensionTestUtil.maskExtensions(ExtensionPointName.create("com.intellij.html.scriptContentProvider"),
                                      ContainerUtil.emptyList(), getTestRootDisposable());
     final Ref<String> result = Ref.create();
-    PlatformTestUtil.startPerformanceTest("Parsing", 500, () -> result.set(getTreeTextByFile("index-all.html"))).assertTiming();
+    PlatformTestUtil.startPerformanceTest("Parsing", () -> result.set(getTreeTextByFile("index-all.html"))).assertTiming();
     assertResult("Performance.txt", result.get());
   }
 

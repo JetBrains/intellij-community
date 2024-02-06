@@ -114,14 +114,14 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testChainingPerformance() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".java");
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 1000, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
         configure();
         assertNotNull(myItems);
         LookupManager.getInstance(getProject()).hideActiveLookup();
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
 
   }
 

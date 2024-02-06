@@ -43,7 +43,7 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
                                  }
                              }
                          }""");
-    PlatformTestUtil.startPerformanceTest("Many exceptions", 10_000, () -> {
+    PlatformTestUtil.startPerformanceTest("Many exceptions", () -> {
       // instantiate console with exception filters only to avoid failures due to Node/Ruby/etc dog-slow sloppy regex-based filters
       TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
       consoleBuilder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(getProject())));

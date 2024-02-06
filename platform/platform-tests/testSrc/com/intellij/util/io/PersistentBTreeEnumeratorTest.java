@@ -225,7 +225,7 @@ public class PersistentBTreeEnumeratorTest {
     StorageLockContext.assertNoBuffersLocked();
 
     FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 400, () -> {
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", () -> {
       for (int i = 0; i < 10000; i++) {
         for (String item : data) {
           assertNotEquals(0, myEnumerator.tryEnumerate(item));
@@ -327,7 +327,7 @@ public class PersistentBTreeEnumeratorTest {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 1000, () -> {
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         String string = createRandomString();

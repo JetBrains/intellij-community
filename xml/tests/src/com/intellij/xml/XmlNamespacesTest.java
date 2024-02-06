@@ -301,7 +301,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPatternPerformanceProblem() {
     myFixture.configureByFile("idproblem.html");
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 100, () -> myFixture.doHighlighting()).assertTiming();
+    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> myFixture.doHighlighting()).assertTiming();
   }
 
   private void doUnusedDeclarationTest(String text, String after, String name) {

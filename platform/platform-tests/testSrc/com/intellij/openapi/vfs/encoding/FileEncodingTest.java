@@ -1021,7 +1021,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
     encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
-    PlatformTestUtil.startPerformanceTest("encoding re-detect requests", 10_000, ()->{
+    PlatformTestUtil.startPerformanceTest("encoding re-detect requests", ()->{
       for (int i=0; i<100_000_000;i++) {
         encodingManager.queueUpdateEncodingFromContent(document);
       }

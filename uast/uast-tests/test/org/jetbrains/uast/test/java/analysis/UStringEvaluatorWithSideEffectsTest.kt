@@ -513,7 +513,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
                          ?: fail("Cannot find UElement at caret")
 
     val expected = "'a''b'".repeat(size)
-    PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 1000) {
+    PlatformTestUtil.startPerformanceTest("calculate value of many assignments") {
       val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = PsiJavaPatterns.psiMethod().withName("b"),

@@ -373,12 +373,12 @@ Thread 7381: (state = BLOCKED)
   void "test very long line parsing performance"() {
     def spaces = ' ' * 1_000_000
     def letters = 'a' * 1_000_000
-    PlatformTestUtil.startPerformanceTest('parsing spaces', 100, {
+    PlatformTestUtil.startPerformanceTest('parsing spaces', {
       def threads = ThreadDumpParser.parse(spaces)
       assert threads.empty
     }).assertTimingAsSubtest()
     
-    PlatformTestUtil.startPerformanceTest('parsing letters', 100, {
+    PlatformTestUtil.startPerformanceTest('parsing letters', {
       def threads = ThreadDumpParser.parse(letters)
       assert threads.empty
     }).assertTimingAsSubtest()

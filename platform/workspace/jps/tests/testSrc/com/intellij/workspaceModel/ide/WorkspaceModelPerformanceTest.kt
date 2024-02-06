@@ -100,7 +100,7 @@ class WorkspaceModelPerformanceTest {
 
   @Test
   fun `add remove module`() {
-    PlatformTestUtil.startPerformanceTest("Adding and removing a module 10 times", 125) {
+    PlatformTestUtil.startPerformanceTest("Adding and removing a module 10 times") {
       repeat(10) {
         val module = ourProjectModel.createModule("newModule")
         ourProjectModel.removeModule(module)
@@ -110,7 +110,7 @@ class WorkspaceModelPerformanceTest {
 
   @Test
   fun `add remove project library`() {
-    PlatformTestUtil.startPerformanceTest("Adding and removing a project library 30 times", 125) {
+    PlatformTestUtil.startPerformanceTest("Adding and removing a project library 30 times") {
       repeat(30) {
         val library = ourProjectModel.addProjectLevelLibrary("newLibrary") {
           it.addRoot(ourProjectRoot.append("newLibrary/classes").url, OrderRootType.CLASSES)
@@ -125,7 +125,7 @@ class WorkspaceModelPerformanceTest {
   @Test
   fun `add remove module library`() {
     val module = ourProjectModel.moduleManager.findModuleByName("module50")!!
-    PlatformTestUtil.startPerformanceTest("Adding and removing a module library 10 times", 200) {
+    PlatformTestUtil.startPerformanceTest("Adding and removing a module library 10 times") {
       repeat(10) {
         val library = ourProjectModel.addModuleLevelLibrary(module, "newLibrary") {
           it.addRoot(ourProjectRoot.append("newLibrary/classes").url, OrderRootType.CLASSES)
@@ -141,7 +141,7 @@ class WorkspaceModelPerformanceTest {
   fun `add remove dependency`() {
     val module = ourProjectModel.moduleManager.findModuleByName("module50")!!
     val library = ourProjectModel.projectLibraryTable.getLibraryByName("lib40")!!
-    PlatformTestUtil.startPerformanceTest("Adding and removing a dependency 20 times", 250) {
+    PlatformTestUtil.startPerformanceTest("Adding and removing a dependency 20 times") {
       repeat(20) {
         ModuleRootModificationUtil.addDependency(module, library)
         ModuleRootModificationUtil.removeDependency(module, library)
@@ -151,7 +151,7 @@ class WorkspaceModelPerformanceTest {
 
   @Test
   fun `process content roots`() {
-    PlatformTestUtil.startPerformanceTest("Iterate through content roots of all modules 1000 times", 80) {
+    PlatformTestUtil.startPerformanceTest("Iterate through content roots of all modules 1000 times") {
       var count = 0
       repeat(1000) {
         ourProjectModel.moduleManager.modules.forEach { module ->
@@ -164,7 +164,7 @@ class WorkspaceModelPerformanceTest {
 
   @Test
   fun `process order entries`() {
-    PlatformTestUtil.startPerformanceTest("Iterate through order entries of all modules 1000 times", 60) {
+    PlatformTestUtil.startPerformanceTest("Iterate through order entries of all modules 1000 times") {
       var count = 0
       repeat(1000) {
         ourProjectModel.moduleManager.modules.forEach { module ->
