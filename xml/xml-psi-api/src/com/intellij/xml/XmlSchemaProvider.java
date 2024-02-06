@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,8 +46,7 @@ public abstract class XmlSchemaProvider implements PossiblyDumbAware {
 
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @NotNull PsiFile baseFile) {
-    final PsiDirectory directory = baseFile.getParent();
-    final Module module = ModuleUtilCore.findModuleForPsiElement(directory == null ? baseFile : directory);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(baseFile);
     return findSchema(namespace, module, baseFile);
   }
 
