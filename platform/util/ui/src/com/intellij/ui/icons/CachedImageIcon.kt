@@ -91,7 +91,7 @@ open class CachedImageIcon private constructor(
   }
 
   @Internal
-  constructor(resolver: ImageDataLoader, originalResolver: ImageDataLoader = resolver) : this(resolver = resolver, originalResolver = originalResolver, toolTip = null)
+  constructor(resolver: ImageDataLoader) : this(resolver = resolver, originalResolver = resolver)
 
   internal constructor(resolver: ImageDataLoader, toolTip: Supplier<String?>?) :
     this(resolver = resolver, originalResolver = resolver, toolTip = toolTip)
@@ -102,9 +102,6 @@ open class CachedImageIcon private constructor(
   private fun getEffectiveAttributes(): IconAttributes {
     return if (attributes.isDarkSet) attributes else attributes.copy(isDark = pathTransform.get().isDark, isDarkSet = true)
   }
-
-  @Internal
-  fun getResolver(): ImageDataLoader? = resolver
 
   @ApiStatus.Experimental
   fun getCoords(): Pair<String, ClassLoader>? = resolver?.getCoords()

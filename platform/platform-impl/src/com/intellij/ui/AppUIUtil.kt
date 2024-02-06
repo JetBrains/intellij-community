@@ -125,7 +125,7 @@ private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: 
 private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
   val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
   // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
-  val descriptors = createImageDescriptorList(path = path, isDark = false, pixScale = pixScale)
+  val descriptors = createImageDescriptorList(path = path, isDark = false, isStroke = false, pixScale = pixScale)
   val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
   for (descriptor in descriptors) {
     val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")

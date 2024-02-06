@@ -281,7 +281,7 @@ internal fun loadCustomIcon(url: URL): Image? {
 
 @Internal
 fun loadImageForStartUp(requestedPath: String, scale: Float, classLoader: ClassLoader): BufferedImage? {
-  val descriptors = createImageDescriptorList(path = requestedPath, isDark = false, pixScale = scale)
+  val descriptors = createImageDescriptorList(path = requestedPath, isDark = false, isStroke = false, pixScale = scale)
   for (descriptor in descriptors) {
     try {
       val dotIndex = requestedPath.lastIndexOf('.')
@@ -323,29 +323,6 @@ internal fun doScaleImage(image: Image, scale: Double): Image {
   // because ultra quality performs a few more passes when scaling, which introduces blurriness
   // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
   return Scalr.resize(ImageUtil.toBufferedImage(image, false), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, null)
-}
-
-@Internal
-fun loadImageFromStream(stream: InputStream,
-                        path: String?,
-                        scale: Float,
-                        isDark: Boolean,
-                        useSvg: Boolean,
-                        isStroke: Boolean,
-                        colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?): Image {
-  stream.use {
-    if (useSvg) {
-      val compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)
-      return loadSvg(path = path,
-                     stream = stream,
-                     scale = scale,
-                     compoundCacheKey = compoundCacheKey,
-                     colorPatcherProvider = colorPatcherProvider)
-    }
-    else {
-      return loadRasterImage(stream = stream)
-    }
-  }
 }
 
 @Internal

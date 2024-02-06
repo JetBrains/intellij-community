@@ -68,7 +68,8 @@ fun loadSvg(data: ByteArray, scale: Float): BufferedImage {
   }!!
 }
 
-internal fun loadSvg(path: String?,
+@Internal
+fun loadSvg(path: String?,
                      stream: InputStream,
                      scale: Float,
                      compoundCacheKey: SvgCacheClassifier? = null,
