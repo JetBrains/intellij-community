@@ -167,6 +167,10 @@ final class PainterHelper implements Painter.Listener {
     painters.addPainter(new MyImagePainter(painters.rootComponent, propertyName), null);
   }
 
+  static void resetWallpaperPainterCache() {
+    MyImagePainter.ourImageCache.clear();
+  }
+
   static AbstractPainter newImagePainter(@NotNull Image image,
                                          @NotNull IdeBackgroundUtil.Fill fillType,
                                          @NotNull IdeBackgroundUtil.Anchor anchor,
@@ -432,6 +436,8 @@ final class PainterHelper implements Painter.Listener {
   }
 
   private static final class MyImagePainter extends ImagePainter {
+    private static final Map<ImageLoadSettings, Image> ourImageCache = ContainerUtil.createWeakValueMap();
+
     private final JComponent rootComponent;
     private final String propertyName;
 
@@ -528,9 +534,16 @@ final class PainterHelper implements Painter.Listener {
         return;
       }
 
+      Image cachedImage = ourImageCache.get(newLoadSettings);
+      if (cachedImage != null) {
+        resetImage(propertyValue, newLoadSettings, cachedImage, newAlpha, newFillType, newAnchor);
+        return;
+      }
+
       ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         Image newImage = filterImage(loadImage(newLoadSettings), newLoadSettings);
+        ourImageCache.put(newLoadSettings, newImage);
         ApplicationManager.getApplication().invokeLater(() -> {
           resetImage(propertyValue, newLoadSettings, newImage, newAlpha, newFillType, newAnchor);
         }, modalityState);

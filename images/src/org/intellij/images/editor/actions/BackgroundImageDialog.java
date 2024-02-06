@@ -361,7 +361,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     String prop = getSystemProp();
     PropertiesComponent.getInstance(myProject).setValue(prop, null);
     PropertiesComponent.getInstance().setValue(prop, null);
-    repaintAllWindows();
+    resetBackgroundImagePainters();
   }
 
   @Override
@@ -381,7 +381,7 @@ public class BackgroundImageDialog extends DialogWrapper {
       PropertiesComponent.getInstance().setValue(prop, value);
     }
 
-    repaintAllWindows();
+    resetBackgroundImagePainters();
   }
 
   private void storeRecentImages() {

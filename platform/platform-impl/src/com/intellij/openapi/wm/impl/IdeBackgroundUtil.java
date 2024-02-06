@@ -127,6 +127,11 @@ public final class IdeBackgroundUtil {
     }, null);
   }
 
+  public static void resetBackgroundImagePainters() {
+    PainterHelper.resetWallpaperPainterCache();
+    repaintAllWindows();
+  }
+
   public static @NotNull Color getIdeBackgroundColor() {
     return JBColor.lazy(() -> {
       return StartupUiUtil.isUnderDarcula() ? Gray._40 : ColorUtil.darker(JBColor.PanelBackground, 3);
