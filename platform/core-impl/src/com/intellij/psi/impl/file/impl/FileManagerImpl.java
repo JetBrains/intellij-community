@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -27,7 +27,6 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -121,7 +120,7 @@ public final class FileManagerImpl implements FileManager {
       return;
     }
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAction();
 
     VirtualFile dir = vFile.getParent();
     PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
@@ -153,8 +152,9 @@ public final class FileManagerImpl implements FileManager {
     clearViewProviders();
   }
 
-  @RequiresWriteLock
   private void clearViewProviders() {
+    assertWriteAction();
+
     DebugUtil.performPsiModification("clearViewProviders", () -> {
       ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
       if (map != null) {
@@ -164,6 +164,12 @@ public final class FileManagerImpl implements FileManager {
       }
       myVFileToViewProviderMap.set(null);
     });
+  }
+
+  // do not use RequiresWriteLock or ThreadingAssertions - mock app or core env is used here
+  private static void assertWriteAction() {
+    //noinspection UsagesOfObsoleteApi
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
   }
 
   @Override
@@ -294,7 +300,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   void possiblyInvalidatePhysicalPsi() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAction();
     removeInvalidDirs();
     for (FileViewProvider viewProvider : getVFileToViewProviderMap().values()) {
       markPossiblyInvalidated(viewProvider);
@@ -552,7 +558,7 @@ public final class FileManagerImpl implements FileManager {
 
   @Override
   public void reloadFromDisk(@NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAction();
     VirtualFile vFile = psiFile.getVirtualFile();
     assert vFile != null;
 
