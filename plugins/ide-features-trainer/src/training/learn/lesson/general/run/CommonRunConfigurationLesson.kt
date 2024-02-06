@@ -47,21 +47,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         LessonUtil.setEditorReadOnly(editor)
       }
 
-      highlightButtonById("Run", highlightInside = false, usePulsation = false)
-
-      task {
-        text(LessonsBundle.message("run.configuration.run.current", icon(runIcon)))
-        text(LessonsBundle.message("run.configuration.run.current.balloon"), LearningBalloonConfig(Balloon.Position.below, 0))
-        checkToolWindowState("Run", true)
-        test {
-          ideFrame {
-            highlightedArea.click()
-          }
-        }
-      }
-
-      text(LessonsBundle.message("run.configuration.no.run.configuration",
-                                 strong(ExecutionBundle.message("run.configurations.combo.run.current.file.selected"))))
+      runFromToolbar()
 
       runTask()
 
@@ -210,6 +196,23 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
     }
 
   protected open fun LessonContext.addAnotherRunConfiguration() {}
+  protected open fun LessonContext.runFromToolbar() {
+    highlightButtonById("Run", highlightInside = false, usePulsation = false)
+
+    task {
+      text(LessonsBundle.message("run.configuration.run.current", icon(runIcon)))
+      text(LessonsBundle.message("run.configuration.run.current.balloon"), LearningBalloonConfig(Balloon.Position.below, 0))
+      checkToolWindowState("Run", true)
+      test {
+        ideFrame {
+          highlightedArea.click()
+        }
+      }
+    }
+
+    text(LessonsBundle.message("run.configuration.no.run.configuration",
+                               strong(ExecutionBundle.message("run.configurations.combo.run.current.file.selected"))))
+  }
 
   protected abstract fun LessonContext.runTask()
 
