@@ -22,7 +22,7 @@ private class UnsupportedGradleJvmBuildIssue(
   gradleVersion: GradleVersion,
   javaVersion: JavaVersion?,
   projectPath: String
-) : AbstractGradleBuildIssue() {
+) : ConfigurableGradleBuildIssue() {
   init {
     val oldestSupportedJavaVersionByIdea = GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
     val oldestSupportedJavaVersionByGradle = GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(gradleVersion)

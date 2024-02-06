@@ -84,7 +84,7 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
       else -> newestCompatibleJavaVersion
     }
 
-    return object : AbstractGradleBuildIssue() {
+    return object : ConfigurableGradleBuildIssue() {
       init {
         when {
           gradleVersionUsed != null && isRemovedUnsafeDefineClassMethodInJDK11Issue -> {

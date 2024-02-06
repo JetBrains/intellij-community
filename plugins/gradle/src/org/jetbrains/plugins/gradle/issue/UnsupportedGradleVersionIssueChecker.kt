@@ -76,8 +76,7 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
   }
 }
 
-private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, projectPath: String) : AbstractGradleBuildIssue() {
-
+private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, projectPath: String) : ConfigurableGradleBuildIssue() {
   init {
     val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
     val oldestRecommendedGradleVersion = GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
@@ -101,8 +100,7 @@ private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, proje
 }
 
 @ApiStatus.Internal
-class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: String) : AbstractGradleBuildIssue() {
-
+class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: String) : ConfigurableGradleBuildIssue() {
   init {
     val recommendedGradleVersion = GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
     setTitle(GradleBundle.message("gradle.build.issue.gradle.deprecated.title"))
