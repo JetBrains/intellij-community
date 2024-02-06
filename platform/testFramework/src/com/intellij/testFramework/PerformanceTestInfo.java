@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +26,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,29 +33,19 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttribute;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttributes;
 
 public class PerformanceTestInfo {
-  private record IterationStatus(@NotNull IterationResult iterationResult,
-                                 boolean passed,
-                                 @NotNull String logMessage) {
-  }
-
   private enum IterationMode {
     WARMUP,
     MEASURE
   }
 
   private final ThrowableComputable<Integer, ?> test; // runnable to measure; returns actual input size
-  private final int expectedMs;           // millis the test is expected to run
   private final int expectedInputSize;    // size of input the test is expected to process;
   private ThrowableRunnable<?> setup;      // to run before each test
   private int usedReferenceCpuCores = 1;
   private int maxMeasurementAttempts = 3;             // number of retries
   private final String launchName;         // to print on fail
-  private boolean adjustForIO;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
-  private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
-  private boolean useLegacyScaling;
   private int warmupIterations = 1; // default warmup iterations should be positive
   @NotNull
   private final IJTracer tracer;
@@ -93,13 +81,11 @@ public class PerformanceTestInfo {
     }
   }
 
-  PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedMs, int expectedInputSize, @NotNull String launchName) {
+  PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName) {
     initOpenTelemetry();
 
     this.test = test;
-    this.expectedMs = expectedMs;
     this.expectedInputSize = expectedInputSize;
-    assert expectedMs > 0 : "Expected must be > 0. Was: " + expectedMs;
     assert expectedInputSize > 0 : "Expected input size must be > 0. Was: " + expectedInputSize;
     this.launchName = launchName;
     this.tracer = TelemetryManager.getInstance().getTracer(new Scope("performanceUnitTests", null));
@@ -109,33 +95,6 @@ public class PerformanceTestInfo {
   public PerformanceTestInfo setup(@NotNull ThrowableRunnable<?> setup) {
     assert this.setup == null;
     this.setup = setup;
-    return this;
-  }
-
-  /**
-   * Invoke this method if and only if the code under performance tests is using all CPU cores.
-   * The "standard" expected time then should be given for a machine which has 8 CPU cores.
-   * Actual test expected time will be adjusted according to the number of cores the actual computer has.
-   */
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
-
-  /**
-   * Invoke this method if and only if the code under performance tests is using {@code maxCores} CPU cores (or fewer if the computer has less than {@code maxCores} cores).
-   * The "standard" expected time then should be given for a machine which has {@code maxCores} CPU cores.
-   * Actual test expected time will be adjusted according to the number of cores the actual computer has.
-   */
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo usesMultipleCPUCores(int maxCores) {
-    assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores";
-    usedReferenceCpuCores = maxCores;
-    return this;
-  }
-
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo ioBound() {
-    adjustForIO = true;
-    adjustForCPU = false;
     return this;
   }
 
@@ -152,18 +111,6 @@ public class PerformanceTestInfo {
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo warmupIterations(int iterations) {
     warmupIterations = iterations;
-    return this;
-  }
-
-  /**
-   * @deprecated Enables procedure for nonlinear scaling of results between different machines. This was historically enabled, but doesn't
-   * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
-   * expected execution time accordingly.
-   */
-  @Deprecated
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo useLegacyScaling() {
-    useLegacyScaling = true;
     return this;
   }
 
@@ -290,55 +237,24 @@ public class PerformanceTestInfo {
       computeWithSpanAttribute(tracer, launchName, "warmup", (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)), () -> {
         try {
           PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
+
           for (int attempt = 1; attempt <= maxIterationsNumber; attempt++) {
             AtomicInteger actualInputSize;
 
             if (setup != null) setup.run();
             actualInputSize = new AtomicInteger(expectedInputSize);
 
-            int iterationNumber = attempt;
-            Supplier<IterationStatus> operation = () -> {
-              CpuUsageData currentData;
-              try {
-                Profiler.startProfiling(iterationType.name() + iterationNumber);
-                currentData = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
-              }
-              catch (Throwable e) {
-                ExceptionUtil.rethrowUnchecked(e);
-                throw new RuntimeException(e);
-              }
-              finally {
-                Profiler.stopProfiling();
-              }
-              int actualUsedCpuCores = usedReferenceCpuCores < 8
-                                       ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores)
-                                       : JobSchedulerImpl.getJobPoolParallelism();
-              int expectedOnMyMachine = getExpectedTimeOnThisMachine(actualInputSize.get(), actualUsedCpuCores);
-              IterationResult iterationResult = currentData.getIterationResult(expectedOnMyMachine);
+            Supplier<Object> perfTestWorkload = getPerfTestWorkloadSupplier(iterationType, attempt, actualInputSize);
 
-              boolean passed = iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
-              String message =
-                formatMessage(currentData, expectedOnMyMachine, actualInputSize.get(), actualUsedCpuCores, iterationResult);
-              return new IterationStatus(iterationResult, passed, message);
-            };
-
-            IterationStatus iterationStatus = computeWithSpanAttributes(
+            computeWithSpanAttribute(
               tracer, "Attempt: " + attempt,
-              iterationStatusSupplier -> {
-                var spanAttributes = new HashMap<String, String>();
+              "warmup",
+              (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)),
+              () -> perfTestWorkload.get()
+            );
 
-                spanAttributes.put("Attempt status", String.valueOf(iterationStatusSupplier));
-                if (iterationType.equals(IterationMode.WARMUP)) {
-                  spanAttributes.put("warmup", "true");
-                }
-
-                return spanAttributes;
-              },
-              () -> operation.get());
-
-
-            if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-              System.out.println(iterationStatus);
+            if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+              // TODO: Print debug metrics here https://youtrack.jetbrains.com/issue/AT-726
             }
             //noinspection CallToSystemGC
             System.gc();
@@ -367,34 +283,22 @@ public class PerformanceTestInfo {
     }
   }
 
-  private @NotNull String formatMessage(@NotNull CpuUsageData data,
-                                        int expectedOnMyMachine,
-                                        int actualInputSize,
-                                        int actualUsedCpuCores,
-                                        @NotNull IterationResult iterationResult) {
-    long duration = data.durationMs;
-    int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-    String colorCode = iterationResult == IterationResult.ACCEPTABLE ? "32;1m" : // green
-                       iterationResult == IterationResult.BORDERLINE ? "33;1m" : // yellow
-                       "31;1m"; // red
-    return
-      launchName + " took \u001B[" + colorCode + Math.abs(percentage) + "% " + (percentage > 0 ? "more" : "less") + " time\u001B[0m than expected" +
-      (iterationResult == IterationResult.DISTRACTED ? " (but JIT compilation took too long, will retry anyway)" : "") +
-      "\n  Expected: " + expectedOnMyMachine + "ms" + (expectedOnMyMachine < 1000 ? "" : " (" + StringUtil.formatDuration(expectedOnMyMachine) + ")") +
-      "\n  Actual:   " + duration + "ms" + (duration < 1000 ? "" : " (" + StringUtil.formatDuration(duration) + ")") +
-      (expectedInputSize != actualInputSize ? "\n  (Expected time was adjusted accordingly to input size: expected " + expectedInputSize + ", actual " + actualInputSize + ".)": "") +
-      (usedReferenceCpuCores != actualUsedCpuCores ? "\n  (Expected time was adjusted accordingly to number of available CPU cores: reference CPU has " + usedReferenceCpuCores + ", actual value is " + actualUsedCpuCores + ".)": "") +
-      "\n  Timings:  " + Timings.getStatistics() +
-      "\n  Threads:  " + data.getThreadStats() +
-      "\n  GC stats: " + data.getGcStats() +
-      "\n  Process:  " + data.getProcessCpuStats();
-  }
+  private @NotNull Supplier<Object> getPerfTestWorkloadSupplier(IterationMode iterationType, int attempt, AtomicInteger actualInputSize) {
+    return () -> {
+      try {
+        Profiler.startProfiling(iterationType.name() + attempt);
+        actualInputSize.set(test.compute());
+      }
+      catch (Throwable e) {
+        ExceptionUtil.rethrowUnchecked(e);
+        throw new RuntimeException(e);
+      }
+      finally {
+        Profiler.stopProfiling();
+      }
 
-  enum IterationResult {
-    ACCEPTABLE, // test was completed within the specified range
-    BORDERLINE, // test barely managed to complete within the specified range
-    SLOW,       // test was too slow
-    DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g., JIT or GC)
+      return null;
+    };
   }
 
   private static final class Profiler {
@@ -432,33 +336,6 @@ public class PerformanceTestInfo {
           System.out.println("Can't start profiling");
         }
       }
-    }
-  }
-
-  private int getExpectedTimeOnThisMachine(int actualInputSize, int actualUsedCpuCores) {
-    int expectedOnMyMachine = (int)(((long)expectedMs) * actualInputSize / expectedInputSize);
-    if (adjustForCPU) {
-      expectedOnMyMachine *= usedReferenceCpuCores;
-      expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.REFERENCE_CPU_TIMING, useLegacyScaling);
-      expectedOnMyMachine /= actualUsedCpuCores;
-    }
-    if (adjustForIO) {
-      expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.REFERENCE_IO_TIMING, useLegacyScaling);
-    }
-    return expectedOnMyMachine;
-  }
-
-  private static int adjust(int expectedOnMyMachine, long thisTiming, long referenceTiming, boolean useLegacyScaling) {
-    if (useLegacyScaling) {
-      double speed = 1.0 * thisTiming / referenceTiming;
-      double delta = speed < 1
-                     ? 0.9 + Math.pow(speed - 0.7, 2)
-                     : 0.45 + Math.pow(speed - 0.25, 2);
-      expectedOnMyMachine *= delta;
-      return expectedOnMyMachine;
-    }
-    else {
-      return (int)(expectedOnMyMachine * thisTiming / referenceTiming);
     }
   }
 }
