@@ -760,6 +760,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
   }
 
+  /** Checks if the selected content component or one of its descendants has focus. */
+  @ApiStatus.Internal public Boolean isActive() {
+    return UIUtil.isFocusAncestor(contentComponent);
+  }
+
   public final class TabPanel extends NonOpaquePanel implements UISettingsListener {
     private TabPanel() {
       super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
