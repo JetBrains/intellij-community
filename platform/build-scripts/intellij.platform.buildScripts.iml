@@ -118,10 +118,10 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.apple.notary.api.kotlin.client" type="repository">
-        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.2">
+        <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.5">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2.jar">
-              <sha256sum>25ac259e3506b4d80d038131445643d80bffc097488da73a9cbea05a2f14270b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.5/apple-notary-api-kotlin-client-1.0.5.jar">
+              <sha256sum>68d0ecf4537f09f9115b2d68c57664cd1bdcf8ec25937b7280f89eea20c3bf22</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar">
               <sha256sum>45b24b098dcaec230fde72b4e0568dab464cf7d8afd8b83fb9ac628778c67df9</sha256sum>
@@ -132,9 +132,6 @@
             <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar">
               <sha256sum>e17a93342d623ecd58449b6142db53c5ec9d1fb7a6a40d6266e56ed796e06fdf</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2.jar">
-              <sha256sum>0d127b205a1fce0abc2a3757a041748651bc66c15cf4c059bac5833b27d471a5</sha256sum>
-            </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431.jar">
               <sha256sum>238630e244b369b57238bb35e9a23382be65771b04a0f36d85df07b61b4ae2b9</sha256sum>
             </artifact>
@@ -143,56 +140,34 @@
             </artifact>
           </verification>
           <exclude>
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
-            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
-            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
-            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
-            <dependency maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor" />
-            <dependency maven-id="commons-codec:commons-codec" />
-            <dependency maven-id="commons-logging:commons-logging" />
-            <dependency maven-id="io.ktor:ktor-client-content-negotiation-jvm" />
             <dependency maven-id="io.ktor:ktor-client-core-jvm" />
             <dependency maven-id="io.ktor:ktor-client-logging-jvm" />
-            <dependency maven-id="io.ktor:ktor-events-jvm" />
-            <dependency maven-id="io.ktor:ktor-http-jvm" />
-            <dependency maven-id="io.ktor:ktor-io-jvm" />
-            <dependency maven-id="io.ktor:ktor-serialization-jvm" />
+            <dependency maven-id="io.ktor:ktor-client-content-negotiation-jvm" />
             <dependency maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm" />
-            <dependency maven-id="io.ktor:ktor-serialization-kotlinx-jvm" />
-            <dependency maven-id="io.ktor:ktor-utils-jvm" />
-            <dependency maven-id="io.ktor:ktor-websocket-serialization-jvm" />
-            <dependency maven-id="io.ktor:ktor-websockets-jvm" />
-            <dependency maven-id="joda-time:joda-time" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="commons-codec:commons-codec" />
             <dependency maven-id="org.apache.httpcomponents:httpclient" />
-            <dependency maven-id="org.apache.httpcomponents:httpcore" />
+            <dependency maven-id="software.amazon.ion:ion-java" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+            <dependency maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor" />
+            <dependency maven-id="joda-time:joda-time" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.5/apple-notary-api-kotlin-client-1.0.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.5/apple-notary-api-kotlin-client-1.0.5-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0-sources.jar!/" />
         </SOURCES>
@@ -244,8 +219,8 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="jaxb-api" level="project" />
-    <orderEntry type="library" name="jaxb-runtime" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
@@ -307,5 +282,7 @@
     <orderEntry type="library" name="jbr-api" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jackson-dataformat-yaml" level="project" />
+    <orderEntry type="library" name="ion" level="project" />
   </component>
 </module>
