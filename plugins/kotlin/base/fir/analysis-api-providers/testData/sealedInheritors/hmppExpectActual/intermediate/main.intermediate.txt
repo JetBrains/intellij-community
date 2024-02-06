@@ -1,1 +1,2 @@
 pkg/SealedClass1
+pkg/SealedClass2
