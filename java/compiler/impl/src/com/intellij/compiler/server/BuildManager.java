@@ -1125,6 +1125,8 @@ public final class BuildManager implements Disposable {
   @Override
   public void dispose() {
     stopListening();
+    myAutomakeTrigger.cancel();
+    myRequestsProcessor.cancel();
   }
 
   public static @NotNull Pair<@NotNull Sdk, @Nullable JavaSdkVersion> getBuildProcessRuntimeSdk(@NotNull Project project) {

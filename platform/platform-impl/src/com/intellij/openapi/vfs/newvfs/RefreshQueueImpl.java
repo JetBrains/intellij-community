@@ -197,6 +197,8 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
         session.cancel();
       }
     }
+    myEventProcessingQueue.cancel();
+    myQueue.cancel();
   }
 
   public static boolean isRefreshInProgress() {

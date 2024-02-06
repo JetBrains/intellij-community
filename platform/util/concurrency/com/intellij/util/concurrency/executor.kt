@@ -47,6 +47,10 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
     }
   }
 
+  fun cancel() {
+    childScope.cancel()
+  }
+
   @TestOnly
   fun waitAllTasksExecuted(timeout: Long, timeUnit: TimeUnit) {
     @Suppress("RAW_RUN_BLOCKING")

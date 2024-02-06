@@ -314,6 +314,7 @@ final class FileTypeDetectionService implements Disposable {
   @Override
   public void dispose() {
     LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
+    reDetectExecutor.cancel();
   }
 
   static boolean isDetectable(@NotNull VirtualFile file) {
