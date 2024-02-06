@@ -49,12 +49,10 @@ open class IdeStarter : ModernApplicationStarter() {
     private var filesToLoad: List<Path> = Collections.emptyList()
     private var uriToOpen: String? = null
 
-    @JvmStatic
     fun openFilesOnLoading(value: List<Path>) {
       filesToLoad = value
     }
 
-    @JvmStatic
     fun openUriOnLoading(value: String) {
       uriToOpen = value
     }
@@ -105,7 +103,6 @@ open class IdeStarter : ModernApplicationStarter() {
     }
   }
 
-  @OptIn(IntellijInternalApi::class)
   protected open suspend fun openProjectIfNeeded(args: List<String>,
                                                  app: Application,
                                                  asyncCoroutineScope: CoroutineScope,
@@ -127,12 +124,6 @@ open class IdeStarter : ModernApplicationStarter() {
 
       asyncCoroutineScope.launch {
         LifecycleUsageTriggerCollector.onIdeStart()
-      }
-
-      if (app.isInternal) {
-        asyncCoroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          UiInspectorAction.initStacktracesSaving()
-        }
       }
 
       if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
@@ -255,7 +246,14 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
   return result.project
 }
 
+@OptIn(IntellijInternalApi::class)
 private fun CoroutineScope.postOpenUiTasks() {
+  if (ApplicationManager.getApplication().isInternal) {
+    launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      UiInspectorAction.initStacktracesSaving()
+    }
+  }
+
   if (PluginManagerCore.isRunningFromSources()) {
     updateAppWindowIcon(JOptionPane.getRootFrame())
   }
