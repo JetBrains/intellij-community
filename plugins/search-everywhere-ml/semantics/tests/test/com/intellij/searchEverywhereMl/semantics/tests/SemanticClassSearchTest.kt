@@ -3,7 +3,6 @@ package com.intellij.searchEverywhereMl.semantics.tests
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoClassModel2
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage
 import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
@@ -12,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticClassSearchEverywhereContributor
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
-import com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -120,11 +118,9 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
   }
 
   private suspend fun setupTest(vararg filePaths: String) {
-    SemanticSearchFileChangeListener.getInstance(project).clearEvents()
     myFixture.configureByFiles(*filePaths)
-    LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
     SearchEverywhereSemanticSettings.getInstance().enabledInClassesTab = true
-    ClassEmbeddingsStorage.getInstance(project).index.clear()
+    storage.index.clear()
     FileBasedEmbeddingStoragesManager.getInstance(project).prepareForSearch().join()
   }
 }

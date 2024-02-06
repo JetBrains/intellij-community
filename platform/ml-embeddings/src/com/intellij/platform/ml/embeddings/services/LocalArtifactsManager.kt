@@ -3,6 +3,7 @@ package com.intellij.platform.ml.embeddings.services
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -51,7 +52,7 @@ class LocalArtifactsManager {
   @RequiresBackgroundThread
   suspend fun downloadArtifactsIfNecessary(project: Project? = null,
                                            retryIfCanceled: Boolean = true) = withContext(downloadContext) {
-    if (!checkArtifactsPresent() && (retryIfCanceled || !downloadCanceled)) {
+    if (!checkArtifactsPresent() && !ApplicationManager.getApplication().isUnitTestMode && (retryIfCanceled || !downloadCanceled)) {
       logger.debug("Semantic search artifacts are not present, starting the download...")
       if (project != null) {
         withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
