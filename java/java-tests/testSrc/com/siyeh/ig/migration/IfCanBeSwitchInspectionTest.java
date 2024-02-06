@@ -17,6 +17,10 @@ public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
     doTest();
   }
 
+  public void testSeveralIfStatements() {
+    doTest();
+  }
+
   public void testNullUnsafe(){ doUnsafeNullTest(); }
 
   @NotNull IfCanBeSwitchInspection myInspection = new IfCanBeSwitchInspection();

@@ -64,7 +64,9 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    return new IfCanBeSwitchFix();
+    if (infos.length == 0 || !(infos[0] instanceof Integer)) return null;
+    int additionalIfStatementsCount = (Integer)infos[0];
+    return new IfCanBeSwitchFix(additionalIfStatementsCount);
   }
 
   @Override
@@ -88,7 +90,11 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
 
   private static class IfCanBeSwitchFix extends PsiUpdateModCommandQuickFix {
 
-    IfCanBeSwitchFix() {}
+    private final int myAdditionalIfStatementsCount;
+
+    IfCanBeSwitchFix(int additionalIfStatementsCount) {
+      this.myAdditionalIfStatementsCount = additionalIfStatementsCount;
+    }
 
     @Override
     @NotNull
@@ -102,12 +108,58 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       if (!(element instanceof PsiIfStatement ifStatement)) {
         return;
       }
+      ifStatement = concatenateIfStatements(ifStatement);
       if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(ifStatement)) {
         for (PsiIfStatement ifStatementInChain : getAllConditionalBranches(ifStatement)) {
           replaceCastsWithPatternVariable(ifStatementInChain);
         }
       }
       replaceIfWithSwitch(ifStatement, updater);
+    }
+
+    @NotNull
+    private PsiIfStatement concatenateIfStatements(@NotNull PsiIfStatement originalIfStatement) {
+      if (myAdditionalIfStatementsCount == 0) return originalIfStatement;
+      StringBuilder sb = new StringBuilder();
+      CommentTracker commentTracker = new CommentTracker();
+      PsiIfStatement currentStatement = originalIfStatement;
+      int currentAdditionalIfStatementsCount = 0;
+      List<PsiIfStatement> toDeleteStatements = new ArrayList<>();
+      boolean addText = true;
+      while (true) {
+        if (addText) {
+          String text = commentTracker.text(currentStatement);
+          sb.append(text);
+        }
+        PsiStatement elseBranch = currentStatement.getElseBranch();
+        if (elseBranch instanceof PsiIfStatement nextIfStatement) {
+          addText = false;
+          currentStatement = nextIfStatement;
+          continue;
+        }
+        if (elseBranch == null && currentAdditionalIfStatementsCount < myAdditionalIfStatementsCount) {
+          PsiIfStatement upperIf =  currentStatement;
+          while (upperIf.getParent() instanceof PsiIfStatement parentIfStatement &&
+                 parentIfStatement.getElseBranch() == upperIf) {
+            upperIf = parentIfStatement;
+          }
+          PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(upperIf);
+          if (nextElement instanceof PsiIfStatement nextIfStatement) {
+            addText = true;
+            sb.append("\n else \n");
+            currentStatement = nextIfStatement;
+            currentAdditionalIfStatementsCount++;
+            toDeleteStatements.add(nextIfStatement);
+            continue;
+          }
+        }
+        break;
+      }
+      PsiElement replaced = commentTracker.replace(originalIfStatement, sb.toString());
+      for (PsiIfStatement toDeleteStatement : toDeleteStatements) {
+        toDeleteStatement.delete();
+      }
+      return replaced instanceof PsiIfStatement ? (PsiIfStatement)replaced : originalIfStatement;
     }
   }
 
@@ -550,13 +602,41 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       int branchCount = 0;
       final Set<Object> switchCaseValues = new HashSet<>();
       PsiIfStatement branch = statement;
+      int additionalIfStatementCount = 0;
+
+      //otherwise there may be problems in batch modes
+      PsiElement previousElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(branch);
+      if (previousElement instanceof PsiIfStatement previousPsiIfStatement &&
+          SwitchUtils.canBeSwitchCase(previousPsiIfStatement.getCondition(), switchExpression, languageLevel, switchCaseValues, isPatternMatch)) {
+        return;
+      }
+
+      boolean currentIsNextIf = false;
       while (true) {
         branchCount++;
-        if (!SwitchUtils.canBeSwitchCase(branch.getCondition(), switchExpression, languageLevel, switchCaseValues, isPatternMatch)) {
+        if (!currentIsNextIf && !SwitchUtils.canBeSwitchCase(branch.getCondition(), switchExpression, languageLevel, switchCaseValues, isPatternMatch)) {
           return;
         }
+        currentIsNextIf = false;
         final PsiStatement elseBranch = branch.getElseBranch();
         if (!(elseBranch instanceof PsiIfStatement)) {
+          if (elseBranch == null) {
+            PsiIfStatement upperIf = branch;
+            while (upperIf.getParent() instanceof PsiIfStatement parentIfStatement &&
+                   parentIfStatement.getElseBranch() == upperIf) {
+              upperIf = parentIfStatement;
+            }
+            PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(upperIf);
+            if (nextElement instanceof PsiIfStatement nextIfStatement &&
+                !ControlFlowUtils.statementMayCompleteNormally(branch.getThenBranch())) {
+              if (SwitchUtils.canBeSwitchCase(nextIfStatement.getCondition(), switchExpression, languageLevel, switchCaseValues, isPatternMatch)) {
+                branch = nextIfStatement;
+                currentIsNextIf = true;
+                additionalIfStatementCount++;
+                continue;
+              }
+            }
+          }
           break;
         }
         branch = (PsiIfStatement)elseBranch;
@@ -570,7 +650,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         if (!isOnTheFly()) return;
         highlightType = ProblemHighlightType.INFORMATION;
       }
-      registerError(statement.getFirstChild(), highlightType);
+      registerError(statement.getFirstChild(), highlightType, additionalIfStatementCount);
     }
 
     private boolean shouldHighlight(PsiIfStatement ifStatement, PsiExpression switchExpression) {
