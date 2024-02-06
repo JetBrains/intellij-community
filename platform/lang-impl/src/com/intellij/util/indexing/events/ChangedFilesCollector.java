@@ -8,14 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
@@ -26,19 +23,14 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -50,11 +42,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public static final boolean CLEAR_NON_INDEXABLE_FILE_DATA =
     SystemProperties.getBooleanProperty("idea.indexes.clear.non.indexable.file.data", true);
 
-  // files from myEventMerger and myFilesToUpdate
-  private final List<Pair<Project, ConcurrentBitSet>> myDirtyFiles = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final ConcurrentBitSet myDirtyFilesWithoutProject = ConcurrentBitSet.create();
+  private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
-  private final FilesToUpdateCollector myFilesToUpdate = new FilesToUpdateCollector(myDirtyFiles, myDirtyFilesWithoutProject);
+  private final FilesToUpdateCollector myFilesToUpdate = new FilesToUpdateCollector();
 
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
   private final Phaser myWorkersFinishedSync = new Phaser() {
@@ -88,29 +78,18 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return myFilesToUpdate;
   }
 
-  static void removeFromDirtyFiles(int fileId, @NotNull ConcurrentBitSet dirtyFilesWithoutProject, @NotNull List<Pair<Project, ConcurrentBitSet>> dirtyFiles) {
-    dirtyFilesWithoutProject.clear(fileId);
-    for (Pair<Project, ConcurrentBitSet> pair : dirtyFiles) {
-      pair.second.clear(fileId);
-    }
-  }
-
   public Collection<VirtualFile> getAllFilesToUpdate() {
     ensureUpToDate();
     return myFilesToUpdate.getAllFilesToUpdate();
   }
 
-  @NotNull
-  public IntSet getDirtyFilesWithoutProject() {
-    return toIntSet(myDirtyFilesWithoutProject);
-  }
-
-  public void clearFilesToUpdate() {
-    myFilesToUpdate.clearFilesToUpdate();
-    myDirtyFilesWithoutProject.clear();
-    for (Pair<Project, ConcurrentBitSet> p : myDirtyFiles) {
-      p.second.clear();
-    }
+  public void clear() {
+    myDirtyFiles.clear();
+    ReadAction.run(() -> {
+      processFilesInReadAction(info -> {
+        return true;
+      });
+    });
   }
 
   @Override
@@ -128,23 +107,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   private void addToDirtyFiles(@NotNull VirtualFile fileOrDir) {
     if (!(fileOrDir instanceof VirtualFileWithId fileOrDirWithId)) return;
     int id = fileOrDirWithId.getId();
-
     Set<Project> projects = myFileBasedIndex.getIndexableFilesFilterHolder().findProjectsForFile(FileBasedIndex.getFileId(fileOrDir));
-    if (projects.isEmpty()) {
-      myDirtyFilesWithoutProject.set(id);
-      return;
-    }
-    for (Project project : projects) {
-      Pair<Project, ConcurrentBitSet> projectDirtyFiles = getDirtyFiles(project);
-      if (projectDirtyFiles != null) {
-        projectDirtyFiles.second.set(id);
-      }
-      else {
-        assert false : "Project (name: " + project.getName() + " hash: " + project.getLocationHash() + ") " +
-                       "was not found in myDirtyFiles. " +
-                       "Projects in myDirtyFiles: " + Strings.join(myDirtyFiles, p -> "(name: " + p.first.getName() + " hash: " + p.first.getLocationHash() + ") ", ", ");
-      }
-    }
+    myDirtyFiles.addFile(projects, id);
   }
 
   @Override
@@ -171,62 +135,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     };
   }
 
-  public void addProject(@NotNull Project project) {
-    myDirtyFiles.add(new Pair<>(project, ConcurrentBitSet.create()));
-  }
-
-  public void onProjectClosing(@NotNull Project project, long vfsCreationStamp) {
-    persistProjectsDirtyFiles(project, vfsCreationStamp);
-    while (true) {
-      if (!myDirtyFiles.removeIf(p -> p.first.equals(project))) break;
-    }
-  }
-
-  public void persistProjectsDirtyFiles(long vfsCreationStamp) {
-    Set<Project> persistedProjects = new HashSet<>();
-    for (Pair<Project, ConcurrentBitSet> p : myDirtyFiles) {
-      if (!persistedProjects.add(p.first)) {
-        // todo: this is a temp fix for the problem in LightPlatformTestCase where
-        //  project is registered in FileBasedIndexImpl two times.
-        //  First time via LightProjectDescriptor.setUpProject
-        //  Second time via ((TestProjectManager)ProjectManagerEx.getInstanceEx()).openProject(project)
-        //  So here in myDirtyFiles there'll be the same project twice, only the first one may contain data
-        //  because second one is never reached.
-        //  (this is relevant only for tests)
-        continue;
-      }
-      persistProjectsDirtyFiles(p.first, vfsCreationStamp);
-    }
-    // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
-    ReadAction.run(() -> {
-      processFilesInReadAction(info -> {
-        return true;
-      });
-    });
-  }
-
-  private void persistProjectsDirtyFiles(@NotNull Project project, long vfsCreationStamp) {
-    Pair<Project, ConcurrentBitSet> p = getDirtyFiles(project);
-    if (p == null) return;
-    IntSet dirtyFileIds = toIntSet(p.second);
-    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(p.first.getLocationHash()), dirtyFileIds, vfsCreationStamp);
-  }
-
   @NotNull
-  private static IntSet toIntSet(@NotNull ConcurrentBitSet dirtyFilesSet) {
-    IntSet dirtyFileIds = new IntOpenHashSet();
-    for (int fileId = 0; fileId < dirtyFilesSet.size(); fileId++) {
-      if (dirtyFilesSet.get(fileId)) {
-        PingProgress.interactWithEdtProgress();
-        dirtyFileIds.add(fileId);
-      }
-    }
-    return dirtyFileIds;
-  }
-
-  @Nullable
-  private Pair<Project, ConcurrentBitSet> getDirtyFiles(@NotNull Project project) {
-    return ContainerUtil.find(myDirtyFiles, p -> p.first.equals(project));
+  public DirtyFiles getDirtyFiles() {
+    return myDirtyFiles;
   }
 
   private static boolean memoryStorageCleaningNeeded(@NotNull VFileEvent event) {
@@ -292,10 +203,12 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         try {
           int fileId = info.getFileId();
           VirtualFile file = info.getFile();
-          if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
-          if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
-          if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
-          if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
+          List<Project> dirtyQueueProjects = myDirtyFiles.getProjects(info.getFileId());
+          myDirtyFiles.removeFile(info.getFileId());
+          if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects);
+          if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true, dirtyQueueProjects);
+          if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file, dirtyQueueProjects);
+          if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false, dirtyQueueProjects);
           if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
               StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
             perFileElementTypeUpdateProcessor.processUpdate(file);
@@ -304,11 +217,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         catch (Throwable t) {
           if (LOG.isDebugEnabled()) LOG.debug("Exception while processing " + info, t);
           throw t;
-        }
-        finally {
-          if (!myFilesToUpdate.containsFileId(info.getFileId())) {
-            removeFromDirtyFiles(info.getFileId(), myDirtyFilesWithoutProject, myDirtyFiles); // vfs event was processed by files was not scheduled for indexing
-          }
         }
         return true;
       }

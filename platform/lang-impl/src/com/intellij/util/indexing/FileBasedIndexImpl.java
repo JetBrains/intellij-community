@@ -69,10 +69,7 @@ import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesServic
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
-import com.intellij.util.indexing.events.ChangedFilesCollector;
-import com.intellij.util.indexing.events.DeletedVirtualFileStub;
-import com.intellij.util.indexing.events.FilesToUpdateCollector;
-import com.intellij.util.indexing.events.VfsEventsMerger;
+import com.intellij.util.indexing.events.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
@@ -295,7 +292,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public void onProjectClosing(@NotNull Project project) {
     myIndexableSets.removeIf(p -> p.second.equals(project));
-    getChangedFilesCollector().onProjectClosing(project, vfsCreationStamp);
+    persistDirtyFiles(project);
+    getChangedFilesCollector().getDirtyFiles().removeProject(project);
+    getChangedFilesCollector().getFilesToUpdateCollector().getDirtyFiles().removeProject(project);
   }
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
@@ -571,6 +570,31 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  @TestOnly
+  private void persistProjectsDirtyFiles() {
+    Set<Project> projects = new HashSet<>();
+    projects.addAll(getChangedFilesCollector().getDirtyFiles().getProjects());
+    projects.addAll(getChangedFilesCollector().getFilesToUpdateCollector().getDirtyFiles().getProjects());
+    for (Project project : projects) {
+      persistDirtyFiles(project);
+    }
+  }
+
+  private void persistDirtyFiles(@NotNull Project project) {
+    IntSet dirtyFileIds = getAllDirtyFiles(project);
+    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(project.getLocationHash()), dirtyFileIds, vfsCreationStamp);
+  }
+
+  @NotNull
+  public IntSet getAllDirtyFiles(@Nullable Project project) {
+    IntSet dirtyFileIds = new IntOpenHashSet();
+    ProjectDirtyFiles dirtyFiles1 = getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(project);
+    if (dirtyFiles1 != null) dirtyFiles1.addAllTo(dirtyFileIds);
+    ProjectDirtyFiles dirtyFiles2 = getChangedFilesCollector().getFilesToUpdateCollector().getDirtyFiles().getProjectDirtyFiles(project);
+    if (dirtyFiles2 != null) dirtyFiles2.addAllTo(dirtyFileIds);
+    return dirtyFileIds;
+  }
+
   void performShutdown(boolean keepConnection, @NotNull String reason) {
     myShutdownReason = keepConnection ? reason : null;
     RegisteredIndexes registeredIndexes = myRegisteredIndexes;
@@ -616,11 +640,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           allStaleIdsToCheck.addAll(staleIds);
           // project dirty files are still in ChangedFilesCollector in case FileBasedIndex is restarted using Tumbler (projects are not closed)
           // we need to persist queues, so we can properly re-read them here and in FileBasedIndexDataInitialization
-          getChangedFilesCollector().persistProjectsDirtyFiles(vfsCreationStamp);
+          persistProjectsDirtyFiles();
           // some deleted files were already saved to project queues and saved to disk during project closing
           // we need to read them to avoid false-positive errors in checkIndexForStaleRecords
           readAllProjectDirtyFilesQueues(allStaleIdsToCheck);
-          allStaleIdsToCheck.addAll(getChangedFilesCollector().getDirtyFilesWithoutProject());
+
+          allStaleIdsToCheck.addAll(getAllDirtyFiles(null));
 
           UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
           if (index != null) {
@@ -628,12 +653,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
-        IntSet dirtyFilesWithoutProject = getChangedFilesCollector().getDirtyFilesWithoutProject();
+        IntSet dirtyFilesWithoutProject = getAllDirtyFiles(null);
         // we need to persist myStaleIds to disk otherwise we lose them if FileBasedIndexTumbler shutdown is performed twice in a row
         dirtyFilesWithoutProject.addAll(staleIds);
         PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(),
                                                      dirtyFilesWithoutProject, vfsCreationStamp);
-        getChangedFilesCollector().clearFilesToUpdate();
+        // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
+        getChangedFilesCollector().clear();
+        getChangedFilesCollector().getFilesToUpdateCollector().clear();
         vfsCreationStamp = 0;
 
         // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
@@ -1752,7 +1779,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     index.invalidateIndexedStateForFile(inputId);
   }
 
-  public void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file) {
+  public void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file, @NotNull List<Project> dirtyQueueProjects) {
     clearUpToDateIndexesForUnsavedOrTransactedDocs();
 
     Document document = myFileDocumentManager.getCachedDocument(file);
@@ -1774,10 +1801,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     IndexingStamp.flushCache(fileId);
 
-    getFilesToUpdateCollector().scheduleForUpdate(file);
+    getFilesToUpdateCollector().scheduleForUpdate(file, dirtyQueueProjects);
   }
 
-  public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file) {
+  public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, @NotNull List<Project> dirtyQueueProjects) {
     IndexingFlag.cleanProcessedFlagRecursively(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
@@ -1797,7 +1824,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     else {
       // its data should be (lazily) wiped for every index
-      getFilesToUpdateCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+      getFilesToUpdateCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file), dirtyQueueProjects);
     }
   }
 
@@ -1806,10 +1833,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return getChangedFilesCollector().getFilesToUpdateCollector();
   }
 
-  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean onlyContentChanged) {
+  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean onlyContentChanged, @NotNull List<Project> dirtyQueueProjects) {
     Project projectForFile = ensureFileBelongsToIndexableFilter(fileId, file);
     if (projectForFile == null) {
-      doInvalidateIndicesForFile(fileId, file);
+      doInvalidateIndicesForFile(fileId, file, dirtyQueueProjects);
       return;
     }
 
@@ -1831,7 +1858,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     // with old content)
     if (!file.isValid() || (isRegularFile && isTooLarge(file))) {
       // large file might be scheduled for update in before event when its size was not large
-      getFilesToUpdateCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+      getFilesToUpdateCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file), dirtyQueueProjects);
     }
     else {
       FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
@@ -1855,7 +1882,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
 
           IndexingStamp.flushCache(fileId);
-          getFilesToUpdateCollector().scheduleForUpdate(file);
+          getFilesToUpdateCollector().scheduleForUpdate(file, dirtyQueueProjects);
         }
         else {
           IndexingFlag.setFileIndexed(file, indexingStamp);
@@ -1933,7 +1960,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
     myIndexableSets.add(Pair.create(set, project));
-    getChangedFilesCollector().addProject(project);
+    getChangedFilesCollector().getDirtyFiles().addProject(project);
+    getChangedFilesCollector().getFilesToUpdateCollector().getDirtyFiles().addProject(project);
   }
 
   public void onProjectClosing(@NotNull IndexableFileSet set) {
@@ -1957,7 +1985,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         changedFilesCollector.getFilesToUpdateCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       }
     }
-    getChangedFilesCollector().onProjectClosing(p.second, vfsCreationStamp);
+    persistDirtyFiles(p.second);
+    getChangedFilesCollector().getDirtyFiles().removeProject(p.second);
+    getChangedFilesCollector().getFilesToUpdateCollector().getDirtyFiles().removeProject(p.second);
 
     IndexingStamp.flushCaches();
   }

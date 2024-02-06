@@ -5,9 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.*;
@@ -17,22 +15,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.indexing.events.ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA;
-import static com.intellij.util.indexing.events.ChangedFilesCollector.removeFromDirtyFiles;
 
 public class FilesToUpdateCollector {
   private static final Logger LOG = Logger.getInstance(FilesToUpdateCollector.class);
   private final FileBasedIndexImpl myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final IntObjectMap<VirtualFile> myFilesToUpdate = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
-  private final List<Pair<Project, ConcurrentBitSet>> myDirtyFiles;
-  private final ConcurrentBitSet myDirtyFilesWithoutProject;
+  private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
-  public FilesToUpdateCollector(@NotNull List<Pair<Project, ConcurrentBitSet>> dirtyFiles, @NotNull ConcurrentBitSet dirtyFilesWithoutProject) {
-    myDirtyFiles = dirtyFiles;
-    myDirtyFilesWithoutProject = dirtyFilesWithoutProject;
-  }
-
-  public void scheduleForUpdate(@NotNull VirtualFile file) {
+  public void scheduleForUpdate(@NotNull VirtualFile file, @NotNull List<Project> dirtyQueueProjects) {
     int fileId = FileBasedIndex.getFileId(file);
     if (!(file instanceof DeletedVirtualFileStub)) {
       Set<Project> projects = myFileBasedIndex.getContainingProjects(file);
@@ -44,7 +35,13 @@ public class FilesToUpdateCollector {
     }
 
     VfsEventsMerger.tryLog("ADD_TO_UPDATE", file);
+    myDirtyFiles.addFile(dirtyQueueProjects, fileId);
     myFilesToUpdate.put(fileId, file);
+  }
+
+  @NotNull
+  public DirtyFiles getDirtyFiles() {
+    return myDirtyFiles;
   }
 
   private void removeNonIndexableFileData(@NotNull VirtualFile file, int fileId) {
@@ -92,16 +89,17 @@ public class FilesToUpdateCollector {
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
       VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", file);
       myFilesToUpdate.remove(fileId);
-      removeFromDirtyFiles(fileId, myDirtyFilesWithoutProject, myDirtyFiles);
+      myDirtyFiles.removeFile(fileId);
     }
   }
 
   public void removeFileIdFromFilesScheduledForUpdate(int fileId) {
     myFilesToUpdate.remove(fileId);
-    removeFromDirtyFiles(fileId, myDirtyFilesWithoutProject, myDirtyFiles);
+    myDirtyFiles.removeFile(fileId);
   }
 
-  public void clearFilesToUpdate() {
+  public void clear() {
+    myDirtyFiles.clear();
     myFilesToUpdate.clear();
   }
 
