@@ -312,7 +312,7 @@ object PluginManagerCore {
       .map { it.value }
       .toList()
     val logMessage = "Problems found loading plugins:\n  " +
-                     (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().map { it.internalMessage })
+                     (globalErrorsSuppliers.asSequence().map { it.get() } + loadingErrors.asSequence().map { it.internalMessage })
                        .joinToString(separator = "\n  ")
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
       if (!isUnitTestMode) {
