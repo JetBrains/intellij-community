@@ -12,6 +12,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.CachingTreePath;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -294,6 +295,8 @@ public final class TreeState implements JDOMExternalizable {
       if (!path[index].isMatchTo(rootPath.getPathComponent(index))) continue;
       expandImpl(0, path, rootPath, tree, indicator);
     }
+
+    tree.finishExpanding();
   }
 
   private void applySelectedTo(@NotNull JTree tree) {
@@ -378,6 +381,8 @@ public final class TreeState implements JDOMExternalizable {
 
     abstract ActionCallback expand(TreePath treePath);
 
+    abstract void finishExpanding();
+
     abstract void batch(Progressive progressive);
 
     static TreeFacade getFacade(JTree tree) {
@@ -386,15 +391,30 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   static class JTreeFacade extends TreeFacade {
+    private final boolean useBulkExpand;
+    private final @NotNull List<@NotNull TreePath> pathsToExpand = new ArrayList<>();
 
     JTreeFacade(JTree tree) {
       super(tree);
+      useBulkExpand = tree instanceof Tree && Tree.isBulkExpandCollapseSupported();
     }
 
     @Override
     public ActionCallback expand(@NotNull TreePath treePath) {
-      tree.expandPath(treePath);
+      if (useBulkExpand) {
+        pathsToExpand.add(treePath);
+      }
+      else {
+        tree.expandPath(treePath);
+      }
       return ActionCallback.DONE;
+    }
+
+    @Override
+    void finishExpanding() {
+      if (useBulkExpand) {
+        ((Tree)tree).expandPaths(pathsToExpand);
+      }
     }
 
     @Override
