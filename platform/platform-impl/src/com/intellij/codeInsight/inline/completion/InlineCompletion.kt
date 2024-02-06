@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
@@ -35,10 +36,17 @@ object InlineCompletion {
     editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
     editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
+
+    application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerInstalled(editor, handler)
   }
 
   fun remove(editor: Editor) {
-    editor.getUserData(KEY)?.cancel(FinishType.EDITOR_REMOVED)
-    editor.putUserData(KEY, null)
+    val handler = editor.getUserData(KEY)
+
+    if (handler != null) {
+      handler.cancel(FinishType.EDITOR_REMOVED)
+      application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerUninstalled(editor, handler)
+      editor.putUserData(KEY, null)
+    }
   }
 }
