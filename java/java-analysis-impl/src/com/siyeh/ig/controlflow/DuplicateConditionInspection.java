@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -54,7 +55,8 @@ public final class DuplicateConditionInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("ignoreSideEffectConditions", InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option")));
+      checkbox("ignoreSideEffectConditions", InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option"))
+        .description(InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option.description")));
   }
 
   @Override
@@ -141,20 +143,16 @@ public final class DuplicateConditionInspection extends BaseInspection {
 
     private void findDuplicatesAccordingToSideEffects(Set<PsiExpression> conditions) {
       final List<PsiExpression> conditionList = new ArrayList<>(conditions);
-      if (ignoreSideEffectConditions) {
-        conditionList.replaceAll(cond -> SideEffectChecker.mayHaveSideEffects(cond) ? null : cond);
-        // Every condition having side-effect separates non-side-effect conditions into independent groups
-        // like:
-        // if(!readToken() || token == X || token == Y) ...
-        // else if(!readToken() || token == X || token == Y) ...
-        // here we analyze independently first ['token == X', 'token == Y'] and second ['token == X', 'token == Y']
-        // thus no warning is issued. Such constructs often appear in parsers.
-        StreamEx.of(conditionList).groupRuns((a, b) -> a != null && b != null)
-          .filter(list -> list.size() >= 2).forEach(this::findDuplicates);
-      }
-      else {
-        findDuplicates(conditionList);
-      }
+      ThreeState wantedStatus = ignoreSideEffectConditions ? ThreeState.UNSURE : ThreeState.YES;
+      conditionList.replaceAll(cond -> SideEffectChecker.getSideEffectStatus(cond).isAtLeast(wantedStatus) ? null : cond);
+      // Every condition having side-effect separates non-side-effect conditions into independent groups
+      // like:
+      // if(!readToken() || token == X || token == Y) ...
+      // else if(!readToken() || token == X || token == Y) ...
+      // here we analyze independently first ['token == X', 'token == Y'] and second ['token == X', 'token == Y']
+      // thus no warning is issued. Such constructs often appear in parsers.
+      StreamEx.of(conditionList).groupRuns((a, b) -> a != null && b != null)
+        .filter(list -> list.size() >= 2).forEach(this::findDuplicates);
     }
 
     private void findDuplicates(List<PsiExpression> conditions) {

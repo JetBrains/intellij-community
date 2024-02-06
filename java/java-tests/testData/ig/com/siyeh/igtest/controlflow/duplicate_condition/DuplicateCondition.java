@@ -1,5 +1,7 @@
 package com.siyeh.igtest.controlflow.duplicate_condition;
 
+import java.util.*;
+
 public class DuplicateCondition {
 
   void x(boolean b) {
@@ -72,5 +74,9 @@ public class DuplicateCondition {
     else if (<warning descr="Duplicate condition '(((p + o) + (n + m)) + ((l + k) + (j + i))) + (((h + g) + (f + e)) + ((d + c) + (b + a))) > 0'">(((p + o) + (n + m)) + ((l + k) + (j + i))) + (((h + g) + (f + e)) + ((d + c) + (b + a))) > 0</warning>) {
       System.out.println("two");
     }
+  }
+  
+  void testCollection(Set<String> set) {
+    if (set.add("foo") || set.remove("bar") || set.add("foo") || set.remove("bar")) {}
   }
 }

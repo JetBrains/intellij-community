@@ -17,11 +17,13 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +68,17 @@ public final class SideEffectChecker {
     final SideEffectsVisitor visitor = new SideEffectsVisitor(null, exp);
     exp.accept(visitor);
     return visitor.mayHaveSideEffects();
+  }
+
+  /**
+   * @param exp expression to test
+   * @return whether expression produces side effect. {@link ThreeState#UNSURE} means 
+   * that unannotated method is called, which may or may not produce side effect.
+   */
+  public static @NotNull ThreeState getSideEffectStatus(@NotNull PsiExpression exp) {
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(null, exp);
+    exp.accept(visitor);
+    return visitor.getSideEffectStatus();
   }
 
   public static boolean mayHaveSideEffects(@NotNull PsiElement element, @NotNull Predicate<? super PsiElement> shouldIgnoreElement) {
@@ -139,7 +152,7 @@ public final class SideEffectChecker {
     private final @Nullable List<? super PsiElement> mySideEffects;
     private final @NotNull PsiElement myStartElement;
     private final @NotNull Predicate<? super PsiElement> myIgnorePredicate;
-    boolean found;
+    private @NotNull ThreeState found = ThreeState.NO;
 
     SideEffectsVisitor(@Nullable List<? super PsiElement> sideEffects, @NotNull PsiElement startElement) {
       this(sideEffects, startElement, call -> false);
@@ -152,11 +165,17 @@ public final class SideEffectChecker {
     }
 
     private boolean addSideEffect(PsiElement element) {
-      if (myIgnorePredicate.test(element)) return false;
-      found = true;
+      return addSideEffect(element, ThreeState.YES);
+    }
+
+    private boolean addSideEffect(PsiElement element, ThreeState state) {
+      if (state == ThreeState.NO || myIgnorePredicate.test(element)) return false;
+      if (state == ThreeState.YES || state == ThreeState.UNSURE && found == ThreeState.NO) {
+        found = state;
+      }
       if(mySideEffects != null) {
         mySideEffects.add(element);
-      } else {
+      } else if (found == ThreeState.YES) {
         stopWalking();
       }
       return true;
@@ -171,24 +190,35 @@ public final class SideEffectChecker {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiMethod method = expression.resolveMethod();
-      if (!isPure(method)) {
-        if (addSideEffect(expression)) return;
-      }
+      ThreeState sideEffect = getMethodSideEffect(method);
+      if (addSideEffect(expression, sideEffect)) return;
       super.visitMethodCallExpression(expression);
     }
 
-    protected static boolean isPure(PsiMethod method) {
-      if (method == null) return false;
+    private static @NotNull ThreeState getMethodSideEffect(PsiMethod method) {
+      if (method == null) {
+        return ThreeState.UNSURE;
+      }
       PsiField field = PropertyUtil.getFieldOfGetter(method);
-      if (field != null) return !field.hasModifierProperty(PsiModifier.VOLATILE);
-      return JavaMethodContractUtil.isPure(method) && !mayHaveExceptionalSideEffect(method);
+      if (field != null) {
+        return ThreeState.fromBoolean(field.hasModifierProperty(PsiModifier.VOLATILE));
+      }
+      if (mayHaveExceptionalSideEffect(method)) {
+        return ThreeState.UNSURE;
+      }
+      MutationSignature mutationSignature = MutationSignature.fromMethod(method);
+      if (mutationSignature.isPure()) {
+        return ThreeState.NO;
+      }
+      if (mutationSignature.mutatesAnything() || PropertyUtil.getFieldOfSetter(method) != null) {
+        return ThreeState.YES;
+      }
+      return ThreeState.UNSURE;
     }
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      if (!expression.isArrayCreation() && !isSideEffectFreeConstructor(expression)) {
-        if (addSideEffect(expression)) return;
-      }
+      if (addSideEffect(expression, getConstructorSideEffect(expression))) return;
       super.visitNewExpression(expression);
     }
 
@@ -269,6 +299,10 @@ public final class SideEffectChecker {
     }
 
     public boolean mayHaveSideEffects() {
+      return found != ThreeState.NO;
+    }
+    
+    public @NotNull ThreeState getSideEffectStatus() {
       return found;
     }
   }
@@ -293,21 +327,30 @@ public final class SideEffectChecker {
                                       && mc.getReturnValue().isFail());
   }
 
-  private static boolean isSideEffectFreeConstructor(@NotNull PsiNewExpression newExpression) {
+  private static @NotNull ThreeState getConstructorSideEffect(@NotNull PsiNewExpression newExpression) {
+    if (newExpression.isArrayCreation()) return ThreeState.NO;
     PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
     if (anonymousClass != null && anonymousClass.getInitializers().length == 0) {
       PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
       if (baseClass != null && baseClass.isInterface()) {
-        return true;
+        return ThreeState.NO;
       }
     }
     PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     PsiClass aClass = classReference == null ? null : (PsiClass)classReference.resolve();
     String qualifiedName = aClass == null ? null : aClass.getQualifiedName();
-    if (qualifiedName == null) return false;
-    if (ourSideEffectFreeClasses.contains(qualifiedName)) return true;
+    if (qualifiedName == null) return ThreeState.UNSURE;
+    if (ourSideEffectFreeClasses.contains(qualifiedName)) return ThreeState.NO;
     PsiMethod method = newExpression.resolveConstructor();
-    if (method != null && JavaMethodContractUtil.isPure(method)) return true;
+    if (method != null) {
+      MutationSignature signature = MutationSignature.fromMethod(method);
+      if (signature.isPure()) {
+        return ThreeState.NO;
+      }
+      if (signature.mutatesAnything()) {
+        return ThreeState.YES;
+      }
+    }
 
     PsiFile file = aClass.getContainingFile();
     PsiDirectory directory = file.getContainingDirectory();
@@ -318,21 +361,21 @@ public final class SideEffectChecker {
     if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName) || "java.io".equals(packageName)) {
       PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
       if (throwableClass != null && com.intellij.psi.util.InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
-        return true;
+        return ThreeState.NO;
       }
     }
     if (method == null) {
       PsiClass superClass = aClass.getSuperClass();
       if (superClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         for (PsiClassInitializer initializer : aClass.getInitializers()) {
-          if (!initializer.hasModifierProperty(PsiModifier.STATIC)) return false;
+          if (!initializer.hasModifierProperty(PsiModifier.STATIC)) return ThreeState.UNSURE;
         }
         for (PsiField field : aClass.getFields()) {
-          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.hasInitializer()) return false;
+          if (!field.hasModifierProperty(PsiModifier.STATIC) && field.hasInitializer()) return ThreeState.UNSURE;
         }
-        return true;
+        return ThreeState.NO;
       }
     }
-    return false;
+    return ThreeState.UNSURE;
   }
 }
