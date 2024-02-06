@@ -9,7 +9,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.sha3_256
+import com.intellij.util.io.sha3_224
 import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
@@ -357,21 +357,21 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
           projectHome = request.homePath,
           buildOutputRootEvaluator = { _ -> runDir },
           setupTracer = false,
-          /**
-           * Will be enabled later in [com.intellij.platform.ide.bootstrap.enableJstack] instead
-           */
+          // will be enabled later in [com.intellij.platform.ide.bootstrap.enableJstack] instead
           enableCoroutinesDump = false,
           options = options,
         )
       }
     }
 
-    BuildContextImpl(compilationContext = compilationContext.await(),
-                     productProperties = productProperties.await(),
-                     windowsDistributionCustomizer = object : WindowsDistributionCustomizer() {},
-                     linuxDistributionCustomizer = object : LinuxDistributionCustomizer() {},
-                     macDistributionCustomizer = object : MacDistributionCustomizer() {},
-                     proprietaryBuildTools = ProprietaryBuildTools.DUMMY)
+    BuildContextImpl(
+      compilationContext = compilationContext.await(),
+      productProperties = productProperties.await(),
+      windowsDistributionCustomizer = object : WindowsDistributionCustomizer() {},
+      linuxDistributionCustomizer = object : LinuxDistributionCustomizer() {},
+      macDistributionCustomizer = object : MacDistributionCustomizer() {},
+      proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+    )
   }
 }
 
@@ -484,7 +484,7 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
     return ""
   }
   else {
-    return BigInteger(1, sha3_256().digest(additionalModules.sorted()
+    return BigInteger(1, sha3_224().digest(additionalModules.sorted()
                                              .joinToString(separator = ",")
                                              .toByteArray())).toString(Character.MAX_RADIX)
   }

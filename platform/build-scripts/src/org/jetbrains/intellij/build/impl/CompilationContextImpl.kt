@@ -15,7 +15,10 @@ import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.*
@@ -174,9 +177,9 @@ class CompilationContextImpl private constructor(
 
       val isCompilationRequired = CompiledClasses.isCompilationRequired(options)
 
-      val model = coroutineScope {
-        loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(communityHome, messages), isCompilationRequired)
-      }
+      val model = loadProject(projectHome = projectHome,
+                              kotlinBinaries = KotlinBinaries(communityHome),
+                              isCompilationRequired = isCompilationRequired)
 
       val buildPaths = computeBuildPaths(project = model.project,
                                          communityHome = communityHome,
@@ -224,15 +227,19 @@ class CompilationContextImpl private constructor(
   fun createCopy(messages: BuildMessages,
                  options: BuildOptions,
                  buildOutputRootEvaluator: (JpsProject) -> Path): CompilationContextImpl {
-    val copy = CompilationContextImpl(model = projectModel,
-                                      communityHome = paths.communityHomeDirRoot,
-                                      messages = messages,
-                                      paths = computeBuildPaths(options = options,
-                                                                project = project,
-                                                                communityHome = communityHome,
-                                                                buildOutputRootEvaluator = buildOutputRootEvaluator,
-                                                                projectHome = paths.projectHome),
-                                      options = options)
+    val copy = CompilationContextImpl(
+      model = projectModel,
+      communityHome = paths.communityHomeDirRoot,
+      messages = messages,
+      paths = computeBuildPaths(
+        options = options,
+        project = project,
+        communityHome = communityHome,
+        buildOutputRootEvaluator = buildOutputRootEvaluator,
+        projectHome = paths.projectHome,
+      ),
+      options = options,
+    )
     copy.compilationData = compilationData
     return copy
   }
@@ -267,8 +274,9 @@ class CompilationContextImpl private constructor(
     }
     suppressWarnings(project)
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
-    if (options.cleanOutputFolder || options.forceRebuild)
+    if (options.cleanOutputFolder || options.forceRebuild) {
       cleanOutput()
+    }
     else {
       Span.current().addEvent("skip output cleaning", Attributes.of(
         AttributeKey.stringKey("dir"), "${paths.buildOutputDir}",

@@ -1,16 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.idea.devkit.requestHandlers
 
 import com.intellij.compiler.CompilerMessageImpl
 import com.intellij.compiler.impl.CompileScopeUtil
 import com.intellij.compiler.impl.CompositeScope
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.compiler.CompileStatusNotification
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -52,20 +57,30 @@ private class BuildHttpRequestHandler : HttpRequestHandler() {
   }
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
-    val projectPath = urlDecoder.parameters()["project-path"]?.firstOrNull()
-    val project = ProjectManager.getInstance().openProjects.find {
-      it.stateStore.projectBasePath.invariantSeparatorsPathString == projectPath
+    val query = urlDecoder.parameters()
+    val projectHash = query.get("project-hash")?.firstOrNull()
+    val project: Project?
+    if (projectHash == null) {
+      val projectPath = query.get("project-path")?.firstOrNull()
+      project = ProjectManager.getInstance().openProjects.find {
+        it.stateStore.projectBasePath.invariantSeparatorsPathString == projectPath
+      }
+    }
+    else {
+      project = ProjectManager.getInstance().findOpenProjectByHash(projectHash)
     }
     if (project == null) {
-      LOG.info("Project '$projectPath' is not found")
+      LOG.info("Project is not found (query=$query)")
       HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
       return true
     }
+
     if (!PsiUtil.isIdeaProject(project)) {
-      LOG.info("Build requests are currently handled for 'intellij' project only, so request for '$projectPath' won't be processed")
+      LOG.info("Build requests are currently handled for 'intellij' project only, so request won't be processed (query=$query)")
       HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
       return true
     }
+
     project.service<BuildRequestAsyncHandler>().handle(request, context.channel())
     return true
   }
@@ -85,7 +100,7 @@ private class BuildRequestAsyncHandler(private val project: Project, private val
     }
 
     coroutineScope.launch {
-      val compilerManager = CompilerManager.getInstance(project)
+      val compilerManager = project.serviceAsync<CompilerManager>()
       val scope = readAction {
         val base = CompositeScope(CompositeScope.EMPTY_ARRAY)
         CompileScopeUtil.setBaseScopeForExternalBuild(base, scopeDescriptions.map {
@@ -93,7 +108,7 @@ private class BuildRequestAsyncHandler(private val project: Project, private val
         })
         base
       }
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         compilerManager.make(scope, CompileStatusNotification { aborted, errors, _, compileContext ->
           when {
             aborted -> HttpResponseStatus.INTERNAL_SERVER_ERROR.send(channel, request, description = "Build cancelled")
@@ -103,7 +118,7 @@ private class BuildRequestAsyncHandler(private val project: Project, private val
                 CompilationErrorDescription(
                   filePath = it.virtualFile?.path,
                   line = (it as? CompilerMessageImpl)?.line ?: 0,
-                  it.message
+                  message = it.message,
                 )
               }
               val content = Unpooled.copiedBuffer(Json.encodeToString(errorDescriptions), Charsets.UTF_8)
