@@ -877,8 +877,12 @@ public final class TreeUtil {
     internalSelect(tree, normalize(leadSelectionPath, minCount, keepSelectionLevel));
   }
 
-  private static void expandPaths(@NotNull JTree tree, @Nullable List<TreePath> paths) {
-    if (paths == null || paths.isEmpty()) {
+  public static boolean isBulkExpandCollapseSupported(@NotNull JTree tree) {
+    return Tree.isBulkExpandCollapseSupported() && tree instanceof Tree;
+  }
+
+  public static void expandPaths(@NotNull JTree tree, @Nullable Iterable<TreePath> paths) {
+    if (paths == null) {
       return;
     }
     if (Tree.isBulkExpandCollapseSupported() && tree instanceof Tree jbTree) {
@@ -889,8 +893,8 @@ public final class TreeUtil {
     }
   }
 
-  private static void collapsePaths(@NotNull JTree tree, @Nullable List<TreePath> paths) {
-    if (paths == null || paths.isEmpty()) {
+  public static void collapsePaths(@NotNull JTree tree, @Nullable Iterable<TreePath> paths) {
+    if (paths == null) {
       return;
     }
     if (Tree.isBulkExpandCollapseSupported() && tree instanceof Tree jbTree) {
