@@ -373,7 +373,7 @@ abstract class EffectQuantum {
     CallQuantum(EKey key, DataValue[] data, boolean isStatic) {
       super((key.hashCode() * 31 + Arrays.hashCode(data)) * 31 + (isStatic ? 1 : 0));
       this.key = key;
-      this.data = data;
+      this.data = data.length == 0 ? DataValue.EMPTY : data;
       this.isStatic = isStatic;
     }
 
