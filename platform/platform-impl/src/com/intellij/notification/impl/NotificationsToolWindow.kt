@@ -139,6 +139,8 @@ internal class NotificationContent(val project: Project,
 
   private val mySearchUpdateAlarm = Alarm()
 
+  private val splitter = MySplitter()
+
   init {
     myMainPanel.background = NotificationComponent.BG_COLOR
     setEmptyState()
@@ -152,7 +154,6 @@ internal class NotificationContent(val project: Project,
 
     createGearActions()
 
-    val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
     myMainPanel.add(splitter)
@@ -193,6 +194,12 @@ internal class NotificationContent(val project: Project,
 
   private fun createSearchComponent(): SearchTextField {
     val searchField = object : SearchTextField(false) {
+      override fun getPreferredSize(): Dimension {
+        val size = super.getPreferredSize()
+        size.height = JBUIScale.scale(35)
+        return size
+      }
+
       override fun updateUI() {
         super.updateUI()
         textEditor?.border = null
@@ -202,12 +209,13 @@ internal class NotificationContent(val project: Project,
         if (event.keyCode == KeyEvent.VK_ESCAPE && event.id == KeyEvent.KEY_PRESSED) {
           isVisible = false
           searchController.cancelSearch()
+          splitter.border = null
           return true
         }
         return super.preprocessEventForTextField(event)
       }
     }
-    searchField.textEditor.border = null
+    searchField.textEditor.border = JBUI.Borders.empty(0, 5, 0, 3)
     searchField.border = JBUI.Borders.customLineBottom(JBColor.border())
     searchField.isVisible = false
 
@@ -235,6 +243,7 @@ internal class NotificationContent(val project: Project,
     val gearAction = object : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {
         searchController.startSearch()
+        splitter.border = JBUI.Borders.emptyTop(4)
       }
     }
 
