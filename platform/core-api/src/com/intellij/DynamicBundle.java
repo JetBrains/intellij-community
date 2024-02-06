@@ -145,14 +145,14 @@ public class DynamicBundle extends AbstractBundle {
                                          Map<Integer, ResourceBundle> bundleOrder,
                                          @NotNull Function<? super @NotNull ClassLoader, ? extends @NotNull ResourceBundle> bundleResolver) {
     ResourceBundle bundle = bundleResolver.apply(loader);
-    while (bundle != null) {
-      try {
+    try {
+      while (bundle != null) {
         putBundleOrder(bundle, bundleOrder, orderedPaths, isPluginClassLoader);
         bundle = getParent(bundle);
       }
-      catch (Throwable throwable) {
-        LOG.info(throwable);
-      }
+    }
+    catch (Throwable throwable) {
+      LOG.info(throwable);
     }
     for (ResourceBundle localizedBundle : getBundlesFromLocalizationFolder(pathToBundle, loader)) {
       putBundleOrder(localizedBundle, bundleOrder, orderedPaths, isPluginClassLoader);
