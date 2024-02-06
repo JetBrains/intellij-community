@@ -61,7 +61,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   private final ExceptionInfoCache myCache;
   private ExceptionLineRefiner myLocationRefiner;
 
-  public ExceptionLineParserImpl(@NotNull ExceptionInfoCache cache) {
+  ExceptionLineParserImpl(@NotNull ExceptionInfoCache cache) {
     myProject = cache.getProject();
     myCache = cache;
   }
@@ -186,13 +186,18 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
     private final @NonNls Set<String> myMethodNames;
     private final @NonNls String myClassName;
     private final boolean myHasDollarInName;
-    private final List<StackFrameMatcher> myAdditionalMatchers = new ArrayList<>();
+    private final StackFrameMatcher myAdditionalMatcher;
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
-      this(info.classFqnRange.substring(line), Set.of(info.methodNameRange.substring(line)));
+      myClassName = info.classFqnRange.substring(line);
+      myMethodNames = Set.of(info.methodNameRange.substring(line));
+      myHasDollarInName = StringUtil.getShortName(myClassName).contains("$");
       ClassSetMethods mappedMethods = MAPPED_METHODS.get(new ClassMethod(myClassName, info.methodNameRange.substring(line)));
       if (mappedMethods != null) {
-        myAdditionalMatchers.add(new StackFrameMatcher(mappedMethods.className(), mappedMethods.methodName()));
+        myAdditionalMatcher = new StackFrameMatcher(mappedMethods.className(), mappedMethods.methodName());
+      }
+      else {
+        myAdditionalMatcher = null;
       }
     }
 
@@ -200,19 +205,18 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       myClassName = className;
       myMethodNames = methodNames;
       myHasDollarInName = StringUtil.getShortName(myClassName).contains("$");
+      myAdditionalMatcher = null;
     }
 
     @Override
     public RefinerMatchResult matchElement(@NotNull PsiElement element) {
-      for (StackFrameMatcher matcher : myAdditionalMatchers) {
-        RefinerMatchResult result = matcher.matchElement(element);
-        if (result != null) {
-          return result;
-        }
+      RefinerMatchResult result = myAdditionalMatcher == null ? null : myAdditionalMatcher.matchElement(element);
+      if (result != null) {
+        return result;
       }
       if (myMethodNames.contains("requireNonNull") && myClassName.equals(CommonClassNames.JAVA_UTIL_OBJECTS)) {
         // Since Java 9 Objects.requireNonNull(x) is used by javac instead of x.getClass() for generated null-check (JDK-8074306)
-        RefinerMatchResult result = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
+        result = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
         if (result != null) {
           return result;
         }
