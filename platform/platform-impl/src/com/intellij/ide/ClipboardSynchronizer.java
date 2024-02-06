@@ -248,7 +248,7 @@ public final class ClipboardSynchronizer implements Disposable {
   private static final class XWinClipboardHandler extends ClipboardHandler {
     private static final String DATA_TRANSFER_TIMEOUT_PROPERTY = "sun.awt.datatransfer.timeout";
     private static final String LONG_TIMEOUT = "2000";
-    private static final String SHORT_TIMEOUT = "100";
+    private static final String SHORT_TIMEOUT = "300";
     private static final FlavorTable FLAVOR_MAP = (FlavorTable)SystemFlavorMap.getDefaultFlavorMap();
 
     private volatile Transferable myCurrentContent = null;
