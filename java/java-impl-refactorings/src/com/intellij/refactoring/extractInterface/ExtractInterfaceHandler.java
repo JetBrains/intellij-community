@@ -28,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -113,12 +112,11 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
     ExtractClassUtil.askAndTurnRefsToSuper(myClass, anInterface);
   }
 
-  @VisibleForTesting
-  public static PsiClass extractInterface(PsiDirectory targetDir,
-                                          PsiClass aClass,
-                                          String interfaceName,
-                                          MemberInfo[] selectedMembers,
-                                          DocCommentPolicy javaDocPolicy) {
+  static PsiClass extractInterface(PsiDirectory targetDir,
+                                   PsiClass aClass,
+                                   String interfaceName,
+                                   MemberInfo[] selectedMembers,
+                                   DocCommentPolicy javaDocPolicy) {
     final Project project = aClass.getProject();
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createBeforeData(aClass, selectedMembers));
