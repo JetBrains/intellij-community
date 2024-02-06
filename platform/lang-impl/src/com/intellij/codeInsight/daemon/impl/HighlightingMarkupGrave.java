@@ -8,12 +8,8 @@ import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGraveEvent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorKind;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -30,6 +26,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.IOUtil;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,16 +44,16 @@ import static com.intellij.util.io.DataInputOutputUtil.writeINT;
  * Stores the highlighting markup on disk on file close and restores it back to the editor on file open,
  * to reduce the "opened editor-to-some highlighting shown" perceived interval.
  */
-@Service(Service.Level.PROJECT)
-final class HighlightingMarkupGrave {
+@ApiStatus.Internal
+public class HighlightingMarkupGrave {
   private static final Logger LOG = Logger.getInstance(HighlightingMarkupGrave.class);
   private static final Key<Boolean> IS_ZOMBIE = Key.create("IS_ZOMBIE");
 
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
   private final @NotNull ConcurrentIntObjectMap<Boolean> myResurrectedZombies; // fileId -> isMarkupModelPreferable
   private final @NotNull HighlightingMarkupStore myMarkupStore;
 
-  HighlightingMarkupGrave(@NotNull Project project, @NotNull CoroutineScope scope) {
+  public HighlightingMarkupGrave(@NotNull Project project, @NotNull CoroutineScope scope) {
     // check that important TextAttributesKeys are initialized
     assert DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey() != null : DefaultLanguageHighlighterColors.INSTANCE_FIELD;
 
@@ -68,7 +65,7 @@ final class HighlightingMarkupGrave {
     subscribeFileClosed();
   }
 
-  private void subscribeDaemonFinished() {
+  protected void subscribeDaemonFinished() {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
     myProject.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
@@ -77,14 +74,18 @@ final class HighlightingMarkupGrave {
         if (!DumbService.getInstance(myProject).isDumb()) {
           for (FileEditor fileEditor : fileEditors) {
             if (fileEditor instanceof TextEditor textEditor &&
-                textEditor.getEditor().getEditorKind() == EditorKind.MAIN_EDITOR &&
-                DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, myProject)) {
+                shouldPutDownActiveZombiesInFile(textEditor)) {
               putDownActiveZombiesInFile(textEditor);
             }
           }
         }
       }
     });
+  }
+
+  protected Boolean shouldPutDownActiveZombiesInFile(TextEditor textEditor){
+    return textEditor.getEditor().getEditorKind() == EditorKind.MAIN_EDITOR &&
+           DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, myProject);
   }
 
   private void subscribeFileClosed() {
@@ -103,13 +104,17 @@ final class HighlightingMarkupGrave {
     if (!(textEditor.getFile() instanceof VirtualFileWithId fileWithId)) {
       return;
     }
+    putDownActiveZombiesInFile(fileWithId, textEditor.getEditor());
+  }
+
+  protected void putDownActiveZombiesInFile(@NotNull VirtualFileWithId fileWithId, @NotNull Editor editor){
     boolean replaced = myResurrectedZombies.replace(fileWithId.getId(), false, true);
     if (!replaced) {
       // no zombie or zombie already disposed
       return;
     }
     List<RangeHighlighter> toRemove = null;
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(textEditor.getEditor().getDocument(), myProject, false);
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
     if (markupModel != null) {
       for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
         if (isZombieMarkup(highlighter)) {
@@ -124,7 +129,7 @@ final class HighlightingMarkupGrave {
       return;
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("removing " + toRemove.size() + " markups for " + textEditor + "; dumb=" + DumbService.getInstance(myProject).isDumb());
+      LOG.debug("removing " + toRemove.size() + " markups for " + editor + "; dumb=" + DumbService.getInstance(myProject).isDumb());
     }
 
     for (RangeHighlighter highlighter : toRemove) {
@@ -246,10 +251,42 @@ final class HighlightingMarkupGrave {
     });
   }
 
+  @NotNull
+  private List<HighlighterState> allHighlightersFromMarkup(@NotNull Project project,
+                                                                  @NotNull Document document,
+                                                                  @NotNull EditorColorsScheme colorsScheme) {
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
+    if (markupModel == null) {
+      return Collections.emptyList();
+    }
+    return Arrays.stream(markupModel.getAllHighlighters())
+      .filter(h -> shouldSaveHighlighter(h))
+      .map(h -> getHighlighterState(h, colorsScheme))
+      .toList();
+  }
+
+  protected boolean shouldSaveHighlighter(@NotNull RangeHighlighter highlighter) {
+    if (highlighter.getTextAttributesKey() != null && highlighter.getTextAttributesKey().getExternalName().equals("STICKY_LINE_MARKER")) {
+      return true;
+    }
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+    if (info != null &&
+        (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
+         || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY)) {
+      return true;
+    }
+    LineMarkerInfo<?> lm = LineMarkersUtil.getLineMarkerInfo(highlighter);
+    return lm != null && lm.getIcon() != null; // or a line marker with a gutter icon
+  }
+
+  protected HighlighterState getHighlighterState(@NotNull RangeHighlighter highlighter, @NotNull EditorColorsScheme colorsScheme) {
+    return new HighlighterState(highlighter, colorsScheme);
+  }
+
   private @NotNull FileMarkupInfo getMarkupFromModel(@NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
     return new FileMarkupInfo(
       contentHash(document),
-      HighlighterState.allHighlightersFromMarkup(myProject, document, colorsScheme)
+      allHighlightersFromMarkup(myProject, document, colorsScheme)
     );
   }
 
@@ -282,7 +319,7 @@ final class HighlightingMarkupGrave {
     }
   }
 
-  record HighlighterState(
+  public record HighlighterState(
     int start,
     int end,
     int layer,
@@ -358,32 +395,6 @@ final class HighlightingMarkupGrave {
     public int hashCode() {
       // exclude gutterIcon
       return Objects.hash(start, end, layer, targetArea, textAttributesKey, textAttributes);
-    }
-
-    @NotNull
-    private static List<HighlighterState> allHighlightersFromMarkup(@NotNull Project project,
-                                                                    @NotNull Document document,
-                                                                    @NotNull EditorColorsScheme colorsScheme) {
-      MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
-      if (markupModel == null) {
-        return Collections.emptyList();
-      }
-      return Arrays.stream(markupModel.getAllHighlighters())
-        .filter(h -> {
-          if (h.getTextAttributesKey() != null && h.getTextAttributesKey().getExternalName().equals("STICKY_LINE_MARKER")) {
-            return true;
-          }
-          HighlightInfo info = HighlightInfo.fromRangeHighlighter(h);
-          if (info != null &&
-              (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
-               || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY)) {
-            return true;
-          }
-          LineMarkerInfo<?> lm = LineMarkersUtil.getLineMarkerInfo(h);
-          return lm != null && lm.getIcon() != null; // or a line marker with a gutter icon
-        })
-        .map(h -> new HighlighterState(h, colorsScheme))
-        .toList();
     }
   }
 

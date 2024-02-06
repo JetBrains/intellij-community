@@ -403,6 +403,8 @@
     <projectService serviceInterface="com.intellij.codeInsight.highlighting.HighlightManager"
                     serviceImplementation="com.intellij.codeInsight.highlighting.HighlightManagerImpl"/>
 
+    <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.HighlightingMarkupGrave" />
+
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.settings.CodeVisionSettings"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionInitializer"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionHost"/>
