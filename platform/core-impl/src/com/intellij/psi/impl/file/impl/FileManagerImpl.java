@@ -149,7 +149,9 @@ public final class FileManagerImpl implements FileManager {
   }
 
   public void dispose() {
-    clearViewProviders();
+    if (myVFileToViewProviderMap.get() != null) {
+      clearViewProviders();
+    }
   }
 
   private void clearViewProviders() {
