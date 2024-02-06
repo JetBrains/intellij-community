@@ -438,17 +438,8 @@ public final class EditorSearchSession implements SearchSession,
   }
 
   private void updateUIWithFindModel() {
-    myComponent.update(myFindModel.getStringToFind(),
-                       myFindModel.getStringToReplace(),
-                       myFindModel.isReplaceState(),
-                       myFindModel.isMultiline());
-    updateEmptyText(myComponent, myFindModel, getEditor());
+    updateUIWithFindModel(myComponent, myFindModel, getEditor());
     myLivePreviewController.setTrackingSelection(!myFindModel.isGlobal());
-  }
-
-  public static void updateUIWithFindModel(@NotNull SearchReplaceComponent component,
-                                           @NotNull FindModel findModel) {
-    updateEmptyText(component, findModel, null);
   }
 
   public static void updateUIWithFindModel(@NotNull SearchReplaceComponent component,

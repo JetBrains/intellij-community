@@ -131,7 +131,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
 
     if (update) {
       holders.forEach(EditorSearchSessionHolder::initLivePreview)
-      EditorSearchSession.updateUIWithFindModel(component, findModel)
+      EditorSearchSession.updateEmptyText(component, findModel, null)
     }
 
     EditorSearchSession.updateUIWithFindModel(component, findModel, this.currentEditor)
