@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.ActivityPresentationProvider
@@ -92,10 +92,10 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     val provider = activityId?.let { ACTIVITY_PRESENTATION_PROVIDER_EP.findFirstSafe { it.id == activityId.providerId } }
     val icon = provider?.getIcon(activityId.kind)
     return when (item) {
-      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon, showBackground = true, highlightColor = null)
+      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon, highlightColor = null)
       is LabelActivityItem -> {
         val color = provider?.getColor(activityId.kind) ?: intToColor(item.color)
-        ActivityPresentation(item.name ?: "", icon, showBackground = false, highlightColor = color)
+        ActivityPresentation(item.name ?: "", icon, highlightColor = color)
       }
       else -> null
     }
