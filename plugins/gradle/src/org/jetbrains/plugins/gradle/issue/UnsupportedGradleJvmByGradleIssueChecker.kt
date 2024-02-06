@@ -74,15 +74,20 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
     }
 
     val oldestCompatibleJavaVersion = gradleVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(it) }
-                                      ?: GradleJvmSupportMatrix.getOldestRecommendedJavaVersionByIdea()
+                                      ?: GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
     val newestCompatibleJavaVersion = gradleVersionUsed?.let { GradleJvmSupportMatrix.suggestLatestSupportedJavaVersion(it) }
-                                      ?: GradleJvmSupportMatrix.getOldestRecommendedJavaVersionByIdea()
+                                      ?: GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
     val suggestedJavaVersion = when {
       javaVersionUsed == null -> newestCompatibleJavaVersion
       javaVersionUsed < oldestCompatibleJavaVersion -> oldestCompatibleJavaVersion
       javaVersionUsed > newestCompatibleJavaVersion -> newestCompatibleJavaVersion
       else -> newestCompatibleJavaVersion
     }
+
+    val oldestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
+    val newestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestLatestSupportedGradleVersion(it) }
+    val recommendedGradleVersion = GradleJvmSupportMatrix.getRecommendedGradleVersionByIdea()
+    val newestGradleVersion = GradleJvmSupportMatrix.getLatestSupportedGradleVersionByIdea()
 
     return object : ConfigurableGradleBuildIssue() {
       init {
@@ -109,11 +114,6 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
             ))
           }
           isUnsupportedJavaRuntimeIssue -> {
-            val oldestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
-            val newestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestLatestSupportedGradleVersion(it) }
-            val recommendedGradleVersion = GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
-            val newestGradleVersion = GradleJvmSupportMatrix.getLatestSupportedGradleVersionByIdea()
-
             setTitle(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title"))
             addDescription(GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.header"))
             when {
@@ -171,9 +171,10 @@ class UnsupportedGradleJvmByGradleIssueChecker : GradleIssueChecker {
         addGradleJvmQuickFix(issueData.projectPath, suggestedJavaVersion)
 
         if (!isUnsupportedClassVersionErrorIssue) {
-          val oldestCompatibleGradleVersion = javaVersionUsed?.let { GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(it) }
-                                              ?: GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
-          addGradleVersionQuickFix(issueData.projectPath, oldestCompatibleGradleVersion)
+          addGradleVersionQuickFix(issueData.projectPath, recommendedGradleVersion)
+          if (oldestCompatibleGradleVersion != null && oldestCompatibleGradleVersion < recommendedGradleVersion) {
+            addGradleVersionQuickFix(issueData.projectPath, oldestCompatibleGradleVersion)
+          }
         }
       }
     }
