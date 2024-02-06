@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.requestHandlers
 
 import com.intellij.compiler.CompilerMessageImpl
@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.project.stateStore
-import com.intellij.util.io.systemIndependentPath
 import io.netty.buffer.ByteBufInputStream
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -35,27 +34,27 @@ import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.io.send
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
+import kotlin.io.path.invariantSeparatorsPathString
+
+private const val PREFIX = "/devkit/build"
+private val LOG = logger<BuildHttpRequestHandler>()
 
 /**
  * Starts JPS build for targets passed in the content in JSON format (array of [BuildScopeDescription] objects).
- * 
+ *
  * Currently, it's enabled for 'intellij' project only, and can be used to build additional required modules when a developer runs a test or
  * an application from the IDE.
  */
+@Suppress("unused")
 private class BuildHttpRequestHandler : HttpRequestHandler() {
-  companion object {
-    private const val PREFIX = "/devkit/build"
-    private val LOG = logger<BuildHttpRequestHandler>()
-  }
-
   override fun isSupported(request: FullHttpRequest): Boolean {
-    return request.method() == HttpMethod.POST && request.uri().startsWith(PREFIX) 
+    return request.method() == HttpMethod.POST && request.uri().startsWith(PREFIX)
   }
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     val projectPath = urlDecoder.parameters()["project-path"]?.firstOrNull()
-    val project = ProjectManager.getInstance().openProjects.find { 
-      it.stateStore.projectBasePath.systemIndependentPath == projectPath
+    val project = ProjectManager.getInstance().openProjects.find {
+      it.stateStore.projectBasePath.invariantSeparatorsPathString == projectPath
     }
     if (project == null) {
       LOG.info("Project '$projectPath' is not found")
@@ -70,63 +69,64 @@ private class BuildHttpRequestHandler : HttpRequestHandler() {
     project.service<BuildRequestAsyncHandler>().handle(request, context.channel())
     return true
   }
-  
-  @Service(Service.Level.PROJECT)
-  private class BuildRequestAsyncHandler(private val project: Project, private val coroutineScope: CoroutineScope) {
-    @OptIn(ExperimentalSerializationApi::class)
-    fun handle(request: FullHttpRequest, channel: Channel) {
-      val scopeDescriptions = try {
-        Json.decodeFromStream<List<BuildScopeDescription>>(ByteBufInputStream(request.content()))
-      } catch (e: SerializationException) {
-        LOG.info(e)
-        HttpResponseStatus.BAD_REQUEST.send(channel, request)
-        return
+}
+
+@Service(Service.Level.PROJECT)
+private class BuildRequestAsyncHandler(private val project: Project, private val coroutineScope: CoroutineScope) {
+  @OptIn(ExperimentalSerializationApi::class)
+  fun handle(request: FullHttpRequest, channel: Channel) {
+    val scopeDescriptions = try {
+      Json.decodeFromStream<List<BuildScopeDescription>>(ByteBufInputStream(request.content()))
+    }
+    catch (e: SerializationException) {
+      LOG.info(e)
+      HttpResponseStatus.BAD_REQUEST.send(channel, request)
+      return
+    }
+
+    coroutineScope.launch {
+      val compilerManager = CompilerManager.getInstance(project)
+      val scope = readAction {
+        val base = CompositeScope(CompositeScope.EMPTY_ARRAY)
+        CompileScopeUtil.setBaseScopeForExternalBuild(base, scopeDescriptions.map {
+          TargetTypeBuildScope.newBuilder().setTypeId(it.targetType).addAllTargetId(it.targetIds).setForceBuild(it.forceBuild).build()
+        })
+        base
       }
-      
-      coroutineScope.launch {
-        val compilerManager = CompilerManager.getInstance(project)
-        val scope = readAction {
-          val base = CompositeScope(CompositeScope.EMPTY_ARRAY)
-          CompileScopeUtil.setBaseScopeForExternalBuild(base, scopeDescriptions.map { 
-            TargetTypeBuildScope.newBuilder().setTypeId(it.targetType).addAllTargetId(it.targetIds).setForceBuild(it.forceBuild).build()
-          })
-          base
-        }
-        withContext(Dispatchers.EDT) {
-          compilerManager.make(scope, CompileStatusNotification { aborted, errors, warnings, compileContext ->
-            when {
-              aborted -> HttpResponseStatus.INTERNAL_SERVER_ERROR.send(channel, request, description = "Build cancelled")
-              errors == 0 -> HttpResponseStatus.OK.send(channel, request)
-              else -> {
-                val errorDescriptions = compileContext.getMessages(CompilerMessageCategory.ERROR).map { 
-                  CompilationErrorDescription(
-                    filePath = it.virtualFile?.path,
-                    line = (it as? CompilerMessageImpl)?.line ?: 0,
-                    it.message
-                  )
-                }
-                val content = Unpooled.copiedBuffer(Json.encodeToString(errorDescriptions), Charsets.UTF_8)
-                val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR, content)
-                response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                response.send(channel, request)
+      withContext(Dispatchers.EDT) {
+        compilerManager.make(scope, CompileStatusNotification { aborted, errors, _, compileContext ->
+          when {
+            aborted -> HttpResponseStatus.INTERNAL_SERVER_ERROR.send(channel, request, description = "Build cancelled")
+            errors == 0 -> HttpResponseStatus.OK.send(channel, request)
+            else -> {
+              val errorDescriptions = compileContext.getMessages(CompilerMessageCategory.ERROR).map {
+                CompilationErrorDescription(
+                  filePath = it.virtualFile?.path,
+                  line = (it as? CompilerMessageImpl)?.line ?: 0,
+                  it.message
+                )
               }
+              val content = Unpooled.copiedBuffer(Json.encodeToString(errorDescriptions), Charsets.UTF_8)
+              val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR, content)
+              response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+              response.send(channel, request)
             }
-          })
-        }
+          }
+        })
       }
     }
   }
 }
 
 @Serializable
-data class BuildScopeDescription(
+private data class BuildScopeDescription(
   val targetType: String,
   val targetIds: List<String>,
   val forceBuild: Boolean = false,
 )
 
 @Serializable
-data class CompilationErrorDescription(
+private data class CompilationErrorDescription(
   val filePath: String?,
   val line: Int,
   val message: String,

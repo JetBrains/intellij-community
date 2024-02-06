@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -49,7 +49,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.Chunk;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -381,18 +381,18 @@ public final class CompileDriver {
       });
   }
 
+  @RequiresEdt
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
                        final boolean forceCompile,
                        final boolean withModalProgress,
                        final CompileStatusNotification callback,
                        final CompilerMessage message) {
-    ThreadingAssertions.assertEventDispatchThread();
     ModalityState modalityState = ModalityState.current();
 
-    final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final String name = JavaCompilerBundle.message(
-        isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make"
+    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    String name = JavaCompilerBundle.message(
+      isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make"
     );
     Tracer.Span span = Tracer.start(name + " preparation");
     final CompilerTask compileTask = new CompilerTask(

@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -39,18 +40,21 @@ fun Path.outputStream(append: Boolean = false, vararg options: OpenOption): Outp
 
 fun Path.safeOutputStream(): OutputStream = SafeFileOutputStream(this.createParentDirectories())
 
-fun Path.inputStreamIfExists(): InputStream? =
-  try {
+fun Path.inputStreamIfExists(): InputStream? {
+  return try {
     inputStream()
   }
   catch (_: NoSuchFileException) {
     null
   }
+}
 
 @JvmOverloads
-fun Path.delete(recursively: Boolean = true) = when {
-  recursively -> NioFiles.deleteRecursively(this)
-  else -> Files.delete(this)
+fun Path.delete(recursively: Boolean = true) {
+  when {
+    recursively -> NioFiles.deleteRecursively(this)
+    else -> Files.delete(this)
+  }
 }
 
 fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
@@ -65,7 +69,7 @@ fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
   // remove empty directories
   while (parent != null && parent != root) {
     try {
-      // must be only Files.delete, but not our delete (Files.delete throws DirectoryNotEmptyException)
+      // must be only Files.delete, but not our `delete` (Files.delete throws DirectoryNotEmptyException)
       Files.delete(parent)
     }
     catch (e: IOException) {
@@ -78,6 +82,7 @@ fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
   return true
 }
 
+@get:Obsolete
 val Path.systemIndependentPath: String
   get() = invariantSeparatorsPathString
 
@@ -107,21 +112,23 @@ fun Path.write(data: CharSequence, charset: Charset = Charsets.UTF_8, createPare
   return this
 }
 
-fun Path.basicAttributesIfExists(): BasicFileAttributes? =
-  try {
+fun Path.basicAttributesIfExists(): BasicFileAttributes? {
+  return try {
     Files.readAttributes(this, BasicFileAttributes::class.java)
   }
   catch (_: FileSystemException) {
     null
   }
+}
 
-fun Path.fileSizeSafe(fallback: Long = 0) =
-  try {
+fun Path.fileSizeSafe(fallback: Long = 0): Long {
+  return try {
     fileSize()
   }
   catch (_: kotlin.io.FileSystemException) {
     fallback
   }
+}
 
 fun Path.move(target: Path): Path {
   target.parent?.createDirectories()
@@ -142,26 +149,29 @@ fun Path.copyRecursively(target: Path) {
   }
 }
 
-inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? =
-  try {
+inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? {
+  return try {
     Files.newDirectoryStream(this).use(task)
   }
   catch (_: NoSuchFileException) {
     null
   }
+}
 
-inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? =
-  try {
+inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
+  return try {
     Files.newDirectoryStream(this, makeFilter(filter)).use(task)
   }
   catch (_: NoSuchFileException) {
     null
   }
+}
 
 @PublishedApi
-internal fun makeFilter(filter: (path: Path) -> Boolean): DirectoryStream.Filter<Path> =
-  // extracted in order to not introduce additional JVM class for every directoryStreamIfExists call site
-  DirectoryStream.Filter { filter(it) }
+internal fun makeFilter(filter: (path: Path) -> Boolean): DirectoryStream.Filter<Path> {
+  // extracted to not introduce additional JVM class for every directoryStreamIfExists call site
+  return DirectoryStream.Filter { filter(it) }
+}
 
 @Throws(IOException::class)
 fun generateRandomPath(parentDirectory: Path): Path {

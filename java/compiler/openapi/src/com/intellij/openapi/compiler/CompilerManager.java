@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -169,7 +169,8 @@ public abstract class CompilerManager {
 
   /**
    * Compile all modified files and all files that depend on them from the scope given.
-   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored. All modules must belong to the same project
+   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored.
+   * All modules must belong to the same project.
    *
    * @param scope    a scope to be compiled
    * @param callback a notification callback, or null if no notifications needed
