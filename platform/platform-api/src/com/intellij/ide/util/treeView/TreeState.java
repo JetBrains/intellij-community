@@ -12,7 +12,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.CachingTreePath;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -396,7 +395,7 @@ public final class TreeState implements JDOMExternalizable {
 
     JTreeFacade(JTree tree) {
       super(tree);
-      useBulkExpand = tree instanceof Tree && Tree.isBulkExpandCollapseSupported();
+      useBulkExpand = TreeUtil.isBulkExpandCollapseSupported(tree);
     }
 
     @Override
@@ -413,7 +412,7 @@ public final class TreeState implements JDOMExternalizable {
     @Override
     void finishExpanding() {
       if (useBulkExpand) {
-        ((Tree)tree).expandPaths(pathsToExpand);
+        TreeUtil.expandPaths(tree, pathsToExpand);
       }
     }
 
