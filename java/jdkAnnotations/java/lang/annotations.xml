@@ -76,10 +76,25 @@
       <val name="to" val="255"/>
     </annotation>
   </item>
+  <item name='java.lang.CharSequence boolean isEmpty()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.CharSequence char charAt(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.CharSequence char charAt(int) 0'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE-1"/>
+    </annotation>
+  </item>
+  <item name='java.lang.CharSequence int compare(java.lang.CharSequence, java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.lang.CharSequence int length()'>
@@ -87,9 +102,15 @@
             <val name="from" val="0"/>
             <val name="to" val="java.lang.Integer.MAX_VALUE"/>
         </annotation>
-    </item>
+      <annotation name='org.jetbrains.annotations.Contract'>
+          <val name="pure" val="true"/>
+      </annotation>
+  </item>
   <item name='java.lang.CharSequence java.lang.CharSequence subSequence(int, int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.CharSequence java.lang.CharSequence subSequence(int, int) 0'>
       <annotation name='org.jetbrains.annotations.Range'>
