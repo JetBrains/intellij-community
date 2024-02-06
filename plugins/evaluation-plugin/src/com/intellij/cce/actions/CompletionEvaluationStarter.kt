@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.actions
 
 import com.github.ajalt.clikt.core.BadParameterValue
@@ -20,7 +20,6 @@ import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Path
@@ -65,7 +64,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
 
     protected fun loadAndApply(projectPath: String, action: (Project) -> Unit) {
-      val parentDisposable = Disposer.newDisposable()
       val project: Project?
 
       try {
@@ -73,8 +71,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         @Suppress("SSBasedInspection")
         project = runBlocking {
           ProjectOpeningUtils.openProject(
-            File(projectPath).toPath(),
-            parentDisposable,
+            File(projectPath).toPath()
           )
         }
         println("Project loaded!")
@@ -88,10 +85,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       }
       catch (e: Exception) {
         fatalError("Project could not be loaded or processed: $e. StackTrace: ${stackTraceToString(e)}")
-      }
-      finally {
-        // Closes the project even if it is not fully opened, but started to
-        Disposer.dispose(parentDisposable)
       }
     }
 

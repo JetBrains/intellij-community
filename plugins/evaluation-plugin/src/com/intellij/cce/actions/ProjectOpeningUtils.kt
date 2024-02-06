@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.actions
 
 import com.intellij.conversion.ConversionListener
@@ -7,7 +8,6 @@ import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil.openOrImport
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,7 +39,7 @@ object ProjectOpeningUtils {
    *
    * return app.open() ?: throw ProjectApplicationException("Can not open project")
    */
-  suspend fun openProject(projectPath: Path, parentDisposable: Disposable, projectToClose: Project? = null): Project {
+  suspend fun openProject(projectPath: Path): Project {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     ApplicationManagerEx.getApplicationEx().isSaveAllowed = false
 
@@ -52,9 +51,8 @@ object ProjectOpeningUtils {
 
     configureProjectEnvironment(projectPath)
 
-    val project = openOrImport(projectPath, projectToClose, forceOpenInNewFrame = true)
+    val project = openOrImport(projectPath, null, forceOpenInNewFrame = true)
                   ?: throw RuntimeException("Can not open or import project from $projectPath.")
-    Disposer.register(parentDisposable) { closeProject(project) }
 
     waitAllStartupActivitiesPassed(project)
 
@@ -69,6 +67,15 @@ object ProjectOpeningUtils {
     waitForInvokeLaterActivities()
 
     return project
+  }
+
+  fun closeProject(project: Project) {
+    LOG.info("Closing project $project...")
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+
+    ApplicationManager.getApplication().invokeAndWait {
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+    }
   }
 
   private suspend fun convertProject(projectPath: Path) {
@@ -87,15 +94,6 @@ object ProjectOpeningUtils {
         LOG.info("Applying configurator ${configurator.name} to configure project environment $projectPath.")
         configurator.configureEnvironment(context)
       }
-    }
-  }
-
-  private fun closeProject(project: Project) {
-    LOG.info("Closing project $project...")
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-
-    ApplicationManager.getApplication().invokeAndWait {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project)
     }
   }
 
