@@ -168,11 +168,33 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   public boolean selectFrame(@NotNull XStackFrame toSelect) {
-    //noinspection unchecked
-    if (!Objects.equals(getSelectedValue(), toSelect) && getModel().contains(toSelect)) {
+    if (Objects.equals(getSelectedValue(), toSelect)) return false;
+    if (getModel().contains(toSelect)) {
       setSelectedValue(toSelect, true);
       return true;
+    }
+    else if (toSelect instanceof XFramesView.HiddenStackFramesItem placeholder) {
+      // If a user has a selected hidden frames placeholder and toggles "view library frames",
+      // we should select first of hidden frames under the selected placeholder.
+      var firstHiddenFrame = placeholder.hiddenFrames.get(0);
+      if (getModel().contains(firstHiddenFrame)) {
+        setSelectedValue(firstHiddenFrame, true);
+        return true;
+      }
+    }
+    else {
+      // If a user has a selected frame and toggles "hide library frames",
+      // we should be able to select the placeholder containing the hidden frame.
+      var placeholderContainingFrameToSelect =
+        ContainerUtil.find(getModel().getItems(),
+                           frame -> frame instanceof XFramesView.HiddenStackFramesItem placeholder &&
+                                    placeholder.hiddenFrames.contains(toSelect));
+      if (placeholderContainingFrameToSelect != null) {
+        setSelectedValue(placeholderContainingFrameToSelect, true);
+        return true;
+      }
     }
     return false;
   }

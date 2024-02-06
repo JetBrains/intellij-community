@@ -45,8 +45,6 @@ import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAbove;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,10 +71,10 @@ public final class XFramesView extends XDebugView {
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
   private final ComboBox<XExecutionStack> myThreadComboBox;
-  private final Object2IntMap<XExecutionStack> myExecutionStacksWithSelection = new Object2IntOpenHashMap<>();
+  private final Map<XExecutionStack, XStackFrame> myExecutionStacksWithSelection = new HashMap<>();
   private final AutoScrollToSourceHandler myFrameSelectionHandler;
   private XExecutionStack mySelectedStack;
-  private int mySelectedFrameIndex;
+  private XStackFrame mySelectedFrame;
   private Rectangle myVisibleRect;
   private boolean myListenersEnabled;
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<>();
@@ -413,15 +411,15 @@ public final class XFramesView extends XDebugView {
       ThreadingAssertions.assertEventDispatchThread();
       if (currentStackFrame != null) {
         myFramesList.setSelectedValue(currentStackFrame, true);
-        mySelectedFrameIndex = myFramesList.getSelectedIndex();
-        myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
+        mySelectedFrame = currentStackFrame;
+        myExecutionStacksWithSelection.put(mySelectedStack, currentStackFrame);
       }
       return;
     }
 
     EdtExecutorService.getInstance().execute(() -> {
       if (event != SessionEvent.SETTINGS_CHANGED) {
-        mySelectedFrameIndex = 0;
+        mySelectedFrame = null;
         mySelectedStack = null;
         myVisibleRect = null;
       }
@@ -495,7 +493,7 @@ public final class XFramesView extends XDebugView {
             myThreadComboBox.addItem(executionStack);
           }
         }
-        myExecutionStacksWithSelection.put(executionStack, 0);
+        myExecutionStacksWithSelection.put(executionStack, null);
       }
     }
     return addBeforeSelection;
@@ -511,10 +509,10 @@ public final class XFramesView extends XDebugView {
 
     mySelectedStack = executionStack;
     if (executionStack != null) {
-      mySelectedFrameIndex = myExecutionStacksWithSelection.getInt(executionStack);
+      mySelectedFrame = myExecutionStacksWithSelection.get(executionStack);
       StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
       builder.setRefresh(refresh);
-      builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrameIndex);
+      builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrame);
       myListenersEnabled = false;
       boolean selected = builder.initModel(myFramesList.getModel());
       myListenersEnabled = !builder.start() || selected;
@@ -539,14 +537,15 @@ public final class XFramesView extends XDebugView {
   }
 
   private void processFrameSelection(XDebugSession session, boolean force) {
-    mySelectedFrameIndex = myFramesList.getSelectedIndex();
-    myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
+    mySelectedFrame = myFramesList.getSelectedFrame();
+    myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrame);
     withCurrentBuilder(b -> b.setToSelect(null));
 
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
       if (session != null) {
         if (force || (!myRefresh && session.getCurrentStackFrame() != selected)) {
+          int mySelectedFrameIndex = myFramesList.getSelectedIndex();
           session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
           if (force) {
             XDebuggerActionsCollector.frameSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
@@ -710,6 +709,9 @@ public final class XFramesView extends XDebugView {
       else if (toSelect instanceof Integer) {
         if (myFramesList.selectFrame((int)toSelect)) return true;
       }
+      else if (toSelect == null && myFramesList.getSelectedIndex() == -1) {
+        if (myFramesList.selectFrame(0)) return true;
+      }
       return false;
     }
 
@@ -733,7 +735,7 @@ public final class XFramesView extends XDebugView {
    */
   public static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor,
                                                                            ItemWithSeparatorAbove {
-    private final List<XStackFrame> hiddenFrames;
+    final List<XStackFrame> hiddenFrames;
 
     public HiddenStackFramesItem(List<XStackFrame> hiddenFrames) {
       this.hiddenFrames = List.copyOf(hiddenFrames);
