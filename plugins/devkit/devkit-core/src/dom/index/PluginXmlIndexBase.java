@@ -76,6 +76,8 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
     int idx = 0;
 
     while (true) {
+      if (idx == -1) return false;
+
       // find open tag
       idx = CharArrayUtil.indexOf(text, "<", idx);
       if (idx == -1) return false;
