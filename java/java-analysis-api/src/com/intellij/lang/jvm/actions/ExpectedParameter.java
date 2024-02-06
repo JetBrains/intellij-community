@@ -13,7 +13,7 @@ public interface ExpectedParameter {
   List<ExpectedType> getExpectedTypes();
 
   /**
-   * For example for unresolved call in Java {@code a.foo(bars)} this method will return 'bars' string,
+   * For example, for unresolved call in Java {@code a.foo(bars)} this method will return 'bars' string,
    * which then will be used to suggest parameter names
    * taking code style parameter prefix into consideration as well as its type.
    */
