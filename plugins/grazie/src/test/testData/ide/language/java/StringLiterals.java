@@ -7,7 +7,7 @@ class Main {
         String notIgnoreOtherMistakes = "It is friend. But I have a ${1} here";
         String typoInTextBlock = """
                                  Lorem ipsum dolor sit amet, \
-                                 <TYPO descr="Typo: In word 'consectetur'">consectetur</TYPO>...
+                                 <TYPO descr="Typo: In word 'onsectetur'">onsectetur</TYPO>...
                                  """;
 
         System.out.println("It is <warning descr="EN_A_VS_AN">an</warning> friend of human");
