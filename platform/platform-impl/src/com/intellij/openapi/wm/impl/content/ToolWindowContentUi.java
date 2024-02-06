@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
+import static com.intellij.ui.popup.AbstractPopup.getChildPopups;
+
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
@@ -13,6 +15,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
@@ -758,6 +761,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       dropCaches();
       rebuild();
     }
+  }
+
+  /** Checks if the selected content component or one of its descendants has focus. */
+  @ApiStatus.Internal public Boolean isActive() {
+    return UIUtil.isFocusAncestor(contentComponent);
   }
 
   public final class TabPanel extends NonOpaquePanel implements UISettingsListener {
