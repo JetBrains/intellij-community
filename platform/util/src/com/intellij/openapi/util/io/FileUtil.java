@@ -35,9 +35,8 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 /**
  * Utilities for working with {@link File}.
  */
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 @ApiStatus.NonExtendable
-public class FileUtil extends FileUtilRt {
+public class FileUtil {
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
@@ -191,7 +190,7 @@ public class FileUtil extends FileUtilRt {
         throw new IOException("File length reported negative, probably doesn't exist");
       }
 
-      if (isTooLarge(len)) {
+      if (FileUtilRt.isTooLarge(len)) {
         throw new FileTooBigException("Attempt to load '" + file + "' in memory buffer, file length is " + len + " bytes.");
       }
 
@@ -357,6 +356,10 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.delete(file);
   }
 
+  public static void deleteRecursively(@NotNull Path file) throws IOException {
+    FileUtilRt.deleteRecursively(file, null);
+  }
+
   /**
    * Delete the path -- recursively, if it is a directory.
    * Really insist: i.e. retry delete a few times with a timeout -- see {@link FileUtilRt#doDelete(Path)}
@@ -366,7 +369,7 @@ public class FileUtil extends FileUtilRt {
    * @see FileUtilRt#doDelete(Path)
    */
   public static void delete(@NotNull Path path) throws IOException {
-    deleteRecursively(path, null);
+    FileUtilRt.deleteRecursively(path, null);
   }
 
   public static boolean createParentDirs(@NotNull File file) {
@@ -383,6 +386,10 @@ public class FileUtil extends FileUtilRt {
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
     return FileUtilRt.ensureCanCreateFile(file);
+  }
+
+  public static boolean createIfNotExists(@NotNull File file) {
+    return FileUtilRt.createIfNotExists(file);
   }
 
   public static void copy(@NotNull File fromFile, @NotNull File toFile) throws IOException {
@@ -586,6 +593,10 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.toSystemDependentName(filePath);
   }
 
+  public static @NotNull String toSystemDependentName(@NotNull String path, char separatorChar) {
+    return FileUtilRt.toSystemDependentName(path, separatorChar);
+  }
+
   /**
    * Converts {@code filePath} to file system independent form which uses forward slashes ('/'). Such paths can be stored in internal structures
    * and configuration files. They must be converted to {@link #toSystemDependentName file system dependenct form} to show in UI.
@@ -603,7 +614,11 @@ public class FileUtil extends FileUtilRt {
    */
   @Contract("null -> null; !null->!null")
   public static String toCanonicalPath(@Nullable String path) {
-    return toCanonicalPath(path, File.separatorChar, true);
+    return FileUtilRt.toCanonicalPath(path, File.separatorChar, true);
+  }
+
+  public static String toCanonicalPath(@Nullable String path, char separatorChar, boolean removeLastSlash) {
+    return FileUtilRt.toCanonicalPath(path, separatorChar, removeLastSlash);
   }
 
   /**
@@ -628,15 +643,15 @@ public class FileUtil extends FileUtilRt {
 
   @Contract("null, _ -> null; !null,_->!null")
   public static String toCanonicalPath(@Nullable String path, char separatorChar) {
-    return toCanonicalPath(path, separatorChar, true);
+    return FileUtilRt.toCanonicalPath(path, separatorChar, true);
   }
 
   @Contract("null -> null; !null->!null")
   public static String toCanonicalUriPath(@Nullable String path) {
-    return toCanonicalPath(path, '/', false);
+    return FileUtilRt.toCanonicalPath(path, '/', false);
   }
 
-  private static final SymlinkResolver SYMLINK_RESOLVER = new SymlinkResolver() {
+  private static final FileUtilRt.SymlinkResolver SYMLINK_RESOLVER = new FileUtilRt.SymlinkResolver() {
     @Override
     public @NotNull String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash) {
       try {
@@ -659,8 +674,8 @@ public class FileUtil extends FileUtilRt {
                                         char separatorChar,
                                         boolean removeLastSlash,
                                         boolean resolveSymlinks) {
-    SymlinkResolver symlinkResolver = resolveSymlinks ? SYMLINK_RESOLVER : null;
-    return toCanonicalPath(path, separatorChar, removeLastSlash, symlinkResolver);
+    FileUtilRt.SymlinkResolver symlinkResolver = resolveSymlinks ? SYMLINK_RESOLVER : null;
+    return FileUtilRt.toCanonicalPath(path, separatorChar, removeLastSlash, symlinkResolver);
   }
 
   /**
@@ -797,6 +812,14 @@ public class FileUtil extends FileUtilRt {
   @ApiStatus.ScheduledForRemoval
   public static @NotNull String getExtension(@NotNull String fileName) {
     return Strings.toLowerCase(FileUtilRt.getExtension(fileName));
+  }
+
+  public static @NotNull CharSequence getExtension(@NotNull CharSequence fileName) {
+    return FileUtilRt.getExtension(fileName);
+  }
+
+  public static CharSequence getExtension(@NotNull CharSequence fileName, @Nullable String defaultValue) {
+    return FileUtilRt.getExtension(fileName, defaultValue);
   }
 
   public static @NotNull @NlsSafe String resolveShortWindowsName(@NotNull String path) throws IOException {
@@ -1354,6 +1377,10 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.generateRandomTemporaryPath();
   }
 
+  public static @NotNull File generateRandomTemporaryPath(@NotNull String prefix, @NotNull String suffix) throws IOException {
+    return FileUtilRt.generateRandomTemporaryPath(prefix, suffix);
+  }
+
   public static void setExecutable(@NotNull File file) throws IOException {
     NioFiles.setExecutable(file.toPath());
   }
@@ -1395,7 +1422,11 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.loadFileText(file);
   }
 
-  public static char @NotNull [] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
+  public static char @NotNull [] loadFileText(@NotNull File file, @NotNull Charset encoding) throws IOException {
+    return FileUtilRt.loadFileText(file, encoding);
+  }
+
+  public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
     return FileUtilRt.loadFileText(file, encoding);
   }
 
@@ -1432,7 +1463,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static @NotNull List<String> splitPath(@NotNull String path) {
-    return splitPath(path, File.separatorChar);
+    return FileUtilRt.splitPath(path, File.separatorChar);
+  }
+
+  public static @NotNull List<String> splitPath(@NotNull String path, char separatorChar) {
+    return FileUtilRt.splitPath(path, separatorChar);
   }
 
   public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
@@ -1481,5 +1516,14 @@ public class FileUtil extends FileUtilRt {
    */
   public static @NotNull URI fileToUri(@NotNull File file) {
     return FileUtilRt.fileToUri(file);
+  }
+
+  public static boolean extensionEquals(@NotNull @NonNls String filePath, @NotNull @NonNls String extension) {
+    return FileUtilRt.extensionEquals(filePath, extension);
+  }
+
+  @SuppressWarnings("unused")
+  public static boolean isJarOrZip(@NotNull File file) {
+    return FileUtilRt.isJarOrZip(file, true);
   }
 }

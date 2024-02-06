@@ -18,7 +18,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
@@ -122,29 +123,33 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     val pathsToUpload: MutableSet<String> = HashSet()
 
     val workingDir = consumerOperationParameters.projectDir
-    val gradleProjectDirectory = toSystemDependentName(workingDir.path)
+    val gradleProjectDirectory = FileUtilRt.toSystemDependentName(workingDir.path)
     pathsToUpload.add(gradleProjectDirectory)
 
     val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(
       ExternalSystemApiUtil.toCanonicalPath(workingDir.path))
     projectSettings?.modules
       ?.filter { Files.exists(Path.of(it)) }
-      ?.mapTo(pathsToUpload) { toSystemDependentName(it) }
+      ?.mapTo(pathsToUpload) { FileUtilRt.toSystemDependentName(it) }
 
     val commonAncestor = findCommonAncestor(pathsToUpload)
-    val uploadPath = Paths.get(toSystemDependentName(commonAncestor!!))
+    val uploadPath = Paths.get(FileUtilRt.toSystemDependentName(commonAncestor!!))
     val uploadRoot = TargetEnvironment.UploadRoot(uploadPath, TargetEnvironment.TargetPath.Temporary())
     request.uploadVolumes += uploadRoot
     val targetFileSeparator = request.targetPlatform.platform.fileSeparator
 
     var targetWorkingDirectory: TargetValue<String>? = null
     for (path in pathsToUpload) {
-      val relativePath = getRelativePath(commonAncestor, path, File.separatorChar)
+      val relativePath = FileUtilRt.getRelativePath(commonAncestor, path, File.separatorChar)
       val targetValue = targetEnvironmentProvider.upload(uploadRoot, path, relativePath!!)
-      if (targetWorkingDirectory == null && isAncestor(path, gradleProjectDirectory, false)) {
-        val workingDirRelativePath = getRelativePath(path, gradleProjectDirectory, File.separatorChar)!!
-        val targetWorkingDirRelativePath = if (workingDirRelativePath == ".") ""
-        else toSystemDependentName(workingDirRelativePath, targetFileSeparator)
+      if (targetWorkingDirectory == null && FileUtil.isAncestor(path, gradleProjectDirectory, false)) {
+        val workingDirRelativePath = FileUtilRt.getRelativePath(path, gradleProjectDirectory, File.separatorChar)!!
+        val targetWorkingDirRelativePath = if (workingDirRelativePath == ".") {
+          ""
+        }
+        else {
+          FileUtilRt.toSystemDependentName(workingDirRelativePath, targetFileSeparator)
+        }
         targetWorkingDirectory = TargetValue.map(targetValue) { "$it$targetFileSeparator$targetWorkingDirRelativePath" }
       }
     }
@@ -155,7 +160,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
   private fun findCommonAncestor(paths: Set<String>): String? {
     var commonRoot: File? = null
     for (path in paths) {
-      commonRoot = if (commonRoot == null) File(path) else findAncestor(commonRoot, File(path))
+      commonRoot = if (commonRoot == null) File(path) else FileUtil.findAncestor(commonRoot, File(path))
       requireNotNull(commonRoot) { "no common root found" }
     }
     assert(commonRoot != null)
@@ -207,7 +212,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     if (request is LocalTargetEnvironmentRequest) {
       javaParameters.vmParametersList.addProperty(Main.LOCAL_BUILD_PROPERTY, "true")
       val javaHomePath = consumerOperationParameters.javaHome.path
-      ProjectJdkTable.getInstance().allJdks.find { pathsEqual(it.homePath, javaHomePath) }?.let { javaParameters.jdk = it }
+      ProjectJdkTable.getInstance().allJdks.find { FileUtilRt.pathsEqual(it.homePath, javaHomePath) }?.let { javaParameters.jdk = it }
     }
     else {
       if (environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) == null) {
@@ -382,7 +387,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     fun requestUploadIntoTarget(path: String,
                                 request: TargetEnvironmentRequest,
                                 environmentConfiguration: TargetEnvironmentConfiguration): TargetValue<String> {
-      val uploadPath = Paths.get(toSystemDependentName(path))
+      val uploadPath = Paths.get(FileUtilRt.toSystemDependentName(path))
       val localRootPath = uploadPath.parent
 
       val languageRuntime = environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java)

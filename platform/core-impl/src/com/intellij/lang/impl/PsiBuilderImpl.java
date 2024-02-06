@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl;
 
 import com.intellij.lang.*;
@@ -36,16 +36,12 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
@@ -94,9 +90,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private IElementType myCachedTokenType;
 
   private final Int2ObjectMap<LazyParseableToken> myChameleonCache = new Int2ObjectOpenHashMap<>();
-  private final MarkerPool myPool = new MarkerPool(this);
+  private final MarkerPool pool = new MarkerPool(this);
   private final MarkerOptionalData myOptionalData = new MarkerOptionalData();
-  private final MarkerProduction myProduction = new MarkerProduction(myPool, myOptionalData);
+  private final MarkerProduction myProduction = new MarkerProduction(pool, myOptionalData);
 
   public static void registerWhitespaceToken(@NotNull IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
@@ -387,7 +383,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull @Nls String errorMessage) {
       StartMarker marker = (StartMarker)before;
-      ErrorItem errorItem = myBuilder.myPool.allocateErrorItem();
+      ErrorItem errorItem = myBuilder.pool.allocateErrorItem();
       errorItem.setMessage(errorMessage);
       errorItem.myLexemeIndex = marker.myLexemeIndex;
       myBuilder.myProduction.addBefore(errorItem, marker);
@@ -835,7 +831,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private @NotNull StartMarker createMarker(int lexemeIndex) {
-    StartMarker marker = myPool.allocateStartMarker();
+    StartMarker marker = pool.allocateStartMarker();
     marker.myLexemeIndex = lexemeIndex;
     if (myDebugMode) {
       myOptionalData.notifyAllocated(marker.markerId);
@@ -912,7 +908,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     if (lastMarker instanceof ErrorItem && lastMarker.myLexemeIndex == myCurrentLexeme) {
       return;
     }
-    ErrorItem marker = myPool.allocateErrorItem();
+    ErrorItem marker = pool.allocateErrorItem();
     marker.setMessage(messageText);
     marker.myLexemeIndex = myCurrentLexeme;
     myProduction.addMarker(marker);
@@ -1036,25 +1032,24 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
     StartMarker curNode = rootMarker;
-    ObjectArrayList<StartMarker> nodes = new ObjectArrayList<>();
-    nodes.push(rootMarker);
+    ArrayDeque<StartMarker> nodes = new ArrayDeque<>();
+    nodes.addLast(rootMarker);
 
     int lastErrorIndex = -1;
     int maxDepth = 0;
     int curDepth = 0;
     boolean hasCollapsedChameleons = false;
     int[] productions = myProduction.elements();
-    Object[] markers = myPool.elements();
     for (int i = 1, size = myProduction.size(); i < size; i++) {
       int id = productions[i];
-      ProductionMarker item = id > 0 ? (ProductionMarker)markers[id] : null;
+      ProductionMarker item = id > 0 ? pool.get(id) : null;
 
       if (item instanceof StartMarker) {
         StartMarker marker = (StartMarker)item;
         marker.myParent = curNode;
         marker.myFirstChild = marker.myLastChild = marker.myNext = null;
         curNode.addChild(marker);
-        nodes.push(curNode);
+        nodes.addLast(curNode);
         curNode = marker;
         curDepth++;
         if (curDepth > maxDepth) maxDepth = curDepth;
@@ -1070,8 +1065,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         if (isCollapsedChameleon(curNode)) {
           hasCollapsedChameleons = true;
         }
-        assertMarkersBalanced(id < 0 && markers[-id] == curNode, item);
-        curNode = nodes.pop();
+        assertMarkersBalanced(id < 0 && pool.get(-id) == curNode, item);
+        curNode = nodes.removeLast();
         curDepth--;
       }
     }
@@ -1124,15 +1119,14 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     int lastIndex = 0;
 
     int[] productions = myProduction.elements();
-    Object[] markers = myPool.elements();
     for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
       int id = productions[i];
-      ProductionMarker starting = id > 0 ? (ProductionMarker)markers[id] : null;
+      ProductionMarker starting = id > 0 ? pool.get(id) : null;
       if (starting instanceof StartMarker) {
         assertMarkersBalanced(((StartMarker)starting).isDone(), starting);
       }
       boolean done = starting == null;
-      ProductionMarker item = starting != null ? starting : (ProductionMarker)markers[-id];
+      ProductionMarker item = starting != null ? starting : pool.get(-id);
 
       WhitespacesAndCommentsBinder binder;
       if (item instanceof ErrorItem) {
@@ -1151,7 +1145,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       }
       else {
         int prevId = productions[i - 1];
-        prevProductionLexIndex = ((ProductionMarker)markers[Math.abs(prevId)]).getLexemeIndex(prevId < 0);
+        prevProductionLexIndex = pool.get(Math.abs(prevId)).getLexemeIndex(prevId < 0);
       }
       int wsStartIndex = Math.max(lexemeIndex, lastIndex);
       while (wsStartIndex > prevProductionLexIndex && whitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;

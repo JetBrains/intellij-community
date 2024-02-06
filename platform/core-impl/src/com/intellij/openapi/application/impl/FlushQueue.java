@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -26,7 +25,7 @@ final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(FlushQueue.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, MINUTES.toMillis(1));
 
-  private ObjectList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
+  private ObjectArrayList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
@@ -110,7 +109,7 @@ final class FlushQueue {
         //          (in .reincludeSkippedItems()) and also reset queueSize/queuedTimeNs fields.
         //          This way we got queue loading info 'cleared' (kind of) from bypassing influence,
         //          i.e. re-appended tasks will look as-if they were just added -- which is not strictly true,
-        //          but it will disturb waiting times much less then current approach there skipped/not skipped
+        //          but it will disturb waiting times much less than the current approach there skipped/not skipped
         //          tasks waiting times stats are merged together.
         mySkippedItems.add(info.wasSkipped());
       }

@@ -49,8 +49,10 @@ import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.*;
 
@@ -1156,9 +1158,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
         else {
           if (createEvents instanceof VFileCreateEvent prevEvent) {
-            Set<VFileCreateEvent> children = parent.isCaseSensitive()
-                                             ? new LinkedHashSet<>()
-                                             : CollectionFactory.createLinkedCustomHashingStrategySet(CASE_INSENSITIVE_STRATEGY);
+            Set<VFileCreateEvent> children;
+            children = parent.isCaseSensitive() ? new LinkedHashSet<>() : new ObjectLinkedOpenCustomHashSet<>(CASE_INSENSITIVE_STRATEGY);
             children.add(prevEvent);
             toCreate.put(parent, children);
             createEvents = children;
@@ -2467,7 +2468,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
            (areChildrenCaseSensitive ? Flags.CHILDREN_CASE_SENSITIVE : 0);
   }
 
-  private static final HashingStrategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new HashingStrategy<>() {
+  private static final Hash.Strategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new Hash.Strategy<>() {
     @Override
     public int hashCode(@Nullable VFileCreateEvent object) {
       return object == null ? 0 : Strings.stringHashCodeInsensitive(object.getChildName());

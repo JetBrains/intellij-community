@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -23,7 +23,7 @@ import static java.lang.System.getProperty;
  * A stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
-public class FileUtilRt {
+public final class FileUtilRt {
   private static final int KILOBYTE = 1024;
   private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
 
@@ -98,7 +98,7 @@ public class FileUtilRt {
   }
 
   @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
-  protected static String toCanonicalPath(@Nullable String path,
+  static String toCanonicalPath(@Nullable String path,
                                           char separatorChar,
                                           boolean removeLastSlash,
                                           @Nullable SymlinkResolver resolver) {
@@ -522,16 +522,18 @@ public class FileUtilRt {
       if (attempts > maxFileNumber / 2 || attempts > MAX_ATTEMPTS) {
         String[] children = dir.list();
         int size = children == null ? 0 : children.length;
-        maxFileNumber = Math.max(10, size * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
+        maxFileNumber = Math.max(10, size * 10); // if too many files are in tmp dir, we need a bigger random range than a meager 10
         if (attempts > MAX_ATTEMPTS) {
           throw exception != null ? exception: new IOException("Unable to create a temporary file " + f + "\nDirectory '" + dir +
                                 "' list ("+size+" children): " + Arrays.toString(children));
         }
       }
 
-      i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). Try file2.
+      // For some reason, the file1 can't be created (previous file1 was deleted but got locked by antivirus?). Try file2.
+      i++;
       if (i > 2) {
-        i = 2 + RANDOM.nextInt(maxFileNumber); // generate random suffix if too many failures
+        // generate random suffix if too many failures
+        i = 2 + RANDOM.nextInt(maxFileNumber);
       }
     }
   }
@@ -722,12 +724,12 @@ public class FileUtilRt {
   }
 
   /**
-   * Get parent for the file. The method correctly
-   * processes "." and ".." in file names. The name
-   * remains relative if was relative before.
+   * Get parent for the file.
+   * The method correctly processes `.` and `..` in file names.
+   * The name remains relative if it was relative before.
    *
    * @param file a file to analyze
-   * @return files's parent, or {@code null} if the file has no parent.
+   * @return file's parent, or {@code null} if the file has no parent.
    */
   @Nullable
   public static File getParentFile(@NotNull File file) {
@@ -893,7 +895,7 @@ public class FileUtilRt {
   private static DirectoryNotEmptyException directoryNotEmptyExceptionWithMoreDiagnostic(@NotNull Path path) throws IOException {
     DirectoryStream.Filter<Path> alwaysTrue = new DirectoryStream.Filter<Path>() {
       @Override
-      public boolean accept(Path entry) throws IOException {
+      public boolean accept(Path entry) {
         return true;
       }
     };
@@ -938,8 +940,12 @@ public class FileUtilRt {
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
-    if (file.exists()) return file.canWrite();
-    if (!createIfNotExists(file)) return false;
+    if (file.exists()) {
+      return file.canWrite();
+    }
+    if (!createIfNotExists(file)) {
+      return false;
+    }
     return delete(file);
   }
 
@@ -1080,8 +1086,9 @@ public class FileUtilRt {
                       file2 == null ? null : file2.getPath());
   }
 
+  @SuppressWarnings("RedundantSuppression")
   public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
-    //noinspection StringEquality
+    //noinspection StringEquality,SSBasedInspection
     if (path1 == path2) {
       return true;
     }

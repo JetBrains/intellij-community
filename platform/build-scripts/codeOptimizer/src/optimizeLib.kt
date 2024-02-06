@@ -14,11 +14,58 @@ import kotlin.time.measureTime
 
 internal data class OptimizeLibraryContext(@JvmField val tempDir: Path, @JvmField val javaHome: Path)
 
-// The Maven Java API can appear somewhat complex and broad, making certain tasks cumbersome.
-// Hence, we depend on the prerequisite that the original library is already resolved and stored in the local Maven repository.
+private data class LibDescriptor(@JvmField val id: String, @JvmField val version: String, @JvmField val jbVersion: Int)
+
+private val fastUtil = LibDescriptor(id = "fastutil", version = "8.5.13", jbVersion = 3)
+
+@Suppress("unused")
+internal object FastutilInstall {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    publishToMaven(fastUtil, deploy = false)
+  }
+}
+
+@Suppress("SpellCheckingInspection", "RedundantSuppression", "SameParameterValue")
+private fun publishToMaven(
+  @Suppress("SameParameterValue") lib: LibDescriptor,
+  deploy: Boolean,
+) {
+  for (extraArgs in listOf(
+    listOf("-Dpackaging=jar", "-Dfile=out/${lib.id}.jar"),
+    listOf("-Dpackaging=java-source", "-Dfile=out/${lib.id}-sources.jar", "-DgeneratePom=false"),
+    listOf("-Dpackaging=txt", "-Dclassifier=proguard-map", "-Dfile=out/${lib.id}-proguard-map.txt", "-DgeneratePom=false"),
+  )) {
+    val list = mutableListOf(
+      "mvn",
+      if (deploy) "deploy:deploy-file" else "install:install-file",
+      "-DgroupId=org.jetbrains.intellij.deps.fastutil",
+      "-DartifactId=intellij-deps-fastutil",
+      "-Dversion=${lib.version}-jb${lib.jbVersion}",
+    )
+    list.addAll(extraArgs)
+
+    if (deploy) {
+      list.addAll(listOf(
+        "-DrepositoryId=space-intellij-dependencies",
+        "-Durl=https://packages.jetbrains.team/maven/p/ij/intellij-dependencies",
+      ))
+    }
+
+    executeMaven(list)
+  }
+}
+
+@Suppress("SpellCheckingInspection", "RedundantSuppression")
 internal object LibraryCodeOptimizer {
   @JvmStatic
   fun main(args: Array<String>) {
+    val version = fastUtil.version
+    // The Maven Java API can appear somewhat complex and broad, making certain tasks cumbersome.
+    // Use CLI.
+    executeMaven(listOf("mvn", "org.apache.maven.plugins:maven-dependency-plugin:get", "-Dartifact=it.unimi.dsi:fastutil:$version"))
+    executeMaven(listOf("mvn", "org.apache.maven.plugins:maven-dependency-plugin:get", "-Dartifact=it.unimi.dsi:fastutil:$version:java-source:sources"))
+
     val m2 = Path.of(System.getProperty("user.home")).resolve(".m2/repository")
     val outDir = Path.of("out").toAbsolutePath()
     val output = outDir.resolve("fastutil.jar")
@@ -27,9 +74,8 @@ internal object LibraryCodeOptimizer {
     }
 
     //val input = m2.resolve("com/github/weisj/jsvg/1.3.0-jb.3/jsvg-1.3.0-jb.3.jar")
-    val version = "8.5.13-jb.1"
     val input = m2.resolve("it/unimi/dsi/fastutil/$version/fastutil-$version.jar")
-    val mapping = outDir.resolve("fastutil-map.txt")
+    val mapping = outDir.resolve("fastutil-proguard-map.txt")
     val duration = measureTime {
       optimizeLibrary(name = "fastutil",
                       input = input,
@@ -47,6 +93,13 @@ internal object LibraryCodeOptimizer {
     //updateContentHash(digest, cleanZip(output))
     //println(bytesToHex(digest.digest()))
   }
+}
+
+private fun executeMaven(command: List<String>) {
+  ProcessBuilder(command)
+    .inheritIO()
+    .start()
+    .waitFor()
 }
 
 //private fun cleanZip(file: Path): Path {

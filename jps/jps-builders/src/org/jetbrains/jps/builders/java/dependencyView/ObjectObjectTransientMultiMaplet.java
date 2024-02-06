@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.HashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -14,11 +14,11 @@ import java.util.function.Supplier;
  * @author Eugene Zhuravlev
  */
 public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
-  private final Map<K, Collection<V>> myMap;
+  private final Object2ObjectOpenCustomHashMap<K, Collection<V>> myMap;
   private final Supplier<? extends Collection<V>> myCollectionFactory;
 
-  public ObjectObjectTransientMultiMaplet(HashingStrategy<K> hashingStrategy, Supplier<? extends Collection<V>> collectionFactory) {
-    myMap = CollectionFactory.createCustomHashingStrategyMap(hashingStrategy);
+  public ObjectObjectTransientMultiMaplet(Hash.Strategy<K> hashingStrategy, Supplier<? extends Collection<V>> collectionFactory) {
+    myMap = new Object2ObjectOpenCustomHashMap<>(hashingStrategy);
     myCollectionFactory = collectionFactory;
   }
 
@@ -89,12 +89,8 @@ public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> ext
   @Override
   public void removeAll(K key, Collection<V> values) {
     final Collection<V> collection = myMap.get(key);
-    if (collection != null) {
-      if (collection.removeAll(values)) {
-        if (collection.isEmpty()) {
-          myMap.remove(key);
-        }
-      }
+    if (collection != null && collection.removeAll(values) && collection.isEmpty()) {
+      myMap.remove(key);
     }
   }
 

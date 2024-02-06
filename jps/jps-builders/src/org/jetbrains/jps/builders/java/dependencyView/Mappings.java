@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,10 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FileCollectionFactory;
-import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.containers.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -144,7 +141,7 @@ public class Mappings {
         myClassToClassDependency = new IntIntTransientMultiMaplet();
         myShortClassNameIndex = null;
         myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(
-          FileCollectionFactory.FILE_PATH_HASH_STRATEGY, () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
+          FastUtilHashingStrategies.FILE_PATH_HASH_STRATEGY, () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
         );
         myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
       }
@@ -171,7 +168,7 @@ public class Mappings {
         ) {
           @Override
           protected @NotNull String debugString(String path) {
-            // on case-insensitive file systems save paths in normalized (lowercase) format in order to make tests run deterministically
+            // on case-insensitive file systems save paths in normalized (lowercase) format to make tests run deterministically
             return SystemInfo.isFileSystemCaseSensitive ? path : path.toLowerCase(Locale.US);
           }
         };
