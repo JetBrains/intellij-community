@@ -1593,8 +1593,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testHighlightingInSplittedWindowFinishesEventually() {
     myDaemonCodeAnalyzer.serializeCodeInsightPasses(true); // reproduced only for serialized passes
     try {
-      Collection<Editor> applied = ContainerUtil.createEmptyCOWList();
-      Collection<Editor> collected = ContainerUtil.createEmptyCOWList();
+      Collection<Editor> applied = ContainerUtil.createConcurrentList();
+      Collection<Editor> collected = ContainerUtil.createConcurrentList();
       registerFakePass(applied, collected);
 
       @Language("JAVA")

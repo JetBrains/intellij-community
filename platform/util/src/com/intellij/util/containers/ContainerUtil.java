@@ -2581,6 +2581,11 @@ public final class ContainerUtil {
     return ContainerUtilRt.emptyList();
   }
 
+  /**
+   * Creates empty {@link CopyOnWriteArrayList}, avoiding initial allocation of an empty array, unlike the {@link CopyOnWriteArrayList#CopyOnWriteArrayList()}.
+   * However, subsequent modifications could lead to the empty array garbage nevertheless, so consider using {@link #createLockFreeCopyOnWriteList()} instead,
+   * which guarantees to not allocate empty arrays evar.
+   */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
     // does not create garbage new Object[0]
