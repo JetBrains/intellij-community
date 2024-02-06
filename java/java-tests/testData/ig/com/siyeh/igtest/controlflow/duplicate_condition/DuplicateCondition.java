@@ -4,6 +4,19 @@ import java.util.*;
 
 public class DuplicateCondition {
 
+  void testAndChain(String s) {
+    if (!s.isEmpty() && <warning descr="Duplicate condition 's.trim().length() == 5'">s.trim().length() == 5</warning> && <warning descr="Duplicate condition 's.trim().length() == 5'">s.trim().length() == 5</warning>) {}
+  }
+
+  void testAndChainNested(String s) {
+    if (!<warning descr="Duplicate condition 's.isEmpty()'">s.isEmpty()</warning> && <warning descr="Duplicate condition 's.trim().length() == 5'">s.trim().length() == 5</warning>) {
+      if (<warning descr="Duplicate condition 's.trim().length() == 5'">s.trim().length() == 5</warning>) {
+        if (!<warning descr="Duplicate condition 's.isEmpty()'">s.isEmpty()</warning>) {}
+      }
+      System.out.println("Hello");
+    }
+  }
+
   void x(boolean b) {
     if (<warning descr="Duplicate condition 'b'">b</warning> || <warning descr="Duplicate condition 'b'">b</warning> || <warning descr="Duplicate condition 'b'">b</warning> ) {
 
