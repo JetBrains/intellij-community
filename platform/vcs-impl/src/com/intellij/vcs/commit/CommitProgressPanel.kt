@@ -15,12 +15,14 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.progress.impl.updateFromFlow
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsBundle.messagePointer
+import com.intellij.openapi.vcs.actions.commit.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
@@ -408,10 +410,7 @@ private fun createCommitChecksToolbar(target: JComponent): ActionToolbar =
     component.border = null
   }
 
-private class RerunCommitChecksAction :
-  AnActionWrapper(ActionManager.getInstance().getAction("Vcs.RunCommitChecks")),
-  TooltipDescriptionProvider {
-
+private class RerunCommitChecksAction : DumbAwareAction(), TooltipDescriptionProvider {
   init {
     templatePresentation.apply {
       setText(Presentation.NULL_STRING)
@@ -420,5 +419,24 @@ private class RerunCommitChecksAction :
       icon = AllIcons.General.InlineRefresh
       hoveredIcon = AllIcons.General.InlineRefreshHover
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    val workflowHandler = e.getContextCommitWorkflowHandler()
+    val executor = workflowHandler?.getExecutor(RunCommitChecksExecutor.ID)
+    e.presentation.isVisible = workflowHandler != null && executor != null
+    e.presentation.isEnabled = workflowHandler != null && executor != null && workflowHandler.isExecutorEnabled(executor)
+  }
+
+  /**
+   * See [com.intellij.openapi.vcs.changes.actions.CommitExecutorAction]
+   */
+  override fun actionPerformed(e: AnActionEvent) {
+    val workflowHandler = e.getContextCommitWorkflowHandler()!!
+    val executor = workflowHandler.getExecutor(RunCommitChecksExecutor.ID)!!
+
+    workflowHandler.execute(executor)
   }
 }
