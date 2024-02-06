@@ -36,13 +36,11 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
       @Override
       public @Nullable ListSeparator separatorFor(MySchemeListItem<T> value) {
-        int i = 0;
-        while (i < mySeparatorInfos.size()) {
-          T scheme = mySeparatorInfos.get(i).myListItem.myScheme;
+        for (SeparatorInfo info : mySeparatorInfos) {
+          T scheme = info.myListItem.myScheme;
           if (scheme != null && scheme.equals(value.getScheme())) {
-            return new ListSeparator(mySeparatorInfos.get(i).title);
+            return new ListSeparator(info.title);
           }
-          i++;
         }
 
         return null;

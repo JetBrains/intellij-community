@@ -16,7 +16,7 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.ActionLink
-import java.awt.Component
+import javax.swing.JComponent
 
 internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
                                   private val applyImmediately: Boolean = false): SchemesPanel(colorAndFontsOptions, 0) {
@@ -62,7 +62,7 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
   override fun useBoldForNonRemovableSchemes(): Boolean = false
 }
 
-private class OpenEditorSchemeConfigurableAction(val component: Component, val selectedSchemeProvider: () -> String?) :
+private class OpenEditorSchemeConfigurableAction(val component: JComponent, val selectedSchemeProvider: () -> String?) :
   DumbAwareAction(IdeBundle.message("combobox.editor.color.scheme.edit")) {
 
   override fun actionPerformed(e: AnActionEvent) {
