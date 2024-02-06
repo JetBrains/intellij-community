@@ -6,8 +6,28 @@
   <item name='javax.swing.AbstractAction void putValue(java.lang.String, java.lang.Object) 0'>
     <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
+  <item name='javax.swing.AbstractButton boolean isSelected()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.AbstractButton int getDisplayedMnemonicIndex()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.AbstractButton int getMnemonic()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='javax.swing.AbstractButton java.lang.String getActionCommand()'>
     <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.AbstractButton javax.swing.ButtonModel getModel()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='javax.swing.AbstractButton void setActionCommand(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls' />
@@ -69,11 +89,79 @@
       <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
     </annotation>
   </item>
+  <item name='javax.swing.ButtonModel boolean isArmed()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isEnabled()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isPressed()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isRollover()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel boolean isSelected()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+  <item name='javax.swing.ButtonModel int getMnemonic()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='javax.swing.ButtonModel java.lang.String getActionCommand()'>
     <annotation name='org.jetbrains.annotations.NonNls' />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setActionCommand(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
   </item>
   <item name='javax.swing.ButtonModel void setActionCommand(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.ButtonModel void setArmed(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setEnabled(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setMnemonic(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setPressed(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setRollover(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel void setSelected(boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
   </item>
   <item name='javax.swing.ImageIcon ImageIcon(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls' />
