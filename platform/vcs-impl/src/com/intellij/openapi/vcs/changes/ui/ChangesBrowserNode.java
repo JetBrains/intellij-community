@@ -70,7 +70,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   private int myDirectoryCount = -1;
   private boolean myHelper;
   private @Nullable Color myBackgroundColor = UNKNOWN_COLOR;
-  private final @NotNull UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+  private UserDataHolderBase myUserDataHolder;
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
@@ -152,23 +152,36 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   @Nullable
   @Override
   public <V> V getUserData(@NotNull Key<V> key) {
-    return myUserDataHolder.getUserData(key);
+    UserDataHolderBase holder = myUserDataHolder;
+    return holder == null ? null : holder.getUserData(key);
   }
 
   @Override
   public <V> void putUserData(@NotNull Key<V> key, @Nullable V value) {
-    myUserDataHolder.putUserData(key, value);
+    UserDataHolderBase holder = myUserDataHolder;
+    if (holder == null) {
+      myUserDataHolder = holder = new UserDataHolderBase();
+    }
+    holder.putUserData(key, value);
   }
 
   @NotNull
   @Override
   public <V> V putUserDataIfAbsent(@NotNull Key<V> key, @NotNull V value) {
-    return myUserDataHolder.putUserDataIfAbsent(key, value);
+    UserDataHolderBase holder = myUserDataHolder;
+    if (holder == null) {
+      myUserDataHolder = holder = new UserDataHolderBase();
+    }
+    return holder.putUserDataIfAbsent(key, value);
   }
 
   @Override
   public <V> boolean replace(@NotNull Key<V> key, @Nullable V oldValue, @Nullable V newValue) {
-    return myUserDataHolder.replace(key, oldValue, newValue);
+    UserDataHolderBase holder = myUserDataHolder;
+    if (holder == null) {
+      myUserDataHolder = holder = new UserDataHolderBase();
+    }
+    return holder.replace(key, oldValue, newValue);
   }
 
   @Override
