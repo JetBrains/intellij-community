@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -29,7 +28,6 @@ import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -39,10 +37,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class ChangedFilesCollector extends IndexedFilesListener {
@@ -50,12 +50,11 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public static final boolean CLEAR_NON_INDEXABLE_FILE_DATA =
     SystemProperties.getBooleanProperty("idea.indexes.clear.non.indexable.file.data", true);
 
-  private final IntObjectMap<VirtualFile> myFilesToUpdate =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-
   // files from myEventMerger and myFilesToUpdate
   private final List<Pair<Project, ConcurrentBitSet>> myDirtyFiles = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ConcurrentBitSet myDirtyFilesWithoutProject = ConcurrentBitSet.create();
+
+  private final FilesToUpdateCollector myFilesToUpdate = new FilesToUpdateCollector(myDirtyFiles, myDirtyFilesWithoutProject);
 
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
   private final Phaser myWorkersFinishedSync = new Phaser() {
@@ -84,56 +83,21 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  public void scheduleForUpdate(@NotNull VirtualFile file) {
-    int fileId = FileBasedIndex.getFileId(file);
-    if (!(file instanceof DeletedVirtualFileStub)) {
-      Set<Project> projects = myFileBasedIndex.getContainingProjects(file);
-      if (projects.isEmpty()) {
-        removeNonIndexableFileData(file, fileId);
-        myFileBasedIndex.getIndexableFilesFilterHolder().removeFile(fileId);
-        return;
-      }
-    }
-
-    VfsEventsMerger.tryLog("ADD_TO_UPDATE", file);
-    myFilesToUpdate.put(fileId, file);
+  @NotNull
+  public FilesToUpdateCollector getFilesToUpdateCollector() {
+    return myFilesToUpdate;
   }
 
-  public void removeScheduledFileFromUpdate(VirtualFile file) {
-    int fileId = FileBasedIndex.getFileId(file);
-    VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
-    if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
-      VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", file);
-      myFilesToUpdate.remove(fileId);
-      removeFromDirtyFiles(fileId);
-    }
-  }
-
-  public void removeFileIdFromFilesScheduledForUpdate(int fileId) {
-    myFilesToUpdate.remove(fileId);
-    removeFromDirtyFiles(fileId);
-  }
-
-  private void removeFromDirtyFiles(int fileId) {
-    myDirtyFilesWithoutProject.clear(fileId);
-    for (Pair<Project, ConcurrentBitSet> pair : myDirtyFiles) {
+  static void removeFromDirtyFiles(int fileId, @NotNull ConcurrentBitSet dirtyFilesWithoutProject, @NotNull List<Pair<Project, ConcurrentBitSet>> dirtyFiles) {
+    dirtyFilesWithoutProject.clear(fileId);
+    for (Pair<Project, ConcurrentBitSet> pair : dirtyFiles) {
       pair.second.clear(fileId);
     }
   }
 
-  public boolean containsFileId(int fileId) {
-    return myFilesToUpdate.containsKey(fileId);
-  }
-
-  public Iterator<@NotNull VirtualFile> getFilesToUpdate() {
-    return myFilesToUpdate.values().iterator();
-  }
-
   public Collection<VirtualFile> getAllFilesToUpdate() {
     ensureUpToDate();
-    return myFilesToUpdate.isEmpty()
-           ? Collections.emptyList()
-           : Collections.unmodifiableCollection(myFilesToUpdate.values());
+    return myFilesToUpdate.getAllFilesToUpdate();
   }
 
   @NotNull
@@ -142,7 +106,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void clearFilesToUpdate() {
-    myFilesToUpdate.clear();
+    myFilesToUpdate.clearFilesToUpdate();
     myDirtyFilesWithoutProject.clear();
     for (Pair<Project, ConcurrentBitSet> p : myDirtyFiles) {
       p.second.clear();
@@ -205,19 +169,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         if (registeredIndexes != null && registeredIndexes.isInitialized()) ensureUpToDateAsync();
       }
     };
-  }
-
-  private void removeNonIndexableFileData(@NotNull VirtualFile file, int fileId) {
-    if (CLEAR_NON_INDEXABLE_FILE_DATA) {
-      List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
-      if (!extensions.isEmpty()) {
-        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
-      }
-      IndexingFlag.cleanProcessingFlag(file);
-    }
-    else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      checkNotIndexedByContentBasedIndexes(file, fileId);
-    }
   }
 
   public void addProject(@NotNull Project project) {
@@ -283,10 +234,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return requestor instanceof FileDocumentManager ||
            requestor instanceof PsiManager ||
            requestor == LocalHistory.VFS_EVENT_REQUESTOR;
-  }
-
-  public boolean isScheduledForUpdate(VirtualFile file) {
-    return myFilesToUpdate.containsKey(FileBasedIndex.getFileId(file));
   }
 
   public void ensureUpToDate() {
@@ -359,8 +306,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
           throw t;
         }
         finally {
-          if (!myFilesToUpdate.containsKey(info.getFileId())) {
-            removeFromDirtyFiles(info.getFileId()); // vfs event was processed by files was not scheduled for indexing
+          if (!myFilesToUpdate.containsFileId(info.getFileId())) {
+            removeFromDirtyFiles(info.getFileId(), myDirtyFilesWithoutProject, myDirtyFiles); // vfs event was processed by files was not scheduled for indexing
           }
         }
         return true;
@@ -444,32 +391,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     while (getEventMerger().hasChanges()) {
       ReadAction.nonBlocking(() -> processFilesToUpdateInReadAction()).executeSynchronously();
     }
-  }
-
-  private void checkNotIndexedByContentBasedIndexes(@NotNull VirtualFile file, int fileId) {
-    List<ID<?, ?>> contentDependentIndexes = getIndexedContentDependentExtensions(fileId);
-    if (!contentDependentIndexes.isEmpty()) {
-      LOG.error("indexes " + contentDependentIndexes + " will not be updated for file = " + file + ", id = " + fileId);
-    }
-  }
-
-  private @NotNull List<ID<?, ?>> getIndexedContentDependentExtensions(int fileId) {
-    List<ID<?, ?>> indexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
-    RegisteredIndexes registeredIndexes = myFileBasedIndex.getRegisteredIndexes();
-    List<ID<?, ?>> contentDependentIndexes;
-    if (registeredIndexes == null) {
-      Set<? extends ID<?, ?>> allContentDependentIndexes = FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList().stream()
-        .filter(ex -> ex.dependsOnFileContent())
-        .map(ex -> ex.getName())
-        .collect(Collectors.toSet());
-      contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> !allContentDependentIndexes.contains(id));
-    }
-    else {
-      contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> {
-        return registeredIndexes.isContentDependentIndex(id);
-      });
-    }
-    return contentDependentIndexes;
   }
 
   @TestOnly

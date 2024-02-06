@@ -71,6 +71,7 @@ import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
+import com.intellij.util.indexing.events.FilesToUpdateCollector;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
@@ -302,7 +303,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     // avoid missing files when events are processed concurrently
     Iterator<VirtualFile> iterator = Iterators.concat(
       getChangedFilesCollector().getEventMerger().getChangedFiles(),
-      getChangedFilesCollector().getFilesToUpdate()
+      getFilesToUpdateCollector().getFilesToUpdate()
     );
 
     HashSet<VirtualFile> checkedFiles = new HashSet<>();
@@ -1304,7 +1305,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public boolean isFileUpToDate(VirtualFile file) {
-    return file instanceof VirtualFileWithId && !getChangedFilesCollector().isScheduledForUpdate(file);
+    return file instanceof VirtualFileWithId && !getFilesToUpdateCollector().isScheduledForUpdate(file);
   }
 
   // caller is responsible to ensure no concurrent same document processing
@@ -1312,7 +1313,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                     @NotNull FileIndexingStamp indexingStamp) {
     // ProcessCanceledException will cause re-adding the file to the processing list
     final VirtualFile file = fileContent.getVirtualFile();
-    if (getChangedFilesCollector().isScheduledForUpdate(file)) {
+    if (getFilesToUpdateCollector().isScheduledForUpdate(file)) {
       try {
         indexFileContent(project, fileContent, null, indexingStamp).apply(file, null, true);
       }
@@ -1770,7 +1771,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     IndexingStamp.flushCache(fileId);
 
-    getChangedFilesCollector().scheduleForUpdate(file);
+    getFilesToUpdateCollector().scheduleForUpdate(file);
   }
 
   public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file) {
@@ -1789,12 +1790,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
     if (file.isDirectory()) {
-      getChangedFilesCollector().removeScheduledFileFromUpdate(file); // no need to update it anymore
+      getFilesToUpdateCollector().removeScheduledFileFromUpdate(file); // no need to update it anymore
     }
     else {
       // its data should be (lazily) wiped for every index
-      getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+      getFilesToUpdateCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
     }
+  }
+
+  @NotNull
+  public FilesToUpdateCollector getFilesToUpdateCollector() {
+    return getChangedFilesCollector().getFilesToUpdateCollector();
   }
 
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean onlyContentChanged) {
@@ -1822,7 +1828,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     // with old content)
     if (!file.isValid() || (isRegularFile && isTooLarge(file))) {
       // large file might be scheduled for update in before event when its size was not large
-      getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+      getFilesToUpdateCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
     }
     else {
       FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
@@ -1846,7 +1852,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
 
           IndexingStamp.flushCache(fileId);
-          getChangedFilesCollector().scheduleForUpdate(file);
+          getFilesToUpdateCollector().scheduleForUpdate(file);
         }
         else {
           IndexingFlag.setFileIndexed(file, indexingStamp);
@@ -1938,14 +1944,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (!file.isValid()) {
         removeDataFromIndicesForFile(fileId, file, "invalid_file");
         getIndexableFilesFilterHolder().removeFile(fileId);
-        changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
+        changedFilesCollector.getFilesToUpdateCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       }
       else if (!belongsToIndexableFiles(file)) {
         if (ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA) {
           removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
         }
         getIndexableFilesFilterHolder().removeFile(fileId);
-        changedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
+        changedFilesCollector.getFilesToUpdateCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
       }
     }
     getChangedFilesCollector().onProjectClosing(p.second, vfsCreationStamp);
@@ -2000,7 +2006,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (dumbModeAccessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) return f -> true;
 
     assert dumbModeAccessType == DumbModeAccessType.RELIABLE_DATA_ONLY;
-    return fileId -> !getChangedFilesCollector().containsFileId(fileId);
+    return fileId -> !getFilesToUpdateCollector().containsFileId(fileId);
   }
 
   @Override

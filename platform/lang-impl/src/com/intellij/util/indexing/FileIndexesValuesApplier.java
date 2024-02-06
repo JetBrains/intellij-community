@@ -189,7 +189,7 @@ public final class FileIndexesValuesApplier {
                              () -> " updated_indexes=" + stats.getPerIndexerEvaluateIndexValueTimes().keySet() +
                                    " deleted_indexes=" + stats.getPerIndexerEvaluatingIndexValueRemoversTimes().keySet() +
                                    " " + debugString);
-      myIndex.getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
+      myIndex.getFilesToUpdateCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
 
       if (shouldMarkFileAsIndexed) {
         IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject, indexingStamp);

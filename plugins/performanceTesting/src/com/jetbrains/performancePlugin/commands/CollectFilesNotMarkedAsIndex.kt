@@ -113,7 +113,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
             }
             try {
               fileOrDir.contentsToByteArray()
-              if (fbi.changedFilesCollector.containsFileId(fileOrDir.id)) {
+              if (fbi.changedFilesCollector.filesToUpdateCollector.containsFileId(fileOrDir.id)) {
                 logIndexingIssue("$fileOrDir (id=${fileOrDir.id}) $errorMessagePart because is changed\n")
               }
               else {
