@@ -877,6 +877,10 @@ fun <T : CommandChain> T.clearLLMInlineCompletionCache(): T = apply {
   addCommand("${CMD_PREFIX}clearLLMInlineCompletionCache")
 }
 
+fun <T : CommandChain> T.waitForVcsLogUpdate(): T = apply {
+  addCommand("${CMD_PREFIX}waitForVcsLogUpdate")
+}
+
 /**
  * Will wait and throw exception if the condition wasn't satisfied
  */
