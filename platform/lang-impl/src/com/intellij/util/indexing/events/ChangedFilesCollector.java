@@ -135,7 +135,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       return;
     }
     for (Project project : projects) {
-      Pair<Project, ConcurrentBitSet> projectDirtyFiles = getDirtyFilesWithoutProject(project);
+      Pair<Project, ConcurrentBitSet> projectDirtyFiles = getDirtyFiles(project);
       if (projectDirtyFiles != null) {
         projectDirtyFiles.second.set(id);
       }
@@ -206,7 +206,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   private void persistProjectsDirtyFiles(@NotNull Project project, long vfsCreationStamp) {
-    Pair<Project, ConcurrentBitSet> p = getDirtyFilesWithoutProject(project);
+    Pair<Project, ConcurrentBitSet> p = getDirtyFiles(project);
     if (p == null) return;
     IntSet dirtyFileIds = toIntSet(p.second);
     PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(p.first.getLocationHash()), dirtyFileIds, vfsCreationStamp);
@@ -225,7 +225,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   @Nullable
-  private Pair<Project, ConcurrentBitSet> getDirtyFilesWithoutProject(@NotNull Project project) {
+  private Pair<Project, ConcurrentBitSet> getDirtyFiles(@NotNull Project project) {
     return ContainerUtil.find(myDirtyFiles, p -> p.first.equals(project));
   }
 
