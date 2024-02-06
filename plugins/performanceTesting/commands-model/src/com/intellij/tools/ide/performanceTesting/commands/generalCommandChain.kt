@@ -914,6 +914,9 @@ fun <T : CommandChain> T.sleep(timeOut: Long, unit: TimeUnit = TimeUnit.MILLISEC
   addCommand("${CMD_PREFIX}sleep ${unit.toMillis(timeOut)}")
 }
 
+fun <T : CommandChain> T.waitForEDTQueueUnstuck(): T = apply {
+  addCommand("${CMD_PREFIX}waitForEDTQueueUnstuck")
+}
 
 fun <T : CommandChain> T.repeatCommand(times: Int, commandChain: (CommandChain) -> Unit): T = apply {
   repeat(times) {

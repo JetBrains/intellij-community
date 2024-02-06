@@ -104,7 +104,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(AssertEncodingFileCommand.PREFIX, AssertEncodingFileCommand::new),
       Map.entry(SetModuleJdkCommand.PREFIX, SetModuleJdkCommand::new),
       Map.entry(ReplaceBrowser.PREFIX, ReplaceBrowser::new),
-      Map.entry(AssertModuleJdkVersionCommand.PREFIX, AssertModuleJdkVersionCommand::new)
+      Map.entry(AssertModuleJdkVersionCommand.PREFIX, AssertModuleJdkVersionCommand::new),
+      Map.entry(WaitForEDTQueueUnstuckCommand.PREFIX, WaitForEDTQueueUnstuckCommand::new)
     );
   }
 }
