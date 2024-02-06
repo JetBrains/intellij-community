@@ -140,9 +140,9 @@ suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
 
 @Serializable
 class BuiltinModulesFileData(
-  @JvmField val plugins: List<String>,
-  @JvmField val modules: List<String>,
-  @JvmField val fileExtensions: List<String>,
+  @JvmField val plugins: MutableList<String> = mutableListOf(),
+  @JvmField val modules: MutableList<String> = mutableListOf(),
+  @JvmField val fileExtensions: MutableList<String> = mutableListOf(),
 )
 
 data class DistFile(@JvmField val file: Path,
