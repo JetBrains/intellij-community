@@ -6,6 +6,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
+import org.jetbrains.annotations.CheckReturnValue
 
 abstract class ConfigurableBuildIssue : BuildIssue {
 
@@ -34,8 +35,26 @@ abstract class ConfigurableBuildIssue : BuildIssue {
     configurator.quickFixPrompts.add(quickFixPrompt)
   }
 
-  fun addQuickFix(quickFix: BuildIssueQuickFix) {
-    configurator.quickFixes.add(quickFix)
+  /**
+   * Defines quick fix implementation that will be called on hyperlink activation.
+   * The hyperlink in the quick fix prompt should use href attribute which returns from this function.
+   * @return hyperlink reference (href) for the quickfix prompt
+   */
+  @CheckReturnValue
+  fun addQuickFix(quickFix: BuildIssueQuickFix): String {
+    val ordinal = configurator.quickFixes.size
+    val hyperlinkReference = "${quickFix.id}($ordinal)"
+    val orderedQuickFix = QuickFix(hyperlinkReference, quickFix)
+    configurator.quickFixes.add(orderedQuickFix)
+    return hyperlinkReference
+  }
+
+  private class QuickFix(
+    hyperlinkReference: String,
+    private val delegate: BuildIssueQuickFix
+  ) : BuildIssueQuickFix by delegate {
+
+    override val id: String = hyperlinkReference
   }
 
   private class BuildIssueConfigurator {

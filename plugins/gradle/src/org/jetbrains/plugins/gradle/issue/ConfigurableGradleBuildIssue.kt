@@ -13,20 +13,20 @@ abstract class ConfigurableGradleBuildIssue : ConfigurableBuildIssue() {
 
   fun addGradleVersionQuickFix(projectPath: String, gradleVersion: GradleVersion) {
     val quickFix = GradleVersionQuickFix(projectPath, gradleVersion, true)
-    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.version", quickFix.id, gradleVersion.version))
-    addQuickFix(quickFix)
+    val hyperlinkReference = addQuickFix(quickFix)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.version", hyperlinkReference, gradleVersion.version))
   }
 
   fun addGradleJvmQuickFix(projectPath: String, javaVersion: JavaVersion) {
     // Android Studio doesn't have Gradle JVM setting
     if ("AndroidStudio" == PlatformUtils.getPlatformPrefix()) return
 
-    val gradleSettingsQuickFix = GradleSettingsQuickFix(
+    val quickFix = GradleSettingsQuickFix(
       projectPath, true,
       GradleSettingsQuickFix.GradleJvmChangeDetector,
       GradleBundle.message("gradle.settings.text.jvm.path")
     )
-    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", gradleSettingsQuickFix.id, javaVersion))
-    addQuickFix(gradleSettingsQuickFix)
+    val hyperlinkReference = addQuickFix(quickFix)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm", hyperlinkReference, javaVersion))
   }
 }
