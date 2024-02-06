@@ -2,7 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.nls.NlsMessages.formatNarrowAndList
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
@@ -18,6 +17,7 @@ import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -367,7 +367,7 @@ private class FailuresDescriptionPanel : HtmlPanel() {
   private fun buildDescription(): HtmlChunk {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
-    val failureLinks = formatNarrowAndList(failures.mapNotNull {
+    val failureLinks = failures.mapNotNull {
       when (val failure = it.value) {
         is CommitCheckFailure.WithDetails -> {
           if (failure.viewDetailsLinkText != null) {
@@ -381,9 +381,9 @@ private class FailuresDescriptionPanel : HtmlPanel() {
         is CommitCheckFailure.WithDescription -> HtmlChunk.text(failure.text)
         else -> null
       }
-    })
-    if (failureLinks.isBlank()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
-    return HtmlChunk.raw(failureLinks)
+    }
+    if (failureLinks.isEmpty()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
+    return HtmlBuilder().appendWithSeparators(HtmlChunk.raw("<br/><br/>"), failureLinks).toFragment()
   }
 
   private fun showDetails(event: HyperlinkEvent) {
