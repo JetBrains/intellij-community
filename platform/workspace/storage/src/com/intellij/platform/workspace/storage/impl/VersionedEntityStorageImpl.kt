@@ -5,15 +5,13 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeNanosec
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeNanosec
-import com.intellij.platform.diagnostic.telemetry.helpers.fromNanosecToMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.Nanoseconds
+import com.intellij.platform.diagnostic.telemetry.helpers.NanosecondsMeasurer
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 private class ValuesCache {
@@ -22,7 +20,7 @@ private class ValuesCache {
     Caffeine.newBuilder().build()
 
   fun <R> cachedValue(value: CachedValue<R>, storage: ImmutableEntityStorage): R {
-    val start = System.nanoTime()
+    val start = Nanoseconds.now()
     val o: Any? = cachedValues.getIfPresent(value)
     var valueToReturn: R? = null
 
@@ -30,10 +28,10 @@ private class ValuesCache {
     if (o != null) {
       @Suppress("UNCHECKED_CAST")
       valueToReturn = o as R
-      cachedValueFromCacheNanosec.addElapsedTimeNanosec(start)
+      cachedValueFromCacheNanosec.addElapsedTime(start)
     }
     else {
-      cachedValueCalculatedNanosec.addMeasuredTimeNanosec {
+      cachedValueCalculatedNanosec.addMeasuredTime {
         valueToReturn = value.source(storage)!!
         cachedValues.put(value, valueToReturn)
       }
@@ -43,7 +41,7 @@ private class ValuesCache {
   }
 
   fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: ImmutableEntityStorage): R {
-    val start = System.nanoTime()
+    val start = Nanoseconds.now()
     // recursive update - loading get cannot be used
     val o = cachedValuesWithParameter.getIfPresent(value to parameter)
     var valueToReturn: R? = null
@@ -51,10 +49,10 @@ private class ValuesCache {
     if (o != null) {
       @Suppress("UNCHECKED_CAST")
       valueToReturn = o as R
-      cachedValueWithParametersFromCacheNanosec.addElapsedTimeNanosec(start)
+      cachedValueWithParametersFromCacheNanosec.addElapsedTime(start)
     }
     else {
-      cachedValueWithParametersCalculatedNanosec.addMeasuredTimeNanosec {
+      cachedValueWithParametersCalculatedNanosec.addMeasuredTime {
         valueToReturn = value.source(storage, parameter)!!
         cachedValuesWithParameter.put(value to parameter, valueToReturn)
       }
@@ -64,22 +62,22 @@ private class ValuesCache {
   }
 
   fun <R> clearCachedValue(value: CachedValue<R>) {
-    cachedValueClearNanosec.addMeasuredTimeNanosec { cachedValues.invalidate(value) }
+    cachedValueClearNanosec.addMeasuredTime { cachedValues.invalidate(value) }
   }
 
   fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {
-    cachedValueWithParametersClearNanosec.addMeasuredTimeNanosec { cachedValuesWithParameter.invalidate(value to parameter) }
+    cachedValueWithParametersClearNanosec.addMeasuredTime { cachedValuesWithParameter.invalidate(value to parameter) }
   }
 
   companion object {
-    private val cachedValueFromCacheNanosec: AtomicLong = AtomicLong()
-    private val cachedValueCalculatedNanosec: AtomicLong = AtomicLong()
+    private val cachedValueFromCacheNanosec = NanosecondsMeasurer()
+    private val cachedValueCalculatedNanosec = NanosecondsMeasurer()
 
-    private val cachedValueWithParametersFromCacheNanosec: AtomicLong = AtomicLong()
-    private val cachedValueWithParametersCalculatedNanosec: AtomicLong = AtomicLong()
+    private val cachedValueWithParametersFromCacheNanosec = NanosecondsMeasurer()
+    private val cachedValueWithParametersCalculatedNanosec = NanosecondsMeasurer()
 
-    private val cachedValueClearNanosec: AtomicLong = AtomicLong()
-    private val cachedValueWithParametersClearNanosec: AtomicLong = AtomicLong()
+    private val cachedValueClearNanosec = NanosecondsMeasurer()
+    private val cachedValueWithParametersClearNanosec = NanosecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
       val cachedValueFromCacheCounter = meter.counterBuilder("workspaceModel.cachedValue.from.cache.ms").buildObserver()
@@ -95,18 +93,18 @@ private class ValuesCache {
 
       meter.batchCallback(
         {
-          cachedValueFromCacheCounter.record(cachedValueFromCacheNanosec.fromNanosecToMillis())
-          cachedValueCalculatedCounter.record(cachedValueCalculatedNanosec.fromNanosecToMillis())
-          cachedValueTotalCounter.record(cachedValueFromCacheNanosec.fromNanosecToMillis().plus(cachedValueCalculatedNanosec.fromNanosecToMillis()))
+          cachedValueFromCacheCounter.record(cachedValueFromCacheNanosec.asMilliseconds())
+          cachedValueCalculatedCounter.record(cachedValueCalculatedNanosec.asMilliseconds())
+          cachedValueTotalCounter.record(cachedValueFromCacheNanosec.asMilliseconds().plus(cachedValueCalculatedNanosec.asMilliseconds()))
 
-          cachedValueWithParametersFromCacheCounter.record(cachedValueWithParametersFromCacheNanosec.fromNanosecToMillis())
-          cachedValueWithParametersCalculatedCounter.record(cachedValueWithParametersCalculatedNanosec.fromNanosecToMillis())
+          cachedValueWithParametersFromCacheCounter.record(cachedValueWithParametersFromCacheNanosec.asMilliseconds())
+          cachedValueWithParametersCalculatedCounter.record(cachedValueWithParametersCalculatedNanosec.asMilliseconds())
           cachedValueWithParametersTotalCounter.record(
-            cachedValueWithParametersFromCacheNanosec.fromNanosecToMillis().plus(cachedValueWithParametersCalculatedNanosec.fromNanosecToMillis())
+            cachedValueWithParametersFromCacheNanosec.asMilliseconds().plus(cachedValueWithParametersCalculatedNanosec.asMilliseconds())
           )
 
-          cachedValueClearCounter.record(cachedValueClearNanosec.fromNanosecToMillis())
-          cachedValueWithParametersClearCounter.record(cachedValueWithParametersClearNanosec.fromNanosecToMillis())
+          cachedValueClearCounter.record(cachedValueClearNanosec.asMilliseconds())
+          cachedValueWithParametersClearCounter.record(cachedValueWithParametersClearNanosec.asMilliseconds())
         },
         cachedValueFromCacheCounter, cachedValueCalculatedCounter, cachedValueTotalCounter,
 

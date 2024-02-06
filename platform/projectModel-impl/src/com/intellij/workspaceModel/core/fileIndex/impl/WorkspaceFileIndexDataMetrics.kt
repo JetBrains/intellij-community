@@ -3,23 +3,23 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.fromNanosecToMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.NanosecondsMeasurer
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 
 object WorkspaceFileIndexDataMetrics {
   internal val instancesCounter: AtomicLong = AtomicLong()
-  internal val initTimeNanosec: AtomicLong = AtomicLong()
-  internal val getFileInfoTimeNanosec: AtomicLong = AtomicLong()
-  internal val visitFileSetsTimeNanosec: AtomicLong = AtomicLong()
-  internal val processFileSetsTimeNanosec: AtomicLong = AtomicLong()
-  internal val markDirtyTimeNanosec: AtomicLong = AtomicLong()
-  internal val updateDirtyEntitiesTimeNanosec: AtomicLong = AtomicLong()
-  internal val onEntitiesChangedTimeNanosec: AtomicLong = AtomicLong()
-  internal val getPackageNameTimeNanosec: AtomicLong = AtomicLong()
-  internal val getDirectoriesByPackageNameTimeNanosec: AtomicLong = AtomicLong()
+  internal val initTimeNanosec = NanosecondsMeasurer()
+  internal val getFileInfoTimeNanosec = NanosecondsMeasurer()
+  internal val visitFileSetsTimeNanosec = NanosecondsMeasurer()
+  internal val processFileSetsTimeNanosec = NanosecondsMeasurer()
+  internal val markDirtyTimeNanosec = NanosecondsMeasurer()
+  internal val updateDirtyEntitiesTimeNanosec = NanosecondsMeasurer()
+  internal val onEntitiesChangedTimeNanosec = NanosecondsMeasurer()
+  internal val getPackageNameTimeNanosec = NanosecondsMeasurer()
+  internal val getDirectoriesByPackageNameTimeNanosec = NanosecondsMeasurer()
 
-  internal val registerFileSetsTimeNanosec: AtomicLong = AtomicLong()
+  internal val registerFileSetsTimeNanosec = NanosecondsMeasurer()
 
 
   private fun setupOpenTelemetryReporting(meter: Meter): Unit {
@@ -39,17 +39,17 @@ object WorkspaceFileIndexDataMetrics {
     meter.batchCallback(
       {
         instancesCountCounter.record(instancesCounter.get())
-        initTimeCounter.record(initTimeNanosec.fromNanosecToMillis())
-        getFileInfoTimeCounter.record(getFileInfoTimeNanosec.fromNanosecToMillis())
-        visitFileSetsCounter.record(visitFileSetsTimeNanosec.fromNanosecToMillis())
-        processFileSetsCounter.record(processFileSetsTimeNanosec.fromNanosecToMillis())
-        markDirtyCounter.record(markDirtyTimeNanosec.fromNanosecToMillis())
-        updateDirtyEntitiesCounter.record(updateDirtyEntitiesTimeNanosec.fromNanosecToMillis())
-        onEntitiesChangedCounter.record(onEntitiesChangedTimeNanosec.fromNanosecToMillis())
-        getPackageNameCounter.record(getPackageNameTimeNanosec.fromNanosecToMillis())
-        getDirectoriesByPackageNameCounter.record(getDirectoriesByPackageNameTimeNanosec.fromNanosecToMillis())
+        initTimeCounter.record(initTimeNanosec.asMilliseconds())
+        getFileInfoTimeCounter.record(getFileInfoTimeNanosec.asMilliseconds())
+        visitFileSetsCounter.record(visitFileSetsTimeNanosec.asMilliseconds())
+        processFileSetsCounter.record(processFileSetsTimeNanosec.asMilliseconds())
+        markDirtyCounter.record(markDirtyTimeNanosec.asMilliseconds())
+        updateDirtyEntitiesCounter.record(updateDirtyEntitiesTimeNanosec.asMilliseconds())
+        onEntitiesChangedCounter.record(onEntitiesChangedTimeNanosec.asMilliseconds())
+        getPackageNameCounter.record(getPackageNameTimeNanosec.asMilliseconds())
+        getDirectoriesByPackageNameCounter.record(getDirectoriesByPackageNameTimeNanosec.asMilliseconds())
 
-        registerFileSetsMsCounter.record(registerFileSetsTimeNanosec.fromNanosecToMillis())
+        registerFileSetsMsCounter.record(registerFileSetsTimeNanosec.asMilliseconds())
       },
       instancesCountCounter, initTimeCounter, getFileInfoTimeCounter, visitFileSetsCounter,
       processFileSetsCounter, markDirtyCounter, updateDirtyEntitiesCounter, onEntitiesChangedCounter,
