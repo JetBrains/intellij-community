@@ -12,7 +12,6 @@ import org.jetbrains.jps.dependency.java.SubclassesIndex;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -84,7 +83,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
       final Set<NodeSource> compiledSources = deltaSources instanceof Set? (Set<NodeSource>)deltaSources : collect(deltaSources, new HashSet<>());
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
-      final Set<BiPredicate<Node<?, ?>, Usage>> usageQueries = new HashSet<>();
+      final Set<Predicate<Node<?, ?>>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
 
       @Override
@@ -121,7 +120,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       }
 
       @Override
-      public void affectUsage(Iterable<? extends ReferenceID> affectionScopeNodes, @NotNull BiPredicate<Node<?, ?>, Usage> usageQuery) {
+      public void affectUsage(Iterable<? extends ReferenceID> affectionScopeNodes, @NotNull Predicate<Node<?, ?>> usageQuery) {
         for (Usage u : map(affectionScopeNodes, AffectionScopeMetaUsage::new)) {
           affectUsage(u);
         }
@@ -149,7 +148,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
           }
         }
 
-        if (!usageQueries.isEmpty() && find(node.getUsages(), u -> find(usageQueries, query -> query.test(node, u)) != null) != null) {
+        if (!usageQueries.isEmpty() && find(usageQueries, query -> query.test(node)) != null) {
           return true;
         }
         return false;

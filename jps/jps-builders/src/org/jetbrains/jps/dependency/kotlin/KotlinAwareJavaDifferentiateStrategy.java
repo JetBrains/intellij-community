@@ -11,7 +11,6 @@ import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.*;
-import org.jetbrains.org.objectweb.asm.Type;
 
 import java.util.*;
 
@@ -120,7 +119,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       for (JvmClass depClass : flat(map(context.getGraph().getDependingNodes(changedClass.getReferenceID()), dep -> present.getNodes(dep, JvmClass.class)))) {
         JvmMethod methodWithSAMType = find(depClass.getMethods(), m -> contains(m.getArgTypes(), samType));
         if (methodWithSAMType != null) {
-          affectConflictingExtensionMethods(context, depClass, methodWithSAMType, samType, future);
+          affectConflictingExtensionMethods(context, depClass, methodWithSAMType, future);
         }
       }
     }
@@ -137,7 +136,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   public boolean processAddedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmMethod addedMethod, Utils future, Utils present) {
 
     // any added method may conflict with an extension method to this class, defined elsewhere
-    affectConflictingExtensionMethods(context, change.getPast(), addedMethod, null, future);
+    affectConflictingExtensionMethods(context, change.getPast(), addedMethod, future);
 
     JvmClass changedClass = change.getNow();
     if (!changedClass.isPrivate() && "invoke".equals(addedMethod.getName())) {
@@ -175,49 +174,25 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return true;
   }
 
-  private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, @Nullable TypeRepr.ClassType samType, Utils utils) {
+  private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, Utils utils) {
     if (clsMethod.isPrivate() || clsMethod.isConstructor()) {
       return;
     }
     // the first arg is always the class being extended
-    Set<String> firstArgTypes = collect(
-      map(flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), id -> id.getNodeName()), new HashSet<>()
+    Set<JvmNodeReferenceID> targets = collect(
+      flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), new HashSet<>()
     );
-    firstArgTypes.add(cls.getName());
-    context.affectUsage(map(firstArgTypes, JvmNodeReferenceID::new), (n, u) -> {
-      if (!(u instanceof MethodUsage) || !(n instanceof JvmClass)) {
-        return false;
+    targets.add(cls.getReferenceID());
+    String matchName = clsMethod.getName();
+    context.affectUsage(targets, n -> {
+      KmDeclarationContainer container = getDeclarationContainer(n);
+      if (container == null) {
+        return false; // not a Kotlin-compiled node
       }
-      MethodUsage methodUsage = (MethodUsage)u;
-      JvmClass contextCls = (JvmClass)n;
-      if (firstArgTypes.contains(methodUsage.getElementOwner().getNodeName()) || !Objects.equals(methodUsage.getName(), clsMethod.getName())) {
-        return false;
+      if (find(container.getTypeAliases(), alias -> matchName.equals(alias.getName())) != null) {
+        return true;
       }
-      Type calledMethodType = Type.getType(methodUsage.getDescriptor());
-      if (!Objects.equals(clsMethod.getType(), TypeRepr.getType(calledMethodType.getReturnType()))) {
-        return false;
-      }
-      Iterator<TypeRepr> usageArgTypes = map(Arrays.asList(calledMethodType.getArgumentTypes()), TypeRepr::getType).iterator();
-      if (!usageArgTypes.hasNext()) {
-        return false;
-      }
-      TypeRepr firstUsageArgType = usageArgTypes.next();
-      if (!(firstUsageArgType instanceof TypeRepr.ClassType) || !firstArgTypes.contains(((TypeRepr.ClassType)firstUsageArgType).getJvmName())) {
-        return false;
-      }
-      for (TypeRepr methodArgType : clsMethod.getArgTypes()) {
-        if (!usageArgTypes.hasNext()) {
-          return false;
-        }
-        TypeRepr usageArgType = usageArgTypes.next();
-        if (samType != null && samType.equals(methodArgType) && !(usageArgType instanceof TypeRepr.ClassType)) {
-          return false;
-        }
-      }
-      if (usageArgTypes.hasNext()) {
-        return false;
-      }
-      return utils.isVisibleIn(cls, clsMethod, contextCls);
+      return find(n.getUsages(), u -> u instanceof MethodUsage && !targets.contains(u.getElementOwner()) && Objects.equals(((MethodUsage)u).getName(), matchName)) != null;
     });
   }
 

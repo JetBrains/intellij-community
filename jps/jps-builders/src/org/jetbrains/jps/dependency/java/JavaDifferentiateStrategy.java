@@ -190,13 +190,15 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         if (!removedTargets.isEmpty()) {
           debug("Removed some annotation targets, adding annotation query");
           TypeRepr.ClassType classType = new TypeRepr.ClassType(changedClass.getName());
-          context.affectUsage(asIterable(changedClass.getReferenceID()), (node, usage) -> {
-            if (usage instanceof AnnotationUsage) {
-              AnnotationUsage annotUsage = (AnnotationUsage)usage;
-              if (classType.equals(annotUsage.getClassType())) {
-                for (ElemType target : annotUsage.getTargets()) {
-                  if (removedTargets.contains(target)) {
-                    return true;
+          context.affectUsage(asIterable(changedClass.getReferenceID()), node -> {
+            for (Usage usage : node.getUsages()) {
+              if (usage instanceof AnnotationUsage) {
+                AnnotationUsage annotUsage = (AnnotationUsage)usage;
+                if (classType.equals(annotUsage.getClassType())) {
+                  for (ElemType target : annotUsage.getTargets()) {
+                    if (removedTargets.contains(target)) {
+                      return true;
+                    }
                   }
                 }
               }
@@ -331,11 +333,13 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
           debug("Class is annotation, default value is removed => adding annotation query");
           String argName = changedMethod.getName();
           TypeRepr.ClassType annotType = new TypeRepr.ClassType(changedClass.getName());
-          context.affectUsage(asIterable(changedClass.getReferenceID()), (node, usage) -> {
-            if (usage instanceof AnnotationUsage) {
-              // need to find annotation usages that do not use arguments this annotation uses
-              AnnotationUsage au = (AnnotationUsage)usage;
-              return annotType.equals(au.getClassType()) && isEmpty(filter(au.getUsedArgNames(), argName::equals));
+          context.affectUsage(asIterable(changedClass.getReferenceID()), node -> {
+            for (Usage usage : node.getUsages()) {
+              if (usage instanceof AnnotationUsage) {
+                // need to find annotation usages that do not use arguments this annotation uses
+                AnnotationUsage au = (AnnotationUsage)usage;
+                return annotType.equals(au.getClassType()) && isEmpty(filter(au.getUsedArgNames(), argName::equals));
+              }
             }
             return false;
           });
@@ -690,14 +694,19 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
     }
 
-    context.affectUsage(changedClassWithSubclasses, (n, u) -> {
-      // affect all clients that access fields with the same name via subclasses,
-      // if the added field is not visible to the client
-      if (!(u instanceof FieldUsage) || !(n instanceof JvmClass)) {
-        return false;
+    context.affectUsage(changedClassWithSubclasses, node -> {
+      if (node instanceof JvmClass) {
+        for (Usage usage : node.getUsages()) {
+          // affect all clients that access fields with the same name via subclasses,
+          // if the added field is not visible to the client
+          if (usage instanceof FieldUsage) {
+            if (Objects.equals(((FieldUsage)usage).getName(), addedField.getName()) && changedClassWithSubclasses.contains(usage.getElementOwner())) {
+              return true;
+            }
+          }
+        }
       }
-      FieldUsage fieldUsage = (FieldUsage)u;
-      return Objects.equals(fieldUsage.getName(), addedField.getName()) && changedClassWithSubclasses.contains(fieldUsage.getElementOwner());
+      return false;
     });
     return true;
   }

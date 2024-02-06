@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.util.SmartList;
@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Node;
-import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.impl.RW;
@@ -15,7 +14,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, JvmMethod.Diff> {
   private final Iterable<TypeRepr> myArgTypes;
@@ -64,9 +63,9 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
     return new MethodUsage(owner, getName(), getDescriptor());
   }
 
-  public BiPredicate<Node<?, ?>, Usage> createUsageQuery(JvmNodeReferenceID owner) {
+  public Predicate<Node<?, ?>> createUsageQuery(JvmNodeReferenceID owner) {
     String thisMethodName = getName();
-    return (n,u) -> u instanceof MethodUsage && owner.equals(u.getElementOwner()) && Objects.equals(((MethodUsage)u).getName(), thisMethodName);
+    return n -> Iterators.find(n.getUsages(), u -> u instanceof MethodUsage && owner.equals(u.getElementOwner()) && Objects.equals(((MethodUsage)u).getName(), thisMethodName)) != null;
   }
 
   public Iterable<ParamAnnotation> getParamAnnotations() {
