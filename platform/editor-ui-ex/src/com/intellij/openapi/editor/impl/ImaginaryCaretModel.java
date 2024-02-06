@@ -53,12 +53,12 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public boolean supportsMultipleCarets() {
-    throw notImplemented();
+    return false;
   }
 
   @Override
   public int getMaxCaretCount() {
-    throw notImplemented();
+    return 1;
   }
 
   @Override
@@ -98,7 +98,6 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public void removeSecondaryCarets() {
-    throw notImplemented();
   }
 
   @Override
