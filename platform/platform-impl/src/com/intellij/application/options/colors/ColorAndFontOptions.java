@@ -562,6 +562,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
    }
 
   private void initAll() {
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+
     mySchemes = new HashMap<>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
       MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
@@ -576,7 +578,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     if (schemeToSelect == null) {
-      schemeToSelect = EditorColorsManager.getInstance().getGlobalScheme();
+      schemeToSelect = globalScheme;
 
       if (EditorColorsManagerImpl.Companion.isTempScheme(schemeToSelect)) {
         MyColorScheme schemeDelegate = new MyTempColorScheme((AbstractColorsScheme)schemeToSelect);
