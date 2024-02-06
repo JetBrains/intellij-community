@@ -115,6 +115,7 @@
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="00000080"/>
       <option name="Scrollbar.Tabs.TransparentThumbColor" value="ABABAB00"/>
       <option name="Scrollbar.Tabs.ThumbColor" value="ABABABFF"/>
+      <option name="Scrollbar.Tabs.HoveredThumbColor" value="7F7F7FFF"/>
       <option name="ActionButton.hoverBackground" value="dfdfdf"/>
       <option name="ActionButton.pressedBackground" value="cfcfcf"/>
       <option name="ActionButton.iconTextForeground" value="6e6e6e"/>
@@ -1555,6 +1556,7 @@
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="2626268C"/>
       <option name="Scrollbar.Tabs.TransparentThumbColor" value="44434300"/>
       <option name="Scrollbar.Tabs.ThumbColor" value="444343FF"/>
+      <option name="Scrollbar.Tabs.HoveredThumbColor" value="555453FF"/>
       <option name="ActionButton.hoverBackground" value="4c5052"/>
       <option name="ActionButton.pressedBackground" value="5c6164"/>
       <option name="ActionButton.iconTextForeground" value="bbbbbb"/>

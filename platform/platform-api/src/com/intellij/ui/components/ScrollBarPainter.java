@@ -117,6 +117,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
 
   public static final ColorKey TABS_TRANSPARENT_THUMB_BACKGROUND = key(0x00ABABAB, 0x00434344, "Scrollbar.Tabs.TransparentThumbColor");
   public static final ColorKey TABS_THUMB_BACKGROUND = key(0xFFABABAB, 0xFF434344, "Scrollbar.Tabs.ThumbColor");
+  public static final ColorKey TABS_THUMB_HOVERED_BACKGROUND = key(0xFF7F7F7F, 0xFF535455, "Scrollbar.Tabs.HoveredThumbColor");
   private static final List<ColorKey> CONTRAST_ELEMENTS_KEYS = Arrays.asList(
     THUMB_OPAQUE_FOREGROUND,
     THUMB_OPAQUE_BACKGROUND,
