@@ -53,7 +53,10 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -75,6 +78,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -169,9 +173,9 @@ public final class BuildManager implements Disposable {
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager(this);
-  private final Executor myRequestsProcessor;
+  private final CoroutineDispatcherBackedExecutor myRequestsProcessor;
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
-  private final Executor myAutomakeTrigger;
+  private final CoroutineDispatcherBackedExecutor myAutomakeTrigger;
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
 
@@ -311,7 +315,7 @@ public final class BuildManager implements Disposable {
           synchronized (myUnprocessedEvents) {
             myUnprocessedEvents.addAll(events);
           }
-          myAutomakeTrigger.execute(() -> {
+          myAutomakeTrigger.schedule(() -> {
             if (!application.isDisposed()) {
               ReadAction.run(()-> {
                 if (application.isDisposed()) {
@@ -509,7 +513,7 @@ public final class BuildManager implements Disposable {
   }
 
   public void runCommand(@NotNull Runnable command) {
-    myRequestsProcessor.execute(command);
+    myRequestsProcessor.schedule(command);
   }
 
   private void doNotify(final Supplier<Collection<? extends File>> pathsProvider, final boolean notifyDeletion) {

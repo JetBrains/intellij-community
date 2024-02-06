@@ -7,13 +7,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.namedChildScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
@@ -26,18 +24,21 @@ fun executeOnPooledIoThread(task: Runnable) {
 }
 
 @Internal
-fun createSingleTaskApplicationPoolExecutor(name: String, coroutineScope: CoroutineScope): Executor {
-  return CoroutineDispatcherBackedExecutor(coroutineScope, context = Dispatchers.IO.limitedParallelism(1) + CoroutineName(name))
+fun createSingleTaskApplicationPoolExecutor(name: String, coroutineScope: CoroutineScope): CoroutineDispatcherBackedExecutor {
+  return CoroutineDispatcherBackedExecutor(coroutineScope, name)
 }
 
+// TODO expose interface if ever goes public
 @Internal
-class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, private val context: CoroutineContext) : Executor {
-  private val childScope = coroutineScope.childScope()
+@OptIn(ExperimentalCoroutinesApi::class)
+class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: String) {
+
+  private val childScope = coroutineScope.namedChildScope(name, Dispatchers.IO.limitedParallelism(parallelism = 1))
 
   fun isEmpty(): Boolean = childScope.coroutineContext.job.children.none()
 
-  override fun execute(it: Runnable) {
-    childScope.launch(context) {
+  fun schedule(it: Runnable) {
+    childScope.launch {
       // `blockingContext` is not used by intention - low-level tasks are expected in such executors
       try {
         it.run()
