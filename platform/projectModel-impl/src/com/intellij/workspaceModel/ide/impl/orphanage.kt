@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.*
@@ -106,19 +107,19 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
         }
       }
     }
-    updateOrphanTimeMs.addAndGet(updateTime)
+    updateOrphanTimeMs.duration.addAndGet(updateTime)
     if (updateTime > 1_000) log.warn("Orphanage update took $updateTime ms")
   }
 
   companion object {
     private val log = logger<OrphanListener>()
 
-    private val updateOrphanTimeMs: AtomicLong = AtomicLong()
+    private val updateOrphanTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val updateOrphanTimeCounter = meter.counterBuilder("workspaceModel.orphan.listener.update.ms").buildObserver()
 
-      meter.batchCallback({ updateOrphanTimeCounter.record(updateOrphanTimeMs.get()) }, updateOrphanTimeCounter)
+      meter.batchCallback({ updateOrphanTimeCounter.record(updateOrphanTimeMs.asMilliseconds()) }, updateOrphanTimeCounter)
     }
 
     init {

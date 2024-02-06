@@ -33,8 +33,8 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.WorkspaceModelUnloadedStorageChangeListener
 import com.intellij.platform.backend.workspace.impl.internal
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
@@ -56,7 +56,6 @@ import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -69,10 +68,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     private val LOG = logger<JpsProjectModelSynchronizer>()
 
-    private val jpsLoadProjectToEmptyStorageTimeMs: AtomicLong = AtomicLong()
-    private val reloadProjectEntitiesTimeMs: AtomicLong = AtomicLong()
-    private val applyLoadedStorageTimeMs: AtomicLong = AtomicLong()
-    private val saveChangedProjectEntitiesTimeMs: AtomicLong = AtomicLong()
+    private val jpsLoadProjectToEmptyStorageTimeMs = MillisecondsMeasurer()
+    private val reloadProjectEntitiesTimeMs = MillisecondsMeasurer()
+    private val applyLoadedStorageTimeMs = MillisecondsMeasurer()
+    private val saveChangedProjectEntitiesTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val jpsLoadProjectToEmptyStorageTimeCounter = meter.counterBuilder("jps.load.project.to.empty.storage.ms").buildObserver()
@@ -82,10 +81,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
       meter.batchCallback(
         {
-          jpsLoadProjectToEmptyStorageTimeCounter.record(jpsLoadProjectToEmptyStorageTimeMs.get())
-          reloadProjectEntitiesTimeCounter.record(reloadProjectEntitiesTimeMs.get())
-          applyLoadedStorageTimeCounter.record(applyLoadedStorageTimeMs.get())
-          saveChangedProjectEntitiesTimeCounter.record(saveChangedProjectEntitiesTimeMs.get())
+          jpsLoadProjectToEmptyStorageTimeCounter.record(jpsLoadProjectToEmptyStorageTimeMs.asMilliseconds())
+          reloadProjectEntitiesTimeCounter.record(reloadProjectEntitiesTimeMs.asMilliseconds())
+          applyLoadedStorageTimeCounter.record(applyLoadedStorageTimeMs.asMilliseconds())
+          saveChangedProjectEntitiesTimeCounter.record(saveChangedProjectEntitiesTimeMs.asMilliseconds())
         },
         jpsLoadProjectToEmptyStorageTimeCounter, reloadProjectEntitiesTimeCounter,
         applyLoadedStorageTimeCounter, saveChangedProjectEntitiesTimeCounter
@@ -116,22 +115,22 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  suspend fun reloadProjectEntities() = reloadProjectEntitiesTimeMs.addMeasuredTimeMillis {
+  suspend fun reloadProjectEntities() = reloadProjectEntitiesTimeMs.addMeasuredTime {
     if (StoreReloadManager.getInstance(project).isReloadBlocked()) {
       LOG.debug("Skip reloading because it's blocked")
-      return@addMeasuredTimeMillis
+      return@addMeasuredTime
     }
 
     val serializers = serializers.get()
     if (serializers == null) {
       LOG.debug("Skip reloading because initial loading wasn't performed yet")
-      return@addMeasuredTimeMillis
+      return@addMeasuredTime
     }
 
     val changes = getAndResetIncomingChanges()
     if (changes == null) {
       LOG.debug("Skip reloading because there are no changed files")
-      return@addMeasuredTimeMillis
+      return@addMeasuredTime
     }
 
     LOG.debug { "Reload entities from changed files:\n$changes" }
@@ -148,7 +147,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         !(reloadingResult.builder as MutableEntityStorageInstrumentation).hasChanges() &&
         !(reloadingResult.unloadedEntityBuilder as MutableEntityStorageInstrumentation).hasChanges() &&
         !(reloadingResult.orphanageBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
-      return@addMeasuredTimeMillis
+      return@addMeasuredTime
     }
 
     writeAction {
@@ -275,7 +274,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   suspend fun loadProjectToEmptyStorage(project: Project): LoadedProjectEntities? {
-    val start = System.currentTimeMillis()
+    val start = Milliseconds.now()
 
     val configLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
@@ -311,22 +310,23 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       null
     }
 
-    jpsLoadProjectToEmptyStorageTimeMs.addElapsedTimeMillis(start)
-    WorkspaceModelFusLogger.logLoadingJpsFromIml(System.currentTimeMillis() - start)
+    jpsLoadProjectToEmptyStorageTimeMs.addElapsedTime(start)
+    WorkspaceModelFusLogger.logLoadingJpsFromIml(Milliseconds.now().minus(start).value)
     return loadedProjectEntities
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?) = applyLoadedStorageTimeMs.addMeasuredTimeMillis {
+  suspend fun applyLoadedStorage(projectEntities: LoadedProjectEntities?) = applyLoadedStorageTimeMs.addMeasuredTime {
     if (projectEntities == null) {
-      return@addMeasuredTimeMillis
+      return@addMeasuredTime
     }
 
     writeAction {
       // add logs
       childActivity = childActivity?.endAndStart("applying loaded changes")
       val description = "Apply JPS storage (iml files)"
-      val sourceFilter = { entitySource: EntitySource -> entitySource is JpsFileEntitySource // covers all global SDK and libraries
+      val sourceFilter = { entitySource: EntitySource ->
+        entitySource is JpsFileEntitySource // covers all global SDK and libraries
         || entitySource is JpsFileDependentEntitySource
         || entitySource is CustomModuleEntitySource || entitySource is DummyParentEntitySource // covers CIDR related entities
         || entitySource is LegacyCustomLibraryEntitySource // covers custom libraries
@@ -402,12 +402,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     return createProjectSerializers(configLocation, externalStoragePath, context)
   }
 
-  fun saveChangedProjectEntities(writer: JpsFileContentWriter) = saveChangedProjectEntitiesTimeMs.addMeasuredTimeMillis {
+  fun saveChangedProjectEntities(writer: JpsFileContentWriter) = saveChangedProjectEntitiesTimeMs.addMeasuredTime {
     LOG.debug("Saving project entities")
     val data = serializers.get()
     if (data == null) {
       LOG.debug("Skipping save because initial loading wasn't performed")
-      return@addMeasuredTimeMillis
+      return@addMeasuredTime
     }
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities

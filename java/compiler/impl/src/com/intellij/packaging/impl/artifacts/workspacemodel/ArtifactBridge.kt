@@ -21,7 +21,7 @@ import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
@@ -30,7 +30,6 @@ import com.intellij.workspaceModel.ide.toExternalSource
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
-import java.util.concurrent.atomic.AtomicLong
 
 open class ArtifactBridge(
   _artifactId: ArtifactId,
@@ -42,7 +41,7 @@ open class ArtifactBridge(
 
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-      override fun beforeChanged(event: VersionedStorageChange) = beforeChangedMs.addMeasuredTimeMillis {
+      override fun beforeChanged(event: VersionedStorageChange) = beforeChangedMs.addMeasuredTime {
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
           if (it.entity.symbolicId != artifactId) return@forEach
 
@@ -286,7 +285,7 @@ open class ArtifactBridge(
       previousProperties.forEach { builder.removeEntity(it) }
     }
 
-    private val beforeChangedMs: AtomicLong = AtomicLong()
+    private val beforeChangedMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
       val beforeChangedGauge = meter.gaugeBuilder("compiler.ArtifactBridge.beforeChanged.ms")
@@ -294,7 +293,7 @@ open class ArtifactBridge(
 
       meter.batchCallback(
         {
-          beforeChangedGauge.record(beforeChangedMs.get())
+          beforeChangedGauge.record(beforeChangedMs.asMilliseconds())
         },
         beforeChangedGauge,
       )

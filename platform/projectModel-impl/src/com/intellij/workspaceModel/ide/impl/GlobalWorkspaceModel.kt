@@ -13,7 +13,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.*
@@ -133,7 +133,7 @@ class GlobalWorkspaceModel : Disposable {
       entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
     }.apply {
       updatesCounter.incrementAndGet()
-      totalUpdatesTimeMs.addAndGet(this)
+      totalUpdatesTimeMs.duration.addAndGet(this)
     }
 
     LOG.info("Global model updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
@@ -196,11 +196,11 @@ class GlobalWorkspaceModel : Disposable {
   }
 
   @RequiresWriteLock
-  fun applyStateToProject(targetProject: Project) = applyStateToProjectTimeMs.addMeasuredTimeMillis {
+  fun applyStateToProject(targetProject: Project) = applyStateToProjectTimeMs.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
 
     if (targetProject === filteredProject) {
-      return@addMeasuredTimeMillis
+      return@addMeasuredTime
     }
 
     val workspaceModel = WorkspaceModel.getInstance(targetProject)
@@ -212,7 +212,7 @@ class GlobalWorkspaceModel : Disposable {
   }
 
   fun applyStateToProjectBuilder(project: Project,
-                                 targetBuilder: MutableEntityStorage) = applyStateToProjectBuilderTimeMs.addMeasuredTimeMillis {
+                                 targetBuilder: MutableEntityStorage) = applyStateToProjectBuilderTimeMs.addMeasuredTime {
     LOG.info("Sync global entities with mutable entity storage")
     targetBuilder.replaceBySource(globalEntitiesFilter,
                                   copyEntitiesToEmptyStorage(entityStorage.current,
@@ -220,7 +220,7 @@ class GlobalWorkspaceModel : Disposable {
   }
 
   @RequiresWriteLock
-  fun syncEntitiesWithProject(sourceProject: Project) = syncEntitiesWithProjectTimeMs.addMeasuredTimeMillis {
+  fun syncEntitiesWithProject(sourceProject: Project) = syncEntitiesWithProjectTimeMs.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
 
     filteredProject = sourceProject
@@ -317,10 +317,10 @@ class GlobalWorkspaceModel : Disposable {
     fun getInstance(): GlobalWorkspaceModel = ApplicationManager.getApplication().service()
 
     private val updatesCounter: AtomicLong = AtomicLong()
-    private val totalUpdatesTimeMs: AtomicLong = AtomicLong()
-    private val applyStateToProjectTimeMs: AtomicLong = AtomicLong()
-    private val applyStateToProjectBuilderTimeMs: AtomicLong = AtomicLong()
-    private val syncEntitiesWithProjectTimeMs: AtomicLong = AtomicLong()
+    private val totalUpdatesTimeMs = MillisecondsMeasurer()
+    private val applyStateToProjectTimeMs = MillisecondsMeasurer()
+    private val applyStateToProjectBuilderTimeMs = MillisecondsMeasurer()
+    private val syncEntitiesWithProjectTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
       val updateTimesCounter = meter.counterBuilder("workspaceModel.global.updates.count").buildObserver()
@@ -332,10 +332,10 @@ class GlobalWorkspaceModel : Disposable {
       meter.batchCallback(
         {
           updateTimesCounter.record(updatesCounter.get())
-          totalUpdatesTimeCounter.record(totalUpdatesTimeMs.get())
-          applyStateToProjectTimeCounter.record(applyStateToProjectTimeMs.get())
-          applyStateToProjectBuilderTimeCounter.record(applyStateToProjectBuilderTimeMs.get())
-          syncEntitiesWithProjectTimeCounter.record(syncEntitiesWithProjectTimeMs.get())
+          totalUpdatesTimeCounter.record(totalUpdatesTimeMs.asMilliseconds())
+          applyStateToProjectTimeCounter.record(applyStateToProjectTimeMs.asMilliseconds())
+          applyStateToProjectBuilderTimeCounter.record(applyStateToProjectBuilderTimeMs.asMilliseconds())
+          syncEntitiesWithProjectTimeCounter.record(syncEntitiesWithProjectTimeMs.asMilliseconds())
         },
         updateTimesCounter, totalUpdatesTimeCounter, applyStateToProjectTimeCounter,
         applyStateToProjectBuilderTimeCounter, syncEntitiesWithProjectTimeCounter

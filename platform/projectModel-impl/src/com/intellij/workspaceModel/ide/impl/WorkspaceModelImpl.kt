@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
@@ -78,7 +78,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   init {
     log.debug { "Loading workspace model" }
-    val start = System.currentTimeMillis()
+    val start = Milliseconds.now()
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)?.apply { setVirtualFileUrlManager(virtualFileManager) }
@@ -89,7 +89,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       }
       cache != null -> {
         val activity = StartUpMeasurer.startActivity("cache loading")
-        val cacheLoadingStart = System.currentTimeMillis()
+        val cacheLoadingStart = Milliseconds.now()
 
         val previousStorage: MutableEntityStorage?
         val previousStorageForUnloaded: ImmutableEntityStorage
@@ -107,7 +107,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
           previousStorage
         }
 
-        loadingFromCacheTimeMs.addElapsedTimeMillis(cacheLoadingStart)
+        loadingFromCacheTimeMs.addElapsedTime(cacheLoadingStart)
         activity.end()
         storage to previousStorageForUnloaded
       }
@@ -120,7 +120,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     entityStorage = VersionedEntityStorageImpl(projectEntities.toSnapshot())
     unloadedEntitiesStorage = VersionedEntityStorageImpl(unloadedEntities)
     entityTracer.subscribe(project, cs)
-    loadingTotalTimeMs.addElapsedTimeMillis(start)
+    loadingTotalTimeMs.addElapsedTime(start)
   }
 
   override val currentSnapshotOfUnloadedEntities: ImmutableEntityStorage
@@ -178,12 +178,12 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       }
       entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
     }.apply {
-      updateTimePreciseMs.addAndGet(updateTimeMillis)
-      preHandlersTimeMs.addAndGet(preHandlersTimeMillis)
-      collectChangesTimeMs.addAndGet(collectChangesTimeMillis)
-      initializingTimeMs.addAndGet(initializingTimeMillis)
-      toSnapshotTimeMs.addAndGet(toSnapshotTimeMillis)
-      totalUpdatesTimeMs.addAndGet(this)
+      updateTimePreciseMs.duration.addAndGet(updateTimeMillis)
+      preHandlersTimeMs.duration.addAndGet(preHandlersTimeMillis)
+      collectChangesTimeMs.duration.addAndGet(collectChangesTimeMillis)
+      initializingTimeMs.duration.addAndGet(initializingTimeMillis)
+      toSnapshotTimeMs.duration.addAndGet(toSnapshotTimeMillis)
+      totalUpdatesTimeMs.duration.addAndGet(this)
       updatesCounter.incrementAndGet()
     }
     log.info("Project model updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
@@ -245,9 +245,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       }
       entityStorage.replace(newStorage, changes, {}, {})
     }.apply {
-      updateTimePreciseMs.addAndGet(updateTimeMillis)
-      toSnapshotTimeMs.addAndGet(toSnapshotTimeMillis)
-      totalUpdatesTimeMs.addAndGet(this)
+      updateTimePreciseMs.duration.addAndGet(updateTimeMillis)
+      toSnapshotTimeMs.duration.addAndGet(toSnapshotTimeMillis)
+      totalUpdatesTimeMs.duration.addAndGet(this)
       updatesCounter.incrementAndGet()
     }
 
@@ -263,7 +263,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   /**
    * Things that must be considered if you'd love to change this logic: IDEA-342103
    */
-  private fun checkRecursiveUpdate() = checkRecursiveUpdateTimeMs.addMeasuredTimeMillis {
+  private fun checkRecursiveUpdate() = checkRecursiveUpdateTimeMs.addMeasuredTime {
     val stackStraceIterator = RuntimeException().stackTrace.iterator()
     // Skip two methods of the current update
     repeat(2) { stackStraceIterator.next() }
@@ -275,7 +275,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       }
       else if (frame.methodName == onChangedMethodName && frame.className == WorkspaceModelImpl::class.qualifiedName) {
         // It's fine to update the project method in "after update" listeners
-        return@addMeasuredTimeMillis
+        return@addMeasuredTime
       }
     }
   }
@@ -334,7 +334,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       val changes = builder.collectChanges()
       val newStorage = builder.toSnapshot()
       unloadedEntitiesStorage.replace(newStorage, changes, {}, ::onUnloadedEntitiesChanged)
-    }.apply { updateUnloadedEntitiesTimeMs.addAndGet(this) }
+    }.apply { updateUnloadedEntitiesTimeMs.duration.addAndGet(this) }
 
     log.info("Unloaded entity storage updated in $time ms: $description")
   }
@@ -350,7 +350,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
     if (entityStorage.version != replacement.version) return false
 
-    replaceProjectModelTimeMs.addMeasuredTimeMillis {
+    replaceProjectModelTimeMs.addMeasuredTime {
       val builder = replacement.builder
       this.initializeBridges(replacement.changes, builder)
       entityStorage.replace(builder.toSnapshot(), replacement.changes, this::onBeforeChanged, this::onChanged)
@@ -365,7 +365,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
 
-    initializeBridgesTimeMs.addMeasuredTimeMillis {
+    initializeBridgesTimeMs.addMeasuredTime {
       BridgeInitializer.EP_NAME.extensionList.forEach { bridgeInitializer ->
         logErrorOnEventHandling {
           if (bridgeInitializer.isEnabled()) {
@@ -461,21 +461,21 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       "com.intellij.workspaceModel.preUpdateHandler")
     private const val PRE_UPDATE_LOOP_BLOCK = 100
 
-    private val loadingTotalTimeMs: AtomicLong = AtomicLong()
-    private val loadingFromCacheTimeMs: AtomicLong = AtomicLong()
+    private val loadingTotalTimeMs = MillisecondsMeasurer()
+    private val loadingFromCacheTimeMs = MillisecondsMeasurer()
     private val updatesCounter: AtomicLong = AtomicLong()
 
-    private val updateTimePreciseMs: AtomicLong = AtomicLong()
-    private val preHandlersTimeMs: AtomicLong = AtomicLong()
-    private val collectChangesTimeMs: AtomicLong = AtomicLong()
-    private val initializingTimeMs: AtomicLong = AtomicLong()
-    private val toSnapshotTimeMs: AtomicLong = AtomicLong()
-    private val totalUpdatesTimeMs: AtomicLong = AtomicLong()
+    private val updateTimePreciseMs = MillisecondsMeasurer()
+    private val preHandlersTimeMs = MillisecondsMeasurer()
+    private val collectChangesTimeMs = MillisecondsMeasurer()
+    private val initializingTimeMs = MillisecondsMeasurer()
+    private val toSnapshotTimeMs = MillisecondsMeasurer()
+    private val totalUpdatesTimeMs = MillisecondsMeasurer()
 
-    private val checkRecursiveUpdateTimeMs: AtomicLong = AtomicLong()
-    private val updateUnloadedEntitiesTimeMs: AtomicLong = AtomicLong()
-    private val replaceProjectModelTimeMs: AtomicLong = AtomicLong()
-    private val initializeBridgesTimeMs: AtomicLong = AtomicLong()
+    private val checkRecursiveUpdateTimeMs = MillisecondsMeasurer()
+    private val updateUnloadedEntitiesTimeMs = MillisecondsMeasurer()
+    private val replaceProjectModelTimeMs = MillisecondsMeasurer()
+    private val initializeBridgesTimeMs = MillisecondsMeasurer()
 
     /**
      * This setup is in static part because meters will not be collected if the same instrument (gauge, counter ...) are registered more than once.
@@ -499,21 +499,21 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
       meter.batchCallback(
         {
-          loadingTotalCounter.record(loadingTotalTimeMs.get())
-          loadingFromCacheCounter.record(loadingFromCacheTimeMs.get())
+          loadingTotalCounter.record(loadingTotalTimeMs.asMilliseconds())
+          loadingFromCacheCounter.record(loadingFromCacheTimeMs.asMilliseconds())
           updatesTimesCounter.record(updatesCounter.get())
 
-          updateTimePreciseCounter.record(updateTimePreciseMs.get())
-          preHandlersTimeCounter.record(preHandlersTimeMs.get())
-          collectChangesTimeCounter.record(collectChangesTimeMs.get())
-          initializingTimeCounter.record(initializingTimeMs.get())
-          toSnapshotTimeCounter.record(toSnapshotTimeMs.get())
-          totalUpdatesTimeCounter.record(totalUpdatesTimeMs.get())
+          updateTimePreciseCounter.record(updateTimePreciseMs.asMilliseconds())
+          preHandlersTimeCounter.record(preHandlersTimeMs.asMilliseconds())
+          collectChangesTimeCounter.record(collectChangesTimeMs.asMilliseconds())
+          initializingTimeCounter.record(initializingTimeMs.asMilliseconds())
+          toSnapshotTimeCounter.record(toSnapshotTimeMs.asMilliseconds())
+          totalUpdatesTimeCounter.record(totalUpdatesTimeMs.asMilliseconds())
 
-          checkRecursiveUpdateTimeCounter.record(checkRecursiveUpdateTimeMs.get())
-          updateUnloadedEntitiesTimeCounter.record(updateUnloadedEntitiesTimeMs.get())
-          replaceProjectModelTimeCounter.record(replaceProjectModelTimeMs.get())
-          initializeBridgesTimeCounter.record(initializeBridgesTimeMs.get())
+          checkRecursiveUpdateTimeCounter.record(checkRecursiveUpdateTimeMs.asMilliseconds())
+          updateUnloadedEntitiesTimeCounter.record(updateUnloadedEntitiesTimeMs.asMilliseconds())
+          replaceProjectModelTimeCounter.record(replaceProjectModelTimeMs.asMilliseconds())
+          initializeBridgesTimeCounter.record(initializeBridgesTimeMs.asMilliseconds())
         },
         loadingTotalCounter, loadingFromCacheCounter, updatesTimesCounter,
         updateTimePreciseCounter, preHandlersTimeCounter, collectChangesTimeCounter,

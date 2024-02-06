@@ -11,7 +11,8 @@ import com.esotericsoftware.kryo.kryo5.objenesis.strategy.StdInstantiatorStrateg
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
@@ -31,7 +32,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 
 private val LOG = logger<EntityStorageSerializerImpl>()
@@ -45,13 +45,13 @@ public class EntityStorageSerializerImpl(
   public companion object {
     public const val STORAGE_SERIALIZATION_VERSION: String = "version6"
 
-    private val loadCacheMetadataFromFileTimeMs: AtomicLong = AtomicLong()
+    private val loadCacheMetadataFromFileTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadCacheMetadataFromFileTimeCounter = meter.counterBuilder("workspaceModel.load.cache.metadata.from.file.ms").buildObserver()
 
       meter.batchCallback(
-        { loadCacheMetadataFromFileTimeCounter.record(loadCacheMetadataFromFileTimeMs.get()) },
+        { loadCacheMetadataFromFileTimeCounter.record(loadCacheMetadataFromFileTimeMs.asMilliseconds()) },
         loadCacheMetadataFromFileTimeCounter
       )
     }
@@ -146,7 +146,7 @@ public class EntityStorageSerializerImpl(
         val cacheIjBuildVersion = input.readString()
 
         var time = System.nanoTime()
-        val metadataDeserializationStartTimeMs = System.currentTimeMillis()
+        val metadataDeserializationStartTimeMs = Milliseconds.now()
 
         val (comparisonResult, cacheMetadata) = compareCacheMetadata(kryo, input)
         if (!comparisonResult.areEquals) {
@@ -154,7 +154,7 @@ public class EntityStorageSerializerImpl(
           return Result.success(null)
         }
 
-        loadCacheMetadataFromFileTimeMs.addElapsedTimeMillis(metadataDeserializationStartTimeMs)
+        loadCacheMetadataFromFileTimeMs.addElapsedTime(metadataDeserializationStartTimeMs)
 
         time = logAndResetTime(time) { measuredTime -> "Read cache metadata and compare it with the existing metadata: $measuredTime ns" }
 

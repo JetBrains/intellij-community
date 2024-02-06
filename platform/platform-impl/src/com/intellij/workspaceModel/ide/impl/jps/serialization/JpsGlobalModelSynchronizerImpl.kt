@@ -6,7 +6,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
@@ -23,7 +23,6 @@ import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -56,7 +55,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
   override fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
-                                loadedFromCache: Boolean): () -> Unit = jpsLoadInitialStateMs.addMeasuredTimeMillis {
+                                loadedFromCache: Boolean): () -> Unit = jpsLoadInitialStateMs.addMeasuredTime {
     val callback = if (loadedFromCache) {
       val callback = bridgesInitializationCallback(mutableStorage, initialEntityStorage)
       coroutineScope.launch {
@@ -69,14 +68,14 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       loadGlobalEntitiesToEmptyStorage(mutableStorage, initialEntityStorage, initializeBridges = true)
     }
 
-    return@addMeasuredTimeMillis callback
+    return@addMeasuredTime callback
   }
 
   override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
     virtualFileUrlManager = vfuManager
   }
 
-  suspend fun saveGlobalEntities() = jpsSaveGlobalEntitiesMs.addMeasuredTimeMillis {
+  suspend fun saveGlobalEntities() = jpsSaveGlobalEntitiesMs.addMeasuredTime {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     setVirtualFileUrlManager(globalWorkspaceModel.getVirtualFileUrlManager())
     val entityStorage = globalWorkspaceModel.entityStorage.current
@@ -212,8 +211,8 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       }
     }
 
-    private val jpsLoadInitialStateMs: AtomicLong = AtomicLong()
-    private val jpsSaveGlobalEntitiesMs: AtomicLong = AtomicLong()
+    private val jpsLoadInitialStateMs = MillisecondsMeasurer()
+    private val jpsSaveGlobalEntitiesMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
       val jpsLoadInitialStateCounter = meter.counterBuilder("jps.load.initial.state.ms").buildObserver()
@@ -221,8 +220,8 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
 
       meter.batchCallback(
         {
-          jpsLoadInitialStateCounter.record(jpsLoadInitialStateMs.get())
-          jpsSaveGlobalEntitiesCounter.record(jpsSaveGlobalEntitiesMs.get())
+          jpsLoadInitialStateCounter.record(jpsLoadInitialStateMs.asMilliseconds())
+          jpsSaveGlobalEntitiesCounter.record(jpsSaveGlobalEntitiesMs.asMilliseconds())
         },
         jpsLoadInitialStateCounter, jpsSaveGlobalEntitiesCounter
       )

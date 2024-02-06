@@ -4,7 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.util.PathUtil
@@ -13,10 +13,9 @@ import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicLong
 
 internal class AppStorageContentReader : JpsFileContentReader {
-  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? = loadComponentTimeMs.addMeasuredTimeMillis {
+  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? = loadComponentTimeMs.addMeasuredTime {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     val element: Element? = if (isApplicationLevelFile(filePath)) {
       val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
@@ -28,7 +27,7 @@ internal class AppStorageContentReader : JpsFileContentReader {
     else {
       null
     }
-    return@addMeasuredTimeMillis element
+    return@addMeasuredTime element
   }
 
   override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap =
@@ -38,11 +37,11 @@ internal class AppStorageContentReader : JpsFileContentReader {
     Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
 
   companion object {
-    private val loadComponentTimeMs: AtomicLong = AtomicLong()
+    private val loadComponentTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadComponentTimeCounter = meter.counterBuilder("jps.app.storage.content.reader.load.component.ms").buildObserver()
-      meter.batchCallback({ loadComponentTimeCounter.record(loadComponentTimeMs.get()) }, loadComponentTimeCounter)
+      meter.batchCallback({ loadComponentTimeCounter.record(loadComponentTimeMs.asMilliseconds()) }, loadComponentTimeCounter)
     }
 
     init {
@@ -52,7 +51,7 @@ internal class AppStorageContentReader : JpsFileContentReader {
 }
 
 internal class AppStorageContentWriter(private val session: SaveSessionProducerManager) : JpsAppFileContentWriter {
-  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?): Unit = saveComponentTimeMs.addMeasuredTimeMillis {
+  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?): Unit = saveComponentTimeMs.addMeasuredTime {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (isApplicationLevelFile(filePath)) {
       val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
@@ -73,11 +72,11 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
     Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
 
   companion object {
-    private val saveComponentTimeMs: AtomicLong = AtomicLong()
+    private val saveComponentTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val saveComponentTimeCounter = meter.counterBuilder("jps.app.storage.content.writer.save.component.ms").buildObserver()
-      meter.batchCallback({ saveComponentTimeCounter.record(saveComponentTimeMs.get()) }, saveComponentTimeCounter)
+      meter.batchCallback({ saveComponentTimeCounter.record(saveComponentTimeMs.asMilliseconds()) }, saveComponentTimeCounter)
     }
 
     init {

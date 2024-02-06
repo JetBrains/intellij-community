@@ -15,7 +15,8 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOAD
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.internal
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -32,19 +33,18 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootMana
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicLong
 
 private val LOG: Logger
   get() = logger<ModuleBridgeLoaderService>()
 
-private val moduleLoadingTimeMs = AtomicLong().also { setupOpenTelemetryReporting(jpsMetrics.meter) }
+private val moduleLoadingTimeMs = MillisecondsMeasurer().also { setupOpenTelemetryReporting(jpsMetrics.meter) }
 
 private fun setupOpenTelemetryReporting(meter: Meter) {
   val modulesLoadingTimeCounter = meter.counterBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms").buildObserver()
 
   meter.batchCallback(
     {
-      modulesLoadingTimeCounter.record(moduleLoadingTimeMs.get())
+      modulesLoadingTimeCounter.record(moduleLoadingTimeMs.asMilliseconds())
     },
     modulesLoadingTimeCounter
   )
@@ -58,7 +58,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
       launch { project.serviceAsync<ProjectRootManager>() }
 
-      val start = System.currentTimeMillis()
+      val start = Milliseconds.now()
 
       if (workspaceModel.loadedFromCache) {
         span("modules loading with cache") {
@@ -116,7 +116,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         }
       }
 
-      moduleLoadingTimeMs.addElapsedTimeMillis(start)
+      moduleLoadingTimeMs.addElapsedTime(start)
     }
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
   }

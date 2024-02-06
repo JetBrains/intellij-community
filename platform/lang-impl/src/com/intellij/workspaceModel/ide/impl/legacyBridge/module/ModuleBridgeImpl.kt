@@ -18,8 +18,8 @@ import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
 import com.intellij.platform.workspace.storage.*
@@ -33,7 +33,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import io.opentelemetry.api.metrics.Meter
-import java.util.concurrent.atomic.AtomicLong
 
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ModuleBridgeImpl(
@@ -64,7 +63,7 @@ internal class ModuleBridgeImpl(
     }
   }
 
-  override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTimeMillis {
+  override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
     event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
       if (it.entity.symbolicId != moduleEntityId) return@forEach
 
@@ -118,7 +117,7 @@ internal class ModuleBridgeImpl(
     createComponentsNonBlocking()
   }
 
-  override fun initFacets() = facetsInitializationTimeMs.addMeasuredTimeMillis {
+  override fun initFacets() = facetsInitializationTimeMs.addMeasuredTime {
     FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
   }
 
@@ -172,7 +171,7 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    val start = System.currentTimeMillis()
+    val start = Milliseconds.now()
 
     val diff = diff
     if (diff != null) {
@@ -195,14 +194,14 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    updateOptionTimeMs.addElapsedTimeMillis(start)
+    updateOptionTimeMs.addElapsedTime(start)
     return
   }
 
   companion object {
-    private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
-    private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
-    private val updateOptionTimeMs: AtomicLong = AtomicLong()
+    private val moduleBridgeBeforeChangedTimeMs = MillisecondsMeasurer()
+    private val facetsInitializationTimeMs = MillisecondsMeasurer()
+    private val updateOptionTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val moduleBridgeBeforeChangedTimeCounter = meter.counterBuilder("workspaceModel.moduleBridge.before.changed.ms").buildObserver()
@@ -211,9 +210,9 @@ internal class ModuleBridgeImpl(
 
       meter.batchCallback(
         {
-          moduleBridgeBeforeChangedTimeCounter.record(moduleBridgeBeforeChangedTimeMs.get())
-          facetsInitializationTimeCounter.record(facetsInitializationTimeMs.get())
-          updateOptionTimeCounter.record(updateOptionTimeMs.get())
+          moduleBridgeBeforeChangedTimeCounter.record(moduleBridgeBeforeChangedTimeMs.asMilliseconds())
+          facetsInitializationTimeCounter.record(facetsInitializationTimeMs.asMilliseconds())
+          updateOptionTimeCounter.record(updateOptionTimeMs.asMilliseconds())
         },
         moduleBridgeBeforeChangedTimeCounter, facetsInitializationTimeCounter, updateOptionTimeCounter
       )

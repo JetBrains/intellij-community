@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.jps.serialization.impl
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
@@ -25,7 +25,6 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.StringReader
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.exists
 
 internal const val DEPRECATED_MODULE_MANAGER_COMPONENT_NAME = "DeprecatedModuleOptionManager"
@@ -65,7 +64,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     reader: JpsFileContentReader,
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager
-  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTimeMillis {
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTime {
 
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity> = HashMap()
     val newModuleEntity: ModuleEntity?
@@ -135,7 +134,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       else newModuleEntity = null
     }
 
-    return@addMeasuredTimeMillis LoadingResult(
+    return@addMeasuredTime LoadingResult(
       mapOf(
         ModuleEntity::class.java to listOfNotNull(newModuleEntity),
         LibraryEntity::class.java to moduleLibrariesCollector.values,
@@ -604,7 +603,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override fun saveEntities(mainEntities: Collection<ModuleEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             storage: EntityStorage,
-                            writer: JpsFileContentWriter) = saveEntitiesTimeMs.addMeasuredTimeMillis {
+                            writer: JpsFileContentWriter) = saveEntitiesTimeMs.addMeasuredTime {
 
     val module = mainEntities.singleOrNull()
     if (module != null && acceptsSource(module.entitySource)) {
@@ -964,8 +963,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       orderOfKnownAttributes.indexOf(o1.name).compareTo(orderOfKnownAttributes.indexOf(o2.name))
     }.reversed()
 
-    private val loadEntitiesTimeMs: AtomicLong = AtomicLong()
-    private val saveEntitiesTimeMs: AtomicLong = AtomicLong()
+    private val loadEntitiesTimeMs = MillisecondsMeasurer()
+    private val saveEntitiesTimeMs= MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadEntitiesTimeCounter = meter.counterBuilder("jps.module.iml.entities.serializer.load.entities.ms").buildObserver()
@@ -973,8 +972,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
       meter.batchCallback(
         {
-          loadEntitiesTimeCounter.record(loadEntitiesTimeMs.get())
-          saveEntitiesTimeCounter.record(saveEntitiesTimeMs.get())
+          loadEntitiesTimeCounter.record(loadEntitiesTimeMs.asMilliseconds())
+          saveEntitiesTimeCounter.record(saveEntitiesTimeMs.asMilliseconds())
         },
         loadEntitiesTimeCounter, saveEntitiesTimeCounter
       )

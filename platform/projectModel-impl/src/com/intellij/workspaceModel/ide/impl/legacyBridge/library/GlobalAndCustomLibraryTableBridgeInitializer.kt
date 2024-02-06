@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.BridgeInitializer
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
@@ -19,7 +18,7 @@ class GlobalAndCustomLibraryTableBridgeInitializer : BridgeInitializer {
   // Handle the initialization of all global and custom libraries
   override fun initializeBridges(project: Project,
                                  changes: Map<Class<*>, List<EntityChange<*>>>,
-                                 builder: MutableEntityStorage) = GlobalLibraryTableBridgeImpl.initializeLibraryBridgesTimeMs.addMeasuredTimeMillis {
+                                 builder: MutableEntityStorage) = GlobalLibraryTableBridgeImpl.initializeLibraryBridgesTimeMs.addMeasuredTime {
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
 
     @Suppress("UNCHECKED_CAST")

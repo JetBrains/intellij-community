@@ -6,13 +6,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 /**
@@ -46,7 +46,7 @@ class DelayedProjectSynchronizer : ProjectActivity {
         projectModelSynchronizer.loadProject(project)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
-      syncTimeMs.addAndGet(loadingTime)
+      syncTimeMs.duration.addAndGet(loadingTime)
       thisLogger().info(
         "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
       )
@@ -60,12 +60,12 @@ class DelayedProjectSynchronizer : ProjectActivity {
       doSync(project)
     }
 
-    private val syncTimeMs: AtomicLong = AtomicLong()
+    private val syncTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val syncTimeCounter = meter.counterBuilder("workspaceModel.delayed.project.synchronizer.sync.ms").buildObserver()
 
-      meter.batchCallback({ syncTimeCounter.record(syncTimeMs.get()) }, syncTimeCounter)
+      meter.batchCallback({ syncTimeCounter.record(syncTimeMs.asMilliseconds()) }, syncTimeCounter)
     }
   }
 }

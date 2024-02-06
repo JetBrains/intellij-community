@@ -14,7 +14,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.internal
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
@@ -103,7 +102,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     doCacheSaving()
   }
 
-  private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTimeMillis {
+  private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTime {
     val workspaceModel = WorkspaceModel.getInstance(project)
     val storage = workspaceModel.currentSnapshot
     val unloadedStorage = workspaceModel.internal.currentSnapshotOfUnloadedEntities
@@ -180,14 +179,14 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       Disposer.register(disposable) { forceEnableCaching = false }
     }
 
-    private val saveWorkspaceModelCachesTimeMs: AtomicLong = AtomicLong()
+    private val saveWorkspaceModelCachesTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val saveWorkspaceModelCachesTimeCounter = meter.counterBuilder("workspaceModel.do.save.caches.ms").buildObserver()
 
       meter.batchCallback(
         {
-          saveWorkspaceModelCachesTimeCounter.record(saveWorkspaceModelCachesTimeMs.get())
+          saveWorkspaceModelCachesTimeCounter.record(saveWorkspaceModelCachesTimeMs.asMilliseconds())
         },
         saveWorkspaceModelCachesTimeCounter
       )
