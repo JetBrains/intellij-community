@@ -887,6 +887,7 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
           toolWindowManager.activateToolWindow(entry = entry,
                                                info = toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id),
                                                autoFocusContents = false)
+          InternalDecoratorImpl.setActiveDecorator(toolWindow, component)
         }
       })
   }
