@@ -2,10 +2,12 @@
 package com.intellij.analysis.customization.console
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.execution.filters.HyperlinkInfoFactory.HyperlinkHandler
 import com.intellij.execution.filters.impl.MultipleFilesHyperlinkInfoBase
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -23,6 +25,10 @@ class OnFlyMultipleFilesHyperlinkInfo internal constructor(private val myInfoCac
                                                            action: HyperlinkHandler?) :
   MultipleFilesHyperlinkInfoBase(lineNumber, project, action) {
   override fun getFiles(project: Project): List<PsiFile> {
+    if (DumbService.isDumb(project)) {
+      return emptyList()
+    }
+
     val packageName = StringUtil.getPackageName(probableClassName.fullClassName)
     if (packageName.length == probableClassName.fullClassName.length) return emptyList()
     val className = probableClassName.fullClassName.substring(packageName.length + 1)
@@ -45,7 +51,12 @@ class OnFlyMultipleFilesHyperlinkInfo internal constructor(private val myInfoCac
 
   override fun showNotFound(project: Project, hyperlinkLocationPoint: RelativePoint?) {
     if (hyperlinkLocationPoint == null) return
-    val message = JvmAnalysisBundle.message("action.find.similar.stack.call.methods.not.found")
+    val message = if (DumbService.isDumb(project)) {
+      CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing")
+    }
+    else {
+      JvmAnalysisBundle.message("action.find.similar.stack.call.methods.not.found")
+    }
     val label = HintUtil.createWarningLabel(message)
     JBPopupFactory.getInstance().createBalloonBuilder(label)
       .setFadeoutTime(4000)
