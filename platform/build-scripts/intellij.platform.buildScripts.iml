@@ -198,7 +198,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library name="jetbrains.intellij.plugins.structure" type="repository">
         <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.247">
           <verification>
