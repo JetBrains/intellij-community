@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection")
 
 package org.jetbrains.intellij.build.pycharm
@@ -7,8 +7,8 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaCommunityProperties
+import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import java.nio.file.FileVisitResult
@@ -30,7 +30,7 @@ internal class PythonCommunityPluginBuilder(private val home: Path) {
                                                       projectHome = homeDir,
                                                       productProperties = IdeaCommunityProperties(communityRoot.communityRoot),
                                                       options = options)
-    BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(
+    createBuildTasks(buildContext).buildNonBundledPlugins(listOf(
       "intellij.python.community.plugin",
     ))
 

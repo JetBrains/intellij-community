@@ -4,13 +4,18 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import java.nio.file.Path
+
+fun createBuildTasks(context: BuildContext): BuildTasks = BuildTasksImpl(context as BuildContextImpl)
 
 interface BuildTasks {
   companion object {
     @JvmStatic
-    fun create(context: BuildContext): BuildTasks = BuildTasksImpl(context)
+    @Obsolete
+    fun create(context: BuildContext): BuildTasks = createBuildTasks(context)
   }
 
   /**
@@ -19,6 +24,7 @@ interface BuildTasks {
    */
   suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean)
 
+  @Obsolete
   fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
     runBlocking {
       zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = false)

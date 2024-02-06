@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.BuildContextImpl
@@ -417,7 +417,7 @@ object KotlinPluginBuilder {
     val result = oldText.replaceFirst(Regex(regex), newText)
     if (result == oldText) {
       if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
-        // Locally e.g. in 'Update IDE from Sources' allow data to be already present
+        // Locally, e.g., in 'Update IDE from Sources' allow data to be already present
         return result
       }
 
@@ -432,7 +432,7 @@ object KotlinPluginBuilder {
                                                       projectHome = home,
                                                       productProperties = properties)
     buildContext.options.enableEmbeddedJetBrainsClient = false
-    BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
+    createBuildTasks(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
 
   enum class KotlinUltimateSources {

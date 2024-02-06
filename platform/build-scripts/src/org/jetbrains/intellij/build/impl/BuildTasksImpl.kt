@@ -62,8 +62,7 @@ import kotlin.time.Duration.Companion.seconds
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
-class BuildTasksImpl(context: BuildContext) : BuildTasks {
-  private val context = context as BuildContextImpl
+class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
 
   override suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
     zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = includeLibraries, context = context)

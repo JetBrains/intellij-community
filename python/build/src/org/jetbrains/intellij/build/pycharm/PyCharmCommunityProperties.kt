@@ -58,8 +58,8 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     mavenArtifacts.forIdeModules = true
   }
 
-  override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
-    super.copyAdditionalFilesBlocking(context, targetDirectory)
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    super.copyAdditionalFiles(context, targetDirectory)
 
     val targetDir = Path.of(targetDirectory, "license")
     copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)

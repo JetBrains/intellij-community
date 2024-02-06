@@ -2,9 +2,9 @@
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.JetBrainsProductProperties
 import org.jetbrains.intellij.build.TEST_FRAMEWORK_WITH_JAVA_RT
+import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.impl.copyDirWithFileFilter
 import java.nio.file.Path
 import java.util.function.Predicate
@@ -25,12 +25,16 @@ abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
       "intellij.platform.testFramework.common",
       "intellij.platform.testFramework.junit5",
       "intellij.platform.testFramework",
-      ))
+    ))
   }
 
-  override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
-    val tasks = BuildTasks.create(context)
-    tasks.zipSourcesOfModulesBlocking(listOf("intellij.python.community", "intellij.python.psi"), Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"))
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    val tasks = createBuildTasks(context)
+    tasks.zipSourcesOfModules(
+      modules = listOf("intellij.python.community", "intellij.python.psi"),
+      targetFile = Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"),
+      includeLibraries = false,
+    )
 
     copyDirWithFileFilter(
       fromDir = getKeymapReferenceDirectory(context),
