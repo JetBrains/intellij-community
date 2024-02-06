@@ -61,7 +61,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
 
   private fun removeExistingLines(stickyModel: StickyLinesModel): List<StickyLine> {
     val toRemove: MutableList<StickyLine> = mutableListOf()
-    stickyModel.processStickyLines(null) { existingLine: StickyLine ->
+    stickyModel.processStickyLines(STICKY_LINE_SOURCE) { existingLine: StickyLine ->
       toRemove.add(existingLine)
       true
     }
