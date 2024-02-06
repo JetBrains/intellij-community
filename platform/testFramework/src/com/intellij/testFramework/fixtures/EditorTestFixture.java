@@ -29,7 +29,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
@@ -143,7 +143,7 @@ public class EditorTestFixture {
 
   @NotNull
   private DataContext getEditorDataContext() {
-    return ((EditorEx)myEditor).getDataContext();
+    return EditorUtil.getEditorDataContext(myEditor);
   }
 
   public PsiFile getFile() {
