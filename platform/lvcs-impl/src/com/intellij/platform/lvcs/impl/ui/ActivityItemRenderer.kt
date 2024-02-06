@@ -8,12 +8,12 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -29,7 +29,7 @@ private const val ROW_TOP_BOTTOM_INSETS = 8
 private val HIGHLIGHTED_ARC = JBUI.value(4f)
 private val BACKGROUND_ARC = JBUI.value(8f)
 private val HIGHLIGHT_THICKNESS = JBUI.value(4f)
-private val HGAP = JBUI.value(2f)
+private val VGAP = JBUI.value(2f)
 
 internal class ActivityItemRenderer(private val presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : ListCellRenderer<ActivityItem> {
 
@@ -86,7 +86,7 @@ private class RoundedPanel(var roundedBackgroundColor: Color?, var highlightColo
 private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, icon: Icon?, timestamp: Long,
                                backgroundColor: Color?, highlightColor: Color?, isSelected: Boolean): RoundedPanel {
   val content = RoundedPanel(backgroundColor, highlightColor)
-  content.layout = BorderLayout(HGAP.get(), 0)
+  content.layout = VerticalLayout(VGAP.get(), SwingConstants.LEFT)
   content.font = list.font
   content.foreground = if (isSelected) list.selectionForeground else list.foreground
   content.background = null
@@ -94,13 +94,13 @@ private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, 
 
   val mainLabel = JBLabel(text, icon, SwingConstants.LEFT)
   mainLabel.foreground = if (isSelected) list.selectionForeground else list.foreground
-  content.add(mainLabel, BorderLayout.CENTER)
+  content.add(mainLabel)
 
   if (timestamp > 0) {
     val timestampLabel = JBLabel(DateFormatUtil.formatDateTime(timestamp))
     timestampLabel.componentStyle = UIUtil.ComponentStyle.SMALL
     timestampLabel.foreground = if (isSelected) list.selectionForeground else JBColor.GRAY
-    content.add(timestampLabel, BorderLayout.EAST)
+    content.add(timestampLabel)
   }
 
   return content
