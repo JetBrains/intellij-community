@@ -20,6 +20,7 @@
                      implementationClass="com.intellij.devkit.workspaceModel.WorkspaceImplObsoleteInspection"
                      key="inspection.workspace.obsolete.model.display.name"/>
     <localInspection language="kotlin"
+                     shortName="WorkspaceImplAbsent"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
