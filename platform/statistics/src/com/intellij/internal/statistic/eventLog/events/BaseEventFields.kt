@@ -57,15 +57,7 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
       get() = listOf("{enum#$enumRef}")
   }
 
-  @Deprecated("Please use StringEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
-              ReplaceWith("StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
-  data class ValidatedByCustomRule(@NonNls @EventFieldName  override val name: String,
-                                   @NonNls val customRuleId: String) : StringEventField(name) {
-    override val validationRule: List<String>
-      get() = listOf("{util#$customRuleId}")
-  }
-
-  data class ValidatedByCustomValidationRule(
+  data class ValidatedByCustomValidationRule @JvmOverloads constructor(
     @NonNls @EventFieldName  override val name: String,
     @NonNls val customValidationRule: Class<out CustomValidationRule>
   ) : StringEventField(name) {
@@ -350,15 +342,7 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
       get() = listOf("{enum#$enumRef}")
   }
 
-  @Deprecated("Please use StringListEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
-              ReplaceWith("StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
-  data class ValidatedByCustomRule(@NonNls @EventFieldName  override val name: String,
-                                   @NonNls val customRuleId: String) : StringListEventField(name) {
-    override val validationRule: List<String>
-      get() = listOf("{util#$customRuleId}")
-  }
-
-  data class ValidatedByCustomValidationRule(
+  data class ValidatedByCustomValidationRule @JvmOverloads constructor(
     @NonNls @EventFieldName  override val name: String,
     @NonNls val customValidationRule: Class<out CustomValidationRule>
   ) : StringListEventField(name) {
