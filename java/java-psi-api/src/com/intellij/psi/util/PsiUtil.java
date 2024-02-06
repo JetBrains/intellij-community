@@ -977,17 +977,7 @@ public final class PsiUtil extends PsiUtilCore {
 
       if (currentOwner.hasModifierProperty(PsiModifier.STATIC)) break;
       if (currentOwner instanceof PsiClass && isLocalClass((PsiClass)currentOwner)) {
-        //otherwise, parameters will be taken from methods
-        boolean ownerIsStatic = false;
-        do {
-          currentOwner = PsiTreeUtil.getParentOfType(currentOwner, PsiTypeParameterListOwner.class);
-          if (currentOwner != null && currentOwner.hasModifierProperty(PsiModifier.STATIC)) {
-            ownerIsStatic = true;
-            break;
-          }
-        }
-        while (currentOwner instanceof PsiMethod);
-        if (ownerIsStatic) break;
+        currentOwner = PsiTreeUtil.getParentOfType(currentOwner, PsiTypeParameterListOwner.class);
         continue;
       }
       currentOwner = currentOwner.getContainingClass();
