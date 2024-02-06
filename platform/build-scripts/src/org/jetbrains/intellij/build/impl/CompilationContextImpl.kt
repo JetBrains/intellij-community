@@ -205,12 +205,9 @@ class CompilationContextImpl private constructor(
       spanBuilder("define JDK").useWithScope {
         defineJavaSdk(context)
       }
-      spanBuilder("enabled coroutines dump").useWithScope {
-        if (enableCoroutinesDump) {
+      if (enableCoroutinesDump) {
+        spanBuilder("enabled coroutines dump").useWithScope {
           context.enableCoroutinesDump(it)
-        }
-        else {
-          it.addEvent("coroutine dump is disabled")
         }
       }
       spanBuilder("prepare for build").useWithScope {
