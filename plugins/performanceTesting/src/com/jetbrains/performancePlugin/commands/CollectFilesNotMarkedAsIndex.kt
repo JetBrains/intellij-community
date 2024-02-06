@@ -113,7 +113,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
             }
             try {
               fileOrDir.contentsToByteArray()
-              if (fbi.changedFilesCollector.filesToUpdateCollector.containsFileId(fileOrDir.id)) {
+              if (fbi.filesToUpdateCollector.containsFileId(fileOrDir.id)) {
                 logIndexingIssue("$fileOrDir (id=${fileOrDir.id}) $errorMessagePart because is changed\n")
               }
               else {
@@ -158,7 +158,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
         if (!cachedUnfinishedFiles.isEmpty()) {
           textConsumer.accept("Unfinished cached files' ids in IndexingStamp: ${cachedUnfinishedFiles.contentToString()}\n")
           dumpIdsWithPaths(cachedUnfinishedFiles, textConsumer)
-          textConsumer.accept("All changed unindexed files: ${fbi.changedFilesCollector.allFilesToUpdate}")
+          textConsumer.accept("All changed unindexed files: ${fbi.allFilesToUpdate}")
         }
         return@use
       }

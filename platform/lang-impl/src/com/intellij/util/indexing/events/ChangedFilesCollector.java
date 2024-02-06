@@ -30,7 +30,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -43,8 +42,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     SystemProperties.getBooleanProperty("idea.indexes.clear.non.indexable.file.data", true);
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
-
-  private final FilesToUpdateCollector myFilesToUpdate = new FilesToUpdateCollector();
 
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
   private final Phaser myWorkersFinishedSync = new Phaser() {
@@ -71,16 +68,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         }
       });
     }
-  }
-
-  @NotNull
-  public FilesToUpdateCollector getFilesToUpdateCollector() {
-    return myFilesToUpdate;
-  }
-
-  public Collection<VirtualFile> getAllFilesToUpdate() {
-    ensureUpToDate();
-    return myFilesToUpdate.getAllFilesToUpdate();
   }
 
   public void clear() {

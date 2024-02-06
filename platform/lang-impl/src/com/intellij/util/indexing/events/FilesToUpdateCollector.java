@@ -5,6 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
@@ -18,7 +19,7 @@ import static com.intellij.util.indexing.events.ChangedFilesCollector.CLEAR_NON_
 
 public class FilesToUpdateCollector {
   private static final Logger LOG = Logger.getInstance(FilesToUpdateCollector.class);
-  private final FileBasedIndexImpl myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+  private final NotNullLazyValue<FileBasedIndexImpl> myFileBasedIndex = NotNullLazyValue.createValue(() -> (FileBasedIndexImpl)FileBasedIndex.getInstance());
   private final IntObjectMap<VirtualFile> myFilesToUpdate = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
@@ -26,10 +27,10 @@ public class FilesToUpdateCollector {
   public void scheduleForUpdate(@NotNull VirtualFile file, @NotNull List<Project> dirtyQueueProjects) {
     int fileId = FileBasedIndex.getFileId(file);
     if (!(file instanceof DeletedVirtualFileStub)) {
-      Set<Project> projects = myFileBasedIndex.getContainingProjects(file);
+      Set<Project> projects = myFileBasedIndex.get().getContainingProjects(file);
       if (projects.isEmpty()) {
         removeNonIndexableFileData(file, fileId);
-        myFileBasedIndex.getIndexableFilesFilterHolder().removeFile(fileId);
+        myFileBasedIndex.get().getIndexableFilesFilterHolder().removeFile(fileId);
         return;
       }
     }
@@ -48,7 +49,7 @@ public class FilesToUpdateCollector {
     if (CLEAR_NON_INDEXABLE_FILE_DATA) {
       List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
       if (!extensions.isEmpty()) {
-        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
+        myFileBasedIndex.get().removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
       }
       IndexingFlag.cleanProcessingFlag(file);
     }
@@ -66,7 +67,7 @@ public class FilesToUpdateCollector {
 
   private @NotNull List<ID<?, ?>> getIndexedContentDependentExtensions(int fileId) {
     List<ID<?, ?>> indexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
-    RegisteredIndexes registeredIndexes = myFileBasedIndex.getRegisteredIndexes();
+    RegisteredIndexes registeredIndexes = myFileBasedIndex.get().getRegisteredIndexes();
     List<ID<?, ?>> contentDependentIndexes;
     if (registeredIndexes == null) {
       Set<? extends ID<?, ?>> allContentDependentIndexes = FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList().stream()
@@ -107,11 +108,11 @@ public class FilesToUpdateCollector {
     return myFilesToUpdate.containsKey(fileId);
   }
 
-  public Iterator<@NotNull VirtualFile> getFilesToUpdate() {
+  public Iterator<@NotNull VirtualFile> getFilesToUpdateAsIterator() {
     return myFilesToUpdate.values().iterator();
   }
 
-  public Collection<VirtualFile> getAllFilesToUpdate() {
+  public Collection<VirtualFile> getFilesToUpdate() {
     return myFilesToUpdate.isEmpty()
            ? Collections.emptyList()
            : Collections.unmodifiableCollection(myFilesToUpdate.values());
