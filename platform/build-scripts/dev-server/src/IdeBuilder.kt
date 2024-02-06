@@ -15,6 +15,12 @@ import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -23,6 +29,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.math.BigInteger
@@ -105,6 +112,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                                    request = request,
                                    runDir = runDir,
                                    jarCacheDir = rootDir.resolve("jar-cache"))
+  compileIfNeeded(context)
+
   coroutineScope {
     val platformLayout = async {
       createPlatformLayout(pluginsToPublish = emptySet(), context = context)
@@ -180,6 +189,56 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     context.messages.close()
   }
   return runDir
+}
+
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalSerializationApi::class)
+private suspend fun compileIfNeeded(context: BuildContext) {
+  val port = System.getProperty("compile.server.port")?.toIntOrNull()
+  val project = System.getProperty("compile.server.project")
+  if (port == null || project == null) {
+    return
+  }
+
+  val modulesToCompile = spanBuilder("collect modules to compile").useWithScope {
+    val result = collectModulesToCompileForDistribution(context)
+    JpsJavaExtensionService.getInstance().enumerateDependencies(listOf(context.findRequiredModule("intellij.platform.bootstrap.dev")))
+      .recursively()
+      .productionOnly()
+      .withoutLibraries()
+      .processModules { result.remove(it.name) }
+    result
+  }
+
+  val url = "http://127.0.0.1:$port/devkit/build?project-hash=$project&skip-save=true"
+  TraceManager.flush()
+  spanBuilder("compile modules").setAttribute("url", url).useWithScope {
+    coroutineScope {
+      val task = launch {
+        postData(url, ProtoBuf.encodeToByteArray(listOf(BuildScopeDescription(
+          targetType = "java-production",
+          targetIds = modulesToCompile,
+        ))))
+      }
+
+      var count = 0
+      while (task.isActive) {
+        select<Unit> {
+          task.onJoin {
+            return@onJoin
+          }
+          onTimeout((if (count != 0 && count < 100) 2 else 6).seconds) {
+            if (count == 0) {
+              println("compiling")
+            }
+            else {
+              print('.')
+            }
+            count++
+          }
+        }
+      }
+    }
+  }
 }
 
 private fun writePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, runDir: Path) {
@@ -501,3 +560,10 @@ private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot
   }
   return BuildDependenciesCommunityRoot(if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath)
 }
+
+@Serializable
+private data class BuildScopeDescription(
+  val targetType: String,
+  val targetIds: Collection<String>,
+  val forceBuild: Boolean = false,
+)

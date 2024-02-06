@@ -121,7 +121,7 @@ class JarPackager private constructor(private val outputDir: Path,
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
   private val copiedFiles = HashMap<Path, CopiedFor>()
 
-  private val helper = JarPackagerDependencyHelper(context)
+  private val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
 
   companion object {
     suspend fun pack(includedModules: Collection<ModuleItem>,

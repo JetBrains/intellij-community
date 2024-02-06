@@ -72,6 +72,8 @@ class BuildContextImpl(
     ?: NonCachingJarCacheManager
   }
 
+  internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this) }
+
   init {
     @Suppress("DEPRECATION")
     if (productProperties.productCode == null) {

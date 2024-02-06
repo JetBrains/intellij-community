@@ -319,5 +319,6 @@
     </orderEntry>
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="jbr-api" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
   </component>
 </module>

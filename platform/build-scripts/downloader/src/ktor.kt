@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build
 
@@ -15,7 +15,9 @@ import io.ktor.client.plugins.auth.providers.basic
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.request.get
+import io.ktor.client.request.post
 import io.ktor.client.request.prepareGet
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -160,6 +162,14 @@ suspend fun downloadAsBytes(url: String): ByteArray {
   return spanBuilder("download").setAttribute("url", url).useWithScope2 {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).body()
+    }
+  }
+}
+
+suspend fun postData(url: String, data: ByteArray) {
+  return withContext(Dispatchers.IO) {
+    httpClient.value.post(url) {
+      setBody(data)
     }
   }
 }

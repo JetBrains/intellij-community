@@ -178,7 +178,7 @@ public abstract class CompilerManager {
   public abstract void make(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
-   * Same as {@link #make(CompileScope, CompileStatusNotification)} but with modal progress window instead of background progress
+   * Same as {@link #make(CompileScope, CompileStatusNotification)} but with a modal progress window instead of background progress.
    */
   public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 

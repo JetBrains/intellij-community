@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.*
@@ -322,26 +321,24 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
 
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
-  val jpsJavaExtensionService = JpsJavaExtensionService.getInstance()
   val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules,
                                                                        productLayout = context.productProperties.productLayout)
+
+  val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
   for (plugin in pluginLayoutsByJpsModuleNames) {
     if (plugin.auto) {
       continue
     }
 
     for (moduleName in plugin.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
-        val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue
+      val module = context.findRequiredModule(moduleName)
+      for (element in helper.getLibraryDependencies(module)) {
+        val libraryReference = element.libraryReference
         if (libraryReference.parentReference is JpsModuleReference) {
           continue
         }
 
-        if (jpsJavaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
-          continue
-        }
-
-        val libraryName = element.libraryReference.libraryName
+        val libraryName = libraryReference.libraryName
         if (plugin.hasLibrary(libraryName)) {
           continue
         }

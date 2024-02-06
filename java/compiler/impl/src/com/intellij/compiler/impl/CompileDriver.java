@@ -73,6 +73,10 @@ public final class CompileDriver {
   private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
   private static final long ONE_MINUTE_MS = 60L * 1000L;
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static final Key<Boolean> SKIP_SAVE = Key.create("SKIP_SAVE");
+
   private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
@@ -388,7 +392,7 @@ public final class CompileDriver {
                        final boolean withModalProgress,
                        final CompileStatusNotification callback,
                        final CompilerMessage message) {
-    ModalityState modalityState = ModalityState.current();
+    ModalityState modalityState = scope.getUserData(SKIP_SAVE) == Boolean.TRUE ? null : ModalityState.current();
 
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     String name = JavaCompilerBundle.message(
@@ -401,8 +405,10 @@ public final class CompileDriver {
 
     StatusBar.Info.set("", myProject, "Compiler");
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    FileDocumentManager.getInstance().saveAllDocuments();
+    if (modalityState != null) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
 
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, compileTask, scope, !isRebuild && !forceCompile, isRebuild);
     span.complete();
@@ -416,7 +422,9 @@ public final class CompileDriver {
       }
 
       // ensure the project model seen by build process is up-to-date
-      CompilerDriverHelperKt.saveSettings(myProject, modalityState, isUnitTestMode);
+      if (modalityState != null) {
+        CompilerDriverHelperKt.saveSettings(myProject, modalityState, isUnitTestMode);
+      }
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
@@ -628,12 +636,13 @@ public final class CompileDriver {
     if (myProject.isDisposed()) {
       return false;
     }
+
     final CompilerManager manager = CompilerManager.getInstance(myProject);
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.pushState();
     try {
       List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
-      if (tasks.size() > 0) {
+      if (!tasks.isEmpty()) {
         progressIndicator.setText(
           JavaCompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks")
         );

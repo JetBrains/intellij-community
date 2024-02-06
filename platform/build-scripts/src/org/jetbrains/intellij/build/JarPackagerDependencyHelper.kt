@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
-import org.jetbrains.intellij.build.BuildContext
+package org.jetbrains.intellij.build
+
+import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsDependencyElement
@@ -40,7 +42,7 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
 
         result.add((element as? JpsLibraryDependency) ?: continue)
       }
-      if (result.isEmpty()) emptyList() else result
+      if (result.isEmpty()) java.util.List.of() else result
     }
   }
 

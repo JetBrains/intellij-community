@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
+import com.intellij.compiler.options.MakeProjectStepBeforeRun
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.JavaParameters
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
+import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -23,8 +25,8 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(configuration: T,
                                                                   javaParameters: JavaParameters,
                                                                   runnerSettings: RunnerSettings?) {
-    val applicationConfiguration = configuration as? ApplicationConfiguration ?: return
-    val project = applicationConfiguration.project
+    val appConfiguration = configuration as? ApplicationConfiguration ?: return
+    val project = appConfiguration.project
     if (!PsiUtil.isIdeaProject(project)) {
       return
     }
@@ -69,9 +71,6 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")
     }
-    if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
-      vmParameters.add("-Xmx2g")
-    }
     if (is17 && vmParametersAsList.none { it.startsWith("-XX:SoftRefLRUPolicyMSPerMB") }) {
       vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
     }
@@ -81,6 +80,11 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
     if (!isDev) {
       return
+    }
+
+    if (appConfiguration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
+      vmParameters.addProperty("compile.server.port", BuiltInServerManager.getInstance().port.toString())
+      vmParameters.addProperty("compile.server.project", project.locationHash)
     }
 
     var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")

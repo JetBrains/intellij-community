@@ -18,6 +18,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
@@ -45,16 +46,15 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.PathMatcher
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
+import kotlin.io.NoSuchFileException
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.name
 import kotlin.io.path.walk
@@ -526,25 +526,33 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
   return sourceFiles
 }
 
-private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
+@Internal
+fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
   val productProperties = context.productProperties
   val productLayout = productProperties.productLayout
-  val mavenArtifacts = productProperties.mavenArtifacts
 
-  val toCompile = LinkedHashSet<String>()
-  collectModulesToCompile(context = context, result = toCompile)
+  val result = LinkedHashSet<String>()
+  collectModulesToCompile(context = context, result = result)
   context.proprietaryBuildTools.scrambleTool?.let {
-    toCompile.addAll(it.additionalModulesToCompile)
+    result.addAll(it.additionalModulesToCompile)
   }
-  toCompile.addAll(productLayout.mainModules)
-  toCompile.addAll(mavenArtifacts.additionalModules)
-  toCompile.addAll(mavenArtifacts.squashedModules)
-  toCompile.addAll(mavenArtifacts.proprietaryModules)
-  toCompile.addAll(productProperties.modulesToCompileTests)
-  toCompile.add("intellij.tools.launcherGenerator")
+  result.addAll(productLayout.mainModules)
+
+  val mavenArtifacts = productProperties.mavenArtifacts
+  result.addAll(mavenArtifacts.additionalModules)
+  result.addAll(mavenArtifacts.squashedModules)
+  result.addAll(mavenArtifacts.proprietaryModules)
+
+  result.addAll(productProperties.modulesToCompileTests)
+  result.add("intellij.tools.launcherGenerator")
+  return result
+}
+
+private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
+  val productLayout = context.productProperties.productLayout
 
   val compilationTasks = CompilationTasks.create(context)
-  compilationTasks.compileModules(toCompile)
+  compilationTasks.compileModules(collectModulesToCompileForDistribution(context))
 
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
   filterPluginsToPublish(pluginsToPublish, context)
@@ -575,7 +583,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
                               ideClasspath = ideClasspath,
                               arguments = listOf("listBundledPlugins", providedModuleFile.toString()),
                               timeout = 30.seconds)
-        productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
+        context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
         try {
           val builtinModuleData = readBuiltinModulesFile(file = providedModuleFile)
           context.builtinModule = builtinModuleData
@@ -1228,11 +1236,9 @@ private fun crossPlatformZip(macX64DistDir: Path,
   }
 }
 
-fun collectModulesToCompile(context: BuildContext, result: MutableCollection<String>) {
+fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
   val productLayout = context.productProperties.productLayout
-  collectIncludedPluginModules(enabledPluginModules = productLayout.bundledPluginModules.toHashSet(),
-                               product = productLayout,
-                               result = result)
+  collectIncludedPluginModules(enabledPluginModules = productLayout.bundledPluginModules, product = productLayout, result = result)
   collectPlatformModules(result)
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
@@ -1264,24 +1270,25 @@ internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>
                               arguments = listOf(command.first, targetPath.toString()))
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
-        zipWithCompression(targetFile = targetFile,
-                           dirs = mapOf(targetPath to ""),
-                           compressionLevel = if (context.options.compressZipFiles) Deflater.DEFAULT_COMPRESSION else Deflater.NO_COMPRESSION)
+        zipWithCompression(
+          targetFile = targetFile,
+          dirs = mapOf(targetPath to ""),
+          compressionLevel = if (context.options.compressZipFiles) Deflater.DEFAULT_COMPRESSION else Deflater.NO_COMPRESSION,
+        )
       }
     }
   }
 }
 
 internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext) {
-  withContext(Dispatchers.IO) {
-    spanBuilder("update last modified time").setAttribute("dir", directory.toString()).useWithScope {
-      Files.walk(directory).use { tree ->
-        val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
-        tree.forEach {
-          Files.setLastModifiedTime(it, fileTime)
-        }
+  spanBuilder("update last modified time").setAttribute("dir", directory.toString()).useWithScope(Dispatchers.IO) {
+    val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
+    Files.walkFileTree(directory, object : SimpleFileVisitor<Path>() {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+        Files.setLastModifiedTime(file, fileTime)
+        return FileVisitResult.CONTINUE
       }
-    }
+    })
   }
 }
 
@@ -1290,10 +1297,16 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
  */
 internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>,
                                           product: ProductModulesLayout,
-                                          result: MutableCollection<String>) {
+                                          result: MutableSet<String>) {
   result.addAll(enabledPluginModules)
+  val enabledPluginModuleSet = if (enabledPluginModules is Set<String> || enabledPluginModules.size < 2) {
+    enabledPluginModules
+  }
+  else {
+    enabledPluginModules.toHashSet()
+  }
   product.pluginLayouts.asSequence()
-    .filter { enabledPluginModules.contains(it.mainModule) }
+    .filter { enabledPluginModuleSet.contains(it.mainModule) }
     .flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
 }
 

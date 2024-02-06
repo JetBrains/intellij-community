@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Responses")
 package org.jetbrains.io
 
@@ -79,7 +79,7 @@ fun HttpResponse.send(channel: Channel, request: HttpRequest?, extraHeaders: Htt
   extraHeaders?.let {
     headers().add(it)
   }
-  send(channel, request != null && !addKeepAliveIfNeeded(request))
+  send(channel = channel, close = request != null && !addKeepAliveIfNeeded(request))
 }
 
 fun HttpResponse.addKeepAliveIfNeeded(request: HttpRequest): Boolean {

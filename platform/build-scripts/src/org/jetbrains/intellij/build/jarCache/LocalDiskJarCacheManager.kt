@@ -13,32 +13,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
 import java.math.BigInteger
-import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
 import java.time.Instant
 import kotlin.time.Duration.Companion.days
 
 private const val jarSuffix = ".jar"
-private const val metaSuffix = ".json"
+private const val metaSuffix = ".bin"
 
-private const val cacheVersion: Byte = 6
-
-private val json by lazy {
-  Json {
-    ignoreUnknownKeys = true
-    prettyPrint = true
-    prettyPrintIndent = "  "
-    isLenient = true
-  }
-}
+private const val cacheVersion: Byte = 7
 
 internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val classOutDirectory: Path) : JarCacheManager {
   init {
@@ -47,7 +39,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
 
   override suspend fun cleanup() {
     withContext(Dispatchers.IO) {
-      CacheDirCleanup(cacheDir = cacheDir, maxAccessTimeAge = 2.days).runCleanupIfRequired()
+      CacheDirCleanup(cacheDir = cacheDir, maxAccessTimeAge = 7.days).runCleanupIfRequired()
     }
   }
 
@@ -106,17 +98,8 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
     var fileMoved = false
     try {
       producer.produce(tempFile)
-      try {
-        Files.move(tempFile, cacheFile)
-        fileMoved = true
-      }
-      catch (e: FileAlreadyExistsException) {
-        // concurrent access?
-        span.addEvent("cache file $cacheFile already exists")
-        check(Files.size(tempFile) == Files.size(cacheFile)) {
-          "file=$targetFile, cacheFile=$cacheFile, sources=$sources"
-        }
-      }
+      Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING)
+      fileMoved = true
     }
     finally {
       if (!fileMoved) {
@@ -140,7 +123,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
       }
 
       launch {
-        Files.writeString(cacheMetadataFile, json.encodeToString(JarCacheItem(sources = sourceCacheItems)))
+        Files.write(cacheMetadataFile, ProtoBuf.encodeToByteArray(JarCacheItem(sources = sourceCacheItems)))
       }
 
       launch(Dispatchers.Default) {
@@ -169,22 +152,16 @@ private fun checkCache(cacheMetadataFile: Path,
                        items: List<SourceAndCacheStrategy>,
                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                        span: Span): Boolean {
-  if (Files.notExists(cacheMetadataFile)) {
-    Files.deleteIfExists(cacheFile)
+  if (Files.notExists(cacheMetadataFile) || Files.notExists(cacheFile)) {
     return false
   }
 
-  if (Files.notExists(cacheFile)) {
-    Files.deleteIfExists(cacheMetadataFile)
-    return false
-  }
-
-  val metadataString = Files.readString(cacheMetadataFile)
+  val metadataBytes = Files.readAllBytes(cacheMetadataFile)
   val metadata = try {
-    json.decodeFromString<JarCacheItem>(metadataString)
+    ProtoBuf.decodeFromByteArray<JarCacheItem>(metadataBytes)
   }
   catch (e: SerializationException) {
-    span.addEvent("cannot decode metadata $metadataString", Attributes.of(
+    span.addEvent("cannot decode metadata $metadataBytes", Attributes.of(
       AttributeKey.stringArrayKey("sources"), sources.map { it.toString() },
       AttributeKey.stringKey("error"), e.toString(),
     ))
@@ -195,7 +172,7 @@ private fun checkCache(cacheMetadataFile: Path,
   }
 
   if (!checkSavedAndActualSources(metadata = metadata, sources = sources, items = items)) {
-    span.addEvent("metadata $metadataString not equal to $sources")
+    span.addEvent("metadata $metadataBytes not equal to $sources")
 
     Files.deleteIfExists(cacheFile)
     Files.deleteIfExists(cacheMetadataFile)
