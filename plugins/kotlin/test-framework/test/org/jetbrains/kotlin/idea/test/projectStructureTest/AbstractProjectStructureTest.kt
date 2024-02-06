@@ -16,7 +16,10 @@ import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.idea.test.addRoot
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.tooling.core.withClosure
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -70,13 +73,18 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
             error("Test project libraries and modules may not share names. Duplicate names: ${duplicateNames.joinToString()}.")
         }
 
+        val refinementMap: Map<String, List<String>> = testStructure.modules.associate { testModule ->
+            testModule.name to testModule.dependsOnModules.filter { it.kind == DependencyKind.REFINEMENT }.map { it.name }
+        }
+
         testStructure.modules.forEach { moduleData ->
             val module = modulesByName.getValue(moduleData.name)
-            moduleData.dependsOnModules.forEach { dependencyName ->
-                projectLibrariesByName[dependencyName]
-                    ?.let { library -> module.addDependency(library) }
-                    ?: module.addDependency(modulesByName.getValue(dependencyName))
+            val dependenciesByKind = moduleData.dependsOnModules.groupBy { it.kind }
+
+            dependenciesByKind[DependencyKind.REGULAR].orEmpty().let { regularDependencies ->
+                addRegularDependencies(module, regularDependencies, modulesByName, projectLibrariesByName)
             }
+            setupRefinementDependenciesAndPlatform(module, moduleData.targetPlatform, modulesByName, refinementMap)
         }
 
         return Triple(testStructure, projectLibrariesByName, modulesByName)
@@ -133,6 +141,49 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
                 destinationPath.write(processedFileText)
             }
         }
+    }
+
+    private fun addRegularDependencies(
+        module: Module,
+        dependencies: List<Dependency>,
+        modulesByName: Map<String, Module>,
+        librariesByName: Map<String, Library>,
+    ) {
+        dependencies.forEach { dependency ->
+            check(dependency.kind == DependencyKind.REGULAR)
+            librariesByName[dependency.name]
+                ?.let { library -> module.addDependency(library) }
+                ?: module.addDependency(modulesByName.getValue(dependency.name))
+        }
+    }
+
+    /**
+     * Setting refinement dependency includes two parts:
+     * - creating normal module dependencies (IJ workspace model);
+     * - writing transitive closure of the module names in the Kotlin Facet Settings.
+     *
+     * Refinement dependencies allow all the usual things from regular dependencies + expect-actual matching + internals are visible.
+     */
+    private fun setupRefinementDependenciesAndPlatform(
+        module: Module,
+        platform: TargetPlatform,
+        modulesByName: Map<String, Module>,
+        refinementMap: Map<String, List<String>>,
+    ) {
+        val refinementDependencyClosure = refinementMap.getValue(module.name).withClosure { refinementDependency: String ->
+            refinementMap.getValue(refinementDependency)
+        }
+
+        refinementDependencyClosure.forEach { refinementDependencyModuleName ->
+            module.addDependency(modulesByName.getValue(refinementDependencyModuleName))
+        }
+
+        module.createMultiplatformFacetM3(
+            platformKind = platform,
+            useProjectSettings = true,
+            dependsOnModuleNames = refinementDependencyClosure.toList(),
+            pureKotlinSourceFolders = emptyList(),
+        )
     }
 
     protected fun getCaretPosition(ktFile: KtFile): Int = getCaretPositionOrNull(ktFile) ?: error("Expected `<caret>` in file: $ktFile")

@@ -4,7 +4,14 @@ package org.jetbrains.kotlin.idea.test.projectStructureTest
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import org.jetbrains.kotlin.idea.base.util.getAsStringList
+import org.jetbrains.kotlin.idea.base.util.getNullableString
 import org.jetbrains.kotlin.idea.base.util.getString
+import org.jetbrains.kotlin.platform.CommonPlatforms
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.js.JsPlatforms
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import java.util.UUID
 
 interface TestProjectStructure {
@@ -41,25 +48,87 @@ data class TestProjectLibrary(val name: String, val roots: List<String>)
 
 object TestProjectLibraryParser {
     private const val ROOTS_FIELD = "roots"
+    private const val NAME_FIELD = "name"
 
     fun parse(json: JsonElement): TestProjectLibrary {
         require(json is JsonObject)
         val roots = json.getAsStringList(ROOTS_FIELD) ?: listOf(UUID.randomUUID().toString())
-        return TestProjectLibrary(json.getString("name"), roots)
+        return TestProjectLibrary(json.getString(NAME_FIELD), roots)
     }
 }
 
-data class TestProjectModule(val name: String, val dependsOnModules: List<String>)
+data class TestProjectModule(val name: String, val targetPlatform: TargetPlatform, val dependsOnModules: List<Dependency>)
+data class Dependency(val name: String, val kind: DependencyKind)
+
+enum class DependencyKind(val jsonName: String) {
+    REGULAR("regular"),
+    FRIEND("friend"),
+    REFINEMENT("refinement")
+}
+
+/**
+ * Simplified platform representation for testing.
+ * Shouldn't be used when precise HMPP platforms are important.
+ * E.g., defaultCommonPlatform is not an accurate representation for a JVM+JS shared source set.
+ */
+enum class TestPlatform(val jsonName: String, val targetPlatform: TargetPlatform) {
+    JVM("jvm", JvmPlatforms.defaultJvmPlatform),
+    JS("js", JsPlatforms.defaultJsPlatform),
+    NATIVE("native", NativePlatforms.unspecifiedNativePlatform),
+    WASM("wasm", WasmPlatforms.Default),
+    COMMON("common", CommonPlatforms.defaultCommonPlatform),
+}
 
 object TestProjectModuleParser {
     private const val DEPENDS_ON_FIELD = "dependsOn"
+    private const val MODULE_NAME_FIELD = "name"
+    private const val DEPENDENCY_NAME_FIELD = "name"
+    private const val DEPENDENCY_KIND_FIELD = "kind"
+    private const val PLATFORM_FIELD = "platform"
 
     fun parse(json: JsonElement): TestProjectModule {
         require(json is JsonObject)
-        val dependencies = json.getAsStringList(DEPENDS_ON_FIELD) ?: emptyList()
+        val dependencies = json.getAsJsonArray(DEPENDS_ON_FIELD)?.map(::parseDependency).orEmpty()
+        val platform = json.getNullableString(PLATFORM_FIELD)?.let(::parsePlatform) ?: JvmPlatforms.defaultJvmPlatform
         return TestProjectModule(
-            json.getString("name"),
-            dependencies
+            json.getString(MODULE_NAME_FIELD),
+            platform,
+            dependencies,
         )
+    }
+
+    /**
+     * String: only the name, interpreted as a regular dependency.
+     * JSON: [DEPENDENCY_NAME_FIELD] defines module name (or library name, if such exists, for regular dependencies);
+     * [DEPENDENCY_KIND_FIELD] defines the dependency kind, one of [DependencyKind].
+     */
+    private fun parseDependency(dependencyStringOrObject: JsonElement): Dependency {
+        return when {
+            dependencyStringOrObject.isJsonObject -> parseDependencyObject(dependencyStringOrObject.asJsonObject)
+            else -> Dependency(dependencyStringOrObject.asString, DependencyKind.REGULAR)
+        }
+    }
+
+    /**
+     * One of the platforms from [TestPlatform].
+     */
+    private fun parsePlatform(platformString: String): TargetPlatform {
+        val platforms = TestPlatform.entries
+        return platforms.firstOrNull { it.jsonName == platformString.lowercase() }?.targetPlatform
+            ?: error("Unexpected platform '$platformString'. Expected one of the following: ${platforms.joinToString {it.jsonName}}")
+    }
+
+    /**
+     * The name is mandatory, the kind is optional.
+     * If the kind is absent, the dependency is considered regular.
+     */
+    private fun parseDependencyObject(dependencyObject: JsonObject): Dependency {
+        val name = dependencyObject.getString(DEPENDENCY_NAME_FIELD)
+        val kind = dependencyObject.getNullableString(DEPENDENCY_KIND_FIELD)?.let { kind ->
+            DependencyKind.entries.firstOrNull { it.jsonName == kind }
+                ?: error("Unexpected kind '$kind'. Expected one of the following: " +
+                                 DependencyKind.entries.joinToString { it.jsonName })
+        } ?: DependencyKind.REGULAR
+        return Dependency(name, kind)
     }
 }
