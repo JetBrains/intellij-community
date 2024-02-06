@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.pythonSdk
 
-abstract class PythonDependencyCompletionTest : BasePlatformTestCase() {
+abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
   protected fun mockPackageNames(packageNames: List<String>) {
     val packageManagerProvider = TestPackageManagerProvider().withPackageNames(packageNames)
