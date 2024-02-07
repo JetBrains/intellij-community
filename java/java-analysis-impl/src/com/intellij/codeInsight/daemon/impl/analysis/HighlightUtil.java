@@ -144,7 +144,7 @@ public final class HighlightUtil {
 
   private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   public static final TokenSet BRACKET_TOKENS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
-  private static final String ANONYMOUS = "anonymous";
+  private static final @NlsSafe String ANONYMOUS = "anonymous ";
 
   private HighlightUtil() { }
 
@@ -3208,48 +3208,30 @@ public final class HighlightUtil {
 
   @NotNull
   static HighlightInfo.Builder createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,
-                                                           @Nullable PsiType rType,
-                                                           @NotNull TextRange textRange,
-                                                           int navigationShift,
-                                                           @NotNull String reason) {
+                                                                   @Nullable PsiType rType,
+                                                                   @NotNull TextRange textRange,
+                                                                   int navigationShift,
+                                                                   @NotNull String reason) {
     PsiType baseLType = PsiUtil.convertAnonymousToBaseType(lType);
     PsiType baseRType = rType == null ? null : PsiUtil.convertAnonymousToBaseType(rType);
+    boolean leftAnonymous = PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass;
     String styledReason = reason.isEmpty() ? "" :
                           String.format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
-    IncompatibleTypesTooltipComposer tooltipComposer = (lTypeString, lTypeArguments, rTypeString, rTypeArguments) -> {
-      lTypeString = addAnonymousIfNecessary(lType, lTypeString);
-      rTypeString = addAnonymousIfNecessary(rType, rTypeString);
-      return JavaErrorBundle.message("incompatible.types.html.tooltip",
-                                     lTypeString, lTypeArguments,
-                                     rTypeString, rTypeArguments,
-                                     styledReason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground()));
-    };
-    String toolTip = createIncompatibleTypesTooltip(baseLType, baseRType, tooltipComposer);
+    IncompatibleTypesTooltipComposer tooltipComposer = (lTypeString, lTypeArguments, rTypeString, rTypeArguments) -> 
+      JavaErrorBundle.message("incompatible.types.html.tooltip",
+                              lTypeString, lTypeArguments,
+                              rTypeString, rTypeArguments,
+                              styledReason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground()));
+    String toolTip = createIncompatibleTypesTooltip(leftAnonymous ? lType : baseLType, leftAnonymous ? rType : baseRType, tooltipComposer);
 
-    String lTypeString = JavaHighlightUtil.formatType(lType);
-    String rTypeString = JavaHighlightUtil.formatType(rType);
+    String lTypeString = JavaHighlightUtil.formatType(leftAnonymous ? lType : baseLType);
+    String rTypeString = JavaHighlightUtil.formatType(leftAnonymous ? rType : baseRType);
     String description = JavaErrorBundle.message("incompatible.types", lTypeString, rTypeString);
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
       .range(textRange)
       .description(description)
       .escapedToolTip(toolTip)
       .navigationShift(navigationShift);
-  }
-
-  /**
-   *
-   * @param type      the type
-   * @param typeString   the raw type (base type of anonymous type)
-   * @return String representation if `anonymous` is requried
-   */
-  @NotNull
-  private static String addAnonymousIfNecessary(@Nullable PsiType type,
-                                                @NotNull String typeString) {
-    if (type instanceof PsiClassType lClassType &&
-        lClassType.resolve() instanceof PsiAnonymousClass) {
-      typeString = ANONYMOUS + " " + typeString;
-    }
-    return typeString;
   }
 
   public static HighlightInfo.Builder checkArrayType(PsiTypeElement type) {
@@ -3321,21 +3303,17 @@ public final class HighlightUtil {
       String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
       boolean showShortType = showShortType(lSubstitutedType, rSubstitutedType);
 
-      requiredRow.append(skipColumns ? ""
-                                     : "<td style='padding: 0px 0px 8px 0px;'>")
+      requiredRow.append(skipColumns ? "" : "<td style='padding: 0px 0px 8px 0px;'>")
         .append(lTypeParams.length == 0 ? "" : openBrace)
         .append(redIfNotMatch(lSubstitutedType, true, showShortType))
         .append(i < lTypeParams.length ? closeBrace : "")
-        .append(skipColumns ? ""
-                            : "</td>");
+        .append(skipColumns ? "" : "</td>");
 
-      foundRow.append(skipColumns ? ""
-                                  : "<td style='padding: 0px 0px 0px 0px;'>")
+      foundRow.append(skipColumns ? "" : "<td style='padding: 0px 0px 0px 0px;'>")
         .append(rTypeParams.length == 0 ? "" : openBrace)
         .append(redIfNotMatch(rSubstitutedType, matches, showShortType))
         .append(i < rTypeParams.length ? closeBrace : "")
-        .append(skipColumns ? ""
-                            : "</td>");
+        .append(skipColumns ? "" : "</td>");
     }
     PsiType lRawType = lType instanceof PsiClassType ? ((PsiClassType)lType).rawType() : lType;
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
@@ -3350,7 +3328,9 @@ public final class HighlightUtil {
   static boolean showShortType(@Nullable PsiType lType, @Nullable PsiType rType) {
     if (Comparing.equal(lType, rType)) return true;
 
-    return lType != null && rType != null && !Comparing.strEqual(lType.getPresentableText(), rType.getPresentableText());
+    return lType != null && rType != null &&
+           (!lType.getPresentableText().equals(rType.getPresentableText()) ||
+            lType.getCanonicalText().equals(rType.getCanonicalText()));
   }
 
   private static @NotNull String getReasonForIncompatibleTypes(PsiType rType) {
@@ -3385,15 +3365,19 @@ public final class HighlightUtil {
   @NotNull
   static @NlsSafe HtmlChunk redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
     if (type == null) return HtmlChunk.empty();
-    Color color;
-    if (matches) {
-      color = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground();
+    String typeText;
+    if (shortType || type instanceof PsiCapturedWildcardType) {
+      typeText = PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiAnonymousClass
+                 ? ANONYMOUS + type.getPresentableText()
+                 : type.getPresentableText();
     }
     else {
-      color = NamedColorUtil.getErrorForeground();
+      typeText = type.getCanonicalText();
     }
-    return HtmlChunk.tag("font").attr("color", ColorUtil.toHtmlColor(color))
-      .addText(shortType || type instanceof PsiCapturedWildcardType ? type.getPresentableText() : type.getCanonicalText());
+    Color color = matches
+                  ? ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()
+                  : NamedColorUtil.getErrorForeground();
+    return HtmlChunk.tag("font").attr("color", ColorUtil.toHtmlColor(color)).addText(typeText);
   }
 
 
