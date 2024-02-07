@@ -99,7 +99,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     if (isCreatingNewProject) {
       if (sdkDownloadTask is JdkDownloadTask) {
         // Download the SDK on project creation
-        project.service<JdkDownloadService>().scheduleDownloadJdkForNewProject(sdkDownloadTask)
+        val sdkDownloadedFuture = project.service<JdkDownloadService>().scheduleDownloadJdkForNewProject(sdkDownloadTask)
       }
     }
 
