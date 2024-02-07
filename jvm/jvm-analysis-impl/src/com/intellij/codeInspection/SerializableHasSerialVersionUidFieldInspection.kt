@@ -8,9 +8,8 @@ import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddFieldActions
 import com.intellij.lang.jvm.actions.expectedTypes
 import com.intellij.lang.jvm.actions.fieldRequest
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiUtil
 import com.siyeh.HardcodedMethodConstants
 import com.siyeh.ig.fixes.SerialVersionUIDBuilder
 import com.siyeh.ig.psiutils.SerializationUtils
@@ -45,7 +44,7 @@ class SerializableHasSerialVersionUidFieldInspection : USerializableInspectionBa
     val serialUid = SerialVersionUIDBuilder.computeDefaultSUID(psiClass)
 
     val project = psiClass.project
-    val annotations = if (PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_14)) {
+    val annotations = if (JavaFeature.SERIAL_ANNOTATION.isAvailable(psiClass)) {
       listOf(annotationRequest("java.io.Serial"))
     }
     else emptyList()

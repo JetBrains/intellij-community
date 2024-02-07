@@ -1127,7 +1127,7 @@ public final class HighlightUtil {
                       // PsiJavaFile or JavaDummyHolder
                       modifierOwnerParent instanceof PsiClass &&
                       (modifierOwnerParent instanceof PsiSyntheticClass ||
-                       PsiUtil.isLanguageLevel16OrHigher(modifierOwnerParent) ||
+                       JavaFeature.INNER_STATICS.isAvailable(modifierOwnerParent) ||
                        ((PsiClass)modifierOwnerParent).getQualifiedName() != null ||
                        !modifierOwnerParent.isPhysical());
         }
@@ -1135,7 +1135,7 @@ public final class HighlightUtil {
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
             isAllowed = modifierOwnerParent instanceof PsiClass &&
                         (PsiModifier.STATIC.equals(modifier) ||
-                         PsiUtil.isLanguageLevel16OrHigher(modifierOwnerParent) ||
+                         JavaFeature.INNER_STATICS.isAvailable(modifierOwnerParent) ||
                          ((PsiClass)modifierOwnerParent).getQualifiedName() != null) ||
                         FileTypeUtils.isInServerPageFile(modifierOwnerParent) ||
                         // non-physical dummy holder might not have FQN
