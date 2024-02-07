@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
 sealed class K2MoveRenameUsageInfo(
@@ -195,18 +197,27 @@ sealed class K2MoveRenameUsageInfo(
             containingDecl.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
                 if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
                 if (refExpr.parent is KtThisExpression || refExpr.parent is KtSuperExpression) return@forEachDescendantOfType
-                analyze(refExpr) {
-                    val ref = refExpr.mainReference
-                    val declSymbol = ref.resolveToSymbol() as? KtDeclarationSymbol? ?: return@forEachDescendantOfType
-                    val declPsi = declSymbol.psi as? KtNamedDeclaration ?: return@forEachDescendantOfType
-                    if (declPsi.needsReferenceUpdate) {
-                        val usageInfo = ref.createKotlinUsageInfo(declPsi, isInternal = true)
-                        usages.add(usageInfo)
-                        refExpr.internalUsageInfo = usageInfo
-                    }
-                }
+                if (!refExpr.isImportable()) return@forEachDescendantOfType
+                val resolved = analyze(refExpr) { refExpr.mainReference.resolveToSymbol()?.psi } as? KtNamedDeclaration ?: return@forEachDescendantOfType
+                val usageInfo = refExpr.mainReference.createKotlinUsageInfo(resolved, isInternal = true)
+                usages.add(usageInfo)
+                refExpr.internalUsageInfo = usageInfo
             }
           return usages
+        }
+
+        private fun KtSimpleNameExpression.isImportable(): Boolean = analyze(this) {
+            val refExpr = this@isImportable
+            if (refExpr.isUnqualifiable()) return true
+            val resolvedSymbol = refExpr.mainReference.resolveToSymbol()
+            if (resolvedSymbol is KtConstructorSymbol) return true
+            val containingSymbol = resolvedSymbol?.getContainingSymbol()
+            if (containingSymbol == null) return true // top levels are static
+            if (containingSymbol is KtSymbolWithMembers) {
+                val staticScope = containingSymbol.getStaticMemberScope()
+                return resolvedSymbol in staticScope.getAllSymbols()
+            }
+            return false
         }
 
         /**
