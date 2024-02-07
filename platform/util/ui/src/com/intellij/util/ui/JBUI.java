@@ -826,6 +826,57 @@ public final class JBUI {
           return "Editor.Notification.WithoutStatus.borderInsets";
         }
       }
+      
+      interface Gutter {
+
+        static int emptyAnnotationAreaWidth() {
+          return getInt(emptyAnnotationAreaWidthKey(), defaultEmptyAnnotationAreaWidth());
+        }
+
+        static @NotNull String emptyAnnotationAreaWidthKey() {
+          return "Editor.Gutter.emptyAnnotationAreaWidth";
+        }
+
+        static int defaultEmptyAnnotationAreaWidth() {
+          return 4;
+        }
+
+        static int gapAfterVcsMarkersWidth() {
+          return getInt(gapAfterVcsMarkersWidthKey(), defaultGapAfterVcsMarkersWidth());
+        }
+
+        static @NotNull String gapAfterVcsMarkersWidthKey() {
+          return "Editor.Gutter.gapAfterVcsMarkersWidth";
+        }
+
+        static int defaultGapAfterVcsMarkersWidth() {
+          return 4;
+        }
+
+        static int gapAfterLineNumbersWidth() {
+          return getInt(gapAfterLineNumbersWidthKey(), defaultGapAfterLineNumbersWidth());
+        }
+
+        static @NotNull String gapAfterLineNumbersWidthKey() {
+          return "Editor.Gutter.gapAfterLineNumbersWidth";
+        }
+
+        static int defaultGapAfterLineNumbersWidth() {
+          return 4;
+        }
+
+        static int gapAfterIconsWidth() {
+          return getInt(gapAfterIconsWidthKey(), defaultGapAfterIconsWidth());
+        }
+
+        static @NotNull String gapAfterIconsWidthKey() {
+          return "Editor.Gutter.gapAfterIconsWidth";
+        }
+
+        static int defaultGapAfterIconsWidth() {
+          return 4;
+        }
+      }
     }
 
     public interface DragAndDrop {

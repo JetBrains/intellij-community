@@ -221,7 +221,13 @@
       "SearchField.borderInsets.compact": "3,10,3,8",
       "SearchToolbar.borderInsets.compact": "0,0,0,0",
       "ReplaceToolbar.borderInsets.compact": "1,0,1,0",
-      "SearchReplaceModePanel.borderInsets.compact": "3,3,3,3"
+      "SearchReplaceModePanel.borderInsets.compact": "3,3,3,3",
+      "Gutter": {
+        "emptyAnnotationAreaWidth.compact": 0,
+        "gapAfterVcsMarkersWidth.compact": 2,
+        "gapAfterLineNumbersWidth.compact": 2,
+        "gapAfterIconsWidth.compact": 2
+      }
     },
 
     "EditorPane": {

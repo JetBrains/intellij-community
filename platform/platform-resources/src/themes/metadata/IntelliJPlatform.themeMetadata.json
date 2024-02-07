@@ -460,6 +460,26 @@
       "description": "Editor header component border"
     },
     {
+      "key": "Editor.Gutter.emptyAnnotationAreaWidth",
+      "description": "Editor gutter annotation area width when the annotations are hidden",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.Gutter.gapAfterVcsMarkersWidth",
+      "description": "Editor gutter gap width after the VCS annotation markers",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.Gutter.gapAfterLineNumbersWidth",
+      "description": "Editor gutter gap width after the line numbers",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.Gutter.gapAfterIconsWidth",
+      "description": "Editor gutter gap width after the icons",
+      "since": "2024.1"
+    },
+    {
       "key": "EditorTabs.background",
       "description": "Background under all tabs in the editor. If value isn't specified the value of DefaultTabs.background will be used",
       "since": "2019.2"
