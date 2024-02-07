@@ -216,7 +216,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
     for (ChangeList list : changeLists) {
       List<Change> changes = sorted(list.getChanges(), CHANGE_COMPARATOR);
-      ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
+      ChangeListRemoteState listRemoteState = new ChangeListRemoteState();
 
       ChangesBrowserNode<?> changesParent;
       if (!skipChangeListNode) {
