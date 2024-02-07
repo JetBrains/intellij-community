@@ -44,12 +44,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
     val stickyModel: StickyLinesModel = StickyLinesModel.getModel(project, document) ?: return
     // markup model could contain raised zombies on the first pass.
     // we should burn them all here, otherwise an empty panel will appear
-    val removeExisting: Boolean = stickyModel.isFirstUpdate()
-    val outdatedLines: List<StickyLine> = if (removeExisting) {
-      removeExistingLines(stickyModel)
-    } else {
-      mergeWithExistingLines(stickyModel, linesToAdd) // mutates linesToAdd
-    }
+    val outdatedLines: List<StickyLine> = mergeWithExistingLines(stickyModel, linesToAdd) // mutates linesToAdd
     for (toRemove: StickyLine in outdatedLines) {
       stickyModel.removeStickyLine(toRemove)
     }
@@ -57,15 +52,6 @@ class StickyLinesCollector(private val project: Project, private val document: D
       stickyModel.addStickyLine(STICKY_LINE_SOURCE, toAdd.textOffset, toAdd.endOffset, toAdd.debugText)
     }
     stickyModel.notifyListeners()
-  }
-
-  private fun removeExistingLines(stickyModel: StickyLinesModel): List<StickyLine> {
-    val toRemove: MutableList<StickyLine> = mutableListOf()
-    stickyModel.processStickyLines(null) { existingLine: StickyLine ->
-      toRemove.add(existingLine)
-      true
-    }
-    return toRemove
   }
 
   private fun mergeWithExistingLines(
