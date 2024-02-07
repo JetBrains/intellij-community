@@ -39,6 +39,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -130,6 +131,8 @@ public final class PythonSdkUpdater {
       if (isSdkDisposed()) {
         return;
       }
+      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress
+      cancelIndicatorOnProjectDisposal(indicator);
       if (Trigger.LOG.isDebugEnabled()) {
         Trigger.LOG.debug(
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
@@ -161,6 +164,17 @@ public final class PythonSdkUpdater {
         // restart code analysis
         ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
       }
+    }
+
+    private void cancelIndicatorOnProjectDisposal(@NotNull ProgressIndicator indicator) {
+      Disposable indicatorDisposable = indicator instanceof Disposable disposable ? disposable : new Disposable() {
+        @Override
+        public void dispose() {
+          LOG.info("Cancelling update for " + mySdk + " due to project " + myProject + " disposal");
+          indicator.cancel();
+        }
+      };
+      Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
     }
 
     private void refreshPackages(@NotNull Sdk sdk, @NotNull ProgressIndicator indicator) {
