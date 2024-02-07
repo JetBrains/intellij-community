@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, fs};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
@@ -49,6 +50,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
         init_env_vars(&self.launcher_name, &self.default.ide_home).context("Preparing environment variables")?;
 
+        preload_native_libs(&self.default.ide_home).context("Preloading native libraries")?;
         self.default.prepare_for_launch()
     }
 }
@@ -509,6 +511,78 @@ fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
 #[cfg(not(target_os = "macos"))]
 fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
     None
+}
+
+#[cfg(not(target_os = "linux"))]
+fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
+    // We don't ship self-contained libraries outside of Linux
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
+    use libc::{dlclose, dlerror, dlopen};
+
+    let use_libs = parse_bool_env_var("REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS", true)?;
+    if !use_libs {
+        return Ok(())
+    }
+
+    let self_contained_dir = ide_home_dir.join("plugins/remote-dev-server/selfcontained/lib");
+    if !self_contained_dir.is_dir() {
+        error!("Self-contained libraries not found at {}. Only OS-provided libraries will be used.", self_contained_dir.to_string_lossy());
+        return Ok(());
+    }
+    let mut libs_to_try = HashSet::new();
+    for x in fs::read_dir(&self_contained_dir)? {
+        let _ = libs_to_try.insert(x?.path());
+    }
+
+    let mut try_loading_more = true;
+
+    let mut libs_to_remove = Vec::new();
+    // Try loading libraries until no new library is loaded on a given iterations
+    // This is the cheap solution to having to load libraries in correct order
+    while try_loading_more {
+        try_loading_more = false;
+        libs_to_remove.clear();
+        for child in &libs_to_try {
+            let child_path = child;
+            if let Some(name) = child_path.file_name() {
+                unsafe {
+                    // Try loading the library by (file) name first to see if it can be found in system
+                    let in_str = CString::new(name.to_string_lossy().to_string())?;
+                    let handle = dlopen(in_str.as_ptr(), libc::RTLD_LAZY | libc::RTLD_GLOBAL);
+                    if !handle.is_null() {
+                        let _ = dlclose(handle);
+                        libs_to_remove.push(child.clone());
+                        continue;
+                    }
+
+                    // Otherwise, load library by full path; this may fail if dependencies are not loaded yet
+                    let in_str = CString::new(child_path.to_string_lossy().to_string())?;
+                    let handle = dlopen(in_str.as_ptr(), libc::RTLD_LAZY | libc::RTLD_GLOBAL);
+                    if handle.is_null() {
+                        debug!("Can't load library from {}", child_path.to_string_lossy());
+                        let error = CStr::from_ptr(dlerror());
+                        debug!("Error reported: {}", error.to_string_lossy());
+                    } else {
+                        try_loading_more = true;
+                        libs_to_remove.push(child.clone());
+                    }
+                    // handle intentionally lost to keep library loaded; RTLD_NODELETE is non-POSIX
+                }
+            }
+        }
+        for x in &libs_to_remove {
+            let _ = libs_to_try.remove(x);
+        }
+    }
+
+    for x in libs_to_try {
+        println!("Unable to load native library {}. This might affect the IDE process.", x.to_string_lossy());
+    }
+    Ok(())
 }
 
 fn escape_for_idea_properties(path: &Path) -> String {
