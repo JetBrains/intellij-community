@@ -6,6 +6,7 @@ import com.intellij.facet.ui.FacetEditor
 import com.intellij.facet.ui.FacetEditorsFactory
 import com.intellij.facet.ui.MultipleFacetSettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import javax.swing.JComponent
@@ -55,7 +56,7 @@ class MultipleKotlinFacetEditor(
         // `editors` were created on the outside and will be disposed there;
         // we only have to worry about the `multiEditorComponent` that we created
         if (multiEditorComponent.isInitialized()) {
-            multiEditorComponent.value.compilerConfigurable.disposeUIResources()
+            Disposer.dispose(multiEditorComponent.value)
         }
     }
 }
