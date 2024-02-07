@@ -313,7 +313,7 @@ object QuickDocHighlightingHelper {
   ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
     colorScheme, editorPaneBackgroundColor,
     listOf(".content", ".content-separated", ".content-only div:not(.bottom)", ".sections"),
-    listOf(".definition code", ".definition pre", ".definition-only code", ".definition-only"),
+    listOf(".definition code", ".definition pre", ".definition-only code", ".definition-only pre"),
     DocumentationSettings.isCodeBackgroundEnabled()
     && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
     DocumentationSettings.isCodeBackgroundEnabled()
