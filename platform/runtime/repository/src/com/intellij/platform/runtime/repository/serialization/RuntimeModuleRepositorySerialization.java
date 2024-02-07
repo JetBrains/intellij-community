@@ -20,11 +20,16 @@ import java.util.Collection;
 public final class RuntimeModuleRepositorySerialization {
   private RuntimeModuleRepositorySerialization() {}
 
-  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName, 
-                               @NotNull Path jarPath, int generatorVersion)
+  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName,
+                               @NotNull Path jarPath, int generatorVersion) throws IOException {
+    saveToJar(descriptors, bootstrapModuleName, jarPath, null, generatorVersion);
+  }
+
+  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName,
+                               @NotNull Path jarPath, @Nullable String mainPluginModuleId, int generatorVersion)
     throws IOException {
     try {
-      JarFileSerializer.saveToJar(descriptors, bootstrapModuleName, jarPath, generatorVersion);
+      JarFileSerializer.saveToJar(descriptors, bootstrapModuleName, jarPath, mainPluginModuleId, generatorVersion);
     }
     catch (XMLStreamException e) {
       throw new IOException(e);
@@ -33,7 +38,7 @@ public final class RuntimeModuleRepositorySerialization {
 
   public static @NotNull RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws MalformedRepositoryException {
     try {
-      return new RawRuntimeModuleRepositoryData(jarPath);
+      return JarFileSerializer.loadFromJar(jarPath);
     }
     catch (XMLStreamException | IOException e) {
       throw new MalformedRepositoryException("Failed to load repository from " + jarPath, e);

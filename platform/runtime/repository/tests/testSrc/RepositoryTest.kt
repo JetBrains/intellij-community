@@ -185,6 +185,6 @@ class RepositoryTest {
   }
 
   private fun createRawRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescriptor): RawRuntimeModuleRepositoryData {
-    return RawRuntimeModuleRepositoryData(basePath, descriptors.associateBy { it.id })
+    return RawRuntimeModuleRepositoryData(descriptors.associateBy { it.id }, basePath, null)
   }
 }

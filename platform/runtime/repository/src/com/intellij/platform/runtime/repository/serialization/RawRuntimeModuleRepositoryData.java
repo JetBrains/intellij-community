@@ -1,13 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization;
 
-import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.xml.stream.XMLStreamException;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
@@ -19,16 +15,15 @@ import java.util.Set;
 public final class RawRuntimeModuleRepositoryData {
   private final Map<String, RawRuntimeModuleDescriptor> myDescriptors;
   private final Path myBasePath;
+  private final String myMainPluginModuleId;
 
-  RawRuntimeModuleRepositoryData(@NotNull Path descriptorsJarPath) throws XMLStreamException, IOException {
-    myBasePath = descriptorsJarPath.getParent();
-    myDescriptors = JarFileSerializer.loadFromJar(descriptorsJarPath);
-  }
-
-  @VisibleForTesting
-  public RawRuntimeModuleRepositoryData(Path basePath, Map<String, RawRuntimeModuleDescriptor> descriptors) {
-    myBasePath = basePath;
+  /**
+   * Use {@link RuntimeModuleRepositorySerialization#loadFromJar(Path)} to create an instance in production code.
+   */
+  public RawRuntimeModuleRepositoryData(@NotNull Map<String, RawRuntimeModuleDescriptor> descriptors, @NotNull Path basePath, @Nullable String mainPluginModuleId) {
     myDescriptors = descriptors;
+    myBasePath = basePath;
+    myMainPluginModuleId = mainPluginModuleId;
   }
 
   public @Nullable RawRuntimeModuleDescriptor findDescriptor(@NotNull String id) {
@@ -41,5 +36,13 @@ public final class RawRuntimeModuleRepositoryData {
   
   public @NotNull Set<String> getAllIds() {
     return myDescriptors.keySet();
+  }
+
+  /**
+   * Returns ID of the main plugin module for an additional module repository describing a custom plugin. 
+   * For the main module repository (describing the IDE distribution) it returns {@code null}. 
+   */
+  public @Nullable String getMainPluginModuleId() {
+    return myMainPluginModuleId;
   }
 }

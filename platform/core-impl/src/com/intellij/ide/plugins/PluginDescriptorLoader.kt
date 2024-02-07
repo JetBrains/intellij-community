@@ -203,7 +203,8 @@ fun loadDescriptorFromFileOrDirInTests(
   )
 }
 
-internal fun loadDescriptorFromFileOrDir(
+@Internal
+fun loadDescriptorFromFileOrDir(
   file: Path,
   context: DescriptorListLoadingContext,
   pathResolver: PathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
@@ -574,7 +575,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
     pool = zipFilePool,
     classLoader = mainClassLoader,
   ))
-  result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
+  result.addAll(ProductLoadingStrategy.strategy.loadCustomPluginDescriptors(scope = this, customPluginDir = customPluginDir, context = context, zipFilePool = zipFilePool))
 
   result.addAll(ProductLoadingStrategy.strategy.loadBundledPluginDescriptors(
     scope = this,

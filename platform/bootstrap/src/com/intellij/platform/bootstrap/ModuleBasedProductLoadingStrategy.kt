@@ -5,6 +5,8 @@ import com.intellij.ide.plugins.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.runtime.repository.*
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
+import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipFilePool
@@ -13,6 +15,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
   @OptIn(ExperimentalStdlibApi::class)
@@ -63,6 +66,81 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
              on 'intellij.profiler.common' and other module from the platform, in other IDEs it includes them as its own content. In the
              latter case we currently cannot run it using the modular loader, because these modules will be loaded twice. */
           logger<ModuleBasedProductLoadingStrategy>().debug("Skipped $moduleGroup: ${moduleGroup.includedModules}")
+          null
+        }
+      }
+    }
+  }
+
+  override fun loadCustomPluginDescriptors(scope: CoroutineScope, customPluginDir: Path, context: DescriptorListLoadingContext, 
+                                           zipFilePool: ZipFilePool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+    if (!Files.isDirectory(customPluginDir)) {
+      return emptyList()
+    }
+
+    return Files.newDirectoryStream(customPluginDir).use { dirStream ->
+      val deferredDescriptors = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
+      val additionalRepositoryPaths = ArrayList<Path>()
+      dirStream.forEach { file ->
+        val moduleRepository = file.resolve("module-descriptors.jar")
+        if (moduleRepository.exists()) {
+          additionalRepositoryPaths.add(moduleRepository)
+        }
+        else {
+          deferredDescriptors.add(scope.async {
+            loadDescriptorFromFileOrDir(
+              file = file,
+              context = context,
+              pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+              pool = zipFilePool,
+            )
+          })
+        }
+      }
+      deferredDescriptors.addAll(loadPluginDescriptorsFromAdditionalRepositories(scope, additionalRepositoryPaths, context, zipFilePool))
+      deferredDescriptors
+    }
+  }
+
+  private fun loadPluginDescriptorsFromAdditionalRepositories(scope: CoroutineScope,
+                                                              repositoryPaths: List<Path>,
+                                                              context: DescriptorListLoadingContext,
+                                                              zipFilePool: ZipFilePool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+    val repositoriesByPaths = scope.async {
+      val repositoriesByPaths = repositoryPaths.associateWith {
+        try {
+          RuntimeModuleRepositorySerialization.loadFromJar(it)
+        }
+        catch (e: MalformedRepositoryException) {
+          logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load module repository for a custom plugin: $e", e)
+          null
+        } 
+      }
+      (moduleRepository as RuntimeModuleRepositoryImpl).loadAdditionalRepositories(repositoriesByPaths.values.filterNotNull())
+      repositoriesByPaths
+    }
+    return repositoryPaths.map { path -> 
+      scope.async { 
+        val repositoryDataMap = repositoriesByPaths.await()
+        val repositoryData = repositoryDataMap[path] ?: return@async null
+        val mainModuleId = repositoryData.mainPluginModuleId ?: return@async null
+        try {
+          val mainModule = moduleRepository.getModule(RuntimeModuleId.raw(mainModuleId))
+          /* 
+            It would be probably better to reuse PluginModuleGroup here, and load information about additional modules from plugin.xml. 
+            However, currently this won't work because plugin model v2 requires that there is an xml configuration file for each module
+            mentioned in the <content> tag, but in the test plugins we have modules without configuration files. 
+          */
+          val descriptors = ArrayList<RuntimeModuleDescriptor>()
+          descriptors.add(mainModule)
+          repositoryData.allIds.asSequence()
+            .filter { it != mainModuleId }
+            .mapTo(descriptors) { moduleRepository.getModule(RuntimeModuleId.raw(it)) }
+          val moduleGroup = CustomPluginModuleGroup(descriptors)
+          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool)
+        }
+        catch (t: Throwable) {
+          logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load custom plugin '$mainModuleId': $t", t)
           null
         }
       }
@@ -146,6 +224,12 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   override fun isOptionalProductModule(moduleName: String): Boolean {
     return productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleName))
   }
+}
+
+private class CustomPluginModuleGroup(moduleDescriptors: List<RuntimeModuleDescriptor>) : RuntimeModuleGroup {
+  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, ModuleImportance.FUNCTIONAL) } 
+  override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules 
+  override fun getOptionalModuleIds(): Set<RuntimeModuleId> = emptySet()
 }
 
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"

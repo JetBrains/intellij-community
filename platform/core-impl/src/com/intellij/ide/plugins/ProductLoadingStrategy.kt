@@ -51,6 +51,12 @@ abstract class ProductLoadingStrategy {
     zipFilePool: ZipFilePool,
   ): List<Deferred<IdeaPluginDescriptorImpl?>>
 
+  /** Loads descriptors for custom (non-bundled) plugins from [customPluginDir] */
+  abstract fun loadCustomPluginDescriptors(scope: CoroutineScope,
+                                           customPluginDir: Path,
+                                           context: DescriptorListLoadingContext,
+                                           zipFilePool: ZipFilePool): Collection<Deferred<IdeaPluginDescriptorImpl?>>
+  
   abstract fun isOptionalProductModule(moduleName: String): Boolean
 
   /**
@@ -91,6 +97,11 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       bundledPluginDir = effectiveBundledPluginDir,
       scope = scope,
     )
+  }
+
+  override fun loadCustomPluginDescriptors(scope: CoroutineScope, customPluginDir: Path, context: DescriptorListLoadingContext, 
+                                           zipFilePool: ZipFilePool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+    return scope.loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool)
   }
 
   private fun loadFromPluginClasspathDescriptor(
