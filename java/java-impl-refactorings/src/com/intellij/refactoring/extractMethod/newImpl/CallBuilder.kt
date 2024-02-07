@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
+import com.intellij.pom.java.JavaLanguageFeature
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
@@ -46,7 +47,7 @@ class CallBuilder(private val context: PsiElement) {
       PsiUtil.setModifierProperty(declaredVariable, PsiModifier.FINAL, declareFinal)
 
       val isInferredVar = outputVariable?.typeElement?.isInferredType == true
-      if (isInferredVar || HighlightingFeature.LVTI.isAvailable(context) && settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE == true) {
+      if (isInferredVar || JavaLanguageFeature.LVTI.isAvailable(context) && settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE == true) {
         IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(declaredVariable.typeElement, declaredVariable)
       }
     }

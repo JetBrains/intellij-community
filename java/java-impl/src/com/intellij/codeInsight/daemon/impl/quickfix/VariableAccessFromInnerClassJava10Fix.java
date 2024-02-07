@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -51,7 +52,7 @@ public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCom
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    if (!HighlightingFeature.LVTI.isAvailable(context.file())) return null;
+    if (!JavaLanguageFeature.LVTI.isAvailable(context.file())) return null;
     PsiReferenceExpression reference = tryCast(element, PsiReferenceExpression.class);
     if (reference == null) return null;
     PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);

@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.pom.java.JavaLanguageFeature
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
@@ -58,7 +59,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
                          isAccessible: (targetModule: PsiJavaModule, packageName: String, useModule: PsiJavaModule) -> Boolean): ErrorWithFixes? {
     val originalTargetFile = targetFile?.originalFile
     val useFile = place.containingFile?.originalFile ?: return null
-    if (!HighlightingFeature.MODULES.isAvailable(useFile)) return null
+    if (!JavaLanguageFeature.MODULES.isAvailable(useFile)) return null
 
     val useVFile = useFile.virtualFile
     val index = ProjectFileIndex.getInstance(useFile.project)

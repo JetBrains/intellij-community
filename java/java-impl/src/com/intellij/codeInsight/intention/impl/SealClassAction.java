@@ -11,6 +11,7 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
@@ -42,7 +43,7 @@ public final class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
   }
 
   private static boolean isAvailable(@NotNull ActionContext context, @NotNull PsiClass aClass) {
-    if (!HighlightingFeature.SEALED_CLASSES.isAvailable(aClass)) return false;
+    if (!JavaLanguageFeature.SEALED_CLASSES.isAvailable(aClass)) return false;
     int offset = context.offset();
     PsiElement lBrace = aClass.getLBrace();
     if (lBrace == null) return false;

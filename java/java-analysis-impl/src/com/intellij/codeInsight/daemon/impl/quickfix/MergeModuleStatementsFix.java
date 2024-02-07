@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -27,7 +28,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends P
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaModule element) {
-    return HighlightingFeature.MODULES.isAvailable(element) ? Presentation.of(getText()) : null;
+    return JavaLanguageFeature.MODULES.isAvailable(element) ? Presentation.of(getText()) : null;
   }
 
   @IntentionName

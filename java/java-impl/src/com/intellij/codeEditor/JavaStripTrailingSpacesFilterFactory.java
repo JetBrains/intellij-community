@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
@@ -31,7 +32,7 @@ public final class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTra
 
     @Override
     protected void process(@NotNull PsiFile psiFile) {
-      if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(psiFile)) return;
+      if (!JavaLanguageFeature.TEXT_BLOCKS.isAvailable(psiFile)) return;
       psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {

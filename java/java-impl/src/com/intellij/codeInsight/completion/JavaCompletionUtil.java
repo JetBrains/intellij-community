@@ -29,6 +29,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -535,7 +536,7 @@ public final class JavaCompletionUtil {
           if (ReferenceListWeigher.INSTANCE.getApplicability(psiClass, myPlace) == inapplicable) {
             return new MarkProblem(MarkType.RED, null);
           }
-          if (HighlightingFeature.MODULES.isAvailable(myPlace)) {
+          if (JavaLanguageFeature.MODULES.isAvailable(myPlace)) {
             final PsiJavaModule currentModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
             if (currentModule != null) {
               final PsiJavaModule targetModule =  ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));

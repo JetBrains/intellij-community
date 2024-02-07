@@ -25,6 +25,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -95,7 +96,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {
-    return !onlyReportSwitchExpressions || HighlightingFeature.ENHANCED_SWITCH.isAvailable(file);
+    return !onlyReportSwitchExpressions || JavaLanguageFeature.ENHANCED_SWITCH.isAvailable(file);
   }
 
   @Override

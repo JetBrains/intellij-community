@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -26,7 +27,7 @@ public final class JavaPatternCompletionUtil {
    * @return true if patterns should be suggested here
    */
   public static boolean isPatternContext(@NotNull PsiFile psiFile, @NotNull PsiElement element) {
-    if (!HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(psiFile)) return false;
+    if (!JavaLanguageFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(psiFile)) return false;
     if (!(element instanceof PsiIdentifier)) return false;
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;

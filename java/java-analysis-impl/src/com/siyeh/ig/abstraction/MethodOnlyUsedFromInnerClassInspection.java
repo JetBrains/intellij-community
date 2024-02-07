@@ -3,6 +3,7 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -77,7 +78,7 @@ public final class MethodOnlyUsedFromInnerClassInspection extends BaseInspection
       if (innerClass == null) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.STATIC) && !HighlightingFeature.INNER_STATICS.isAvailable(method)) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !JavaLanguageFeature.INNER_STATICS.isAvailable(method)) {
         final PsiElement parent = innerClass.getParent();
         if (parent instanceof PsiClass && !innerClass.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLocalClass(innerClass)) {
           return;

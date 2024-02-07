@@ -23,6 +23,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -89,7 +90,7 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
       if (containingClass != null
           && !containingClass.hasModifierProperty(PsiModifier.STATIC)
           && containingClass.getContainingClass() != null
-          && !HighlightingFeature.INNER_STATICS.isAvailable(containingClass)
+          && !JavaLanguageFeature.INNER_STATICS.isAvailable(containingClass)
           && !PsiUtil.isCompileTimeConstant(field)) {
         // inner class cannot have static declarations in earlier Java versions
         return;
@@ -97,8 +98,8 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
       if (UnusedSymbolUtil.isImplicitWrite(field)) {
         return;
       }
-      if (containingClass instanceof PsiAnonymousClass && 
-          !HighlightingFeature.INNER_STATICS.isAvailable(containingClass) &&
+      if (containingClass instanceof PsiAnonymousClass &&
+          !JavaLanguageFeature.INNER_STATICS.isAvailable(containingClass) &&
           !PsiUtil.isCompileTimeConstant(field)) {
         return;
       }

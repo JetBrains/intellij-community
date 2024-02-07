@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -38,7 +39,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
       if (type == null) return false;
       if (PsiTypes.intType().isAssignableFrom(type)) return true;
       if (type instanceof PsiClassType classType) {
-        if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return true;
+        if (JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) return true;
 
         final PsiClass psiClass = classType.resolve();
         if (psiClass != null && psiClass.isEnum()) return true;
@@ -76,7 +77,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
           PsiSwitchStatement switchStatement = (PsiSwitchStatement)factory.createStatementFromText("switch(1){case 1:}", null);
           return postprocessSwitch(editor, expr, codeStyleManager, parent, switchStatement);
         }
-        else if (HighlightingFeature.ENHANCED_SWITCH.isAvailable(expr)) {
+        else if (JavaLanguageFeature.ENHANCED_SWITCH.isAvailable(expr)) {
           PsiSwitchExpression switchExpression = (PsiSwitchExpression)factory.createExpressionFromText("switch(1){case 1->1;}", null);
           return postprocessSwitch(editor, expr, codeStyleManager, expr, switchExpression);
         }
@@ -122,7 +123,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-        boolean isEnhancedSwitchAvailable = HighlightingFeature.ENHANCED_SWITCH.isAvailable(context);
+        boolean isEnhancedSwitchAvailable = JavaLanguageFeature.ENHANCED_SWITCH.isAvailable(context);
         List<PsiElement> result = new ArrayList<>();
 
         for (PsiElement element = PsiTreeUtil.getNonStrictParentOfType(context, PsiExpression.class, PsiStatement.class);

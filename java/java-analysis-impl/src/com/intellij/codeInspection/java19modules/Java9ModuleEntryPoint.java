@@ -10,6 +10,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.CachedValueProvider;
@@ -116,7 +117,7 @@ public final class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   private static @Nullable PsiJavaModule getJavaModule(@Nullable PsiElement element) {
-    return element != null && HighlightingFeature.MODULES.isAvailable(element) ? JavaModuleGraphUtil.findDescriptorByElement(element) : null;
+    return element != null && JavaLanguageFeature.MODULES.isAvailable(element) ? JavaModuleGraphUtil.findDescriptorByElement(element) : null;
   }
 
   private static boolean isInExportedPackage(@NotNull PsiClass psiClass, @NotNull PsiJavaModule javaModule) {

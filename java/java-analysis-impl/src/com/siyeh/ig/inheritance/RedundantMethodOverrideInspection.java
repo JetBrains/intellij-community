@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PackageScope;
@@ -184,7 +185,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
           method.isVarArgs() != superMethod.isVarArgs()) {
         return;
       }
-      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !HighlightingFeature.EXTENSION_METHODS.isAvailable(method)) {
+      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !JavaLanguageFeature.EXTENSION_METHODS.isAvailable(method)) {
         return;
       }
       boolean canBeRemoved = AbstractMethodOverridesAbstractMethodInspection.haveSameParameterTypes(method, superMethod);

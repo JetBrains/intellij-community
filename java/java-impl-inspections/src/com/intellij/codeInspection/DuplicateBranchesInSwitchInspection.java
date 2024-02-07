@@ -9,6 +9,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.LocalSearchScope;
@@ -1079,7 +1080,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements,
-                                   element -> element instanceof PsiPattern && (!HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(element) ||
+                                   element -> element instanceof PsiPattern && (!JavaLanguageFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(element) ||
                                                                                 JavaPsiPatternUtil.containsNamedPatternVariable(element)) ||
                                               element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }

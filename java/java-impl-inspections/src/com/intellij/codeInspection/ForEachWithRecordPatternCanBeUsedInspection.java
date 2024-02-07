@@ -7,6 +7,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -69,7 +70,7 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!JavaLanguageFeature.RECORD_PATTERNS_IN_FOR_EACH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     boolean useVar = IntroduceVariableBase.createVarType() || forceUseVar;
     return new JavaElementVisitor() {
       private final Options options = new Options(maxNotUsedComponentCounts,

@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
@@ -870,7 +871,7 @@ public class ExpressionGenerator extends Generator {
     final String text = literal.getText();
     final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      if (HighlightingFeature.TEXT_BLOCKS.isAvailable(literal)) {
+      if (JavaLanguageFeature.TEXT_BLOCKS.isAvailable(literal)) {
         builder
           .append("\"\"\"\n")
           .append(PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(value)))

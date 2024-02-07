@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.*;
@@ -739,7 +740,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       PsiType type = ((PsiInstanceOfExpression)anchor).getOperand().getType();
       if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
       // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 427)
-      if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(anchor)) return false;
+      if (JavaLanguageFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(anchor)) return false;
       PsiPattern pattern = ((PsiInstanceOfExpression)anchor).getPattern();
       if (pattern instanceof PsiTypeTestPattern && ((PsiTypeTestPattern)pattern).getPatternVariable() != null) {
         PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();

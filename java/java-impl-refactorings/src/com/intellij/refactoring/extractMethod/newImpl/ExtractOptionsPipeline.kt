@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.java.JavaLanguageFeature
 import com.intellij.psi.*
 import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.search.LocalSearchScope
@@ -206,7 +207,7 @@ object ExtractMethodPipeline {
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
     val targetClass = extractOptions.targetClass
     val isInnerClass = PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)
-    if (isInnerClass && !HighlightingFeature.INNER_STATICS.isAvailable(targetClass)) return null
+    if (isInnerClass && !JavaLanguageFeature.INNER_STATICS.isAvailable(targetClass)) return null
     val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
     if (memberUsages.any(::isNotExtractableUsage)) return null
     val addedParameters = memberUsages.groupBy(MemberUsage::member).entries

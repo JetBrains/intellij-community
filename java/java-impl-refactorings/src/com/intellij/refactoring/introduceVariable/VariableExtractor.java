@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightJavaToken;
@@ -336,7 +337,7 @@ final class VariableExtractor {
     }
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
-    if (HighlightingFeature.PATTERNS.isAvailable(anchor)) {
+    if (JavaLanguageFeature.PATTERNS.isAvailable(anchor)) {
       PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class);
       if (cast != null) {
         PsiType castType = cast.getType();

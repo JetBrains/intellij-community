@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -16,7 +17,7 @@ public final class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaL
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.LVTI.isAvailable(holder.getFile())) { //var won't be parsed as inferred type otherwise
+    if (!JavaLanguageFeature.LVTI.isAvailable(holder.getFile())) { //var won't be parsed as inferred type otherwise
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

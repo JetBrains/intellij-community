@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
@@ -95,7 +96,7 @@ public final class ModifierChooser {
   }
 
   public static String[] addClassModifiers(PsiModifierList list, @NotNull PsiElement scope) {
-    if (HighlightingFeature.SEALED_CLASSES.isAvailable(scope)) {
+    if (JavaLanguageFeature.SEALED_CLASSES.isAvailable(scope)) {
       if (list == null) {
         return CLASS_MODIFIERS_WITH_SEALED.clone();
       }
@@ -136,7 +137,7 @@ public final class ModifierChooser {
   }
 
   private static String[][] getInterfaceMemberModifiers(@NotNull PsiElement list) {
-    if (HighlightingFeature.SEALED_CLASSES.isAvailable(list)) {
+    if (JavaLanguageFeature.SEALED_CLASSES.isAvailable(list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_SEALED;
     }
     if (PsiUtil.isLanguageLevel9OrHigher(list)) {
@@ -149,7 +150,7 @@ public final class ModifierChooser {
   }
 
   private static String[][] getClassMemberModifiers(@NotNull PsiElement list) {
-    if (HighlightingFeature.SEALED_CLASSES.isAvailable(list)) {
+    if (JavaLanguageFeature.SEALED_CLASSES.isAvailable(list)) {
       return CLASS_MEMBER_MODIFIERS_WITH_SEALED;
     }
     return CLASS_MEMBER_MODIFIERS;

@@ -18,6 +18,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.pom.java.JavaLanguageFeature
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.light.LightRecordMember
@@ -136,11 +137,11 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
     if (staticMethodRequested) {
       // static methods in interfaces are allowed starting with Java 8
-      if (javaClass.isInterface && !HighlightingFeature.STATIC_INTERFACE_CALLS.isAvailable(javaClass)) return emptyList()
+      if (javaClass.isInterface && !JavaLanguageFeature.STATIC_INTERFACE_CALLS.isAvailable(javaClass)) return emptyList()
       // static methods in inner classes are disallowed before Java 16: see JLS 8.1.3
       if (javaClass.containingClass != null &&
           !javaClass.hasModifierProperty(PsiModifier.STATIC) &&
-          !HighlightingFeature.INNER_STATICS.isAvailable(javaClass)) return emptyList()
+          !JavaLanguageFeature.INNER_STATICS.isAvailable(javaClass)) return emptyList()
     }
 
     val result = ArrayList<IntentionAction>()

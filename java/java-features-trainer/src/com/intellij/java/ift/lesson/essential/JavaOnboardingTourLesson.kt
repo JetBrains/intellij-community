@@ -1,18 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift.lesson.essential
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.pom.java.JavaLanguageFeature
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.IntentionPowerPackBundle
 import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.util.*
+import training.util.isToStringContains
 
 // store as global const to not load the JavaOnboardingTourLesson class in onboarding promoter on Welcome Screen
 const val ideaOnboardingLessonId: String = "idea.onboarding"
@@ -72,7 +72,7 @@ class JavaOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLessonId
     fun getIntentionMessage(project: Project): @Nls String {
       val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: error("Not found modules in project '${project.name}'")
       val langLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module)
-      val messageKey = if (langLevel.isAtLeast(HighlightingFeature.TEXT_BLOCKS.level)) {
+      val messageKey = if (JavaLanguageFeature.TEXT_BLOCKS.isSufficient(langLevel)) {
         "replace.concatenation.with.format.string.intention.name.formatted"
       }
       else "replace.concatenation.with.format.string.intention.name"

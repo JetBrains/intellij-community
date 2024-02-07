@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -139,7 +140,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       if (bean != null && bean.getField() != null) {
         getter = GenerateMembersUtil.suggestGetterName(bean.getField());
       }
-      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && HighlightingFeature.RECORDS.isAvailable(context)) {
+      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && JavaLanguageFeature.RECORDS.isAvailable(context)) {
         getter = paramInfo.getName();
       }
       else {

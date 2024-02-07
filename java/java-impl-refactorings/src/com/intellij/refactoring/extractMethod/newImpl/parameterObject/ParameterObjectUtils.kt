@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
+import com.intellij.pom.java.JavaLanguageFeature
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -13,7 +14,7 @@ object ParameterObjectUtils {
     val factory = PsiElementFactory.getInstance(introducedClass.project)
     val typeParameters = introducedClass.typeParameters.map(factory::createType).toTypedArray()
     val type = factory.createType(introducedClass, *typeParameters)
-    val typeElement = if (HighlightingFeature.DIAMOND_TYPES.isAvailable(introducedClass) && typeParameters.isNotEmpty()) {
+    val typeElement = if (JavaLanguageFeature.DIAMOND_TYPES.isAvailable(introducedClass) && typeParameters.isNotEmpty()) {
       "${type.name}<>"
     } else {
       type.canonicalText

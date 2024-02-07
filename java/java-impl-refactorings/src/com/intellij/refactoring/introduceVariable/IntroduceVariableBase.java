@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -563,7 +564,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {
-    if (HighlightingFeature.LVTI.isAvailable(expr)) {
+    if (JavaLanguageFeature.LVTI.isAvailable(expr)) {
       PsiType type = getNormalizedType(expr);
       if (type != null && !PsiTypes.nullType().equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
         PsiExpression copy =
@@ -832,7 +833,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   private boolean checkAnchorBeforeThisOrSuper(Project project, Editor editor, PsiElement tempAnchorElement) {
-    if (HighlightingFeature.STATEMENTS_BEFORE_SUPER.isAvailable(tempAnchorElement)) {
+    if (JavaLanguageFeature.STATEMENTS_BEFORE_SUPER.isAvailable(tempAnchorElement)) {
       return false;
     }
     if (tempAnchorElement instanceof PsiExpressionStatement) {

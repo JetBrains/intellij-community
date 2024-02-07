@@ -39,6 +39,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -274,7 +275,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           return element instanceof PsiEnumConstant;
         }
       };
-      if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
+      if (!JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
         return enumClassFilter;
       }
 
@@ -321,7 +322,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
     };
 
-    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(position) ||
+    if (!JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(position) ||
         isPrimitive(selectorType) || TypeUtils.isJavaLangString(selectorType)) {
       ClassFilter classFilter = new ClassFilter(PsiClass.class) {
         @Override
@@ -1012,7 +1013,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (IN_SWITCH_LABEL.accepts(position)) {
-      return HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(parent);
+      return JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(parent);
     }
 
     if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {

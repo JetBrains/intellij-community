@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiPrecedenceUtil;
@@ -188,7 +189,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<? super @NotNull LocalQuickFix> fixes) {
-    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
+    if (!JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
     if (parent instanceof PsiSwitchBlock block && PsiUtil.skipParenthesizedExprDown(block.getExpression()) == qualifier) {
       fixes.add(LocalQuickFix.from(new CreateNullBranchFix(block)));

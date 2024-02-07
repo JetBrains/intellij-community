@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -217,7 +218,7 @@ public class PushDownConflicts {
     if (movedMember.hasModifierProperty(PsiModifier.STATIC) &&
         !targetClass.hasModifierProperty(PsiModifier.STATIC) &&
         !(targetClass.getParent() instanceof PsiFile) &&
-        !HighlightingFeature.INNER_STATICS.isAvailable(targetClass)) {
+        !JavaLanguageFeature.INNER_STATICS.isAvailable(targetClass)) {
       myConflicts.putValue(movedMember, JavaBundle.message("push.down.static.nonstatic.conflict",
                                               RefactoringUIUtil.getDescription(movedMember, false),
                                               RefactoringUIUtil.getDescription(targetClass, false)));

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -349,7 +350,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     }
 
     // jigsaw module
-    if (HighlightingFeature.MODULES.isAvailable(file)) {
+    if (JavaLanguageFeature.MODULES.isAvailable(file)) {
       final PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(file);
       if (currentModule != null) {
         final PsiJavaModule targetModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);

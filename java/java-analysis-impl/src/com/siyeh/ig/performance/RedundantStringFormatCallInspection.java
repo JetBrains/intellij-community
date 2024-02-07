@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -33,7 +34,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new RemoveRedundantStringFormatVisitor(holder, isOnTheFly, HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile()));
+    return new RemoveRedundantStringFormatVisitor(holder, isOnTheFly, JavaLanguageFeature.TEXT_BLOCKS.isAvailable(holder.getFile()));
   }
 
   private static final class RemoveRedundantStringFormatVisitor extends JavaElementVisitor {

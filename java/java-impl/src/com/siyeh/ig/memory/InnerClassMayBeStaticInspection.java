@@ -24,6 +24,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -175,7 +176,7 @@ public final class InnerClassMayBeStaticInspection extends BaseInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC) ||
           PsiUtil.isLocalOrAnonymousClass(aClass)) {
-        if (!HighlightingFeature.INNER_STATICS.isAvailable(aClass)) {
+        if (!JavaLanguageFeature.INNER_STATICS.isAvailable(aClass)) {
           return;
         }
       }

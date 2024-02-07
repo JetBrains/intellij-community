@@ -10,6 +10,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
+import com.intellij.pom.java.JavaLanguageFeature
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiKeyword
@@ -23,7 +24,7 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModComman
   abstract fun getText(): String
 
   override fun getPresentation(context: ActionContext, module: PsiJavaModule): Presentation? {
-    return if (HighlightingFeature.MODULES.isAvailable(module)) Presentation.of(getText()) else null
+    return if (JavaLanguageFeature.MODULES.isAvailable(module)) Presentation.of(getText()) else null
   }
 }
 

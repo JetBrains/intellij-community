@@ -3,6 +3,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -53,7 +54,7 @@ public final class ReplaceConcatenationWithFormatStringIntention extends MCInten
     }
     CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
-    if (HighlightingFeature.TEXT_BLOCKS.isAvailable(element)) {
+    if (JavaLanguageFeature.TEXT_BLOCKS.isAvailable(element)) {
       appendFormatString(expression, formatString, false, newExpression);
       newExpression.append(".formatted(");
     } else {
@@ -70,7 +71,7 @@ public final class ReplaceConcatenationWithFormatStringIntention extends MCInten
 
   @Override
   protected String getTextForElement(@NotNull PsiElement element) {
-    return IntentionPowerPackBundle.message(HighlightingFeature.TEXT_BLOCKS.isAvailable(element)
+    return IntentionPowerPackBundle.message(JavaLanguageFeature.TEXT_BLOCKS.isAvailable(element)
                                             ? "replace.concatenation.with.format.string.intention.name.formatted"
                                             : "replace.concatenation.with.format.string.intention.name");
   }

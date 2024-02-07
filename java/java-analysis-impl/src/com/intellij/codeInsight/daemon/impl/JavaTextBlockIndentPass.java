@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLiteralExpression;
@@ -49,7 +50,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!myEditor.getSettings().isIndentGuidesShown() || !HighlightingFeature.TEXT_BLOCKS.isAvailable(myFile)) {
+    if (!myEditor.getSettings().isIndentGuidesShown() || !JavaLanguageFeature.TEXT_BLOCKS.isAvailable(myFile)) {
       return;
     }
     Document document = myEditor.getDocument();

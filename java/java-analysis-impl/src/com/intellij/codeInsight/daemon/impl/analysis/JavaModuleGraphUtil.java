@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
@@ -218,7 +219,7 @@ public final class JavaModuleGraphUtil {
                                    @Nullable DependencyScope scope,
                                    boolean isExported) {
     if (to.equals(JAVA_BASE)) return false;
-    if (!HighlightingFeature.MODULES.isAvailable(from)) return false;
+    if (!JavaLanguageFeature.MODULES.isAvailable(from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to, scope) ? PsiKeyword.STATIC + " " : "") +
@@ -231,7 +232,7 @@ public final class JavaModuleGraphUtil {
                                       @NotNull PsiJavaModule to,
                                       @Nullable DependencyScope scope) {
     if (to.getName().equals(JAVA_BASE)) return false;
-    if (!HighlightingFeature.MODULES.isAvailable(from)) return false;
+    if (!JavaLanguageFeature.MODULES.isAvailable(from)) return false;
     if (alreadyContainsRequires(from, to.getName())) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +

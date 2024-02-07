@@ -10,6 +10,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -107,7 +108,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
       }
-      if (HighlightingFeature.RECORDS.isAvailable(ref)) {
+      if (JavaLanguageFeature.RECORDS.isAvailable(ref)) {
         if (isNewExpression) {
           result.add(new CreateRecordFromNewFix((PsiNewExpression)parent));
         }
@@ -118,7 +119,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
       if (isNewExpression) {
         result.add(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
-        if (HighlightingFeature.RECORDS.isAvailable(ref) && ((PsiNewExpression)parent).getQualifier() == null) {
+        if (JavaLanguageFeature.RECORDS.isAvailable(ref) && ((PsiNewExpression)parent).getQualifier() == null) {
           result.add(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
         }
       }

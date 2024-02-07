@@ -4,6 +4,7 @@ package com.siyeh.ig.dataflow;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -36,7 +37,7 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock switchBlock, @NotNull ModPsiUpdater updater) {
-    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) return;
+    if (!JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) return;
     PsiCodeBlock body = switchBlock.getBody();
     if (body == null) return;
     PsiExpression selector = switchBlock.getExpression();

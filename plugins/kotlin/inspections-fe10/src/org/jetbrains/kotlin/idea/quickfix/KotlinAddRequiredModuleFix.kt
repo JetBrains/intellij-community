@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.pom.java.JavaLanguageFeature
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaModule
@@ -26,7 +27,7 @@ class KotlinAddRequiredModuleFix(module: PsiJavaModule, private val requiredName
     override fun startInWriteAction() = true
 
     override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-        return HighlightingFeature.MODULES.isAvailable(file) &&
+        return JavaLanguageFeature.MODULES.isAvailable(file) &&
                 startElement is PsiJavaModule &&
                 startElement.getManager().isInProject(startElement)
     }

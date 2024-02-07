@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -116,7 +117,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
     }
 
-    if (ref != null && HighlightingFeature.PATTERNS.isAvailable(ref) && psiClass.getTypeParameters().length > 0) {
+    if (ref != null && JavaLanguageFeature.PATTERNS.isAvailable(ref) && psiClass.getTypeParameters().length > 0) {
       PsiExpression instanceOfOperand = JavaCompletionUtil.getInstanceOfOperand(ref);
       if (instanceOfOperand != null) {
         PsiClassType origType = JavaPsiFacade.getElementFactory(project).createType(psiClass);

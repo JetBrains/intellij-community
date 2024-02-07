@@ -19,7 +19,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.regist
 public final class SealedClassUnresolvedReferenceFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
-    if (!HighlightingFeature.SEALED_CLASSES.isAvailable(ref) && ref.textMatches(PsiKeyword.SEALED)) {
+    if (!JavaLanguageFeature.SEALED_CLASSES.isAvailable(ref) && ref.textMatches(PsiKeyword.SEALED)) {
       ArrayList<IntentionAction> intentions = new ArrayList<>();
       registerIncreaseLanguageLevelFixes(ref, JavaLanguageFeature.SEALED_CLASSES, intentions);
       for (IntentionAction intention : intentions) {

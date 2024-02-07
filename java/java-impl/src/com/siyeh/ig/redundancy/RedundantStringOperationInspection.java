@@ -15,6 +15,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -152,7 +153,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     public void visitTemplateExpression(@NotNull PsiTemplateExpression element) {
-      if (!HighlightingFeature.STRING_TEMPLATES.isAvailable(element) || element.getLiteralExpression() == null) {
+      if (!JavaLanguageFeature.STRING_TEMPLATES.isAvailable(element) || element.getLiteralExpression() == null) {
         return;
       }
       PsiExpression processor = element.getProcessor();

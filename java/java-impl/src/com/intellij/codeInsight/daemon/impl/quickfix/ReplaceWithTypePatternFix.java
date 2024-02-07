@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public class ReplaceWithTypePatternFix extends PsiUpdateModCommandAction<PsiRefe
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiReferenceExpression expression) {
-    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression) || !(expression.getParent() instanceof PsiCaseLabelElementList)) {
+    if (!JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(expression) || !(expression.getParent() instanceof PsiCaseLabelElementList)) {
       return null;
     }
     PsiClass resolvedExprClass = getResolvedExprClass();

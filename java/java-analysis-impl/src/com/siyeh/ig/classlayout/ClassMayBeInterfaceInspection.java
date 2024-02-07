@@ -23,6 +23,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -204,7 +205,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (PsiUtil.isLocalClass(aClass) && !HighlightingFeature.LOCAL_INTERFACES.isAvailable(aClass)) {
+      if (PsiUtil.isLocalClass(aClass) && !JavaLanguageFeature.LOCAL_INTERFACES.isAvailable(aClass)) {
         return;
       }
       if (!mayBeInterface(aClass)) {

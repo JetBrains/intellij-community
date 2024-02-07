@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
@@ -30,7 +31,7 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
 
   @Override
   public boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement context) {
-    if (HighlightingFeature.LVTI.isAvailable(context)) {
+    if (JavaLanguageFeature.LVTI.isAvailable(context)) {
       return false;
     }
     PsiElement[] declaredElements = context.getDeclaredElements();

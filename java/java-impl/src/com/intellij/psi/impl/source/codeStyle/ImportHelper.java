@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -129,7 +130,7 @@ public final class ImportHelper{
     classesToUseSingle.addAll(toReimport);
 
     try {
-      boolean stringTemplates = HighlightingFeature.STRING_TEMPLATES.isAvailable(file);
+      boolean stringTemplates = JavaLanguageFeature.STRING_TEMPLATES.isAvailable(file);
       StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand.keySet(), classesToUseSingle, stringTemplates);
       for (PsiElement nonImport : nonImports) {
         text.append("\n").append(nonImport.getText());

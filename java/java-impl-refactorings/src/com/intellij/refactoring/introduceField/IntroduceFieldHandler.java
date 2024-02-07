@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -122,7 +123,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
         declareStatic = isInSuperOrThis = isInSuperOrThis(occurrences[i]);
       }
     }
-    if (isInSuperOrThis && HighlightingFeature.STATIC_INTERFACE_CALLS.isAvailable(expr != null ? expr : anchorElement)) {
+    if (isInSuperOrThis && JavaLanguageFeature.STATIC_INTERFACE_CALLS.isAvailable(expr != null ? expr : anchorElement)) {
       isInSuperOrThis = false;
     }
     int occurrencesNumber = occurrences.length;

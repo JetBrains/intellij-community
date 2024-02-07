@@ -23,6 +23,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +69,7 @@ public final class ClassInitializerInspection extends BaseInspection {
     PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
     final PsiClass aClass = classInitializer.getContainingClass();
     assert aClass != null;
-    if (PsiUtil.isInnerClass(aClass) && !HighlightingFeature.INNER_STATICS.isAvailable(aClass) || 
+    if (PsiUtil.isInnerClass(aClass) && !JavaLanguageFeature.INNER_STATICS.isAvailable(aClass) ||
         ClassInitializerMayBeStaticInspection.dependsOnInstanceMembers(classInitializer)) {
       return new LocalQuickFix[] {new MoveToConstructorFix()};
     }

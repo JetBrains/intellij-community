@@ -12,6 +12,7 @@ import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
+import com.intellij.pom.java.JavaLanguageFeature
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
@@ -43,7 +44,7 @@ object ResultObjectExtractor {
       InplaceExtractUtils.showExtractErrorHint(editor, ExtractMultipleVariablesException(variables, scope))
       return
     }
-    val shouldInsertRecord = HighlightingFeature.RECORDS.isAvailable(variables.first())
+    val shouldInsertRecord = JavaLanguageFeature.RECORDS.isAvailable(variables.first())
     val objectBuilder = if (shouldInsertRecord) {
       RecordResultObjectBuilder.create(variables)
     } else {

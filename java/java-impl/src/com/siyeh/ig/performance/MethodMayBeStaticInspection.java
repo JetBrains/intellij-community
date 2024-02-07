@@ -23,6 +23,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -153,7 +154,7 @@ public final class MethodMayBeStaticInspection extends BaseInspection {
       }
       final PsiElement scope = containingClass.getScope();
       if (!(scope instanceof PsiJavaFile) && !containingClass.hasModifierProperty(PsiModifier.STATIC) && !containingClass.isInterface() &&
-          !HighlightingFeature.INNER_STATICS.isAvailable(scope)) {
+          !JavaLanguageFeature.INNER_STATICS.isAvailable(scope)) {
         return;
       }
       if (m_onlyPrivateOrFinal && !method.hasModifierProperty(PsiModifier.FINAL) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
