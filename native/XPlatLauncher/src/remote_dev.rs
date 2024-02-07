@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, fs};
 use std::collections::HashMap;
@@ -70,9 +70,9 @@ fn legacy_per_project_configs() -> bool {
 impl DefaultLaunchConfiguration {
     fn prepare_path_overrides(&self, per_project_config_dir_name: &str) -> Result<Option<PerProjectPathOverrides>> {
         if legacy_per_project_configs() {
-            let config_dir = self.prepare_host_config_dir(&per_project_config_dir_name)?;
-            let system_dir = self.prepare_host_system_dir(&per_project_config_dir_name)?;
-            let logs_dir = self.prepare_host_logs_dir(&per_project_config_dir_name)?;
+            let config_dir = self.prepare_host_config_dir(per_project_config_dir_name)?;
+            let system_dir = self.prepare_host_system_dir(per_project_config_dir_name)?;
+            let logs_dir = self.prepare_host_logs_dir(per_project_config_dir_name)?;
 
             Ok(Some(PerProjectPathOverrides {
                 config_dir,
@@ -108,7 +108,7 @@ impl DefaultLaunchConfiguration {
         let logs_home = &get_logs_home()?;
 
         match logs_home {
-            None => return Ok(None),
+            None => Ok(None),
             Some(x) => {
                 let prepared_logs_home = self.prepare_project_specific_dir(
                     "IDE logs directory",
@@ -147,11 +147,9 @@ impl DefaultLaunchConfiguration {
 
                 let product_code = &self.product_info.productCode;
 
-                let result = base_dir.join("JetBrains")
+                base_dir.join("JetBrains")
                     .join(format!("RemoteDev-{product_code}"))
-                    .join(per_project_config_dir_name);
-
-                result
+                    .join(per_project_config_dir_name)
             }
         };
 
@@ -171,11 +169,12 @@ impl DefaultLaunchConfiguration {
 }
 
 impl RemoteDevLaunchConfiguration {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
         let (project_path, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
 
-        // required for the most basic launch (e.g. showing help)
-        // as there may be nothing on user system and we'll crash
+        // required for the most basic launch (e.g., showing help)
+        // as there may be nothing on a user system and we'll crash
         Self::setup_font_config()?;
 
         let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
@@ -273,7 +272,7 @@ impl RemoteDevLaunchConfiguration {
             bail!("Project path does not exist: {project_path_string}");
         }
 
-        return Ok(project_path);
+        Ok(project_path)
     }
 
     fn create(exe_path: &Path, project_path: Option<PathBuf>, default: DefaultLaunchConfiguration) -> Result<Self> {
@@ -287,10 +286,7 @@ impl RemoteDevLaunchConfiguration {
                     info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
                 }
 
-                let per_project_config_dir_name = canonical_project_path.to_string_lossy()
-                    .replace("/", "_")
-                    .replace("\\", "_")
-                    .replace(":", "_");
+                let per_project_config_dir_name = canonical_project_path.to_string_lossy().replace(['/', '\\', ':'], "_");
                 debug!("Per-project config dir name: '{per_project_config_dir_name}'");
 
                 default.prepare_path_overrides(&per_project_config_dir_name)?
@@ -343,8 +339,8 @@ impl RemoteDevLaunchConfiguration {
             ("idea.required.plugins.id", "com.jetbrains.codeWithMe"),
 
             // Automatic updates are not supported by Remote Development
-            // It should be done manually by selecting correct IDE version in JetBrains Gateway
-            // For pre-configured environment (e.g. cloud) the version is fixed anyway
+            // It should be done manually by selecting the correct IDE version in JetBrains Gateway
+            // For pre-configured environment (e.g., cloud) the version is fixed anyway
             ("ide.no.platform.update", "true"),
 
             // Don't ask user about indexes download
@@ -359,7 +355,7 @@ impl RemoteDevLaunchConfiguration {
         ];
 
         for x in &extra_properties {
-            remote_dev_properties.push((x.0, &x.1.as_str()));
+            remote_dev_properties.push((x.0, x.1.as_str()));
         }
 
         let remote_dev_server_jcef_enabled = env::var("REMOTE_DEV_SERVER_JCEF_ENABLED").unwrap_or_default();
@@ -550,7 +546,7 @@ impl std::fmt::Display for RemoteDevEnvVars {
             .unwrap_or(0);
 
         for remote_dev_env_var in &self.0 {
-            write!(f, "\t{:max_len$} {}\n", remote_dev_env_var.name, remote_dev_env_var.description)?;
+            writeln!(f, "\t{:max_len$} {}", remote_dev_env_var.name, remote_dev_env_var.description)?;
         }
         Ok(())
     }
@@ -559,8 +555,8 @@ impl std::fmt::Display for RemoteDevEnvVars {
 fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
     RemoteDevEnvVars(vec![
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded chromium) in IDE".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other linux libraries from plugins/remote-dev-server/selfcontained. Use everything from the system. by default bundled libraries are used".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded Chromium) in IDE".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other Linux libraries from plugins/remote-dev-server/self-contained. Use everything from the system. by default bundled libraries are used".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE".to_string(), description: "set to any value to use as the script name in this output".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NEW_UI_ENABLED".to_string(), description: "set to '1' to start with forced enabled new UI".to_string()},
@@ -600,38 +596,35 @@ fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
         remote_dev_env_var_values.push(("REMOTE_DEV_NON_INTERACTIVE", "1"))
     }
 
-    let os_spec = get_os_specific_env_vars();
-    for (key, value) in os_spec.iter() {
-        remote_dev_env_var_values.push((key, value))
+    if let Some(os_spec) = get_os_specific_env_vars() {
+        remote_dev_env_var_values.extend(os_spec);
     }
 
     for (key, value) in remote_dev_env_var_values {
-        match env::var(key) {
-            Ok(old_value) => {
-                let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
-                debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
+        if let Ok(old_value) = env::var(key) {
+            let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
+            debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
                         Old value will be preserved for child processes.");
-                env::set_var(backup_key, old_value)
-            }
-            Err(_) => { }
+            env::set_var(backup_key, old_value)
         }
 
         env::set_var(key, value)
     }
 
-    return Ok(())
+    Ok(())
 }
+
 #[cfg(target_os = "macos")]
-fn get_os_specific_env_vars() -> Vec<(String, String)> {
-    // GTW-6786 fix macos host crashing on start
-    vec![("AWT_FORCE_HEADFUL".to_string(), "true".to_string())]
+fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
+    // GTW-6786 fix macOS host crashing on start
+    Some(vec![("AWT_FORCE_HEADFUL", "true")])
 }
 
 #[cfg(not(target_os = "macos"))]
-fn get_os_specific_env_vars() -> Vec<(String, String)> {
-    Vec::new()
+fn get_os_specific_env_vars() -> Option<Vec<(String, String)>> {
+    None
 }
 
 fn escape_for_idea_properties(path: &Path) -> String {
-    path.to_string_lossy().replace("\\", "\\\\")
+    path.to_string_lossy().replace('\\', "\\\\")
 }

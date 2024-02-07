@@ -99,7 +99,7 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
     let main_class = main_class.to_owned();
     let (tx, rx) = std::sync::mpsc::channel();
 
-    // JNI docs says that JVM should not be created on primordial thread
+    // JNI docs say that JVM should not be created on primordial thread
     // (https://docs.oracle.com/en/java/javase/17/docs/specs/jni/invocation.html#creating-the-vm)
     debug!("Starting a JVM thread");
     let join_handle = thread::Builder::new().spawn(move || {
@@ -157,8 +157,8 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
 }
 
 fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv<'static>> {
-    // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
-    // in load_libjvm().
+    // Read the current directory and pass it to JVM through environment variable.
+    // The real current directory will be changed in load_libjvm().
     let work_dir = env::current_dir().context("Failed to get current directory")?;
     env::set_var("IDEA_INITIAL_DIRECTORY", work_dir);
 
