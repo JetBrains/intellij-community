@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.vcs.FilePath
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
@@ -13,8 +12,6 @@ object GHPRActionKeys {
 
   @JvmStatic
   val PULL_REQUEST_URL = DataKey.create<String>("org.jetbrains.plugins.github.pullrequest.url")
-
-  internal val PULL_REQUEST_FILES = DataKey.create<Iterable<FilePath>>("org.jetbrains.plugins.github.pullrequest.files")
 
   @JvmStatic
   val PULL_REQUESTS_LIST_CONTROLLER = DataKey.create<GHPRListController>("org.jetbrains.plugins.github.pullrequest.list.controller")

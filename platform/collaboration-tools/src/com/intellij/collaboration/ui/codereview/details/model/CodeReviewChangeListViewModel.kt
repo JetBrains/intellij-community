@@ -60,6 +60,9 @@ interface CodeReviewChangeListViewModel {
   }
 }
 
+fun CodeReviewChangeListViewModel.WithDetails.isViewedStateForAllChanges(changes: Iterable<RefComparisonChange>, viewed: Boolean): Boolean =
+  changes.all { detailsByChange.value[it]?.isRead == viewed }
+
 abstract class CodeReviewChangeListViewModelBase(
   parentCs: CoroutineScope,
   protected val changeList: CodeReviewChangeList

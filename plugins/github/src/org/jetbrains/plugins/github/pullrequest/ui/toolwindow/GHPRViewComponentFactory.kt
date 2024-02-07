@@ -119,7 +119,6 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
       when {
         tree.isShowing ->
           when {
-            GHPRActionKeys.PULL_REQUEST_FILES.`is`(dataId) -> tree.getPullRequestFiles()
             GHPRChangeListViewModel.DATA_KEY.`is`(dataId) -> changeListVm
             CodeReviewChangeListViewModel.DATA_KEY.`is`(dataId) -> changeListVm
             else -> null
@@ -142,8 +141,3 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
     return CollaborationToolsUIUtil.moveToCenter(errorPanel)
   }
 }
-
-private fun ChangesTree.getPullRequestFiles(): Iterable<FilePath> =
-  VcsTreeModelData.selected(this)
-    .iterateUserObjects(Change::class.java)
-    .map { ChangesUtil.getFilePath(it) }

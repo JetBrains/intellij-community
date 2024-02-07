@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.messagePointer
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory.SELECTED_CHANGES
+import com.intellij.collaboration.ui.codereview.details.model.isViewedStateForAllChanges
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions.ActionText
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys.PULL_REQUEST_FILES
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import java.util.function.Supplier
 
@@ -19,16 +20,18 @@ internal abstract class GHPRViewedStateAction(
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
-    val files = e.getData(PULL_REQUEST_FILES) ?: return
+    val changes = e.getData(SELECTED_CHANGES) ?: return
     val vm = e.getData(GHPRChangeListViewModel.DATA_KEY) ?: return
 
-    e.presentation.isEnabledAndVisible = vm.isViewedStateForAllFiles(files, isViewed)?.not() ?: false
+    if (!vm.isOnLatest) return
+
+    e.presentation.isEnabledAndVisible = vm.isViewedStateForAllChanges(changes, isViewed)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val files = e.getRequiredData(PULL_REQUEST_FILES)
+    val changes = e.getRequiredData(SELECTED_CHANGES)
     val vm = e.getRequiredData(GHPRChangeListViewModel.DATA_KEY)
-    vm.setViewedState(files, isViewed)
+    vm.setViewedState(changes, isViewed)
   }
 }
 

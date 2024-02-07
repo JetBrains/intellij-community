@@ -10,7 +10,6 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.repo.GitRepository
@@ -26,18 +25,10 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.createViewedStateR
 @ApiStatus.Experimental
 interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails {
   val isUpdating: StateFlow<Boolean>
+  val isOnLatest: Boolean
 
-  /**
-   * Tests if the viewed state matches for all files
-   */
   @RequiresEdt
-  fun isViewedStateForAllFiles(files: Iterable<FilePath>, viewed: Boolean): Boolean?
-
-  /**
-   * Set a viewed state for all files
-   */
-  @RequiresEdt
-  fun setViewedState(files: Iterable<FilePath>, viewed: Boolean)
+  fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
 
   companion object {
     val DATA_KEY = DataKey.create<GHPRChangeListViewModel>("GitHub.PullRequest.Details.Changes.List.ViewModel")
@@ -55,6 +46,8 @@ internal class GHPRChangeListViewModelImpl(
 
   private val _isUpdating = MutableStateFlow(false)
   override val isUpdating: StateFlow<Boolean> = _isUpdating.asStateFlow()
+
+  override val isOnLatest: Boolean = changeList.commitSha == null
 
   private val viewedStateData = dataProvider.viewedStateData
 
@@ -81,20 +74,12 @@ internal class GHPRChangeListViewModelImpl(
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)*/
   }
 
-  override fun isViewedStateForAllFiles(files: Iterable<FilePath>, viewed: Boolean): Boolean? {
-    if (selectedCommit != null) return null
-    val state = viewedStateData.getViewedState() ?: return null
-    return files.all {
-      val relativePath = relativePath(repository.root, it)
-      (state[relativePath]?.isViewed() ?: false) == viewed
-    }
-  }
-
-  override fun setViewedState(files: Iterable<FilePath>, viewed: Boolean) {
+  @RequiresEdt
+  override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
     //TODO: check API for batch update
     val state = viewedStateData.getViewedState() ?: return
-    files.asSequence().map {
-      relativePath(repository.root, it)
+    changes.asSequence().map {
+      relativePath(repository.root, it.filePath)
     }.filter {
       state[it]?.isViewed() != viewed
     }.forEach {
