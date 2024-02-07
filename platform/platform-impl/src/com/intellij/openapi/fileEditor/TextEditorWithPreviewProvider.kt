@@ -2,16 +2,20 @@
 package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.TextEditorWithPreview.MyFileEditorState
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jdom.Attribute
+import org.jdom.DataConversionException
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 private const val FIRST_EDITOR = "first_editor"
 private const val SECOND_EDITOR = "second_editor"
 private const val SPLIT_LAYOUT = "split_layout"
+private const val VERTICAL_SPLIT = "is_vertical_split"
 
 @ApiStatus.Internal
 abstract class TextEditorWithPreviewProvider(
@@ -51,28 +55,24 @@ abstract class TextEditorWithPreviewProvider(
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
     val firstBuilder = createEditorBuilderAsync(provider = firstProvider, project = project, file = file, document = document)
     val secondBuilder = createEditorBuilderAsync(provider = secondProvider, project = project, file = file, document = document)
-    return object: AsyncFileEditorProvider.Builder() {
+    return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
         return createSplitEditor(firstEditor = firstBuilder.build(), secondEditor = secondBuilder.build())
       }
     }
   }
 
-  protected fun readFirstProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
+  private fun readFirstProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
     val child = sourceElement.getChild(FIRST_EDITOR) ?: return null
     return firstProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
   }
 
-  protected fun readSecondProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
+  private fun readSecondProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
     val child = sourceElement.getChild(SECOND_EDITOR) ?: return null
     return secondProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
   }
 
-  protected fun readSplitLayoutState(sourceElement: Element): String? {
-    return sourceElement.getAttribute(SPLIT_LAYOUT)?.value
-  }
-
-  protected fun writeFirstProviderState(state: FileEditorState?, project: Project, targetElement: Element) {
+  private fun writeFirstProviderState(state: FileEditorState?, project: Project, targetElement: Element) {
     val child = Element(FIRST_EDITOR)
     if (state != null) {
       firstProvider.writeState(state, project, child)
@@ -80,7 +80,7 @@ abstract class TextEditorWithPreviewProvider(
     }
   }
 
-  protected fun writeSecondProviderState(state: FileEditorState?, project: Project, targetElement: Element) {
+  private fun writeSecondProviderState(state: FileEditorState?, project: Project, targetElement: Element) {
     val child = Element(SECOND_EDITOR)
     if (state != null) {
       secondProvider.writeState(state, project, child)
@@ -88,10 +88,40 @@ abstract class TextEditorWithPreviewProvider(
     }
   }
 
-  protected fun writeSplitLayoutState(splitLayout: String?, targetElement: Element) {
-    if (splitLayout != null) {
-      targetElement.setAttribute(SPLIT_LAYOUT, splitLayout)
+  override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
+    val firstState = readFirstProviderState(sourceElement, project, file)
+    val secondState = readSecondProviderState(sourceElement, project, file)
+    val layoutState = readSplitLayoutState(sourceElement)
+    val isVerticalSplit = sourceElement.getAttribute(VERTICAL_SPLIT)?.booleanValue(false) ?: false
+    return MyFileEditorState(layoutState, firstState, secondState, isVerticalSplit)
+  }
+
+  private fun Attribute.booleanValue(default: Boolean): Boolean {
+    try {
+      return booleanValue
     }
+    catch (ignored: DataConversionException) {
+      return default
+    }
+  }
+
+  override fun writeState(state: FileEditorState, project: Project, targetElement: Element) {
+    if (state is MyFileEditorState) {
+      writeFirstProviderState(state.firstState, project, targetElement)
+      writeSecondProviderState(state.secondState, project, targetElement)
+      writeSplitLayoutState(state.splitLayout, targetElement)
+      targetElement.setAttribute(VERTICAL_SPLIT, state.isVerticalSplit.toString())
+    }
+  }
+
+  private fun readSplitLayoutState(sourceElement: Element): TextEditorWithPreview.Layout? {
+    val value = sourceElement.getAttribute(SPLIT_LAYOUT)?.value
+    return TextEditorWithPreview.Layout.entries.find { it.name == value }
+  }
+
+  private fun writeSplitLayoutState(layout: TextEditorWithPreview.Layout?, targetElement: Element) {
+    val value = layout?.name ?: return
+    targetElement.setAttribute(SPLIT_LAYOUT, value)
   }
 
   protected abstract fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor

@@ -8,8 +8,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.project.ProjectUtil;
@@ -90,20 +88,6 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   @Override
   public void setLayout(@NotNull Layout layout) {
     super.setLayout(layout);
-  }
-
-  @Override
-  public void setState(@NotNull FileEditorState state) {
-    if (state instanceof MarkdownEditorWithPreviewState actualState) {
-      super.setState(actualState.getUnderlyingState());
-      setVerticalSplit(actualState.isVerticalSplit());
-    }
-  }
-
-  @Override
-  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    final var underlyingState = super.getState(level);
-    return new MarkdownEditorWithPreviewState(underlyingState, isVerticalSplit());
   }
 
   @Override

@@ -236,6 +236,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
         myLayout = compositeState.getSplitLayout();
         invalidateLayout();
       }
+      setVerticalSplit(compositeState.isVerticalSplit());
     }
   }
 
@@ -290,7 +291,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
   @Override
   public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return new MyFileEditorState(myLayout, myEditor.getState(level), myPreview.getState(level));
+    return new MyFileEditorState(myLayout, myEditor.getState(level), myPreview.getState(level), isVerticalSplit());
   }
 
   @Override
@@ -331,11 +332,21 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     private final Layout mySplitLayout;
     private final FileEditorState myFirstState;
     private final FileEditorState mySecondState;
+    private final boolean myVerticalSplit;
 
-    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
+    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState, boolean verticalSplit) {
       mySplitLayout = layout;
       myFirstState = firstState;
       mySecondState = secondState;
+      myVerticalSplit = verticalSplit;
+    }
+
+    /**
+     * @deprecated Use {@link #MyFileEditorState(Layout, FileEditorState, FileEditorState, boolean)}
+     */
+    @Deprecated
+    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
+      this(layout, firstState, secondState, false);
     }
 
     public @Nullable Layout getSplitLayout() {
@@ -348,6 +359,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     public @Nullable FileEditorState getSecondState() {
       return mySecondState;
+    }
+
+    public boolean isVerticalSplit() {
+      return myVerticalSplit;
     }
 
     @Override
