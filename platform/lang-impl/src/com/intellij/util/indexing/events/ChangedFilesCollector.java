@@ -191,7 +191,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
           int fileId = info.getFileId();
           VirtualFile file = info.getFile();
           List<Project> dirtyQueueProjects = myDirtyFiles.getProjects(info.getFileId());
-          myDirtyFiles.removeFile(info.getFileId());
           if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects);
           if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true, dirtyQueueProjects);
           if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file, dirtyQueueProjects);
@@ -204,6 +203,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         catch (Throwable t) {
           if (LOG.isDebugEnabled()) LOG.debug("Exception while processing " + info, t);
           throw t;
+        }
+        finally {
+          myDirtyFiles.removeFile(info.getFileId());
         }
         return true;
       }
