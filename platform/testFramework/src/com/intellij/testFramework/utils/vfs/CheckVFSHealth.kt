@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.vfs
 
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthChecker
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthChecker.VFSHealthCheckReport
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.*
 import org.junit.rules.TestRule
@@ -73,7 +75,9 @@ private constructor(private val checkBeforeEach: Boolean = false,
     //TODO RC: supply dummy LOG instance so VFSHealthChecker doesn't fill the log with
     //         warnings?
     val checker = VFSHealthChecker()
-    val currentReport = checker.checkHealth(checkForOrphanRecords = true)
+    val currentReport = runBlockingCancellable {
+      checker.checkHealth(checkForOrphanRecords = true)
+    }
     context.publishReportEntry(LOCAL_STORE_REPORT_KEY, currentReport.toString())
 
     //In a perfect world, we should check _any_ VFS error.
@@ -119,12 +123,12 @@ class CheckVFSHealthRule : TestRule {
       override fun evaluate() {
         //TODO RC: supply dummy LOG instance so VFSHealthChecker doesn't fill the log with
         //         warnings?
-        val reportBefore = VFSHealthChecker().checkHealth(checkForOrphanRecords = true)
+        val reportBefore = runBlocking { VFSHealthChecker().checkHealth(checkForOrphanRecords = true) }
         try {
           base.evaluate()
         }
         finally {
-          val reportAfter = VFSHealthChecker().checkHealth(checkForOrphanRecords = true)
+          val reportAfter = runBlocking { VFSHealthChecker().checkHealth(checkForOrphanRecords = true) }
           assertVFSErrorsAreNotIncreased(reportAfter, reportBefore)
         }
       }
