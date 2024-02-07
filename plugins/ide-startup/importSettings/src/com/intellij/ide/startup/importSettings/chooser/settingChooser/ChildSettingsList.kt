@@ -5,24 +5,19 @@ import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
+import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JLabel
-import javax.swing.JList
-import javax.swing.JPanel
-import javax.swing.ListCellRenderer
+import javax.swing.*
 
 class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean, changeHandler: () -> Unit) : JBList<ChildItem>(createDefaultListModel(settings)) {
-  companion object {
-    const val SCROLL_PANE_INSETS = 7
-  }
-
-
   init {
     cellRenderer = CBRenderer(configurable)
 
@@ -30,7 +25,7 @@ class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean, ch
       addMouseListener(object : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
           val index = locationToIndex(e.point)
-          if (settings.size > index) {
+          if (index >= 0 && settings.size > index) {
             val settingItem = settings[index]
             settingItem.selected = !settingItem.selected
             repaint()
@@ -38,14 +33,40 @@ class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean, ch
           }
         }
       })
-    }
 
+      addKeyListener(object : KeyAdapter() {
+        override fun keyTyped(e: KeyEvent) {
+          val supply = SpeedSearchSupply.getSupply(this@ChildSettingsList)
+          if (supply != null && supply.isPopupActive) {
+            return
+          }
+          if (e.keyChar == ' ') {
+            for (index in selectedIndices) {
+              if (index >= 0 && settings.size > index) {
+                val settingItem = settings[index]
+                settingItem.selected = !settingItem.selected
+
+                repaint()
+                changeHandler()
+              }
+            }
+          }
+        }
+      })
+    }
   }
 }
 
 private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem> {
-  private var ch = JBCheckBox()
-  private var txt = JLabel()
+  private val hg = 3
+  private val wg = 5
+
+  private var ch = JBCheckBox().apply {
+    isOpaque = false
+  }
+  private var txt = JLabel().apply {
+    border = JBUI.Borders.emptyLeft(wg)
+  }
 
   private var addTxt = JLabel().apply {
     foreground = UIUtil.getContextHelpForeground()
@@ -56,10 +77,6 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
   }
 
   private val separator = SeparatorComponent(5, JBUI.CurrentTheme.Popup.separatorColor(), null)
-
-  private val hg = 3
-  private val wg = 5
-
 
   val line = JPanel(GridBagLayout()).apply {
     val constraint = GridBagConstraints()
@@ -93,7 +110,7 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
 
     add(rightTxt, constraint)
 
-    border = JBUI.Borders.empty()
+    border = JBUI.Borders.empty(1, wg, 0, wg)
   }
 
   val pane = JPanel().apply {
@@ -108,7 +125,7 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
     constraint.gridx = 0
     constraint.gridy = 1
     add(line, constraint)
-    border = JBUI.Borders.empty(hg, wg)
+    border = JBUI.Borders.emptyTop(hg)
   }
 
   override fun getListCellRendererComponent(list: JList<out ChildItem>,
@@ -118,6 +135,14 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
                                             cellHasFocus: Boolean): Component {
     separator.isVisible = value.separatorNeeded
     val child = value.child
+
+    if(configurable) {
+      line.background = if (isSelected) list.selectionBackground else list.background
+      val color = if (isSelected) list.selectionForeground else list.foreground
+
+      ch.foreground = color
+      txt.foreground = color
+    }
 
     ch.isVisible = configurable
     ch.isSelected = value.selected
