@@ -43,11 +43,6 @@ public class SealedInheritorsProviderTestGenerated extends AbstractSealedInherit
         runTest("testData/sealedInheritors/ambiguousSealedInterface/");
     }
 
-    @TestMetadata("hmppExpectActual")
-    public void testHmppExpectActual() throws Exception {
-        runTest("testData/sealedInheritors/hmppExpectActual/");
-    }
-
     @TestMetadata("illegalDistributedSealedClass")
     public void testIllegalDistributedSealedClass() throws Exception {
         runTest("testData/sealedInheritors/illegalDistributedSealedClass/");
@@ -76,6 +71,11 @@ public class SealedInheritorsProviderTestGenerated extends AbstractSealedInherit
     @TestMetadata("indirectInheritorsSealedInterface")
     public void testIndirectInheritorsSealedInterface() throws Exception {
         runTest("testData/sealedInheritors/indirectInheritorsSealedInterface/");
+    }
+
+    @TestMetadata("kmpExpectActual")
+    public void testKmpExpectActual() throws Exception {
+        runTest("testData/sealedInheritors/kmpExpectActual/");
     }
 
     @TestMetadata("librarySealedClass")

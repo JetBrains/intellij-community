@@ -1,0 +1,21 @@
+{
+    "modules": [
+        { "name": "common", "platform": "common", "dependencies": [] },
+        { "name": "intermediate", "platform": "common", "dependencies": [{ "kind": "refinement", "name": "common" }] },
+        { "name": "jvm", "platform": "jvm", "dependencies": [{ "kind": "refinement", "name": "intermediate" }] },
+        { "name": "native", "platform": "native", "dependencies": [{ "kind": "refinement", "name": "intermediate" }] },
+        { "name": "js", "platform": "js", "dependencies": [{ "kind": "refinement", "name": "common" }] }
+    ],
+    "targets": [
+        { "module": "common", "file": "class.common.kt" },
+        { "module": "common", "file": "interface.common.kt" },
+        { "module": "intermediate", "file": "class.intermediate.kt" },
+        { "module": "intermediate", "file": "interface.intermediate.kt" },
+        { "module":  "jvm", "file":  "class.jvm.kt" },
+        { "module":  "jvm", "file":  "interface.jvm.kt" },
+        { "module":  "js", "file":  "class.js.kt" },
+        { "module":  "js", "file":  "interface.js.kt" },
+        { "module":  "native", "file":  "class.native.kt" },
+        { "module":  "native", "file":  "interface.native.kt" }
+    ]
+}
