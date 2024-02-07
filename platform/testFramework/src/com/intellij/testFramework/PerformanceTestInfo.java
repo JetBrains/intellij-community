@@ -165,13 +165,13 @@ public class PerformanceTestInfo {
    * </ul>
    * <br/>
    * Considering metrics: better to have a test that produces metrics in seconds, rather milliseconds.<br/>
-   * Since degradation will be easier to detect and metric deviation from the baseline will be easier to notice.
+   * This way degradation will be easier to detect and metric deviation from the baseline will be easier to notice.
    * <p/>
-   * On CI all unit performance tests run as
+   * On TeamCity all unit performance tests run as
    * <a href="https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_Idea_Tests_PerformanceTests?branch=&buildTypeTab=overview&mode=builds">the composite build</a>
    * <br/>
-   * And their metrics are collected
-   * and can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-blade-hetzner&branch=master">IJ Perf</a>
+   * Raw metrics are reported as TC artifacts and can be found on Artifacts tqb in dependency builds.<br/>
+   * Human friendly metrics representation can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-blade-hetzner&branch=master">IJ Perf</a>
    *
    * @see PerformanceTestInfo#start(String)
    **/
@@ -250,9 +250,7 @@ public class PerformanceTestInfo {
 
   private void start(IterationMode iterationType, String fullQualifiedTestMethodName) {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
-    System.out.printf("Starting performance test in mode: %s%n", iterationType);
-
-    Timings.getStatistics(); // warm-up, measure
+    System.out.printf("Starting performance test \"%s\" in mode: %s%n", fullQualifiedTestMethodName, iterationType);
 
     int maxIterationsNumber;
     if (iterationType.equals(IterationMode.WARMUP)) {
@@ -305,8 +303,8 @@ public class PerformanceTestInfo {
     }
     finally {
       try {
-        // publish warmup and clean measurements at once at the end of the runs
-        if (iterationType.equals(IterationMode.MEASURE) && UsefulTestCase.IS_UNDER_TEAMCITY) {
+        // publish warmup and final measurements at once at the end of the runs
+        if (iterationType.equals(IterationMode.MEASURE)) {
           MetricsPublisher.Companion.getInstance().publishSync(fullQualifiedTestMethodName, launchName);
         }
       }

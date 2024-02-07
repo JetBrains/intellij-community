@@ -87,6 +87,15 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       val artifactName = "metrics.performance.json"
       val reportFile = Files.createTempFile("unit-perf-metric", artifactName)
       jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
+
+      // Print metrics in stdout when running locally
+      // https://youtrack.jetbrains.com/issue/AT-644/Performance-tests-do-not-check-anything#focus=Comments-27-8578186.0-0
+      // https://youtrack.jetbrains.com/issue/AT-726
+      if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+        println("Collected metrics: (can be found in ${teamCityClient.artifactForPublishingDir.resolve(fullQualifiedTestMethodName)})")
+        println(metricsDto.metrics.joinToString(separator = System.lineSeparator()) { String.format("%-50s %6s", it.n, it.v) })
+      }
+
       teamCityClient.publishTeamCityArtifacts(source = reportFile,
                                               artifactPath = fullQualifiedTestMethodName,
                                               artifactName = "metrics.performance.json",
