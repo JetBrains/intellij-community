@@ -238,6 +238,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
                     }
                     else if (event instanceof LocatableEvent) {
                       preloadEventInfo(((LocatableEvent)event));
+                      if (eventSet.size() > 1) {
+                        // check for more than one different thread
+                        if (StreamEx.of(eventSet).select(LocatableEvent.class).map(LocatableEvent::thread).toSet().size() > 1) {
+                          LOG.error("Two different threads in LocatableEvents: " + eventSet);
+                        }
+                      }
                       //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
                       //ModificationWatchpointEvent, StepEvent, WatchpointEvent
                       if (event instanceof StepEvent) {
