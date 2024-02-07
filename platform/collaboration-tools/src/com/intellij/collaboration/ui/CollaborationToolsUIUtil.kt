@@ -37,6 +37,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -348,21 +349,31 @@ object CollaborationToolsUIUtil {
 
 @Suppress("FunctionName")
 fun VerticalListPanel(gap: Int = 0): JPanel =
-  ScrollablePanel(ListLayout.vertical(gap), SwingConstants.VERTICAL).apply {
+  ScrollablePanel(SwingConstants.VERTICAL, ListLayout.vertical(gap)).apply {
     isOpaque = false
   }
 
 @Suppress("FunctionName")
 fun HorizontalListPanel(gap: Int = 0): JPanel =
-  ScrollablePanel(ListLayout.horizontal(gap), SwingConstants.HORIZONTAL).apply {
+  ScrollablePanel(SwingConstants.HORIZONTAL, ListLayout.horizontal(gap)).apply {
     isOpaque = false
   }
 
-private class ScrollablePanel(layout: LayoutManager?, private val orientation: Int)
-  : JPanel(layout), Scrollable {
+@Suppress("FunctionName")
+fun ScrollablePanel(@MagicConstant(intValues = [SwingConstants.HORIZONTAL.toLong(), SwingConstants.VERTICAL.toLong()]) orientation: Int,
+                    layout: LayoutManager? = null): JPanel =
+  OrientableScrollablePanel(orientation, layout)
+
+private class OrientableScrollablePanel(private val orientation: Int, layout: LayoutManager?) : JPanel(layout), Scrollable {
 
   private var verticalUnit = 1
   private var horizontalUnit = 1
+
+  init {
+    check(orientation == SwingConstants.VERTICAL || orientation == SwingConstants.HORIZONTAL) {
+      "SwingConstants.VERTICAL or SwingConstants.HORIZONTAL is expected for orientation, got $orientation"
+    }
+  }
 
   override fun addNotify() {
     super.addNotify()
