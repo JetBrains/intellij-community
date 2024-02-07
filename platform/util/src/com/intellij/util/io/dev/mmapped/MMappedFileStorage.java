@@ -21,7 +21,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -640,7 +642,22 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
         @Override
         public void start() throws IOException {
-          Files.createFile(mappingLockFile);
+          try {
+            Files.createFile(mappingLockFile);
+          }
+          catch (NoSuchFileException e) {
+            //NoSuchFileException usually means 'parent dir doesn't exist'
+            Path parent = mappingLockFile.getParent();
+            if (!Files.exists(parent)) {
+              throw new IOException("Parent dir[" + parent.toAbsolutePath() + "] is not exist/was removed -- can't create .lock-file", e);
+            }
+            else {
+              throw new IOException("Can't create .lock-file for unknown reasons", e);
+            }
+          }
+          catch (FileAlreadyExistsException e) {
+            throw new IOException("lock-file[" + mappingLockFile + "] already created -- concurrent access?", e);
+          }
         }
 
         @Override
