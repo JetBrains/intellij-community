@@ -9,6 +9,7 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class RemoveRedundantParameterTypesFix extends PsiUpdateModCommandAction<
     for (PsiParameter parameter : parameters) {
       PsiTypeElement typeElement = parameter.getTypeElement();
       if (typeElement == null) return false;
-      if (!JavaFeature.VAR_LAMBDA_PARAMETER.isAvailable(parameterList)) {
+      if (!PsiUtil.isAvailable(JavaFeature.VAR_LAMBDA_PARAMETER, parameterList)) {
         if (AnonymousCanBeLambdaInspection.mustKeepAnnotations(parameter, Collections.emptySet())) {
           return false;
         }
@@ -73,7 +74,7 @@ public class RemoveRedundantParameterTypesFix extends PsiUpdateModCommandAction<
   private static void removeTypes(PsiLambdaExpression lambdaExpression) {
     if (lambdaExpression != null) {
       final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
-      if (JavaFeature.VAR_LAMBDA_PARAMETER.isAvailable(lambdaExpression) &&
+      if (PsiUtil.isAvailable(JavaFeature.VAR_LAMBDA_PARAMETER, lambdaExpression) &&
           ContainerUtil.exists(parameters, parameter -> keepVarType(parameter))) {
         for (PsiParameter parameter : parameters) {
           PsiTypeElement element = parameter.getTypeElement();

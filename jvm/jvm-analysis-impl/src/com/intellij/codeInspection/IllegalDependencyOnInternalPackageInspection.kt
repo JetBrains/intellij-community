@@ -10,6 +10,7 @@ import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.light.LightJavaModule
+import com.intellij.psi.util.PsiUtil
 
 class IllegalDependencyOnInternalPackageInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = IllegalDependencyOnInternalPackage(holder)
@@ -17,7 +18,7 @@ class IllegalDependencyOnInternalPackageInspection : LocalInspectionTool() {
 
 private class IllegalDependencyOnInternalPackage(private val holder: ProblemsHolder) : PsiElementVisitor() {
   override fun visitFile(file: PsiFile) {
-    if (!JavaFeature.MODULES.isAvailable(file) || JavaModuleGraphUtil.findDescriptorByElement(file) != null) return
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, file) || JavaModuleGraphUtil.findDescriptorByElement(file) != null) return
     DependenciesBuilder.analyzeFileDependencies(file) { place, dependency ->
       if (dependency !is PsiClass) return@analyzeFileDependencies
       val dependencyFile = dependency.containingFile

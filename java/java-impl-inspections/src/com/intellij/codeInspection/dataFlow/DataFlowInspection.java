@@ -188,7 +188,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<? super @NotNull LocalQuickFix> fixes) {
-    if (!JavaFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, qualifier)) return;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
     if (parent instanceof PsiSwitchBlock block && PsiUtil.skipParenthesizedExprDown(block.getExpression()) == qualifier) {
       fixes.add(LocalQuickFix.from(new CreateNullBranchFix(block)));

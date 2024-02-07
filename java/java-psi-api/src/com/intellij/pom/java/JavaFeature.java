@@ -3,9 +3,6 @@ package com.intellij.pom.java;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.*;
 
 /**
@@ -168,20 +165,10 @@ public enum JavaFeature {
   }
 
   /**
-   * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)
-   * @return true if this feature is available in the PsiFile the supplied element belongs to
+   * @return true if the availability of this feature can be additionally filtered using {@link LanguageFeatureProvider}.
    */
-  public boolean isAvailable(@NotNull PsiElement element) {
-    if (!isSufficient(PsiUtil.getLanguageLevel(element))) return false;
-    if (!myCanBeCustomized) return true;
-    PsiFile file = element.getContainingFile();
-    if (file == null) return true;
-    for (LanguageFeatureProvider extension : LanguageFeatureProvider.EXTENSION_POINT_NAME.getExtensionList()) {
-      ThreeState threeState = extension.isFeatureSupported(this, file);
-      if (threeState != ThreeState.UNSURE)
-        return threeState.toBoolean();
-    }
-    return true;
+  public boolean canBeCustomized() {
+    return myCanBeCustomized;
   }
 
   public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {

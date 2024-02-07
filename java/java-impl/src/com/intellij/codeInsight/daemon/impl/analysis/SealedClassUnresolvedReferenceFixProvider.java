@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.regist
 public final class SealedClassUnresolvedReferenceFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
-    if (!JavaFeature.SEALED_CLASSES.isAvailable(ref) && ref.textMatches(PsiKeyword.SEALED)) {
+    if (!PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, ref) && ref.textMatches(PsiKeyword.SEALED)) {
       ArrayList<IntentionAction> intentions = new ArrayList<>();
       registerIncreaseLanguageLevelFixes(ref, JavaFeature.SEALED_CLASSES, intentions);
       for (IntentionAction intention : intentions) {

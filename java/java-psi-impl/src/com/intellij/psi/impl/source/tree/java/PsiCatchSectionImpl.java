@@ -76,7 +76,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     PsiType declaredType = parameter.getType();
 
     // When the thrown expression is an ... exception parameter Ej (parameter) of a catch clause Cj (this) ...
-    if (JavaFeature.MULTI_CATCH.isAvailable(parameter) && isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
+    if (PsiUtil.isAvailable(JavaFeature.MULTI_CATCH, parameter) && isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
       PsiTryStatement statement = getTryStatement();
       // ... and the try block of the try statement which declares Cj (tryBlock) can throw T ...
       Collection<PsiClassType> thrownTypes = getThrownTypes(statement);

@@ -7,6 +7,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -43,7 +44,7 @@ public final class UnnecessaryModifierInspection extends BaseInspection implemen
     public void visitClass(@NotNull PsiClass aClass) {
       final PsiElement parent = aClass.getParent();
       final boolean interfaceMember = parent instanceof PsiClass && ((PsiClass)parent).isInterface();
-      final boolean redundantStrictfp = JavaFeature.ALWAYS_STRICTFP.isAvailable(aClass) && aClass.hasModifierProperty(PsiModifier.STRICTFP);
+      final boolean redundantStrictfp = PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, aClass) && aClass.hasModifierProperty(PsiModifier.STRICTFP);
       if (aClass.isRecord() || aClass.isInterface() || aClass.isEnum() || interfaceMember || redundantStrictfp) {
         PsiModifierList modifierList = aClass.getModifierList();
         if (modifierList == null) {
@@ -102,7 +103,7 @@ public final class UnnecessaryModifierInspection extends BaseInspection implemen
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      final boolean redundantStrictfp = JavaFeature.ALWAYS_STRICTFP.isAvailable(method) && method.hasModifierProperty(PsiModifier.STRICTFP);
+      final boolean redundantStrictfp = PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, method) && method.hasModifierProperty(PsiModifier.STRICTFP);
       if (redundantStrictfp) {
         final PsiModifierList modifierList = method.getModifierList();
         final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);

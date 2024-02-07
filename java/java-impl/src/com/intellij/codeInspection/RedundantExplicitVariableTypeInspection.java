@@ -23,7 +23,7 @@ public final class RedundantExplicitVariableTypeInspection extends AbstractBaseJ
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.LVTI.isAvailable(holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.LVTI, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

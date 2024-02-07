@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaImplicitClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public final class HighlightImplicitClassUtil {
 
   static HighlightInfo.@Nullable Builder checkImplicitClassHasMainMethod(@NotNull PsiJavaFile file) {
-    if (!JavaFeature.IMPLICIT_CLASSES.isAvailable(file)) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, file)) return null;
     PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
     if (implicitClass == null) return null;
     PsiMethod[] methods = implicitClass.getMethods();
@@ -38,7 +39,7 @@ public final class HighlightImplicitClassUtil {
   }
 
   static HighlightInfo.@Nullable Builder checkImplicitClassFileIsValidIdentifier(@NotNull PsiJavaFile file) {
-    if (!JavaFeature.IMPLICIT_CLASSES.isAvailable(file)) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, file)) return null;
     PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
     if (implicitClass == null) return null;
     String name = implicitClass.getQualifiedName();
@@ -52,7 +53,7 @@ public final class HighlightImplicitClassUtil {
   }
 
   static HighlightInfo.@Nullable Builder checkInitializersInImplicitClass(@NotNull PsiClassInitializer initializer) {
-    if (initializer.getContainingClass() instanceof PsiImplicitClass && JavaFeature.IMPLICIT_CLASSES.isAvailable(initializer)) {
+    if (initializer.getContainingClass() instanceof PsiImplicitClass && PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, initializer)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(initializer)
         .descriptionAndTooltip(JavaErrorBundle.message("error.initializers.are.not.allowed.in.implicit.classes"))
@@ -63,7 +64,7 @@ public final class HighlightImplicitClassUtil {
 
   static HighlightInfo.@Nullable Builder checkPackageNotAllowedInImplicitClass(@NotNull PsiPackageStatement statement,
                                                                                @NotNull PsiFile file) {
-    if (JavaFeature.IMPLICIT_CLASSES.isAvailable(file) && JavaImplicitClassUtil.isFileWithImplicitClass(file)) {
+    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, file) && JavaImplicitClassUtil.isFileWithImplicitClass(file)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(statement)
         .descriptionAndTooltip(JavaErrorBundle.message("error.package.statement.not.allowed.for.implicit.class"))
@@ -74,7 +75,7 @@ public final class HighlightImplicitClassUtil {
 
   @Nullable
   static HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiJavaFile file) {
-    if (!JavaFeature.IMPLICIT_CLASSES.isAvailable(file)) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, file)) return null;
     PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
     if (implicitClass == null) return null;
 

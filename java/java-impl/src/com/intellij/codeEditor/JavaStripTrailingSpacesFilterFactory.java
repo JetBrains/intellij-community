@@ -9,6 +9,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
@@ -31,7 +32,7 @@ public final class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTra
 
     @Override
     protected void process(@NotNull PsiFile psiFile) {
-      if (!JavaFeature.TEXT_BLOCKS.isAvailable(psiFile)) return;
+      if (!PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, psiFile)) return;
       psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {

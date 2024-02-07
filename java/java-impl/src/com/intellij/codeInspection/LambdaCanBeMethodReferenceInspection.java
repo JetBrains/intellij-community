@@ -59,7 +59,7 @@ public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJava
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.LAMBDA_EXPRESSIONS.isAvailable(holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

@@ -6,6 +6,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public final class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaL
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.LVTI.isAvailable(holder.getFile())) { //var won't be parsed as inferred type otherwise
+    if (!PsiUtil.isAvailable(JavaFeature.LVTI, holder.getFile())) { //var won't be parsed as inferred type otherwise
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

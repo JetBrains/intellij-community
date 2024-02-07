@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ class ParameterObjectBuilder {
   }
 
   public String buildBeanClass() {
-    boolean recordsAvailable = JavaFeature.RECORDS.isAvailable(myFile) &&
+    boolean recordsAvailable = PsiUtil.isAvailable(JavaFeature.RECORDS, myFile) &&
                                !ContainerUtil.exists(fields, ParameterSpec::isSetterRequired);
     @NonNls final StringBuilder out = new StringBuilder(1024);
     if (packageName.length() > 0) out.append("package ").append(packageName).append(';');

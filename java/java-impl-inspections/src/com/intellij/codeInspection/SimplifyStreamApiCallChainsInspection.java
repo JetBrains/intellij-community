@@ -1702,7 +1702,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       PsiReferenceParameterList typeParameters = qualifierCall.getMethodExpression().getParameterList();
       String typeParametersText = typeParameters == null ? "" : ct.text(typeParameters);
       String factory;
-      if (JavaFeature.COLLECTION_FACTORIES.isAvailable(call) && MethodCallUtils.isVarArgCall(qualifierCall) &&
+      if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, call) && MethodCallUtils.isVarArgCall(qualifierCall) &&
           ContainerUtil
             .and(qualifierArgs.getExpressions(), e -> NullabilityUtil.getExpressionNullability(e, true) == Nullability.NOT_NULL)) {
         factory = JAVA_UTIL_LIST + "." + typeParametersText + "of";

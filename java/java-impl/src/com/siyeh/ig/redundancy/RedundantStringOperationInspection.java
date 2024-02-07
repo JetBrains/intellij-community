@@ -152,7 +152,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     public void visitTemplateExpression(@NotNull PsiTemplateExpression element) {
-      if (!JavaFeature.STRING_TEMPLATES.isAvailable(element) || element.getLiteralExpression() == null) {
+      if (!PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, element) || element.getLiteralExpression() == null) {
         return;
       }
       PsiExpression processor = element.getProcessor();

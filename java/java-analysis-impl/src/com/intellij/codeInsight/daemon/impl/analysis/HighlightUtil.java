@@ -1127,7 +1127,7 @@ public final class HighlightUtil {
                       // PsiJavaFile or JavaDummyHolder
                       modifierOwnerParent instanceof PsiClass &&
                       (modifierOwnerParent instanceof PsiSyntheticClass ||
-                       JavaFeature.INNER_STATICS.isAvailable(modifierOwnerParent) ||
+                       PsiUtil.isAvailable(JavaFeature.INNER_STATICS, modifierOwnerParent) ||
                        ((PsiClass)modifierOwnerParent).getQualifiedName() != null ||
                        !modifierOwnerParent.isPhysical());
         }
@@ -1135,7 +1135,7 @@ public final class HighlightUtil {
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
             isAllowed = modifierOwnerParent instanceof PsiClass &&
                         (PsiModifier.STATIC.equals(modifier) ||
-                         JavaFeature.INNER_STATICS.isAvailable(modifierOwnerParent) ||
+                         PsiUtil.isAvailable(JavaFeature.INNER_STATICS, modifierOwnerParent) ||
                          ((PsiClass)modifierOwnerParent).getQualifiedName() != null) ||
                         FileTypeUtils.isInServerPageFile(modifierOwnerParent) ||
                         // non-physical dummy holder might not have FQN
@@ -3855,7 +3855,7 @@ public final class HighlightUtil {
   public static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
                                                         @NotNull JavaFeature feature,
                                                         @NotNull List<? super IntentionAction> registrar) {
-    if (feature.isAvailable(element)) return;
+    if (PsiUtil.isAvailable(feature, element)) return;
     if (feature.isLimited()) return; //no reason for applying it because it can be outdated
     LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
     registrar.add(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel));

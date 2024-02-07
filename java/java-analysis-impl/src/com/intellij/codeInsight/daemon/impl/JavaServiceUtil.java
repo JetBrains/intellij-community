@@ -83,7 +83,7 @@ final public class JavaServiceUtil {
                                                                                   @Nullable PsiClass implementerClass,
                                                                                   @Nullable PsiClass resultClass) {
     if (identifier == null || implementerClass == null || resultClass == null) return Collections.emptyList();
-    if (!JavaFeature.MODULES.isAvailable(identifier)) return Collections.emptyList();
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, identifier)) return Collections.emptyList();
 
     String implementerClassName = implementerClass.getQualifiedName();
     if (implementerClassName == null) return Collections.emptyList();
@@ -127,7 +127,7 @@ final public class JavaServiceUtil {
 
   static List<LineMarkerInfo<PsiElement>> collectServiceLoaderLoadCall(@NotNull PsiIdentifier identifier,
                                                                        @NotNull PsiMethodCallExpression methodCall) {
-    if (!JavaFeature.MODULES.isAvailable(methodCall)) return Collections.emptyList();
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, methodCall)) return Collections.emptyList();
     PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
 
     JavaReflectionReferenceUtil.ReflectiveType serviceType = findServiceTypeInArguments(arguments);

@@ -28,6 +28,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -95,7 +96,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {
-    return !onlyReportSwitchExpressions || JavaFeature.ENHANCED_SWITCH.isAvailable(file);
+    return !onlyReportSwitchExpressions || PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, file);
   }
 
   @Override

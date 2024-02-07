@@ -8,6 +8,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
 import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ public final class MeaninglessRecordAnnotationInspection extends AbstractBaseJav
   
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.RECORDS.isAvailable(holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.RECORDS, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

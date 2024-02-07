@@ -349,7 +349,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     }
 
     // jigsaw module
-    if (JavaFeature.MODULES.isAvailable(file)) {
+    if (PsiUtil.isAvailable(JavaFeature.MODULES, file)) {
       final PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(file);
       if (currentModule != null) {
         final PsiJavaModule targetModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);

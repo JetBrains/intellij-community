@@ -55,7 +55,7 @@ public class RenameToIgnoredFix extends RenameElementFix {
   }
 
   private static boolean canBeUnnamed(PsiVariable variable) {
-    if (!JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(variable)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, variable)) return false;
     if (variable instanceof PsiPatternVariable || variable instanceof PsiResourceVariable) return true;
     if (variable instanceof PsiLocalVariable) {
       return variable.getParent() instanceof PsiDeclarationStatement decl && decl.getParent() instanceof PsiCodeBlock;

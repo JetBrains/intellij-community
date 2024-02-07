@@ -107,7 +107,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
       }
-      if (JavaFeature.RECORDS.isAvailable(ref)) {
+      if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref)) {
         if (isNewExpression) {
           result.add(new CreateRecordFromNewFix((PsiNewExpression)parent));
         }
@@ -118,7 +118,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
       if (isNewExpression) {
         result.add(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
-        if (JavaFeature.RECORDS.isAvailable(ref) && ((PsiNewExpression)parent).getQualifier() == null) {
+        if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref) && ((PsiNewExpression)parent).getQualifier() == null) {
           result.add(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
         }
       }

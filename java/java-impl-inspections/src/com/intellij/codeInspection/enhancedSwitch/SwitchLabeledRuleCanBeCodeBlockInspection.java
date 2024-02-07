@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -21,7 +22,7 @@ public final class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspec
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.ENHANCED_SWITCH.isAvailable(holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 

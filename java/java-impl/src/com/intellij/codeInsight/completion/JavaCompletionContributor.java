@@ -274,7 +274,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           return element instanceof PsiEnumConstant;
         }
       };
-      if (!JavaFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
+      if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, position)) {
         return enumClassFilter;
       }
 
@@ -321,7 +321,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
     };
 
-    if (!JavaFeature.PATTERNS_IN_SWITCH.isAvailable(position) ||
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, position) ||
         isPrimitive(selectorType) || TypeUtils.isJavaLangString(selectorType)) {
       ClassFilter classFilter = new ClassFilter(PsiClass.class) {
         @Override
@@ -1012,7 +1012,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (IN_SWITCH_LABEL.accepts(position)) {
-      return JavaFeature.PATTERNS_IN_SWITCH.isAvailable(parent);
+      return PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, parent);
     }
 
     if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {

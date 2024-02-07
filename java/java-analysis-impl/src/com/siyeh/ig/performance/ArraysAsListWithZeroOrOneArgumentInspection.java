@@ -11,6 +11,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -131,7 +132,7 @@ public final class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspe
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length > 1) return;
 
-      boolean suggestListOf = JavaFeature.COLLECTION_FACTORIES.isAvailable(expression);
+      boolean suggestListOf = PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, expression);
       boolean empty = false;
       if (arguments.length == 0) {
         empty = true;

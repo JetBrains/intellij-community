@@ -15,6 +15,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.BaseInspection;
@@ -47,7 +48,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {
-    return JavaFeature.RECORDS.isAvailable(file);
+    return PsiUtil.isAvailable(JavaFeature.RECORDS, file);
   }
 
   @Override

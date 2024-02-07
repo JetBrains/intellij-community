@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ public final class JavaPatternCompletionUtil {
    * @return true if patterns should be suggested here
    */
   public static boolean isPatternContext(@NotNull PsiFile psiFile, @NotNull PsiElement element) {
-    if (!JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(psiFile)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, psiFile)) return false;
     if (!(element instanceof PsiIdentifier)) return false;
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;

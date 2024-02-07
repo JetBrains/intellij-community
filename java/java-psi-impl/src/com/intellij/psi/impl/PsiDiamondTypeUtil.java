@@ -39,7 +39,7 @@ public final class PsiDiamondTypeUtil {
                                              final PsiNewExpression context,
                                              @Nullable final PsiType expectedType,
                                              boolean skipDiamonds) {
-    if (JavaFeature.DIAMOND_TYPES.isAvailable(context)) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();

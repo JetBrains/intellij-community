@@ -146,12 +146,12 @@ public final class PsiTypesUtil {
             case CommonClassNames.JAVA_LANG_DOUBLE:
               return "0.0";
             case CommonClassNames.JAVA_UTIL_SET:
-              return JavaFeature.COLLECTION_FACTORIES.isAvailable(psiClass) ? "java.util.Set.of()" : "java.util.Collections.emptySet()";
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.Set.of()" : "java.util.Collections.emptySet()";
             case CommonClassNames.JAVA_UTIL_COLLECTION:
             case CommonClassNames.JAVA_UTIL_LIST:
-              return JavaFeature.COLLECTION_FACTORIES.isAvailable(psiClass) ? "java.util.List.of()" : "java.util.Collections.emptyList()";
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.List.of()" : "java.util.Collections.emptyList()";
             case CommonClassNames.JAVA_UTIL_MAP:
-              return JavaFeature.COLLECTION_FACTORIES.isAvailable(psiClass) ? "java.util.Map.of()" : "java.util.Collections.emptyMap()";
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.Map.of()" : "java.util.Collections.emptyMap()";
           }
         }
       }

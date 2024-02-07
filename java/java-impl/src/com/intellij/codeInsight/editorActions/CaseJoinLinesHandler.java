@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public final class CaseJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
-    if (!JavaFeature.ENHANCED_SWITCH.isAvailable(psiFile)) return -1;
+    if (!PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, psiFile)) return -1;
     PsiElement elementAtStartLineEnd = psiFile.findElementAt(start);
     PsiElement elementAtNextLineStart = psiFile.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;

@@ -161,7 +161,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
       if (modifierListOwner.getParent() instanceof PsiParameterList &&
           modifierListOwner.getParent().getParent() instanceof PsiLambdaExpression lambda) {
         // Lambda parameter without type cannot be annotated. Check if we can specify types
-        if (JavaFeature.VAR_LAMBDA_PARAMETER.isAvailable(modifierListOwner)) return true;
+        if (PsiUtil.isAvailable(JavaFeature.VAR_LAMBDA_PARAMETER, modifierListOwner)) return true;
         return LambdaUtil.createLambdaParameterListWithFormalTypes(lambda.getFunctionalInterfaceType(), lambda, false) != null;
       }
       return false;
@@ -327,7 +327,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
         PsiParameter[] parameters = list.getParameters();
         int index = ArrayUtil.indexOf(parameters, parameter);
         PsiParameterList newList;
-        if (JavaFeature.VAR_LAMBDA_PARAMETER.isAvailable(list)) {
+        if (PsiUtil.isAvailable(JavaFeature.VAR_LAMBDA_PARAMETER, list)) {
           String newListText = StreamEx.of(parameters).map(p -> PsiKeyword.VAR + " " + p.getName()).joining(",", "(", ")");
           newList = ((PsiLambdaExpression)JavaPsiFacade.getElementFactory(list.getProject())
             .createExpressionFromText(newListText+" -> {}", null)).getParameterList();

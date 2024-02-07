@@ -84,7 +84,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
     VirtualFile virtualFile = file.getVirtualFile();
-    if (!JavaFeature.STREAMS.isAvailable(file) || virtualFile == null ||
+    if (!PsiUtil.isAvailable(JavaFeature.STREAMS, file) || virtualFile == null ||
         !FileIndexFacade.getInstance(holder.getProject()).isInSourceContent(virtualFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }

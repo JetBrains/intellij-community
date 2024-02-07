@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class AddSerialVersionUIDFix extends PsiUpdateModCommandQuickFix {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
     final long serialVersionUID = SerialVersionUIDBuilder.computeDefaultSUID(aClass);
     final PsiField field = elementFactory.createFieldFromText(generateSerialVersionUIDFieldText(serialVersionUID), aClass);
-    if (JavaFeature.SERIAL_ANNOTATION.isAvailable(field)) {
+    if (PsiUtil.isAvailable(JavaFeature.SERIAL_ANNOTATION, field)) {
       annotateFieldWithSerial(field);
     }
     aClass.add(field);

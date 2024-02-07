@@ -184,7 +184,7 @@ public final class SwitchUtils {
    */
   @Contract(pure = true)
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
-    if (!JavaFeature.ENHANCED_SWITCH.isAvailable(block)) {
+    if (!PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, block)) {
       return false;
     }
 
@@ -233,7 +233,7 @@ public final class SwitchUtils {
       if (JavaFeature.STRING_SWITCH.isSufficient(languageLevel) && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return true;
       }
-      return JavaFeature.PATTERNS_IN_SWITCH.isAvailable(expression);
+      return PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, expression);
     }
     return false;
   }
@@ -269,7 +269,7 @@ public final class SwitchUtils {
         return left;
       }
     }
-    if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
+    if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, expression)) {
       final PsiExpression patternSwitchExpression = findPatternSwitchExpression(expression);
       if (patternSwitchExpression != null) return patternSwitchExpression;
     }
@@ -431,7 +431,7 @@ public final class SwitchUtils {
         final PsiExpression instanceOf = ContainerUtil.find(operands, operand -> operand instanceof PsiInstanceOfExpression);
         StringBuilder builder = new StringBuilder();
         builder.append(createPatternCaseText(instanceOf));
-        boolean needAppendWhen = JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(expression);
+        boolean needAppendWhen = PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, expression);
         for (PsiExpression operand : operands) {
           if (operand != instanceOf) {
             builder.append(needAppendWhen ? " when " : " && ").append(operand.getText());

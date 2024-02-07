@@ -106,7 +106,7 @@ public final class PsiPolyExpressionUtil {
   }
 
   private static boolean isVarContext(PsiVariable variable) {
-    if (JavaFeature.LVTI.isAvailable(variable)) {
+    if (PsiUtil.isAvailable(JavaFeature.LVTI, variable)) {
       PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null && typeElement.isInferredType()) {
         return true;

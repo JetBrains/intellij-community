@@ -138,7 +138,7 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.make.abstract.method.static"));
     }
 
-    if(PsiUtil.isLocalOrAnonymousClass(containingClass) && !JavaFeature.INNER_STATICS.isAvailable(member) ||
+    if(PsiUtil.isLocalOrAnonymousClass(containingClass) && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, member) ||
        containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("inner.classes.cannot.have.static.members"));
     }

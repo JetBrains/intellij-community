@@ -187,7 +187,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
           method.isVarArgs() != superMethod.isVarArgs()) {
         return;
       }
-      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !JavaFeature.EXTENSION_METHODS.isAvailable(method)) {
+      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method)) {
         return;
       }
       boolean canBeRemoved = AbstractMethodOverridesAbstractMethodInspection.haveSameParameterTypes(method, superMethod);

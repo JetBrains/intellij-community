@@ -40,7 +40,7 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     boolean available = element.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
-                        JavaFeature.TRY_WITH_RESOURCES.isAvailable(element) &&
+                        PsiUtil.isAvailable(JavaFeature.TRY_WITH_RESOURCES, element) &&
                         (findVariable(element) != null || findExpression(element) != null);
     return available ? Presentation.of(getFamilyName()) : null;
   }

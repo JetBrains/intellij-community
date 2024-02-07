@@ -122,7 +122,7 @@ public abstract class LocalToFieldHandler {
    * @return true, if adding a non-compile-time constants static field to the specified class is allowed. False otherwise.
    */
   public static boolean isStaticFieldAllowed(@NotNull PsiClass aClass) {
-    if (JavaFeature.INNER_STATICS.isAvailable(aClass)) {
+    if (PsiUtil.isAvailable(JavaFeature.INNER_STATICS, aClass)) {
       return true;
     }
     return aClass.hasModifierProperty(PsiModifier.STATIC) || aClass.getParent() instanceof PsiJavaFile;

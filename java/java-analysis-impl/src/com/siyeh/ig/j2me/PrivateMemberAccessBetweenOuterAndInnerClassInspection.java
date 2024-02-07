@@ -172,7 +172,7 @@ public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extend
       // disable for jsp files IDEADEV-12957
       return false;
     }
-    return !JavaFeature.NESTMATES.isAvailable(file);
+    return !PsiUtil.isAvailable(JavaFeature.NESTMATES, file);
   }
 
   @Override

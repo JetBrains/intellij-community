@@ -33,7 +33,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new RemoveRedundantStringFormatVisitor(holder, isOnTheFly, JavaFeature.TEXT_BLOCKS.isAvailable(holder.getFile()));
+    return new RemoveRedundantStringFormatVisitor(holder, isOnTheFly, PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, holder.getFile()));
   }
 
   private static final class RemoveRedundantStringFormatVisitor extends JavaElementVisitor {

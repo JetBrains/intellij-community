@@ -12,6 +12,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,7 @@ public final class StaticPseudoFunctionalStyleMethodInspection extends AbstractB
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.STREAMS.isAvailable(holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.STREAMS, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

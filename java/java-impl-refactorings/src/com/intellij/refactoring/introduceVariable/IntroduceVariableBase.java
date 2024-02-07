@@ -563,7 +563,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {
-    if (JavaFeature.LVTI.isAvailable(expr)) {
+    if (PsiUtil.isAvailable(JavaFeature.LVTI, expr)) {
       PsiType type = getNormalizedType(expr);
       if (type != null && !PsiTypes.nullType().equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
         PsiExpression copy =
@@ -832,7 +832,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   private boolean checkAnchorBeforeThisOrSuper(Project project, Editor editor, PsiElement tempAnchorElement) {
-    if (JavaFeature.STATEMENTS_BEFORE_SUPER.isAvailable(tempAnchorElement)) {
+    if (PsiUtil.isAvailable(JavaFeature.STATEMENTS_BEFORE_SUPER, tempAnchorElement)) {
       return false;
     }
     if (tempAnchorElement instanceof PsiExpressionStatement) {

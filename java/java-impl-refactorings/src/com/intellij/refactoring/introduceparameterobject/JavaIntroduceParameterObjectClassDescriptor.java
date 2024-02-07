@@ -139,7 +139,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       if (bean != null && bean.getField() != null) {
         getter = GenerateMembersUtil.suggestGetterName(bean.getField());
       }
-      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && JavaFeature.RECORDS.isAvailable(context)) {
+      else if (bean == null && access == ReadWriteAccessDetector.Access.Read && PsiUtil.isAvailable(JavaFeature.RECORDS, context)) {
         getter = paramInfo.getName();
       }
       else {

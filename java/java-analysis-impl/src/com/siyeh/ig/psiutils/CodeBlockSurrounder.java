@@ -273,7 +273,7 @@ public abstract class CodeBlockSurrounder {
         if (parentContext != ParentContext.ASSIGNMENT && parentContext != ParentContext.RETURN) return null;
         return new TernaryToIfSurrounder(expression, conditional, parentSurrounder);
       }
-      if (JavaPsiConstructorUtil.isConstructorCall(parent) && !JavaFeature.STATEMENTS_BEFORE_SUPER.isAvailable(parent)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(parent) && !PsiUtil.isAvailable(JavaFeature.STATEMENTS_BEFORE_SUPER, parent)) {
         return null;
       }
       cur = parent;

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public final class Java9ReflectionClassVisibilityInspection extends AbstractBase
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     final PsiFile file = holder.getFile();
-    if (JavaFeature.MODULES.isAvailable(file)) {
+    if (PsiUtil.isAvailable(JavaFeature.MODULES, file)) {
       final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(file);
       if (javaModule != null) {
         return new JavaElementVisitor() {

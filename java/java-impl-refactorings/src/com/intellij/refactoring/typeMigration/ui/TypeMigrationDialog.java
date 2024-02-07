@@ -23,10 +23,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
@@ -143,10 +140,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       final String text = rootType != null ? rootType.getCanonicalText(true) : "";
       int flags = 0;
       PsiElement root = roots[0];
-      if (JavaFeature.VARARGS.isAvailable(root)) {
+      if (PsiUtil.isAvailable(JavaFeature.VARARGS, root)) {
         flags |= JavaCodeFragmentFactory.ALLOW_ELLIPSIS;
       }
-      if (JavaFeature.MULTI_CATCH.isAvailable(root)) {
+      if (PsiUtil.isAvailable(JavaFeature.MULTI_CATCH, root)) {
         flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
       }
       flags |= JavaCodeFragmentFactory.ALLOW_VOID;

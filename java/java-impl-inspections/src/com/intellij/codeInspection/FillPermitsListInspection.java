@@ -18,7 +18,7 @@ public final class FillPermitsListInspection extends AbstractBaseJavaLocalInspec
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.SEALED_CLASSES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass psiClass) {

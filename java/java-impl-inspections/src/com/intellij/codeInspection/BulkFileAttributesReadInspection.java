@@ -256,7 +256,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
       if (
         initializer != null
         && parent.getContext() != null
-        && JavaFeature.LVTI.isAvailable(parent)
+        && PsiUtil.isAvailable(JavaFeature.LVTI, parent)
         && JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE
       ) {
         displayType = TypeUtils.getType(PsiKeyword.VAR, parent.getContext());

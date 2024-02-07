@@ -192,7 +192,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       }
     }
 
-    if (!(element instanceof PsiClass psiClass) || !PATTERNS_IN_SWITCH.isAvailable(myElement)) return true;
+    if (!(element instanceof PsiClass psiClass) || !PsiUtil.isAvailable(PATTERNS_IN_SWITCH, myElement)) return true;
 
     if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
       addSealedHierarchy(state, psiClass);

@@ -33,7 +33,7 @@ import java.util.Set;
 public final class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.RECORDS.isAvailable(holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.RECORDS, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

@@ -109,7 +109,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         return;
       }
       ifStatement = concatenateIfStatements(ifStatement);
-      if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(ifStatement)) {
+      if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, ifStatement)) {
         for (PsiIfStatement ifStatementInChain : getAllConditionalBranches(ifStatement)) {
           replaceCastsWithPatternVariable(ifStatementInChain);
         }
@@ -319,7 +319,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
       }
     }
-    if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression)){
+    if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, switchExpression)){
       if (getNullability(switchExpression) != Nullability.NOT_NULL && findNullCheckedOperand(statementToReplace) == null) {
         final IfStatementBranch defaultBranch = ContainerUtil.find(branches, (branch) -> branch.isElse());
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
@@ -349,7 +349,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
     final PsiSwitchStatement replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
     updater.moveCaretTo(replacement);
-    if (JavaFeature.ENHANCED_SWITCH.isAvailable(replacement)) {
+    if (PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, replacement)) {
       final EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {
         replacer.replace(replacement);
@@ -674,7 +674,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
           return false;
         }
         Nullability nullability = getNullability(switchExpression);
-        if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression) && !ClassUtils.isPrimitive(switchExpression.getType())) {
+        if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, switchExpression) && !ClassUtils.isPrimitive(switchExpression.getType())) {
           if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null || hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
             nullability = Nullability.NOT_NULL;
           }

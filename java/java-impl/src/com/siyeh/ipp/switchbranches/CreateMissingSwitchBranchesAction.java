@@ -39,7 +39,7 @@ public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommand
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock block, @NotNull ModPsiUpdater updater) {
-    if (block instanceof PsiSwitchExpression && !JavaFeature.SWITCH_EXPRESSION.isAvailable(block)) {
+    if (block instanceof PsiSwitchExpression && !PsiUtil.isAvailable(JavaFeature.SWITCH_EXPRESSION, block)) {
       // Do not suggest if switch expression is not supported as we may generate unparseable code with 'yield' statement
       return;
     }

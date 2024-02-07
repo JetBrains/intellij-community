@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends P
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaModule element) {
-    return JavaFeature.MODULES.isAvailable(element) ? Presentation.of(getText()) : null;
+    return PsiUtil.isAvailable(JavaFeature.MODULES, element) ? Presentation.of(getText()) : null;
   }
 
   @IntentionName

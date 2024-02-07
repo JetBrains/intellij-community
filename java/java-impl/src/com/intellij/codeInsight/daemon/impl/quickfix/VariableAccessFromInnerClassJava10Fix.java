@@ -51,7 +51,7 @@ public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCom
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    if (!JavaFeature.LVTI.isAvailable(context.file())) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.LVTI, context.file())) return null;
     PsiReferenceExpression reference = tryCast(element, PsiReferenceExpression.class);
     if (reference == null) return null;
     PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);

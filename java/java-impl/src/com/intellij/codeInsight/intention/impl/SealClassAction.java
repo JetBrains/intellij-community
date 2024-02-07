@@ -42,7 +42,7 @@ public final class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
   }
 
   private static boolean isAvailable(@NotNull ActionContext context, @NotNull PsiClass aClass) {
-    if (!JavaFeature.SEALED_CLASSES.isAvailable(aClass)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, aClass)) return false;
     int offset = context.offset();
     PsiElement lBrace = aClass.getLBrace();
     if (lBrace == null) return false;

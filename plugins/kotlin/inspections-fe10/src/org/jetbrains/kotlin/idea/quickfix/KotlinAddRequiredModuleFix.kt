@@ -11,6 +11,7 @@ import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.idea.fe10.inspections.KotlinInspectionsFe10Bundle
@@ -26,7 +27,7 @@ class KotlinAddRequiredModuleFix(module: PsiJavaModule, private val requiredName
     override fun startInWriteAction() = true
 
     override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-        return JavaFeature.MODULES.isAvailable(file) &&
+        return PsiUtil.isAvailable(JavaFeature.MODULES, file) &&
                 startElement is PsiJavaModule &&
                 startElement.getManager().isInProject(startElement)
     }

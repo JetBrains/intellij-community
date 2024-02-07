@@ -76,7 +76,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
           registerProblem(statement, false);
           return;
         }
-        if (!JavaFeature.ADVANCED_COLLECTIONS_API.isAvailable(holder.getFile())) return;
+        if (!PsiUtil.isAvailable(JavaFeature.ADVANCED_COLLECTIONS_API, holder.getFile())) return;
         if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;
         if (!LambdaGenerationUtil.canBeUncheckedLambda(rValue, Predicate.isEqual(loop.getCounter()))) return;
         registerProblem(statement, true);

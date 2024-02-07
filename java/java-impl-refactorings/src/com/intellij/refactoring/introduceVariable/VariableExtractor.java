@@ -336,7 +336,7 @@ final class VariableExtractor {
     }
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
-    if (JavaFeature.PATTERNS.isAvailable(anchor)) {
+    if (PsiUtil.isAvailable(JavaFeature.PATTERNS, anchor)) {
       PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class);
       if (cast != null) {
         PsiType castType = cast.getType();

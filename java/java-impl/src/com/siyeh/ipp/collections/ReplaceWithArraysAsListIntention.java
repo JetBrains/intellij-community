@@ -10,6 +10,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.Presentation;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -83,12 +84,12 @@ public final class ReplaceWithArraysAsListIntention extends MCIntention {
   private static String getReplacementMethodText(String methodName, PsiMethodCallExpression context) {
     final PsiExpression[] arguments = context.getArgumentList().getExpressions();
     if (methodName.equals("emptyList") && arguments.length == 1 &&
-        !JavaFeature.COLLECTION_FACTORIES.isAvailable(context) && ClassUtils.findClass("com.google.common.collect.ImmutableList", context) == null) {
+        !PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context) && ClassUtils.findClass("com.google.common.collect.ImmutableList", context) == null) {
       return "java.util.Collections.singletonList";
     }
     if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
       if (!ContainerUtil.exists(arguments, ReplaceWithArraysAsListIntention::isPossiblyNull)) {
-        if (JavaFeature.COLLECTION_FACTORIES.isAvailable(context)) {
+        if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)) {
           return "java.util.List.of";
         }
         else if (ClassUtils.findClass("com.google.common.collect.ImmutableList", context) != null) {
@@ -98,7 +99,7 @@ public final class ReplaceWithArraysAsListIntention extends MCIntention {
       return "java.util.Arrays.asList";
     }
     if (methodName.equals("emptySet") || methodName.equals("singleton")) {
-      if (JavaFeature.COLLECTION_FACTORIES.isAvailable(context)) {
+      if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)) {
         return "java.util.Set.of";
       }
       else if (ClassUtils.findClass("com.google.common.collect.ImmutableSet", context) != null) {
@@ -106,7 +107,7 @@ public final class ReplaceWithArraysAsListIntention extends MCIntention {
       }
     }
     else if (methodName.equals("emptyMap") || methodName.equals("singletonMap")) {
-      if (JavaFeature.COLLECTION_FACTORIES.isAvailable(context)) {
+      if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)) {
         return "java.util.Map.of";
       }
       else if (ClassUtils.findClass("com.google.common.collect.ImmutableMap", context) != null) {

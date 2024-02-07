@@ -113,7 +113,7 @@ public class IntroduceHolderFix extends PsiUpdateModCommandQuickFix {
     final PsiModifierList modifierList = newField.getModifierList();
     assert modifierList != null;
     modifierList.setModifierProperty(PsiModifier.FINAL, true);
-    if (!JavaFeature.NESTMATES.isAvailable(holderClass)) {
+    if (!PsiUtil.isAvailable(JavaFeature.NESTMATES, holderClass)) {
       modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     }
     newField.setInitializer(rhs);

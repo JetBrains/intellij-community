@@ -129,7 +129,7 @@ public final class ImportHelper{
     classesToUseSingle.addAll(toReimport);
 
     try {
-      boolean stringTemplates = JavaFeature.STRING_TEMPLATES.isAvailable(file);
+      boolean stringTemplates = PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, file);
       StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand.keySet(), classesToUseSingle, stringTemplates);
       for (PsiElement nonImport : nonImports) {
         text.append("\n").append(nonImport.getText());

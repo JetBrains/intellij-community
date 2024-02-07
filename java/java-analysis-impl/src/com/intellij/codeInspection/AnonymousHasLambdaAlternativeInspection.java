@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +50,7 @@ public final class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJ
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     @NotNull PsiFile context = holder.getFile();
-    if (!JavaFeature.THREAD_LOCAL_WITH_INITIAL.isAvailable(context)) {
+    if (!PsiUtil.isAvailable(JavaFeature.THREAD_LOCAL_WITH_INITIAL, context)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

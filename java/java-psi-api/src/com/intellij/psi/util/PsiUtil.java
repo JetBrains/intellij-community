@@ -16,6 +16,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageFeatureProvider;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.ClassCandidateInfo;
@@ -28,6 +30,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -1068,9 +1071,33 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /**
-   * @param element element to get Java language level for
-   * @return the language level. If {@linkplain LanguageLevel#isUnsupported() unsupported} language level 
+   * @param feature feature to check
+   * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)
+   * @return true if the feature is available in the PsiFile the supplied element belongs to
+   */
+  public static boolean isAvailable(@NotNull JavaFeature feature, @NotNull PsiElement element) {
+    if (!feature.isSufficient(getLanguageLevel(element))) return false;
+    if (!feature.canBeCustomized()) return true;
+    PsiFile file = element.getContainingFile();
+    if (file == null) return true;
+    for (LanguageFeatureProvider extension : LanguageFeatureProvider.EXTENSION_POINT_NAME.getExtensionList()) {
+      ThreeState threeState = extension.isFeatureSupported(feature, file);
+      if (threeState != ThreeState.UNSURE)
+        return threeState.toBoolean();
+    }
+    return true;
+  }
+
+  /**
+   * Returns the element language level. If {@linkplain LanguageLevel#isUnsupported() unsupported} language level 
    * is selected for project or module, this method returns the supported alias.
+   * <p>
+   * Note that it's a rare case when one may need a language level. Usually, it's interesting to check
+   * whether a particular language feature is available at a given context. 
+   * Consider using {@link #isAvailable(JavaFeature, PsiElement)} instead of this method.
+   * 
+   * @param element element to get Java language level for
+   * @return the language level.
    */
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {

@@ -1429,7 +1429,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (!hasErrorResults() && resultForIncompleteCode != null && JavaFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
+    if (!hasErrorResults() && resultForIncompleteCode != null && PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, expression)) {
       add(HighlightUtil.checkPatternVariableRequired(expression, resultForIncompleteCode));
     }
 
@@ -1689,7 +1689,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
     super.visitStatement(statement);
-    if (!hasErrorResults() && JavaFeature.ENHANCED_SWITCH.isAvailable(myFile)) {
+    if (!hasErrorResults() && PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, myFile)) {
       add(HighlightUtil.checkReturnFromSwitchExpr(statement));
     }
     if (!hasErrorResults()) {

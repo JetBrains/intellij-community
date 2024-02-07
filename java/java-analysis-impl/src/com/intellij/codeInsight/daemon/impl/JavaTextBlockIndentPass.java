@@ -24,6 +24,7 @@ import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!myEditor.getSettings().isIndentGuidesShown() || !JavaFeature.TEXT_BLOCKS.isAvailable(myFile)) {
+    if (!myEditor.getSettings().isIndentGuidesShown() || !PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, myFile)) {
       return;
     }
     Document document = myEditor.getDocument();

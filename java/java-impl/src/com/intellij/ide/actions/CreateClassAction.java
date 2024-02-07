@@ -38,7 +38,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       .setTitle(JavaBundle.message("action.create.new.class"))
       .addKind(JavaPsiBundle.message("node.class.tooltip"), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
       .addKind(JavaPsiBundle.message("node.interface.tooltip"), PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
-    if (JavaFeature.RECORDS.isAvailable(directory)) {
+    if (PsiUtil.isAvailable(JavaFeature.RECORDS, directory)) {
       builder.addKind(JavaPsiBundle.message("node.record.tooltip"), PlatformIcons.RECORD_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);
     }
     LanguageLevel level = PsiUtil.getLanguageLevel(directory);

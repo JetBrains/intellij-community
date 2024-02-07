@@ -260,7 +260,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       IntList initializerPositions = new IntArrayList();
       for (PsiVariable resourceVariable : collectedVariables) {
         boolean variableUsedOutsideTry = isVariableUsedOutsideContext(resourceVariable, tryStatement);
-        if (!JavaFeature.REFS_AS_RESOURCE.isAvailable(finallyBlock) && variableUsedOutsideTry) return null;
+        if (!PsiUtil.isAvailable(JavaFeature.REFS_AS_RESOURCE, finallyBlock) && variableUsedOutsideTry) return null;
         if (!variableUsedOutsideTry && resourceVariable instanceof PsiLocalVariable) {
           PsiExpression initializer = resourceVariable.getInitializer();
           boolean hasNonNullInitializer = initializer != null && !PsiTypes.nullType().equals(initializer.getType());

@@ -118,7 +118,7 @@ public class JavaInheritorsGetter {
 
     PsiType psiType = GenericsUtil.eliminateWildcards(type);
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getOriginalPosition()) &&
-        JavaFeature.DIAMOND_TYPES.isAvailable(parameters.getOriginalFile())) {
+        PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, parameters.getOriginalFile())) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       PsiClassType classType = (PsiClassType)type;
       if (psiClass.hasTypeParameters() && !classType.isRaw()) {

@@ -89,7 +89,7 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
       if (containingClass != null
           && !containingClass.hasModifierProperty(PsiModifier.STATIC)
           && containingClass.getContainingClass() != null
-          && !JavaFeature.INNER_STATICS.isAvailable(containingClass)
+          && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, containingClass)
           && !PsiUtil.isCompileTimeConstant(field)) {
         // inner class cannot have static declarations in earlier Java versions
         return;
@@ -98,7 +98,7 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
         return;
       }
       if (containingClass instanceof PsiAnonymousClass &&
-          !JavaFeature.INNER_STATICS.isAvailable(containingClass) &&
+          !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, containingClass) &&
           !PsiUtil.isCompileTimeConstant(field)) {
         return;
       }

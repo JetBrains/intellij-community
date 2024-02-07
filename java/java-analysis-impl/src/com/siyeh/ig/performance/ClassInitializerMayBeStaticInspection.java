@@ -10,6 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -60,7 +61,7 @@ public final class ClassInitializerMayBeStaticInspection extends BaseInspection 
       final PsiElement scope = containingClass.getScope();
       if (!(scope instanceof PsiJavaFile) &&
           !containingClass.hasModifierProperty(PsiModifier.STATIC) &&
-          !JavaFeature.INNER_STATICS.isAvailable(containingClass)) {
+          !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, containingClass)) {
         return;
       }
 

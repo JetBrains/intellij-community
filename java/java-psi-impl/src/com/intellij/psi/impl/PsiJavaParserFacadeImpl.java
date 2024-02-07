@@ -267,7 +267,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @Override
   public PsiJavaCodeReferenceElement createReferenceFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
     boolean isStaticImport = context instanceof PsiImportStaticStatement && !((PsiImportStaticStatement)context).isOnDemand();
-    boolean mayHaveDiamonds = context instanceof PsiNewExpression && JavaFeature.DIAMOND_TYPES.isAvailable(context);
+    boolean mayHaveDiamonds = context instanceof PsiNewExpression && PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context);
     JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : mayHaveDiamonds ? DIAMOND_REF : REFERENCE;
     DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, level(context)), context);
     PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());

@@ -535,7 +535,7 @@ public final class JavaCompletionUtil {
           if (ReferenceListWeigher.INSTANCE.getApplicability(psiClass, myPlace) == inapplicable) {
             return new MarkProblem(MarkType.RED, null);
           }
-          if (JavaFeature.MODULES.isAvailable(myPlace)) {
+          if (PsiUtil.isAvailable(JavaFeature.MODULES, myPlace)) {
             final PsiJavaModule currentModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
             if (currentModule != null) {
               final PsiJavaModule targetModule =  ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));

@@ -1410,7 +1410,7 @@ public final class HighlightClassUtil {
     HighlightInfo.Builder builder = HighlightUtil.checkFeature(member, JavaFeature.IMPLICIT_CLASSES, languageLevel, psiFile);
     if (builder == null) return null;
 
-    if (!(member instanceof PsiClass) && !JavaFeature.IMPLICIT_CLASSES.isAvailable(member)) {
+    if (!(member instanceof PsiClass) && !PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, member)) {
       boolean hasClassToRelocate = PsiTreeUtil.findChildOfType(implicitClass, PsiClass.class) != null;
       if (hasClassToRelocate) {
         MoveMembersIntoClassFix fix = new MoveMembersIntoClassFix(implicitClass);

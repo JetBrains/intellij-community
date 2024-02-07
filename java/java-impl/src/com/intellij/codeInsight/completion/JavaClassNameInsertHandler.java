@@ -116,7 +116,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
     }
 
-    if (ref != null && JavaFeature.PATTERNS.isAvailable(ref) && psiClass.getTypeParameters().length > 0) {
+    if (ref != null && PsiUtil.isAvailable(JavaFeature.PATTERNS, ref) && psiClass.getTypeParameters().length > 0) {
       PsiExpression instanceOfOperand = JavaCompletionUtil.getInstanceOfOperand(ref);
       if (instanceOfOperand != null) {
         PsiClassType origType = JavaPsiFacade.getElementFactory(project).createType(psiClass);

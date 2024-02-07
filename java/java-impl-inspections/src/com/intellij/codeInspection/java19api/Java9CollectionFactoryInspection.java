@@ -70,7 +70,7 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.COLLECTION_FACTORIES.isAvailable(holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

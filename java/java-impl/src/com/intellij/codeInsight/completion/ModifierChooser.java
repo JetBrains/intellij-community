@@ -95,7 +95,7 @@ public final class ModifierChooser {
   }
 
   public static String[] addClassModifiers(PsiModifierList list, @NotNull PsiElement scope) {
-    if (JavaFeature.SEALED_CLASSES.isAvailable(scope)) {
+    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, scope)) {
       if (list == null) {
         return CLASS_MODIFIERS_WITH_SEALED.clone();
       }
@@ -136,20 +136,20 @@ public final class ModifierChooser {
   }
 
   private static String[][] getInterfaceMemberModifiers(@NotNull PsiElement list) {
-    if (JavaFeature.SEALED_CLASSES.isAvailable(list)) {
+    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_SEALED;
     }
     if (PsiUtil.isLanguageLevel9OrHigher(list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE;
     }
-    if (JavaFeature.STATIC_INTERFACE_CALLS.isAvailable(list)) {
+    if (PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_DEFAULT;
     }
     return INTERFACE_MEMBER_MODIFIERS;
   }
 
   private static String[][] getClassMemberModifiers(@NotNull PsiElement list) {
-    if (JavaFeature.SEALED_CLASSES.isAvailable(list)) {
+    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, list)) {
       return CLASS_MEMBER_MODIFIERS_WITH_SEALED;
     }
     return CLASS_MEMBER_MODIFIERS;

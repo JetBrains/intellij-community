@@ -24,6 +24,7 @@ import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
 import java.util.regex.Pattern
@@ -58,7 +59,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
                          isAccessible: (targetModule: PsiJavaModule, packageName: String, useModule: PsiJavaModule) -> Boolean): ErrorWithFixes? {
     val originalTargetFile = targetFile?.originalFile
     val useFile = place.containingFile?.originalFile ?: return null
-    if (!JavaFeature.MODULES.isAvailable(useFile)) return null
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, useFile)) return null
 
     val useVFile = useFile.virtualFile
     val index = ProjectFileIndex.getInstance(useFile.project)

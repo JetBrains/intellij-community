@@ -29,11 +29,11 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.PATTERNS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        if (!JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(holder.getFile())) return;
+        if (!PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, holder.getFile())) return;
         PsiTypeCastExpression qualifier = getQualifierReferenceExpression(call);
         if (qualifier == null) return;
         PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(qualifier);

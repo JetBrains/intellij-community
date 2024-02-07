@@ -95,7 +95,7 @@ public final class CapturingCleanerInspection extends AbstractBaseJavaLocalInspe
         }
         if (runnableExpr instanceof PsiNewExpression newExpression) {
           if (newExpression.getAnonymousClass() != null) {
-            if (JavaFeature.INNER_NOT_CAPTURE_THIS.isAvailable(trackedClass)) {
+            if (PsiUtil.isAvailable(JavaFeature.INNER_NOT_CAPTURE_THIS, trackedClass)) {
               PsiElement elementCapturingThis = getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass);
               if (elementCapturingThis != null) {
                 return elementCapturingThis;
@@ -110,7 +110,7 @@ public final class CapturingCleanerInspection extends AbstractBaseJavaLocalInspe
           if (aClass == null) return null;
           if (aClass.getContainingClass() != trackedClass) return null;
           if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
-          if (JavaFeature.INNER_NOT_CAPTURE_THIS.isAvailable(trackedClass) && 
+          if (PsiUtil.isAvailable(JavaFeature.INNER_NOT_CAPTURE_THIS, trackedClass) && 
               getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass) == null) return null;
           return classReference;
         }

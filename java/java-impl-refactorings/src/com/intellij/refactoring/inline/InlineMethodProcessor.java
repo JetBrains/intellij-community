@@ -932,7 +932,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   public static @DialogMessage String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, PsiElement element) {
-    if (!JavaFeature.STATEMENTS_BEFORE_SUPER.isAvailable(element) &&
+    if (!PsiUtil.isAvailable(JavaFeature.STATEMENTS_BEFORE_SUPER, element) &&
         checkUnableToInsertCodeBlock(methodBody, element,
                                      expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
       return JavaRefactoringBundle.message("inline.method.multiline.method.in.ctor.call");

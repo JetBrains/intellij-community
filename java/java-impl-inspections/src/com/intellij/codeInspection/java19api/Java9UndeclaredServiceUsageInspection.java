@@ -9,6 +9,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.daemon.impl.JavaServiceUtil.JAVA_UTIL_SERVICE_LOADER_METHODS;
@@ -19,7 +20,7 @@ public final class Java9UndeclaredServiceUsageInspection extends AbstractBaseJav
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.MODULES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {

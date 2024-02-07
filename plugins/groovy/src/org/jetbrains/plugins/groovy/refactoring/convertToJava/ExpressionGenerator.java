@@ -870,7 +870,7 @@ public class ExpressionGenerator extends Generator {
     final String text = literal.getText();
     final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      if (JavaFeature.TEXT_BLOCKS.isAvailable(literal)) {
+      if (com.intellij.psi.util.PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, literal)) {
         builder
           .append("\"\"\"\n")
           .append(PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(value)))

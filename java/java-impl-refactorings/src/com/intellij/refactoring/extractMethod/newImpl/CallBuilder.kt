@@ -46,7 +46,7 @@ class CallBuilder(private val context: PsiElement) {
       PsiUtil.setModifierProperty(declaredVariable, PsiModifier.FINAL, declareFinal)
 
       val isInferredVar = outputVariable?.typeElement?.isInferredType == true
-      if (isInferredVar || JavaFeature.LVTI.isAvailable(context) && settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE == true) {
+      if (isInferredVar || PsiUtil.isAvailable(JavaFeature.LVTI, context) && settings.INTRODUCE_LOCAL_CREATE_VAR_TYPE == true) {
         IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(declaredVariable.typeElement, declaredVariable)
       }
     }

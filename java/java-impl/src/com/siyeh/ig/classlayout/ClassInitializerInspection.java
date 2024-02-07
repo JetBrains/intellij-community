@@ -68,7 +68,7 @@ public final class ClassInitializerInspection extends BaseInspection {
     PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
     final PsiClass aClass = classInitializer.getContainingClass();
     assert aClass != null;
-    if (PsiUtil.isInnerClass(aClass) && !JavaFeature.INNER_STATICS.isAvailable(aClass) ||
+    if (PsiUtil.isInnerClass(aClass) && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, aClass) ||
         ClassInitializerMayBeStaticInspection.dependsOnInstanceMembers(classInitializer)) {
       return new LocalQuickFix[] {new MoveToConstructorFix()};
     }

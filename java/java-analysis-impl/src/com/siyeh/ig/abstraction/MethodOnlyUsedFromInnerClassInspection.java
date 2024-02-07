@@ -77,7 +77,7 @@ public final class MethodOnlyUsedFromInnerClassInspection extends BaseInspection
       if (innerClass == null) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.STATIC) && !JavaFeature.INNER_STATICS.isAvailable(method)) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, method)) {
         final PsiElement parent = innerClass.getParent();
         if (parent instanceof PsiClass && !innerClass.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLocalClass(innerClass)) {
           return;

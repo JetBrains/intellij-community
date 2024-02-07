@@ -403,7 +403,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
       if (message != null) {
         PsiPattern pattern = variable.getPattern();
         IntentionAction action = null;
-        if (JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(parameter)) {
+        if (PsiUtil.isAvailable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, parameter)) {
           if (pattern instanceof PsiTypeTestPattern ttPattern && pattern.getParent() instanceof PsiDeconstructionList) {
             PsiRecordComponent component = JavaPsiPatternUtil.getRecordComponentForPattern(pattern);
             PsiTypeElement checkType = ttPattern.getCheckType();
@@ -426,7 +426,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
       }
     }
     else if ((myUnusedSymbolInspection.checkParameterExcludingHierarchy() ||
-              JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(declarationScope))
+              PsiUtil.isAvailable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, declarationScope))
              && declarationScope instanceof PsiLambdaExpression) {
       checkUnusedParameter(parameter, null);
       if (message != null) {
@@ -444,7 +444,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     if (!"main".equals(method.getName())) {
       return true;
     }
-    if (!JavaFeature.IMPLICIT_CLASSES.isAvailable(method)) {
+    if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, method)) {
       return true;
     }
     return false;

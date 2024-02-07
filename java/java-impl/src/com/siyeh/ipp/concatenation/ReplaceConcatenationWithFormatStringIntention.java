@@ -6,6 +6,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -53,7 +54,7 @@ public final class ReplaceConcatenationWithFormatStringIntention extends MCInten
     }
     CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
-    if (JavaFeature.TEXT_BLOCKS.isAvailable(element)) {
+    if (PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, element)) {
       appendFormatString(expression, formatString, false, newExpression);
       newExpression.append(".formatted(");
     } else {
@@ -70,7 +71,7 @@ public final class ReplaceConcatenationWithFormatStringIntention extends MCInten
 
   @Override
   protected String getTextForElement(@NotNull PsiElement element) {
-    return IntentionPowerPackBundle.message(JavaFeature.TEXT_BLOCKS.isAvailable(element)
+    return IntentionPowerPackBundle.message(PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, element)
                                             ? "replace.concatenation.with.format.string.intention.name.formatted"
                                             : "replace.concatenation.with.format.string.intention.name");
   }

@@ -116,7 +116,7 @@ public final class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   private static @Nullable PsiJavaModule getJavaModule(@Nullable PsiElement element) {
-    return element != null && JavaFeature.MODULES.isAvailable(element) ? JavaModuleGraphUtil.findDescriptorByElement(element) : null;
+    return element != null && PsiUtil.isAvailable(JavaFeature.MODULES, element) ? JavaModuleGraphUtil.findDescriptorByElement(element) : null;
   }
 
   private static boolean isInExportedPackage(@NotNull PsiClass psiClass, @NotNull PsiJavaModule javaModule) {

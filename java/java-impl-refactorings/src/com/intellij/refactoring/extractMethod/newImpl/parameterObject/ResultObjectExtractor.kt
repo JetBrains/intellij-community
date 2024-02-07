@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMultipleVariablesException
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
@@ -43,7 +44,7 @@ object ResultObjectExtractor {
       InplaceExtractUtils.showExtractErrorHint(editor, ExtractMultipleVariablesException(variables, scope))
       return
     }
-    val shouldInsertRecord = JavaFeature.RECORDS.isAvailable(variables.first())
+    val shouldInsertRecord = PsiUtil.isAvailable(JavaFeature.RECORDS, variables.first())
     val objectBuilder = if (shouldInsertRecord) {
       RecordResultObjectBuilder.create(variables)
     } else {

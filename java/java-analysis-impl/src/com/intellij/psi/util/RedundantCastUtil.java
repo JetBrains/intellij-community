@@ -813,7 +813,7 @@ public final class RedundantCastUtil {
             }
           }
           if (opType instanceof PsiPrimitiveType) {
-            if (JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(switchBlock)) {
+            if (PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, switchBlock)) {
               for (PsiElement branch : SwitchUtils.getSwitchBranches(switchBlock)) {
                 // 14.11.1 A null case element is switch compatible with T if T is a reference type (JEP 427)
                 if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
@@ -823,7 +823,7 @@ public final class RedundantCastUtil {
                 if (branch instanceof PsiPattern) return;
               }
             }
-            else if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) {
+            else if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, switchBlock)) {
               boolean needToCheckCompleteness = switchBlock instanceof PsiSwitchExpression;
               boolean hasDefault = false;
               for (PsiElement branch : SwitchUtils.getSwitchBranches(switchBlock)) {

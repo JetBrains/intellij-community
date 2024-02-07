@@ -178,7 +178,7 @@ public final class InnerClassMayBeStaticInspection extends BaseInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC) ||
           PsiUtil.isLocalOrAnonymousClass(aClass)) {
-        if (!JavaFeature.INNER_STATICS.isAvailable(aClass)) {
+        if (!PsiUtil.isAvailable(JavaFeature.INNER_STATICS, aClass)) {
           return;
         }
       }

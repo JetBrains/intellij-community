@@ -289,7 +289,7 @@ public class SwitchBlockHighlightingModel {
 
   @Nullable
   private static HighlightInfo.Builder createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
-    if (JavaFeature.ENUM_QUALIFIED_NAME_IN_SWITCH.isAvailable(expr)) return null;
+    if (PsiUtil.isAvailable(JavaFeature.ENUM_QUALIFIED_NAME_IN_SWITCH, expr)) return null;
     PsiElement qualifier = expr.getQualifier();
     if (qualifier == null) return null;
     HighlightInfo.Builder result = createError(expr, JavaErrorBundle.message("qualified.enum.constant.in.switch"));
@@ -798,7 +798,8 @@ public class SwitchBlockHighlightingModel {
             // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
             // applicable at another reference type T if T is checkcast convertible to U (JEP 440-441)
             // There is no rule that says that a reference type applies to a primitive type
-            (mySelectorType instanceof PsiPrimitiveType && JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(label))) &&
+            (mySelectorType instanceof PsiPrimitiveType && PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS,
+                                                                               label))) &&
             //null type is applicable to any class type
             !mySelectorType.equals(PsiTypes.nullType())) {
           HighlightInfo.Builder error =
@@ -1085,7 +1086,7 @@ public class SwitchBlockHighlightingModel {
         if (nonPattern != null) {
           return getPatternConstantCombinationProblem(nonPattern);
         }
-        if (JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(firstElement)) {
+        if (PsiUtil.isAvailable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, firstElement)) {
           PsiCaseLabelElement patternVarElement = ContainerUtil.find(elements, JavaPsiPatternUtil::containsNamedPatternVariable);
           if (patternVarElement != null) {
             return new CaseLabelCombinationProblem(patternVarElement, "invalid.case.label.combination.several.patterns.unnamed", null);
@@ -1099,7 +1100,7 @@ public class SwitchBlockHighlightingModel {
 
     @NotNull
     private static CaseLabelCombinationProblem getPatternConstantCombinationProblem(PsiCaseLabelElement anchor) {
-      if (JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(anchor)) {
+      if (PsiUtil.isAvailable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, anchor)) {
         return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns.unnamed", null);
       } else {
         return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns", null);

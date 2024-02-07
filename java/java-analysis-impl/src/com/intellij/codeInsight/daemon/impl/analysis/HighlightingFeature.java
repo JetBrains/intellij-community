@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -69,6 +70,6 @@ public enum HighlightingFeature {
    * @return true if this feature is available in the PsiFile the supplied element belongs to
    */
   public boolean isAvailable(@NotNull PsiElement element) {
-    return myFeature.isAvailable(element);
+    return PsiUtil.isAvailable(myFeature, element);
   }
 }

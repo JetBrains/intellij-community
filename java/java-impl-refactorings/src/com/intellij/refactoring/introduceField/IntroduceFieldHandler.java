@@ -122,7 +122,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
         declareStatic = isInSuperOrThis = isInSuperOrThis(occurrences[i]);
       }
     }
-    if (isInSuperOrThis && JavaFeature.STATIC_INTERFACE_CALLS.isAvailable(expr != null ? expr : anchorElement)) {
+    if (isInSuperOrThis && PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, expr != null ? expr : anchorElement)) {
       isInSuperOrThis = false;
     }
     int occurrencesNumber = occurrences.length;

@@ -219,7 +219,7 @@ public final class JavaModuleGraphUtil {
                                    @Nullable DependencyScope scope,
                                    boolean isExported) {
     if (to.equals(JAVA_BASE)) return false;
-    if (!JavaFeature.MODULES.isAvailable(from)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to, scope) ? PsiKeyword.STATIC + " " : "") +
@@ -232,7 +232,7 @@ public final class JavaModuleGraphUtil {
                                       @NotNull PsiJavaModule to,
                                       @Nullable DependencyScope scope) {
     if (to.getName().equals(JAVA_BASE)) return false;
-    if (!JavaFeature.MODULES.isAvailable(from)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
     if (alreadyContainsRequires(from, to.getName())) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +

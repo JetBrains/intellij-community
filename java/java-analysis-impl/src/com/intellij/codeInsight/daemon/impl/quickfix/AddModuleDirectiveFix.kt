@@ -23,7 +23,7 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModComman
   abstract fun getText(): String
 
   override fun getPresentation(context: ActionContext, module: PsiJavaModule): Presentation? {
-    return if (JavaFeature.MODULES.isAvailable(module)) Presentation.of(getText()) else null
+    return if (PsiUtil.isAvailable(JavaFeature.MODULES, module)) Presentation.of(getText()) else null
   }
 }
 

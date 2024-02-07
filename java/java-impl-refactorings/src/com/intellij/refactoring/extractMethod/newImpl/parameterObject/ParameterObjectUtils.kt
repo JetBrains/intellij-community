@@ -13,7 +13,7 @@ object ParameterObjectUtils {
     val factory = PsiElementFactory.getInstance(introducedClass.project)
     val typeParameters = introducedClass.typeParameters.map(factory::createType).toTypedArray()
     val type = factory.createType(introducedClass, *typeParameters)
-    val typeElement = if (JavaFeature.DIAMOND_TYPES.isAvailable(introducedClass) && typeParameters.isNotEmpty()) {
+    val typeElement = if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, introducedClass) && typeParameters.isNotEmpty()) {
       "${type.name}<>"
     } else {
       type.canonicalText

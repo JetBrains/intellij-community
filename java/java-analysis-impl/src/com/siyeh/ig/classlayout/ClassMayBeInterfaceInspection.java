@@ -204,7 +204,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (PsiUtil.isLocalClass(aClass) && !JavaFeature.LOCAL_INTERFACES.isAvailable(aClass)) {
+      if (PsiUtil.isLocalClass(aClass) && !PsiUtil.isAvailable(JavaFeature.LOCAL_INTERFACES, aClass)) {
         return;
       }
       if (!mayBeInterface(aClass)) {

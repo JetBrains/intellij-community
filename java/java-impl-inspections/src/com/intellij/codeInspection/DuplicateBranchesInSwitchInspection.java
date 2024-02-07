@@ -477,7 +477,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myLabelToMergeWith);
         if (prevElement != null) moveTarget = prevElement;
       }
-      if (JavaFeature.SWITCH_EXPRESSION.isAvailable(moveTarget) && moveTarget instanceof PsiSwitchLabelStatement labelStatement &&
+      if (PsiUtil.isAvailable(JavaFeature.SWITCH_EXPRESSION, moveTarget) && moveTarget instanceof PsiSwitchLabelStatement labelStatement &&
           myBranchToDelete.canCopyCaseValues(myBranchToMergeWith) && !SwitchUtils.isCaseNull(labelStatement) &&
           !SwitchUtils.isDefaultLabel(labelStatement)) {
         for (PsiElement element : myBranchPrefixToMove) {
@@ -1079,7 +1079,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements,
-                                   element -> element instanceof PsiPattern && (!JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(element) ||
+                                   element -> element instanceof PsiPattern && (!PsiUtil.isAvailable(
+                                     JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, element) ||
                                                                                 JavaPsiPatternUtil.containsNamedPatternVariable(element)) ||
                                               element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }
