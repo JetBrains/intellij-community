@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.idea.dev.js">
+  <dependencies>
+    <module name="intellij.dev.psiViewer"/>
+    <plugin id="JavaScript"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.dev">
+    <psiViewer.propertyNodeFactory implementation="org.jetbrains.idea.dev.js.psiViewer.PsiViewerJSTypeNode$Factory"/>
+  </extensions>
+</idea-plugin>

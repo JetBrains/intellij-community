@@ -2,18 +2,15 @@ package com.intellij.dev.psiViewer.properties.tree.nodes
 
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
 import com.intellij.dev.psiViewer.properties.tree.appendPresentation
+import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
+import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.psiViewerApiMethods
 import com.intellij.dev.psiViewer.properties.tree.prependPresentation
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.checkCancelled
 import com.intellij.ui.SimpleTextAttributes
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.lang.reflect.Method
 import java.lang.reflect.Modifier
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.WildcardType
 
 private const val NOT_EMPTY_LIST_VALUE_WEIGHT = 100
 private const val NULL_VALUE_WEIGHT = 150
@@ -42,36 +39,26 @@ private fun nullValueFromMethodNode(methodName: String, methodReturnType: Class<
     .appendPresentation(methodReturnTypePresentation(methodReturnType))
 }
 
-suspend fun computePsiViewerNodeByMethodCall(
+private suspend fun computePsiViewerNodeByMethodCall(
   nodeContext: PsiViewerPropertyNode.Context,
-  instance: Any?,
-  method: Method,
-  arguments: List<Any>
+  psiViewerApiMethod: PsiViewerApiMethod,
 ): PsiViewerPropertyNode? {
-  suspend fun invokeMethod(): Any? {
-    checkCancelled()
-    return readAction {
-      method.invoke(instance, *arguments.toTypedArray())
-    }
-  }
-
-  val returnType = method.returnType
+  val returnType = psiViewerApiMethod.returnType.returnType
   val matchedNodeFactory = PsiViewerPropertyNode.Factory.findMatchingFactory(returnType)
   if (matchedNodeFactory != null) {
     return methodReturnValuePsiViewerNode(
-      value = invokeMethod(),
-      method.name,
-      method.returnType,
+      value = psiViewerApiMethod.invoke(),
+      psiViewerApiMethod.name,
+      returnType,
       matchedNodeFactory,
       nodeContext
     )
   }
 
-  val typeOfReturnedCollection = getTypeOfReturnedCollection(method) ?: return null
+  val returnedCollectionType = psiViewerApiMethod.returnType.returnedCollectionType ?: return null
+  val matchedNodeFactoryOfCollectionType = PsiViewerPropertyNode.Factory.findMatchingFactory(returnedCollectionType) ?: return null
 
-  val matchedNodeFactoryOfListType = PsiViewerPropertyNode.Factory.findMatchingFactory(typeOfReturnedCollection) ?: return null
-
-  val returnedValue = invokeMethod() ?: return null
+  val returnedValue = psiViewerApiMethod.invoke() ?: return null
   val returnedList = (returnedValue as? Array<*>)?.toList() ?: (returnedValue as? Collection<*>) ?: return null
 
   val childrenNodes = coroutineScope {
@@ -83,7 +70,7 @@ suspend fun computePsiViewerNodeByMethodCall(
           val idxPresentation = PsiViewerPropertyNode.Presentation {
             it.append("[$idx] =", SimpleTextAttributes.GRAYED_ATTRIBUTES)
           }
-          matchedNodeFactoryOfListType.createNode(nodeContext, value)?.prependPresentation(idxPresentation)
+          matchedNodeFactoryOfCollectionType.createNode(nodeContext, value)?.prependPresentation(idxPresentation)
         }
       }
       .toList()
@@ -99,30 +86,11 @@ suspend fun computePsiViewerNodeByMethodCall(
 
   val weight = if (childrenNodes.isEmpty()) EMPTY_LIST_VALUE_WEIGHT else NOT_EMPTY_LIST_VALUE_WEIGHT
 
-  val node = PsiViewerPropertyNodeImpl(methodNamePresentation(method.name), childrenNodes, weight)
+  val node = PsiViewerPropertyNodeImpl(methodNamePresentation(psiViewerApiMethod.name), childrenNodes, weight)
     .appendPresentation(returnedListPresentation)
-    .appendPresentation(methodReturnTypePresentation(method.returnType))
+    .appendPresentation(methodReturnTypePresentation(returnType))
 
   return if (childrenNodes.isNotEmpty() || nodeContext.showEmptyNodes) node else null
-}
-
-private fun getTypeOfReturnedCollection(method: Method): Class<*>? {
-  val returnType = method.returnType
-  if (returnType.isArray) {
-    return returnType.componentType
-  }
-
-  val isCollectionReturnType = Collection::class.java.isAssignableFrom(returnType)
-  if (!isCollectionReturnType) return null
-
-  val genericType = method.genericReturnType
-  if (genericType !is ParameterizedType) return null
-
-  val actualTypeArguments = genericType.actualTypeArguments
-  if (actualTypeArguments.size != 1) return null
-
-  val firstTypeArgument = actualTypeArguments.firstOrNull() ?: return null
-  return (firstTypeArgument as? Class<*>) ?: (firstTypeArgument as? WildcardType)?.upperBounds?.firstOrNull() as? Class<*>
 }
 
 suspend fun computePsiViewerApiClassesNodes(
@@ -134,11 +102,8 @@ suspend fun computePsiViewerApiClassesNodes(
     val apiClassesNodes = apiClasses
       .mapIndexed { idx, apiClass ->
         async {
-          val childrenNodesForApiClass = computePsiViewerPropertyNodesByCallingInstanceMethods(
-            nodeContext,
-            instance,
-            apiClass.declaredApiMethods
-          )
+          val apiMethods = apiClass.psiViewerApiMethods(instance)
+          val childrenNodesForApiClass = computePsiViewerPropertyNodesByCallingApiMethods(nodeContext, apiMethods)
           if (childrenNodesForApiClass.isEmpty()) return@async null
 
           val presentation = PsiViewerPropertyNode.Presentation {
@@ -157,16 +122,15 @@ suspend fun computePsiViewerApiClassesNodes(
   }
 }
 
-private suspend fun computePsiViewerPropertyNodesByCallingInstanceMethods(
+private suspend fun computePsiViewerPropertyNodesByCallingApiMethods(
   nodeContext: PsiViewerPropertyNode.Context,
-  instance: Any,
-  methods: List<Method>
+  methods: List<PsiViewerApiMethod>,
 ): List<PsiViewerPropertyNode> {
   return coroutineScope {
     methods
       .map {
         async {
-          computePsiViewerNodeByMethodCall(nodeContext, instance, it, emptyList())
+          computePsiViewerNodeByMethodCall(nodeContext, it)
         }
       }
       .awaitAll()
@@ -215,11 +179,4 @@ private val Class<*>.isApiClass: Boolean
       canonicalName.contains("stub", ignoreCase = true) -> false
       else -> true
     }
-  }
-private val Class<*>.declaredApiMethods: List<Method>
-  get() {
-    return declaredMethods
-      .filter {
-        Modifier.isPublic(it.modifiers) && it.parameterCount == 0 && it.name != "hashCode"
-      }
   }

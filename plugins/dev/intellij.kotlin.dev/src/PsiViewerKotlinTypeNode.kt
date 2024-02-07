@@ -1,33 +1,42 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.dev.psiViewer
+package org.jetbrains.idea.dev.kotlin
 
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
 import com.intellij.dev.psiViewer.properties.tree.nodes.computePsiViewerApiClassesNodes
 import com.intellij.dev.psiViewer.properties.tree.nodes.psiViewerApiClassesExtending
-import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.types.KotlinType
 
-private class PsiViewerPsiTypeNode(
-  private val psiType: PsiType,
+class PsiViewerKotlinTypeNode(
+  private val kotlinType: KotlinType,
   private val nodeContext: PsiViewerPropertyNode.Context
 ) : PsiViewerPropertyNode {
   class Factory : PsiViewerPropertyNode.Factory {
-    override fun isMatchingType(clazz: Class<*>): Boolean = PsiType::class.java.isAssignableFrom(clazz)
+    override fun isMatchingType(clazz: Class<*>): Boolean = KotlinType::class.java.isAssignableFrom(clazz)
 
     override suspend fun createNode(nodeContext: PsiViewerPropertyNode.Context, returnedValue: Any): PsiViewerPropertyNode? {
-      val psiType = returnedValue as? PsiType ?: return null
-      return PsiViewerPsiTypeNode(psiType, nodeContext)
+      val kotlinType = returnedValue as? KotlinType ?: return null
+      return PsiViewerKotlinTypeNode(kotlinType, nodeContext)
     }
   }
 
   override val presentation = PsiViewerPropertyNode.Presentation {
-    @Suppress("HardCodedStringLiteral")
-    it.append(psiType.toString())
+    it.append(kotlinType.toString())
   }
 
   override val children = PsiViewerPropertyNode.Children.Async {
-    val psiTypeApiClasses = psiType::class.java.psiViewerApiClassesExtending(PsiType::class.java)
-    computePsiViewerApiClassesNodes(psiTypeApiClasses, psiType, nodeContext)
+    computePsiViewerApiClassesNodes(listOf(KotlinType::class.java), kotlinType, nodeContext)
   }
 
-  override val weight: Int = 25
+  override val weight: Int
+    get() = 20
 }
+
+
+
+
+
+
+
+
+
+
