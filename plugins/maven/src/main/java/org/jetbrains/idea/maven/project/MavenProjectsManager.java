@@ -180,7 +180,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void initForTests() {
-    tryToLoadExistingTree();
     initProjectsTree();
     doInit();
   }
@@ -233,7 +232,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     boolean wasMavenized = !myState.originalFiles.isEmpty();
     if (!wasMavenized) return;
 
-    tryToLoadExistingTree();
     initProjectsTree();
     doInit();
     doActivate();
@@ -283,36 +281,33 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return mySyncConsole.get();
   }
 
-  private void tryToLoadExistingTree() {
+  private void initProjectsTree() {
     initLock.lock();
     try {
-      if (triedToLoadExistingTree.getAndSet(true)) {
-        return;
-      }
-      Path file = getProjectsTreeFile();
-      if (Files.exists(file)) {
-        var readTree = MavenProjectsTree.read(myProject, file);
-        if (null != readTree) {
-          myProjectsTree = readTree;
+      try {
+        if (!triedToLoadExistingTree.getAndSet(true)) {
+          Path file = getProjectsTreeFile();
+          if (Files.exists(file)) {
+            var readTree = MavenProjectsTree.read(myProject, file);
+            if (null != readTree) {
+              myProjectsTree = readTree;
+            }
+            else {
+              MavenLog.LOG.warn("Could not load existing tree, read null");
+            }
+          }
         }
-        else {
-          MavenLog.LOG.warn("Could not load existing tree, read null");
-        }
       }
-    }
-    catch (IOException e) {
-      MavenLog.LOG.info(e);
+      catch (IOException e) {
+        MavenLog.LOG.info(e);
+      }
+      if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
+      applyStateToTree(myProjectsTree, this);
+      myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
     }
     finally {
       initLock.unlock();
     }
-  }
-
-  @NotNull
-  private void initProjectsTree() {
-    if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
-    applyStateToTree(myProjectsTree, this);
-    myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
   }
 
   private void applyTreeToState() {
@@ -693,7 +688,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @NotNull
   public MavenProjectsTree getProjectsTree() {
     if (myProjectsTree == null) {
-      tryToLoadExistingTree();
       initProjectsTree();
     }
     return myProjectsTree;
