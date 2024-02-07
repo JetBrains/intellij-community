@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -29,6 +30,7 @@ public final class PatternProperties {
     myCachedPatterns = new HashMap<>();
     myCachedPatternProperties = CollectionFactory.createConcurrentWeakKeyWeakValueMap();
     mySchemasMap.keySet().forEach(key -> {
+      ProgressManager.checkCanceled();
       final Pair<Pattern, String> pair = JsonSchemaObjectReadingUtils.compilePattern(key);
       if (pair.getSecond() == null) {
         assert pair.getFirst() != null;

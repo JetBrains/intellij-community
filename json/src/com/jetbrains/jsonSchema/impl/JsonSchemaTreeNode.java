@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.openapi.progress.ProgressManager;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.impl.tree.Operation;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,7 @@ public final class JsonSchemaTreeNode {
   }
 
   public void createChildrenFromOperation(@NotNull Operation operation) {
+    ProgressManager.checkCanceled();
     if (!SchemaResolveState.normal.equals(operation.myState)) {
       final JsonSchemaTreeNode node = new JsonSchemaTreeNode(this, null);
       node.myResolveState = operation.myState;
@@ -57,6 +59,7 @@ public final class JsonSchemaTreeNode {
     }
     if (!operation.myOneOfGroup.isEmpty()) {
       for (int i = 0; i < operation.myOneOfGroup.size(); i++) {
+        ProgressManager.checkCanceled();
         var group = operation.myOneOfGroup.get(i);
         final List<JsonSchemaTreeNode> children = convertToNodes(group);
         final int number = i;

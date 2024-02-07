@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.tree;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
@@ -23,6 +24,7 @@ public final class ProcessDefinitionsOperation extends Operation {
   public void map(final @NotNull Set<JsonSchemaObject> visited) {
     var current = mySourceNode;
     while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
+      ProgressManager.checkCanceled();
       final var definition = current.resolveRefSchema(myService);
       if (definition == null) {
         myState = SchemaResolveState.brokenDefinition;
