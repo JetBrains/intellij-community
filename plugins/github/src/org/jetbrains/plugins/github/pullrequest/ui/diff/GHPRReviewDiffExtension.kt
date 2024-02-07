@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.*
+import org.jetbrains.plugins.github.util.GithubSettings
 import kotlin.math.max
 import kotlin.math.min
 
@@ -48,11 +49,15 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
   private class InlaysController(private val cs: CoroutineScope) {
 
     fun installInlays(reviewVm: GHPRDiffViewModel, change: RefComparisonChange, viewer: DiffViewerBase) {
+      val settings = GithubSettings.getInstance()
       cs.launchNow(Dispatchers.Main) {
         reviewVm.getViewModelFor(change).collectLatest { changeVm ->
           if (changeVm == null) return@collectLatest
 
-          changeVm.markViewed()
+          if (settings.isAutomaticallyMarkAsViewed) {
+            changeVm.markViewed()
+          }
+
           coroutineScope {
             viewer.controlReviewIn(this, { locationToLine, lineToLocations ->
               DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
@@ -71,7 +76,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
 }
 
 internal interface GHPREditorReviewModel : CodeReviewEditorModel<GHPREditorMappedComponentModel>,
-                                  CodeReviewEditorGutterControlsModel.WithMultilineComments {
+                                           CodeReviewEditorGutterControlsModel.WithMultilineComments {
   companion object {
     val KEY: Key<GHPREditorReviewModel> = Key.create("GitHub.Editor.Gutter.Review.Model")
   }

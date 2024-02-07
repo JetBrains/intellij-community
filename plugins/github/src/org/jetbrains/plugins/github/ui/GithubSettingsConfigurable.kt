@@ -46,6 +46,10 @@ internal class GithubSettingsConfigurable internal constructor(
         checkBox(message("settings.clone.ssh"))
           .bindSelected(ghSettings::isCloneGitUsingSsh, ghSettings::setCloneGitUsingSsh)
       }
+      row {
+        checkBox(message("settings.automatically.mark.as.viewed"))
+          .bindSelected(ghSettings::isAutomaticallyMarkAsViewed, ghSettings::setAutomaticallyMarkAsViewed)
+      }
       row(message("settings.timeout")) {
         intTextField(range = 0..60)
           .columns(2)
