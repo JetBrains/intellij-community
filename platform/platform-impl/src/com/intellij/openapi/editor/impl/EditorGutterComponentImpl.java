@@ -161,6 +161,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final JBValue GAP_BETWEEN_ICONS = JBVG.value(3);
   private static final JBValue GAP_BETWEEN_AREAS = JBVG.value(5);
   private static final JBValue GAP_BETWEEN_ANNOTATIONS = JBVG.value(5);
+  static final JBValue EMPTY_ANNOTATION_AREA_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.emptyAnnotationAreaWidth());
+  static final JBValue GAP_AFTER_VCS_MARKERS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterVcsMarkersWidth());
+  static final JBValue GAP_AFTER_LINE_NUMBERS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterLineNumbersWidth());
+  private static final JBValue GAP_AFTER_ICONS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterIconsWidth());
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
 
   private ClickInfo myLastActionableClick;
@@ -336,6 +340,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void updateUI() {
+    JBVG.updateCachedValues();
     super.updateUI();
     setRenderingHints();
     reinitSettings(true);
@@ -1937,7 +1942,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getGapAfterIconsArea() {
-    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? EditorUIUtil.scaleWidth(4, myEditor) : getGapBetweenAreas() : 0;
+    return isRealEditor() && areIconsShown()
+           ? ExperimentalUI.isNewUI()
+             ? EditorUIUtil.scaleWidth(GAP_AFTER_ICONS_WIDTH.get(), myEditor)
+             : getGapBetweenAreas()
+           : 0;
   }
 
   private boolean isMirrored() {
