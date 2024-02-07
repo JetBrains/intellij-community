@@ -73,7 +73,8 @@ internal class GitLabMergeRequestDiffViewModelImpl(
       it.getParsedChanges()
     }.map { parsedChanges ->
       parsedChanges.patchesByChange[change]?.let { diffData ->
-        GitLabMergeRequestDiffReviewViewModelImpl(mergeRequest, diffData, discussions, discussionsViewOption, avatarIconsProvider)
+        GitLabMergeRequestDiffReviewViewModelImpl(project, change, mergeRequest, diffData,
+                                                  discussions, discussionsViewOption, avatarIconsProvider)
       }
     }.catch { emit(null) }
   }

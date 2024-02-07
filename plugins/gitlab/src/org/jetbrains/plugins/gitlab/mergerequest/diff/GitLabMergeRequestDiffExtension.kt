@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDiscussionViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDraftNoteViewModel
@@ -51,10 +52,16 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
   @Service(Service.Level.PROJECT)
   private class InlaysController(private val project: Project, private val cs: CoroutineScope) {
     fun installInlays(reviewVm: GitLabMergeRequestDiffViewModel, change: RefComparisonChange, viewer: DiffViewerBase) {
+      val glSettings = GitLabSettings.getInstance()
       cs.launchNow(Dispatchers.Main) {
         reviewVm.getViewModelFor(change).collectLatest { changeVm ->
           if (changeVm == null) return@collectLatest
           GitLabStatistics.logMrDiffOpened(project, changeVm.isCumulativeChange)
+
+          if (glSettings.isAutomaticallyMarkAsViewed) {
+            changeVm.markViewed()
+          }
+
           coroutineScope {
             viewer.controlReviewIn(this, { locationToLine, lineToLocations ->
               DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
