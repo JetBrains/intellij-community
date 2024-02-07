@@ -219,6 +219,90 @@
         "Tree.iconColor": {
           "$ref": "#/definitions/color",
           "description": "Color of expand/collapse icons"
+        },
+        "Gray.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Gray.SecondaryStroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons in input fields and tabs"
+        },
+        "Gray.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Blue.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Blue.Solid": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons with the same stroke and fill colors"
+        },
+        "Blue.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Green.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Green.Solid": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons with the same stroke and fill colors"
+        },
+        "Green.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Red.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Red.Solid": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons with the same stroke and fill colors"
+        },
+        "Red.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Yellow.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Yellow.Solid": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons with the same stroke and fill colors"
+        },
+        "Yellow.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Orange.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Orange.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Purple.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Purple.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Teal.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Teal.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
         }
       }
     },
