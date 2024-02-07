@@ -1570,7 +1570,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     final Method forNameMethod;
     List<Value> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
-    args.add(virtualMachine.mirrorOf(qName));
+    args.add(DebuggerUtilsEx.mirrorOfString(qName, virtualMachine, evaluationContext));
     if (classLoader != null) {
       //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
       forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");

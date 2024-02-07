@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
@@ -136,7 +137,7 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
             val vm = context.vm
             val classLoaderType = classLoader.referenceType() as ClassType
             val defineMethod = classLoaderType.concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;")
-            val nameObj = vm.mirrorOf(name)
+            val nameObj = DebuggerUtilsEx.mirrorOfString(name, vm, context.evaluationContext)
 
             val args = listOf(nameObj, mirrorOfByteArray(bytes, context), vm.mirrorOf(0), vm.mirrorOf(bytes.size))
             context.invokeMethod(classLoader, defineMethod, args)
