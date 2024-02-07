@@ -15,6 +15,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -276,7 +277,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           for (VariableData data : getChosenParameters()) {
             if (!data.passAsParameter) {
               PsiElement scope = PsiUtil.getVariableCodeBlock(data.variable, null);
-              if (PsiUtil.isLanguageLevel8OrHigher(data.variable)
+              if (PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, data.variable)
                   ? scope != null && !HighlightControlFlowUtil.isEffectivelyFinal(data.variable, scope, null)
                   : data.variable.hasModifierProperty(PsiModifier.FINAL)) {
                 conflicts.putValue(null, JavaBundle.message("introduce.functional.variable.accessibility.conflict", data.name));

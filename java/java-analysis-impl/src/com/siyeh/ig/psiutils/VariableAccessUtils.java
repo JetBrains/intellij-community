@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -484,7 +485,7 @@ public final class VariableAccessUtils {
 
     final boolean finalVariableIntroduction =
       !initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL) ||
-      PsiUtil.isLanguageLevel8OrHigher(initialization) &&
+      PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, initialization) &&
       !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) &&
       HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null);
     final boolean canCaptureThis = initialization instanceof PsiField && !initialization.hasModifierProperty(PsiModifier.STATIC);

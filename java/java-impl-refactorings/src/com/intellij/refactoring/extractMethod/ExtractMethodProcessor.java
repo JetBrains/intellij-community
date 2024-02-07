@@ -34,6 +34,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -1268,7 +1269,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         });
       }
-      else if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)){
+      else if (!PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, myTargetClass)){
         method.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();

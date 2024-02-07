@@ -38,6 +38,7 @@ public enum JavaFeature {
   RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
   INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
   STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
+  EFFECTIVELY_FINAL(LanguageLevel.JDK_1_8, "feature.effectively.final"),
   REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
   MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
   COLLECTION_FACTORIES(LanguageLevel.JDK_1_9, "feature.collection.factories"),

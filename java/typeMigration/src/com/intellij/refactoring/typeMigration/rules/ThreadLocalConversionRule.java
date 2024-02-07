@@ -271,9 +271,9 @@ public final class ThreadLocalConversionRule extends TypeConversionRule {
     @Override
     public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       PsiExpression replaced = super.replace(expression, evaluator);
-      boolean atLeastJava8 = PsiUtil.isLanguageLevel8OrHigher(replaced);
+      boolean effectivelyFinalSupported = PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, replaced);
       for (PsiVariable var : myVariablesToMakeFinal) {
-        if (!atLeastJava8 || !HighlightControlFlowUtil.isEffectivelyFinal(var, replaced, null)) {
+        if (!effectivelyFinalSupported || !HighlightControlFlowUtil.isEffectivelyFinal(var, replaced, null)) {
           VariableAccessFromInnerClassFix.fixAccess(var, replaced);
         }
       }

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -254,7 +255,7 @@ class InlineToAnonymousConstructorProcessor {
     try {
       final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiLocalVariable variable = (PsiLocalVariable)declaration.getDeclaredElements()[0];
-      if (!PsiUtil.isLanguageLevel8OrHigher(myNewExpression) ||
+      if (!PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, myNewExpression) ||
           JavaCodeStyleSettings.getInstance(initializer.getContainingFile()).GENERATE_FINAL_LOCALS) {
         PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
       }

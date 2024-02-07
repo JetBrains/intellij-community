@@ -18,13 +18,13 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -189,7 +189,7 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
 
     private static boolean isNecessaryFinal(PsiVariable variable, PsiElement context) {
       return PsiUtil.isConstantExpression(variable.getInitializer()) ||
-             !PsiUtil.isLanguageLevel8OrHigher(variable) && VariableAccessUtils.variableIsUsedInInnerClass(variable, context);
+             !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, variable) && VariableAccessUtils.variableIsUsedInInnerClass(variable, context);
     }
 
     private void check(PsiParameter parameter) {

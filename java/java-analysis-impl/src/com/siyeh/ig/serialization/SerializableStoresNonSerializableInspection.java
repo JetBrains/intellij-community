@@ -16,6 +16,7 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -108,7 +109,7 @@ public final class SerializableStoresNonSerializableInspection extends BaseInspe
         }
         final PsiVariable variable = (PsiVariable)target;
         if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
-          if (!PsiUtil.isLanguageLevel8OrHigher(variable) ||
+          if (!PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, variable) ||
               !HighlightControlFlowUtil.isEffectivelyFinal(variable, myClassOrLambda, expression)) {
             // don't warn on uncompilable code.
             return;
