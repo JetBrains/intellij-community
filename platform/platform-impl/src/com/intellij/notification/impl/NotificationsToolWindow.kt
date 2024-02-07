@@ -43,6 +43,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.scale.JBUIScale
@@ -139,7 +140,7 @@ internal class NotificationContent(val project: Project,
 
   private val mySearchUpdateAlarm = Alarm()
 
-  private val splitter = MySplitter()
+  private val splitterWrapper: JPanel
 
   init {
     myMainPanel.background = NotificationComponent.BG_COLOR
@@ -154,9 +155,11 @@ internal class NotificationContent(val project: Project,
 
     createGearActions()
 
+    val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
-    myMainPanel.add(splitter)
+    splitterWrapper = NonOpaquePanel(splitter)
+    myMainPanel.add(splitterWrapper)
 
     autoProportionController = AutoProportionController(splitter, suggestions, timeline)
 
@@ -209,7 +212,7 @@ internal class NotificationContent(val project: Project,
         if (event.keyCode == KeyEvent.VK_ESCAPE && event.id == KeyEvent.KEY_PRESSED) {
           isVisible = false
           searchController.cancelSearch()
-          splitter.border = null
+          splitterWrapper.border = null
           return true
         }
         return super.preprocessEventForTextField(event)
@@ -243,7 +246,7 @@ internal class NotificationContent(val project: Project,
     val gearAction = object : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {
         searchController.startSearch()
-        splitter.border = JBUI.Borders.emptyTop(4)
+        splitterWrapper.border = JBUI.Borders.emptyTop(4)
       }
     }
 
