@@ -48,31 +48,19 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   private Icon myIcon = EmptyIcon.ICON_16;
 
-  public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame, @NotNull MethodsTracker tracker) {
-    myFrame = frame;
-
-    try {
-      myUiIndex = frame.getFrameIndex();
-      myLocation = frame.location();
-      if (!getValueMarkers().isEmpty()) {
-        getThisObject(); // init this object for markup
-      }
-      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, DebuggerUtilsEx.getMethod(myLocation));
-      myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
-      mySourcePosition = ContextUtil.getSourcePosition(this);
-      PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
-      myIsInLibraryContent = DebuggerUtilsEx.isInLibraryContent(psiFile != null ? psiFile.getVirtualFile() : null, getDebugProcess().getProject());
-    }
-    catch (InternalException | EvaluateException e) {
-      LOG.info(e);
-      myLocation = null;
-      myMethodOccurrence = tracker.getMethodOccurrence(0, null);
-      myIsSynthetic = false;
-      myIsInLibraryContent = false;
-    }
+  public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                  @NotNull MethodsTracker tracker) {
+    this(frame, false, null, tracker);
   }
 
   private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                   @Nullable Method method,
+                                   @NotNull MethodsTracker tracker) {
+    this(frame, true, method, tracker);
+  }
+
+  private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                   boolean useMethod,
                                    @Nullable Method method,
                                    @NotNull MethodsTracker tracker) {
     myFrame = frame;
@@ -83,8 +71,9 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       if (!getValueMarkers().isEmpty()) {
         getThisObject(); // init this object for markup
       }
-      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, method);
-      myIsSynthetic = DebuggerUtils.isSynthetic(method);
+      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex,
+                                                       useMethod ? method : DebuggerUtilsEx.getMethod(myLocation));
+      myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
       mySourcePosition = ContextUtil.getSourcePosition(this);
       PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
       myIsInLibraryContent =
