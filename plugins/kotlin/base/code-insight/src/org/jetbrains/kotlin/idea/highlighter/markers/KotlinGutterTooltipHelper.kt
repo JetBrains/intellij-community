@@ -69,4 +69,8 @@ object KotlinGutterTooltipHelper : GutterTooltipBuilder() {
         }
     }
 
+    override fun isDeprecated(element: PsiElement): Boolean {
+        return element is PsiDocCommentOwner && element.isDeprecated
+    }
+
 }
