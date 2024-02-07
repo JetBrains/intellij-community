@@ -22,7 +22,6 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -39,13 +38,9 @@ open class FileBasedStorage(
   roamingType: RoamingType,
   provider: StreamProvider? = null,
   override val controller: SettingsController?,
-) : XmlElementStorage(
-  fileSpec = fileSpec,
-  rootElementName = rootElementName,
-  pathMacroSubstitutor = pathMacroManager,
-  storageRoamingType = roamingType,
-  provider = provider,
-) {
+) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
+  private data class BlockSaving(val reason: String)
+
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   private var lineSeparator: LineSeparator? = null
@@ -129,6 +124,25 @@ open class FileBasedStorage(
         }
       }
     }
+
+    private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile?) {
+      if (virtualFile == null) {
+        file.deleteIfExists()
+      }
+      else if (virtualFile.exists()) {
+        if (virtualFile.isWritable) {
+          virtualFile.delete(requestor)
+        }
+        else {
+          throw ReadOnlyModificationException(virtualFile, object : SaveSession {
+            override fun saveBlocking() {
+              // the caller must wrap into undo-transparent write action
+              virtualFile.delete(requestor)
+            }
+          })
+        }
+      }
+    }
   }
 
   fun getVirtualFile(): VirtualFile? {
@@ -205,11 +219,10 @@ open class FileBasedStorage(
   }
 
   private fun processReadException(e: Exception?) {
-    val contentTruncated = e == null
-    if (!contentTruncated &&
+    if (e != null &&
         (fileSpec == PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
          fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)) {
-      blockSaving = BlockSaving(reason = e?.toString() ?: "empty file")
+      blockSaving = BlockSaving(reason = e.toString())
     }
     else {
       blockSaving = null
@@ -220,7 +233,7 @@ open class FileBasedStorage(
 
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment) {
-      val reason = if (contentTruncated) ConfigurationStoreBundle.message("notification.load.settings.error.reason.truncated") else e!!.message
+      val reason = if (e != null) e.message else ConfigurationStoreBundle.message("notification.load.settings.error.reason.truncated")
       val action = if (blockSaving == null)
         ConfigurationStoreBundle.message("notification.load.settings.action.content.will.be.recreated")
         else ConfigurationStoreBundle.message("notification.load.settings.action.please.correct.file.content")
@@ -244,14 +257,20 @@ internal fun writeFile(
   lineSeparator: LineSeparator,
   prependXmlProlog: Boolean
 ): VirtualFile {
-  val file = if (cachedFile != null && (virtualFile == null || !virtualFile.isValid)) {
-    getOrCreateVirtualFile(cachedFile, requestor)
-  }
-  else {
-    virtualFile!!
-  }
+  val file = if (cachedFile == null || virtualFile?.isValid == true) virtualFile!! else getOrCreateVirtualFile(cachedFile, requestor)
 
   if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(file.length)) {
+    fun isEqualContent(file: VirtualFile, lineSeparator: LineSeparator, content: BufferExposingByteArrayOutputStream, prependXmlProlog: Boolean): Boolean {
+      val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size + lineSeparator.separatorBytes.size
+      if (file.length.toInt() == headerLength + content.size()) {
+        val oldContent = file.contentsToByteArray()
+        if (!prependXmlProlog || ArrayUtil.startsWith(oldContent, XML_PROLOG) && ArrayUtil.startsWith(oldContent, XML_PROLOG.size, lineSeparator.separatorBytes)) {
+          return (headerLength until oldContent.size).all { oldContent[it] == content.internalBuffer[it - headerLength] }
+        }
+      }
+      return false
+    }
+
     val content = dataWriter.toBufferExposingByteArray(lineSeparator)
     if (isEqualContent(file, lineSeparator, content, prependXmlProlog)) {
       val contentString = content.toByteArray().toString(Charsets.UTF_8)
@@ -268,7 +287,40 @@ internal fun writeFile(
     }
   }
 
+  fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFile, dataWriterOrByteArray: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
+    LOG.debug { "Save ${file.presentableUrl}" }
+
+    if (!file.isWritable) {
+      // maybe the element is not long-lived, so we must write it to a byte array
+      val byteArray = when (dataWriterOrByteArray) {
+        is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
+        else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
+      }
+      throw ReadOnlyModificationException(file, object : SaveSession {
+        override fun saveBlocking() {
+          doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
+        }
+      })
+    }
+
+    runAsWriteActionIfNeeded {
+      file.getOutputStream(requestor).use { output ->
+        if (prependXmlProlog) {
+          output.write(XML_PROLOG)
+          output.write(lineSeparator.separatorBytes)
+        }
+        if (dataWriterOrByteArray is DataWriter) {
+          dataWriterOrByteArray.write(output, lineSeparator)
+        }
+        else {
+          (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)
+        }
+      }
+    }
+  }
+
   doWrite(requestor, file, dataWriter, lineSeparator, prependXmlProlog)
+
   return file
 }
 
@@ -289,78 +341,4 @@ internal fun writeFile(
   }
 }
 
-internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
-
-private fun isEqualContent(result: VirtualFile,
-                           lineSeparator: LineSeparator,
-                           content: BufferExposingByteArrayOutputStream,
-                           prependXmlProlog: Boolean): Boolean {
-  val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size + lineSeparator.separatorBytes.size
-  if (result.length.toInt() != (headerLength + content.size())) {
-    return false
-  }
-
-  val oldContent = result.contentsToByteArray()
-
-  if (prependXmlProlog && (!ArrayUtil.startsWith(oldContent, XML_PROLOG) ||
-                           !ArrayUtil.startsWith(oldContent, XML_PROLOG.size, lineSeparator.separatorBytes))) {
-    return false
-  }
-
-  return (headerLength until oldContent.size).all { oldContent[it] == content.internalBuffer[it - headerLength] }
-}
-
-private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFile, dataWriterOrByteArray: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
-  LOG.debug { "Save ${file.presentableUrl}" }
-
-  if (!file.isWritable) {
-    // maybe the element is not long-lived, so we must write it to a byte array
-    val byteArray = when (dataWriterOrByteArray) {
-      is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
-      else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
-    }
-    throw ReadOnlyModificationException(file, object : SaveSession {
-      override fun saveBlocking() {
-        doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
-      }
-    })
-  }
-
-  runAsWriteActionIfNeeded {
-    file.getOutputStream(requestor).use { output ->
-      if (prependXmlProlog) {
-        output.write(XML_PROLOG)
-        output.write(lineSeparator.separatorBytes)
-      }
-      if (dataWriterOrByteArray is DataWriter) {
-        dataWriterOrByteArray.write(output, lineSeparator)
-      }
-      else {
-        (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)
-      }
-    }
-  }
-}
-
-private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile?) {
-  if (virtualFile == null) {
-    file.deleteIfExists()
-  }
-  else if (virtualFile.exists()) {
-    if (virtualFile.isWritable) {
-      virtualFile.delete(requestor)
-    }
-    else {
-      throw ReadOnlyModificationException(virtualFile, object : SaveSession {
-        override fun saveBlocking() {
-          // the caller must wrap into undo-transparent write action
-          virtualFile.delete(requestor)
-        }
-      })
-    }
-  }
-}
-
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")
-
-private data class BlockSaving(@NonNls val reason: String)
