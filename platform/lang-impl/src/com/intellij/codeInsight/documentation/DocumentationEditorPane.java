@@ -36,6 +36,8 @@ import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocumentationPaneDefaultCssRules;
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
+import static com.intellij.util.ui.html.UtilsKt.getCssMargin;
+import static com.intellij.util.ui.html.UtilsKt.getCssPadding;
 
 @Internal
 public abstract class DocumentationEditorPane extends JEditorPane implements Disposable {
@@ -184,7 +186,16 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
 
   private int getPreferredSectionWidth(String sectionClassName) {
     View definition = findSection(getUI().getRootView(this), sectionClassName);
-    return definition == null ? -1 : (int)definition.getPreferredSpan(View.X_AXIS);
+    var result = definition == null ? -1 : (int)definition.getPreferredSpan(View.X_AXIS);
+    if (result > 0) {
+      result += getCssMargin(definition).width();
+      var parent = definition.getParent();
+      while (parent != null) {
+        result += getCssMargin(parent).width() + getCssPadding(parent).width();
+        parent = parent.getParent();
+      }
+    }
+    return result;
   }
 
   private static int getPreferredContentWidth(int textLength) {

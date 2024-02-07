@@ -7,14 +7,12 @@ import com.intellij.util.ui.JBUI
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.Shape
-import javax.swing.text.AttributeSet
 import javax.swing.text.Element
 import javax.swing.text.TabExpander
 import javax.swing.text.View
 import javax.swing.text.html.CSS
 import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.InlineView
-import javax.swing.text.html.StyleSheet
 import kotlin.math.max
 
 private val CAPTION_SIDE = CSS.Attribute::class.java
@@ -57,11 +55,11 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
     val prevSibling = if (index > 0) parentView.getView(index - 1) else null
     val nextSibling = if (index < parentView.viewCount - 1) parentView.getView(index + 1) else null
 
-    padding = attributes.padding
-    margin = attributes.margin
+    padding = this.cssPadding
+    margin = this.cssMargin
 
-    startView = prevSibling?.attributes?.padding != padding || prevSibling.attributes.margin != margin
-    endView = nextSibling?.attributes?.padding != padding || nextSibling.attributes.margin != margin
+    startView = prevSibling?.cssPadding != padding || prevSibling.cssMargin != margin
+    endView = nextSibling?.cssPadding != padding || nextSibling.cssMargin != margin
 
     // "caption-side" is used as "border-radius"
     borderRadius = attributes.getAttribute(CAPTION_SIDE)
@@ -93,31 +91,6 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
       padding.right + margin.right,
     )
   }
-
-  private val AttributeSet.padding: JBInsets
-    get() {
-      val styleSheet = getStyleSheet()
-      return JBUI.insets(
-        getLength(CSS.Attribute.PADDING_TOP, styleSheet).toInt(),
-        getLength(CSS.Attribute.PADDING_LEFT, styleSheet).toInt(),
-        getLength(CSS.Attribute.PADDING_BOTTOM, styleSheet).toInt(),
-        getLength(CSS.Attribute.PADDING_RIGHT, styleSheet).toInt(),
-      )
-    }
-
-  private val AttributeSet.margin: JBInsets
-    get() {
-      val styleSheet = getStyleSheet()
-      return JBUI.insets(
-        getLength(CSS.Attribute.MARGIN_TOP, styleSheet).toInt(),
-        getLength(CSS.Attribute.MARGIN_LEFT, styleSheet).toInt(),
-        getLength(CSS.Attribute.MARGIN_BOTTOM, styleSheet).toInt(),
-        getLength(CSS.Attribute.MARGIN_RIGHT, styleSheet).toInt(),
-      )
-    }
-
-  private fun AttributeSet.getLength(attribute: CSS.Attribute, styleSheet: StyleSheet): Float =
-    cssLength.invoke(css, this, attribute, styleSheet) as Float
 
   override fun getPartialSpan(p0: Int, p1: Int): Float {
     var offset = 0
@@ -198,15 +171,6 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
       return (insets.top + (contentsAlign * h)) / (insets.height() + h)
     }
     return super.getAlignment(axis)
-  }
-
-  companion object {
-    private val css: CSS by lazy(LazyThreadSafetyMode.PUBLICATION) { CSS() }
-    private val cssLength by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      CSS::class.java.getDeclaredMethod("getLength", AttributeSet::class.java, CSS.Attribute::class.java, StyleSheet::class.java)
-        .also { it.isAccessible = true }
-    }
-
   }
 
 }
