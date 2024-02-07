@@ -24,17 +24,12 @@ interface StateStorage {
    */
   fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>)
 
-  fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): StateStorageChooserEx.Resolution {
-    return StateStorageChooserEx.Resolution.DO
-  }
+  fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): StateStorageChooserEx.Resolution =
+    StateStorageChooserEx.Resolution.DO
 }
 
 interface StateStorageChooserEx {
-  enum class Resolution {
-    DO,
-    SKIP,
-    CLEAR
-  }
+  enum class Resolution { DO, SKIP, CLEAR }
 
   fun getResolution(storage: Storage, operation: StateStorageOperation): Resolution
 }

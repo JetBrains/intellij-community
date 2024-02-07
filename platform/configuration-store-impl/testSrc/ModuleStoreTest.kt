@@ -53,6 +53,7 @@ class ModuleStoreTest {
   val ruleChain = RuleChain(tempDirManager, ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))
 
   @Test
+  @Suppress("DEPRECATION")
   fun `set option`() = runBlocking {
     val moduleFile = tempDirManager.createVirtualFile("test.iml", """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -69,12 +70,14 @@ class ModuleStoreTest {
       assertThat(getOptionValue("foo")).isEqualTo("not bar")
 
       setOption("foo", "not bar")
-      // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not on this level")
+      // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not at this level")
       project.stateStore.save()
     }
   }
 
-  @Test fun `newModule should always create a new module from scratch`() = runBlocking {
+  @Test
+  @Suppress("DEPRECATION")
+  fun `newModule should always create a new module from scratch`() = runBlocking {
     val moduleFile = tempDirManager.createVirtualFile("test.iml", "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
     projectRule.createModule(moduleFile.toNioPath()).useAndDispose {
       assertThat(getOptionValue("foo")).isNull()

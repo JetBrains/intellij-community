@@ -28,6 +28,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readBytes
 
 open class FileBasedStorage(
@@ -38,15 +39,12 @@ open class FileBasedStorage(
   roamingType: RoamingType,
   provider: StreamProvider? = null
 ) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
-
-  @Volatile
-  private var cachedVirtualFile: VirtualFile? = null
+  @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   private var lineSeparator: LineSeparator? = null
   private var blockSaving: BlockSaving? = null
 
-  @Volatile
-  var file: Path = file
+  @Volatile var file: Path = file
     private set
 
   init {
@@ -75,16 +73,13 @@ open class FileBasedStorage(
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorageSaveSessionProducer<FileBasedStorage>(storageData, storage) {
 
-    final override fun isSaveAllowed(): Boolean {
-      if (!super.isSaveAllowed()) {
-        return false
-      }
-
-      if (storage.blockSaving != null) {
+    final override fun isSaveAllowed(): Boolean = when {
+      !super.isSaveAllowed() -> false
+      storage.blockSaving != null -> {
         LOG.warn("Save blocked for $storage")
-        return false
+        false
       }
-      return true
+      else -> true
     }
 
     override fun saveLocally(dataWriter: DataWriter?) {
@@ -101,12 +96,11 @@ open class FileBasedStorage(
           if (isUseVfs && virtualFile == null) {
             LOG.warn("Cannot find virtual file")
           }
-
-          deleteFile(storage.file, this, virtualFile)
+          deleteFile(storage.file, requestor = this, virtualFile)
           storage.cachedVirtualFile = null
         }
         isUseVfs -> {
-          storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
+          storage.cachedVirtualFile = writeFile(storage.file, requestor = this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
         }
         else -> {
           writeFile(storage.file, requestor = this, dataWriter, lineSeparator, storage.isUseXmlProlog)
@@ -176,15 +170,9 @@ open class FileBasedStorage(
         return element
       }
     }
-    catch (e: JDOMException) {
-      processReadException(e)
-    }
-    catch (e: XMLStreamException) {
-      processReadException(e)
-    }
-    catch (e: IOException) {
-      processReadException(e)
-    }
+    catch (e: JDOMException) { processReadException(e) }
+    catch (e: XMLStreamException) { processReadException(e) }
+    catch (e: IOException) { processReadException(e) }
     return null
   }
 
@@ -192,8 +180,8 @@ open class FileBasedStorage(
     val contentTruncated = e == null
 
     if (!contentTruncated &&
-          (fileSpec == PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
-           fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)) {
+        (fileSpec == PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
+         fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)) {
       blockSaving = BlockSaving(reason = e?.toString() ?: "empty file")
     }
     else {
@@ -240,7 +228,7 @@ internal fun writeFile(
     val content = dataWriter.toBufferExposingByteArray(lineSeparator)
     if (isEqualContent(file, lineSeparator, content, prependXmlProlog)) {
       val contentString = content.toByteArray().toString(Charsets.UTF_8)
-      val message = "Content equals, but it must be handled not on this level: file ${file.name}, content:\n$contentString"
+      val message = "Content equals, but it must be handled not at this level: file ${file.name}, content:\n${contentString}"
       if (ApplicationManager.getApplication().isUnitTestMode) {
         LOG.debug(message)
       }
@@ -299,18 +287,14 @@ private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFi
   LOG.debug { "Save ${file.presentableUrl}" }
 
   if (!file.isWritable) {
-    // may be element is not long-lived, so, we must write it to a byte array
+    // maybe the element is not long-lived, so we must write it to a byte array
     val byteArray = when (dataWriterOrByteArray) {
       is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
       else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
     }
     throw ReadOnlyModificationException(file, object : SaveSession {
       override fun saveBlocking() {
-        doWrite(requestor = requestor,
-                file = file,
-                dataWriterOrByteArray = byteArray,
-                lineSeparator = lineSeparator,
-                prependXmlProlog = prependXmlProlog)
+        doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
       }
     })
   }
@@ -333,11 +317,7 @@ private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFi
 
 private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile?) {
   if (virtualFile == null) {
-    try {
-      Files.delete(file)
-    }
-    catch (ignored: NoSuchFileException) {
-    }
+    file.deleteIfExists()
   }
   else if (virtualFile.exists()) {
     if (virtualFile.isWritable) {
@@ -346,7 +326,7 @@ private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, 
     else {
       throw ReadOnlyModificationException(virtualFile, object : SaveSession {
         override fun saveBlocking() {
-          // caller must wrap into undo transparent and write action
+          // the caller must wrap into undo-transparent write action
           virtualFile.delete(requestor)
         }
       })

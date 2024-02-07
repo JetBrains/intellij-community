@@ -23,8 +23,9 @@ open class DirectoryBasedStorage(
   @Suppress("DEPRECATION", "removal") private val splitter: com.intellij.openapi.components.StateSplitter,
   private val pathMacroSubstitutor: PathMacroSubstitutor? = null
 ) : StateStorageBase<StateMap>() {
-  protected var componentName: String? = null
+  private var componentName: String? = null
   @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = emptyMap()
+  @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   public override fun loadData(): StateMap {
     val (elementMap, separatorMap) = ComponentStorageUtil.load(dir, pathMacroSubstitutor)
@@ -75,9 +76,6 @@ open class DirectoryBasedStorage(
     return state
   }
 
-  @Volatile
-  private var cachedVirtualFile: VirtualFile? = null
-
   private fun getVirtualFile(): VirtualFile? {
     var result = cachedVirtualFile
     if (result == null) {
@@ -92,7 +90,7 @@ open class DirectoryBasedStorage(
   }
 
   override fun createSaveSessionProducer(): SaveSessionProducer? =
-    if (checkIsSavingDisabled()) null else MySaveSessionProducer(this, getStorageData())
+    if (checkIsSavingDisabled()) null else MySaveSessionProducer(storage = this, getStorageData())
 
   private class MySaveSessionProducer(
     private val storage: DirectoryBasedStorage,

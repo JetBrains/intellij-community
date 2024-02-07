@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
-
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -106,10 +104,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     val directory = LocalFileSystem.getInstance().findFileByPath(ioDirectory.invariantSeparatorsPathString) ?: return
     cachedVirtualDirectory = directory
     directory.children
-    if (directory is NewVirtualFile) {
-      directory.markDirty()
-    }
-
+    (directory as? NewVirtualFile)?.markDirty()
     directory.refresh(true, false)
   }
 
@@ -232,24 +227,19 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   internal fun createSchemeLoader(isDuringLoad: Boolean = false): SchemeLoader<T, MUTABLE_SCHEME> {
     val filesToDelete = HashSet(filesToDelete)
-    // caller must call SchemeLoader.apply to bring back scheduled for deleting files
+    // the caller must call SchemeLoader.apply to bring back scheduled for deleting files
     this.filesToDelete.removeAll(filesToDelete)
     // SchemeLoader can use a retained list to bring back previously scheduled for deleting file,
     // but what if someone calls save() during a load and file will be deleted, although you should be loaded by a new load session
     // (because modified on disk)
-    return SchemeLoader(schemeManager = this,
-                        oldList = schemeListManager.data,
-                        preScheduledFilesToDelete = filesToDelete,
-                        isDuringLoad = isDuringLoad)
+    return SchemeLoader(schemeManager = this, oldList = schemeListManager.data, filesToDelete, isDuringLoad)
   }
 
-  internal fun getFileExtension(fileName: CharSequence, isAllowAny: Boolean): String {
-    return when {
-      fileName.endsWith(schemeExtension, ignoreCase = true) -> schemeExtension
-      fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true) -> ComponentStorageUtil.DEFAULT_EXT
-      isAllowAny -> PathUtilRt.getFileExtension(fileName.toString())!!
-      else -> throw IllegalStateException("Scheme file extension $fileName is unknown, must be filtered out")
-    }
+  internal fun getFileExtension(fileName: CharSequence, isAllowAny: Boolean): String = when {
+    fileName.endsWith(schemeExtension, ignoreCase = true) -> schemeExtension
+    fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true) -> ComponentStorageUtil.DEFAULT_EXT
+    isAllowAny -> PathUtilRt.getFileExtension(fileName.toString())!!
+    else -> throw IllegalStateException("Scheme file extension $fileName is unknown, must be filtered out")
   }
 
   override fun loadSchemes(): Collection<T> {
@@ -261,8 +251,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       // isDuringLoad is true even if loadSchemes called not first time, but on reload,
       // because scheme processor should use cumulative event `reloaded` to update runtime state/caches
       val schemeLoader = createSchemeLoader(isDuringLoad = true)
-      val isLoadOnlyFromProvider = provider != null && provider.processChildren(fileSpec, roamingType,
-                                                                                { canRead(it) }) { name, input, readOnly ->
+      val isLoadOnlyFromProvider = provider != null && provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         catchAndLog({ "${provider.javaClass.name}: $name" }) {
           val scheme = schemeLoader.loadScheme(name, input, null)
           if (readOnly && scheme != null) {
@@ -314,7 +303,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     processor.reloaded(this, loadSchemes())
   }
 
-  // method is used to reflect already performed changes on disk, so, `isScheduleToDelete = false` is passed to `retainExternalInfo`
+  // this method is used to reflect already performed changes on disk, so, `isScheduleToDelete = false` is passed to `retainExternalInfo`
   internal fun removeExternalizableSchemesFromRuntimeState(retainFilter: ((scheme: T) -> Boolean)? = null) {
     val effectiveRetainFilter = retainFilter ?: { scheme ->
       ((scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme)) == SchemeState.NON_PERSISTENT
@@ -347,10 +336,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   internal fun getFileName(scheme: T): String? = schemeListManager.getExternalInfo(scheme)?.fileNameWithoutExtension
 
-  fun canRead(name: CharSequence): Boolean {
-    return (updateExtension && name.endsWith(ComponentStorageUtil.DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) &&
-           (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
-  }
+  fun canRead(name: CharSequence): Boolean =
+    (updateExtension && name.endsWith(ComponentStorageUtil.DEFAULT_EXT, true) || name.endsWith(schemeExtension, ignoreCase = true)) &&
+    (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
   override fun save() {
     if (isLoadingSchemes.get()) {
@@ -413,9 +401,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
   }
 
-  override fun getSettingsCategory(): SettingsCategory {
-    return settingsCategory
-  }
+  override fun getSettingsCategory(): SettingsCategory = settingsCategory
 
   private fun removeDirectoryIfEmpty(errorCollector: ErrorCollector) {
     ioDirectory.directoryStreamIfExists {
@@ -468,7 +454,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     val fileName = fileNameWithoutExtension + schemeExtension
-    // the file will be overwritten, so, we don't need to delete it
+    // the file will be overwritten, so we don't need to delete it
     filesToDelete.remove(fileName)
 
     val newDigest = hashElement(element)
@@ -502,7 +488,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       providerPath = null
     }
 
-    // if another new scheme uses the old name of this scheme, we must not delete it (as part of rename operation)
+    // if another new scheme uses the old name of this scheme, we must not delete it (as a part of the rename operation)
     val renamed = externalInfo != null &&
                   fileNameWithoutExtension !== currentFileNameWithoutExtension &&
                   currentFileNameWithoutExtension != null &&
@@ -579,7 +565,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       }.getOrLogException(LOG)
     }
 
-    val bundledScheme = schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(scheme))
+    val bundledScheme = schemeListManager.readOnlyExternalizableSchemes[processor.getSchemeKey(scheme)]
     if (bundledScheme == null) {
       if ((processor as? LazySchemeProcessor)?.isSchemeEqualToBundled(scheme) == true) {
         externalInfo?.scheduleDelete(filesToDelete, "equals to bundled")
@@ -644,16 +630,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
             }
           }
         }
-        return
       }
     }
-
-    for (name in filesToDelete) {
-      try {
-        NioFiles.deleteRecursively(ioDirectory.resolve(name))
-      }
-      catch (e: Throwable) {
-        errorCollector.addError(e)
+    else {
+      for (name in filesToDelete) {
+        try {
+          NioFiles.deleteRecursively(ioDirectory.resolve(name))
+        }
+        catch (e: Throwable) {
+          errorCollector.addError(e)
+        }
       }
     }
   }
@@ -668,9 +654,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   }
 
   override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Predicate<T>?) {
-    schemeListManager.setSchemes(newSchemes = newSchemes,
-                                 newCurrentScheme = newCurrentScheme,
-                                 removeCondition = removeCondition?.let { it::test })
+    schemeListManager.setSchemes(newSchemes, newCurrentScheme, removeCondition?.let { it::test })
   }
 
   internal fun retainExternalInfo(isScheduleToDelete: Boolean, schemeToInfo: MutableMap<T, ExternalInfo>, newSchemes: List<T>) {
@@ -680,7 +664,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
     val iterator = schemeToInfo.entries.iterator()
     l@ for ((scheme, info) in iterator) {
-      if (schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(scheme)) === scheme) {
+      if (schemeListManager.readOnlyExternalizableSchemes[processor.getSchemeKey(scheme)] === scheme) {
         continue
       }
 
@@ -742,24 +726,24 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
     return null
   }
-}
 
-private class ErrorCollector {
-  private var error: Throwable? = null
+  private class ErrorCollector {
+    private var error: Throwable? = null
 
-  fun addError(error: Throwable) {
-    if (error is CancellationException || error is ProcessCanceledException) {
-      throw error
+    fun addError(error: Throwable) {
+      if (error is CancellationException || error is ProcessCanceledException) {
+        throw error
+      }
+
+      val compoundError = this.error
+      if (compoundError == null) {
+        this.error = error
+      }
+      else {
+        compoundError.addSuppressed(error)
+      }
     }
 
-    val compoundError = this.error
-    if (compoundError == null) {
-      this.error = error
-    }
-    else {
-      compoundError.addSuppressed(error)
-    }
+    fun getError(): Throwable? = error
   }
-
-  fun getError(): Throwable? = error
 }
