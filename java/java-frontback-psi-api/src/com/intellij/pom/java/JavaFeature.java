@@ -2,7 +2,6 @@
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.*;
 
 /**
@@ -158,7 +157,7 @@ public enum JavaFeature {
   /**
    * @return minimal language level where feature is available.
    * Note that this doesn't mean that the feature is available on every language level which is higher.
-   * In most of the cases, {@link #isAvailable(PsiElement)} or {@link #isSufficient(LanguageLevel)} should be used instead.
+   * In most of the cases, {@code PsiUtil.isAvailable(PsiElement)} or {@link #isSufficient(LanguageLevel)} should be used instead.
    */
   public @NotNull LanguageLevel getMinimumLevel() {
     return myLevel;
