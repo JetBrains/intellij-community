@@ -25,6 +25,8 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.max
+import kotlin.math.min
 
 const val LOOKUP_DOCUMENTATION_POPUP_WIDTH = 550
 const val LOOKUP_DOCUMENTATION_POPUP_MIN_HEIGHT = 300
@@ -111,10 +113,10 @@ internal fun lookupElementToRequestMapper(lookup: Lookup): suspend (LookupElemen
 
 private class LookupPopupBoundsHandler(
   private val lookup: LookupEx,
-) : AdjusterPopupBoundsHandler(lookup.component) {
+) : BaseAdjustingPopupBoundsHandler(lookup.component) {
   override fun popupBounds(anchor: Component, size: Dimension): Rectangle {
     val preferredSize = Dimension(LOOKUP_DOCUMENTATION_POPUP_WIDTH,
-                                  Math.min(size.height, Math.max(LOOKUP_DOCUMENTATION_POPUP_MIN_HEIGHT, anchor.height)))
+                                  min(size.height, max(LOOKUP_DOCUMENTATION_POPUP_MIN_HEIGHT, anchor.height)))
     val bounds = PositionAdjuster(anchor)
       .adjustBounds(preferredSize, arrayOf(Position.RIGHT, Position.LEFT))
       .applyIf(lookup.isPositionedAboveCaret) {
