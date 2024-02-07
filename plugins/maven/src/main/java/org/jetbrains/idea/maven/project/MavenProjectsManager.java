@@ -72,7 +72,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable,
              MavenAsyncProjectsManager {
   private final ReentrantLock initLock = new ReentrantLock();
-  private final AtomicBoolean triedToLoadExistingTree = new AtomicBoolean();
+  private final AtomicBoolean projectsTreeInitialized = new AtomicBoolean();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
 
@@ -87,8 +87,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-
-  private MavenWorkspaceSettings myWorkspaceSettings;
 
   private final AtomicReference<MavenSyncConsole> mySyncConsole = new AtomicReference<>();
   private final MavenMergingUpdateQueue mySaveQueue;
@@ -162,11 +160,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private MavenWorkspaceSettings getWorkspaceSettings() {
-    if (myWorkspaceSettings == null) {
-      myWorkspaceSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-    }
-
-    return myWorkspaceSettings;
+    return MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
   }
 
   public File getLocalRepository() {
@@ -284,24 +278,28 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private void initProjectsTree() {
     initLock.lock();
     try {
+      if (projectsTreeInitialized.getAndSet(true)) return;
+
       try {
-        if (!triedToLoadExistingTree.getAndSet(true)) {
-          Path file = getProjectsTreeFile();
-          if (Files.exists(file)) {
-            var readTree = MavenProjectsTree.read(myProject, file);
-            if (null != readTree) {
-              myProjectsTree = readTree;
-            }
-            else {
-              MavenLog.LOG.warn("Could not load existing tree, read null");
-            }
+        Path file = getProjectsTreeFile();
+        if (Files.exists(file)) {
+          var readTree = MavenProjectsTree.read(myProject, file);
+          if (null != readTree) {
+            myProjectsTree = readTree;
+          }
+          else {
+            MavenLog.LOG.warn("Could not load existing tree, read null");
           }
         }
       }
       catch (IOException e) {
         MavenLog.LOG.info(e);
       }
-      if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
+
+      if (myProjectsTree == null) {
+        myProjectsTree = new MavenProjectsTree(myProject);
+      }
+
       applyStateToTree(myProjectsTree, this);
       myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
     }
@@ -317,7 +315,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myState.ignoredPathMasks = tree.getIgnoredFilesPatterns();
   }
 
-  public static void applyStateToTree(MavenProjectsTree tree, MavenProjectsManager manager) {
+  private static void applyStateToTree(MavenProjectsTree tree, MavenProjectsManager manager) {
     MavenWorkspaceSettings settings = manager.getWorkspaceSettings();
     MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(settings.enabledProfiles, settings.disabledProfiles);
     tree.resetManagedFilesPathsAndProfiles(manager.myState.originalFiles, explicitProfiles);
