@@ -89,21 +89,29 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
     val allResourceRoots = includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
-      loadDescriptorFromDir(dir = mainResourceRoot, pluginDir = mainResourceRoot, context = context, isBundled = true)
-    }
-    else {
-      loadDescriptorFromJar(
-        file = mainResourceRoot,
-        descriptorRelativePath = PluginManagerCore.PLUGIN_XML_PATH,
+      loadDescriptorFromDir(
+        dir = mainResourceRoot,
+        pluginDir = mainResourceRoot,
+        context = context,
+        isBundled = true,
         pathResolver = ModuleBasedPluginXmlPathResolver(
           allResourceRoots = allResourceRoots.toList(),
+          includedModules = includedModules, 
+          fallbackResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+        )
+      )
+    }
+    else {
+      val includedModulesRootsList = allResourceRoots.toList()
+      loadDescriptorFromJar(
+        file = mainResourceRoot,
+        pathResolver = ModuleBasedPluginXmlPathResolver(
+          allResourceRoots = includedModulesRootsList,
           includedModules = includedModules,
-          pool = zipFilePool,
+          fallbackResolver = PluginXmlPathResolver(includedModulesRootsList, zipFilePool),
         ),
         parentContext = context,
         isBundled = true,
-        isEssential = false,
-        useCoreClassLoader = false,
         pluginDir = mainResourceRoot.parent.parent,
         pool = zipFilePool,
       )

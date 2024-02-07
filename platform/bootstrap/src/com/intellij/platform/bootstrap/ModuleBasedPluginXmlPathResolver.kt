@@ -3,7 +3,6 @@ package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
 import com.intellij.platform.runtime.repository.IncludedRuntimeModule
-import com.intellij.util.lang.ZipFilePool
 import java.nio.file.Path
 
 /**
@@ -13,9 +12,8 @@ import java.nio.file.Path
 internal class ModuleBasedPluginXmlPathResolver(
   private val allResourceRoots: List<Path>,
   private val includedModules: List<IncludedRuntimeModule>,
-  pool: ZipFilePool,
+  private val fallbackResolver: PathResolver,
 ) : PathResolver {
-  private val fallbackResolver = PluginXmlPathResolver(pluginJarFiles = allResourceRoots, pool = pool)
 
   override fun resolveModuleFile(
     readContext: ReadModuleContext,
