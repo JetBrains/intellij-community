@@ -88,7 +88,14 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   /** Log each unmapped buffer */
   private static final boolean LOG_UNMAP_OPERATIONS = getBooleanProperty("MMappedFileStorage.LOG_UNMAP_OPERATIONS", false);
 
+  /** Do file-expansion in such a way that it could be continued & finished even if the application crashed & restarted in the middle */
   private static final boolean CRASH_TOLERANT_EXPANSION = getBooleanProperty("MMappedFileStorage.CRASH_TOLERANT_EXPANSION", true);
+
+  /**
+   * On .close() check that storage file and parent folder do exist.
+   * Log warning if they don't -- which means that storage file(s) was removed from disk _before_ close.
+   */
+  private static final boolean WARN_OF_DELETED_STORAGES_USE = getBooleanProperty("MMappedFileStorage.WARN_OF_DELETED_STORAGES_USE", true);
 
   //============== statistics/monitoring: ===================================================================
 
@@ -98,6 +105,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
 
   /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
   private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 512);
+
 
   private static volatile int openedStoragesCount = 0;
   private static final AtomicInteger totalPagesMapped = new AtomicInteger();
@@ -334,6 +342,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   }
 
   private void close(boolean unmap) throws IOException {
+    boolean actuallyClosed = false;
     try {
       synchronized (pagesLock) {
         if (channel.isOpen()) {
@@ -343,6 +352,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
               unregisterMappedPage(pageSize);
             }
           }
+          actuallyClosed = true;
         }
 
         if (unmap) {
@@ -381,6 +391,18 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
           openedStorages.remove(storagePath);
           //noinspection AssignmentToStaticFieldFromInstanceMethod
           openedStoragesCount--;
+        }
+      }
+    }
+
+    if (actuallyClosed && WARN_OF_DELETED_STORAGES_USE) {
+      Path parent = storagePath.getParent();
+      if (!Files.exists(parent)) {
+        LOG.warn("Storage parent dir[" + parent.toAbsolutePath() + "] is not exist: storage files were removed while wasn't yet closed!");
+      }
+      else {
+        if (!Files.exists(storagePath)) {
+          LOG.warn("Storage[" + storagePath.toAbsolutePath() + "] is not exist: storage file was removed while wasn't yet closed!");
         }
       }
     }
@@ -586,8 +608,20 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
    * Solution to the issue: somehow register (in a persistent way) the start of region allocation-and-zeroing process,
    * and if the process was interrupted by the application crash -- finish it on app restart.
    * <p/>
-   * Different implementations could be used for that 'persistent registering' -- so the interface, and simplest implementation
-   * based on file-lock
+   * Different implementations could be used for that 'persistent registering' -- so the interface.
+   * The simplest (default) implementation is now based on file-lock.
+   * Use:
+   * <pre>
+   *   Region region = lock.region(regionStartOffset, pageSize)
+   *   if(region.isUnfinished()){
+   *    //finalize region expansion/zeroing
+   *   }
+   *   else{
+   *     region.start()
+   *     //do region expansion/zeroing
+   *   }                                  `
+   *   region.finish();
+   * </pre>
    */
   public interface RegionAllocationAtomicityLock {
     Region region(long regionStartOffset, int pageSize) throws IOException;
