@@ -125,7 +125,6 @@ abstract class EditorBasedStatusBarPopup(
       }
     })
 
-    registerCustomListeners(myConnection)
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
         val document = e.document
