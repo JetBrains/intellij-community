@@ -56,7 +56,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public final class SettingsEntryPointAction extends ActionGroup
-  implements CustomComponentAction, RightAlignedToolbarAction, TooltipDescriptionProvider, Toggleable, DumbAware {
+  implements AlwaysVisibleActionGroup, CustomComponentAction, Toggleable, DumbAware,
+             RightAlignedToolbarAction, TooltipDescriptionProvider {
 
   private static final Logger LOG = Logger.getInstance(SettingsEntryPointAction.class);
 

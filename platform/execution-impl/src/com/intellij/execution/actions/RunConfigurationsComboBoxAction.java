@@ -466,7 +466,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
 
     @Override
