@@ -41,6 +41,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
@@ -3271,7 +3272,7 @@ public class JavaDocInfoGenerator {
         if (returnTag != null) {
           return returnTag;
         }
-        if (PsiUtil.isLanguageLevel16OrHigher(comment)) {
+        if (PsiUtil.getLanguageLevel(comment).isAtLeast(LanguageLevel.JDK_16)) {
           for (PsiElement child : comment.getChildren()) {
             if (child instanceof PsiDocTag && RETURN_TAG.equals(((PsiDocTag)child).getName())) {
               return (PsiDocTag)child;

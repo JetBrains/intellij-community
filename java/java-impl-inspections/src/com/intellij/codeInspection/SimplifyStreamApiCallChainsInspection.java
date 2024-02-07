@@ -1085,7 +1085,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       if (type != null && type.equalsToText(JAVA_LANG_OBJECT + "[]")) {
         return "";
       }
-      if (PsiUtil.isLanguageLevel11OrHigher(methodCall)) {
+      if (PsiUtil.getLanguageLevel(methodCall).isAtLeast(LanguageLevel.JDK_11)) {
         return ct.text(methodCall.getArgumentList().getExpressions()[0]);
       }
       if (type != null) {

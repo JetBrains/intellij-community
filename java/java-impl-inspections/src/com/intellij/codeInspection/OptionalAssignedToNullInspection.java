@@ -10,6 +10,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -99,7 +100,7 @@ public final class OptionalAssignedToNullInspection extends AbstractBaseJavaLoca
             !comesFromMapGet(value)) {
           boolean useIsEmpty =
             binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
-            PsiUtil.isLanguageLevel11OrHigher(binOp);
+            PsiUtil.getLanguageLevel(binOp).isAtLeast(LanguageLevel.JDK_11);
           holder.problem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"))
             .fix(new ReplaceWithIsPresentFix(useIsEmpty))
             .fix(new UpdateInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",

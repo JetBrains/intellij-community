@@ -14,6 +14,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -182,7 +183,7 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
         if (argumentList != null) {
           PsiExpression[] args = argumentList.getExpressions();
           PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-          if (classReference != null && PsiUtil.isLanguageLevel10OrHigher(mapDefinition) &&
+          if (classReference != null && PsiUtil.getLanguageLevel(mapDefinition).isAtLeast(LanguageLevel.JDK_10) &&
               JAVA_UTIL_HASH_MAP.equals(classReference.getQualifiedName()) && args.length == 1) {
             PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[0]);
             if (arg != null) {
@@ -279,7 +280,9 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
         if (ARRAYS_AS_LIST.test(call)) {
           return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), type);
         }
-        if(arg != null && PsiUtil.isLanguageLevel10OrHigher(arg) && InheritanceUtil.isInheritor(arg.getType(), JAVA_UTIL_COLLECTION)) {
+        if (arg != null &&
+            PsiUtil.getLanguageLevel(arg).isAtLeast(LanguageLevel.JDK_10) &&
+            InheritanceUtil.isInheritor(arg.getType(), JAVA_UTIL_COLLECTION)) {
           return new PrepopulatedCollectionModel(Collections.singletonList(arg), Collections.emptyList(), type, true);
         }
       }

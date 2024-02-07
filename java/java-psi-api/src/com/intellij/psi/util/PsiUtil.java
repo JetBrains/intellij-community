@@ -1058,18 +1058,6 @@ public final class PsiUtil extends PsiUtilCore {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_9);
   }
 
-  public static boolean isLanguageLevel10OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_10);
-  }
-
-  public static boolean isLanguageLevel11OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_11);
-  }
-
-  public static boolean isLanguageLevel16OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_16);
-  }
-
   /**
    * @param feature feature to check
    * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)

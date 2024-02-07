@@ -10,6 +10,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiPrecedenceUtil;
@@ -50,7 +51,7 @@ public final class IOStreamConstructorInspection extends AbstractBaseJavaLocalIn
         if (isFileNotFoundHandled(newExpression)) return;
         boolean canUseBaseType = TypeConversionUtil.isAssignable(expectedType, streamType.baseType(newExpression));
         if (!canUseBaseType) return;
-        boolean isInfoLevel = PsiUtil.isLanguageLevel10OrHigher(holder.getFile());
+        boolean isInfoLevel = PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_10);
         if (isInfoLevel && !isOnTheFly) return;
         ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.WARNING;
         ReplaceWithNioCallFix fix = new ReplaceWithNioCallFix(streamType.myReplacement, isOnTheFly);
@@ -152,7 +153,7 @@ public final class IOStreamConstructorInspection extends AbstractBaseJavaLocalIn
 
       @Override
       public String createReplacement() {
-        return PsiUtil.isLanguageLevel11OrHigher(myStringExpr)
+        return PsiUtil.getLanguageLevel(myStringExpr).isAtLeast(LanguageLevel.JDK_11)
                ? "java.nio.file.Path.of(" + myStringExpr.getText() + ")"
                : "java.nio.file.Paths.get(" + myStringExpr.getText() + ")";
       }

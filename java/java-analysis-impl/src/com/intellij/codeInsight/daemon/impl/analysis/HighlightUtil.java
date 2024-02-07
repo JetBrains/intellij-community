@@ -1156,7 +1156,7 @@ public final class HighlightUtil {
         }
 
         if (aClass.getContainingClass() instanceof PsiAnonymousClass &&
-            privateOrProtected && !PsiUtil.isLanguageLevel16OrHigher(modifierOwnerParent)) {
+            privateOrProtected && !PsiUtil.getLanguageLevel(modifierOwnerParent).isAtLeast(LanguageLevel.JDK_16)) {
           isAllowed = false;
         }
       }
