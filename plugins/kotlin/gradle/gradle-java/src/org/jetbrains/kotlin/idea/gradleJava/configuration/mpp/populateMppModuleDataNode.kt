@@ -45,7 +45,6 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 import java.lang.reflect.Proxy
 import java.util.*
-import java.util.stream.Collectors
 
 /**
  * Creates and adds [GradleSourceSetData] nodes and [KotlinSourceSetInfo] for the given [moduleDataNode]
@@ -418,7 +417,7 @@ private fun createExternalSourceSet(
 
         sourceSet.name = compilation.fullName()
         sourceSet.targetCompatibility = compilationData.targetCompatibility
-        sourceSet.dependencies += compilation.dependencies.mapNotNull { mppModel.dependencyMap[it] }
+        sourceSet.dependencies = compilation.dependencies.mapNotNull { mppModel.dependencyMap[it] }
         //TODO after applying patch to IDEA core uncomment the following line:
         // sourceSet.isTest = compilation.sourceSets.filter { isTestModule }.isNotEmpty()
         // It will allow to get rid of hacks with guessing module type in DataServices and obtain properly set productionOnTest flags
@@ -494,7 +493,7 @@ private fun createExternalSourceSet(
     return DefaultExternalSourceSet().also { sourceSet ->
         sourceSet.name = ktSourceSet.name
         sourceSet.targetCompatibility = ktSourceSetData.targetCompatibility
-        sourceSet.dependencies += ktSourceSet.dependencies.mapNotNull { mppModel.dependencyMap[it] }
+        sourceSet.dependencies = ktSourceSet.dependencies.mapNotNull { mppModel.dependencyMap[it] }
 
         sourceSet.setSources(linkedMapOf(
             ktSourceSet.sourceType to DefaultExternalSourceDirectorySet().also { dirSet ->

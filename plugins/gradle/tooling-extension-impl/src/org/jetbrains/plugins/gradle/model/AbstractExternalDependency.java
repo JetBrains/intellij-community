@@ -21,7 +21,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
 
   private final @NotNull DefaultExternalDependencyId myId;
   private String myScope;
-  private final @NotNull Collection<ExternalDependency> myDependencies;
+  private @NotNull Collection<? extends ExternalDependency> myDependencies;
   private String mySelectionReason;
   private int myClasspathOrder;
   private boolean myExported;
@@ -52,7 +52,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
   ) {
     myId = new DefaultExternalDependencyId(id);
     mySelectionReason = selectionReason;
-    myDependencies = dependencies == null ? new ArrayList<>(0) : ModelFactory.createCopy(dependencies);
+    myDependencies = ModelFactory.createCopy(dependencies);
     myScope = scope;
     myClasspathOrder = classpathOrder;
     myExported = exported;
@@ -150,8 +150,12 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
   }
 
   @Override
-  public @NotNull Collection<ExternalDependency> getDependencies() {
+  public @NotNull Collection<? extends ExternalDependency> getDependencies() {
     return myDependencies;
+  }
+
+  public void setDependencies(@NotNull Collection<? extends ExternalDependency> dependencies) {
+    myDependencies = dependencies;
   }
 
   @Override
@@ -174,8 +178,8 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
            equal(myDependencies, that.myDependencies);
   }
 
-  private static boolean equal(@NotNull Collection<ExternalDependency> dependencies1,
-                               @NotNull Collection<ExternalDependency> dependencies2) {
+  private static boolean equal(@NotNull Collection<? extends ExternalDependency> dependencies1,
+                               @NotNull Collection<? extends ExternalDependency> dependencies2) {
     final DependenciesIterator iterator1 = new DependenciesIterator(dependencies1);
     final DependenciesIterator iterator2 = new DependenciesIterator(dependencies2);
     return GradleContainerUtil.match(iterator1, iterator2, new BooleanBiFunction<AbstractExternalDependency, AbstractExternalDependency>() {
@@ -206,7 +210,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     private final ArrayDeque<ExternalDependency> myToProcess;
     private final ArrayList<Integer> myProcessedStructure;
 
-    private DependenciesIterator(@NotNull Collection<ExternalDependency> dependencies) {
+    private DependenciesIterator(@NotNull Collection<? extends ExternalDependency> dependencies) {
       mySeenDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
       myToProcess = new ArrayDeque<>(dependencies);
       myProcessedStructure = new ArrayList<>();

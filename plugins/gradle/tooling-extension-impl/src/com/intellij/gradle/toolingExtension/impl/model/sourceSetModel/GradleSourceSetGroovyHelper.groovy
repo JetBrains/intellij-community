@@ -295,7 +295,7 @@ class GradleSourceSetGroovyHelper {
       if (resolveSourceSetDependencies) {
         def dependencies = new GradleSourceSetDependencyResolver(context, project)
           .resolveDependencies(sourceSet)
-        externalSourceSet.dependencies.addAll(dependencies)
+        externalSourceSet.setDependencies(dependencies)
       }
 
       externalSourceSet.sources = sources

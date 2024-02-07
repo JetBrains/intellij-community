@@ -104,7 +104,7 @@ public interface ExternalDependency extends Serializable {
    * @return transitive dependencies
    */
   @NotNull
-  Collection<ExternalDependency> getDependencies();
+  Collection<? extends ExternalDependency> getDependencies();
 
   /**
    * Allows to check if current dependency is transitive, i.e. is visible to the module which depends on module that has current dependency.

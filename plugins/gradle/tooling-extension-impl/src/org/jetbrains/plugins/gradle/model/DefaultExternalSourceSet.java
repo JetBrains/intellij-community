@@ -21,10 +21,11 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private String targetCompatibility;
   private String jdkInstallationPath;
   private Collection<File> artifacts;
-  private final @NotNull LinkedHashSet<ExternalDependency> dependencies;
-  private Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
+  private @NotNull Collection<ExternalDependency> dependencies;
+  private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
 
   public DefaultExternalSourceSet() {
+    // Collection can be modified outside by mutation methods
     sources = new HashMap<>(0);
     dependencies = new LinkedHashSet<>(0);
     artifacts = new ArrayList<>(0);
@@ -33,21 +34,12 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
     name = sourceSet.getName();
     isPreview = sourceSet.isPreview();
+    isPreview = sourceSet.isPreview();
     sourceCompatibility = sourceSet.getSourceCompatibility();
     targetCompatibility = sourceSet.getTargetCompatibility();
-
-    artifacts = sourceSet.getArtifacts() == null ? new ArrayList<>(0) : new ArrayList<>(sourceSet.getArtifacts());
-
-    Set<? extends Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet>> entrySet = sourceSet.getSources().entrySet();
-    sources = new HashMap<>(entrySet.size());
-    for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : entrySet) {
-      sources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
-    }
-
-    dependencies = new LinkedHashSet<>(sourceSet.getDependencies().size());
-    for (ExternalDependency dependency : sourceSet.getDependencies()) {
-      dependencies.add(ModelFactory.createCopy(dependency));
-    }
+    artifacts = copyArtifacts(sourceSet.getArtifacts());
+    dependencies = ModelFactory.createCopy(sourceSet.getDependencies());
+    sources = copySources(sourceSet.getSources());
   }
 
   @Override
@@ -109,17 +101,49 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
     return dependencies;
   }
 
+  public void setDependencies(@NotNull Collection<ExternalDependency> dependencies) {
+    this.dependencies = dependencies;
+  }
+
   @Override
-  public @NotNull Map<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> getSources() {
+  public @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> getSources() {
     return sources;
   }
 
-  public void setSources(Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
-    this.sources = sources;
+  public void setSources(@NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
+    this.sources = new LinkedHashMap<>(sources);
+  }
+
+  public void addSource(@NotNull ExternalSystemSourceType sourceType, @NotNull DefaultExternalSourceDirectorySet sourceDirectorySet) {
+    this.sources.put(sourceType, sourceDirectorySet);
   }
 
   @Override
   public String toString() {
     return "sourceSet '" + name + '\'' ;
+  }
+
+  private static @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> copySources(
+    @Nullable Map<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> sources
+  ) {
+    if (sources == null) {
+      // Collection can be modified outside by mutation methods
+      return new LinkedHashMap<>(0);
+    }
+    Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> result = new LinkedHashMap<>(sources.size());
+    for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : sources.entrySet()) {
+      ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(entry.getKey());
+      DefaultExternalSourceDirectorySet directorySet = new DefaultExternalSourceDirectorySet(entry.getValue());
+      result.put(sourceType, directorySet);
+    }
+    return result;
+  }
+
+  private static @NotNull Collection<File> copyArtifacts(@Nullable Collection<File> artifacts) {
+    if (artifacts == null) {
+      // Collection can be modified outside by mutation methods
+      return new ArrayList<>(0);
+    }
+    return new ArrayList<>(artifacts);
   }
 }

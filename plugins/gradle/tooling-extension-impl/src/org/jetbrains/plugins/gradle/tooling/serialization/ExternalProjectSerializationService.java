@@ -36,7 +36,7 @@ public final class ExternalProjectSerializationService implements SerializationS
   @Override
   public byte[] write(ExternalProject project, Class<? extends ExternalProject> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
+    try (IonWriter writer = createIonWriter().build(out)) {
       writeProject(writer, myWriteContext, project);
     }
     return out.toByteArray();
@@ -193,9 +193,11 @@ public final class ExternalProjectSerializationService implements SerializationS
     writer.stepOut();
   }
 
-  private static void writeDependencies(IonWriter writer,
-                                        WriteContext context,
-                                        Collection<ExternalDependency> dependencies) throws IOException {
+  private static void writeDependencies(
+    IonWriter writer,
+    WriteContext context,
+    Collection<? extends ExternalDependency> dependencies
+  ) throws IOException {
     writer.setFieldName("dependencies");
     writer.stepIn(IonType.LIST);
     for (ExternalDependency dependency : dependencies) {
@@ -204,9 +206,11 @@ public final class ExternalProjectSerializationService implements SerializationS
     writer.stepOut();
   }
 
-  static void writeDependency(IonWriter writer,
-                              WriteContext context,
-                              ExternalDependency dependency) throws IOException {
+  static void writeDependency(
+    IonWriter writer,
+    WriteContext context,
+    ExternalDependency dependency
+  ) throws IOException {
     if (dependency instanceof ExternalLibraryDependency) {
       writeDependency(writer, context, (ExternalLibraryDependency)dependency);
     }
@@ -501,7 +505,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     sourceSet.setTargetCompatibility(readString(reader, "targetCompatibility"));
     sourceSet.setPreview(readBoolean(reader, "isPreview"));
     sourceSet.setArtifacts(readFiles(reader));
-    sourceSet.getDependencies().addAll(readDependencies(reader, context));
+    sourceSet.setDependencies(readDependencies(reader, context));
     sourceSet.setSources(readSourceDirectorySets(reader));
     sourceSet.setJdkInstallationPath(readString(reader, "jdkInstallationPath"));
     reader.stepOut();
@@ -576,8 +580,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     return patternSet;
   }
 
-  private static Collection<? extends ExternalDependency> readDependencies(IonReader reader,
-                                                                           ReadContext context) {
+  private static Collection<ExternalDependency> readDependencies(IonReader reader, ReadContext context) {
     List<ExternalDependency> dependencies = new ArrayList<>();
     reader.next();
     reader.stepIn();
@@ -667,7 +670,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     dependency.setSelectionReason(readString(reader, "selectionReason"));
     dependency.setClasspathOrder(readInt(reader, "classpathOrder"));
     dependency.setExported(readBoolean(reader, "exported"));
-    dependency.getDependencies().addAll(readDependencies(reader, context));
+    dependency.setDependencies(readDependencies(reader, context));
   }
 
   private static void readDependencyId(IonReader reader, AbstractExternalDependency dependency) {
