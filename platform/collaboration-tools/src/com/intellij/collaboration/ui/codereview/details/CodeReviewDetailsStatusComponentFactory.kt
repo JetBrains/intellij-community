@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
+import com.intellij.collaboration.ui.icon.CIBuildStatusIcons
 import com.intellij.collaboration.ui.util.bindIconIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -18,11 +19,8 @@ import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.popup.PopupConfig
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.ShowDirection
-import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
@@ -58,7 +56,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun createConflictsComponent(scope: CoroutineScope, hasConflicts: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: review has conflicts").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = IconStatus.failed
+      icon = CIBuildStatusIcons.failed
       text = CollaborationToolsBundle.message("review.details.status.conflicts")
       bindVisibilityIn(scope, hasConflicts)
     }
@@ -67,7 +65,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun <T> createNeedReviewerComponent(scope: CoroutineScope, reviewersReview: Flow<Map<T, ReviewState>>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: need reviewer").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = IconStatus.warning
+      icon = CIBuildStatusIcons.warning
       text = CollaborationToolsBundle.message("review.details.status.reviewer.missing")
       bindVisibilityIn(scope, reviewersReview.map { it.isEmpty() })
     }
@@ -76,7 +74,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun createRequiredReviewsComponent(scope: CoroutineScope, requiredApprovingReviewsCount: Flow<Int>, isDraft: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: required reviews").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = IconStatus.failed
+      icon = CIBuildStatusIcons.failed
       bindVisibilityIn(scope, combine(requiredApprovingReviewsCount, isDraft) { requiredApprovingReviewsCount, isDraft ->
         requiredApprovingReviewsCount > 0 && !isDraft
       })
@@ -89,7 +87,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun createRequiredResolveConversationsComponent(scope: CoroutineScope, requiredConversationsResolved: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: required conversations resolved").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = IconStatus.failed
+      icon = CIBuildStatusIcons.failed
       text = CollaborationToolsBundle.message("review.details.status.conversations")
       bindVisibilityIn(scope, requiredConversationsResolved)
     }
@@ -98,7 +96,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun createRestrictionComponent(scope: CoroutineScope, isRestricted: Flow<Boolean>, isDraft: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: restricted rights").apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      icon = IconStatus.failed
+      icon = CIBuildStatusIcons.failed
       text = CollaborationToolsBundle.message("review.details.status.not.authorized.to.merge")
       bindVisibilityIn(scope, combine(isRestricted, isDraft) { isRestricted, isDraft ->
         isRestricted && !isDraft
@@ -215,10 +213,10 @@ object CodeReviewDetailsStatusComponentFactory {
     val failed = jobs.count { it.status == CodeReviewCIJobState.FAILED }
     val pending = jobs.count { it.status == CodeReviewCIJobState.PENDING }
     return when {
-      jobs.filter { it.isRequired }.all { it.status == CodeReviewCIJobState.SUCCESS } -> IconStatus.success
-      pending != 0 && failed != 0 -> IconStatus.failedInProgress
-      pending != 0 -> IconStatus.pending
-      else -> IconStatus.failed
+      jobs.filter { it.isRequired }.all { it.status == CodeReviewCIJobState.SUCCESS } -> CIBuildStatusIcons.success
+      pending != 0 && failed != 0 -> CIBuildStatusIcons.failedInProgress
+      pending != 0 -> CIBuildStatusIcons.pending
+      else -> CIBuildStatusIcons.failed
     }
   }
 
@@ -236,30 +234,10 @@ object CodeReviewDetailsStatusComponentFactory {
 
   private fun CodeReviewCIJobState.convertToIcon(): Icon {
     return when (this) {
-      CodeReviewCIJobState.FAILED -> IconStatus.failed
-      CodeReviewCIJobState.PENDING -> IconStatus.pending
-      CodeReviewCIJobState.SKIPPED -> IconStatus.skipped
-      CodeReviewCIJobState.SUCCESS -> IconStatus.success
+      CodeReviewCIJobState.FAILED -> CIBuildStatusIcons.failed
+      CodeReviewCIJobState.PENDING -> CIBuildStatusIcons.pending
+      CodeReviewCIJobState.SKIPPED -> CIBuildStatusIcons.skipped
+      CodeReviewCIJobState.SUCCESS -> CIBuildStatusIcons.success
     }
-  }
-
-  private object IconStatus {
-    val failed: Icon
-      get() = AllIcons.RunConfigurations.TestError
-
-    val failedInProgress: Icon
-      get() = AllIcons.Status.FailedInProgress
-
-    val pending: Icon
-      get() = AllIcons.RunConfigurations.TestNotRan
-
-    val skipped: Icon
-      get() = AllIcons.RunConfigurations.TestSkipped
-
-    val success: Icon
-      get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
-
-    val warning: Icon
-      get() = AllIcons.General.Warning
   }
 }
