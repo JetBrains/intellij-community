@@ -8,7 +8,7 @@ import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
-import java.util.Locale
+import java.util.*
 import java.util.logging.Logger
 
 object Launcher {
@@ -91,6 +91,9 @@ object Launcher {
     if (options.platformPrefix != null) {
       cmd.add("-Didea.platform.prefix=${options.platformPrefix}")
     }
+    options.productMode?.let {
+      cmd.add("-Dintellij.platform.product.mode=${it.id}")
+    }
 
     if (!TeamCityHelper.isUnderTeamCity && options.debugPort != null) {
       val suspendOnStart = if (options.debugSuspendOnStart) "y" else "n"
@@ -106,7 +109,10 @@ object Launcher {
     }
 
     cmd.add("@${classPathArgFile.canonicalPath}")
-    cmd.add("com.intellij.idea.Main")
+    cmd.add(
+      if (options.productMode != null) "com.intellij.platform.runtime.loader.IntellijLoader"
+      else "com.intellij.idea.Main"
+    )
 
     for (arg in options.ideaArguments) {
       cmd.add(arg.trim('"'))
