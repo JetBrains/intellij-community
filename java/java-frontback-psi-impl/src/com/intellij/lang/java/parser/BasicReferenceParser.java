@@ -3,7 +3,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
@@ -95,7 +95,7 @@ public class BasicReferenceParser {
         builder.lookAhead(1) != JavaTokenType.DOT &&
         builder.lookAhead(1) != JavaTokenType.COLON &&
         PsiKeyword.VAR.equals(builder.getTokenText()) &&
-        getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_10)) {
+        JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
       builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
     }
     else if (tokenType == JavaTokenType.VAR_KEYWORD && !isSet(flags, VAR_TYPE)) {
