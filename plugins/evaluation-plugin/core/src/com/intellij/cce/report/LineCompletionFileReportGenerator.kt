@@ -49,6 +49,13 @@ class LineCompletionFileReportGenerator(
     }
   }
 
+  override fun getBackgroundClass(lookup: Lookup, expectedText: String): String {
+    if (lookup.additionalInfo["is_wrong_filtering"] == true) {
+      return "bg-wrong-filtering"
+    }
+    return ""
+  }
+
   override fun getThresholds(): List<BaseThreshold> = Threshold.values().toList()
 
   override fun getThresholdClass(value: Double?): String = value?.let {

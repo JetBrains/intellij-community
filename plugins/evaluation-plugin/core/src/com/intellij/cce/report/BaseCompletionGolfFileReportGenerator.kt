@@ -66,6 +66,10 @@ abstract class BaseCompletionGolfFileReportGenerator(
             label("labelText") { +"Filters check " }
             span("stats-absent") { +"skipped" }
           }
+          div("wrong-filters") {
+            label("labelText") { +"Wrong filters " }
+            span("stats-wrong-filters") { +"wrong" }
+          }
           div("thresholds") {
             label("labelText") { +"Threshold grades:" }
             getThresholds().forEach {
@@ -246,7 +250,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
   ): Int {
     val text = expectedText[offset].toString()
 
-    span("code-span completion ${getKindClass(lookup, expectedText)} $delimiter") {
+    span("code-span completion ${getKindClass(lookup, expectedText)} ${getBackgroundClass(lookup, expectedText)} $delimiter") {
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
       attributes["data-offset"] = offsetInFile.toString()
@@ -280,6 +284,8 @@ abstract class BaseCompletionGolfFileReportGenerator(
   protected abstract fun getLineStats(session: Session): List<String>
 
   protected abstract fun getKindClass(lookup: Lookup, expectedText: String): String
+
+  protected abstract fun getBackgroundClass(lookup: Lookup, expectedText: String): String
 
   protected abstract fun getThresholds(): List<BaseThreshold>
 
