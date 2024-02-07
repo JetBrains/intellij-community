@@ -58,9 +58,7 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
   }
 
   final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
-    runBatchUpdate(project) {
-      reinitComponents(componentNames)
-    }
+    batchReloadStates(componentNames, messageBus)
   }
 
   final override fun setPath(path: Path): Unit = setPath(path, null, false)

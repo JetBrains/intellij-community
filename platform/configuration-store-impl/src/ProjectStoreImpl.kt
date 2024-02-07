@@ -292,9 +292,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   final override fun getDirectoryStorePath(): Path? = dotIdea
 
   final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
-    runBatchUpdate(project) {
-      reinitComponents(componentNames)
-    }
+    batchReloadStates(componentNames, messageBus)
   }
 
   override fun getProjectName(): String {

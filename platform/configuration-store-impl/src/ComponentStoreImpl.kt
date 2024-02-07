@@ -623,7 +623,18 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
-    reinitComponents(componentNames)
+    reinitComponents(componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
+  }
+
+  internal fun batchReloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+    val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
+    publisher.onBatchUpdateStarted()
+    try {
+      reinitComponents(componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
+    }
+    finally {
+      publisher.onBatchUpdateFinished()
+    }
   }
 
   final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
@@ -671,17 +682,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     LOG.debug { "Reload components: $componentNames" }
 
     val notReloadableComponents = getNotReloadableComponents(componentNames)
-    reinitComponents(componentNames = componentNames, changedStorages = changedStorages, notReloadableComponents = notReloadableComponents)
+    reinitComponents(componentNames, changedStorages, notReloadableComponents)
     return notReloadableComponents.ifEmpty { null }
   }
 
   // used in settings repository plugin
-  /**
-   * You must call it in batch mode (use runBatchUpdate)
-   */
-  open fun reinitComponents(componentNames: Set<String>,
-                            changedStorages: Set<StateStorage> = emptySet(),
-                            notReloadableComponents: Collection<String> = emptySet()) {
+  open fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage>, notReloadableComponents: Collection<String>) {
     for (componentName in componentNames) {
       if (!notReloadableComponents.contains(componentName)) {
         reloadState(componentName, changedStorages)
