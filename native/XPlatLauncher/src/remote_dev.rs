@@ -202,50 +202,35 @@ impl RemoteDevLaunchConfiguration {
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
-        let remote_dev_server_jcef_enabled = env::var("REMOTE_DEV_SERVER_JCEF_ENABLED").unwrap_or_default();
+        if parse_bool_env_var("REMOTE_DEV_SERVER_JCEF_ENABLED", false)? {
+            let _ = self.setup_jcef();
 
-        match remote_dev_server_jcef_enabled.to_lowercase().as_str() {
-            "1" | "true" => {
-                // todo: platform depended function which setup jcef
-                let _ = self.setup_jcef();
-
-                remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
-                remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
-                remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
-            }
-            "0" | "false" | "" => {
-                if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
-                    if !trace_var.is_empty() {
-                        info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
-                    }
+            remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
+            remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
+            remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
+        } else {
+            if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
+                if !trace_var.is_empty() {
+                    info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
                 }
+            }
 
-                // Disable JCEF support for now since it does not work in headless environment now
-                // Also see IDEA-241709
-                remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
-            }
-            _ => {
-                bail!("Unsupported value for 'REMOTE_DEV_SERVER_JCEF_ENABLED' variable: '{remote_dev_server_jcef_enabled:?}'")
-            }
+            // Disable JCEF support for now since it does not work in headless environment now
+            // Also see IDEA-241709
+            remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
         }
 
-        match env::var("REMOTE_DEV_JDK_DETECTION") {
-            Ok(remote_dev_jdk_detection_value) => {
-                match remote_dev_jdk_detection_value.as_str() {
-                    "1" | "true" => {
-                        info!("Enable JDK auto-detection and project SDK setup");
-                        remote_dev_properties.push(("jdk.configure.existing", "true"));
-                    },
-                    "0" | "false" => {
-                        info!("Disable JDK auto-detection and project SDK setup");
-                        remote_dev_properties.push(("jdk.configure.existing", "false"));
-                    },
-                    _ => {
-                        bail!("Unsupported value for REMOTE_DEV_JDK_DETECTION variable: '{}'", remote_dev_jdk_detection_value);
-                    },
+        match parse_bool_env_var_optional("REMOTE_DEV_JDK_DETECTION")? {
+            Some(remote_dev_jdk_detection_value) => {
+                if remote_dev_jdk_detection_value {
+                    info!("Enable JDK auto-detection and project SDK setup");
+                    remote_dev_properties.push(("jdk.configure.existing", "true"));
+                } else {
+                    info!("Disable JDK auto-detection and project SDK setup");
+                    remote_dev_properties.push(("jdk.configure.existing", "false"));
                 }
             }
-            Err(_) => {
+            None => {
                 info!("Enable JDK auto-detection and project SDK setup by default. Set REMOTE_DEV_JDK_DETECTION=false to disable.");
                 remote_dev_properties.push(("jdk.configure.existing", "true"));
             }
@@ -449,6 +434,19 @@ fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn parse_bool_env_var(var_name: &str, default: bool) -> Result<bool> {
+    Ok(parse_bool_env_var_optional(var_name)?.unwrap_or(default))
+}
+
+fn parse_bool_env_var_optional(var_name: &str) -> Result<Option<bool>> {
+    Ok(match env::var(var_name) {
+        Ok(s) if s == "0" || s.eq_ignore_ascii_case("false") => Some(false),
+        Ok(s) if s == "1" || s.eq_ignore_ascii_case("true") => Some(true),
+        Ok(s) if !s.is_empty() => bail!("Unsupported value '{}' for '{}' environment variable", s, var_name),
+        _ => None,
+    })
 }
 
 #[cfg(target_os = "macos")]
