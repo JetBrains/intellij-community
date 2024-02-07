@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
@@ -875,7 +875,7 @@ public final class PsiImplUtil {
     int counter = 0;
 
     // java.lang.StringTemplate.STR
-    if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_21_PREVIEW)) {
+    if (PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, file)) {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
       final PsiClass aClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING_TEMPLATE, file.getResolveScope());
       if (aClass != null) {
