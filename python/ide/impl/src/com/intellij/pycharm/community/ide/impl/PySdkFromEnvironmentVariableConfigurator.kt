@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.EnvironmentUtil
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -25,7 +26,8 @@ internal class PySdkFromEnvironmentVariableConfigurator(private val project: Pro
 
     @InternalApi
     fun getPycharmPythonPathProperty() : String? {
-      return System.getProperty(PYCHARM_PYTHON_PATH)
+      // see https://www.jetbrains.com/help/pycharm/configure-an-interpreter-using-command-line.html
+      return System.getProperty(PYCHARM_PYTHON_PATH) ?: EnvironmentUtil.getValue("PYCHARM_PYTHON_PATH")
     }
   }
 
