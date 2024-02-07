@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
@@ -95,7 +95,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         if (exception instanceof EvaluateException) {
           // TODO: simplify when only async method left
           if (!(exception.getCause() instanceof InvalidStackFrameException)) {
-            LOG.error(exception);
+            LOG.error(new Exception(exception));
           }
           return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
         }
