@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider;
@@ -10,6 +10,8 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,7 +41,9 @@ public final class JavaDebuggerAutoAttach extends RunConfigurationExtension {
             String address = matcher.group(2);
             Project project = configuration.getProject();
 
-            JavaAttachDebuggerProvider.attach(transport, address, null, project);
+            ApplicationManager.getApplication().invokeLater(
+              () -> JavaAttachDebuggerProvider.attach(transport, address, null, project),
+              ModalityState.any());
           }
         }
       });
