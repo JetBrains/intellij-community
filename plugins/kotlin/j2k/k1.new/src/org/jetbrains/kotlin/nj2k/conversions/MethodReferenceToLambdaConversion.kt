@@ -108,20 +108,20 @@ internal class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext
             is JKMultiverseClassSymbol -> {
                 val method = reference.target.methods.firstOrNull { !it.hasModifier(STATIC) }
                 val parameters = method?.parameterList?.parameters
-                parameters?.map { typeFactory.fromPsiType(it.type).substituteTypeParameters(this) }
+                parameters?.map { typeFactory.fromPsiType(it.type).substituteTypeParameters(classType = this) }
             }
 
             is JKMultiverseKtClassSymbol -> {
                 val function = reference.target.body?.functions?.singleOrNull()
                 function?.valueParameters?.map { param ->
                     val type = param.kotlinType(param.analyze()) ?: return null
-                    typeFactory.fromKotlinType(type).substituteTypeParameters(this)
+                    typeFactory.fromKotlinType(type).substituteTypeParameters(classType = this)
                 }
             }
 
             is JKUniverseClassSymbol -> {
                 val method = reference.target.classBody.declarations.firstIsInstanceOrNull<JKMethod>()
-                method?.parameters?.map { it.type.type.substituteTypeParameters(this) }
+                method?.parameters?.map { it.type.type.substituteTypeParameters(classType = this) }
             }
 
             else -> null

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
-    private val conversions = mutableListOf<JKExternalConversion>()
+    private val conversions: MutableList<JKExternalConversion> = mutableListOf()
 
     fun fix() {
         for (usage in usages) {
