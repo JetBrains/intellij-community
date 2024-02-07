@@ -5,7 +5,9 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::path::Path;
+    use std::fs;
+    use std::fs::File;
+    use std::path::PathBuf;
     use crate::utils::*;
 
     #[test]
@@ -96,5 +98,36 @@ mod tests {
         let output = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
 
         assert!(output.contains("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable"));
+    }
+
+    fn prepare_font_config_dir(dist_root: &PathBuf) {
+        let font_config_root = dist_root.join("plugins/remote-dev-server/selfcontained/fontconfig");
+        fs::create_dir_all(&font_config_root).unwrap();
+        fs::create_dir_all(font_config_root.join("fonts")).unwrap();
+        File::create(font_config_root.join("fonts.conf")).unwrap();
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn remote_dev_font_config_added_test() {
+        let test = prepare_test_env(LauncherLocation::RemoteDev);
+        prepare_font_config_dir(&test.dist_root);
+        let remote_dev_command = &["printEnvVar", "FONTCONFIG_PATH"];
+        let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command));
+        let output = launch_result.stdout;
+
+        assert!(output.contains("FONTCONFIG_PATH=/tmp/jbrd-fontconfig-"));
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn remote_dev_font_config_preserved_test() {
+        let test = prepare_test_env(LauncherLocation::RemoteDev);
+        let env = HashMap::from([("FONTCONFIG_PATH", "/some/existing/path")]);
+        prepare_font_config_dir(&test.dist_root);
+        let remote_dev_command = &["printEnvVar", "FONTCONFIG_PATH"];
+        let output = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_env(&env).with_args(remote_dev_command)).stdout;
+
+        assert!(output.contains("FONTCONFIG_PATH=/some/existing/path:/tmp/jbrd-fontconfig-"));
     }
 }
