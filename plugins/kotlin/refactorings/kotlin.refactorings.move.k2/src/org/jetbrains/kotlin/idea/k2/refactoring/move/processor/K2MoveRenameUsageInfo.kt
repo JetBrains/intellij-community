@@ -39,6 +39,13 @@ sealed class K2MoveRenameUsageInfo(
   val referencedElement: KtNamedDeclaration
 ) : MoveRenameUsageInfo(element, reference, referencedElement) {
     /**
+     * Corrects referenced element to make it retargatable.
+     */
+    protected fun KtNamedDeclaration.correctKotlinTarget() = if (this is KtConstructor<*>) {
+        containingClass() ?: error("Constructor had no containing class.")
+    } else this
+
+    /**
      * Internal usages are usages that are inside the moved declaration.
      * On the contrary, external usages are usages to the moved declaration.
      * Example, when moving `fooBar`
@@ -137,7 +144,8 @@ sealed class K2MoveRenameUsageInfo(
             // shortening needs to be delayed because shortening might depend on other references
             // Lets say we for example want to replace `a.Foo` (imported) here by `b.Foo`: val x: Foo = Foo()
             // The typer reference can't shorten without changing the reference to the constructor call.
-            return (element?.reference as? KtSimpleNameReference)?.bindToElement(to, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
+            return (element?.reference as? KtSimpleNameReference)
+                ?.bindToElement(to.correctKotlinTarget(), KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
         }
     }
 
@@ -160,7 +168,7 @@ sealed class K2MoveRenameUsageInfo(
         override fun retarget(to: KtNamedDeclaration): PsiElement? {
             val element = (element as? KtElement) ?: return element
             val containingFile = element.containingKtFile
-            computeWithoutAddingRedundantImports(containingFile) { to.fqName?.let(containingFile::addImport) }
+            computeWithoutAddingRedundantImports(containingFile) { to.correctKotlinTarget().fqName?.let(containingFile::addImport) }
             return element
         }
     }

@@ -5,6 +5,7 @@ import foo.O
 import foo.O.objectExtensionMember2
 import foo.O.objectMember2
 import foo.Y
+import foo.YConstr
 import foo.classExtension
 import foo.companionExtension
 import foo.objectExtension

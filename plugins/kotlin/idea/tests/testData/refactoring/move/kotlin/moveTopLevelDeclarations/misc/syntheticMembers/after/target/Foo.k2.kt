@@ -1,5 +1,6 @@
 package target
 
+import library.KtData
 import library.KtEnum
 
 class Foo {

@@ -4,6 +4,7 @@ import foo.A
 import foo.O
 import foo.O.objectExtensionMember2
 import foo.X
+import foo.XConstr
 import foo.classExtension
 import foo.companionExtension
 import foo.objectExtension
