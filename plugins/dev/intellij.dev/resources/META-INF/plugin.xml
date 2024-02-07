@@ -9,6 +9,7 @@
     <module name="intellij.java.dev"/>
     <module name="intellij.groovy.dev"/>
     <module name="intellij.kotlin.dev"/>
+    <module name="intellij.js.dev"/>
     <module name="intellij.platform.statistics.devkit"/>
   </content>
 </idea-plugin>
