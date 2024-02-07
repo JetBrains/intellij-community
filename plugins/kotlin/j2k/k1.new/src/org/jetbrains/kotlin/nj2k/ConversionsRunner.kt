@@ -50,7 +50,7 @@ internal object ConversionsRunner {
         StaticsToCompanionExtractConversion(context),
         InterfaceWithFieldConversion(context),
         ClassToObjectPromotionConversion(context),
-        RemoveWrongExtraModifiersForSingleFunctionsConversion(context),
+        RemoveWrongExtraModifiersConversion(context),
         MethodReferenceToLambdaConversion(context),
         TypeMappingConversion(context) { typeElement ->
             typeElement.parent.safeAs<JKParameter>()?.parent is JKLambdaExpression
