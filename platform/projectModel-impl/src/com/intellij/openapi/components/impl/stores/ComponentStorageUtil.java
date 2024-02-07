@@ -9,16 +9,23 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.SmartList;
+import kotlin.Pair;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.Text;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 @ApiStatus.Internal
 public final class ComponentStorageUtil {
@@ -67,9 +74,13 @@ public final class ComponentStorageUtil {
     return map;
   }
 
-  public static @NotNull Map<String, Element> load(@NotNull Path dir, @Nullable PathMacroSubstitutor pathMacroSubstitutor) throws IOException {
+  public static @NotNull Pair<Map<String, Element>, Map<String, @Nullable LineSeparator>> load(
+    @NotNull Path dir,
+    @Nullable PathMacroSubstitutor pathMacroSubstitutor
+  ) throws IOException {
     try (var files = Files.newDirectoryStream(dir)) {
       var fileToState = new HashMap<String, Element>();
+      var fileToSeparator = new HashMap<String, @Nullable LineSeparator>();
 
       for (var file : files) {
         // ignore system files like .DS_Store on Mac
@@ -78,7 +89,8 @@ public final class ComponentStorageUtil {
         }
 
         try {
-          var element = JDOMUtil.load(file);
+          var elementLineSeparatorPair = load(Files.readAllBytes(file));
+          var element = elementLineSeparatorPair.component1();
           var componentName = getComponentNameIfValid(element);
           if (componentName == null) continue;
 
@@ -102,7 +114,9 @@ public final class ComponentStorageUtil {
             }
           }
 
-          fileToState.put(file.getFileName().toString(), state);
+          var name = file.getFileName().toString();
+          fileToState.put(name, state);
+          fileToSeparator.put(name, elementLineSeparatorPair.component2());
         }
         catch (Throwable e) {
           if (e.getMessage().startsWith("Unexpected End-of-input in prolog")) {
@@ -114,13 +128,13 @@ public final class ComponentStorageUtil {
         }
       }
 
-      return fileToState;
+      return new Pair<>(fileToState, fileToSeparator);
     }
     catch (DirectoryIteratorException e) {
       throw e.getCause();
     }
     catch (NoSuchFileException | NotDirectoryException ignore) {
-      return Map.of();
+      return new Pair<>(Map.of(), Map.of());
     }
   }
 
@@ -134,6 +148,23 @@ public final class ComponentStorageUtil {
     var name = element.getAttributeValue(NAME);
     if (!Strings.isEmpty(name)) return name;
     LOG.warn("No name attribute for component in " + JDOMUtil.writeElement(element));
+    return null;
+  }
+
+  public static @NotNull Pair<Element, @Nullable LineSeparator> load(byte @NotNull [] data) throws IOException, JDOMException {
+    var offset = CharsetToolkit.getBOMLength(data, StandardCharsets.UTF_8);
+    var text = new String(data, offset, data.length - offset, StandardCharsets.UTF_8);
+    var element = JDOMUtil.load(text);
+    var lineSeparator = detectLineSeparator(text);
+    return new Pair<>(element, lineSeparator);
+  }
+
+  private static @Nullable LineSeparator detectLineSeparator(CharSequence chars) {
+    for (int i = 0; i < chars.length(); i++) {
+      var c = chars.charAt(i);
+      if (c == '\r') return LineSeparator.CRLF;
+      if (c == '\n') return LineSeparator.LF;  // if we are here, there was no '\r' before
+    }
     return null;
   }
 }

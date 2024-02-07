@@ -8,18 +8,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SafeStAXStreamBuilder
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
-import com.intellij.util.io.readCharSequence
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -30,6 +28,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
+import kotlin.io.path.readBytes
 
 open class FileBasedStorage(
   file: Path,
@@ -110,17 +109,7 @@ open class FileBasedStorage(
           storage.cachedVirtualFile = writeFile(storage.file, this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
         }
         else -> {
-          val file = storage.file
-          LOG.debug { "Save $file" }
-          try {
-            dataWriter.writeTo(file, requestor = this, lineSeparator, storage.isUseXmlProlog)
-          }
-          catch (e: ReadOnlyModificationException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            throw RuntimeException("Cannot write $file", e)
-          }
+          writeFile(storage.file, requestor = this, dataWriter, lineSeparator, storage.isUseXmlProlog)
         }
       }
     }
@@ -182,9 +171,9 @@ open class FileBasedStorage(
         }
       }
       else {
-        val data = CharsetToolkit.inputStreamSkippingBOM(Files.newInputStream(file)).reader().readCharSequence(attributes.size().toInt())
-        lineSeparator = detectLineSeparators(data, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.load(data)
+        val (element, separator) = ComponentStorageUtil.load(file.readBytes())
+        lineSeparator = separator ?: if (isUseXmlProlog) LineSeparator.getSystemLineSeparator() else LineSeparator.LF
+        return element
       }
     }
     catch (e: JDOMException) {
@@ -232,12 +221,14 @@ open class FileBasedStorage(
   override fun toString(): String = "FileBasedStorage(file=$file, fileSpec=$fileSpec, isBlockSavingTheContent=$blockSaving)"
 }
 
-internal fun writeFile(cachedFile: Path?,
-                       requestor: StorageManagerFileWriteRequestor,
-                       virtualFile: VirtualFile?,
-                       dataWriter: DataWriter,
-                       lineSeparator: LineSeparator,
-                       prependXmlProlog: Boolean): VirtualFile {
+internal fun writeFile(
+  cachedFile: Path?,
+  requestor: StorageManagerFileWriteRequestor,
+  virtualFile: VirtualFile?,
+  dataWriter: DataWriter,
+  lineSeparator: LineSeparator,
+  prependXmlProlog: Boolean
+): VirtualFile {
   val file = if (cachedFile != null && (virtualFile == null || !virtualFile.isValid)) {
     getOrCreateVirtualFile(cachedFile, requestor)
   }
@@ -264,6 +255,23 @@ internal fun writeFile(cachedFile: Path?,
 
   doWrite(requestor, file, dataWriter, lineSeparator, prependXmlProlog)
   return file
+}
+
+internal fun writeFile(
+  file: Path,
+  requestor: StorageManagerFileWriteRequestor,
+  dataWriter: DataWriter,
+  lineSeparator: LineSeparator,
+  prependXmlProlog: Boolean
+) {
+  LOG.debug { "Save $file" }
+  try {
+    dataWriter.writeTo(file, requestor, lineSeparator, prependXmlProlog)
+  }
+  catch (e: ReadOnlyModificationException) { throw e }
+  catch (e: Throwable) {
+    throw RuntimeException("Cannot write $file", e)
+  }
 }
 
 internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
@@ -321,19 +329,6 @@ private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFi
       }
     }
   }
-}
-
-internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator? = null): LineSeparator {
-  for (c in chars) {
-    if (c == '\r') {
-      return LineSeparator.CRLF
-    }
-    else if (c == '\n') {
-      // if we are here, there was no \r before
-      return LineSeparator.LF
-    }
-  }
-  return defaultSeparator ?: LineSeparator.getSystemLineSeparator()
 }
 
 private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile?) {
