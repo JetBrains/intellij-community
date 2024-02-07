@@ -39,8 +39,8 @@ class TerminalTextHighlighterTest {
     val output = TerminalOutputController.CommandOutput("foo bar baz",
                                                         listOf(HighlightingInfo(1, 2, green()),
                                                                HighlightingInfo(5, 6, red())))
-    editor.document.insertString(0, output.text)
     outputModel.putHighlightings(block, output.highlightings)
+    editor.document.insertString(0, output.text)
     val textHighlighter = editor.highlighter as TerminalTextHighlighter
     checkHighlighter(editor.document, textHighlighter, listOf(TextRange(0, 1),
                                                               TextRange(1, 2),
