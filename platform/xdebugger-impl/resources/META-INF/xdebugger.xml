@@ -115,6 +115,7 @@
     <projectService serviceInterface="com.intellij.xdebugger.impl.RunToCursorService"
                     serviceImplementation="com.intellij.xdebugger.impl.DefaultRunToCursorService"/>
 
+    <statistics.applicationUsagesCollector implementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingsStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
 
