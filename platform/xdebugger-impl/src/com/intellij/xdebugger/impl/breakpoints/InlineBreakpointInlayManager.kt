@@ -306,8 +306,8 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
               // If breakpoint was not matched earlier, just draw this inlay as a breakpoint.
               val offset = getBreakpointRangeStartOffset(breakpoint, codeStartOffset)
 
-              // However, if this breakpoint is the only breakpoint, and it covers a whole line, don't draw it.
-              val singleLineBreakpoint = breakpoints.size == 1 && getBreakpointHighlightRange(breakpoint) == null
+              // However, if this breakpoint is the only breakpoint, and all variant highlighters are inside its range, don't draw it.
+              val singleLineBreakpoint = breakpoints.size == 1 && breakpointHasTheBiggestRange(breakpoint, variants)
 
               if (!singleLineBreakpoint || shouldAlwaysShowAllInlays()) {
                 add(SingleInlayDatum(breakpoint, variant, offset))
@@ -329,6 +329,18 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
         val offset = getBreakpointRangeStartOffset(breakpoint, codeStartOffset)
         add(SingleInlayDatum(breakpoint, null, offset))
       }
+    }
+  }
+
+  private fun breakpointHasTheBiggestRange(breakpoint: XLineBreakpointImpl<*>, variants: List<XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant>) : Boolean {
+    val range = getBreakpointHighlightRange(breakpoint)
+    if (range == null) {
+      return true
+    }
+
+    return variants.all {
+      val variantRange = it.highlightRange ?: return@all false
+      return@all range.contains(variantRange)
     }
   }
 
