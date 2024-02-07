@@ -24,16 +24,15 @@ class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
   override suspend fun checkToken(): String {
     val server = createServerPath(serverUri)
     val api = service<GitLabApiManager>().getClient(server, token)
-    val user = withContext(Dispatchers.IO) {
-      api.graphQL.getCurrentUser()
-    }
-
     val version = api.getMetadataOrNull()?.version
     val earliestSupportedVersion = serviceAsync<GitLabServersManager>().earliestSupportedVersion
     require(version != null && earliestSupportedVersion <= version) {
       GitLabBundle.message("server.version.unsupported", version.toString(), earliestSupportedVersion)
     }
 
+    val user = withContext(Dispatchers.IO) {
+      api.graphQL.getCurrentUser()
+    }
     val username = user.username
     if (requiredUsername != null) {
       require(username == requiredUsername) {
