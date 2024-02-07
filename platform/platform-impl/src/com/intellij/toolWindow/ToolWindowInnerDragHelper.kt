@@ -110,24 +110,30 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
 
   private fun doGetTabIndex(tabContainer: JComponent, point: RelativePoint): Int {
     val p = point.getPoint(tabContainer)
-    // com.intellij.openapi.wm.impl.content.TabContentLayout.myDropOverPlaceholder
+    val draggingTab = myDraggingTab
+    if (draggingTab != null) {
+      // Make p the center of the tab being dragged.
+      p.x += draggingTab.width / 2 - myInitialOffset.x
+      p.y += draggingTab.height / 2 - myInitialOffset.y
+    }
+    // com.intellij.openapi.wm.impl.content.TabContentLayout.dropOverPlaceholder
     val placeholderIndex = tabContainer.components.indexOfLast { it is JLabel && it !is BaseLabel }
     for (i in 0 until tabContainer.componentCount) {
       val child = tabContainer.components[i]
       if (child !is ContentTabLabel) continue
-      val childBounds = child.bounds
-      if (placeholderIndex != -1 && i < placeholderIndex) {
-        if (p.x < childBounds.minX) {
+      val childCenterX = child.x + child.width / 2
+      if (placeholderIndex != -1) {
+        if (i < placeholderIndex && p.x < childCenterX) {
           return i
         }
-      }
-      if (placeholderIndex != -1 && i > placeholderIndex) {
-        if (p.x > childBounds.maxX)
-          return i.coerceAtMost(tabContainer.components.indexOfLast { it is JLabel })
-        else
+        if (i > placeholderIndex) {
+          if (p.x > childCenterX) {
+            return i.coerceAtMost(tabContainer.components.indexOfLast { it is JLabel })
+          }
           return placeholderIndex
+        }
       }
-      if (childBounds.contains(p)) return i
+      if (child.bounds.contains(p)) return i
     }
     return tabContainer.components.indexOfLast { it is JLabel }.coerceAtLeast(0)
   }
