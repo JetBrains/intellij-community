@@ -2,11 +2,18 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.k2.refactoring.util.isRedundantUnit
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeInliner
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ExpressionReplacementPerformer
@@ -105,8 +112,17 @@ class CodeInliner<TCallElement : KtElement>(
         return expr.canMoveLambdaOutsideParentheses(skipComplexCalls = false)
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
     override fun removeRedundantUnitExpressions(pointer: SmartPsiElementPointer<KtElement>) {
-        //TODO https://youtrack.jetbrains.com/issue/KTIJ-27433
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                pointer.element?.forEachDescendantOfType<KtReferenceExpression> {
+                    if (isRedundantUnit(it)) {
+                        it.delete()
+                    }
+                }
+            }
+        }
     }
 
     override fun removeRedundantLambdasAndAnonymousFunctions(pointer: SmartPsiElementPointer<KtElement>) {
@@ -114,7 +130,6 @@ class CodeInliner<TCallElement : KtElement>(
     }
 
     override fun shortenReferences(pointers: List<SmartPsiElementPointer<KtElement>>): List<KtElement> {
-        //todo https://youtrack.jetbrains.com/issue/KT-62676
         val facility = ShortenReferencesFacility.getInstance()
         return pointers.mapNotNull { p ->
             val ktElement = p.element ?: return@mapNotNull null

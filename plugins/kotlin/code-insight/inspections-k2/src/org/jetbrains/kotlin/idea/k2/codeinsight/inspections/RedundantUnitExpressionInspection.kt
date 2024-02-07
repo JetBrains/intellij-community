@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.previousStatement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.k2.refactoring.util.isRedundantUnit
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -25,7 +26,7 @@ import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
 class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = referenceExpressionVisitor(fun(expression) {
-        if (Util.isRedundantUnit(expression)) {
+        if (isRedundantUnit(expression)) {
             holder.registerProblem(
                 expression,
                 KotlinBundle.message("redundant.unit"),
@@ -33,78 +34,8 @@ class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLoc
             )
         }
     })
-
-    object Util {
-        private fun KtExpression.isUnitLiteral(): Boolean {
-            val referenceName = (this as? KtNameReferenceExpression)?.getReferencedNameAsName() ?: return false
-            return referenceName == StandardNames.FqNames.unit.shortName()
-        }
-
-        fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
-            if (!referenceExpression.isUnitLiteral()) return false
-            val parent = referenceExpression.parent ?: return false
-            if (parent is KtReturnExpression) {
-                analyze(parent) {
-                    val expectedReturnType = parent.getReturnTargetSymbol()?.returnType ?: return false
-                    val expandedClassSymbol = expectedReturnType.expandedClassSymbol
-                    return expandedClassSymbol != null &&
-                            !expectedReturnType.isMarkedNullable &&
-                            expandedClassSymbol.classIdIfNonLocal != StandardClassIds.Any
-                }
-            }
-
-            if (parent is KtBlockExpression) {
-                if (referenceExpression == parent.lastBlockStatementOrThis()) {
-                    val parentIfOrWhen = PsiTreeUtil.getParentOfType(parent, true, KtIfExpression::class.java, KtWhenExpression::class.java)
-                    val prev = referenceExpression.previousStatement() ?: return parentIfOrWhen == null
-                    if (prev.isUnitLiteral()) return true
-                    if (prev is KtDeclaration && isDynamicCall(parent)) return false
-                    analyze(prev) {
-                        val ktType = prev.getKtType()
-                        if (ktType != null) {
-                            return ktType.isUnit && !ktType.isMarkedNullable && prev.canBeUsedAsValue()
-                        }
-                    }
-
-                    if (prev !is KtDeclaration) return false
-                    if (prev !is KtFunction) return true
-                    return parentIfOrWhen == null
-                }
-
-                return true
-            }
-
-            return false
-        }
-    }
 }
 
-private fun isDynamicCall(parent: KtBlockExpression): Boolean = parent.getStrictParentOfType<KtFunctionLiteral>()?.findLambdaReturnType() is KtDynamicType
-
-
-private fun KtFunctionLiteral.findLambdaReturnType(): KtType? {
-    val callExpression = getStrictParentOfType<KtCallExpression>() ?: return null
-    val valueArgument = getStrictParentOfType<KtValueArgument>() ?: return null
-    analyze(this) {
-        val functionCallOrNull = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return null
-        val variableLikeSignature = functionCallOrNull.argumentMapping[valueArgument.getArgumentExpression()] ?: return null
-        return (variableLikeSignature.returnType as? KtFunctionalType)?.returnType
-    }
-}
-
-context(KtAnalysisSession)
-private fun KtExpression.canBeUsedAsValue(): Boolean {
-    return when (this) {
-        is KtIfExpression -> {
-            val elseExpression = `else`
-            if (elseExpression is KtIfExpression) elseExpression.canBeUsedAsValue() else elseExpression != null
-        }
-        is KtWhenExpression ->
-            entries.lastOrNull()?.elseKeyword != null || getMissingCases().isEmpty()
-        else ->
-            true
-    }
-}
 
 private class RemoveRedundantUnitFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.redundant.unit.fix.text")
