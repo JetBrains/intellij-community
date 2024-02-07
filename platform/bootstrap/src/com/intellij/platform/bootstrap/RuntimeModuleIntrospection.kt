@@ -21,7 +21,7 @@ object RuntimeModuleIntrospection {
       val repositoryPath = System.getProperty("intellij.platform.runtime.repository.path")
       return if (repositoryPath != null) Path(repositoryPath) else null
     }
-  
+
   val moduleRepository: RuntimeModuleRepository?
     get() {
       if (!loaded) {

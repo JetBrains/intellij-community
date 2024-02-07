@@ -15,13 +15,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
+  @OptIn(ExperimentalStdlibApi::class)
   private val productModules by lazy {
     val rootModuleName = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
     if (rootModuleName == null) {
       error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
     }
     val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.LOCAL_IDE.id)
-    val currentMode = ProductMode.entries.find { it.id == currentModeId}
+    val currentMode = ProductMode.entries.find { it.id == currentModeId }
     if (currentMode == null) {
       error("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
     }
@@ -34,10 +35,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     RuntimeModuleRepositorySerialization.loadProductModules(moduleGroupStream, productModulesPath, currentMode, moduleRepository)
   }
-  
+
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
-    val mainGroupClassPath = productModules.mainModuleGroup.includedModules.flatMapTo(LinkedHashSet()) { 
-      it.moduleDescriptor.resourceRootPaths 
+    val mainGroupClassPath = productModules.mainModuleGroup.includedModules.flatMapTo(LinkedHashSet()) {
+      it.moduleDescriptor.resourceRootPaths
     }
     val classPath = (bootstrapClassLoader as PathClassLoader).classPath
     logger<ModuleBasedProductLoadingStrategy>().info("New classpath roots:\n${(mainGroupClassPath - classPath.baseUrls.toSet()).joinToString("\n")}")
