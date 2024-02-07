@@ -9,11 +9,13 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
 import org.jetbrains.ide.BuiltInServerManager
+import org.jetbrains.idea.devkit.requestHandlers.CompileHttpRequestHandlerToken
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -85,6 +87,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (appConfiguration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
       vmParameters.addProperty("compile.server.port", BuiltInServerManager.getInstance().port.toString())
       vmParameters.addProperty("compile.server.project", project.locationHash)
+      vmParameters.addProperty("compile.server.token", service<CompileHttpRequestHandlerToken>().acquireToken())
     }
 
     var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")

@@ -26,6 +26,14 @@ internal object FastutilInstall {
   }
 }
 
+@Suppress("unused")
+internal object FastutilDeploy {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    publishToMaven(fastUtil, deploy = true)
+  }
+}
+
 @Suppress("SpellCheckingInspection", "RedundantSuppression", "SameParameterValue")
 private fun publishToMaven(
   @Suppress("SameParameterValue") lib: LibDescriptor,

@@ -4,7 +4,6 @@
 package org.jetbrains.idea.devkit.requestHandlers
 
 import com.intellij.compiler.CompilerMessageImpl
-import com.intellij.compiler.impl.CompileDriver
 import com.intellij.compiler.impl.CompileScopeUtil
 import com.intellij.compiler.impl.CompositeScope
 import com.intellij.openapi.application.EDT
@@ -21,9 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.project.stateStore
-import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufInputStream
-import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -32,13 +29,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.io.send
@@ -60,37 +56,22 @@ private class BuildHttpRequestHandler : HttpRequestHandler() {
     return request.method() == HttpMethod.POST && request.uri().startsWith(PREFIX)
   }
 
-  @Suppress("OPT_IN_USAGE")
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     val query = urlDecoder.parameters()
     val projectHash = query.get("project-hash")?.firstOrNull()
-    val skipSave = query.get("skip-save")?.firstOrNull()?.toBoolean() ?: false
     val project: Project?
-    val decoder: (ByteBuf) -> List<BuildScopeDescription>
     if (projectHash == null) {
       val projectPath = query.get("project-path")?.firstOrNull()
       project = ProjectManager.getInstance().openProjects.find {
         it.stateStore.projectBasePath.invariantSeparatorsPathString == projectPath
       }
-      decoder = { Json.decodeFromStream<List<BuildScopeDescription>>(ByteBufInputStream(it)) }
     }
     else {
       project = ProjectManager.getInstance().findOpenProjectByHash(projectHash)
-      decoder = { ProtoBuf.decodeFromByteArray<List<BuildScopeDescription>>(ByteBufUtil.getBytes(it)) }
     }
-
     if (project == null) {
       LOG.info("Project is not found (query=$query)")
       HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
-      return true
-    }
-
-    val scopeDescriptions = try {
-      decoder(request.content())
-    }
-    catch (e: SerializationException) {
-      LOG.info(e)
-      HttpResponseStatus.BAD_REQUEST.send(context.channel(), request)
       return true
     }
 
@@ -100,14 +81,24 @@ private class BuildHttpRequestHandler : HttpRequestHandler() {
       return true
     }
 
-    project.service<BuildRequestAsyncHandler>().handle(request, context.channel(), scopeDescriptions, skipSave)
+    project.service<BuildRequestAsyncHandler>().handle(request, context.channel())
     return true
   }
 }
 
 @Service(Service.Level.PROJECT)
 private class BuildRequestAsyncHandler(private val project: Project, private val coroutineScope: CoroutineScope) {
-  fun handle(request: FullHttpRequest, channel: Channel, scopeDescriptions: List<BuildScopeDescription>, skipSave: Boolean) {
+  @OptIn(ExperimentalSerializationApi::class)
+  fun handle(request: FullHttpRequest, channel: Channel) {
+    val scopeDescriptions = try {
+      Json.decodeFromStream<List<BuildScopeDescription>>(ByteBufInputStream(request.content()))
+    }
+    catch (e: SerializationException) {
+      LOG.info(e)
+      HttpResponseStatus.BAD_REQUEST.send(channel, request)
+      return
+    }
+
     coroutineScope.launch {
       val compilerManager = project.serviceAsync<CompilerManager>()
       val scope = readAction {
@@ -117,17 +108,7 @@ private class BuildRequestAsyncHandler(private val project: Project, private val
         })
         base
       }
-
-      // the proper implementation - convert CompilerDriver to kotlin and use coroutines/modern API
-      if (skipSave) {
-        scope.putUserData(CompileDriver.SKIP_SAVE, true)
-      }
-
-      var context = Dispatchers.EDT
-      if (skipSave) {
-        context += ModalityState.any().asContextElement()
-      }
-      withContext(context) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         compilerManager.make(scope, CompileStatusNotification { aborted, errors, _, compileContext ->
           when {
             aborted -> HttpResponseStatus.INTERNAL_SERVER_ERROR.send(channel, request, description = "Build cancelled")
@@ -155,7 +136,7 @@ private class BuildRequestAsyncHandler(private val project: Project, private val
 @Serializable
 private data class BuildScopeDescription(
   val targetType: String,
-  val targetIds: Collection<String>,
+  val targetIds: List<String>,
   val forceBuild: Boolean = false,
 )
 

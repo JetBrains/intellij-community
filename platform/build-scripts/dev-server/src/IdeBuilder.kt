@@ -18,8 +18,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.builtins.SetSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -195,7 +195,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 private suspend fun compileIfNeeded(context: BuildContext) {
   val port = System.getProperty("compile.server.port")?.toIntOrNull()
   val project = System.getProperty("compile.server.project")
-  if (port == null || project == null) {
+  val token = System.getProperty("compile.server.token")
+  if (port == null || project == null || token == null) {
     return
   }
 
@@ -209,15 +210,12 @@ private suspend fun compileIfNeeded(context: BuildContext) {
     result
   }
 
-  val url = "http://127.0.0.1:$port/devkit/build?project-hash=$project&skip-save=true"
+  val url = "http://127.0.0.1:$port/devkit/make?project-hash=$project&token=$token"
   TraceManager.flush()
   spanBuilder("compile modules").setAttribute("url", url).useWithScope {
     coroutineScope {
       val task = launch {
-        postData(url, ProtoBuf.encodeToByteArray(listOf(BuildScopeDescription(
-          targetType = "java-production",
-          targetIds = modulesToCompile,
-        ))))
+        postData(url, ProtoBuf.encodeToByteArray(SetSerializer(String.serializer()), modulesToCompile))
       }
 
       var count = 0
@@ -560,10 +558,3 @@ private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot
   }
   return BuildDependenciesCommunityRoot(if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath)
 }
-
-@Serializable
-private data class BuildScopeDescription(
-  val targetType: String,
-  val targetIds: Collection<String>,
-  val forceBuild: Boolean = false,
-)

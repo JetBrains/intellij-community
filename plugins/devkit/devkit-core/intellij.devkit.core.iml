@@ -78,5 +78,6 @@
     <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>
