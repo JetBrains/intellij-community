@@ -11,7 +11,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -30,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 final class SettingsHelper {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
@@ -86,12 +85,15 @@ final class SettingsHelper {
       } else if (SystemInfoRt.isMac) {
         ProcessHandle.Info i = ProcessHandle.current().info();
         Optional<String> processAppPath = i.command();
+        String appBundlePath = getMacAppBundlePath();
         if (processAppPath.isPresent() && processAppPath.get().endsWith("/bin/java")) {
           // Sandbox must be disabled when user runs IDE from debugger (otherwise dlopen will fail)
-          LOG.info("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
+          LOG.warn("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
           settings.no_sandbox = true;
-        } else if (!PathManager.getBundledRuntimePath().equals(SystemProperties.getJavaHome())) {
-          LOG.info("JCEF-sandbox was disabled (current JDK is not the bundled one)");
+        } else if (appBundlePath == null || !SystemProperties.getJavaHome().startsWith(appBundlePath)) {
+          // https://youtrack.jetbrains.com/issue/JBR-6629
+          LOG.warn("JCEF-sandbox was disabled (jbr %s doesn't belong to the app bundle %s)".formatted(SystemProperties.getJavaHome(),
+                                                                                                      appBundlePath));
           settings.no_sandbox = true;
         }
       } else if (SystemInfoRt.isLinux) {
@@ -371,5 +373,24 @@ final class SettingsHelper {
     }
 
     return true;
+  }
+
+  static String getMacAppBundlePath() {
+    String command = ProcessHandle.current().info().command().orElse(null);
+    if (command == null) {
+      return null;
+    }
+
+    Path p = Path.of(command).toAbsolutePath().normalize();
+    while (p != null) {
+      File infoPlist = Path.of(p.toString(), "Info.plist").toFile();
+      if (infoPlist.exists() && infoPlist.isFile() && Path.of("Contents").equals(p.getFileName())) {
+        p = p.getParent();
+        break;
+      }
+
+      p = p.getParent();
+    }
+    return p == null ? null : p.toString();
   }
 }
