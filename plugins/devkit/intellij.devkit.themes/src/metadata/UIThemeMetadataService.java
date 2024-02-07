@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +58,14 @@ public final class UIThemeMetadataService {
 
   @Nullable
   public Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findByKey(String key) {
+    var baseKey = key;
+    baseKey = StringUtil.trimEnd(baseKey, ".compact");
+    baseKey = StringUtil.trimEnd(baseKey, ".os.mac");
+    baseKey = StringUtil.trimEnd(baseKey, ".os.windows");
+    baseKey = StringUtil.trimEnd(baseKey, ".os.linux");
+    baseKey = StringUtil.trimEnd(baseKey, ".os.default");
     for (Map.Entry<UIThemeMetadata, Map<String, UIThemeMetadata.UIKeyMetadata>> entry : myCache.entrySet()) {
-      final UIThemeMetadata.UIKeyMetadata byKey = entry.getValue().get(key);
+      final UIThemeMetadata.UIKeyMetadata byKey = entry.getValue().get(baseKey);
       if (byKey != null) {
         return Pair.pair(entry.getKey(), byKey);
       }
