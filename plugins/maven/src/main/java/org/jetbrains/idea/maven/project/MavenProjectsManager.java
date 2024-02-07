@@ -74,7 +74,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private final ReentrantLock initLock = new ReentrantLock();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
-  private final AtomicBoolean runImportOnStartup = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
 
@@ -180,29 +179,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void initForTests() {
-    loadExistingTreeAndInit();
-  }
-
-  private void tryInit() {
-    if (!isNormalProject()) {
-      return;
-    }
-    boolean wasMavenized = !myState.originalFiles.isEmpty();
-    if (!wasMavenized) {
-      return;
-    }
-    loadExistingTreeAndInit();
-  }
-
-  private void loadExistingTreeAndInit() {
     tryToLoadExistingTree();
     doInit();
-    runImportOnStartup.set(true);
-  }
-
-  private void initAndActivate() {
-    doInit();
-    doActivate();
   }
 
   private void doInit() {
@@ -249,16 +227,18 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   protected void onProjectStartup() {
-    tryInit();
-    if (isInitialized()) {
-      doActivate();
-      if (runImportOnStartup.get()) {
-        var forceImport =
-          Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
-        if (forceImport) {
-          scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
-        }
-      }
+    if (!isNormalProject()) return;
+
+    boolean wasMavenized = !myState.originalFiles.isEmpty();
+    if (!wasMavenized) return;
+
+    tryToLoadExistingTree();
+    doInit();
+    doActivate();
+    var forceImport =
+      Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
+    if (forceImport) {
+      scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
     }
   }
 
@@ -441,7 +421,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
-      initAndActivate();
+      doInit();
+      doActivate();
       var distributionUrl = getWrapperDistributionUrl(ProjectUtil.guessProjectDir(myProject));
       if (distributionUrl != null) {
         getGeneralSettings().setMavenHomeType(MavenWrapper.INSTANCE);
