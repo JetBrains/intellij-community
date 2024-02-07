@@ -20,6 +20,7 @@ import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.kotlin.psi.KtFunction
+import kotlin.time.Duration.Companion.seconds
 
 
 class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
@@ -48,7 +49,9 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(1, storage.index.size)
   }
 
-  fun `test search everywhere contributor`() = runTest {
+  fun `test search everywhere contributor`() = runTest(
+    timeout = 45.seconds // increased timeout because of a bug in symbol index
+  ) {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
     val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticSymbolSearchEverywhereContributor(createEvent())),
                                                 { _ -> null }, null)

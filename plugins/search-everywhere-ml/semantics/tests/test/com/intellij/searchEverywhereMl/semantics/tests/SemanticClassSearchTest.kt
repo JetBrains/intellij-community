@@ -19,6 +19,7 @@ import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.kotlin.psi.KtClass
 import kotlinx.coroutines.test.runTest
+import kotlin.time.Duration.Companion.seconds
 
 class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
   private val storage
@@ -46,8 +47,12 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(1, storage.index.size)
   }
 
-  fun `test search everywhere contributor`() = runTest {
+  fun `test search everywhere contributor`() = runTest(
+    timeout = 45.seconds // increased timeout because of a bug in class index
+  ) {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
+    assertEquals(3, storage.index.size)
+
     val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticClassSearchEverywhereContributor(createEvent())),
                                                 { _ -> null }, null)
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("index project job"))

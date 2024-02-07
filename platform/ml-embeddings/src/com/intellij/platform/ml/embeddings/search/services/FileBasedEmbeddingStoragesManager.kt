@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -25,11 +26,13 @@ import com.intellij.platform.util.progress.reportProgress
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service(Service.Level.PROJECT)
 class FileBasedEmbeddingStoragesManager(private val project: Project, private val cs: CoroutineScope) {
   private val indexingScope = cs.namedChildScope("Embedding indexing scope")
   private var isFirstIndexing = true
+  private val isIndexingTriggered = AtomicBoolean(false)
 
   private val filesLimit: Int?
     get() {
@@ -40,6 +43,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     }
 
   fun prepareForSearch() = cs.launch {
+    if (isIndexingTriggered.compareAndSet(false, true)) addFileListener()
     indexingScope.coroutineContext.cancelChildren()
     withContext(indexingScope.coroutineContext) {
       if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -48,6 +52,20 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
       }
       indexProject()
     }
+  }
+
+  fun triggerIndexing() {
+    if (isIndexingTriggered.compareAndSet(false, true)) {
+      addFileListener()
+      prepareForSearch()
+    }
+  }
+
+  private fun addFileListener() {
+    VirtualFileManager.getInstance().addAsyncFileListener(
+      SemanticSearchFileChangeListener.getInstance(project),
+      SemanticSearchCoroutineScope.getInstance(project)
+    )
   }
 
   private suspend fun loadRequirements() {

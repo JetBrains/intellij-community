@@ -10,7 +10,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex
@@ -21,6 +23,7 @@ import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -37,28 +40,37 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : EmbeddingsStorag
       .resolve(INDEX_DIR).toPath()
   )
 
+  private val isIndexingTriggered = AtomicBoolean(false)
+
   private val indexSetupJob = AtomicReference<Job>(null)
 
   private val setupTitle
     get() = EmbeddingsBundle.getMessage("ml.embeddings.indices.actions.generation.label")
 
-  fun prepareForSearch(project: Project) = SemanticSearchCoroutineScope.getScope(project).launch {
+  fun prepareForSearch(project: Project? = null) = cs.launch {
+    val reportProject = project ?: blockingContext { ProjectManager.getInstance().openProjects.firstOrNull() }
+    isIndexingTriggered.compareAndSet(false, true)
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       // In unit tests you have to manually download artifacts when needed
-      serviceAsync<LocalArtifactsManager>().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+      serviceAsync<LocalArtifactsManager>().downloadArtifactsIfNecessary(reportProject, retryIfCanceled = false)
     }
     index.loadFromDisk()
-    generateEmbeddingsIfNecessary(project)
+    generateEmbeddingsIfNecessary(reportProject)
   }
 
   fun tryStopGeneratingEmbeddings() = indexSetupJob.getAndSet(null)?.cancel()
 
   /* Thread-safe job for updating embeddings. Consequent call stops the previous execution */
   @RequiresBackgroundThread
-  suspend fun generateEmbeddingsIfNecessary(project: Project) = coroutineScope {
+  suspend fun generateEmbeddingsIfNecessary(project: Project?) = coroutineScope {
     val backgroundable = ActionEmbeddingsStorageSetup(index, indexSetupJob)
     try {
-      withBackgroundProgress(project, setupTitle) {
+      if (project != null) {
+        withBackgroundProgress(project, setupTitle) {
+          backgroundable.run()
+        }
+      }
+      else {
         backgroundable.run()
       }
     }
@@ -74,6 +86,7 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : EmbeddingsStorag
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     if (index.size == 0) return emptyList()
+    triggerIndexing() // trigger indexing on first search usage
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
   }
@@ -81,8 +94,15 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : EmbeddingsStorag
   @RequiresBackgroundThread
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
     if (index.size == 0) return emptySequence()
+    triggerIndexing() // trigger indexing on first search usage
     val embedding = generateEmbedding(text) ?: return emptySequence()
     return index.streamFindClose(embedding, similarityThreshold)
+  }
+
+  private fun triggerIndexing() {
+    if (isIndexingTriggered.compareAndSet(false, true)) {
+      prepareForSearch()
+    }
   }
 
   companion object {
