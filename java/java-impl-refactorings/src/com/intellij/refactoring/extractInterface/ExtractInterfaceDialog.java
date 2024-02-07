@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractInterface;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -46,7 +47,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
             return true;
           }
           return element.hasModifierProperty(PsiModifier.PUBLIC)
-                 && (PsiUtil.isLanguageLevel8OrHigher(element) || !element.hasModifierProperty(PsiModifier.STATIC));
+                 && (PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, element) || !element.hasModifierProperty(PsiModifier.STATIC));
         }
         else if (element instanceof PsiField && !(element instanceof PsiEnumConstant)) {
           return element.hasModifierProperty(PsiModifier.FINAL)

@@ -258,7 +258,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
             // can't have default methods overriding Object methods.
             return false;
           }
-          if (!reportClassesWithNonAbstractMethods || !PsiUtil.isLanguageLevel8OrHigher(aClass)) {
+          if (!reportClassesWithNonAbstractMethods || !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass)) {
             return false;
           }
         }

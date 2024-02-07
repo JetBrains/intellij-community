@@ -16,6 +16,7 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -64,7 +65,7 @@ public final class LambdaParameterHidingMemberVariableInspection extends BaseIns
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel8OrHigher(file);
+    return PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, file);
   }
 
   @Override

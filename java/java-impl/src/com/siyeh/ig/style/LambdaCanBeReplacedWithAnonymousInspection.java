@@ -4,11 +4,13 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -163,7 +165,7 @@ public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspec
         PsiParameterList parameterList = lambdaExpression.getParameterList();
         PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(parameterList);
         if (PsiUtil.isJavaToken(nextElement, JavaTokenType.ARROW)) {
-          if (PsiUtil.isLanguageLevel8OrHigher(nextElement)) {
+          if (PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, nextElement)) {
             registerErrorAtRange(parameterList, nextElement);
           }
           else {

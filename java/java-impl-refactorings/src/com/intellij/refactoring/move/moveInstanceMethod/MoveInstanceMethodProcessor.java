@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -175,7 +176,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
     }
 
-    if (myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
+    if (myTargetClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myTargetClass)) {
       addInheritorUsages(myTargetClass, searchScope, usages);
     }
 
@@ -288,7 +289,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     try {
       final PsiModifierList modifierList = patternMethod.getModifierList();
       if (myTargetClass.isInterface()) {
-        if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
+        if (!PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myTargetClass)) {
           patternMethod.getBody().delete();
           modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
         }

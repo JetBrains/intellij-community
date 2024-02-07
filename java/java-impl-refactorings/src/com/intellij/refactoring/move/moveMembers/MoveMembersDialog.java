@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -428,7 +429,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
           return !myTargetClass.isInterface();
         }
         else if (m instanceof PsiMethod) {
-          return !myTargetClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(myTargetClass);
+          return !myTargetClass.isInterface() || PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myTargetClass);
         }
         else if (m instanceof PsiEnumConstant) {
           return myTargetClass.isEnum();

@@ -53,7 +53,7 @@ object ExtractMethodPipeline {
   }
 
   fun withTargetClass(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions, targetClass: PsiClass): ExtractOptions? {
-    if (targetClass.isInterface && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) return null
+    if (targetClass.isInterface && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)) return null
     if (extractOptions.targetClass == targetClass) return extractOptions
     val sourceMember = PsiTreeUtil.getContextOfType(extractOptions.elements.first(), PsiMember::class.java)
     val targetMember = PsiTreeUtil.getChildOfType(targetClass, PsiMember::class.java)
@@ -206,7 +206,7 @@ object ExtractMethodPipeline {
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
     val targetClass = extractOptions.targetClass
     val isInnerClass = PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)
-    if (isInnerClass && !JavaFeature.INNER_STATICS.isAvailable(targetClass)) return null
+    if (isInnerClass && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, targetClass)) return null
     val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
     if (memberUsages.any(::isNotExtractableUsage)) return null
     val addedParameters = memberUsages.groupBy(MemberUsage::member).entries

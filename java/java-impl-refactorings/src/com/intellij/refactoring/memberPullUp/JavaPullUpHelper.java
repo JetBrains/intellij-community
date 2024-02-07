@@ -9,6 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -227,7 +228,8 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     if (myIsTargetInterface || info.isToAbstract()) {
       ChangeContextUtil.clearContextInfo(method);
 
-      if (!info.isToAbstract() && !method.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.isLanguageLevel8OrHigher(myTargetSuperClass)) {
+      if (!info.isToAbstract() && !method.hasModifierProperty(PsiModifier.ABSTRACT) && 
+          PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myTargetSuperClass)) {
         //pull as default
         RefactoringUtil.makeMethodDefault(methodCopy);
         isOriginalMethodAbstract = true;

@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -1141,7 +1142,7 @@ public final class LambdaUtil {
 
   public static @NotNull PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
     String canonicalText = type.getCanonicalText();
-    if (!PsiUtil.isLanguageLevel8OrHigher(expression)) {
+    if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, expression)) {
       final String arrayInitializer = "new " + canonicalText + "[]{0}";
       PsiNewExpression newExpr = (PsiNewExpression)JavaPsiFacade.getElementFactory(expression.getProject())
         .createExpressionFromText(arrayInitializer, expression);

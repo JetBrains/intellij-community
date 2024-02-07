@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFile;
@@ -27,12 +28,12 @@ public final class JavaImplementMethodsHandler implements ContextAwareActionHand
       return false;
     }
 
-    return OverrideImplementUtil.getContextClass(file.getProject(), editor, file, PsiUtil.isLanguageLevel8OrHigher(file)) != null;
+    return OverrideImplementUtil.getContextClass(file.getProject(), editor, file, PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, file)) != null;
   }
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, PsiUtil.isLanguageLevel8OrHigher(file));
+    PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, file));
     if (aClass == null) {
       return;
     }
@@ -59,7 +60,7 @@ public final class JavaImplementMethodsHandler implements ContextAwareActionHand
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    PsiClass aClass = OverrideImplementUtil.getContextClass(file.getProject(), editor, file, PsiUtil.isLanguageLevel8OrHigher(file));
+    PsiClass aClass = OverrideImplementUtil.getContextClass(file.getProject(), editor, file, PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, file));
     if (aClass == null) {
       return false;
     }

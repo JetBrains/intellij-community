@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -544,7 +545,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   private static boolean isImplementInterfaceInJava8Interface(@NotNull PsiClass targetClass) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(targetClass)){
+    if (!PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)){
       return false;
     }
     String commandName = CommandProcessor.getInstance().getCurrentCommandName();

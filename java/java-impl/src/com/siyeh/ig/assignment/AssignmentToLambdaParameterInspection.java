@@ -3,6 +3,7 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLambdaParameterType;
@@ -48,6 +49,6 @@ public final class AssignmentToLambdaParameterInspection extends BaseAssignmentT
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel8OrHigher(file);
+    return PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, file);
   }
 }

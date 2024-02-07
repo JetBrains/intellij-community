@@ -13,6 +13,7 @@ import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.JavaElementKind;
@@ -49,7 +50,9 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
     final PsiParameterList parameterList = method.getParameterList();
     if (parameterList.isEmpty()) return null;
     final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(method))) return null;
+    if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method))) {
+      return null;
+    }
     if (containingClass.isAnnotationType()) {
       // Method with parameters in annotation is a compilation error; there's no sense to create overload
       return null;

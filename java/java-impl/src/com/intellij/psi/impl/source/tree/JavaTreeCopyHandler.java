@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
@@ -93,7 +94,8 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
               modifierList.setModifierProperty(PsiModifier.STATIC, true);
               modifierList.setModifierProperty(PsiModifier.FINAL, true);
             }
-            else if (element.getTreeParent().getElementType() == JavaElementType.METHOD && !PsiUtil.isLanguageLevel8OrHigher(modifierList) ||
+            else if ((element.getTreeParent().getElementType() == JavaElementType.METHOD &&
+                      !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, modifierList)) ||
                      element.getTreeParent().getElementType() == JavaElementType.ANNOTATION_METHOD) {
               modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
               modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);

@@ -26,6 +26,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -366,7 +367,7 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
         if (ExpressionUtils.isSafelyRecomputableExpression(initializer)) {
           return initializer.getText() + "==null?null:" + stringBuilderText;
         }
-        if (PsiUtil.isLanguageLevel8OrHigher(initializer)) {
+        if (PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, initializer)) {
           return CommonClassNames.JAVA_UTIL_OPTIONAL +
                  ".ofNullable(" +
                  initializer.getText() +

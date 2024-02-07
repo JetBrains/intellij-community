@@ -1185,7 +1185,7 @@ public final class HighlightUtil {
         isAllowed &= !isInterface || PsiUtil.isLanguageLevel9OrHigher(modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType();
       }
       else if (PsiModifier.STRICTFP.equals(modifier)) {
-        isAllowed &= !isInterface || PsiUtil.isLanguageLevel8OrHigher(modifierOwner);
+        isAllowed &= !isInterface || PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, modifierOwner);
       }
       else if (PsiModifier.PROTECTED.equals(modifier) ||
                PsiModifier.TRANSIENT.equals(modifier) ||

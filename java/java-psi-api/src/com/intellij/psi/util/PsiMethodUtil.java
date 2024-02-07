@@ -3,6 +3,7 @@ package com.intellij.psi.util;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.openapi.util.Condition;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,7 +15,7 @@ public final class PsiMethodUtil {
   public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
     if (PsiUtil.isLocalOrAnonymousClass(psiClass)) return false;
     if (psiClass.isAnnotationType()) return false;
-    if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
+    if (psiClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, psiClass)) return false;
     return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
   };
 

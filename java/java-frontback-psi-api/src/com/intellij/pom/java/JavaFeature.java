@@ -21,7 +21,7 @@ public enum JavaFeature {
   BIN_LITERALS(LanguageLevel.JDK_1_7, "feature.binary.literals"),
   UNDERSCORES(LanguageLevel.JDK_1_7, "feature.underscores.in.literals"),
   STRING_SWITCH(LanguageLevel.JDK_1_7, "feature.string.switch"),
-  STREAMS(LanguageLevel.JDK_1_8, "feature.stream.api", true),
+  STREAM_OPTIONAL(LanguageLevel.JDK_1_8, "feature.stream.and.optional.api", true),
   /**
    * java.util.Arrays.setAll, java.util.Collection#removeIf, java.util.List.sort(Comparator),
    * java.util.Map#putIfAbsent, java.util.Map#forEach

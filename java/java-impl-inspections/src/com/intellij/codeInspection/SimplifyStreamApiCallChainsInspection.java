@@ -152,7 +152,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
