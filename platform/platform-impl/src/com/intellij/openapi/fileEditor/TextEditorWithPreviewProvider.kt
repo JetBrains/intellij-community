@@ -124,7 +124,9 @@ abstract class TextEditorWithPreviewProvider(
     targetElement.setAttribute(SPLIT_LAYOUT, value)
   }
 
-  protected abstract fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor
+  protected open fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor {
+    return TextEditorWithPreview(firstEditor as TextEditor, secondEditor)
+  }
 
   override fun getPolicy(): FileEditorPolicy {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR
