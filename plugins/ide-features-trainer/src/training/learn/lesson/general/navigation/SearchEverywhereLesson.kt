@@ -43,6 +43,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   open val showQuickDock: Boolean = true
 
   override val lessonContent: LessonContext.() -> Unit = {
+    configurationTasks()
     sdkConfigurationTasks()
 
     task("SearchEverywhere") {
@@ -165,6 +166,8 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
   }
+
+  protected open fun LessonContext.configurationTasks() {}
 
   open fun LessonContext.epilogue() = Unit
 
