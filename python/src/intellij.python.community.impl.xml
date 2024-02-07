@@ -45,7 +45,7 @@
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
                     overrides="true"/>
-    <localInspection language="Requirements" shortName="RequirementsUnresolvedRequirementInspection" suppressId="RequirementsUnresolvedRequirement" bundle="messages.PyBundle"
+    <localInspection language="Requirements" shortName="UnsatisfiedRequirementInspection" suppressId="UnsatisfiedRequirement" bundle="messages.PyBundle"
                      key="INSP.requirement.uninstalled.name" groupKey="INSP.GROUP.requirements" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.requirements.UnsatisfiedRequirementInspection"/>
 
@@ -520,15 +520,6 @@
                        key="python.sdk.installation.notification.group"/>
 
 
-    <localInspection language="TOML"
-                     shortName="PyprojectInspection"
-                     suppressId="PyprojectInspection"
-                     bundle="messages.PyBundle"
-                     groupKey="INSP.GROUP.python"
-                     key="INSP.NAME.pyproject.packages"
-                     level="WARNING"
-                     enabledByDefault="true"
-                     implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageInspection"/>
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>

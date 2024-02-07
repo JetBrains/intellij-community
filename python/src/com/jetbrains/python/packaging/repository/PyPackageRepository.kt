@@ -64,4 +64,11 @@ open class PyPackageRepository() : BaseState() {
                                       relation: PyRequirementRelation? = null): PythonPackageSpecification {
     return PythonSimplePackageSpecification(packageName, version, this, relation)
   }
+
+  open fun createPackageSpecification(packageName: String,
+                                      versionSpecs: String? = null): PythonPackageSpecification {
+    val spec = PythonSimplePackageSpecification(packageName, null, this)
+    spec.versionSpecs = versionSpecs
+    return spec
+  }
 }
