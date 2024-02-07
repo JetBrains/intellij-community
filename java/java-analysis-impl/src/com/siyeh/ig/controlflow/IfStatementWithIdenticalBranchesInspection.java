@@ -957,7 +957,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       CommonPartType type = thenElse.myCommonPartType;
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly);
       boolean tailStatementIsSingleCall = !inspection.myHighlightWhenLastStatementIsCall
-                                          && thenBranch.length > 1
+                                          && (thenBranch.length > 1 || elseBranch.length > 1)
                                           && isSingleCallTail(thenElse.myTailStatementsOfThen)
                                           && thenElse.myHeadUnitsOfThen.isEmpty();
       boolean isInfoLevel = mayChangeSemantics

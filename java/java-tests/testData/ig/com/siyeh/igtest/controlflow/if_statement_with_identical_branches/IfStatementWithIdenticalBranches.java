@@ -194,6 +194,16 @@ class NotADup {
     }
     else System.out.println(i);
   }
+  
+  void o(boolean b) {
+    if (b) {
+      System.out.println("meat");
+    }
+    else {
+      System.out.println("potatoes");
+      System.out.println("meat");
+    }
+  }
 
   public static String o(List<String> list) {
     String tmp = null;
