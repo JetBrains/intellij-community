@@ -1492,7 +1492,7 @@ public final class TreeUtil {
    * @return a promise that will be succeeded only if paths are found and expanded
    */
   public static @NotNull Promise<List<TreePath>> promiseExpand(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
-    return promiseMakeVisibleAll(tree, visitors, paths -> paths.forEach(path -> expandPathWithDebug(tree, path)));
+    return promiseMakeVisibleAll(tree, visitors, paths -> expandPaths(tree, paths));
   }
 
   /**
