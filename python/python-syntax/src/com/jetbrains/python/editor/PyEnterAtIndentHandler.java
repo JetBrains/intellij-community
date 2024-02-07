@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.ast.PyAstFile;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -29,7 +29,7 @@ public final class PyEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
       editor = InjectedLanguageUtil.getTopLevelEditor(editor);
       offset = editor.getCaretModel().getOffset();
     }
-    if (!(file instanceof PyFile)) {
+    if (!(file instanceof PyAstFile)) {
       return Result.Continue;
     }
 
