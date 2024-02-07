@@ -3,11 +3,12 @@
 use std::{env, fs};
 use std::collections::HashMap;
 use std::fs::File;
+use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
-use log::{debug, info};
+use log::{debug, error, info};
 
 use crate::*;
 use crate::docker::is_running_in_docker;
@@ -46,7 +47,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
-        init_env_vars(&self.launcher_name)?;
+        init_env_vars(&self.launcher_name, &self.default.ide_home).context("Preparing environment variables")?;
 
         self.default.prepare_for_launch()
     }
@@ -56,10 +57,6 @@ impl RemoteDevLaunchConfiguration {
     #[allow(clippy::new_ret_no_self)]
     pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
         let (_, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
-
-        // required for the most basic launch (e.g., showing help)
-        // as there may be nothing on a user system and we'll crash
-        Self::setup_font_config()?;
 
         let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
 
@@ -254,14 +251,10 @@ impl RemoteDevLaunchConfiguration {
         Ok(result)
     }
 
-    fn get_temp_system_like_path(&self) -> Result<PathBuf> {
-        Ok(env::temp_dir())
-    }
-
     fn write_merged_properties_file(&self, remote_dev_properties: &[IdeProperty]) -> Result<PathBuf> {
         let pid = std::process::id();
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
-        let path = self.get_temp_system_like_path()?.join(filename);
+        let path = get_temp_system_like_path()?.join(filename);
 
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir)
@@ -300,19 +293,69 @@ impl RemoteDevLaunchConfiguration {
 
     #[cfg(not(target_os = "linux"))]
     fn setup_jcef(&self) -> Result<()> {
-        bail!("jcef support not yet implemented");
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn setup_font_config() -> Result<()> {
         Ok(())
     }
+}
 
-    #[cfg(target_os = "linux")]
-    fn setup_font_config() -> Result<()> {
-        // TODO: implement
-        Ok(())
+fn get_temp_system_like_path() -> Result<PathBuf> {
+    Ok(env::temp_dir())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn setup_font_config(ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+    // fontconfig is Linux-specific
+    Ok(None)
+}
+
+#[cfg(target_os = "linux")]
+fn setup_font_config(ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+    let source_font_config_file = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts.conf");
+    if !source_font_config_file.is_file() {
+        error!("Missing self-contained font config file at {}; fontconfig setup will be skipped", source_font_config_file.to_string_lossy());
+        return Ok(None);
     }
+
+    let extra_fonts_path_config = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts");
+    let extra_fonts_path_jbr = ide_home_path.join("jbr/lib/fonts");
+
+    if !extra_fonts_path_config.as_path().is_dir() {
+        bail!("Extra fonts in '{}' are missing", extra_fonts_path_config.to_string_lossy())
+    }
+
+    if !extra_fonts_path_jbr.as_path().is_dir() {
+        bail!("Extra fonts in '{}' are missing", extra_fonts_path_jbr.to_string_lossy())
+    }
+
+    let extra_fonts_path_config = extra_fonts_path_config.to_string_lossy().to_string();
+    let extra_fonts_path_jbr = extra_fonts_path_jbr.to_string_lossy().to_string();
+
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    source_font_config_file.hash(&mut hasher);
+    let patched_dir = get_temp_system_like_path()?.join(format!("jbrd-fontconfig-{}", hasher.finish()));
+    fs::create_dir_all(&patched_dir).context("Creating directory for temporary fontconfig")?;
+
+    let patched_file_path = patched_dir.join("fonts.conf");
+
+    let patched_file = File::create(&patched_file_path).context("Creating patched fonts.conf file")?;
+    let mut writer = BufWriter::new(patched_file);
+
+    let source_font_config_file = File::open(&source_font_config_file).context("Failed to open source fonts.conf file")?;
+
+    for l in BufReader::new(source_font_config_file).lines() {
+        let mut l = l.context("Failed to read fonts.conf file")?;
+        l = l.replace("PATH_FONTS", &extra_fonts_path_config);
+        l = l.replace("PATH_JBR", &extra_fonts_path_jbr);
+        writeln!(&mut writer, "{}", l).context("Failed to write patched fonts.conf file")?;
+    }
+
+    writer.flush().context("Failed to flush patched fonts.conf file")?;
+
+    let new_font_config = match env::var("FONTCONFIG_PATH") {
+        Ok(s) if !s.is_empty() => s + ":" + patched_dir.to_string_lossy().as_ref(),
+        _ => patched_dir.to_string_lossy().to_string(),
+    };
+
+    Ok(Some(("FONTCONFIG_PATH".to_string(), new_font_config)))
 }
 
 #[allow(non_snake_case)]
@@ -408,7 +451,7 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
+fn init_env_vars(launcher_name_for_usage: &str, ide_home_path: &PathBuf) -> Result<()> {
     let mut remote_dev_env_var_values = vec![
         ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
         ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", launcher_name_for_usage)
@@ -420,6 +463,13 @@ fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
 
     if let Some(os_spec) = get_os_specific_env_vars() {
         remote_dev_env_var_values.extend(os_spec);
+    }
+
+    // required for the most basic launch (e.g. showing help)
+    // as there may be nothing on a user system and we'll crash
+    let font_config_env = setup_font_config(ide_home_path).context("Preparing fontconfig override")?;
+    if let Some(vars) = &font_config_env {
+        remote_dev_env_var_values.push((&vars.0, &vars.1));
     }
 
     for (key, value) in remote_dev_env_var_values {
