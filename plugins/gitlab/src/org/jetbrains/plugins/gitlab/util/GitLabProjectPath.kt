@@ -5,8 +5,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitHostingUrlUtil
+import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 
+@Serializable
 data class GitLabProjectPath(val owner: @NlsSafe String, val name: @NlsSafe String) {
   @NlsSafe
   fun fullPath(withOwner: Boolean = true): String = if (withOwner) "$owner/$name" else name

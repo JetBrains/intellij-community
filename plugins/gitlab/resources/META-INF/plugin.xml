@@ -86,6 +86,7 @@
     <registryKey defaultValue="true" description="Enable all-in-one diff for GitLab merge requests" key="gitlab.enable.combined.diff"/>
     <registryKey defaultValue="1000" description="Request polling interval in milliseconds" key="gitlab.request.polling.interval.millis"/>
     <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
+    <registryKey defaultValue="62" description="Days until an entry in the viewed/not viewed state store is considered stale" key="gitlab.viewed.state.stale.timeout"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.statistics">
