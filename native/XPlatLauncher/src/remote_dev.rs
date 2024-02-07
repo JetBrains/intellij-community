@@ -584,7 +584,3 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
     }
     Ok(())
 }
-
-fn escape_for_idea_properties(path: &Path) -> String {
-    path.to_string_lossy().replace('\\', "\\\\")
-}
