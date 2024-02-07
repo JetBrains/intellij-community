@@ -317,7 +317,7 @@ public class StackFrameItem {
     }
 
     private SimpleTextAttributes getAttributes() {
-      if (isSynthetic() || isInLibraryContent()) {
+      if (shouldHide()) {
         return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       }
       return SimpleTextAttributes.REGULAR_ATTRIBUTES;

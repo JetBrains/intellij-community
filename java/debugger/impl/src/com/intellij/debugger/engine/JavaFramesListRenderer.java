@@ -45,7 +45,7 @@ final class JavaFramesListRenderer {
   }
 
   private static SimpleTextAttributes getAttributes(final StackFrameDescriptorImpl descriptor) {
-    if (descriptor.isSynthetic() || descriptor.isInLibraryContent()) {
+    if (descriptor.shouldHide()) {
       return SimpleTextAttributes.GRAYED_ATTRIBUTES;
     }
     return SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;

@@ -5,4 +5,8 @@ public interface JVMStackFrameInfoProvider {
   boolean isSynthetic();
 
   boolean isInLibraryContent();
+
+  default boolean shouldHide() {
+    return isSynthetic() || isInLibraryContent();
+  }
 }

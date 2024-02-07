@@ -2,10 +2,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -232,6 +229,11 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public boolean isInLibraryContent() {
     return myIsInLibraryContent;
+  }
+
+  public boolean shouldHide() {
+    return isSynthetic() || isInLibraryContent() ||
+           (Registry.is("debugger.hide.frames.including.stepping.filters") && DebugProcessImpl.isPositionFiltered(getLocation()));
   }
 
   @Nullable

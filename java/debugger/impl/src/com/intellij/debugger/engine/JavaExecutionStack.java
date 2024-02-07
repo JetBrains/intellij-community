@@ -437,7 +437,7 @@ public class JavaExecutionStack extends XExecutionStack {
   private static boolean showFrame(@NotNull XStackFrame frame) {
     if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames() &&
         frame instanceof JVMStackFrameInfoProvider info) {
-      return !info.isSynthetic() && !info.isInLibraryContent();
+      return !info.shouldHide();
     }
     return true;
   }

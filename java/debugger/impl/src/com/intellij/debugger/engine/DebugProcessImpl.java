@@ -448,7 +448,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  static boolean isPositionFiltered(Location location) {
+  public static boolean isPositionFiltered(@Nullable Location location) {
     List<ClassFilter> activeFilters = getActiveFilters();
     if (!activeFilters.isEmpty()) {
       ReferenceType referenceType = location != null ? location.declaringType() : null;
