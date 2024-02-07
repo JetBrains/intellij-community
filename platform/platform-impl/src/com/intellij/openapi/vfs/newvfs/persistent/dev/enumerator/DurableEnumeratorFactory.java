@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -112,9 +112,10 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             //If hashToId map is durable, but its factory configured to 'create an empty map if (corrupted, inconsistent,
             // wasn't properly closed...)' -- then this branch rebuilds such a map, hence provides a recovery even for
             // durable maps
+            //If hashToId is really non-durable (see DEFAULT_IN_MEMORY_MAP_FACTORY) than this branch refill the map.
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
               LOG.warn("[" + name + "]: .valueHashToId map is out-of-sync with .valuesLog data (records count don't match) " +
-                       "-> rebuilding the map");
+                       "-> rebuilding the map (impl: " + valueHashToId.getClass() + ")");
               //MAYBE RC: valueHashToId could be build/load async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
               LOG.warn("[" + name + "]: .valueHashToId was rebuilt (" + valueHashToId.size() + " records)");
@@ -123,12 +124,13 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             //         but still is inconsistent with valuesLog? It seems it could: current implementation of append-only-log
             //         _could_ sometimes lose the written-and-commited record: i.e. one of the previous values in the log
             //         wasn't committed, and even record header wasn't written -- and because of that whole region after
-            //         that allocated-but-not-yet-started record is lost. So there _is_ a chance that value is appended
-            //         to the log, and valueId is inserted into the map, but value record is lost on crash, so the id
-            //         put in the map is now invalid.
+            //         that allocated-but-not-yet-started record is lost (see more detailed discussion in the implementation
+            //         class). So there _is_ a chance that value is appended to the log, and valueId is inserted into the map,
+            //         but value record is lost on crash, so the id put in the map is now invalid.
             //         So we should either modify AppendOnlyLog so that it doesn't allow that (e.g. we could not return
-            //         from allocateRecord until at least header is written) -- or we should rebuild the map even if
-            //         the map itself wasClosedProperly, but AppendOnlyLog was recovered, and recovered region >0
+            //         from allocateRecord until at least header is written -- again, see discussion in the impl class) -- or
+            //         we should always rebuild the map if AppendOnlyLog was recovered, _and_ the recovered region >0 -- even
+            //         if the map itself wasClosedProperly=true.
 
             //MAYBE separate 'always rebuild map' and 'rebuild map if inconsistent'
             //      (both requires .open(path,CREATE_NEW) method)
