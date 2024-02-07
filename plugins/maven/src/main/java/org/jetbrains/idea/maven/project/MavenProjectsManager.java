@@ -72,6 +72,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable,
              MavenAsyncProjectsManager {
   private final ReentrantLock initLock = new ReentrantLock();
+  private final AtomicBoolean triedToLoadExistingTree = new AtomicBoolean();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
 
@@ -282,8 +283,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void tryToLoadExistingTree() {
-    Path file = getProjectsTreeFile();
+    initLock.lock();
     try {
+      if (triedToLoadExistingTree.getAndSet(true)) {
+        return;
+      }
+      Path file = getProjectsTreeFile();
       if (Files.exists(file)) {
         var readTree = MavenProjectsTree.read(myProject, file);
         if (null != readTree) {
@@ -296,6 +301,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
     catch (IOException e) {
       MavenLog.LOG.info(e);
+    }
+    finally {
+      initLock.unlock();
     }
   }
 
