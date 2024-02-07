@@ -51,6 +51,7 @@ internal suspend fun showDocumentationPopup(
   }
   check(popup.canShow()) // sanity check
   boundsHandler.showPopup(popup)
+  project.messageBus.syncPublisher(DocumentationPopupListener.TOPIC).popupShown()
   return popup
 }
 

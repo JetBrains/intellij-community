@@ -18,6 +18,7 @@ import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationPage
 import com.intellij.lang.documentation.ide.impl.DocumentationPageContent
+import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
@@ -37,10 +38,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
+import javax.swing.BoundedRangeModel
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -75,6 +80,7 @@ internal class DocumentationUI(
     Disposer.register(this, editorPane)
     scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
+    emitDocContentsScrolledEvents(scrollPane, project)
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
     switcherToolbarComponent = createSwitcherIfNeeded()?.createToolbar()?.component?.apply {
       border = JBUI.Borders.emptyTop(5)
@@ -112,6 +118,16 @@ internal class DocumentationUI(
     cs.launch(CoroutineName("DocumentationUI content size update emission"), start = CoroutineStart.UNDISPATCHED) {
       myContentUpdates.collect {
         myContentSizeUpdates.emit("content change")
+      }
+    }
+  }
+
+  private fun emitDocContentsScrolledEvents(scrollPane: DocumentationScrollPane, project: Project) {
+    var scrollBarPos = 0
+    scrollPane.verticalScrollBar.model.addChangeListener {
+      if ((it.source as BoundedRangeModel).value != scrollBarPos) {
+        scrollBarPos = (it.source as BoundedRangeModel).value
+        project.messageBus.syncPublisher(DocumentationPopupListener.TOPIC).contentsScrolled()
       }
     }
   }
