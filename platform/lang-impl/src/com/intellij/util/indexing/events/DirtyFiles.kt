@@ -14,16 +14,20 @@ class DirtyFiles {
   private val myDirtyFilesWithoutProject = ProjectDirtyFiles()
 
   fun addFile(projects: Collection<Project>, fileId: Int) {
-    if (projects.isEmpty()) {
+    var addedToAtLeastOneProject = false
+    for (project in projects) {
+      val projectDirtyFiles = myDirtyFiles.find { it.first == project }?.second
+      if (projectDirtyFiles != null) {
+        projectDirtyFiles.addFile(fileId)
+        addedToAtLeastOneProject = true
+      }
+    }
+
+    // 'projects' parameter may be not empty in the case when a project is not yet removed from ProjectIndexableFilesFilterHolder
+    // we just need to make sure that fileId is written to at least one set
+    if (!addedToAtLeastOneProject) {
       myDirtyFilesWithoutProject.addFile(fileId)
       return
-    }
-    for (project in projects) {
-      myDirtyFiles.find { it.first == project }?.second?.addFile(fileId)
-      ?: assert(false) {
-        "Project (name: ${project.getName()} hash: ${project.getLocationHash()}) was not found in myDirtyFiles. " +
-        "Projects in myDirtyFiles: ${myDirtyFiles.joinToString { p -> "(name: " + p.first.name + " hash: " + p.first.locationHash + ") " }}"
-      }
     }
   }
 
